@@ -1,13 +1,36 @@
 import sqlite3
 
-connection = sqlite3.connect("test.db")
 
-cursor = connection.cursor()
-cursor.execute(
-    "CREATE TABLE IF NOT EXISTS pictures (id integer PRIMARY KEY, url TEXT NOT NULL)"
-)
+def create_connection(db_file: str) -> sqlite3.Connection:
+    connection = None
+    try:
+        connection = sqlite3.connect(db_file)
+    except sqlite3.Error as e:
+        print(e)
 
-cursor.execute("INSERT INTO pictures VALUES (1, 'www.example.com')")
+    return connection
 
-rows = cursor.execute("SELECT id, url FROM pictures").fetchall()
-print(rows)
+
+def create_table(connection: sqlite3.Connection, create_table: str):
+    try:
+        c = connection.cursor()
+        c.execute(create_table)
+    except sqlite3.Error as e:
+        print(e)
+
+
+def drop_table(connection: sqlite3.Connection, table: str):
+    try:
+        c = connection.cursor()
+        c.execute("DROP table ?", table)
+    except sqlite3.Error as e:
+        print(e)
+
+
+def create_picture(connection: sqlite3.Connection, pic_data: tuple):
+    try:
+        c = connection.cursor()
+        c.execute("""INSERT INTO pictures(url, raw) VALUES (?,?)""", pic_data)
+        connection.commit()
+    except sqlite3.Error as e:
+        print(e)
