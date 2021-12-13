@@ -21,21 +21,14 @@ def to_image(url: str) -> Image:
     return img
 
 
-def get_pics() -> Tuple[List[str], List[str]]:
+def get_pics() -> List[Tuple[str, str]]:
     reddit = praw.Reddit("bot_1")
-    urls = []
-    blob = []
+    pic_data: List[Tuple[str, str]] = []
+    submissions = [s for s in reddit.subreddit("analog").hot(limit=5) if not s.is_self]
 
-    for submission in reddit.subreddit("analog").hot(limit=5):
-        if not submission.is_self:
-            urls.append(submission.url)
-            img = to_image(submission.url)
-            base64 = to_base64(img)
-            blob.append(base64)
-    return urls, blob
-
-
-if __name__ == "__main__":
-    urls, blob = get_pics()
-    for url in urls:
-        print(url)
+    for s in submissions:
+        img = to_image(s.url)
+        base64 = to_base64(img)
+        # pic_data.append((s.url, base64))
+        pic_data.append((s.url, "test"))
+    return pic_data
