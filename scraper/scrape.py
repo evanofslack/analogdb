@@ -4,7 +4,7 @@ from typing import List, Tuple
 
 import praw
 import requests
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 
 def to_base64(img: Image) -> str:
@@ -27,8 +27,12 @@ def get_pics() -> List[Tuple[str, str]]:
     submissions = [s for s in reddit.subreddit("analog").hot(limit=5) if not s.is_self]
 
     for s in submissions:
-        img = to_image(s.url)
-        base64 = to_base64(img)
-        # pic_data.append((s.url, base64))
-        pic_data.append((s.url, "test"))
+        try:
+            img = to_image(s.url)
+            base64 = to_base64(img)
+            # pic_data.append((s.url, base64))
+            pic_data.append((s.url, "test"))
+        except UnidentifiedImageError:
+            print("Could not process image")
+            pass
     return pic_data
