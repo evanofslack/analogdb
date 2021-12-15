@@ -24,15 +24,46 @@ def to_image(url: str) -> Image:
 def get_pics() -> List[Tuple[str, str]]:
     reddit = praw.Reddit("bot_1")
     pic_data: List[Tuple[str, str]] = []
-    submissions = [s for s in reddit.subreddit("analog").hot(limit=5) if not s.is_self]
+    submissions: List[praw.reddit.Submission] = [
+        s for s in reddit.subreddit("analog").hot(limit=5) if not s.is_self
+    ]
 
     for s in submissions:
+        print("\nTitle:", s.title)
+        # print("\nName:", s.name)
+        # print("\nPermalink:", s.permalink)
+        # print("\nNum Comments:", s.num_comments)
+        # print("\nNSFW:", s.over_18)
+        # print(vars(s))
+
         try:
-            img = to_image(s.url)
-            base64 = to_base64(img)
-            # pic_data.append((s.url, base64))
-            pic_data.append((s.url, "test"))
-        except UnidentifiedImageError:
-            print("Could not process image")
+            print("\nPost Hint:", s.post_hint)
+        except:
             pass
+        try:
+            print("\nDomain:", s.domain)
+        except:
+            pass
+        try:
+            print("\nGallery Data:", s.gallery_data)
+        except:
+            pass
+        # try:
+        #     print("\nMedia Metadata:", s.media_metadata)
+        # except:
+        #     pass
+        try:
+            print("\nGallery:", s.is_gallery)
+        except:
+            pass
+        try:
+            print("\nPicture:", s.is_picture)
+        except:
+            pass
+
+        pic_data.append((s.url, s.title))
     return pic_data
+
+
+if __name__ == "__main__":
+    get_pics()
