@@ -16,3 +16,4 @@
 .env
 praw.ini
 .vscode/settings.json
+*.db
