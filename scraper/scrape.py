@@ -13,7 +13,9 @@ class AnalogData:
     title: str
     url: str
     permalink: str
+    score: int
     nsfw: bool
+    time: str
 
 
 def to_base64(img: Image) -> str:
@@ -53,7 +55,7 @@ def get_url(s: praw.reddit.Submission) -> str:
         return s.url
 
 
-def full_permalink(path: str) -> str:
+def append_link(path: str) -> str:
     return "https://www.reddit.com" + path
 
 
@@ -61,15 +63,17 @@ def get_pics() -> List[AnalogData]:
     reddit = praw.Reddit("bot_1")
     pic_data: List[AnalogData] = []
     submissions: List[praw.reddit.Submission] = [
-        s for s in reddit.subreddit("analog").hot(limit=20) if not s.is_self
+        s for s in reddit.subreddit("analog").hot(limit=5) if not s.is_self
     ]
 
     for s in submissions:
         new_pic = AnalogData(
             title=s.title,
             url=get_url(s),
-            permalink=full_permalink(s.permalink),
+            permalink="https://www.reddit.com" + s.permalink,
+            score=s.score,
             nsfw=s.over_18,
+            time=s.created_utc,
         )
         print("\n", new_pic)
         pic_data.append(new_pic)
