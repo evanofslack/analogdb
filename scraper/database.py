@@ -27,10 +27,14 @@ def drop_table(connection: sqlite3.Connection, table: str):
         print(e)
 
 
-def create_picture(connection: sqlite3.Connection, pic_data: tuple):
+def create_picture(conn: sqlite3.Connection, data: tuple):
+
     try:
-        c = connection.cursor()
-        c.execute("""INSERT INTO pictures(url, raw) VALUES (?,?)""", pic_data)
-        connection.commit()
+        c = conn.cursor()
+        c.execute(
+            "INSERT INTO pictures(title, url, permalink, score, nsfw, time) VALUES (?,?,?,?,?,?)",
+            data,
+        )
+        conn.commit()
     except sqlite3.Error as e:
         print(e)
