@@ -29,9 +29,7 @@ func main() {
 	defer db.Close()
 
 	err = db.Ping()
-	if err == nil {
-		fmt.Println("Connection Established")
-	} else {
+	if err != nil {
 		log.Fatal(err)
 	}
 
