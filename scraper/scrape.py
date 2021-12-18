@@ -68,8 +68,8 @@ def get_pics() -> List[AnalogData]:
 
     for s in submissions:
         new_pic = AnalogData(
-            title=s.title,
             url=get_url(s),
+            title=s.title,
             permalink="https://www.reddit.com" + s.permalink,
             score=s.score,
             nsfw=s.over_18,

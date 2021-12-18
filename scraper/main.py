@@ -7,8 +7,8 @@ from scrape import get_pics
 db_file = os.path.dirname(os.getcwd()) + "/test.db"
 create_picture_table = """CREATE TABLE IF NOT EXISTS pictures (
                             id integer PRIMARY KEY, 
-                            title text, 
                             url text NOT NULL, 
+                            title text, 
                             permalink text,
                             score integer,
                             nsfw integer,
