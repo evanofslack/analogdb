@@ -31,7 +31,7 @@ type Post struct {
 
 func AllPosts() ([]Post, error) {
 
-	rows, err := db.Query("SELECT id, url, title, permalink, score, nsfw, time from pictures")
+	rows, err := db.Query("SELECT * FROM pictures")
 	if err != nil {
 		return nil, err
 	}
@@ -57,5 +57,30 @@ func AllPosts() ([]Post, error) {
 	}
 
 	return posts, nil
+}
 
+func LatestPost() (*Post, error) {
+
+	rows, err := db.Query("SELECT * FROM pictures ORDER BY id DESC LIMIT 1;")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// p := Post{}
+	var p Post
+
+	for rows.Next() {
+		err := rows.Scan(&p.id, &p.url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &p, nil
 }
