@@ -18,12 +18,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// models.AllPosts()
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Get("/", helloWorld)
 	r.Get("/latest", getLatest)
+	r.Get("/random", getRandom)
 	http.ListenAndServe(":3000", r)
 }
 
@@ -35,8 +35,16 @@ func getLatest(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(latest.Url))
 }
 
+func getRandom(w http.ResponseWriter, r *http.Request) {
+	random, err := models.RandomPost()
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Write([]byte(random.Url))
+}
+
 func helloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
+	w.Write([]byte("Hello World!"))
 }
 
 func parent_dir() string {

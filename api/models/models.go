@@ -84,3 +84,28 @@ func LatestPost() (*Post, error) {
 
 	return &p, nil
 }
+
+func RandomPost() (*Post, error) {
+
+	rows, err := db.Query("SELECT * FROM pictures ORDER BY RANDOM() LIMIT 1;")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var p Post
+
+	for rows.Next() {
+		err := rows.Scan(&p.id, &p.Url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Println(p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}
