@@ -75,7 +75,6 @@ func LatestPost() (*Post, error) {
 		if err != nil {
 			return nil, err
 		}
-		// fmt.Println(p)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -100,7 +99,6 @@ func RandomPost() (*Post, error) {
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(p)
 	}
 
 	if err = rows.Err(); err != nil {
