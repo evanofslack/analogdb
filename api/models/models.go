@@ -21,7 +21,7 @@ func InitDB(path string) error {
 
 type Post struct {
 	id        int
-	url       string
+	Url       string
 	title     string
 	permalink string
 	score     int
@@ -41,7 +41,7 @@ func AllPosts() ([]Post, error) {
 
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.id, &p.url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
+		err := rows.Scan(&p.id, &p.Url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
 		if err != nil {
 			return nil, err
 		}
@@ -71,11 +71,34 @@ func LatestPost() (*Post, error) {
 	var p Post
 
 	for rows.Next() {
-		err := rows.Scan(&p.id, &p.url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
+		err := rows.Scan(&p.id, &p.Url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}
+
+func RandomPost() (*Post, error) {
+
+	rows, err := db.Query("SELECT * FROM pictures ORDER BY RANDOM() LIMIT 1;")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var p Post
+
+	for rows.Next() {
+		err := rows.Scan(&p.id, &p.Url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if err = rows.Err(); err != nil {
