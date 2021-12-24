@@ -1,1 +1,1 @@
-“web: go-reddit”
+“web: api/go-reddit”
