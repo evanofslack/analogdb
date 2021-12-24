@@ -18,3 +18,4 @@ praw.ini
 .vscode/settings.json
 *.db
 *.pyc
+api/go-reddit
