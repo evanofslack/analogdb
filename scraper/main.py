@@ -1,10 +1,8 @@
 import dataclasses
-import os
 
 from postgres import create_connection, create_picture, create_table
 from scrape import get_pics
 
-db_file = os.path.dirname(os.getcwd()) + "/test.db"
 create_picture_table = """CREATE TABLE IF NOT EXISTS pictures (
                             id SERIAL PRIMARY KEY, 
                             url text NOT NULL, 
