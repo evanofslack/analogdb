@@ -7,20 +7,21 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
 
 var db *sql.DB
 
-func InitDB(path string) error {
+func InitDB() error {
 	LoadEnv()
 
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
-		os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
+	// psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+	// 	"password=%s dbname=%s sslmode=disable",
+	// 	os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
+	// 	os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
 
-	fmt.Println(psqlInfo)
+	conn, _ := pq.ParseURL(os.Getenv("DATABASE_URL"))
+	psqlInfo := conn + "sslmode=require"
 
 	var err error
 
