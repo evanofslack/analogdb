@@ -63,9 +63,9 @@ def append_link(path: str) -> str:
 def get_pics() -> List[AnalogData]:
     # reddit = praw.Reddit("bot_1")
     reddit = praw.Reddit(
-        client_id=os.getenv["client_id"],
-        client_secret=os.getenv["client_secret"],
-        user_agent=os.getenv["user_agent"],
+        client_id=os.environ.get("client_id"),
+        client_secret=os.environ.get("client_secret"),
+        user_agent=os.environ.get("user_agent"),
     )
 
     pic_data: List[AnalogData] = []
