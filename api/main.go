@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go-reddit/models"
 	"log"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 )
 
 func main() {
+	models.LoadEnv()
 
 	db_path := parent_dir() + "/test.db"
 	err := models.InitDB(db_path)
@@ -24,7 +26,9 @@ func main() {
 	r.Get("/", helloWorld)
 	r.Get("/latest", getLatest)
 	r.Get("/random", getRandom)
-	http.ListenAndServe(":3000", r)
+
+	fmt.Println("listening...")
+	http.ListenAndServe(getPort(), r)
 }
 
 func getLatest(w http.ResponseWriter, r *http.Request) {
@@ -54,4 +58,13 @@ func parent_dir() string {
 	}
 	parent := filepath.Dir(wd)
 	return parent
+}
+
+func getPort() string {
+	var port = os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+		fmt.Println("No PORT env variable found, defaulting to: " + port)
+	}
+	return ":" + port
 }
