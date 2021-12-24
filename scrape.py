@@ -1,4 +1,5 @@
 import base64
+import os
 from dataclasses import dataclass
 from io import BytesIO
 from typing import List, Tuple
@@ -60,7 +61,13 @@ def append_link(path: str) -> str:
 
 
 def get_pics() -> List[AnalogData]:
-    reddit = praw.Reddit("bot_1")
+    # reddit = praw.Reddit("bot_1")
+    reddit = praw.Reddit(
+        client_id=os.getenv["client_id"],
+        client_secret=os.getenv["client_secret"],
+        user_agent=os.getenv["user_agent"],
+    )
+
     pic_data: List[AnalogData] = []
     submissions: List[praw.reddit.Submission] = [
         s for s in reddit.subreddit("analog").hot(limit=5) if not s.is_self
