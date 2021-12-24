@@ -1,0 +1,8 @@
+{
+    "python.analysis.extraPaths": [
+        "./scraper"
+    ],
+    "cSpell.words": [
+        "psycopg"
+    ]
+}
