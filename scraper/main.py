@@ -1,23 +1,23 @@
 import dataclasses
 import os
 
-from database import create_connection, create_picture, create_table
+from postgres import create_connection, create_picture, create_table
 from scrape import get_pics
 
 db_file = os.path.dirname(os.getcwd()) + "/test.db"
 create_picture_table = """CREATE TABLE IF NOT EXISTS pictures (
-                            id integer PRIMARY KEY, 
+                            id SERIAL PRIMARY KEY, 
                             url text NOT NULL, 
                             title text, 
                             permalink text,
                             score integer,
-                            nsfw integer,
+                            nsfw boolean,
                             time text
                             );"""
 
 
 def main():
-    conn = create_connection(db_file)
+    conn = create_connection()
     create_table(conn, create_picture_table)
 
     for data in get_pics():
@@ -26,9 +26,13 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
 
-    conn = create_connection(db_file)
+    conn = create_connection()
     c = conn.cursor()
-    for row in c.execute("SELECT * FROM pictures"):
+    c.execute("SELECT * FROM pictures")
+    row = c.fetchone()
+
+    while row is not None:
         print(row)
+        row = c.fetchone()
