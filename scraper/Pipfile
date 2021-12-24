@@ -5,6 +5,7 @@ name = "pypi"
 
 [packages]
 praw = "*"
+psycopg2 = "*"
 
 [dev-packages]
 black = "*"

@@ -3,16 +3,28 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
 func InitDB(path string) error {
+	LoadEnv()
+
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
+		os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
+
+	fmt.Println(psqlInfo)
+
 	var err error
 
-	db, err = sql.Open("sqlite3", path)
+	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
 		return err
 	}
@@ -25,7 +37,7 @@ type Post struct {
 	title     string
 	permalink string
 	score     int
-	nsfw      int
+	nsfw      bool
 	time      string
 }
 
@@ -106,4 +118,12 @@ func RandomPost() (*Post, error) {
 	}
 
 	return &p, nil
+}
+
+func LoadEnv() {
+	err := godotenv.Load()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 }
