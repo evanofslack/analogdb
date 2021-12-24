@@ -13,8 +13,7 @@ import (
 var db *sql.DB
 
 func InitDB() error {
-	LoadEnv()
-
+	// LoadEnv()
 	// psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 	// 	"password=%s dbname=%s sslmode=disable",
 	// 	os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
