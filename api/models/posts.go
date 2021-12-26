@@ -4,16 +4,16 @@ import "fmt"
 
 type Post struct {
 	id        int
-	Url       string
-	Title     string
-	Author    string
-	Permalink string
-	Score     int
-	Nsfw      bool
-	Greyscale bool
-	Time      string
-	Width     int
-	Height    int
+	Url       string `json:"url"`
+	Title     string `json:"title"`
+	Author    string `json:"author"`
+	Permalink string `json:"permalink"`
+	Score     int    `json:"upvotes"`
+	Nsfw      bool   `json:"nsfw"`
+	Greyscale bool   `json:"greyscale"`
+	Time      string `json:"unix_time"`
+	Width     int    `json:"width"`
+	Height    int    `json:"height"`
 }
 
 func AllPosts() ([]Post, error) {
