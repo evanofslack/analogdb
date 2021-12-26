@@ -33,7 +33,7 @@ def create_table(connection):
                             score integer,
                             nsfw boolean,
                             greyscale boolean,
-                            time text,
+                            time integer,
                             width integer,
                             height integer
                             );"""

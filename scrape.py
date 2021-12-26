@@ -70,7 +70,6 @@ def get_url(s: praw.reddit.Submission) -> str:
 
 
 def get_pics() -> List[AnalogData]:
-    print(os.environ.get(""))
     reddit = praw.Reddit(
         client_id=os.environ.get("client_id"),
         client_secret=os.environ.get("client_secret"),
@@ -96,7 +95,7 @@ def get_pics() -> List[AnalogData]:
             score=s.score,
             nsfw=s.over_18,
             greyscale=is_greyscale(img),
-            time=s.created_utc,
+            time=int(s.created_utc),
             width=w,
             height=h,
         )
