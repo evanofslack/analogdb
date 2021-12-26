@@ -11,7 +11,7 @@ type Post struct {
 	Score     int    `json:"upvotes"`
 	Nsfw      bool   `json:"nsfw"`
 	Greyscale bool   `json:"greyscale"`
-	Time      string `json:"unix_time"`
+	Time      int    `json:"unix_time"`
 	Width     int    `json:"width"`
 	Height    int    `json:"height"`
 }
@@ -48,7 +48,7 @@ func AllPosts() ([]Post, error) {
 
 func LatestPost() (*Post, error) {
 
-	rows, err := db.Query("SELECT * FROM pictures ORDER BY id DESC LIMIT 1;")
+	rows, err := db.Query("SELECT * FROM pictures ORDER BY time DESC LIMIT 1;")
 	if err != nil {
 		return nil, err
 	}
