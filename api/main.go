@@ -12,7 +12,6 @@ import (
 )
 
 func main() {
-	// models.LoadEnv()
 	err := models.InitDB()
 	if err != nil {
 		log.Fatal(err)
