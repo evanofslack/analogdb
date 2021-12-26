@@ -12,7 +12,7 @@ import (
 var db *sql.DB
 
 func InitDB() error {
-	test := true
+	test := false
 	var psqlInfo string
 	if test {
 		psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
