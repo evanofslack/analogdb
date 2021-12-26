@@ -11,8 +11,8 @@ from PIL import Image
 
 @dataclass
 class AnalogData:
-    title: str
     url: str
+    title: str
     author: str
     permalink: str
     score: int
