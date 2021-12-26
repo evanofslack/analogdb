@@ -2,7 +2,7 @@ import base64
 import os
 from dataclasses import dataclass
 from io import BytesIO
-from typing import List, Tuple
+from typing import List
 
 import praw
 import requests
@@ -13,10 +13,14 @@ from PIL import Image
 class AnalogData:
     title: str
     url: str
+    author: str
     permalink: str
     score: int
     nsfw: bool
-    time: str
+    greyscale: bool
+    time: float
+    width: int
+    height: int
 
 
 def to_base64(img: Image) -> str:
@@ -29,13 +33,23 @@ def to_base64(img: Image) -> str:
 def to_image(url: str) -> Image:
     pic = requests.get(url, stream=True)
     img = Image.open(pic.raw)
-    # img.show()
     return img
+
+
+def is_greyscale(img: Image):
+    img = img.convert("RGB")
+    w, h = img.size
+    for i in range(w):
+        for j in range(h):
+            r, g, b = img.getpixel((i, j))
+            if r != g != b:
+                return False
+    return True
 
 
 def handle_gallery(s: praw.reddit.Submission) -> str:
     """
-    Return just the first image of the gallery
+    Return the first image of a gallery
 
     """
     print("\nHandling Gallery")
@@ -48,7 +62,6 @@ def handle_gallery(s: praw.reddit.Submission) -> str:
 
 
 def get_url(s: praw.reddit.Submission) -> str:
-
     if hasattr(s, "is_gallery"):
         if s.is_gallery:
             return handle_gallery(s)
@@ -56,33 +69,38 @@ def get_url(s: praw.reddit.Submission) -> str:
         return s.url
 
 
-def append_link(path: str) -> str:
-    return "https://www.reddit.com" + path
-
-
 def get_pics() -> List[AnalogData]:
-    # reddit = praw.Reddit("bot_1")
+    print(os.environ.get(""))
     reddit = praw.Reddit(
         client_id=os.environ.get("client_id"),
         client_secret=os.environ.get("client_secret"),
         user_agent=os.environ.get("user_agent"),
     )
-
+    print("Scraping pictures...")
     pic_data: List[AnalogData] = []
     submissions: List[praw.reddit.Submission] = [
         s for s in reddit.subreddit("analog").hot(limit=5) if not s.is_self
     ]
+    print(f"Gathered {len(submissions)} posts from /r/analog")
 
     for s in submissions:
+        url = get_url(s)
+        img = to_image(url)
+        w, h = img.size
+
         new_pic = AnalogData(
-            url=get_url(s),
+            url=url,
             title=s.title,
+            author="u/" + s.author.name,
             permalink="https://www.reddit.com" + s.permalink,
             score=s.score,
             nsfw=s.over_18,
+            greyscale=is_greyscale(img),
             time=s.created_utc,
+            width=w,
+            height=h,
         )
-        print("\n", new_pic)
+        print(new_pic.title)
         pic_data.append(new_pic)
 
     return pic_data
