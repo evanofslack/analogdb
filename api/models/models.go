@@ -3,24 +3,27 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 var db *sql.DB
 
 func InitDB() error {
-	// LoadEnv()
-	// psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
-	// 	"password=%s dbname=%s sslmode=disable",
-	// 	os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
-	// 	os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
+	test := true
+	var psqlInfo string
+	if test {
+		psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
+			"password=%s dbname=%s sslmode=disable",
+			os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
+			os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
+	} else {
+		conn, _ := pq.ParseURL(os.Getenv("DATABASE_URL"))
+		psqlInfo = conn + "sslmode=require"
 
-	conn, _ := pq.ParseURL(os.Getenv("DATABASE_URL"))
-	psqlInfo := conn + "sslmode=require"
+	}
 
 	var err error
 
@@ -35,10 +38,14 @@ type Post struct {
 	id        int
 	Url       string
 	title     string
+	author    string
 	permalink string
 	score     int
 	nsfw      bool
+	greyscale bool
 	time      string
+	width     int
+	height    int
 }
 
 func AllPosts() ([]Post, error) {
@@ -53,7 +60,7 @@ func AllPosts() ([]Post, error) {
 
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.id, &p.Url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
+		err := rows.Scan(&p.id, &p.Url, &p.title, &p.author, &p.permalink, &p.score, &p.nsfw, &p.greyscale, &p.time, &p.width, &p.height)
 		if err != nil {
 			return nil, err
 		}
@@ -79,11 +86,10 @@ func LatestPost() (*Post, error) {
 	}
 	defer rows.Close()
 
-	// p := Post{}
 	var p Post
 
 	for rows.Next() {
-		err := rows.Scan(&p.id, &p.Url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
+		err := rows.Scan(&p.id, &p.Url, &p.title, &p.author, &p.permalink, &p.score, &p.nsfw, &p.greyscale, &p.time, &p.width, &p.height)
 		if err != nil {
 			return nil, err
 		}
@@ -92,7 +98,7 @@ func LatestPost() (*Post, error) {
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-
+	fmt.Println(p)
 	return &p, nil
 }
 
@@ -107,7 +113,7 @@ func RandomPost() (*Post, error) {
 	var p Post
 
 	for rows.Next() {
-		err := rows.Scan(&p.id, &p.Url, &p.title, &p.permalink, &p.score, &p.nsfw, &p.time)
+		err := rows.Scan(&p.id, &p.Url, &p.title, &p.author, &p.permalink, &p.score, &p.nsfw, &p.greyscale, &p.time, &p.width, &p.height)
 		if err != nil {
 			return nil, err
 		}
@@ -118,12 +124,4 @@ func RandomPost() (*Post, error) {
 	}
 
 	return &p, nil
-}
-
-func LoadEnv() {
-	err := godotenv.Load()
-
-	if err != nil {
-		log.Fatal(err)
-	}
 }
