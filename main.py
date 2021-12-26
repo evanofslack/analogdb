@@ -5,7 +5,7 @@ from scrape import get_pics
 
 
 def main():
-    conn = create_connection(test=True)
+    conn = create_connection(test=False)
     create_table(conn)
 
     for data in get_pics():
