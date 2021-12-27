@@ -12,8 +12,7 @@ import (
 
 var db *sql.DB
 
-func InitDB() error {
-	test := false
+func InitDB(test bool) error {
 	var psqlInfo string
 	if test {
 		LoadEnv()
