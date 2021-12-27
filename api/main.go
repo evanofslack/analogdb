@@ -12,16 +12,29 @@ import (
 )
 
 func main() {
-	err := models.InitDB()
+	err := models.InitDB(true)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
 	r.Get("/", helloWorld)
-	r.Get("/latest", getLatest)
-	r.Get("/random", getRandom)
+
+	r.Route("/latest", func(r chi.Router) {
+		r.Get("/", getLatestPost)
+		r.Get("/{num}", getLatestPost)
+	})
+	r.Route("/top", func(r chi.Router) {
+		r.Get("/", getTopPost)
+		r.Get("/{num}", getTopPost)
+	})
+	r.Route("/random", func(r chi.Router) {
+		r.Get("/", getRandomPost)
+		r.Get("/{num}", getRandomPost)
+	})
 
 	fmt.Println("listening...")
 	http.ListenAndServe(getPort(), r)

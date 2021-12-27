@@ -5,13 +5,20 @@ import (
 	"go-reddit/models"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
-func getLatest(w http.ResponseWriter, r *http.Request) {
-	latest, err := models.LatestPost()
+func getLatestPost(w http.ResponseWriter, r *http.Request) {
+
+	numPosts := queryParamInt(r, "num")
+	latest, err := models.LatestPost(numPosts)
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(latest); err != nil {
@@ -19,8 +26,25 @@ func getLatest(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getRandom(w http.ResponseWriter, r *http.Request) {
-	random, err := models.RandomPost()
+func getTopPost(w http.ResponseWriter, r *http.Request) {
+
+	numPosts := queryParamInt(r, "num")
+	top, err := models.TopPost(numPosts)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(top); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getRandomPost(w http.ResponseWriter, r *http.Request) {
+
+	numPosts := queryParamInt(r, "num")
+	random, err := models.RandomPost(numPosts)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,4 +57,16 @@ func getRandom(w http.ResponseWriter, r *http.Request) {
 
 func helloWorld(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello World!"))
+}
+
+func queryParamInt(r *http.Request, name string) int {
+	if num := chi.URLParam(r, name); num != "" {
+		result, err := strconv.Atoi(num)
+		if err != nil {
+			return 1
+		}
+		return result
+	} else {
+		return 1
+	}
 }
