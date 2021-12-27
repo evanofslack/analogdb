@@ -16,6 +16,10 @@ type Post struct {
 	Height    int    `json:"height"`
 }
 
+type Response struct {
+	Posts []Post `json:"posts"`
+}
+
 func AllPosts() ([]Post, error) {
 
 	rows, err := db.Query("SELECT * FROM pictures")
@@ -46,50 +50,77 @@ func AllPosts() ([]Post, error) {
 	return posts, nil
 }
 
-func LatestPost() (*Post, error) {
+func LatestPost(num int) (Response, error) {
 
-	rows, err := db.Query("SELECT * FROM pictures ORDER BY time DESC LIMIT 1;")
+	rows, err := db.Query("SELECT * FROM pictures ORDER BY time DESC LIMIT $1;", num)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 	defer rows.Close()
 
-	var p Post
+	var response Response
 
 	for rows.Next() {
+		var p Post
 		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
 		if err != nil {
-			return nil, err
+			return Response{}, err
 		}
+		response.Posts = append(response.Posts, p)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return Response{}, err
 	}
-	fmt.Println(p)
-	return &p, nil
+	return response, nil
 }
 
-func RandomPost() (*Post, error) {
+func TopPost(num int) (Response, error) {
 
-	rows, err := db.Query("SELECT * FROM pictures ORDER BY RANDOM() LIMIT 1;")
+	rows, err := db.Query("SELECT * FROM pictures ORDER BY score DESC LIMIT $1;", num)
 	if err != nil {
-		return nil, err
+		return Response{}, err
 	}
 	defer rows.Close()
 
-	var p Post
+	var response Response
 
 	for rows.Next() {
+		var p Post
 		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
 		if err != nil {
-			return nil, err
+			return Response{}, err
 		}
+		response.Posts = append(response.Posts, p)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return Response{}, err
+	}
+	return response, nil
+}
+func RandomPost(num int) (Response, error) {
+
+	rows, err := db.Query("SELECT * FROM pictures ORDER BY RANDOM() LIMIT $1;", num)
+	if err != nil {
+		return Response{}, err
+	}
+	defer rows.Close()
+
+	var response Response
+
+	for rows.Next() {
+		var p Post
+		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
+		if err != nil {
+			return Response{}, err
+		}
+		response.Posts = append(response.Posts, p)
 	}
 
-	return &p, nil
+	if err = rows.Err(); err != nil {
+		return Response{}, err
+	}
+
+	return response, nil
 }
