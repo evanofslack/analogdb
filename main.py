@@ -1,4 +1,5 @@
 import dataclasses
+import time
 
 from postgres import create_connection, create_picture, create_table
 from scrape import get_pics
@@ -11,6 +12,10 @@ def main():
     for data in get_pics():
         create_picture(conn, dataclasses.astuple(data))
     conn.close()
+
+    while True:
+        # Heroku dyno sleep until called again
+        time.sleep(3600)
 
 
 def get_all():
