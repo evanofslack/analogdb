@@ -55,8 +55,8 @@ func getRandomPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func helloWorld(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World!"))
+func greetings(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Welcome to AnalogAPI!"))
 }
 
 func queryParamInt(r *http.Request, name string) int {
