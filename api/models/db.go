@@ -12,18 +12,17 @@ import (
 
 var db *sql.DB
 
-func InitDB(test bool) error {
+func InitDB(prod bool) error {
 	var psqlInfo string
-	if test {
+	if prod {
+		conn, _ := pq.ParseURL(os.Getenv("DATABASE_URL"))
+		psqlInfo = conn + "sslmode=require"
+	} else {
 		LoadEnv()
 		psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
 			"password=%s dbname=%s sslmode=disable",
 			os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
 			os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
-	} else {
-		conn, _ := pq.ParseURL(os.Getenv("DATABASE_URL"))
-		psqlInfo = conn + "sslmode=require"
-
 	}
 
 	var err error
