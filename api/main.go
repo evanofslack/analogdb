@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	err := models.InitDB(false)
+	err := models.InitDB(true)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,7 +21,7 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/", helloWorld)
+	r.Handle("/*", http.FileServer(http.Dir("./static")))
 
 	r.Route("/latest", func(r chi.Router) {
 		r.Get("/", getLatestPost)
