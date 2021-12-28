@@ -55,10 +55,6 @@ func getRandomPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func greetings(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Welcome to AnalogAPI!"))
-}
-
 func queryParamInt(r *http.Request, name string) int {
 	if num := chi.URLParam(r, name); num != "" {
 		result, err := strconv.Atoi(num)

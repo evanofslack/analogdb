@@ -1,0 +1,37 @@
+body {
+    color: black;
+    padding-left: 4rem;
+    padding-right: 4rem;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    max-width: 65rem;
+    font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu;
+    
+}
+h1 {
+    padding-bottom: 1rem
+}
+h2 {
+    padding-top: 2rem
+}
+code {
+    font-family: monospace;
+    color: black;
+    padding: 3px;
+    border-radius: 3px;
+    font-size: 105%;
+    white-space: pre;
+    background: #f7f7f7;
+
+}
+
+div.code-block { 
+    padding: 5px;
+    border-radius: 9px;
+    background: #f7f7f7;
+    overflow:hidden;
+}
+p {
+    max-width: 60rem
+}
+

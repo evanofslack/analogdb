@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>A static page</title>
+	<link rel="stylesheet" href="stylesheets/main.css">
+</head>
+<body>
+	<h1>AnalogDB API</h1>
+	<p>Welcome to the AnalogDB, a free resource providing analog photos.</p>
+	<p>
+		All film pictures are scrapped from <a href="https://www.reddit.com/r/analog/">r/analog</a>.
+		This API is open-source and available on <a href="https://github.com/evanofslack/analog-api">github</a>.
+		All endpoints are public and use a RESTful JSON interface. 
+		Project is currently under development and subject to change
+	</p>
+	<p>Please use the following URI to access the endpoints: <code>https://analog-go.herokuapp.com</code></p>
+
+	<h2>Available Methods</h2>
+	<p>All endpoints take an optional <code>{count}</code> parameter. This determines the number of posts to return (defaults to 1). </p>
+
+	<h4>Get latest pictures</h4>
+	<div class="code-block">
+		<code>curl https://analog-go.herokuapp.com/latest/{count}</code>
+	</div>
+
+	<h4>Get top pictures</h4>
+	<div class="code-block">
+		<code>curl https://analog-go.herokuapp.com/top/{count}</code>
+	</div>
+	
+	<h4>Get random pictures</h4>
+	<div class="code-block">
+		<code>curl https://analog-go.herokuapp.com/random/{count}</code>
+	</div>
+
+	<h2>Response</h2>
+	<p>Example successful response for query. Please note that all endpoints return a list of posts, even for counts of 1.</p>
+	<div class="code-block"><code>$ curl https://analog-go.herokuapp.com/latest/2 </code></div></br>
+	<div class="code-block">
+		<code>{
+  posts: [
+	{
+	  "url":"https://i.redd.it/iar3s9niiw781.jpg",
+	  "title":"North Dakota | Mamiya 7ii 80MM | FujiFilm Pro 400H",
+	  "author":"u/26Point2",
+	  "permalink":"https://www.reddit.com/r/analog/comments/royi2l/north_dakota_mamiya_7ii_80mm_fujifilm_pro_400h/",
+	  "upvotes":268,
+	  "nsfw":false,
+	  "greyscale":false,
+	  "unix_time":1640530734,
+	  "width":1816,
+	  "height":2048
+	},
+	{
+	  "url":"https://i.redd.it/3eb9g3ricw781.jpg",
+	  "title":"Neoclassical arches // Leica M6 TTL // Kodak 400TX",
+	  "author":"u/photocactus",
+	  "permalink":"https://www.reddit.com/r/analog/comments/roxwa0/neoclassical_arches_leica_m6_ttl_kodak_400tx/",
+	  "upvotes":467,
+	  "nsfw":false,
+	  "greyscale":false,
+	  "unix_time":1640528683,
+	  "width":2400,
+	  "height":3437
+	}
+    ]
+}</code>
+	</div>
+</body>
+</html>
