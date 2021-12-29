@@ -1,8 +1,8 @@
 # AnalogDB API
 
-API serving film photographs scraped from [https://www.reddit.com/r/analog/](r/analog)
+API serving film photographs scraped from [r/analog](https://www.reddit.com/r/analog/)
 
-Built with [Go](https://go.dev/) and [https://github.com/go-chi/chi](chi)
+Built with [Go](https://go.dev/) and [chi](https://github.com/go-chi/chi)
 
 Documentation for the API: https://analogdb.herokuapp.com/
 
