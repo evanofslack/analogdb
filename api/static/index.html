@@ -7,36 +7,35 @@
 </head>
 <body>
 	<h1>AnalogDB API</h1>
-	<p>Welcome to the AnalogDB, a free resource providing analog photos.</p>
+	<p>The AnalogDB API provides film photograph data in JSON form as a REST-style service. </p>
 	<p>
 		All film pictures are scrapped from <a href="https://www.reddit.com/r/analog/">r/analog</a>.
 		This API is open-source and available on <a href="https://github.com/evanofslack/analog-api">github</a>.
-		All endpoints are public and use a RESTful JSON interface. 
 		Project is currently under development and subject to change
 	</p>
-	<p>Please use the following URI to access the endpoints: <code>https://analog-go.herokuapp.com</code></p>
+	<p>Please use the following URI to access the endpoints: <code>https://analogdb.herokuapp.com</code></p>
 
 	<h2>Available Methods</h2>
 	<p>All endpoints take an optional <code>{count}</code> parameter. This determines the number of posts to return (defaults to 1). </p>
 
 	<h4>Get latest pictures</h4>
 	<div class="code-block">
-		<code>curl https://analog-go.herokuapp.com/latest/{count}</code>
+		<code>curl https://analogdb.herokuapp.com/latest/{count}</code>
 	</div>
 
 	<h4>Get top pictures</h4>
 	<div class="code-block">
-		<code>curl https://analog-go.herokuapp.com/top/{count}</code>
+		<code>curl https://analogdb.herokuapp.com/top/{count}</code>
 	</div>
 	
 	<h4>Get random pictures</h4>
 	<div class="code-block">
-		<code>curl https://analog-go.herokuapp.com/random/{count}</code>
+		<code>curl https://analogdb.herokuapp.com/random/{count}</code>
 	</div>
 
 	<h2>Response</h2>
-	<p>Example successful response for query. Please note that all endpoints return a list of posts, even for counts of 1.</p>
-	<div class="code-block"><code>$ curl https://analog-go.herokuapp.com/latest/2 </code></div></br>
+	<p>Example successful response. Please note that all endpoints return a list of posts, even for counts of 1.</p>
+	<div class="code-block"><code>$ curl https://analogdb.herokuapp.com/latest/2 </code></div></br>
 	<div class="code-block">
 		<code>{
   posts: [
