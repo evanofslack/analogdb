@@ -8,6 +8,6 @@ FROM alpine
 RUN adduser -S -D -H -h /app appuser
 USER appuser
 COPY --from=builder /build/go-reddit /app/
-COPY api/static /app/static
+COPY api/static/ /app/static
 WORKDIR /app
 CMD ["./go-reddit"]
