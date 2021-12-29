@@ -2,13 +2,14 @@
 
 API serving film photographs scraped from [r/analog](https://www.reddit.com/r/analog/)
 
-Built with [Go](https://go.dev/) and [chi](https://github.com/go-chi/chi)
-
-Documentation for the API: https://analogdb.herokuapp.com/
+* Built with [Go](https://go.dev/), [Chi](https://github.com/go-chi/chi), and [Postgres](https://www.postgresql.org/)
+* Deployed with [Docker](https://www.docker.com/) and [Heroku](https://www.heroku.com/)
 
 Source code for scraper: https://github.com/evanofslack/analog-scraper
 
 ### Example
+
+Full documentation for the API: https://analogdb.herokuapp.com/
 
 ```bash
 curl https://analogdb.herokuapp.com/latest/2
