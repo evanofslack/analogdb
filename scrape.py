@@ -52,7 +52,6 @@ def handle_gallery(s: praw.reddit.Submission) -> str:
     Return the first image of a gallery
 
     """
-    print("\nHandling Gallery")
     for item in sorted(s.gallery_data["items"], key=lambda x: x["id"]):
         media_id = item["media_id"]
         meta = s.media_metadata[media_id]
