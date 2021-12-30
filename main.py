@@ -9,13 +9,9 @@ def main():
     conn = create_connection(test=False)
     create_table(conn)
 
-    for data in get_pics():
+    for data in get_pics(num_pics=5):
         create_picture(conn, dataclasses.astuple(data))
     conn.close()
-
-    while True:
-        # Heroku dyno sleep until called again
-        time.sleep(3600)
 
 
 def get_all():
@@ -30,4 +26,11 @@ def get_all():
 
 
 if __name__ == "__main__":
-    main()
+
+    while True:
+        main()
+
+        # Heroku schedular limited to once a day
+        # Ideally we want to run twice a day
+        # Timing is not critical though.
+        time.sleep(60 * 60 * 12)  # Wait for 12 hours
