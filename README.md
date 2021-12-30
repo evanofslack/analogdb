@@ -1,6 +1,6 @@
-## /r/Analog scraper
+# Analog scraper
 
-Scrapes hot posts from www.reddit.com/r/analog and saves them to Postgres database
+Scrapes media posts from [r/analog](https://www.reddit.com/r/analog/) and saves them to Postgres database
 
-Worker to be run with Heroku scheduler to provide data for analog-go API 
+Run with Heroku scheduler to provide data for [AnalogDB](https://analogdb.herokuapp.com/) 
 
