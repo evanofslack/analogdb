@@ -2,18 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	mw "go-reddit/middleware"
 	"go-reddit/models"
 	"log"
 	"net/http"
-	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
-func getLatestPost(w http.ResponseWriter, r *http.Request) {
+func listLatest(w http.ResponseWriter, r *http.Request) {
 
-	numPosts := queryParamInt(r, "num")
-	latest, err := models.LatestPost(numPosts)
+	pageSize := r.Context().Value(mw.PageSizeKey)
+	pageID := r.Context().Value(mw.PageIDKey)
+	latest, err := models.LatestPost(pageSize.(int), pageID.(int))
 
 	if err != nil {
 		log.Fatal(err)
@@ -26,10 +25,11 @@ func getLatestPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getTopPost(w http.ResponseWriter, r *http.Request) {
+func listTop(w http.ResponseWriter, r *http.Request) {
 
-	numPosts := queryParamInt(r, "num")
-	top, err := models.TopPost(numPosts)
+	pageSize := r.Context().Value(mw.PageSizeKey)
+	pageID := r.Context().Value(mw.PageIDKey)
+	top, err := models.TopPost(pageSize.(int), pageID.(int))
 
 	if err != nil {
 		log.Fatal(err)
@@ -41,10 +41,12 @@ func getTopPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getRandomPost(w http.ResponseWriter, r *http.Request) {
+func listRandom(w http.ResponseWriter, r *http.Request) {
 
-	numPosts := queryParamInt(r, "num")
-	random, err := models.RandomPost(numPosts)
+	pageSize := r.Context().Value(mw.PageSizeKey)
+	pageID := r.Context().Value(mw.PageIDKey)
+	seed := r.Context().Value(mw.SeedKey)
+	random, err := models.RandomPost(pageSize.(int), pageID.(int), seed.(int))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,17 +54,5 @@ func getRandomPost(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(random); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func queryParamInt(r *http.Request, name string) int {
-	if num := chi.URLParam(r, name); num != "" {
-		result, err := strconv.Atoi(num)
-		if err != nil {
-			return 1
-		}
-		return result
-	} else {
-		return 1
 	}
 }
