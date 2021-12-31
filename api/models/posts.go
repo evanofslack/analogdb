@@ -8,7 +8,7 @@ import (
 )
 
 type Post struct {
-	id        int
+	Id        int    `json:"id"`
 	Url       string `json:"url"`
 	Title     string `json:"title"`
 	Author    string `json:"author"`
@@ -51,7 +51,7 @@ func LatestPost(limit int, time int) (Response, error) {
 
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
 		if err != nil {
 			return Response{}, err
 		}
@@ -90,7 +90,7 @@ func TopPost(limit int, score int) (Response, error) {
 
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
 		if err != nil {
 			return Response{}, err
 		}
@@ -135,7 +135,7 @@ func RandomPost(limit int, time int, seed int) (Response, error) {
 
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
 		if err != nil {
 			return Response{}, err
 		}
