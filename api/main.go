@@ -7,12 +7,14 @@ import (
 	"net/http"
 	"os"
 
+	m "go-reddit/middleware"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 func main() {
-	err := models.InitDB(true)
+	err := models.InitDB(false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -24,8 +26,9 @@ func main() {
 	r.Handle("/*", http.FileServer(http.Dir("./static")))
 
 	r.Route("/latest", func(r chi.Router) {
-		r.Get("/", getLatestPost)
-		r.Get("/{num}", getLatestPost)
+		r.With(m.Pagination).Get("/", listLatest)
+		// r.Get("/", getLatestPost)
+		// r.Get("/{num}", getLatestPost)
 	})
 	r.Route("/top", func(r chi.Router) {
 		r.Get("/", getTopPost)

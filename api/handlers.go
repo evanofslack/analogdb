@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	mw "go-reddit/middleware"
 	"go-reddit/models"
 	"log"
 	"net/http"
@@ -10,10 +12,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func getLatestPost(w http.ResponseWriter, r *http.Request) {
+func listLatest(w http.ResponseWriter, r *http.Request) {
 
-	numPosts := queryParamInt(r, "num")
-	latest, err := models.LatestPost(numPosts)
+	pageSize := r.Context().Value(mw.PageSizeKey)
+	pageID := r.Context().Value(mw.PageIDKey)
+	latest, err := models.LatestPost(pageSize.(int), pageID.(int))
+	fmt.Println(pageSize, pageID)
 
 	if err != nil {
 		log.Fatal(err)
