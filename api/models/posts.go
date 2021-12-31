@@ -1,6 +1,10 @@
 package models
 
-import "fmt"
+import (
+	"database/sql"
+	"fmt"
+	"strconv"
+)
 
 type Post struct {
 	id        int
@@ -17,7 +21,8 @@ type Post struct {
 }
 
 type Response struct {
-	Posts []Post `json:"posts"`
+	PageID string `json:"next_page_id"`
+	Posts  []Post `json:"posts"`
 }
 
 func AllPosts() ([]Post, error) {
@@ -50,9 +55,16 @@ func AllPosts() ([]Post, error) {
 	return posts, nil
 }
 
-func LatestPost(num int) (Response, error) {
+func LatestPost(limit int, time int) (Response, error) {
 
-	rows, err := db.Query("SELECT * FROM pictures ORDER BY time DESC LIMIT $1;", num)
+	var rows *sql.Rows
+	var err error
+
+	if time == 0 {
+		rows, err = db.Query("SELECT * FROM pictures ORDER BY time DESC LIMIT $1;", limit)
+	} else {
+		rows, err = db.Query("SELECT * FROM pictures WHERE time < $1 ORDER BY time DESC LIMIT $2;", time, limit)
+	}
 	if err != nil {
 		return Response{}, err
 	}
@@ -71,6 +83,11 @@ func LatestPost(num int) (Response, error) {
 
 	if err = rows.Err(); err != nil {
 		return Response{}, err
+	}
+	if len(response.Posts) == limit {
+		response.PageID = strconv.Itoa(response.Posts[limit-1].Time)
+	} else {
+		response.PageID = ""
 	}
 	return response, nil
 }
