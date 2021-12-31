@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
+	mw "go-reddit/middleware"
 	"go-reddit/models"
 	"log"
 	"net/http"
 	"os"
-
-	m "go-reddit/middleware"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -26,17 +25,13 @@ func main() {
 	r.Handle("/*", http.FileServer(http.Dir("./static")))
 
 	r.Route("/latest", func(r chi.Router) {
-		r.With(m.Pagination).Get("/", listLatest)
-		// r.Get("/", getLatestPost)
-		// r.Get("/{num}", getLatestPost)
+		r.With(mw.Pagination).Get("/", listLatest)
 	})
 	r.Route("/top", func(r chi.Router) {
-		r.Get("/", getTopPost)
-		r.Get("/{num}", getTopPost)
+		r.With(mw.Pagination).Get("/", listTop)
 	})
 	r.Route("/random", func(r chi.Router) {
-		r.Get("/", getRandomPost)
-		r.Get("/{num}", getRandomPost)
+		r.With(mw.Pagination).Get("/", listRandom)
 	})
 
 	fmt.Println("listening...")

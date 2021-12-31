@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"strconv"
 )
 
@@ -20,45 +21,23 @@ type Post struct {
 	Height    int    `json:"height"`
 }
 
-type Response struct {
-	PageID string `json:"next_page_id"`
-	Posts  []Post `json:"posts"`
+type Meta struct {
+	TotalPosts int    `json:"total_posts"`
+	PageSize   int    `json:"page_size"`
+	PageID     string `json:"next_page_id"`
+	Seed       int    `json:"seed,omitempty"`
 }
 
-func AllPosts() ([]Post, error) {
-
-	rows, err := db.Query("SELECT * FROM pictures")
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var posts []Post
-
-	for rows.Next() {
-		var p Post
-		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
-		if err != nil {
-			return nil, err
-		}
-		posts = append(posts, p)
-	}
-
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-
-	for _, post := range posts {
-		fmt.Println(post)
-	}
-
-	return posts, nil
+type Response struct {
+	Meta  Meta   `json:"meta"`
+	Posts []Post `json:"posts"`
 }
 
 func LatestPost(limit int, time int) (Response, error) {
 
 	var rows *sql.Rows
 	var err error
+	var response Response
 
 	if time == 0 {
 		rows, err = db.Query("SELECT * FROM pictures ORDER BY time DESC LIMIT $1;", limit)
@@ -70,7 +49,44 @@ func LatestPost(limit int, time int) (Response, error) {
 	}
 	defer rows.Close()
 
+	for rows.Next() {
+		var p Post
+		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
+		if err != nil {
+			return Response{}, err
+		}
+		response.Posts = append(response.Posts, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return Response{}, err
+	}
+
+	response.Meta.TotalPosts = getRowCount()
+	response.Meta.PageSize = limit
+	if len(response.Posts) == limit {
+		response.Meta.PageID = strconv.Itoa(response.Posts[limit-1].Time)
+	} else {
+		response.Meta.PageID = ""
+	}
+	return response, nil
+}
+
+func TopPost(limit int, score int) (Response, error) {
+
+	var rows *sql.Rows
+	var err error
 	var response Response
+
+	if score == 0 {
+		rows, err = db.Query("SELECT * FROM pictures ORDER BY score DESC LIMIT $1;", limit)
+	} else {
+		rows, err = db.Query("SELECT * FROM pictures WHERE score < $1 ORDER BY time DESC LIMIT $2;", score, limit)
+	}
+	if err != nil {
+		return Response{}, err
+	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var p Post
@@ -81,26 +97,41 @@ func LatestPost(limit int, time int) (Response, error) {
 		response.Posts = append(response.Posts, p)
 	}
 
+	response.Meta.TotalPosts = getRowCount()
+	response.Meta.PageSize = limit
 	if err = rows.Err(); err != nil {
 		return Response{}, err
 	}
 	if len(response.Posts) == limit {
-		response.PageID = strconv.Itoa(response.Posts[limit-1].Time)
+		response.Meta.PageID = strconv.Itoa(response.Posts[limit-1].Score)
 	} else {
-		response.PageID = ""
+		response.Meta.PageID = ""
 	}
 	return response, nil
 }
+func RandomPost(limit int, time int, seed int) (Response, error) {
 
-func TopPost(num int) (Response, error) {
+	if seed == 0 {
+		prime_seeds := []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97}
+		randomIndex := rand.Intn(len(prime_seeds))
+		seed = prime_seeds[randomIndex]
+	}
 
-	rows, err := db.Query("SELECT * FROM pictures ORDER BY score DESC LIMIT $1;", num)
+	var rows *sql.Rows
+	var err error
+	var response Response
+
+	// Create shuffled order of db based on seed to create "random" order that is repeatable if the seed is supplied.
+	if time == 0 {
+		rows, err = db.Query("SELECT * FROM pictures ORDER BY time % $1, time DESC LIMIT $2;", seed, limit)
+	} else {
+		rows, err = db.Query("SELECT * FROM pictures WHERE time % $1 > $2 ORDER BY time % $3, time DESC LIMIT $4;", seed, time%seed, seed, limit)
+	}
+
 	if err != nil {
 		return Response{}, err
 	}
 	defer rows.Close()
-
-	var response Response
 
 	for rows.Next() {
 		var p Post
@@ -114,30 +145,32 @@ func TopPost(num int) (Response, error) {
 	if err = rows.Err(); err != nil {
 		return Response{}, err
 	}
+
+	// Set response metadata
+	response.Meta.TotalPosts = getRowCount()
+	response.Meta.PageSize = limit
+	if len(response.Posts) == limit {
+		response.Meta.PageID = strconv.Itoa(response.Posts[limit-1].Time)
+	} else {
+		response.Meta.PageID = ""
+	}
+	response.Meta.Seed = seed
+
 	return response, nil
 }
-func RandomPost(num int) (Response, error) {
 
-	rows, err := db.Query("SELECT * FROM pictures ORDER BY RANDOM() LIMIT $1;", num)
+func getRowCount() int {
+	rows, err := db.Query("SELECT COUNT(*) as count FROM  pictures")
 	if err != nil {
-		return Response{}, err
+		fmt.Println(err)
+		return 0
 	}
-	defer rows.Close()
-
-	var response Response
-
+	var count int
 	for rows.Next() {
-		var p Post
-		err := rows.Scan(&p.id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
-		if err != nil {
-			return Response{}, err
+		if err := rows.Scan(&count); err != nil {
+			fmt.Println(err)
+			return 0
 		}
-		response.Posts = append(response.Posts, p)
 	}
-
-	if err = rows.Err(); err != nil {
-		return Response{}, err
-	}
-
-	return response, nil
+	return count
 }
