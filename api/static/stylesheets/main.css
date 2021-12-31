@@ -14,6 +14,12 @@ h1 {
 h2 {
     padding-top: 2rem
 }
+h3 {
+    margin-top: 1rem
+}
+p {
+    max-width: 60rem;
+}
 code {
     font-family: monospace;
     color: black;
@@ -22,16 +28,18 @@ code {
     font-size: 105%;
     white-space: pre;
     background: #f7f7f7;
-
 }
-
 div.code-block { 
     padding: 5px;
     border-radius: 9px;
     background: #f7f7f7;
     overflow:hidden;
 }
-p {
-    max-width: 60rem
+div.example-block { 
+    padding: 5px;
+    border-radius: 9px;
+    background: #f7f7f7;
+    overflow:hidden;
 }
+
 

@@ -11,59 +11,99 @@
 	<p>
 		All film pictures are scrapped from <a href="https://www.reddit.com/r/analog/">r/analog</a>.
 		This API is open-source and available on <a href="https://github.com/evanofslack/analog-api">github</a>.
-		Project is currently under development and subject to change
+		Project is currently under development and subject to change.
 	</p>
 	<p>Please use the following URI to access the endpoints: <code>https://analogdb.herokuapp.com</code></p>
 
-	<h2>Available Methods</h2>
-	<p>All endpoints take an optional <code>{count}</code> parameter. This determines the number of posts to return (defaults to 1). </p>
+	<h2>Pagination</h2>
+	<p>
+		All listing endpoints are paginated with keyset pagination. 10 records per page are returned by default. 
+		Pagination can be controlled with the following parameters:
+	</p>
+	<li><code>page_size</code> - to set the number of records to return on each page</li>
+	<li><code>page_id</code> - to request a specific page of results. Each request returns a <code>next_page_id</code> that can be used to access the next page of results</li>
 
-	<h4>Get latest pictures</h4>
-	<div class="code-block">
-		<code>curl https://analogdb.herokuapp.com/latest/{count}</code>
-	</div>
+	<p style="font-weight:bold">Example: <a href="https://analogdb.herokuapp.com/top?page_size=5&page_id=774" style="font-weight:normal">https://analogdb.herokuapp.com/top?page_size=5&page_id=774</a></p>
 
-	<h4>Get top pictures</h4>
-	<div class="code-block">
-		<code>curl https://analogdb.herokuapp.com/top/{count}</code>
-	</div>
+
+	<h2>Endpoints</h2>
+
+	<h3>Latest posts</h3>
+	<code>GET /latest</code>
+	<p>A list of posts sorted chronologically (newest first). </p>
+	<strong>Available Query Parameters:</strong>
+
+	<li><code>page_size</code> - The number of posts to return per page</li>
+	<li><code>page_id</code> - The page to retrieve</li>
 	
-	<h4>Get random pictures</h4>
-	<div class="code-block">
-		<code>curl https://analogdb.herokuapp.com/random/{count}</code>
-	</div>
+	<div class="example-block">Example request: curl https://analogdb.herokuapp.com/latest?page_size=5</div>
+
+	<h3>Top posts</h3>
+	<code>GET /top</code>
+	<p>A list of posts sorted by number of upvotes. </p>
+	<strong>Available Query Parameters:</strong>
+
+	<li><code>page_size</code> - The number of posts to return per page</li>
+	<li><code>page_id</code> - The page to retrieve</li>
+	
+	<div class="example-block">Example request: curl https://analogdb.herokuapp.com/top?page_size=5</div>
+
+	<h3>Random posts</h3>
+	<code>GET /random</code>
+	<p>A list of posts sorted pseudo-randomly. A random seed is used to shuffle the posts.</p>
+	<p>
+		First request will return a random seed. Provide this seed with subsequent requests to ensure 
+		consistent order and no duplicates when paginating. 
+	</p>
+	
+	<strong>Available Query Parameters:</strong>
+
+	<li><code>page_size</code> - The number of posts to return per page</li>
+	<li><code>page_id</code> - The page to retrieve</li>
+	<li><code>seed</code> - The seed to determine post order. </li>
+	
+	<div class="example-block">Example request: curl https://analogdb.herokuapp.com/random?page_size=5</div>
+
 
 	<h2>Response</h2>
-	<p>Example successful response. Please note that all endpoints return a list of posts, even for counts of 1.</p>
-	<div class="code-block"><code>$ curl https://analogdb.herokuapp.com/latest/2 </code></div></br>
+	<p>Example successful response. Please note that all endpoints return a list of posts, even for page_sizes of 1.</p>
+	<div class="code-block"><code>$ curl https://analogdb.herokuapp.com/latest </code></div></br>
 	<div class="code-block">
 		<code>{
-  posts: [
-	{
-	  "url":"https://i.redd.it/iar3s9niiw781.jpg",
-	  "title":"North Dakota | Mamiya 7ii 80MM | FujiFilm Pro 400H",
-	  "author":"u/26Point2",
-	  "permalink":"https://www.reddit.com/r/analog/comments/royi2l/north_dakota_mamiya_7ii_80mm_fujifilm_pro_400h/",
-	  "upvotes":268,
+  "meta":{
+    "total_posts":30,
+    "page_size":10,
+    "next_page_id":"411"
+  },
+  "posts":[
+      {
+	  "id":74,
+	  "url":"https://i.redd.it/5ip11oipi6881.jpg",
+	  "title":"Little girl meets a cow in Northern Italy. Shot on Portra 400 / Canon EOS 3 / Sigma 35mm f/1.4 [oc]",
+	  "author":"u/johnwingfield",
+	  "permalink":"https://www.reddit.com/r/analog/comments/rq1xx8/little_girl_meets_a_cow_in_northern_italy_shot_on/",
+	  "upvotes":3197,
 	  "nsfw":false,
 	  "greyscale":false,
-	  "unix_time":1640530734,
-	  "width":1816,
-	  "height":2048
-	},
-	{
-	  "url":"https://i.redd.it/3eb9g3ricw781.jpg",
-	  "title":"Neoclassical arches // Leica M6 TTL // Kodak 400TX",
-	  "author":"u/photocactus",
-	  "permalink":"https://www.reddit.com/r/analog/comments/roxwa0/neoclassical_arches_leica_m6_ttl_kodak_400tx/",
-	  "upvotes":467,
+	  "unix_time":1640651873,
+	  "width":4733,
+	  "height":3156
+      },
+      {
+	  "id":77,
+	  "url":"https://i.redd.it/a5q4je4tue881.jpg",
+	  "title":"Found this slide in my department's old files bin, took this one before they throw lots of slides away",
+	  "author":"u/linkmodo",
+	  "permalink":"https://www.reddit.com/r/analog/comments/rqzcgs/found_this_slide_in_my_departments_old_files_bin/",
+	  "upvotes":1955,
 	  "nsfw":false,
 	  "greyscale":false,
-	  "unix_time":1640528683,
-	  "width":2400,
-	  "height":3437
-	}
-    ]
+	  "unix_time":1640752802,
+	  "width":5187,
+	  "height":7776
+      },
+	  ...
+  ]
 }</code>
 	</div>
 </body>
