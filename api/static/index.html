@@ -47,24 +47,24 @@
 		<div class=code-block>
 			<pre class=response>{
   "meta":{
-    "total_posts":30,
-    "page_size":10,
-    "next_page_id":"411"
+    "total_posts":35,
+    "page_size":5,
+    "next_page_id":"1640889405"
+    "next_page_url":"/latest?page_size=5&page_id=1640889405"
   },
   "posts":[
       {
-	  "id":74,
-	  "url":"https://i.redd.it/5ip11oipi6881.jpg",
-	  "title":"Little girl meets a cow in Northern Italy. Shot on Portra 400 / Canon EOS 3 / Sigma 35mm f/1.4 [oc]",
-	  "author":"u/johnwingfield",
-	  "permalink":"https://www.reddit.com/r/analog/comments/rq1xx8/little_girl_meets_a_cow_in_northern_italy_shot_on/",
-	  "upvotes":3197,
+	  "id":110,
+	  "url":"https://preview.redd.it/bgymbk9z24981.jpg?width=2051\u0026format=pjpg\u0026auto=webp\u0026s=97ecf64887ceb6cabe8c2c6a23ccfd0b9c54784c",
+	  "title":"2021 thru my eyes | leica m6 | summicron 35mm | various",
+	  "author":"u/basedjason",
+	  "permalink":"https://www.reddit.com/r/analog/comments/rto4fq/2021_thru_my_eyes_leica_m6_summicron_35mm_various/",
+	  "upvotes":38,
 	  "nsfw":false,
-	  "greyscale":false,
-	  "unix_time":1640651873,
-	  "width":4733,
-	  "height":3156
-      },
+	  "grayscale":false,
+	  "unix_time":1641058655,
+	  "width":2051,
+	  "height":2564
 	  ...
   ]
 }</pre>
@@ -80,6 +80,34 @@
 	<li><code>page_id</code> - The page to retrieve</li>
 	
 	<div class="example-block">Example request: https://analogdb.herokuapp.com/top?page_size=5</div>
+	<div class="content">
+		<div class=code-block>
+			<pre class=response>{
+  "meta":{
+    "total_posts":35,
+    "page_size":5,
+    "next_page_id":"794"
+    "next_page_url":"/top?page_size=5&page_id=794"
+  },
+  "posts":[
+      {
+	  "id":74,
+	  "url":"https://i.redd.it/5ip11oipi6881.jpg",
+	  "title":"Little girl meets a cow in Northern Italy. Shot on Portra 400 / Canon EOS 3 / Sigma 35mm f/1.4 [oc]",
+	  "author":"u/johnwingfield",
+	  "permalink":"https://www.reddit.com/r/analog/comments/rq1xx8/little_girl_meets_a_cow_in_northern_italy_shot_on/",
+	  "upvotes":3197,
+	  "nsfw":false,
+	  "grayscale":false,
+	  "unix_time":1640651873,
+	  "width":4733,
+	  "height":3156
+      },
+	  ...
+  ]
+}</pre>
+</div>
+</div>
 
 	<h3>Random Posts</h3>
 	<code>GET /random</code>
@@ -96,49 +124,61 @@
 	<li><code>seed</code> - The seed to determine post order. </li>
 	
 	<div class="example-block">Example request: https://analogdb.herokuapp.com/random?page_size=5</div>
-
-	<hr>
-
-	<h2>Response</h2>
-	<p>Example successful response. Please note that all endpoints return a list of posts, even for page_sizes of 1.</p>
-	<div class="code-block"><code>$ curl https://analogdb.herokuapp.com/latest </code></div></br>
-	<div class="code-block">
-		<code>{
+	<div class="content">
+		<div class=code-block>
+			<pre class=response>{
   "meta":{
-    "total_posts":30,
-    "page_size":10,
-    "next_page_id":"411"
+    "total_posts":35,
+    "page_size":5,
+    "next_page_id":"1640827799"
+    "next_page_url":"/random?page_size=5&page_id=1640827799&seed=67"
+    "seed":67
   },
   "posts":[
       {
-	  "id":74,
-	  "url":"https://i.redd.it/5ip11oipi6881.jpg",
-	  "title":"Little girl meets a cow in Northern Italy. Shot on Portra 400 / Canon EOS 3 / Sigma 35mm f/1.4 [oc]",
-	  "author":"u/johnwingfield",
-	  "permalink":"https://www.reddit.com/r/analog/comments/rq1xx8/little_girl_meets_a_cow_in_northern_italy_shot_on/",
-	  "upvotes":3197,
+	  "id":102,
+	  "url":"https://i.redd.it/tyh1zyho2v881.jpg",
+	  "title":"Long path/Kodak Portra 400/Praktica Super TL/Carl Zeiss Jena DDR Pancolar 50mm f1.8 @f4",
+	  "author":"u/DerGami",
+	  "permalink":"https://www.reddit.com/r/analog/comments/rsrq7t/long_pathkodak_portra_400praktica_super_tlcarl/",
+	  "upvotes":120,
 	  "nsfw":false,
 	  "greyscale":false,
-	  "unix_time":1640651873,
-	  "width":4733,
-	  "height":3156
-      },
-      {
-	  "id":77,
-	  "url":"https://i.redd.it/a5q4je4tue881.jpg",
-	  "title":"Found this slide in my department's old files bin, took this one before they throw lots of slides away",
-	  "author":"u/linkmodo",
-	  "permalink":"https://www.reddit.com/r/analog/comments/rqzcgs/found_this_slide_in_my_departments_old_files_bin/",
-	  "upvotes":1955,
-	  "nsfw":false,
-	  "greyscale":false,
-	  "unix_time":1640752802,
-	  "width":5187,
-	  "height":7776
+	  "unix_time":1640949129,
+	  "width":3744,
+	  "height":5616
       },
 	  ...
   ]
-}</code>
-	</div>
+}</pre>
+</div>
+</div>
+
+<hr> 
+	<h2>Response Schema</h2>
+	<h3>Meta</h3>
+	<p>Each request returns a set of metadata with the following fields:</p>
+	<li><code>total_posts</code><i> integer</i> - Total number of posts matching query</li>
+	<li><code>page_size</code><i> integer</i> - Number of posts per page</li>
+	<li><code>next_page_id</code><i> string</i> - Query parameter to retrieve subsequent page of results. Empty string signifies no further pages</li>
+	<li><code>next_page_path</code><i> string</i> - Url path to retrieve subsequent page of results. Empty string signifies no further pages</li>
+	<li><code>seed</code><i> integer</i> - Seed determining shuffle order, only included in /random endpoint</li>
+
+	<h3>Posts</h3>
+	<p>Each endpoint returns a list of <code>posts</code>. Each post contains the following fields:</p>
+	<li><code>id</code><i> integer</i> - Unique identifier of this post</li>
+	<li><code>url</code><i> string</i> - Hyperlink to the image (hosted on reddit)</li>
+	<li><code>title</code><i> string</i> - Submitted title of the post</li>
+	<li><code>author</code><i> string</i> - Username of the poster</li>
+	<li><code>permalink</code><i> string</i> - Hyperlink to the full reddit post</li>
+	<li><code>upvotes</code><i> integer</i> - Number of votes the post received</li>
+	<li><code>nsfw</code><i> boolean</i> - True if the picture is Not Safe For Work (18+), else false</li>
+	<li><code>grayscale</code><i> boolean</i> - True if the picture is grayscale (black & white), else false</li>
+	<li><code>unix_time</code><i> integer</i> - Time the post was created at (unix time)</li>
+	<li><code>width</code><i> integer</i> - Width of the image (pixels)</li>
+	<li><code>height</code><i> integer</i> - Height of the image (pixels)</li>
+
+
+
 </body>
 </html>

@@ -8,11 +8,8 @@ body {
     font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu;
     
 }
-h1 {
-    padding-bottom: 1rem
-}
 h3 {
-    margin-top: 2rem
+    margin-top: 2.5rem
 }
 p {
     max-width: 60rem;
