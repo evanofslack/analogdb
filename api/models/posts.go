@@ -15,7 +15,7 @@ type Post struct {
 	Permalink string `json:"permalink"`
 	Score     int    `json:"upvotes"`
 	Nsfw      bool   `json:"nsfw"`
-	Greyscale bool   `json:"greyscale"`
+	Grayscale bool   `json:"grayscale"`
 	Time      int    `json:"unix_time"`
 	Width     int    `json:"width"`
 	Height    int    `json:"height"`
@@ -25,6 +25,7 @@ type Meta struct {
 	TotalPosts int    `json:"total_posts"`
 	PageSize   int    `json:"page_size"`
 	PageID     string `json:"next_page_id"`
+	PageURL    string `json:"next_page_url"`
 	Seed       int    `json:"seed,omitempty"`
 }
 
@@ -51,7 +52,7 @@ func LatestPost(limit int, time int) (Response, error) {
 
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height)
 		if err != nil {
 			return Response{}, err
 		}
@@ -62,12 +63,16 @@ func LatestPost(limit int, time int) (Response, error) {
 		return Response{}, err
 	}
 
+	// Set response metadata
 	response.Meta.TotalPosts = getRowCount()
 	response.Meta.PageSize = limit
 	if len(response.Posts) == limit {
-		response.Meta.PageID = strconv.Itoa(response.Posts[limit-1].Time)
+		pageID := strconv.Itoa(response.Posts[limit-1].Time)
+		response.Meta.PageID = pageID
+		response.Meta.PageURL = "/latest?page_size=" + strconv.Itoa(limit) + "&page_id=" + pageID
 	} else {
 		response.Meta.PageID = ""
+		response.Meta.PageURL = ""
 	}
 	return response, nil
 }
@@ -90,22 +95,26 @@ func TopPost(limit int, score int) (Response, error) {
 
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height)
 		if err != nil {
 			return Response{}, err
 		}
 		response.Posts = append(response.Posts, p)
 	}
 
+	// Set response metadata
 	response.Meta.TotalPosts = getRowCount()
 	response.Meta.PageSize = limit
 	if err = rows.Err(); err != nil {
 		return Response{}, err
 	}
 	if len(response.Posts) == limit {
-		response.Meta.PageID = strconv.Itoa(response.Posts[limit-1].Score)
+		pageID := strconv.Itoa(response.Posts[limit-1].Score)
+		response.Meta.PageID = pageID
+		response.Meta.PageURL = "/top?page_size=" + strconv.Itoa(limit) + "&page_id=" + pageID
 	} else {
 		response.Meta.PageID = ""
+		response.Meta.PageURL = ""
 	}
 	return response, nil
 }
@@ -135,7 +144,7 @@ func RandomPost(limit int, time int, seed int) (Response, error) {
 
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Greyscale, &p.Time, &p.Width, &p.Height)
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height)
 		if err != nil {
 			return Response{}, err
 		}
@@ -150,9 +159,13 @@ func RandomPost(limit int, time int, seed int) (Response, error) {
 	response.Meta.TotalPosts = getRowCount()
 	response.Meta.PageSize = limit
 	if len(response.Posts) == limit {
-		response.Meta.PageID = strconv.Itoa(response.Posts[limit-1].Time)
+		pageID := strconv.Itoa(response.Posts[limit-1].Time)
+		strSeed := strconv.Itoa(seed)
+		response.Meta.PageID = pageID
+		response.Meta.PageURL = "/random?page_size=" + strconv.Itoa(limit) + "&page_id=" + pageID + "&seed=" + strSeed
 	} else {
 		response.Meta.PageID = ""
+		response.Meta.PageURL = ""
 	}
 	response.Meta.Seed = seed
 
