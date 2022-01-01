@@ -4,6 +4,7 @@
 	<meta charset="utf-8">
 	<title>AnalogDB API</title>
 	<link rel="stylesheet" href="stylesheets/main.css">
+	<script type="text/javascript" src="./script.js"></script>
 </head>
 <body>
 	<h1>AnalogDB API</h1>
@@ -15,6 +16,9 @@
 	</p>
 	<p>Please use the following URI to access the endpoints: <code>https://analogdb.herokuapp.com</code></p>
 
+	
+	<hr>
+
 	<h2>Pagination</h2>
 	<p>
 		All listing endpoints are paginated with keyset pagination. 10 records per page are returned by default. 
@@ -23,32 +27,61 @@
 	<li><code>page_size</code> - to set the number of records to return on each page</li>
 	<li><code>page_id</code> - to request a specific page of results. Each request returns a <code>next_page_id</code> that can be used to access the next page of results</li>
 
-	<p style="font-weight:bold">Example: <a href="https://analogdb.herokuapp.com/top?page_size=5&page_id=774" style="font-weight:normal">https://analogdb.herokuapp.com/top?page_size=5&page_id=774</a></p>
+	<p style="font-weight:600">Example: <a href="https://analogdb.herokuapp.com/top?page_size=5&page_id=774" style="font-weight:normal">https://analogdb.herokuapp.com/top?page_size=5&page_id=774</a></p>
 
+	<hr>
 
 	<h2>Endpoints</h2>
 
-	<h3>Latest posts</h3>
+	<h3>Latest Posts</h3>
 	<code>GET /latest</code>
 	<p>A list of posts sorted chronologically (newest first). </p>
-	<strong>Available Query Parameters:</strong>
+	<p style="font-weight:600">Query Parameters: </p>
 
 	<li><code>page_size</code> - The number of posts to return per page</li>
 	<li><code>page_id</code> - The page to retrieve</li>
 	
-	<div class="example-block">Example request: curl https://analogdb.herokuapp.com/latest?page_size=5</div>
+	<div class="example-block">Example request: https://analogdb.herokuapp.com/latest?page_size=5</div>
+	<!-- <button type="button" class="example-block">Example request: https://analogdb.herokuapp.com/latest?page_size=5</button> -->
+	<div class="content">
+		<div class=code-block>
+			<pre class=response>{
+  "meta":{
+    "total_posts":30,
+    "page_size":10,
+    "next_page_id":"411"
+  },
+  "posts":[
+      {
+	  "id":74,
+	  "url":"https://i.redd.it/5ip11oipi6881.jpg",
+	  "title":"Little girl meets a cow in Northern Italy. Shot on Portra 400 / Canon EOS 3 / Sigma 35mm f/1.4 [oc]",
+	  "author":"u/johnwingfield",
+	  "permalink":"https://www.reddit.com/r/analog/comments/rq1xx8/little_girl_meets_a_cow_in_northern_italy_shot_on/",
+	  "upvotes":3197,
+	  "nsfw":false,
+	  "greyscale":false,
+	  "unix_time":1640651873,
+	  "width":4733,
+	  "height":3156
+      },
+	  ...
+  ]
+}</pre>
+</div>
+	</div>
 
-	<h3>Top posts</h3>
+	<h3>Top Posts</h3>
 	<code>GET /top</code>
 	<p>A list of posts sorted by number of upvotes. </p>
-	<strong>Available Query Parameters:</strong>
+	<p style="font-weight:600">Query Parameters: </p>
 
 	<li><code>page_size</code> - The number of posts to return per page</li>
 	<li><code>page_id</code> - The page to retrieve</li>
 	
-	<div class="example-block">Example request: curl https://analogdb.herokuapp.com/top?page_size=5</div>
+	<div class="example-block">Example request: https://analogdb.herokuapp.com/top?page_size=5</div>
 
-	<h3>Random posts</h3>
+	<h3>Random Posts</h3>
 	<code>GET /random</code>
 	<p>A list of posts sorted pseudo-randomly. A random seed is used to shuffle the posts.</p>
 	<p>
@@ -56,14 +89,15 @@
 		consistent order and no duplicates when paginating. 
 	</p>
 	
-	<strong>Available Query Parameters:</strong>
+	<p style="font-weight:600">Query Parameters: </p>
 
 	<li><code>page_size</code> - The number of posts to return per page</li>
 	<li><code>page_id</code> - The page to retrieve</li>
 	<li><code>seed</code> - The seed to determine post order. </li>
 	
-	<div class="example-block">Example request: curl https://analogdb.herokuapp.com/random?page_size=5</div>
+	<div class="example-block">Example request: https://analogdb.herokuapp.com/random?page_size=5</div>
 
+	<hr>
 
 	<h2>Response</h2>
 	<p>Example successful response. Please note that all endpoints return a list of posts, even for page_sizes of 1.</p>
