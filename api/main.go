@@ -10,10 +10,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 func main() {
-	err := models.InitDB(true)
+	err := models.InitDB(false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -21,6 +22,14 @@ func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: false,
+		MaxAge:           300,
+	}))
 
 	r.Handle("/*", http.FileServer(http.Dir("./static")))
 
@@ -41,7 +50,7 @@ func main() {
 func getPort() string {
 	var port = os.Getenv("PORT")
 	if port == "" {
-		port = "3000"
+		port = "5000"
 		fmt.Println("No PORT env variable found, defaulting to: " + port)
 	}
 	return ":" + port
