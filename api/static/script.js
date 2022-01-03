@@ -1,8 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     var examples = document.querySelectorAll("div.example-block");
-    var i;
 
-    for (i = 0; i < examples.length; i++) {
+    for (let i = 0; i < examples.length; i++) {
         examples[i].addEventListener("click", function () {
             this.classList.toggle("active");
             var content = this.nextElementSibling;
