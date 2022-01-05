@@ -40,17 +40,18 @@
 
 	<li><code>page_size</code> - The number of posts to return per page</li>
 	<li><code>page_id</code> - The page to retrieve</li>
+	<li><code>nsfw</code> - Whether to include Not Safe For Work (18+) pictures (default=false)</li>
+	<li><code>bw</code> - Whether to include black & white pictures (default=true)</li>
 	
-	<div class="example-block">Example request: https://analogdb.herokuapp.com/latest?page_size=5</div>
-	<!-- <button type="button" class="example-block">Example request: https://analogdb.herokuapp.com/latest?page_size=5</button> -->
+	<div class="example-block">Example request: https://analogdb.herokuapp.com/latest?page_size=5&bw=false</div>
 	<div class="content">
 		<div class=code-block>
 			<pre class=response>{
   "meta":{
-    "total_posts":35,
+    "total_posts":103,
     "page_size":5,
     "next_page_id":"1640889405"
-    "next_page_url":"/latest?page_size=5&page_id=1640889405"
+    "next_page_url":"/latest?page_size=5&page_id=1640889405&bw=false"
   },
   "posts":[
       {
@@ -78,16 +79,18 @@
 
 	<li><code>page_size</code> - The number of posts to return per page</li>
 	<li><code>page_id</code> - The page to retrieve</li>
+	<li><code>nsfw</code> - Whether to include Not Safe For Work (18+) pictures (default=false)</li>
+	<li><code>bw</code> - Whether to include black & white pictures (default=true)</li>
 	
-	<div class="example-block">Example request: https://analogdb.herokuapp.com/top?page_size=5</div>
+	<div class="example-block">Example request: https://analogdb.herokuapp.com/top?page_size=5&nsfw=true</div>
 	<div class="content">
 		<div class=code-block>
 			<pre class=response>{
   "meta":{
-    "total_posts":35,
+    "total_posts":133,
     "page_size":5,
     "next_page_id":"794"
-    "next_page_url":"/top?page_size=5&page_id=794"
+    "next_page_url":"/top?page_size=5&page_id=794&nsfw=true"
   },
   "posts":[
       {
@@ -121,6 +124,8 @@
 
 	<li><code>page_size</code> - The number of posts to return per page</li>
 	<li><code>page_id</code> - The page to retrieve</li>
+	<li><code>nsfw</code> - Whether to include Not Safe For Work (18+) pictures (default=false)</li>
+	<li><code>bw</code> - Whether to include black & white pictures (default=true)</li>
 	<li><code>seed</code> - The seed to determine post order. </li>
 	
 	<div class="example-block">Example request: https://analogdb.herokuapp.com/random?page_size=5</div>
@@ -143,7 +148,7 @@
 	  "permalink":"https://www.reddit.com/r/analog/comments/rsrq7t/long_pathkodak_portra_400praktica_super_tlcarl/",
 	  "upvotes":120,
 	  "nsfw":false,
-	  "greyscale":false,
+	  "grayscale":false,
 	  "unix_time":1640949129,
 	  "width":3744,
 	  "height":5616
@@ -162,7 +167,7 @@
 	<li><code>page_size</code><i> integer</i> - Number of posts per page</li>
 	<li><code>next_page_id</code><i> string</i> - Query parameter to retrieve subsequent page of results. Empty string signifies no further pages</li>
 	<li><code>next_page_path</code><i> string</i> - Url path to retrieve subsequent page of results. Empty string signifies no further pages</li>
-	<li><code>seed</code><i> integer</i> - Seed determining shuffle order, only included in /random endpoint</li>
+	<li><code>seed</code><i> integer</i> - Seed determining shuffle order (only included in /random endpoint)</li>
 
 	<h3>Posts</h3>
 	<p>Each endpoint returns a list of <code>posts</code>. Each post contains the following fields:</p>
