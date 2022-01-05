@@ -36,6 +36,7 @@ type Response struct {
 
 func LatestPost(limit int, time int, nsfw bool, grayscale bool) (Response, error) {
 
+	fmt.Println(nsfw, grayscale)
 	var rows *sql.Rows
 	var err error
 	var response Response
@@ -43,22 +44,22 @@ func LatestPost(limit int, time int, nsfw bool, grayscale bool) (Response, error
 
 	if time == 0 {
 		if !nsfw && !grayscale {
-			statement = "SELECT * FROM pictures WHERE greyscale = False and nsfw = False ORDER BY time DESC LIMIT $1;"
+			statement = "SELECT * FROM pictures WHERE greyscale = FALSE and nsfw = FALSE ORDER BY time DESC LIMIT $1;"
 		} else if !nsfw {
-			statement = "SELECT * FROM pictures WHERE nsfw = False ORDER BY time DESC LIMIT $1;"
+			statement = "SELECT * FROM pictures WHERE nsfw = FALSE ORDER BY time DESC LIMIT $1;"
 		} else if !grayscale {
-			statement = "SELECT * FROM pictures WHERE greyscale = False ORDER BY time DESC LIMIT $1;"
+			statement = "SELECT * FROM pictures WHERE greyscale = FALSE ORDER BY time DESC LIMIT $1;"
 		} else {
 			statement = "SELECT * FROM pictures ORDER BY time DESC LIMIT $1;"
 		}
 		rows, err = db.Query(statement, limit)
 	} else {
 		if !nsfw && !grayscale {
-			statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = False and nsfw = False ORDER BY time DESC LIMIT $2;"
+			statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = FALSE and nsfw = FALSE ORDER BY time DESC LIMIT $2;"
 		} else if !nsfw {
-			statement = "SELECT * FROM pictures WHERE time < $1 and nsfw = False ORDER BY time DESC LIMIT $2;"
+			statement = "SELECT * FROM pictures WHERE time < $1 and nsfw = FALSE ORDER BY time DESC LIMIT $2;"
 		} else if !grayscale {
-			statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = False ORDER BY time DESC LIMIT $2;"
+			statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = FALSE ORDER BY time DESC LIMIT $2;"
 		} else {
 			statement = "SELECT * FROM pictures WHERE time < $1 ORDER BY time DESC LIMIT $2;"
 		}
@@ -185,11 +186,11 @@ func RandomPost(limit int, time int, seed int) (Response, error) {
 func getRowCount(nsfw bool, grayscale bool) int {
 	var statement string
 	if !nsfw && !grayscale {
-		statement = "SELECT COUNT(*) as count FROM pictures WHERE nsfw = False and greyscale = False"
+		statement = "SELECT COUNT(*) as count FROM pictures WHERE nsfw = FALSE and greyscale = FALSE"
 	} else if !nsfw {
-		statement = "SELECT COUNT(*) as count FROM pictures WHERE nsfw = False"
+		statement = "SELECT COUNT(*) as count FROM pictures WHERE nsfw = FALSE"
 	} else if !grayscale {
-		statement = "SELECT COUNT(*) as count FROM pictures WHERE greyscale = False"
+		statement = "SELECT COUNT(*) as count FROM pictures WHERE greyscale = FALSE"
 	} else {
 		statement = "SELECT COUNT(*) as count FROM pictures"
 	}
