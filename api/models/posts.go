@@ -167,7 +167,7 @@ func RandomPost(limit int, time int, seed int) (Response, error) {
 	}
 
 	// Set response metadata
-	response.Meta.TotalPosts = getRowCount(true, true)
+	response.Meta.TotalPosts = getRowCount(false, true)
 	response.Meta.PageSize = limit
 	if len(response.Posts) == limit {
 		pageID := strconv.Itoa(response.Posts[limit-1].Time)
