@@ -34,37 +34,47 @@ type Response struct {
 	Posts []Post `json:"posts"`
 }
 
-func LatestPost(limit int, time int) (Response, error) {
+func LatestPost(limit int, time int, nsfw bool, grayscale bool) (Response, error) {
 
 	var rows *sql.Rows
 	var err error
 	var response Response
+	var statement string
 
 	if time == 0 {
-		rows, err = db.Query("SELECT * FROM pictures ORDER BY time DESC LIMIT $1;", limit)
+		if !nsfw && !grayscale {
+			statement = "SELECT * FROM pictures WHERE greyscale = False and nsfw = False ORDER BY time DESC LIMIT $1;"
+		} else if !nsfw {
+			statement = "SELECT * FROM pictures WHERE nsfw = False ORDER BY time DESC LIMIT $1;"
+		} else if !grayscale {
+			statement = "SELECT * FROM pictures WHERE greyscale = False ORDER BY time DESC LIMIT $1;"
+		} else {
+			statement = "SELECT * FROM pictures ORDER BY time DESC LIMIT $1;"
+		}
+		rows, err = db.Query(statement, limit)
 	} else {
-		rows, err = db.Query("SELECT * FROM pictures WHERE time < $1 ORDER BY time DESC LIMIT $2;", time, limit)
+		if !nsfw && !grayscale {
+			statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = False and nsfw = False ORDER BY time DESC LIMIT $2;"
+		} else if !nsfw {
+			statement = "SELECT * FROM pictures WHERE time < $1 and nsfw = False ORDER BY time DESC LIMIT $2;"
+		} else if !grayscale {
+			statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = False ORDER BY time DESC LIMIT $2;"
+		} else {
+			statement = "SELECT * FROM pictures WHERE time < $1 ORDER BY time DESC LIMIT $2;"
+		}
+		rows, err = db.Query(statement, time, limit)
 	}
 	if err != nil {
 		return Response{}, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var p Post
-		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height)
-		if err != nil {
-			return Response{}, err
-		}
-		response.Posts = append(response.Posts, p)
-	}
-
-	if err = rows.Err(); err != nil {
+	response, err = createResponse(rows)
+	if err != nil {
 		return Response{}, err
 	}
 
 	// Set response metadata
-	response.Meta.TotalPosts = getRowCount()
+	response.Meta.TotalPosts = getRowCount(nsfw, grayscale)
 	response.Meta.PageSize = limit
 	if len(response.Posts) == limit {
 		pageID := strconv.Itoa(response.Posts[limit-1].Time)
@@ -103,7 +113,7 @@ func TopPost(limit int, score int) (Response, error) {
 	}
 
 	// Set response metadata
-	response.Meta.TotalPosts = getRowCount()
+	response.Meta.TotalPosts = getRowCount(true, true)
 	response.Meta.PageSize = limit
 	if err = rows.Err(); err != nil {
 		return Response{}, err
@@ -156,7 +166,7 @@ func RandomPost(limit int, time int, seed int) (Response, error) {
 	}
 
 	// Set response metadata
-	response.Meta.TotalPosts = getRowCount()
+	response.Meta.TotalPosts = getRowCount(true, true)
 	response.Meta.PageSize = limit
 	if len(response.Posts) == limit {
 		pageID := strconv.Itoa(response.Posts[limit-1].Time)
@@ -172,8 +182,18 @@ func RandomPost(limit int, time int, seed int) (Response, error) {
 	return response, nil
 }
 
-func getRowCount() int {
-	rows, err := db.Query("SELECT COUNT(*) as count FROM  pictures")
+func getRowCount(nsfw bool, grayscale bool) int {
+	var statement string
+	if !nsfw && !grayscale {
+		statement = "SELECT COUNT(*) as count FROM pictures WHERE nsfw = False and greyscale = False"
+	} else if !nsfw {
+		statement = "SELECT COUNT(*) as count FROM pictures WHERE nsfw = False"
+	} else if !grayscale {
+		statement = "SELECT COUNT(*) as count FROM pictures WHERE greyscale = False"
+	} else {
+		statement = "SELECT COUNT(*) as count FROM pictures"
+	}
+	rows, err := db.Query(statement)
 	if err != nil {
 		fmt.Println(err)
 		return 0
@@ -186,4 +206,23 @@ func getRowCount() int {
 		}
 	}
 	return count
+}
+
+// Turn rows from db query into response struct
+func createResponse(rows *sql.Rows) (Response, error) {
+	var response Response
+	var err error
+	defer rows.Close()
+	for rows.Next() {
+		var p Post
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height)
+		if err != nil {
+			return Response{}, err
+		}
+		response.Posts = append(response.Posts, p)
+	}
+	if err = rows.Err(); err != nil {
+		return Response{}, err
+	}
+	return response, nil
 }
