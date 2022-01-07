@@ -171,6 +171,26 @@ func RandomPost(limit int, time int, nsfw bool, grayscale bool, seed int) (Respo
 	return response, nil
 }
 
+// FindPost find and return post by ID
+func FindPost(id int) (Post, error) {
+	var p Post
+	rows, err := db.Query("SELECT * FROM pictures WHERE id = $1;", id)
+	if err != nil {
+		fmt.Println(err)
+		return Post{}, err
+	}
+	for rows.Next() {
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height)
+		if err != nil {
+			return Post{}, err
+		}
+	}
+	if err = rows.Err(); err != nil {
+		return Post{}, err
+	}
+	return p, nil
+}
+
 // Get total number of entries in table for query
 func getRowCount(nsfw bool, grayscale bool) int {
 	var statement string
