@@ -33,6 +33,31 @@
 
 	<h2>Endpoints</h2>
 
+	<h3>Find Post</h3>
+	<code>GET /posts/{id}</code>
+	<p>Returns a single specific post. </p>
+	
+	<div class="example-block">Example request: https://analogdb.herokuapp.com/posts/103</div>
+	<div class="content">
+		<div class=code-block>
+			<pre class=response>{
+  "id":103,
+  "url":"https://preview.redd.it/bgymbk9z24981.jpg?width=2051\u0026format=pjpg\u0026auto=webp\u0026s=97ecf64887ceb6cabe8c2c6a23ccfd0b9c54784c",
+  "title":"2021 thru my eyes | leica m6 | summicron 35mm | various",
+  "author":"u/basedjason",
+  "permalink":"https://www.reddit.com/r/analog/comments/rto4fq/2021_thru_my_eyes_leica_m6_summicron_35mm_various/",
+  "upvotes":38,
+  "nsfw":false,
+  "grayscale":false,
+  "unix_time":1641058655,
+  "width":2051,
+  "height":2564
+}</pre>
+</div>
+	</div>
+
+<hr> 
+
 	<h3>Latest Posts</h3>
 	<code>GET /latest</code>
 	<p>A list of posts sorted chronologically (newest first). </p>
@@ -159,7 +184,8 @@
 </div>
 </div>
 
-<hr> 
+<hr>
+
 	<h2>Response Schema</h2>
 	<h3>Meta</h3>
 	<p>Each request returns a set of metadata with the following fields:</p>

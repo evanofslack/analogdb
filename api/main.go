@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	err := models.InitDB(true)
+	err := models.InitDB(false)
 	if err != nil {
 		log.Fatal(err)
 	}
