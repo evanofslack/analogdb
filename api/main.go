@@ -42,6 +42,9 @@ func main() {
 	r.Route("/random", func(r chi.Router) {
 		r.With(mw.Pagination).Get("/", listRandom)
 	})
+	r.Route("/posts{post}", func(r chi.Router) {
+		r.With(mw.Pagination).Get("/", findPost)
+	})
 
 	fmt.Println("listening...")
 	http.ListenAndServe(getPort(), r)

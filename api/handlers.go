@@ -2,10 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	mw "go-reddit/middleware"
 	"go-reddit/models"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func listLatest(w http.ResponseWriter, r *http.Request) {
@@ -67,6 +71,28 @@ func listRandom(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	if err := enc.Encode(random); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func findPost(w http.ResponseWriter, r *http.Request) {
+	var post models.Post
+	var err error
+
+	if id := chi.URLParam(r, "id"); id != "" {
+		intId, _ := strconv.Atoi(id)
+		post, err = models.FindPost(intId)
+	}
+
+	if err != nil {
+		// Check that item exists in DB, return http.error message if it does not exist
+		fmt.Println(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(post); err != nil {
 		log.Fatal(err)
 	}
 }
