@@ -78,6 +78,7 @@ func listRandom(w http.ResponseWriter, r *http.Request) {
 func findPost(w http.ResponseWriter, r *http.Request) {
 	var post models.Post
 	var err error
+	fmt.Println("Here")
 
 	if id := chi.URLParam(r, "id"); id != "" {
 		fmt.Println(id)
