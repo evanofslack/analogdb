@@ -42,8 +42,10 @@ func main() {
 	r.Route("/random", func(r chi.Router) {
 		r.With(mw.Pagination).Get("/", listRandom)
 	})
+	r.Route("/nsfw", func(r chi.Router) {
+		r.With(mw.Pagination).Get("/", listNsfw)
+	})
 	r.Route("/posts/{id}", func(r chi.Router) {
-		// r.With(mw.Pagination).Get("/", findPost)
 		r.Get("/", findPost)
 
 	})
