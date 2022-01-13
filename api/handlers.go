@@ -94,6 +94,25 @@ func listNsfw(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func listBw(w http.ResponseWriter, r *http.Request) {
+
+	pageSize := r.Context().Value(mw.PageSizeKey)
+	pageID := r.Context().Value(mw.PageIDKey)
+
+	bw, err := models.BwPost(pageSize.(int), pageID.(int))
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(bw); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func findPost(w http.ResponseWriter, r *http.Request) {
 	var post models.Post
 	var err error

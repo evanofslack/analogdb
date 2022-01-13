@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	err := models.InitDB(true)
+	err := models.InitDB(false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -44,6 +44,9 @@ func main() {
 	})
 	r.Route("/nsfw", func(r chi.Router) {
 		r.With(mw.Pagination).Get("/", listNsfw)
+	})
+	r.Route("/bw", func(r chi.Router) {
+		r.With(mw.Pagination).Get("/", listBw)
 	})
 	r.Route("/posts/{id}", func(r chi.Router) {
 		r.Get("/", findPost)

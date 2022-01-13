@@ -72,7 +72,7 @@ func LatestPost(limit int, time int, nsfw bool, grayscale bool) (Response, error
 		return Response{}, err
 	}
 	basePath := "/latest"
-	response = setMeta(response, limit, basePath, nsfw, grayscale, false, "time")
+	response = setMeta(response, limit, basePath, nsfw, grayscale, false, false, "time")
 	return response, nil
 }
 
@@ -114,7 +114,7 @@ func TopPost(limit int, score int, nsfw bool, grayscale bool) (Response, error) 
 		return Response{}, err
 	}
 	basePath := "/top"
-	response = setMeta(response, limit, basePath, nsfw, grayscale, false, "score")
+	response = setMeta(response, limit, basePath, nsfw, grayscale, false, false, "score")
 	return response, nil
 }
 
@@ -164,7 +164,7 @@ func RandomPost(limit int, time int, nsfw bool, grayscale bool, seed int) (Respo
 		return Response{}, err
 	}
 	basePath := "/random"
-	response = setMeta(response, limit, basePath, nsfw, grayscale, false, "score")
+	response = setMeta(response, limit, basePath, nsfw, grayscale, false, false, "score")
 	response.Meta.PageURL += "&seed=" + strconv.Itoa(seed)
 	response.Meta.Seed = seed
 
@@ -193,7 +193,33 @@ func NsfwPost(limit int, time int) (Response, error) {
 		return Response{}, err
 	}
 	basePath := "/nsfw"
-	response = setMeta(response, limit, basePath, false, false, true, "time")
+	response = setMeta(response, limit, basePath, false, false, true, false, "time")
+	return response, nil
+}
+
+func BwPost(limit int, time int) (Response, error) {
+
+	var rows *sql.Rows
+	var err error
+	var response Response
+	var statement string
+
+	if time == 0 {
+		statement = "SELECT * FROM pictures WHERE greyscale = TRUE ORDER BY time DESC LIMIT $1;"
+		rows, err = db.Query(statement, limit)
+	} else {
+		statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = TRUE ORDER BY time DESC LIMIT $2;"
+		rows, err = db.Query(statement, time, limit)
+	}
+	if err != nil {
+		return Response{}, err
+	}
+	response, err = createResponse(rows)
+	if err != nil {
+		return Response{}, err
+	}
+	basePath := "/bw"
+	response = setMeta(response, limit, basePath, false, false, false, true, "time")
 	return response, nil
 }
 
@@ -218,10 +244,12 @@ func FindPost(id int) (Post, error) {
 }
 
 // Get total number of entries in table for query
-func getRowCount(nsfw bool, grayscale bool, onlyNsfw bool) int {
+func getRowCount(nsfw bool, grayscale bool, onlyNsfw bool, onlyBw bool) int {
 	var statement string
 	if onlyNsfw {
 		statement = "SELECT COUNT(*) as count FROM pictures WHERE nsfw = TRUE"
+	} else if onlyBw {
+		statement = "SELECT COUNT(*) as count FROM pictures WHERE greyscale = TRUE"
 	} else if !nsfw && !grayscale {
 		statement = "SELECT COUNT(*) as count FROM pictures WHERE nsfw = FALSE and greyscale = FALSE"
 	} else if !nsfw {
@@ -266,11 +294,11 @@ func createResponse(rows *sql.Rows) (Response, error) {
 }
 
 // Set response metadata
-func setMeta(r Response, limit int, basePath string, nsfw bool, grayscale bool, onlyNsfw bool, offsetKey string) Response {
+func setMeta(r Response, limit int, basePath string, nsfw bool, grayscale bool, onlyNsfw bool, onlyBw bool, offsetKey string) Response {
 
 	var pageID string
 
-	r.Meta.TotalPosts = getRowCount(nsfw, grayscale, onlyNsfw)
+	r.Meta.TotalPosts = getRowCount(nsfw, grayscale, onlyNsfw, onlyBw)
 	r.Meta.PageSize = limit
 
 	if len(r.Posts) == limit {
@@ -281,7 +309,7 @@ func setMeta(r Response, limit int, basePath string, nsfw bool, grayscale bool, 
 		}
 		r.Meta.PageID = pageID
 		r.Meta.PageURL = basePath + "?page_size=" + strconv.Itoa(limit) + "&page_id=" + pageID
-		if onlyNsfw {
+		if onlyNsfw || onlyBw {
 			return r
 		}
 		if nsfw {
