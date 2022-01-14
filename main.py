@@ -31,17 +31,10 @@ def scrape_sprocket(conn):
 if __name__ == "__main__":
     test = False
     conn = create_connection(test)  # Create DB connection
-    update_table(conn)
-    get_columns(conn)
 
     scrape_bw(conn)  # Scrape top black & white picture once a day
     scrape_sprocket(conn)  # Scrape top sprocket shot once a day
-    get_all(conn)
     conn.close()
-
-    while True:
-        time.sleep(100000000)
-        break
 
     for i in range(3):  # Scrape top analog pictures approximately every 8 hours
         conn = create_connection(test)
