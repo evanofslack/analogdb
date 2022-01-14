@@ -68,18 +68,18 @@ def get_url(s: praw.reddit.Submission) -> str:
         return s.url
 
 
-def get_pics(num_pics: int) -> List[AnalogData]:
+def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
     reddit = praw.Reddit(
         client_id=os.environ.get("client_id"),
         client_secret=os.environ.get("client_secret"),
         user_agent=os.environ.get("user_agent"),
     )
-    print("Scraping pictures...")
+    print(f"Scraping pictures from {subreddit}")
     pic_data: List[AnalogData] = []
     submissions: List[praw.reddit.Submission] = [
-        s for s in reddit.subreddit("analog").hot(limit=num_pics + 2) if not s.is_self
-    ]  # typically two self posts at the top of the subreddit, they should be skipped
-    print(f"Gathered {len(submissions)} posts from /r/analog")
+        s for s in reddit.subreddit(subreddit).hot(limit=num_pics) if not s.is_self
+    ]
+    print(f"Gathered {len(submissions)} posts")
 
     for s in submissions:
         url = get_url(s)
@@ -105,4 +105,4 @@ def get_pics(num_pics: int) -> List[AnalogData]:
 
 
 if __name__ == "__main__":
-    get_pics()
+    get_pics(2, "SprocketShots")

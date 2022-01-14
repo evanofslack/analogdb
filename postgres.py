@@ -60,3 +60,51 @@ def create_picture(conn, data: tuple):
         conn.commit()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
+
+
+def update_table(conn):
+    try:
+        c = conn.cursor()
+        # c.execute(
+        #     """
+        #     ALTER TABLE pictures
+        #     DROP COLUMN sprocket
+        #     """,
+        # )
+        # conn.commit()
+        c.execute(
+            """
+            ALTER TABLE pictures
+            ADD COLUMN sprocket BOOLEAN DEFAULT FALSE
+            """,
+        )
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+
+
+def get_tables(conn):
+    cursor = conn.cursor()
+    cursor.execute(
+        """SELECT table_name FROM information_schema.tables
+       WHERE table_schema = 'public'"""
+    )
+    for table in cursor.fetchall():
+        print(table)
+
+
+def get_columns(conn):
+    c = conn.cursor()
+    c.execute("Select * FROM pictures LIMIT 0")
+    colnames = [desc[0] for desc in c.description]
+    print(colnames)
+
+
+def get_all(conn):
+    c = conn.cursor()
+    c.execute("""SELECT * FROM pictures LIMIT 20""")
+    row = c.fetchone()
+
+    while row is not None:
+        print(row)
+        row = c.fetchone()
