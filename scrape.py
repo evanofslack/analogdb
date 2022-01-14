@@ -21,6 +21,7 @@ class AnalogData:
     time: float
     width: int
     height: int
+    sprocket: bool
 
 
 def to_base64(img: Image) -> str:
@@ -97,6 +98,7 @@ def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
             time=int(s.created_utc),
             width=w,
             height=h,
+            sprocket=True if subreddit == "SprocketShots" else False,
         )
         print(new_pic.title)
         pic_data.append(new_pic)

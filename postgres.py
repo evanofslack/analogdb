@@ -51,8 +51,8 @@ def create_picture(conn, data: tuple):
         c.execute(
             """
             INSERT 
-            INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+            INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
             ON CONFLICT (url) DO NOTHING
             """,
             data,
@@ -65,13 +65,6 @@ def create_picture(conn, data: tuple):
 def update_table(conn):
     try:
         c = conn.cursor()
-        # c.execute(
-        #     """
-        #     ALTER TABLE pictures
-        #     DROP COLUMN sprocket
-        #     """,
-        # )
-        # conn.commit()
         c.execute(
             """
             ALTER TABLE pictures
@@ -102,7 +95,7 @@ def get_columns(conn):
 
 def get_all(conn):
     c = conn.cursor()
-    c.execute("""SELECT * FROM pictures LIMIT 20""")
+    c.execute("""SELECT * FROM pictures""")
     row = c.fetchone()
 
     while row is not None:

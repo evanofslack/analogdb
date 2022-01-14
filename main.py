@@ -13,15 +13,6 @@ from postgres import (
 from scrape import get_pics
 
 
-def main():
-    conn = create_connection(test=False)
-    create_table(conn)
-
-    for data in get_pics(num_pics=7, subreddit="analog"):
-        create_picture(conn, dataclasses.astuple(data))
-    conn.close()
-
-
 def scrape_analog(conn):
     for data in get_pics(num_pics=7, subreddit="analog"):
         create_picture(conn, dataclasses.astuple(data))
@@ -38,18 +29,19 @@ def scrape_sprocket(conn):
 
 
 if __name__ == "__main__":
-    test = True
+    test = False
     conn = create_connection(test)  # Create DB connection
-    get_all(conn)
-    # update_table(conn)
-    # get_columns(conn)
-    while True:
-        time.sleep(1000000)
-        break
+    update_table(conn)
+    get_columns(conn)
 
     scrape_bw(conn)  # Scrape top black & white picture once a day
-    # scrape_sprocket(conn)  # Scrape top sprocket shot once a day
+    scrape_sprocket(conn)  # Scrape top sprocket shot once a day
+    get_all(conn)
     conn.close()
+
+    while True:
+        time.sleep(100000000)
+        break
 
     for i in range(3):  # Scrape top analog pictures approximately every 8 hours
         conn = create_connection(test)
