@@ -1,15 +1,7 @@
 import dataclasses
 import time
 
-from postgres import (
-    create_connection,
-    create_picture,
-    create_table,
-    get_all,
-    get_columns,
-    get_tables,
-    update_table,
-)
+from postgres import create_connection, create_picture
 from scrape import get_pics
 
 
