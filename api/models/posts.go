@@ -167,7 +167,7 @@ func RandomPost(limit int, time int, nsfw bool, grayscale bool, seed int) (Respo
 		return Response{}, err
 	}
 	basePath := "/random"
-	response = setMeta(response, limit, basePath, nsfw, grayscale, false, false, "score")
+	response = setMeta(response, limit, basePath, nsfw, grayscale, false, false, "time")
 	response.Meta.PageURL += "&seed=" + strconv.Itoa(seed)
 	response.Meta.Seed = seed
 
