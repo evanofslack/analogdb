@@ -119,7 +119,6 @@ func TopPost(limit int, score int, nsfw bool, grayscale bool) (Response, error) 
 }
 
 func RandomPost(limit int, time int, nsfw bool, grayscale bool, seed int) (Response, error) {
-
 	if seed == 0 {
 		prime_seeds := []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97}
 		randomIndex := rand.Intn(len(prime_seeds))
@@ -153,9 +152,13 @@ func RandomPost(limit int, time int, nsfw bool, grayscale bool, seed int) (Respo
 		} else {
 			statement = "SELECT * FROM pictures WHERE time % $1 > $2 ORDER BY time % $3, time DESC LIMIT $4;"
 		}
-		rows, err = db.Query(statement, seed, time%seed, seed, limit)
-
+		rows, err = db.Query(statement, seed, (time % seed), seed, limit)
 	}
+
+	fmt.Println(time)
+	fmt.Println(seed)
+	fmt.Println(time % seed)
+
 	if err != nil {
 		return Response{}, err
 	}
