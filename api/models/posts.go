@@ -155,10 +155,6 @@ func RandomPost(limit int, time int, nsfw bool, grayscale bool, seed int) (Respo
 		rows, err = db.Query(statement, seed, (time % seed), seed, limit)
 	}
 
-	fmt.Println(time)
-	fmt.Println(seed)
-	fmt.Println(time % seed)
-
 	if err != nil {
 		return Response{}, err
 	}
