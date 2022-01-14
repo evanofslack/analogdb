@@ -19,6 +19,7 @@ type Post struct {
 	Time      int    `json:"unix_time"`
 	Width     int    `json:"width"`
 	Height    int    `json:"height"`
+	Sprocket  bool   `json:"sprocket"`
 }
 
 type Meta struct {
@@ -280,7 +281,7 @@ func createResponse(rows *sql.Rows) (Response, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var p Post
-		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height)
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height, &p.Sprocket)
 		if err != nil {
 			return Response{}, err
 		}
