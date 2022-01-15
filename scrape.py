@@ -92,24 +92,27 @@ def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
         except UnidentifiedImageError as e:
             print(e)
             continue
-        w, h = img.size
 
-        new_pic = AnalogData(
-            url=url,
-            title=s.title,
-            author="u/" + s.author.name,
-            permalink="https://www.reddit.com" + s.permalink,
-            score=s.score,
-            nsfw=s.over_18,
-            greyscale=is_greyscale(img),
-            time=int(s.created_utc),
-            width=w,
-            height=h,
-            sprocket=True if subreddit == "SprocketShots" else False,
-        )
-        print(new_pic.title)
-        print(new_pic.url)
-        pic_data.append(new_pic)
+        try:
+            w, h = img.size
+            new_pic = AnalogData(
+                url=url,
+                title=s.title,
+                author="u/" + s.author.name,
+                permalink="https://www.reddit.com" + s.permalink,
+                score=s.score,
+                nsfw=s.over_18,
+                greyscale=is_greyscale(img),
+                time=int(s.created_utc),
+                width=w,
+                height=h,
+                sprocket=True if subreddit == "SprocketShots" else False,
+            )
+            print(new_pic.title)
+            pic_data.append(new_pic)
+
+        except Exception as e:
+            print(e)
 
     return pic_data
 
