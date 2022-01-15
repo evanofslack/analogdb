@@ -77,24 +77,17 @@ def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
     )
     print(f"Scraping pictures from {subreddit}")
     pic_data: List[AnalogData] = []
-    # submissions: List[praw.reddit.Submission] = [
-    #     s for s in reddit.subreddit(subreddit).hot(limit=num_pics) if not s.is_self
-    # ]
     submissions: List[praw.reddit.Submission] = [
-        s for s in reddit.subreddit(subreddit).top(limit=num_pics) if not s.is_self
+        s for s in reddit.subreddit(subreddit).hot(limit=num_pics) if not s.is_self
     ]
     print(f"Gathered {len(submissions)} posts")
 
     for s in submissions:
-        url = get_url(s)
         try:
+            url = get_url(s)
             img = to_image(url)
-        except UnidentifiedImageError as e:
-            print(e)
-            continue
-
-        try:
             w, h = img.size
+
             new_pic = AnalogData(
                 url=url,
                 title=s.title,
