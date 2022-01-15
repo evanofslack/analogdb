@@ -6,7 +6,7 @@ from typing import List
 
 import praw
 import requests
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 
 @dataclass
@@ -77,14 +77,21 @@ def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
     )
     print(f"Scraping pictures from {subreddit}")
     pic_data: List[AnalogData] = []
+    # submissions: List[praw.reddit.Submission] = [
+    #     s for s in reddit.subreddit(subreddit).hot(limit=num_pics) if not s.is_self
+    # ]
     submissions: List[praw.reddit.Submission] = [
-        s for s in reddit.subreddit(subreddit).hot(limit=num_pics) if not s.is_self
+        s for s in reddit.subreddit(subreddit).top(limit=num_pics) if not s.is_self
     ]
     print(f"Gathered {len(submissions)} posts")
 
     for s in submissions:
         url = get_url(s)
-        img = to_image(url)
+        try:
+            img = to_image(url)
+        except UnidentifiedImageError as e:
+            print(e)
+            continue
         w, h = img.size
 
         new_pic = AnalogData(
@@ -101,10 +108,11 @@ def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
             sprocket=True if subreddit == "SprocketShots" else False,
         )
         print(new_pic.title)
+        print(new_pic.url)
         pic_data.append(new_pic)
 
     return pic_data
 
 
 if __name__ == "__main__":
-    get_pics(2, "SprocketShots")
+    get_pics(6, "analog")
