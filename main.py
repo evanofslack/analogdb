@@ -6,7 +6,7 @@ from scrape import get_pics
 
 
 def scrape_analog(conn):
-    for data in get_pics(num_pics=3, subreddit="analog"):
+    for data in get_pics(num_pics=50, subreddit="analog"):
         create_picture(conn, dataclasses.astuple(data))
 
 
@@ -16,7 +16,7 @@ def scrape_bw(conn):
 
 
 def scrape_sprocket(conn):
-    for data in get_pics(num_pics=1, subreddit="SprocketShots"):
+    for data in get_pics(num_pics=75, subreddit="SprocketShots"):
         create_picture(conn, dataclasses.astuple(data))
 
 
