@@ -48,9 +48,11 @@ func main() {
 	r.Route("/bw", func(r chi.Router) {
 		r.With(mw.Pagination).Get("/", listBw)
 	})
+	r.Route("/sprocket", func(r chi.Router) {
+		r.With(mw.Pagination).Get("/", listSprocket)
+	})
 	r.Route("/posts/{id}", func(r chi.Router) {
 		r.Get("/", findPost)
-
 	})
 
 	fmt.Println("listening...")
