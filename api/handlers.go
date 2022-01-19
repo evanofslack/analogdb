@@ -137,7 +137,7 @@ func findPost(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if id := chi.URLParam(r, "id"); id != "" {
-		fmt.Println(id)
+		// fmt.Println(id)
 		intId, _ := strconv.Atoi(id)
 		post, err = models.FindPost(intId)
 	}

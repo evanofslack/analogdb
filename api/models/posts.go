@@ -258,7 +258,7 @@ func FindPost(id int) (Post, error) {
 		return Post{}, err
 	}
 	for rows.Next() {
-		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height)
+		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height, &p.Sprocket)
 		if err != nil {
 			return Post{}, err
 		}
