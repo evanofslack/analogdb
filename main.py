@@ -25,7 +25,7 @@ if __name__ == "__main__":
     test = False
     conn = create_connection(test)  # Create DB connection
 
-    posts = [650, 614]
+    posts = [567, 279, 596, 367, 195]
     for post in posts:
         delete_post(conn, post)
 
