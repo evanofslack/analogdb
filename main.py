@@ -27,18 +27,18 @@ if __name__ == "__main__":
 
     posts = [650]
     for post in posts:
-        delete_post(post)
+        delete_post(conn, post)
         print(f"deleted {post}")
 
-    # scrape_bw(conn)  # Scrape top black & white picture once a day
-    # scrape_sprocket(conn)  # Scrape top sprocket shot once a day
-    # conn.close()
+    scrape_bw(conn)  # Scrape top black & white picture once a day
+    scrape_sprocket(conn)  # Scrape top sprocket shot once a day
+    conn.close()
 
-    # for i in range(3):  # Scrape top analog pictures approximately every 8 hours
-    #     conn = create_connection(test)
-    #     scrape_analog(conn)
-    #     conn.close()
-    #     time.sleep(60 * 60 * 8)  # Wait for 8 hours
+    for i in range(3):  # Scrape top analog pictures approximately every 8 hours
+        conn = create_connection(test)
+        scrape_analog(conn)
+        conn.close()
+        time.sleep(60 * 60 * 8)  # Wait for 8 hours
 
     while True:
         # Heroku will restart container approximately every 24 hours
