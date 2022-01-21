@@ -6,7 +6,7 @@ from scrape import get_pics
 
 
 def scrape_analog(conn):
-    for data in get_pics(num_pics=5, subreddit="analog"):
+    for data in get_pics(num_pics=6, subreddit="analog"):
         create_picture(conn, dataclasses.astuple(data))
 
 
@@ -25,20 +25,16 @@ if __name__ == "__main__":
     test = False
     conn = create_connection(test)  # Create DB connection
 
-    posts = [567, 279, 596, 367, 195]
-    for post in posts:
-        delete_post(conn, post)
-
     # scrape_bw(conn)  # Scrape top black & white picture once a day
-    # scrape_sprocket(conn)  # Scrape top sprocket shot once a day
-    # conn.close()
+    scrape_sprocket(conn)  # Scrape top sprocket shot once a day
+    conn.close()
 
-    # for i in range(3):  # Scrape top analog pictures approximately every 8 hours
-    #     conn = create_connection(test)
-    #     scrape_analog(conn)
-    #     conn.close()
-    #     time.sleep(60 * 60 * 8)  # Wait for 8 hours
+    for i in range(3):  # Scrape top analog pictures approximately every 8 hours
+        conn = create_connection(test)
+        scrape_analog(conn)
+        conn.close()
+        time.sleep(60 * 60 * 8)  # Wait for 8 hours
 
-    # while True:
-    #     # Heroku will restart container approximately every 24 hours
-    #     time.sleep(60 * 60 * 24)
+    while True:
+        # Heroku will restart container approximately every 24 hours
+        time.sleep(60 * 60 * 24)
