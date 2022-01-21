@@ -101,3 +101,13 @@ def get_all(conn):
     while row is not None:
         print(row)
         row = c.fetchone()
+
+
+def delete_post(conn, post: int):
+    try:
+        c = conn.cursor()
+        c.execute("""DELETE FROM pictures WHERE id = %s""", post)
+        conn.commit()
+
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
