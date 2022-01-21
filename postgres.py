@@ -106,7 +106,7 @@ def get_all(conn):
 def delete_post(conn, post: int):
     try:
         c = conn.cursor()
-        c.execute("""DELETE FROM pictures WHERE id = (%s)""", post)
+        c.execute("""DELETE FROM pictures WHERE id = (%s)""", (post,))
         conn.commit()
         print(f"deleted {post}")
 
