@@ -108,6 +108,7 @@ def delete_post(conn, post: int):
         c = conn.cursor()
         c.execute("""DELETE FROM pictures WHERE id = (%s)""", post)
         conn.commit()
+        print(f"deleted {post}")
 
     except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+        print(f"db_error: {error}")

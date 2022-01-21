@@ -25,10 +25,9 @@ if __name__ == "__main__":
     test = False
     conn = create_connection(test)  # Create DB connection
 
-    posts = [650]
+    posts = [650, 614]
     for post in posts:
         delete_post(conn, post)
-        print(f"deleted {post}")
 
     # scrape_bw(conn)  # Scrape top black & white picture once a day
     # scrape_sprocket(conn)  # Scrape top sprocket shot once a day
