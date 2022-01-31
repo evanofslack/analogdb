@@ -1,7 +1,8 @@
 import dataclasses
+import datetime as dt
 import time
 
-from postgres import create_connection, create_picture, delete_post
+from postgres import create_connection, create_picture
 from scrape import get_pics
 
 
@@ -23,18 +24,18 @@ def scrape_sprocket(conn):
 if __name__ == "__main__":
 
     test = False
-    conn = create_connection(test)  # Create DB connection
+    now = dt.datetime.now()
 
-    # scrape_bw(conn)  # Scrape top black & white picture once a day
-    scrape_sprocket(conn)  # Scrape top sprocket shot once a day
-    conn.close()
+    # Scrape B&W and Sprocket once a day
+    if now.hour == 0:
+        conn = create_connection(test)
+        scrape_bw(conn)
+        scrape_sprocket(conn)
+        scrape_analog(conn)
+        conn.close()
 
-    for i in range(3):  # Scrape top analog pictures approximately every 8 hours
+    # Scrape r/analog every 8 hours
+    elif now.hour == 8 or now.hour == 16:
         conn = create_connection(test)
         scrape_analog(conn)
         conn.close()
-        time.sleep(60 * 60 * 8)  # Wait for 8 hours
-
-    while True:
-        # Heroku will restart container approximately every 24 hours
-        time.sleep(60 * 60 * 24)
