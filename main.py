@@ -1,7 +1,7 @@
 import dataclasses
 import datetime as dt
 
-from postgres import create_connection, create_picture
+from postgres import create_connection, create_picture, update_url
 from scrape import get_pics
 
 
@@ -25,16 +25,20 @@ if __name__ == "__main__":
     test = False
     now = dt.datetime.now()
 
-    # Scrape B&W and Sprocket once a day
-    if now.hour == 0:
-        conn = create_connection(test)
-        scrape_bw(conn)
-        scrape_sprocket(conn)
-        scrape_analog(conn)
-        conn.close()
+    conn = create_connection(test)
+    update_url(conn)
+    conn.close()
 
-    # Scrape r/analog every 8 hours
-    elif now.hour == 8 or now.hour == 16:
-        conn = create_connection(test)
-        scrape_analog(conn)
-        conn.close()
+    # # Scrape B&W and Sprocket once a day
+    # if now.hour == 0:
+    #     conn = create_connection(test)
+    #     scrape_bw(conn)
+    #     scrape_sprocket(conn)
+    #     scrape_analog(conn)
+    #     conn.close()
+
+    # # Scrape r/analog every 8 hours
+    # elif now.hour == 8 or now.hour == 16:
+    #     conn = create_connection(test)
+    #     scrape_analog(conn)
+    #     conn.close()

@@ -10,7 +10,7 @@ class UploadError(Exception):
     pass
 
 
-CLOUDFRONT_URL = "d3i73ktnzbi69i.cloudfront.net/"
+CLOUDFRONT_URL = "https://d3i73ktnzbi69i.cloudfront.net/"
 
 
 def init_s3():
@@ -35,7 +35,11 @@ def s3_upload(s3, bucket: str, url: str, filename: str) -> str:
         "image/gif": ".gif",
     }
 
-    req = requests.get(url, stream=True)
+    try:
+        req = requests.get(url, stream=True)
+    except Exception as e:
+        print(e)
+        raise UploadError
 
     content_type = req.headers["content-type"]
     if content_type not in viable_content.keys():

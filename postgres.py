@@ -124,24 +124,29 @@ def update_url(conn):
     query = """ UPDATE pictures
                 SET url = %s
                 WHERE id = %s"""
+
     s3 = init_s3()
 
     c = conn.cursor()
-    c.execute("""SELECT id, url FROM pictures WHERE id < 20""")
+    c.execute("""SELECT id, url FROM pictures""")
     row = c.fetchone()
+
+    new_rows = []
 
     while row is not None:
         id = str(row[0])
         url = row[1]
-        print(f"ID: {id}, URL: {url}")
 
         try:
             new_url = s3_upload(s3, bucket="analog-photos", url=url, filename=id)
+            new_rows.append((new_url, id))
         except UploadError:
             pass
 
-        c.execute(query, (new_url, id))
         row = c.fetchone()
+
+    for row in new_rows:
+        c.execute(query, (row[0], row[1]))
 
     conn.commit()
 
@@ -149,4 +154,4 @@ def update_url(conn):
 if __name__ == "__main__":
 
     conn = create_connection(True)
-    update_url(conn)
+    get_all(conn)
