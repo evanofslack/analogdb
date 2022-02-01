@@ -25,24 +25,19 @@ if __name__ == "__main__":
 
     test = False
     now = dt.datetime.now()
-    conn = create_connection(test)
 
-    delete_posts = [782, 791, 787, 783, 790, 788, 789]
-    for post in delete_posts:
-        delete_post(conn, post)
+    # Scrape B&W and Sprocket once a day
+    if now.hour == 0:
+        s3 = init_s3()
+        conn = create_connection(test)
+        scrape_bw(conn, s3)
+        scrape_sprocket(conn, s3)
+        scrape_analog(conn, s3)
+        conn.close()
 
-    # # Scrape B&W and Sprocket once a day
-    # if now.hour == 0:
-    #     s3 = init_s3()
-    #     conn = create_connection(test)
-    #     scrape_bw(conn, s3)
-    #     scrape_sprocket(conn, s3)
-    #     scrape_analog(conn, s3)
-    #     conn.close()
-
-    # # Scrape r/analog every 8 hours
-    # elif now.hour == 8 or now.hour == 16:
-    #     s3 = init_s3()
-    #     conn = create_connection(test)
-    #     scrape_analog(conn, s3)
-    #     conn.close()
+    # Scrape r/analog every 8 hours
+    elif now.hour == 8 or now.hour == 16:
+        s3 = init_s3()
+        conn = create_connection(test)
+        scrape_analog(conn, s3)
+        conn.close()
