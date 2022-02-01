@@ -47,7 +47,7 @@ def create_table(connection):
         print(error)
 
 
-def create_picture(conn, data: tuple):
+def create_picture(conn, s3, data: tuple):
     try:
         c = conn.cursor()
         c.execute(
@@ -56,9 +56,14 @@ def create_picture(conn, data: tuple):
             INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
             ON CONFLICT (url) DO NOTHING
+            RETURNING id,url
             """,
             data,
         )
+        result = c.fetchone()
+        id = result[0]
+        url = result[1]
+        update_url(conn, s3, id, url)
         conn.commit()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -116,7 +121,17 @@ def delete_post(conn, post: int):
         print(f"db_error: {error}")
 
 
-def update_url(conn):
+def update_url(conn, s3, id, url):
+    query = """ UPDATE pictures
+                SET url = %s
+                WHERE id = %s"""
+
+    c = conn.cursor()
+    new_url = s3_upload(s3, bucket="analog-photos", url=url, filename=id)
+    c.execute(query, (new_url, id))
+
+
+def update_all_urls(conn):
     """
     Upload reddit images to S3 and update db URL with Cloudfront URL
 

@@ -45,6 +45,7 @@ def s3_upload(s3, bucket: str, url: str, filename: str) -> str:
     if content_type not in viable_content.keys():
         print(f"Cannot process {url} with type {content_type}")
         raise UploadError
+    filename = str(filename)
     filename += viable_content[content_type]
 
     try:
