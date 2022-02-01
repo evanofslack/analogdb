@@ -55,7 +55,7 @@ def create_picture(conn, s3, data: tuple):
             INSERT 
             INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
-            ON CONFLICT (url) DO NOTHING
+            ON CONFLICT (permalink) DO NOTHING
             RETURNING id,url
             """,
             data,
