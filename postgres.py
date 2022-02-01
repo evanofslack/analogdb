@@ -2,6 +2,8 @@ import os
 
 import psycopg2
 
+from s3_upload import UploadError, init_s3, s3_upload
+
 
 def create_connection(test: bool = False):
     connection = None
@@ -112,3 +114,39 @@ def delete_post(conn, post: int):
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"db_error: {error}")
+
+
+def update_url(conn):
+    """
+    Upload reddit images to S3 and update db URL with Cloudfront URL
+
+    """
+    query = """ UPDATE pictures
+                SET url = %s
+                WHERE id = %s"""
+    s3 = init_s3()
+
+    c = conn.cursor()
+    c.execute("""SELECT id, url FROM pictures WHERE id < 20""")
+    row = c.fetchone()
+
+    while row is not None:
+        id = str(row[0])
+        url = row[1]
+        print(f"ID: {id}, URL: {url}")
+
+        try:
+            new_url = s3_upload(s3, bucket="analog-photos", url=url, filename=id)
+        except UploadError:
+            pass
+
+        c.execute(query, (new_url, id))
+        row = c.fetchone()
+
+    conn.commit()
+
+
+if __name__ == "__main__":
+
+    conn = create_connection(True)
+    update_url(conn)

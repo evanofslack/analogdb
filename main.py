@@ -1,6 +1,5 @@
 import dataclasses
 import datetime as dt
-import time
 
 from postgres import create_connection, create_picture
 from scrape import get_pics
