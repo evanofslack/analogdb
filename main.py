@@ -29,7 +29,7 @@ def scrape_sprocket(conn, s3):
 
 if __name__ == "__main__":
 
-    test = True
+    test = False
     now = dt.datetime.now()
     conn = create_connection(test)
     alter_table(conn)
