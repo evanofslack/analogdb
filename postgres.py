@@ -47,6 +47,19 @@ def create_table(connection):
         print(error)
 
 
+def alter_table(conn):
+    query = """ALTER TABLE pictures
+            ADD CONSTRAINT unique_url 
+            UNIQUE (permalink);"""
+    try:
+        c = conn.cursor()
+        c.execute(query)
+        c.commit()
+        print("Success, altered table")
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+
+
 def create_picture(conn, s3, data: tuple):
     try:
         c = conn.cursor()
