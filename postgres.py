@@ -54,7 +54,7 @@ def alter_table(conn):
     try:
         c = conn.cursor()
         c.execute(query)
-        c.commit()
+        conn.commit()
         print("Success, altered table")
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
