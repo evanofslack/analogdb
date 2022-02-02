@@ -10,7 +10,7 @@ See a live demo of the API: https://www.analogdb.com/
 
 ### Example
 
-Full documentation for the API: http://api.analogdb.com/
+Full documentation for the API: https://analogdb.herokuapp.com/
 
 ```bash
 curl https://analogdb.herokuapp.com/latest
