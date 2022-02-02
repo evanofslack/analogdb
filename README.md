@@ -5,9 +5,8 @@ API serving film photographs scraped from [r/analog](https://www.reddit.com/r/an
 * Built with [Go](https://go.dev/), [Chi](https://github.com/go-chi/chi), and [Postgres](https://www.postgresql.org/)
 * Deployed with [Docker](https://www.docker.com/) and [Heroku](https://www.heroku.com/)
 
-Source code for scraper: https://github.com/evanofslack/analog-scraper
 
-See the API in action: https://www.analogdb.com/
+See a live demo of the API: https://www.analogdb.com/
 
 ### Example
 
