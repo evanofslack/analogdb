@@ -5,8 +5,9 @@ API serving film photographs scraped from [r/analog](https://www.reddit.com/r/an
 * Built with [Go](https://go.dev/), [Chi](https://github.com/go-chi/chi), and [Postgres](https://www.postgresql.org/)
 * Deployed with [Docker](https://www.docker.com/) and [Heroku](https://www.heroku.com/)
 
+### Demo
 
-See a live demo of the API: https://www.analogdb.com/
+See the API in action: https://www.analogdb.com/
 
 ### Example
 
@@ -27,7 +28,7 @@ curl https://analogdb.herokuapp.com/latest
    "posts":[
       {
          "id":110,
-         "url":"https://preview.redd.it/bgymbk9z24981.jpg?width=2051\u0026format=pjpg\u0026auto=webp\u0026s=97ecf64887ceb6cabe8c2c6a23ccfd0b9c54784c",
+         "url":"https://d3i73ktnzbi69i.cloudfront.net/110.jpeg",
          "title":"2021 thru my eyes | leica m6 | summicron 35mm | various",
          "author":"u/basedjason",
          "permalink":"https://www.reddit.com/r/analog/comments/rto4fq/2021_thru_my_eyes_leica_m6_summicron_35mm_various/",
@@ -37,6 +38,7 @@ curl https://analogdb.herokuapp.com/latest
          "unix_time":1641058655,
          "width":2051,
          "height":2564
+         "sprocket": false
       },
       ...
    ]
