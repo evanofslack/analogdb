@@ -9,7 +9,7 @@ Source code for scraper: https://github.com/evanofslack/analog-scraper
 
 ### Example
 
-Full documentation for the API: https://analogdb.herokuapp.com/
+Full documentation for the API: http://api.analogdb.com/
 
 ```bash
 curl https://analogdb.herokuapp.com/latest
