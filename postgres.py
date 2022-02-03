@@ -2,7 +2,7 @@ import os
 
 import psycopg2
 
-from s3_upload import UploadError, init_s3, s3_upload
+from s3_upload import UploadError, s3_upload
 
 
 def create_connection(test: bool = False):
@@ -47,19 +47,6 @@ def create_table(connection):
         print(error)
 
 
-def alter_table(conn):
-    query = """ALTER TABLE pictures
-            ADD CONSTRAINT unique_url 
-            UNIQUE (permalink);"""
-    try:
-        c = conn.cursor()
-        c.execute(query)
-        conn.commit()
-        print("Success, altered table")
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-
-
 def create_picture(conn, s3, data: tuple):
     try:
         c = conn.cursor()
@@ -74,24 +61,20 @@ def create_picture(conn, s3, data: tuple):
             data,
         )
         result = c.fetchone()
+        if not result:
+            return
         id = result[0]
         url = result[1]
-        update_url(conn, s3, id, url)
-        conn.commit()
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
 
+        # Prevent re-upload to S3 on conflicting inserts
+        url = str(url)
+        if "d3i73ktnzbi69i.cloudfront.net" in url:
+            conn.commit()
+            return
+        else:
+            update_url(conn, s3, id, url)
+            conn.commit()
 
-def update_table(conn):
-    try:
-        c = conn.cursor()
-        c.execute(
-            """
-            ALTER TABLE pictures
-            ADD COLUMN sprocket BOOLEAN DEFAULT FALSE
-            """,
-        )
-        conn.commit()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
 
@@ -123,60 +106,17 @@ def get_all(conn):
         row = c.fetchone()
 
 
-def delete_post(conn, post: int):
-    try:
-        c = conn.cursor()
-        c.execute("""DELETE FROM pictures WHERE id = (%s)""", (post,))
-        conn.commit()
-        print(f"deleted {post}")
-
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(f"db_error: {error}")
-
-
 def update_url(conn, s3, id, url):
     query = """ UPDATE pictures
                 SET url = %s
                 WHERE id = %s"""
 
     c = conn.cursor()
-    new_url = s3_upload(s3, bucket="analog-photos", url=url, filename=id)
+    try:
+        new_url = s3_upload(s3, bucket="analog-photos", url=url, filename=id)
+    except UploadError:
+        return
     c.execute(query, (new_url, id))
-
-
-def update_all_urls(conn):
-    """
-    Upload reddit images to S3 and update db URL with Cloudfront URL
-
-    """
-    query = """ UPDATE pictures
-                SET url = %s
-                WHERE id = %s"""
-
-    s3 = init_s3()
-
-    c = conn.cursor()
-    c.execute("""SELECT id, url FROM pictures""")
-    row = c.fetchone()
-
-    new_rows = []
-
-    while row is not None:
-        id = str(row[0])
-        url = row[1]
-
-        try:
-            new_url = s3_upload(s3, bucket="analog-photos", url=url, filename=id)
-            new_rows.append((new_url, id))
-        except UploadError:
-            pass
-
-        row = c.fetchone()
-
-    for row in new_rows:
-        c.execute(query, (row[0], row[1]))
-
-    conn.commit()
 
 
 if __name__ == "__main__":

@@ -6,7 +6,7 @@ from typing import List
 
 import praw
 import requests
-from PIL import Image, UnidentifiedImageError
+from PIL import Image
 
 
 @dataclass
