@@ -1,5 +1,4 @@
 from os import getenv
-from typing import List
 
 import boto3
 import boto3.session
@@ -26,7 +25,7 @@ def init_s3():
 
 def s3_upload(s3, bucket: str, url: str, filename: str) -> str:
 
-    assert bucket in [b.name for b in s3.buckets.all()]
+    assert bucket == "analog-photos"
 
     viable_content = {
         "image/png": ".png",
