@@ -98,24 +98,31 @@ def get_url(s: praw.reddit.Submission) -> str:
         return s.url
 
 
-def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
+def init_reddit() -> praw.Reddit:
     reddit = praw.Reddit(
         client_id=os.environ.get("client_id"),
         client_secret=os.environ.get("client_secret"),
         user_agent=os.environ.get("user_agent"),
     )
-    print(f"Scraping pictures from {subreddit}")
+    return reddit
+
+
+def get_pics(
+    reddit: praw.Reddit, s3, num_pics: int, subreddit: str
+) -> List[AnalogData]:
     pic_data: List[AnalogData] = []
     submissions: List[praw.reddit.Submission] = [
         s for s in reddit.subreddit(subreddit).hot(limit=num_pics) if not s.is_self
     ]
-    print(f"Gathered {len(submissions)} posts")
+    print(f"Gathered {len(submissions)} posts from {subreddit}")
 
     for s in submissions:
         try:
             url = get_url(s)
             low, med, high, raw = to_image(url)
-            # TODO s3 upload here
+
+            # todo check if photo is already in DB
+            # todo s3 upload here
 
             new_pic = AnalogData(
                 url=url,
