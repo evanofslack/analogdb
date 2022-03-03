@@ -1,8 +1,6 @@
 import dataclasses
 import datetime as dt
 
-from setuptools import setup
-
 from postgres import create_connection, create_picture
 from s3_upload import init_s3
 from scrape import get_pics, init_reddit
@@ -35,7 +33,7 @@ if __name__ == "__main__":
     test = False
     now = dt.datetime.now()
 
-    # Scrape B&W and Sprocket once a day
+    # Scrape r/analog_bw and sprocketshots once a day
     if now.hour == 0:
         conn, s3, reddit = setup_resources()
         scrape_bw(conn, s3, reddit)
