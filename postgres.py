@@ -53,8 +53,8 @@ def create_picture(conn, s3, data: tuple):
         c.execute(
             """
             INSERT 
-            INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+            INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, low-url, low-width, low-height, med-url, med-width, med-height, high-url, high-width, high-height) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
             ON CONFLICT (permalink) DO NOTHING
             RETURNING id,url
             """,

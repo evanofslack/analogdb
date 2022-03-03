@@ -25,7 +25,7 @@ def init_s3():
 
 def s3_upload(s3, bucket: str, url: str, filename: str) -> str:
 
-    assert bucket == "analog-photos"
+    assert bucket == "analog-photos" or bucket == "analog-photos-test"
 
     viable_content = {
         "image/png": ".png",

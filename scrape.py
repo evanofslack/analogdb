@@ -23,6 +23,16 @@ class AnalogData:
     height: int
     sprocket: bool
 
+    low_url: str
+    low_width: int
+    low_height: int
+    med_url: str
+    med_width: int
+    med_height: int
+    high_url: str
+    high_width: int
+    high_height: int
+
 
 def to_base64(img: Image) -> str:
     with BytesIO() as buffered:
@@ -32,12 +42,31 @@ def to_base64(img: Image) -> str:
 
 
 def to_image(url: str) -> Image:
+
+    LOW_RES = [320, 320]
+    MEDIUM_RES = [768, 768]
+    HIGH_RES = [1200, 1200]
+
     pic = requests.get(url, stream=True)
     img = Image.open(pic.raw)
-    return img
+
+    low = resize_image(img, LOW_RES)
+    med = resize_image(img, MEDIUM_RES)
+    high = resize_image(img, HIGH_RES)
+    raw = img
+
+    return low, med, high, raw
 
 
-def is_greyscale(img: Image):
+def resize_image(img: Image, size: List[int]):
+    img_resized = img.copy()
+    img_resized.thumbnail(size, Image.ANTIALIAS)
+    return img_resized
+
+
+def is_greyscale(img: Image, subreddit: str):
+    if subreddit == "analog_bw":
+        return True
     img = img.convert("RGB")
     w, h = img.size
     for i in range(w):
@@ -85,8 +114,8 @@ def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
     for s in submissions:
         try:
             url = get_url(s)
-            img = to_image(url)
-            w, h = img.size
+            low, med, high, raw = to_image(url)
+            # TODO s3 upload here
 
             new_pic = AnalogData(
                 url=url,
@@ -95,11 +124,20 @@ def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
                 permalink="https://www.reddit.com" + s.permalink,
                 score=s.score,
                 nsfw=s.over_18,
-                greyscale=is_greyscale(img),
+                greyscale=is_greyscale(raw, subreddit),
                 time=int(s.created_utc),
-                width=w,
-                height=h,
+                width=raw.size[0],
+                height=raw.size[1],
                 sprocket=True if subreddit == "SprocketShots" else False,
+                low_url=low,
+                low_width=low.size[0],
+                low_height=low.size[1],
+                med_url=med,
+                med_width=med.size[0],
+                med_height=med.size[1],
+                high_url=high,
+                high_width=high.size[0],
+                high_height=high.size[1],
             )
             print(new_pic.title)
             pic_data.append(new_pic)
@@ -111,4 +149,4 @@ def get_pics(num_pics: int, subreddit: str) -> List[AnalogData]:
 
 
 if __name__ == "__main__":
-    get_pics(6, "analog")
+    get_pics(3, "analog")

@@ -1,6 +1,6 @@
 import psycopg2
 
-from s3_upload import UploadError, s3_upload
+from s3_upload import UploadError, init_s3, s3_upload
 
 
 def update_all_urls(conn):
@@ -55,7 +55,17 @@ def update_table(conn):
         c.execute(
             """
             ALTER TABLE pictures
-            ADD COLUMN sprocket BOOLEAN DEFAULT FALSE
+            ADD COLUMN low-url text
+            ADD COLUMN low-width integer
+            ADD COLUMN low-height integer
+
+            ADD COLUMN med-url text
+            ADD COLUMN med-width integer
+            ADD COLUMN med-height integer
+
+            ADD COLUMN high-url text
+            ADD COLUMN high-width integer
+            ADD COLUMN high-height integer
             """,
         )
         conn.commit()
