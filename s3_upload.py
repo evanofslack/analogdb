@@ -1,8 +1,10 @@
+import io
 from os import getenv
 
 import boto3
 import boto3.session
 import requests
+from PIL import Image
 
 
 class UploadError(Exception):
@@ -18,41 +20,28 @@ def init_s3():
         "aws_secret_access_key": getenv("AWS_SECRET_ACCESS_KEY"),
         "region_name": getenv("AWS_REGION"),
     }
-    my_session = boto3.session.Session(**boto_kwargs)
-    s3 = my_session.resource("s3")
+    s3 = boto3.client("s3")
+
+    # my_session = boto3.session.Session(**boto_kwargs)
+    # s3 = my_session.resource("s3")
     return s3
 
 
-def s3_upload(s3, bucket: str, url: str, filename: str) -> str:
+def s3_upload(
+    s3, bucket: str, image: Image.Image, filename: str, content_type: str
+) -> str:
 
     assert bucket == "analog-photos" or bucket == "analog-photos-test"
 
-    viable_content = {
-        "image/png": ".png",
-        "image/jpeg": ".jpeg",
-        "image/jpg": ".jpg",
-        "image/gif": ".gif",
-    }
+    in_mem = io.BytesIO()
+    image.save(in_mem, content_type.removeprefix("image/"))
+    in_mem.seek(0)
 
     try:
-        req = requests.get(url, stream=True)
-    except Exception as e:
-        print(e)
-        raise UploadError
-
-    content_type = req.headers["content-type"]
-    if content_type not in viable_content.keys():
-        print(f"Cannot process {url} with type {content_type}")
-        raise UploadError
-    filename = str(filename)
-    filename += viable_content[content_type]
-
-    try:
-        req_raw = req.raw
-        req_data = req_raw.read()
-        s3.Bucket(bucket).put_object(
-            Key=filename, Body=req_data, ContentType=content_type
-        )
+        # s3.Bucket(bucket).put_object(
+        #     Key=filename, Body=in_mem, ContentType=content_type
+        # )
+        r = s3.upload_fileobj(in_mem, bucket, filename)
         print(f"success, uploaded {filename} to {bucket}")
         return CLOUDFRONT_URL + filename
 
