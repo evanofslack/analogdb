@@ -1,31 +1,46 @@
 import dataclasses
 import datetime as dt
+from typing import List
 
-from postgres import create_connection, create_picture
+import boto3.session
+import praw
+import psycopg2
+
+from postgres import create_connection, create_picture, get_latest
 from s3_upload import init_s3
 from scrape import get_pics, init_reddit
+
+# Define subreddit names
+ANALOG = "analog"
+BW = "analog_bw"
+SPROCKET = "SprocketShots"
+
+
+@dataclasses.dataclass
+class Resources:
+    """
+    Struct to hold common dependencies needed for scraper
+
+    """
+
+    conn: psycopg2.connection
+    s3: boto3.session.Session
+    reddit: praw.Reddit
+    latest: List[str]
 
 
 def setup_resources():
     conn = create_connection(test)
     s3 = init_s3()
     reddit = init_reddit()
-    return s3, conn, reddit
+    latest = get_latest()
+    return Resources(conn, s3, reddit, latest)
 
 
-def scrape_analog(conn, s3, reddit):
-    for data in get_pics(reddit, s3, num_pics=7, subreddit="analog"):
-        create_picture(conn, s3, dataclasses.astuple(data))
-
-
-def scrape_bw(conn, s3, reddit):
-    for data in get_pics(reddit, s3, num_pics=2, subreddit="analog_bw"):
-        create_picture(conn, s3, dataclasses.astuple(data))
-
-
-def scrape_sprocket(conn, s3, reddit):
-    for data in get_pics(reddit, s3, num_pics=1, subreddit="SprocketShots"):
-        create_picture(conn, s3, dataclasses.astuple(data))
+def scrape_pics(r: Resources, subreddit: str, num_pics: int) -> None:
+    for data in get_pics(r.reddit, r.s3, num_pics, subreddit):
+        if data.title not in r.latest:
+            create_picture(r.conn, r.s3, dataclasses.astuple(data))
 
 
 if __name__ == "__main__":
@@ -35,14 +50,14 @@ if __name__ == "__main__":
 
     # Scrape r/analog_bw and sprocketshots once a day
     if now.hour == 0:
-        conn, s3, reddit = setup_resources()
-        scrape_bw(conn, s3, reddit)
-        scrape_sprocket(conn, s3, reddit)
-        scrape_analog(conn, s3, reddit)
-        conn.close()
+        r = setup_resources()
+        scrape_pics(r, subreddit=ANALOG, num_pics=7)
+        scrape_pics(r, subreddit=BW, num_pics=2)
+        scrape_pics(r, subreddit=SPROCKET, num_pics=1)
+        r.conn.close()
 
     # Scrape r/analog every 8 hours
     elif now.hour == 8 or now.hour == 16:
-        conn, s3, reddit = setup_resources()
-        scrape_analog(conn, s3, reddit)
-        conn.close()
+        r = setup_resources()
+        scrape_pics(r, subreddit=ANALOG, num_pics=7)
+        r.conn.close()
