@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import psycopg2
 
@@ -106,6 +107,20 @@ def get_all(conn):
         row = c.fetchone()
 
 
+def get_latest(conn) -> List[str]:
+    c = conn.cursor()
+    c.execute("""SELECT title FROM pictures ORDER BY time DESC LIMIT 20""")
+    row = c.fetchone()
+
+    titles = []
+    while row is not None:
+        row = c.fetchone()
+        if row:
+            titles.append(row[0])
+
+    return titles
+
+
 def update_url(conn, s3, id, url):
     query = """ UPDATE pictures
                 SET url = %s
@@ -122,4 +137,4 @@ def update_url(conn, s3, id, url):
 if __name__ == "__main__":
 
     conn = create_connection(True)
-    get_all(conn)
+    get_latest(conn)
