@@ -29,7 +29,7 @@ class Resources:
     latest: List[str]
 
 
-def setup_resources():
+def setup_resources(test: bool):
     conn = create_connection(test)
     s3 = init_s3()
     reddit = init_reddit()
@@ -43,14 +43,21 @@ def scrape_pics(r: Resources, subreddit: str, num_pics: int) -> None:
             create_picture(r.conn, r.s3, dataclasses.astuple(data))
 
 
-if __name__ == "__main__":
+def test():
+    test = True
 
+    r = setup_resources(test)
+    scrape_pics(r, subreddit=BW, num_pics=2)
+    r.conn.close()
+
+
+def main():
     test = False
     now = dt.datetime.now()
 
     # Scrape r/analog_bw and sprocketshots once a day
     if now.hour == 0:
-        r = setup_resources()
+        r = setup_resources(test)
         scrape_pics(r, subreddit=ANALOG, num_pics=7)
         scrape_pics(r, subreddit=BW, num_pics=2)
         scrape_pics(r, subreddit=SPROCKET, num_pics=1)
@@ -60,4 +67,8 @@ if __name__ == "__main__":
     elif now.hour == 8 or now.hour == 16:
         r = setup_resources()
         scrape_pics(r, subreddit=ANALOG, num_pics=7)
-        r.conn.close()
+
+
+if __name__ == "__main__":
+    # main()
+    test()

@@ -125,6 +125,7 @@ def url_to_images(url: str, s3) -> List[MyImage]:
     HIGH_RES = [1200, 1200]
     RAW = "RAW"
     resolutions = [LOW_RES, MEDIUM_RES, HIGH_RES, RAW]
+    BUCKET = "analog-photos-test"
 
     pic = requests.get(url, stream=True)
     img = Image.open(pic.raw)
@@ -134,18 +135,12 @@ def url_to_images(url: str, s3) -> List[MyImage]:
 
         if res == "RAW":
             f, c = create_filename(url)
-            new_url = s3_upload(
-                s3, bucket="analog-photos-test", image=i, filename=f, content_type=c
-            )
-            image = MyImage(
-                image=img, url=new_url, width=img.width, height=image.height
-            )
+            new_url = s3_upload(s3, bucket=BUCKET, image=i, filename=f, content_type=c)
+            image = MyImage(image=img, url=new_url, width=img.width, height=img.height)
         else:
             i, w, h = resize_image(img, res)
             f, c = create_filename(url)
-            new_url = s3_upload(
-                s3, bucket="analog-photos-test", image=i, filename=f, content_type=c
-            )
+            new_url = s3_upload(s3, bucket=BUCKET, image=i, filename=f, content_type=c)
             image = MyImage(image=i, url=new_url, width=w, height=h)
 
         images.append(image)
@@ -202,4 +197,4 @@ def get_pics(
 if __name__ == "__main__":
     s3 = init_s3()
     reddit = init_reddit()
-    get_pics(reddit, s3, 3, "analog")
+    get_pics(reddit, s3, 4, "analog")

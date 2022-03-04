@@ -1,5 +1,6 @@
 import psycopg2
 
+from postgres import create_connection
 from s3_upload import UploadError, init_s3, s3_upload
 
 
@@ -55,17 +56,17 @@ def update_table(conn):
         c.execute(
             """
             ALTER TABLE pictures
-            ADD COLUMN low-url text
-            ADD COLUMN low-width integer
-            ADD COLUMN low-height integer
+            ADD COLUMN lowUrl text
+            ADD COLUMN lowWidth integer
+            ADD COLUMN lowHeight integer
 
-            ADD COLUMN med-url text
-            ADD COLUMN med-width integer
-            ADD COLUMN med-height integer
+            ADD COLUMN medUrl text
+            ADD COLUMN medWidth integer
+            ADD COLUMN medHeight integer
 
-            ADD COLUMN high-url text
-            ADD COLUMN high-width integer
-            ADD COLUMN high-height integer
+            ADD COLUMN highUrl text
+            ADD COLUMN highWidth integer
+            ADD COLUMN highHeight integer
             """,
         )
         conn.commit()
@@ -84,3 +85,8 @@ def alter_table(conn):
         print("Success, altered table")
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
+
+
+if __name__ == "__main__":
+    conn = create_connection(test=True)
+    update_table(conn)
