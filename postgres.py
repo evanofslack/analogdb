@@ -87,7 +87,8 @@ def get_columns(conn):
 
 def get_all(conn):
     c = conn.cursor()
-    c.execute("""SELECT * FROM pictures ORDER BY id DESC LIMIT 20""")
+    # c.execute("""SELECT * FROM pictures ORDER BY id DESC LIMIT 20""")
+    c.execute("""SELECT * FROM pictures ORDER BY id ASC LIMIT 20""")
     row = c.fetchone()
 
     while row is not None:
