@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import psycopg2
 
@@ -53,27 +54,15 @@ def create_picture(conn, s3, data: tuple):
         c.execute(
             """
             INSERT 
-            INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket) 
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+            INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight) 
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
             ON CONFLICT (permalink) DO NOTHING
             RETURNING id,url
             """,
             data,
         )
-        result = c.fetchone()
-        if not result:
-            return
-        id = result[0]
-        url = result[1]
 
-        # Prevent re-upload to S3 on conflicting inserts
-        url = str(url)
-        if "d3i73ktnzbi69i.cloudfront.net" in url:
-            conn.commit()
-            return
-        else:
-            update_url(conn, s3, id, url)
-            conn.commit()
+        conn.commit()
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -98,12 +87,26 @@ def get_columns(conn):
 
 def get_all(conn):
     c = conn.cursor()
-    c.execute("""SELECT * FROM pictures""")
+    c.execute("""SELECT * FROM pictures ORDER BY id DESC LIMIT 20""")
     row = c.fetchone()
 
     while row is not None:
         print(row)
         row = c.fetchone()
+
+
+def get_latest(conn) -> List[str]:
+    c = conn.cursor()
+    c.execute("""SELECT title FROM pictures ORDER BY id DESC LIMIT 20""")
+    row = c.fetchone()
+
+    titles = []
+    while row is not None:
+        if row:
+            titles.append(row[0])
+        row = c.fetchone()
+
+    return titles
 
 
 def update_url(conn, s3, id, url):
@@ -122,4 +125,6 @@ def update_url(conn, s3, id, url):
 if __name__ == "__main__":
 
     conn = create_connection(True)
-    get_all(conn)
+    # get_all(conn)
+    for p in get_latest(conn):
+        print(p)
