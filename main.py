@@ -78,8 +78,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    # test()
-    migrate()
-    print("sleeping...")
-    time.sleep(100000)
+    main()
