@@ -47,7 +47,7 @@ def test():
     test = True
 
     r = setup_resources(test)
-    scrape_pics(r, subreddit=ANALOG, num_pics=3)
+    scrape_pics(r, subreddit=ANALOG, num_pics=4)
     r.conn.close()
 
 

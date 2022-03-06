@@ -64,8 +64,7 @@ def resize_all_photos(conn):
     s3 = init_s3()
 
     c = conn.cursor()
-    # c.execute("""SELECT id, url FROM pictures""")
-    c.execute("""SELECT id, url FROM pictures ORDER BY time ASC LIMIT 10""")
+    c.execute("""SELECT id, url FROM pictures""")
     row = c.fetchone()
 
     new_rows = []
@@ -75,7 +74,7 @@ def resize_all_photos(conn):
         url = row[1]
 
         try:
-            images = url_to_images(url, s3, bucket="analog-photos-test")
+            images = url_to_images(url, s3, bucket="analog-photos")
             low = images[0]
             med = images[1]
             high = images[2]
@@ -99,7 +98,7 @@ def resize_all_photos(conn):
                 )
             )
         except Exception as e:
-            print(e)
+            print(f"Error resizing/uploading post: {id}, error: {e}")
             pass
 
         row = c.fetchone()

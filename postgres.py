@@ -87,7 +87,7 @@ def get_columns(conn):
 
 def get_all(conn):
     c = conn.cursor()
-    c.execute("""SELECT * FROM pictures ORDER by time DESC LIMIT 1""")
+    c.execute("""SELECT * FROM pictures ORDER BY id DESC LIMIT 20""")
     row = c.fetchone()
 
     while row is not None:
@@ -97,14 +97,14 @@ def get_all(conn):
 
 def get_latest(conn) -> List[str]:
     c = conn.cursor()
-    c.execute("""SELECT title FROM pictures ORDER BY time DESC LIMIT 30""")
+    c.execute("""SELECT title FROM pictures ORDER BY id DESC LIMIT 20""")
     row = c.fetchone()
 
     titles = []
     while row is not None:
-        row = c.fetchone()
         if row:
             titles.append(row[0])
+        row = c.fetchone()
 
     return titles
 
@@ -125,5 +125,6 @@ def update_url(conn, s3, id, url):
 if __name__ == "__main__":
 
     conn = create_connection(True)
-    latest = get_latest(conn)
-    print(latest)
+    # get_all(conn)
+    for p in get_latest(conn):
+        print(p)
