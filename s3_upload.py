@@ -41,20 +41,12 @@ def s3_upload(
     # s3.Bucket(bucket).put_object(
     #     Key=filename, Body=in_mem, ContentType=content_type
     # )
-    r = s3.upload_fileobj(in_mem, bucket, filename)
+    r = s3.upload_fileobj(
+        in_mem, bucket, filename, ExtraArgs={"ContentType": content_type}
+    )
     print(f"success, uploaded {filename} to {bucket}")
     return CLOUDFRONT_URL + filename
 
     # except Exception as e:
     #     print(e)
     #     raise UploadError
-
-
-if __name__ == "__main__":
-    url = "https://i.redd.it/sgbeui51l1f81.jpg"
-    filename = "6"
-    bucket = "analog-photos"
-
-    s3 = init_s3()
-    upload_url = s3_upload(s3, bucket, url, filename)
-    print(upload_url)

@@ -86,7 +86,9 @@ def is_greyscale(img: Image.Image, subreddit: str):
     return True
 
 
-def resize_image(img: Image.Image, size: List[int]):
+def resize_image(img: Image.Image, size: Optional[List[int]]):
+    if not size:
+        return img, img.width, img.height
     img_resized = img.copy()
     img_resized.thumbnail(size, Image.ANTIALIAS)
     w = img_resized.width
@@ -112,7 +114,7 @@ def create_filename(url: str) -> Tuple[str, str]:
     return filename, content_type
 
 
-def url_to_images(url: str, s3) -> List[MyImage]:
+def url_to_images(url: str, s3, bucket: Optional[str] = None) -> List[MyImage]:
     """
     Download image from URL, create 3 new resolutions, and upload to S3
 
@@ -121,26 +123,21 @@ def url_to_images(url: str, s3) -> List[MyImage]:
     LOW_RES = [320, 320]
     MEDIUM_RES = [768, 768]
     HIGH_RES = [1200, 1200]
-    RAW = "RAW"
+    RAW = None
     resolutions = [LOW_RES, MEDIUM_RES, HIGH_RES, RAW]
-    BUCKET = "analog-photos-test"
+
+    if not bucket:
+        bucket = "analog-photos"
 
     pic = requests.get(url, stream=True)
     img = Image.open(pic.raw)
 
     images: List[MyImage] = []
     for res in resolutions:
-
-        if res == "RAW":
-            f, c = create_filename(url)
-            new_url = s3_upload(s3, bucket=BUCKET, image=i, filename=f, content_type=c)
-            image = MyImage(image=img, url=new_url, width=img.width, height=img.height)
-        else:
-            i, w, h = resize_image(img, res)
-            f, c = create_filename(url)
-            new_url = s3_upload(s3, bucket=BUCKET, image=i, filename=f, content_type=c)
-            image = MyImage(image=i, url=new_url, width=w, height=h)
-
+        i, w, h = resize_image(img, res)
+        f, c = create_filename(url)
+        new_url = s3_upload(s3, bucket=bucket, image=i, filename=f, content_type=c)
+        image = MyImage(image=i, url=new_url, width=w, height=h)
         images.append(image)
 
     return images
