@@ -74,6 +74,7 @@ def resize_all_photos(conn):
         url = row[1]
 
         try:
+            print(f"\nResizing post {id}")
             images = url_to_images(url, s3, bucket="analog-photos")
             low = images[0]
             med = images[1]

@@ -1,12 +1,13 @@
 import dataclasses
 import datetime as dt
+import time
 from typing import List
 
 import boto3.session
 import praw
 import psycopg2
 
-from migrations import update_table
+from migrations import resize_all_photos, update_table
 from postgres import create_connection, create_picture, get_latest
 from s3_upload import init_s3
 from scrape import get_pics, init_reddit
@@ -54,7 +55,7 @@ def test():
 def migrate():
     test = False
     conn = create_connection(test)
-    update_table(conn)
+    resize_all_photos(conn)
     conn.close()
 
 
@@ -80,3 +81,4 @@ if __name__ == "__main__":
     # main()
     # test()
     migrate()
+    time.sleep(100000)
