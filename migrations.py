@@ -138,25 +138,23 @@ def delete_post(conn, post: int):
 
 
 def update_table(conn):
-    try:
-        c = conn.cursor()
-        c.execute(
-            """
-            ALTER TABLE pictures
-            ADD COLUMN lowUrl text, 
-            ADD COLUMN lowWidth integer, 
-            ADD COLUMN lowHeight integer, 
-            ADD COLUMN medUrl text, 
-            ADD COLUMN medWidth integer, 
-            ADD COLUMN medHeight integer, 
-            ADD COLUMN highUrl text, 
-            ADD COLUMN highWidth integer, 
-            ADD COLUMN highHeight integer 
-            """,
-        )
-        conn.commit()
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+    c = conn.cursor()
+    c.execute(
+        """
+        ALTER TABLE pictures
+        ADD COLUMN lowUrl text, 
+        ADD COLUMN lowWidth integer, 
+        ADD COLUMN lowHeight integer, 
+        ADD COLUMN medUrl text, 
+        ADD COLUMN medWidth integer, 
+        ADD COLUMN medHeight integer, 
+        ADD COLUMN highUrl text, 
+        ADD COLUMN highWidth integer, 
+        ADD COLUMN highHeight integer 
+        """,
+    )
+    conn.commit()
+    print("Success, updated table")
 
 
 def alter_table(conn):

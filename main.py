@@ -6,6 +6,7 @@ import boto3.session
 import praw
 import psycopg2
 
+from migrations import update_table
 from postgres import create_connection, create_picture, get_latest
 from s3_upload import init_s3
 from scrape import get_pics, init_reddit
@@ -45,10 +46,16 @@ def scrape_pics(r: Resources, subreddit: str, num_pics: int) -> None:
 
 def test():
     test = True
-
     r = setup_resources(test)
     scrape_pics(r, subreddit=ANALOG, num_pics=4)
     r.conn.close()
+
+
+def migrate():
+    test = False
+    conn = create_connection(test)
+    update_table(conn)
+    conn.close()
 
 
 def main():
@@ -71,4 +78,5 @@ def main():
 
 if __name__ == "__main__":
     # main()
-    test()
+    # test()
+    migrate()
