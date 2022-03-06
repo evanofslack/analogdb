@@ -8,7 +8,7 @@ import praw
 import psycopg2
 
 from migrations import resize_all_photos, update_table
-from postgres import create_connection, create_picture, get_latest
+from postgres import create_connection, create_picture, get_all, get_latest
 from s3_upload import init_s3
 from scrape import get_pics, init_reddit
 
@@ -55,7 +55,7 @@ def test():
 def migrate():
     test = False
     conn = create_connection(test)
-    resize_all_photos(conn)
+    get_all(conn)
     conn.close()
 
 
@@ -81,4 +81,5 @@ if __name__ == "__main__":
     # main()
     # test()
     migrate()
+    print("sleeping...")
     time.sleep(100000)

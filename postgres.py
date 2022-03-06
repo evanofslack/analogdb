@@ -92,6 +92,7 @@ def get_all(conn):
 
     while row is not None:
         print(row)
+        print("\n")
         row = c.fetchone()
 
 
