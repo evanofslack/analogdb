@@ -7,19 +7,47 @@ import (
 	"strconv"
 )
 
+type RawPost struct {
+	id         int
+	url        string
+	title      string
+	author     string
+	permalink  string
+	score      int
+	nsfw       bool
+	grayscale  bool
+	time       int
+	width      int
+	height     int
+	sprocket   bool
+	lowUrl     string
+	lowWidth   int
+	lowHeight  int
+	medUrl     string
+	medWidth   int
+	medHeight  int
+	highUrl    string
+	highWidth  int
+	highHeight int
+}
+
+type Image struct {
+	Label  string `json:"label"`
+	Url    string `json:"url"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+}
 type Post struct {
-	Id        int    `json:"id"`
-	Url       string `json:"url"`
-	Title     string `json:"title"`
-	Author    string `json:"author"`
-	Permalink string `json:"permalink"`
-	Score     int    `json:"upvotes"`
-	Nsfw      bool   `json:"nsfw"`
-	Grayscale bool   `json:"grayscale"`
-	Time      int    `json:"unix_time"`
-	Width     int    `json:"width"`
-	Height    int    `json:"height"`
-	Sprocket  bool   `json:"sprocket"`
+	Id        int     `json:"id"`
+	Images    []Image `json:"images"`
+	Title     string  `json:"title"`
+	Author    string  `json:"author"`
+	Permalink string  `json:"permalink"`
+	Score     int     `json:"upvotes"`
+	Nsfw      bool    `json:"nsfw"`
+	Grayscale bool    `json:"grayscale"`
+	Time      int     `json:"unix_time"`
+	Sprocket  bool    `json:"sprocket"`
 }
 
 type Meta struct {
@@ -251,22 +279,32 @@ func SprocketPost(limit int, time int) (Response, error) {
 
 // FindPost find and return post by ID
 func FindPost(id int) (Post, error) {
-	var p Post
+	var post Post
 	rows, err := db.Query("SELECT * FROM pictures WHERE id = $1;", id)
 	if err != nil {
 		fmt.Println(err)
 		return Post{}, err
 	}
+
 	for rows.Next() {
-		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height, &p.Sprocket)
+		var p RawPost
+		err := rows.Scan(&p.id, &p.url, &p.title, &p.author, &p.permalink, &p.score, &p.nsfw, &p.grayscale, &p.time, &p.width, &p.height, &p.sprocket, &p.lowUrl, &p.lowWidth, &p.lowHeight, &p.medUrl, &p.medWidth, &p.medHeight, &p.highUrl, &p.highWidth, &p.highHeight)
 		if err != nil {
 			return Post{}, err
 		}
+		lowImage := Image{Label: "low", Url: p.lowUrl, Width: p.lowWidth, Height: p.lowHeight}
+		medImage := Image{Label: "medium", Url: p.medUrl, Width: p.medWidth, Height: p.medHeight}
+		highImage := Image{Label: "high", Url: p.highUrl, Width: p.highWidth, Height: p.highHeight}
+		rawImage := Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
+		images := []Image{lowImage, medImage, highImage, rawImage}
+
+		post = Post{Id: p.id, Images: images, Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket}
 	}
+
 	if err = rows.Err(); err != nil {
 		return Post{}, err
 	}
-	return p, nil
+	return post, nil
 }
 
 // Get total number of entries in table for query
@@ -308,12 +346,20 @@ func createResponse(rows *sql.Rows) (Response, error) {
 	var err error
 	defer rows.Close()
 	for rows.Next() {
-		var p Post
-		err := rows.Scan(&p.Id, &p.Url, &p.Title, &p.Author, &p.Permalink, &p.Score, &p.Nsfw, &p.Grayscale, &p.Time, &p.Width, &p.Height, &p.Sprocket)
+		var p RawPost
+		err := rows.Scan(&p.id, &p.url, &p.title, &p.author, &p.permalink, &p.score, &p.nsfw, &p.grayscale, &p.time, &p.width, &p.height, &p.sprocket, &p.lowUrl, &p.lowWidth, &p.lowHeight, &p.medUrl, &p.medWidth, &p.medHeight, &p.highUrl, &p.highWidth, &p.highHeight)
 		if err != nil {
 			return Response{}, err
 		}
-		response.Posts = append(response.Posts, p)
+		lowImage := Image{Label: "low", Url: p.lowUrl, Width: p.lowWidth, Height: p.lowHeight}
+		medImage := Image{Label: "medium", Url: p.medUrl, Width: p.medWidth, Height: p.medHeight}
+		highImage := Image{Label: "high", Url: p.highUrl, Width: p.highWidth, Height: p.highHeight}
+		rawImage := Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
+		images := []Image{lowImage, medImage, highImage, rawImage}
+
+		post := Post{Id: p.id, Images: images, Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket}
+
+		response.Posts = append(response.Posts, post)
 	}
 	if err = rows.Err(); err != nil {
 		return Response{}, err
