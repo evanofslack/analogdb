@@ -56,17 +56,15 @@ def update_table(conn):
         c.execute(
             """
             ALTER TABLE pictures
-            ADD COLUMN lowUrl text
-            ADD COLUMN lowWidth integer
-            ADD COLUMN lowHeight integer
-
-            ADD COLUMN medUrl text
-            ADD COLUMN medWidth integer
-            ADD COLUMN medHeight integer
-
-            ADD COLUMN highUrl text
-            ADD COLUMN highWidth integer
-            ADD COLUMN highHeight integer
+            ADD COLUMN lowUrl text, 
+            ADD COLUMN lowWidth integer, 
+            ADD COLUMN lowHeight integer, 
+            ADD COLUMN medUrl text, 
+            ADD COLUMN medWidth integer, 
+            ADD COLUMN medHeight integer, 
+            ADD COLUMN highUrl text, 
+            ADD COLUMN highWidth integer, 
+            ADD COLUMN highHeight integer 
             """,
         )
         conn.commit()

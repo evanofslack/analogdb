@@ -23,7 +23,7 @@ class Resources:
 
     """
 
-    conn: psycopg2.connection
+    conn: psycopg2.connect
     s3: boto3.session.Session
     reddit: praw.Reddit
     latest: List[str]
@@ -33,12 +33,12 @@ def setup_resources(test: bool):
     conn = create_connection(test)
     s3 = init_s3()
     reddit = init_reddit()
-    latest = get_latest()
+    latest = get_latest(conn)
     return Resources(conn, s3, reddit, latest)
 
 
 def scrape_pics(r: Resources, subreddit: str, num_pics: int) -> None:
-    for data in get_pics(r.reddit, r.s3, num_pics, subreddit):
+    for data in get_pics(r.reddit, r.s3, num_pics, subreddit, r.latest):
         if data.title not in r.latest:
             create_picture(r.conn, r.s3, dataclasses.astuple(data))
 
@@ -47,7 +47,7 @@ def test():
     test = True
 
     r = setup_resources(test)
-    scrape_pics(r, subreddit=BW, num_pics=2)
+    scrape_pics(r, subreddit=SPROCKET, num_pics=2)
     r.conn.close()
 
 

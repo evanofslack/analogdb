@@ -37,17 +37,17 @@ def s3_upload(
     image.save(in_mem, content_type.removeprefix("image/"))
     in_mem.seek(0)
 
-    try:
-        # s3.Bucket(bucket).put_object(
-        #     Key=filename, Body=in_mem, ContentType=content_type
-        # )
-        r = s3.upload_fileobj(in_mem, bucket, filename)
-        print(f"success, uploaded {filename} to {bucket}")
-        return CLOUDFRONT_URL + filename
+    # try:
+    # s3.Bucket(bucket).put_object(
+    #     Key=filename, Body=in_mem, ContentType=content_type
+    # )
+    r = s3.upload_fileobj(in_mem, bucket, filename)
+    print(f"success, uploaded {filename} to {bucket}")
+    return CLOUDFRONT_URL + filename
 
-    except Exception as e:
-        print(e)
-        raise UploadError
+    # except Exception as e:
+    #     print(e)
+    #     raise UploadError
 
 
 if __name__ == "__main__":

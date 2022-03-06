@@ -54,27 +54,15 @@ def create_picture(conn, s3, data: tuple):
         c.execute(
             """
             INSERT 
-            INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, low-url, low-width, low-height, med-url, med-width, med-height, high-url, high-width, high-height) 
+            INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight) 
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
             ON CONFLICT (permalink) DO NOTHING
             RETURNING id,url
             """,
             data,
         )
-        result = c.fetchone()
-        if not result:
-            return
-        id = result[0]
-        url = result[1]
 
-        # Prevent re-upload to S3 on conflicting inserts
-        url = str(url)
-        if "d3i73ktnzbi69i.cloudfront.net" in url:
-            conn.commit()
-            return
-        else:
-            update_url(conn, s3, id, url)
-            conn.commit()
+        conn.commit()
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -99,7 +87,7 @@ def get_columns(conn):
 
 def get_all(conn):
     c = conn.cursor()
-    c.execute("""SELECT * FROM pictures""")
+    c.execute("""SELECT * FROM pictures ORDER by time DESC LIMIT 1""")
     row = c.fetchone()
 
     while row is not None:
@@ -109,7 +97,7 @@ def get_all(conn):
 
 def get_latest(conn) -> List[str]:
     c = conn.cursor()
-    c.execute("""SELECT title FROM pictures ORDER BY time DESC LIMIT 20""")
+    c.execute("""SELECT title FROM pictures ORDER BY time DESC LIMIT 30""")
     row = c.fetchone()
 
     titles = []
@@ -137,4 +125,5 @@ def update_url(conn, s3, id, url):
 if __name__ == "__main__":
 
     conn = create_connection(True)
-    get_latest(conn)
+    latest = get_latest(conn)
+    print(latest)

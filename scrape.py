@@ -1,4 +1,3 @@
-import os
 import uuid
 from dataclasses import dataclass
 from os import getenv
@@ -8,12 +7,11 @@ import praw
 import requests
 from PIL import Image
 
-from s3_upload import UploadError, init_s3, s3_upload
+from s3_upload import init_s3, s3_upload
 
 
 @dataclass
 class MyImage:
-
     image: Image.Image
     url: Optional[str]
     width: int
@@ -149,7 +147,11 @@ def url_to_images(url: str, s3) -> List[MyImage]:
 
 
 def get_pics(
-    reddit: praw.Reddit, s3, num_pics: int, subreddit: str
+    reddit: praw.Reddit,
+    s3,
+    num_pics: int,
+    subreddit: str,
+    latest: List[str],
 ) -> List[AnalogData]:
     pic_data: List[AnalogData] = []
     submissions: List[praw.reddit.Submission] = [
@@ -158,6 +160,11 @@ def get_pics(
     print(f"Gathered {len(submissions)} posts from {subreddit}")
 
     for s in submissions:
+        if s.title in latest:
+            # Don't upload post if it already exists in database
+            print(f"duplicate post ({s.title})")
+            continue
+
         try:
             url = get_url(s)
             images: List[MyImage] = url_to_images(url, s3)
@@ -184,12 +191,11 @@ def get_pics(
                 high_width=images[2].width,
                 high_height=images[2].height,
             )
-            # print(new_pic.title)
-            print(new_pic)
+            print(new_pic.title)
             pic_data.append(new_pic)
 
         except Exception as e:
-            print(e)
+            print(f'Could not handle "{s.title}" at {url} with error: {e} ')
 
     return pic_data
 
