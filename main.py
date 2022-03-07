@@ -62,6 +62,7 @@ def migrate():
 def main():
     test = False
     now = dt.datetime.now()
+    print("\n Running analog scraper...")
 
     # Scrape r/analog_bw and sprocketshots once a day
     if now.hour == 0:
@@ -73,7 +74,7 @@ def main():
 
     # Scrape r/analog every 8 hours
     elif now.hour == 8 or now.hour == 16:
-        r = setup_resources()
+        r = setup_resources(test)
         scrape_pics(r, subreddit=ANALOG, num_pics=7)
 
 
