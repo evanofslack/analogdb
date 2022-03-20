@@ -46,7 +46,7 @@ func main() {
 	r.Route("/posts/{id}", func(r chi.Router) {
 		r.Get("/", findPost)
 	})
-	r.Route("/posts/{id", func(r chi.Router) {
+	r.Route("/posts/{id}", func(r chi.Router) {
 		// add auth
 		r.Delete("/", deletePost)
 	})
