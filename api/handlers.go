@@ -153,3 +153,24 @@ func findPost(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 }
+
+func deletePost(w http.ResponseWriter, r *http.Request) {
+	var post models.Post
+	var err error
+
+	if id := chi.URLParam(r, "id"); id != "" {
+		intId, _ := strconv.Atoi(id)
+		post, err = models.DeletePost(intId)
+	}
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(post); err != nil {
+		log.Fatal(err)
+	}
+}

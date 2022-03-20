@@ -32,7 +32,7 @@ type RawPost struct {
 }
 
 type Image struct {
-	Label  string `json:"label"`
+	Label  string `json:"resolution"`
 	Url    string `json:"url"`
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
@@ -277,10 +277,40 @@ func SprocketPost(limit int, time int) (Response, error) {
 	return response, nil
 }
 
-// FindPost find and return post by ID
+// FindPost finds and returns post by ID
 func FindPost(id int) (Post, error) {
 	var post Post
 	rows, err := db.Query("SELECT * FROM pictures WHERE id = $1;", id)
+	if err != nil {
+		fmt.Println(err)
+		return Post{}, err
+	}
+
+	for rows.Next() {
+		var p RawPost
+		err := rows.Scan(&p.id, &p.url, &p.title, &p.author, &p.permalink, &p.score, &p.nsfw, &p.grayscale, &p.time, &p.width, &p.height, &p.sprocket, &p.lowUrl, &p.lowWidth, &p.lowHeight, &p.medUrl, &p.medWidth, &p.medHeight, &p.highUrl, &p.highWidth, &p.highHeight)
+		if err != nil {
+			return Post{}, err
+		}
+		lowImage := Image{Label: "low", Url: p.lowUrl, Width: p.lowWidth, Height: p.lowHeight}
+		medImage := Image{Label: "medium", Url: p.medUrl, Width: p.medWidth, Height: p.medHeight}
+		highImage := Image{Label: "high", Url: p.highUrl, Width: p.highWidth, Height: p.highHeight}
+		rawImage := Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
+		images := []Image{lowImage, medImage, highImage, rawImage}
+
+		post = Post{Id: p.id, Images: images, Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket}
+	}
+
+	if err = rows.Err(); err != nil {
+		return Post{}, err
+	}
+	return post, nil
+}
+
+// DeletePost deletes a post by ID
+func DeletePost(id int) (Post, error) {
+	var post Post
+	rows, err := db.Query("DELETE FROM pictures WHERE id = $1;", id)
 	if err != nil {
 		fmt.Println(err)
 		return Post{}, err

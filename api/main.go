@@ -33,26 +33,22 @@ func main() {
 
 	r.Handle("/*", http.FileServer(http.Dir("./static")))
 
-	r.Route("/latest", func(r chi.Router) {
-		r.With(mw.Pagination).Get("/", listLatest)
+	r.Group(func(r chi.Router) {
+		r.Use(mw.Pagination)
+		r.Get("/latest", listLatest)
+		r.Get("/top", listTop)
+		r.Get("/randon", listRandom)
+		r.Get("/nsfw", listNsfw)
+		r.Get("/bw", listBw)
+		r.Get("/sprocket", listSprocket)
 	})
-	r.Route("/top", func(r chi.Router) {
-		r.With(mw.Pagination).Get("/", listTop)
-	})
-	r.Route("/random", func(r chi.Router) {
-		r.With(mw.Pagination).Get("/", listRandom)
-	})
-	r.Route("/nsfw", func(r chi.Router) {
-		r.With(mw.Pagination).Get("/", listNsfw)
-	})
-	r.Route("/bw", func(r chi.Router) {
-		r.With(mw.Pagination).Get("/", listBw)
-	})
-	r.Route("/sprocket", func(r chi.Router) {
-		r.With(mw.Pagination).Get("/", listSprocket)
-	})
+
 	r.Route("/posts/{id}", func(r chi.Router) {
 		r.Get("/", findPost)
+	})
+	r.Route("/posts/{id", func(r chi.Router) {
+		// add auth
+		r.Delete("/", deletePost)
 	})
 
 	fmt.Println("listening...")
