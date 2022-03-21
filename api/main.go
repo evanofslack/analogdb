@@ -37,7 +37,7 @@ func main() {
 		r.Use(mw.Pagination)
 		r.Get("/latest", listLatest)
 		r.Get("/top", listTop)
-		r.Get("/randon", listRandom)
+		r.Get("/random", listRandom)
 		r.Get("/nsfw", listNsfw)
 		r.Get("/bw", listBw)
 		r.Get("/sprocket", listSprocket)
