@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	err := models.InitDB(true)
+	err := models.InitDB(false)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,10 +45,7 @@ func main() {
 
 	r.Route("/posts/{id}", func(r chi.Router) {
 		r.Get("/", findPost)
-	})
-	r.Route("/posts/{id}", func(r chi.Router) {
-		// add auth
-		r.Delete("/", deletePost)
+		r.With(mw.BasicAuth).Delete("/", deletePost)
 	})
 
 	fmt.Println("listening...")
