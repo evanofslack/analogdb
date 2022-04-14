@@ -19,3 +19,4 @@ praw.ini
 *.db
 *.pyc
 api/go-reddit
+.DS_Store
