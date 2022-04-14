@@ -1,16 +1,26 @@
-# AnalogDB API
+# AnalogDB
 
-API serving film photographs scraped from [r/analog](https://www.reddit.com/r/analog/)
+The collection of film photography: [analogdb.com](https://www.analogdb.com/)
 
-* Built with [Go](https://go.dev/), [Chi](https://github.com/go-chi/chi), and [Postgres](https://www.postgresql.org/)
+
+### Backend
+
+* Written in [Go](https://go.dev/) with [Chi](https://github.com/go-chi/chi) HTTP router
+* Consuming data from [analog-scraper](https://github.com/evanofslack/analog-scraper) 
 * Images stored on [AWS S3](https://aws.amazon.com/s3/) and served from [CloudFront CDN](https://aws.amazon.com/cloudfront/)
+* Metadata persisted with [Postgres](https://www.postgresql.org/)
 * Deployed with [Docker](https://www.docker.com/) and [Heroku](https://www.heroku.com/)
 
-### Demo
+### UI
 
-See the API in action: https://www.analogdb.com/
+* Powered by [Next](https://github.com/vercel/next.js/)
+* With custom styles built with [CSS Modules](https://github.com/css-modules/css-modules)
+* Deployed with [Vercel](https://vercel.com/).
 
-### Documentation
+
+### API
+
+AnalogDB exposes a public REST API that provides access to thousands of film photographs.
 
 Full documentation for the API: https://analogdb.herokuapp.com/
 
