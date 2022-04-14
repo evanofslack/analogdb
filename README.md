@@ -1,6 +1,6 @@
 # AnalogDB
 
-The collection of film photography: [analogdb.com](https://www.analogdb.com/)
+The collection of film photography
 
 
 ### Backend
