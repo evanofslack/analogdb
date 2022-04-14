@@ -1,0 +1,37 @@
+.headerContainer {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    padding-top: 0.7rem;
+}
+.linkOn, .linkOff {
+    font-weight: 300;
+    color: #444444;
+    padding: .25rem .5rem;
+    margin: .60rem;
+    font-size: 1.2rem;
+}
+.linkOn {
+    font-weight: 600;
+}
+@media screen and (max-width: 720px) {
+.linkOn, .linkOff {
+    padding: .25rem 0.8rem;
+    font-size: 0.7rem;
+    font-weight: 400;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+.linkOn {
+    border-bottom-style: solid;
+    border-width: 0.15rem;
+    font-weight: 600;
+}
+.icon {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+.iconText {
+    margin-top: 0.15rem;
+    margin-bottom: 0.1rem;
+}}
