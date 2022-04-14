@@ -1,6 +1,4 @@
 # Analog Gallery
-
-
 ### Next.js App
 
 * Bootstrapped with [Create Next App](https://nextjs.org/).
