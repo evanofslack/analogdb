@@ -10,21 +10,22 @@ export default function Modal(props) {
     const breakpoints = useBreakpoint();
 
     let image = post.images[2];
-    let fullImage = post.images[2];
+    let fullImage = post.images[3];
     if (breakpoints["xs"]) {
         image = post.images[0];
-        fullImage = post.images[0];
+        fullImage = post.images[2];
     } else if (breakpoints["sm"]) {
         image = post.images[1];
-        fullImage = post.images[1];
+        fullImage = post.images[3];
     } else if (breakpoints["md"]) {
         image = post.images[1];
-        fullImage = post.images[2];
+        fullImage = post.images[3];
     } else if (breakpoints["lg"]) {
         image = post.images[2];
-        fullImage = post.images[2];
+        fullImage = post.images[3];
     }
     const [isOpen, setIsOpen] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
     const toggle = () => setIsOpen((value) => !value);
 
     useDisableScroll(isOpen);
@@ -36,7 +37,7 @@ export default function Modal(props) {
                 width={image.width}
                 height={image.height}
                 alt={`Image ${post.id} by ${post.author}`}
-                quality={80}
+                quality={50}
                 layout="responsive"
                 placeholder="blur"
                 blurDataURL={props.post.images[0].url} // low res image
@@ -46,7 +47,9 @@ export default function Modal(props) {
                 <div className={styles.modal}>
                     <ImageTag post={post}></ImageTag>
                     <div className={styles.imageContainer} onClick={toggle}>
+                        {/* Preview picture of lower resolution */}
                         <Image
+                            style={isLoaded ? {} : { display: "none" }}
                             src={fullImage.url}
                             width={fullImage.width}
                             height={fullImage.height}
@@ -54,8 +57,18 @@ export default function Modal(props) {
                             quality={100}
                             layout="fill"
                             objectFit="contain"
-                            // placeholder="blur"
-                            // blurDataURL={props.post.images[0].url} // low res image
+                            onLoad={() => setIsLoaded(true)}
+                        />
+                        {/* Replace with full resolution picture when loaded */}
+                        <Image
+                            style={isLoaded ? { display: "none" } : {}}
+                            src={image.url}
+                            width={image.width}
+                            height={image.height}
+                            alt={`Image ${post.id} by ${post.author}`}
+                            quality={50}
+                            layout="fill"
+                            objectFit="contain"
                         />
                     </div>
                 </div>
