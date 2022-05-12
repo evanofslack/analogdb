@@ -20,3 +20,5 @@ praw.ini
 *.pyc
 api/go-reddit
 .DS_Store
+
+postgres-data
