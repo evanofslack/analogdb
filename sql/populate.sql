@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS pictures (
   id SERIAL PRIMARY KEY,
-  url text NOT NULL UNIQUE   
+  url text NOT NULL UNIQUE,
   title text, 
   author text,
   permalink text,
@@ -11,18 +11,17 @@ CREATE TABLE IF NOT EXISTS pictures (
   width integer,
   height integer,
   sprocket bool,
-  lowURL string,
+  lowURL text,
   lowWidth int,
   lowHeight int,
-  medUrl string,
+  medUrl text,
   medWidth int,
   medHeight int,
-  highUrl string,
+  highUrl text,
   highWidth int,
-  highHeight int,
+  highHeight int
 );
 
 INSERT 
 INTO pictures(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight) 
-VALUES (www.google.com, testTitle, testAuthor, www.permalink.com, 69, true, false, 1001001001, 10, 20, false, www.lowurl.com, 1, 2, www.mediumurl.com,2, 4, www.highurl.com, 5, 10) 
-ON CONFLICT (permalink) DO NOTHING
+VALUES ('www.google.com', 'testTitle', 'testAuthor', 'www.permalink.com', 69, TRUE, FALSE, 1001001001, 10, 20, FALSE, 'www.lowurl.com', 1, 2, 'www.mediumurl.com',2, 4, 'www.highurl.com', 5, 10) 
