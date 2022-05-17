@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strconv"
+	"strings"
 )
 
 type RawPost struct {
@@ -109,35 +110,58 @@ func TopPost(limit int, score int, nsfw bool, grayscale bool) (Response, error) 
 
 	var rows *sql.Rows
 	var err error
-	var response Response
-	var statement string
 
-	if score == 0 {
-		if !nsfw && !grayscale {
-			statement = "SELECT * FROM pictures WHERE greyscale = FALSE and nsfw = FALSE ORDER BY score DESC LIMIT $1;"
-		} else if !nsfw {
-			statement = "SELECT * FROM pictures WHERE nsfw = FALSE ORDER BY score DESC LIMIT $1;"
-		} else if !grayscale {
-			statement = "SELECT * FROM pictures WHERE greyscale = FALSE ORDER BY score DESC LIMIT $1;"
-		} else {
-			statement = "SELECT * FROM pictures ORDER BY score DESC LIMIT $1;"
-		}
-		rows, err = db.Query(statement, limit)
-	} else {
-		if !nsfw && !grayscale {
-			statement = "SELECT * FROM pictures WHERE score < $1 and greyscale = FALSE and nsfw = FALSE ORDER BY score DESC LIMIT $2;"
-		} else if !nsfw {
-			statement = "SELECT * FROM pictures WHERE score < $1 and nsfw = FALSE ORDER BY score DESC LIMIT $2;"
-		} else if !grayscale {
-			statement = "SELECT * FROM pictures WHERE score < $1 and greyscale = FALSE ORDER BY score DESC LIMIT $2;"
-		} else {
-			statement = "SELECT * FROM pictures WHERE score < $1 ORDER BY score DESC LIMIT $2;"
-		}
-		rows, err = db.Query(statement, score, limit)
+	where := []string{" 1 = 1"}
+	args := []any{}
+
+	if score != 0 {
+		where = append(where, "score < ?")
+		args = append(args, score)
 	}
+	if !nsfw {
+		where = append(where, "nsfw = FALSE")
+	}
+	if !grayscale {
+		where = append(where, "greyscale = FALSE")
+	}
+	lim := fmt.Sprintf(`LIMIT %d`, limit)
+
+	query := `
+			SELECT * 
+			FROM pictures 
+			WHERE` + strings.Join(where, " AND ") + `
+			ORDER BY score DESC
+			` + lim
+	rows, err = db.Query(query, args...)
+
+	// if score == 0 {
+	// 	if !nsfw && !grayscale {
+	// 		statement = "SELECT * FROM pictures WHERE greyscale = FALSE and nsfw = FALSE ORDER BY score DESC LIMIT $1;"
+	// 	} else if !nsfw {
+	// 		statement = "SELECT * FROM pictures WHERE nsfw = FALSE ORDER BY score DESC LIMIT $1;"
+	// 	} else if !grayscale {
+	// 		statement = "SELECT * FROM pictures WHERE greyscale = FALSE ORDER BY score DESC LIMIT $1;"
+	// 	} else {
+	// 		statement = "SELECT * FROM pictures ORDER BY score DESC LIMIT $1;"
+	// 	}
+	// 	rows, err = db.Query(statement, limit)
+	// } else {
+	// 	if !nsfw && !grayscale {
+	// 		statement = "SELECT * FROM pictures WHERE score < $1 and greyscale = FALSE and nsfw = FALSE ORDER BY score DESC LIMIT $2;"
+	// 	} else if !nsfw {
+	// 		statement = "SELECT * FROM pictures WHERE score < $1 and nsfw = FALSE ORDER BY score DESC LIMIT $2;"
+	// 	} else if !grayscale {
+	// 		statement = "SELECT * FROM pictures WHERE score < $1 and greyscale = FALSE ORDER BY score DESC LIMIT $2;"
+	// 	} else {
+	// 		statement = "SELECT * FROM pictures WHERE score < $1 ORDER BY score DESC LIMIT $2;"
+	// 	}
+	// 	rows, err = db.Query(statement, score, limit)
+	// }
 	if err != nil {
 		return Response{}, err
 	}
+
+	var response Response
 	response, err = createResponse(rows)
 	if err != nil {
 		return Response{}, err
