@@ -1,4 +1,4 @@
-.PHONY: up down validate log
+.PHONY: up down validate log dev
 
 validate: 
 	docker-compose config --quiet
@@ -11,3 +11,6 @@ down :
 
 log :
 	docker-compose logs --tail=0 --follow
+
+dev :
+	docker-compose up -d && cd server && go run .
