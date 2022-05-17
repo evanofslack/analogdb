@@ -13,19 +13,19 @@ services:
         max-size: 10m
         max-file: "3"
     ports:
-      - '5438:5432'
+      - '5432:5432'
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./sql/populate.sql:/docker-entrypoint-initdb.d/populate.sql
 
-  web:
-    container_name: analogdb
-    build: .
-    ports:
-      - "5000:5000"
-    restart: unless-stopped
-    depends_on:
-      - "postgres"
+  # web:
+  #   container_name: analogdb
+  #   build: .
+  #   ports:
+  #     - "5000:5000"
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - "postgres"
       
 volumes:
   postgres:
