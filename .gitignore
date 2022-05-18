@@ -15,8 +15,10 @@
 # vendor/
 .env
 praw.ini
-.vscode/settings.json
+.vscode
 *.db
 *.pyc
 api/go-reddit
 .DS_Store
+
+postgres-data
