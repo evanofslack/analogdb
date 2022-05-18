@@ -16,7 +16,7 @@ log :
 	docker-compose logs --tail=0 --follow
 
 dev :
-	docker-compose up -d && cd server && go run
+	docker-compose up -d && cd server && go run .
 
 test :
 	docker-compose up -d && cd server && go test ./...

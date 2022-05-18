@@ -68,35 +68,34 @@ func LatestPost(limit int, time int, nsfw bool, grayscale bool) (Response, error
 
 	var rows *sql.Rows
 	var err error
-	var response Response
-	var statement string
 
-	if time == 0 {
-		if !nsfw && !grayscale {
-			statement = "SELECT * FROM pictures WHERE greyscale = FALSE and nsfw = FALSE ORDER BY time DESC LIMIT $1;"
-		} else if !nsfw {
-			statement = "SELECT * FROM pictures WHERE nsfw = FALSE ORDER BY time DESC LIMIT $1;"
-		} else if !grayscale {
-			statement = "SELECT * FROM pictures WHERE greyscale = FALSE ORDER BY time DESC LIMIT $1;"
-		} else {
-			statement = "SELECT * FROM pictures ORDER BY time DESC LIMIT $1;"
-		}
-		rows, err = db.Query(statement, limit)
-	} else {
-		if !nsfw && !grayscale {
-			statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = FALSE and nsfw = FALSE ORDER BY time DESC LIMIT $2;"
-		} else if !nsfw {
-			statement = "SELECT * FROM pictures WHERE time < $1 and nsfw = FALSE ORDER BY time DESC LIMIT $2;"
-		} else if !grayscale {
-			statement = "SELECT * FROM pictures WHERE time < $1 and greyscale = FALSE ORDER BY time DESC LIMIT $2;"
-		} else {
-			statement = "SELECT * FROM pictures WHERE time < $1 ORDER BY time DESC LIMIT $2;"
-		}
-		rows, err = db.Query(statement, time, limit)
+	where := []string{" 1 = 1"}
+	args := []any{}
+
+	if time != 0 {
+		where = append(where, "time < $1")
+		args = append(args, time)
 	}
+	if !nsfw {
+		where = append(where, "nsfw = FALSE")
+	}
+	if !grayscale {
+		where = append(where, "greyscale = FALSE")
+	}
+	lim := fmt.Sprintf(`LIMIT %d`, limit)
+
+	query := `
+			SELECT * 
+			FROM pictures 
+			WHERE` + strings.Join(where, " AND ") + `
+			ORDER BY time DESC
+			` + lim
+	rows, err = db.Query(query, args...)
+
 	if err != nil {
 		return Response{}, err
 	}
+	var response Response
 	response, err = createResponse(rows)
 	if err != nil {
 		return Response{}, err
@@ -115,7 +114,7 @@ func TopPost(limit int, score int, nsfw bool, grayscale bool) (Response, error) 
 	args := []any{}
 
 	if score != 0 {
-		where = append(where, "score < ?")
+		where = append(where, "score < $1")
 		args = append(args, score)
 	}
 	if !nsfw {
@@ -134,29 +133,6 @@ func TopPost(limit int, score int, nsfw bool, grayscale bool) (Response, error) 
 			` + lim
 	rows, err = db.Query(query, args...)
 
-	// if score == 0 {
-	// 	if !nsfw && !grayscale {
-	// 		statement = "SELECT * FROM pictures WHERE greyscale = FALSE and nsfw = FALSE ORDER BY score DESC LIMIT $1;"
-	// 	} else if !nsfw {
-	// 		statement = "SELECT * FROM pictures WHERE nsfw = FALSE ORDER BY score DESC LIMIT $1;"
-	// 	} else if !grayscale {
-	// 		statement = "SELECT * FROM pictures WHERE greyscale = FALSE ORDER BY score DESC LIMIT $1;"
-	// 	} else {
-	// 		statement = "SELECT * FROM pictures ORDER BY score DESC LIMIT $1;"
-	// 	}
-	// 	rows, err = db.Query(statement, limit)
-	// } else {
-	// 	if !nsfw && !grayscale {
-	// 		statement = "SELECT * FROM pictures WHERE score < $1 and greyscale = FALSE and nsfw = FALSE ORDER BY score DESC LIMIT $2;"
-	// 	} else if !nsfw {
-	// 		statement = "SELECT * FROM pictures WHERE score < $1 and nsfw = FALSE ORDER BY score DESC LIMIT $2;"
-	// 	} else if !grayscale {
-	// 		statement = "SELECT * FROM pictures WHERE score < $1 and greyscale = FALSE ORDER BY score DESC LIMIT $2;"
-	// 	} else {
-	// 		statement = "SELECT * FROM pictures WHERE score < $1 ORDER BY score DESC LIMIT $2;"
-	// 	}
-	// 	rows, err = db.Query(statement, score, limit)
-	// }
 	if err != nil {
 		return Response{}, err
 	}
@@ -180,37 +156,33 @@ func RandomPost(limit int, time int, nsfw bool, grayscale bool, seed int) (Respo
 
 	var rows *sql.Rows
 	var err error
-	var response Response
-	var statement string
 
-	// Create shuffled order of db based on seed to create "random" order that is repeatable if the seed is supplied.
-	if time == 0 {
-		if !nsfw && !grayscale {
-			statement = "SELECT * FROM pictures WHERE nsfw = FALSE and greyscale = FALSE ORDER BY time % $1, time DESC LIMIT $2;"
-		} else if !nsfw {
-			statement = "SELECT * FROM pictures WHERE nsfw = FALSE ORDER BY time % $1, time DESC LIMIT $2;"
-		} else if !grayscale {
-			statement = "SELECT * FROM pictures WHERE greyscale = FALSE ORDER BY time % $1, time DESC LIMIT $2;"
-		} else {
-			statement = "SELECT * FROM pictures ORDER BY time % $1, time DESC LIMIT $2;"
-		}
-		rows, err = db.Query(statement, seed, limit)
-	} else {
-		if !nsfw && !grayscale {
-			statement = "SELECT * FROM pictures WHERE time % $1 > $2 and nsfw = FALSE and greyscale = FALSE ORDER BY time % $3, time DESC LIMIT $4;"
-		} else if !nsfw {
-			statement = "SELECT * FROM pictures WHERE time % $1 > $2 and nsfw = FALSE ORDER BY time % $3, time DESC LIMIT $4;"
-		} else if !grayscale {
-			statement = "SELECT * FROM pictures WHERE time % $1 > $2 and greyscale = FALSE ORDER BY time % $3, time DESC LIMIT $4;"
-		} else {
-			statement = "SELECT * FROM pictures WHERE time % $1 > $2 ORDER BY time % $3, time DESC LIMIT $4;"
-		}
-		rows, err = db.Query(statement, seed, (time % seed), seed, limit)
+	where := []string{" 1 = 1"}
+	args := []any{}
+
+	if time != 0 {
+		where = append(where, "MOD(time, $1) > $2")
+		args = append(args, seed, time%seed)
 	}
+	if !nsfw {
+		where = append(where, "nsfw = FALSE")
+	}
+	if !grayscale {
+		where = append(where, "greyscale = FALSE")
+	}
+	order := fmt.Sprintf(` ORDER BY MOD(time, %d), time DESC`, seed)
+	lim := fmt.Sprintf(` LIMIT %d`, limit)
+
+	query := `
+			SELECT * 
+			FROM pictures 
+			WHERE` + strings.Join(where, " AND ") + order + lim
+	rows, err = db.Query(query, args...)
 
 	if err != nil {
 		return Response{}, err
 	}
+	var response Response
 	response, err = createResponse(rows)
 	if err != nil {
 		return Response{}, err
@@ -227,7 +199,6 @@ func NsfwPost(limit int, time int) (Response, error) {
 
 	var rows *sql.Rows
 	var err error
-	var response Response
 	var statement string
 
 	if time == 0 {
@@ -240,6 +211,7 @@ func NsfwPost(limit int, time int) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
+	var response Response
 	response, err = createResponse(rows)
 	if err != nil {
 		return Response{}, err
@@ -253,7 +225,6 @@ func BwPost(limit int, time int) (Response, error) {
 
 	var rows *sql.Rows
 	var err error
-	var response Response
 	var statement string
 
 	if time == 0 {
@@ -266,6 +237,7 @@ func BwPost(limit int, time int) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
+	var response Response
 	response, err = createResponse(rows)
 	if err != nil {
 		return Response{}, err
@@ -279,7 +251,6 @@ func SprocketPost(limit int, time int) (Response, error) {
 
 	var rows *sql.Rows
 	var err error
-	var response Response
 	var statement string
 
 	if time == 0 {
@@ -292,6 +263,7 @@ func SprocketPost(limit int, time int) (Response, error) {
 	if err != nil {
 		return Response{}, err
 	}
+	var response Response
 	response, err = createResponse(rows)
 	if err != nil {
 		return Response{}, err
