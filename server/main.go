@@ -11,10 +11,16 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := models.InitDB(false)
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = models.InitDB(false)
 	if err != nil {
 		log.Fatal(err)
 	}

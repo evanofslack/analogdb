@@ -3,10 +3,8 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/lib/pq"
 )
 
@@ -18,7 +16,6 @@ func InitDB(prod bool) error {
 		conn, _ := pq.ParseURL(os.Getenv("DATABASE_URL"))
 		psqlInfo = conn + "sslmode=require"
 	} else {
-		LoadEnv()
 		psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
 			"password=%s dbname=%s sslmode=disable",
 			os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
@@ -32,11 +29,4 @@ func InitDB(prod bool) error {
 		return err
 	}
 	return db.Ping()
-}
-
-func LoadEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
 }
