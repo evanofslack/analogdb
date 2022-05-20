@@ -1,4 +1,4 @@
-.PHONY: up down validate log dev test
+.PHONY: validate up up-d down log dev test psql
 
 validate: 
 	docker-compose config --quiet
@@ -6,11 +6,11 @@ validate:
 up :
 	docker-compose up 
 
-upd :
+up-d :
 	docker-compose up -d
 
 down : 
-	docker-compose down
+	docker-compose down --remove-orphans
 
 log :
 	docker-compose logs --tail=0 --follow
@@ -20,3 +20,6 @@ dev :
 
 test :
 	docker-compose up -d && cd server && go test ./...
+
+psql :
+	docker exec -it  postgres psql -U postgres analog-local
