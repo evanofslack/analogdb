@@ -17,15 +17,7 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./sql/populate.sql:/docker-entrypoint-initdb.d/populate.sql
+      - ./sql/csv:/var/lib/postgresql/csv
 
-  # web:
-  #   container_name: analogdb
-  #   build: .
-  #   ports:
-  #     - "5000:5000"
-  #   restart: unless-stopped
-  #   depends_on:
-  #     - "postgres"
-      
 volumes:
   postgres:
