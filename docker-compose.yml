@@ -16,8 +16,8 @@ services:
       - '5432:5432'
     volumes:
       - postgres:/var/lib/postgresql/data
-      - ./sql/populate.sql:/docker-entrypoint-initdb.d/populate.sql
-      - ./sql/csv:/var/lib/postgresql/csv
+      - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
+      - ./postgres/csv:/var/lib/postgresql/csv
 
 volumes:
   postgres:
