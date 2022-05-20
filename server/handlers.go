@@ -3,11 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	mw "go-reddit/middleware"
-	"go-reddit/models"
 	"log"
 	"net/http"
 	"strconv"
+
+	mw "github.com/evanofslack/analogdb/middleware"
+	"github.com/evanofslack/analogdb/models"
 
 	"github.com/go-chi/chi/v5"
 )

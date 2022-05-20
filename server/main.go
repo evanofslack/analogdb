@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	mw "go-reddit/middleware"
-	"go-reddit/models"
 	"log"
 	"net/http"
 	"os"
+
+	mw "github.com/evanofslack/analogdb/middleware"
+	"github.com/evanofslack/analogdb/models"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

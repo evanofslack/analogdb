@@ -1,4 +1,4 @@
-module go-reddit
+module github.com/evanofslack/analogdb
 
 go 1.18
 
