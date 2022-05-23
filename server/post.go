@@ -1,4 +1,4 @@
-package main
+package analogdb
 
 import "context"
 
@@ -26,6 +26,16 @@ type Post struct {
 	Sprocket  bool    `json:"sprocket"`
 }
 
+type PostFilter struct {
+	Limit     *int
+	Time      *int
+	Score     *int
+	Nsfw      *bool
+	Grayscale *bool
+	Sprocket  *bool
+	Seed      *int
+}
+
 // Meta includes details about the response.
 type Meta struct {
 	TotalPosts int    `json:"total_posts"`
@@ -42,9 +52,13 @@ type Response struct {
 }
 
 type PostService interface {
-	Latest(ctx context.Context, limit int, time int, nsfw bool, grayscale bool) (Response, error)
-	Top(ctx context.Context, limit int, score int, nsfw bool, grayscale bool) (Response, error)
-	Random(ctx context.Context, limit int, time int, nsfw bool, grayscale bool, seed int) (Response, error)
-	FindPost(ctx context.Context, id int) (Post, error)
+	LatestPosts(ctx context.Context, filter PostFilter) ([]Post, int, error)
+	TopPosts(ctx context.Context, filter PostFilter) ([]Post, int, error)
+	RandomPosts(ctx context.Context, filter PostFilter) ([]Post, int, error)
+
+	FindPostByID(ctx context.Context, id int) (Post, error)
+	FindPostByTitle(ctx context.Context, title string) (Post, error)
+	FindPostByAuthor(ctx context.Context, author string) (Post, error)
+
 	DeletePost(ctx context.Context, id int) (Post, error)
 }
