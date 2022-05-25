@@ -46,10 +46,3 @@ func (db *DB) Close() error {
 func (db *DB) monitor() {
 	// add prometheous metrics
 }
-
-func FormatLimit(limit int) string {
-	if limit > 0 {
-		return fmt.Sprintf(`LIMIT %d`, limit)
-	}
-	return ""
-}
