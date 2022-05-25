@@ -35,6 +35,9 @@ type PostFilter struct {
 	Grayscale *bool
 	Sprocket  *bool
 	Seed      *int
+	ID        *int
+	Title     *string
+	Author    *string
 }
 
 // Meta includes details about the response.
@@ -53,13 +56,9 @@ type Response struct {
 }
 
 type PostService interface {
-	LatestPosts(ctx context.Context, filter PostFilter) ([]*Post, int, error)
-	TopPosts(ctx context.Context, filter PostFilter) ([]*Post, int, error)
-	RandomPosts(ctx context.Context, filter PostFilter) ([]*Post, int, error)
-
+	LatestPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
+	TopPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
+	RandomPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
 	FindPostByID(ctx context.Context, id int) (*Post, error)
-	FindPostByTitle(ctx context.Context, title string) (*Post, error)
-	FindPostByAuthor(ctx context.Context, author string) (*Post, error)
-
 	DeletePost(ctx context.Context, id int) (*Post, error)
 }
