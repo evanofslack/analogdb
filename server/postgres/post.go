@@ -237,7 +237,7 @@ func filterToOrder(filter *analogdb.PostFilter) string {
 			return "ORDER BY score DESC"
 		case random:
 			if seed := filter.Seed; seed != nil {
-				return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", seed)
+				return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", *seed)
 			} else {
 				newSeed := seedGenerator()
 				filter.Seed = &newSeed
@@ -282,7 +282,7 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 			index += 1
 		case random:
 			if seed := filter.Seed; seed != nil {
-				where = append(where, fmt.Sprintf("MOD(time, %d) > $%d", index, index+1))
+				where = append(where, fmt.Sprintf("MOD(time, $%d) > $%d", index, index+1))
 				args = append(args, *seed, *keyset%*seed)
 				index += 2
 			}

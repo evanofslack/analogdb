@@ -185,11 +185,25 @@ func TestLatestPost(t *testing.T) {
 		}
 
 		newest := posts[0].Time
+		oldest := posts[limit-1].Time
 		for _, p := range posts {
 			if p.Time > newest {
 				t.Fatalf("posts not sorted newest to oldest")
 			}
 		}
+
+		filter.Keyset = &oldest
+		posts, _, err = ps.FindPosts(context.Background(), filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, p := range posts {
+			if p.Time > oldest {
+				t.Fatalf("posts not sorted newest to oldest with keyset")
+			}
+		}
+
 	})
 }
 
@@ -208,16 +222,28 @@ func TestTopPost(t *testing.T) {
 		}
 
 		top := posts[0].Score
+		bottom := posts[limit-1].Score
 		for _, p := range posts {
 			if p.Score > top {
 				t.Fatalf("posts not sorted most to least votes")
+			}
+		}
+		filter.Keyset = &bottom
+		posts, _, err = ps.FindPosts(context.Background(), filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, p := range posts {
+			if p.Score > bottom {
+				t.Fatalf("posts not sorted most to least votes with keyset")
 			}
 		}
 	})
 }
 
 func TestRandomPost(t *testing.T) {
-	t.Run("UpdateFilterSeed", func(t *testing.T) {
+	t.Run("PostRandom", func(t *testing.T) {
 		db := MustOpen(t)
 		defer MustClose(t, db)
 		ps := NewPostService(db)
@@ -229,14 +255,33 @@ func TestRandomPost(t *testing.T) {
 			t.Fatal("unset seed must be nil")
 		}
 
-		_, _, err := ps.FindPosts(context.Background(), filter)
+		posts, _, err := ps.FindPosts(context.Background(), filter)
 		if err != nil {
 			t.Fatal(err)
+		}
+
+		seen := make(map[int]bool)
+		for _, p := range posts {
+			seen[p.Id] = true
 		}
 
 		if seed := filter.Seed; seed == nil {
 			t.Fatal("assigned seed must not be nil")
 		}
+
+		filter.Keyset = &posts[limit-1].Time
+
+		posts, _, err = ps.FindPosts(context.Background(), filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, p := range posts {
+			if seen[p.Id] == true {
+				t.Fatal("random posts must not repeat")
+			}
+		}
+
 	})
 }
 
