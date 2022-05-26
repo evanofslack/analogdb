@@ -29,8 +29,8 @@ type Post struct {
 // PostFilter are options used for querying posts
 type PostFilter struct {
 	Limit     *int
-	Time      *int
-	Score     *int
+	Sort      *string
+	Keyset    *int
 	Nsfw      *bool
 	Grayscale *bool
 	Sprocket  *bool
@@ -56,9 +56,7 @@ type Response struct {
 }
 
 type PostService interface {
-	LatestPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
-	TopPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
-	RandomPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
+	FindPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
 	FindPostByID(ctx context.Context, id int) (*Post, error)
 	DeletePost(ctx context.Context, id int) (*Post, error)
 }
