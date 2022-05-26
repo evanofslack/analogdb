@@ -32,7 +32,7 @@ var (
 func TestFindPosts(t *testing.T) {
 	t.Run("Default", func(t *testing.T) {
 		ctx, tx := setupTx(t)
-		if posts, count, err := findPosts(ctx, tx, nilFilter, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, nilFilter); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts; got != want {
 			t.Fatalf("length of postsG %v, want %v", got, want)
@@ -43,7 +43,7 @@ func TestFindPosts(t *testing.T) {
 
 	t.Run("Limit", func(t *testing.T) {
 		ctx, tx := setupTx(t)
-		if posts, count, err := findPosts(ctx, tx, limitFilter, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, limitFilter); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), limit; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -55,7 +55,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("NoNSFW", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		nsfw := false
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts-totalNsfw; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -67,7 +67,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("OnlyNSFW", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		nsfw := true
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalNsfw; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -79,7 +79,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("NoBW", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		grayscale := false
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts-totalGrayscale; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -91,7 +91,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("OnlyBW", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		grayscale := true
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalGrayscale; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -103,7 +103,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("NoSprocket", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		sprocket := false
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts-totalSprocket; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -115,7 +115,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("OnlySprocket", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		sprocket := true
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalSprocket; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -126,7 +126,7 @@ func TestFindPosts(t *testing.T) {
 
 	t.Run("ByAuthor", func(t *testing.T) {
 		ctx, tx := setupTx(t)
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Author: &postAuthor}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Author: &postAuthor}); err != nil {
 			t.Fatal(err)
 		} else if len(posts) != 1 || count != 1 {
 			t.Fatal("must be one matching post")
@@ -138,7 +138,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("ByAuthorAddPrefix", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		noPrefixAuthor := postAuthor[2:]
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Author: &noPrefixAuthor}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Author: &noPrefixAuthor}); err != nil {
 			t.Fatal(err)
 		} else if len(posts) != 1 || count != 1 {
 			t.Fatal("must be one matching post")
@@ -150,7 +150,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("SearchTitleOne", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		keyword := "Melancholy"
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}, "time"); err != nil {
+		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
 			t.Fatal(err)
 		} else if len(posts) != 1 || count != 1 {
 			t.Fatal("must be one matching post")
@@ -162,7 +162,7 @@ func TestFindPosts(t *testing.T) {
 	t.Run("SearchTitleMultiple", func(t *testing.T) {
 		ctx, tx := setupTx(t)
 		keyword := "Portra"
-		if posts, _, err := findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}, "time"); err != nil {
+		if posts, _, err := findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPortra; got != want {
 			t.Fatalf("number of matching titles not equal, got %v, want %v", got, want)
@@ -176,17 +176,34 @@ func TestLatestPost(t *testing.T) {
 		defer MustClose(t, db)
 		ps := NewPostService(db)
 
-		posts, _, err := ps.LatestPosts(context.Background(), limitFilter)
+		sort := time
+		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
+
+		posts, _, err := ps.FindPosts(context.Background(), filter)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		newest := posts[0].Time
+		oldest := posts[limit-1].Time
 		for _, p := range posts {
 			if p.Time > newest {
 				t.Fatalf("posts not sorted newest to oldest")
 			}
 		}
+
+		filter.Keyset = &oldest
+		posts, _, err = ps.FindPosts(context.Background(), filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, p := range posts {
+			if p.Time > oldest {
+				t.Fatalf("posts not sorted newest to oldest with keyset")
+			}
+		}
+
 	})
 }
 
@@ -196,39 +213,75 @@ func TestTopPost(t *testing.T) {
 		defer MustClose(t, db)
 		ps := NewPostService(db)
 
-		posts, _, err := ps.TopPosts(context.Background(), limitFilter)
+		sort := score
+		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
+
+		posts, _, err := ps.FindPosts(context.Background(), filter)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		top := posts[0].Score
+		bottom := posts[limit-1].Score
 		for _, p := range posts {
 			if p.Score > top {
 				t.Fatalf("posts not sorted most to least votes")
+			}
+		}
+		filter.Keyset = &bottom
+		posts, _, err = ps.FindPosts(context.Background(), filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, p := range posts {
+			if p.Score > bottom {
+				t.Fatalf("posts not sorted most to least votes with keyset")
 			}
 		}
 	})
 }
 
 func TestRandomPost(t *testing.T) {
-	t.Run("UpdateFilterSeed", func(t *testing.T) {
+	t.Run("PostRandom", func(t *testing.T) {
 		db := MustOpen(t)
 		defer MustClose(t, db)
 		ps := NewPostService(db)
 
-		tempFilter := &analogdb.PostFilter{Limit: &limit}
-		if seed := tempFilter.Seed; seed != nil {
+		sort := random
+		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
+
+		if seed := filter.Seed; seed != nil {
 			t.Fatal("unset seed must be nil")
 		}
 
-		_, _, err := ps.RandomPosts(context.Background(), tempFilter)
+		posts, _, err := ps.FindPosts(context.Background(), filter)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if seed := tempFilter.Seed; seed == nil {
+		seen := make(map[int]bool)
+		for _, p := range posts {
+			seen[p.Id] = true
+		}
+
+		if seed := filter.Seed; seed == nil {
 			t.Fatal("assigned seed must not be nil")
 		}
+
+		filter.Keyset = &posts[limit-1].Time
+
+		posts, _, err = ps.FindPosts(context.Background(), filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		for _, p := range posts {
+			if seen[p.Id] == true {
+				t.Fatal("random posts must not repeat")
+			}
+		}
+
 	})
 }
 

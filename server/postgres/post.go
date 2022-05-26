@@ -54,31 +54,13 @@ const (
 	random = "random"
 )
 
-func (s *PostService) LatestPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
+func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer tx.Rollback()
-	return findPosts(ctx, tx, filter, time)
-}
-
-func (s *PostService) TopPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
-	tx, err := s.db.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer tx.Rollback()
-	return findPosts(ctx, tx, filter, score)
-}
-
-func (s *PostService) RandomPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
-	tx, err := s.db.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, 0, err
-	}
-	defer tx.Rollback()
-	return findPosts(ctx, tx, filter, random)
+	return findPosts(ctx, tx, filter)
 }
 
 func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post, error) {
@@ -87,7 +69,7 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 		return nil, err
 	}
 	defer tx.Rollback()
-	posts, _, err := findPosts(ctx, tx, &analogdb.PostFilter{ID: &id}, time)
+	posts, _, err := findPosts(ctx, tx, &analogdb.PostFilter{ID: &id})
 	if err != nil {
 		return nil, err
 	} else if len(posts) == 0 {
@@ -113,16 +95,14 @@ func (s *PostService) DeletePost(ctx context.Context, id int) (*analogdb.Post, e
 }
 
 // findPosts is the general function responsible for handling all queries
-func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter, sort string) ([]*analogdb.Post, int, error) {
-	if err := validateSort(sort); err != nil {
-		return nil, 0, err
-	}
-	if err := validateFilter(sort, filter); err != nil {
+func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
+
+	if err := validateFilter(filter); err != nil {
 		return nil, 0, err
 	}
 
 	where, args := filterToWhere(filter)
-	order := sortToOrder(sort, filter)
+	order := filterToOrder(filter)
 	limit := formatLimit(filter)
 	query := `
 			SELECT
@@ -247,19 +227,25 @@ func deletePost(ctx context.Context, tx *sql.Tx, id int) ([]*analogdb.Post, erro
 	return posts, nil
 }
 
-// sortToOrder converts sort string into an SQL ORDER BY statement
-func sortToOrder(sort string, filter *analogdb.PostFilter) string {
-	if sort == time {
-		return " ORDER BY time DESC"
-	} else if sort == score {
-		return " ORDER BY score DESC"
-	} else if seed := filter.Seed; seed != nil {
-		return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", seed)
-	} else {
-		newSeed := seedGenerator()
-		filter.Seed = &newSeed
-		return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", newSeed)
+// filterToOrder converts filter into an SQL "ORDER BY" statement
+func filterToOrder(filter *analogdb.PostFilter) string {
+	if sort := filter.Sort; sort != nil {
+		switch *sort {
+		case time:
+			return " ORDER BY time DESC"
+		case score:
+			return "ORDER BY score DESC"
+		case random:
+			if seed := filter.Seed; seed != nil {
+				return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", *seed)
+			} else {
+				newSeed := seedGenerator()
+				filter.Seed = &newSeed
+				return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", newSeed)
+			}
+		}
 	}
+	return ""
 }
 
 // formatLimit turns the limit into an SQL limit statement
@@ -283,22 +269,24 @@ func seedGenerator() int {
 func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 	index := 1
 	where, args := []string{"1=1"}, []any{}
-	if time := filter.Time; time != nil {
-		where = append(where, fmt.Sprintf("time < $%d", index))
-		args = append(args, *time)
-		index += 1
-	}
 
-	if score := filter.Score; score != nil {
-		where = append(where, fmt.Sprintf("score < $%d", index))
-		args = append(args, *score)
-		index += 1
-	}
-
-	if seed, time := filter.Seed, filter.Time; seed != nil && time != nil {
-		where = append(where, fmt.Sprintf("MOD(time, %d) > $%d", index, index+1))
-		args = append(args, *seed, *time%*seed)
-		index += 2
+	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
+		switch *sort {
+		case time:
+			where = append(where, fmt.Sprintf("time < $%d", index))
+			args = append(args, *keyset)
+			index += 1
+		case score:
+			where = append(where, fmt.Sprintf("score < $%d", index))
+			args = append(args, *keyset)
+			index += 1
+		case random:
+			if seed := filter.Seed; seed != nil {
+				where = append(where, fmt.Sprintf("MOD(time, $%d) > $%d", index, index+1))
+				args = append(args, *seed, *keyset%*seed)
+				index += 2
+			}
+		}
 	}
 
 	if nsfw := filter.Nsfw; nsfw != nil {
@@ -343,35 +331,18 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 
 }
 
-// validateFilter ensures that provided filter parameters work with sort method
-func validateFilter(sort string, filter *analogdb.PostFilter) error {
-	if sort == time {
-		if filter.Score != nil || filter.Seed != nil {
-			return errors.New("Can not include score or seed in filter if sorting by time")
-		}
-	}
-	if sort == score {
-		if filter.Time != nil || filter.Seed != nil {
-			return errors.New("Can not include time or seed in filter if sorting by score")
-		}
-	}
-	if sort == random {
-		if filter.Score != nil {
-			return errors.New("Can not include score in filter if sorting by random")
-		}
-	}
-	return nil
-}
-
 // validateSort ensures that provided sort method is defined
-func validateSort(sort string) error {
+func validateFilter(filter *analogdb.PostFilter) error {
 	validSort := make(map[string]bool)
 	validSort[time] = true
 	validSort[score] = true
 	validSort[random] = true
 
-	if !validSort[sort] {
-		return errors.New("invalid sort parameter, valid options are 'time', 'score' or 'random'")
+	if sort := filter.Sort; sort != nil {
+		if !validSort[*sort] {
+			return errors.New("invalid sort parameter, valid options are 'time', 'score' or 'random'")
+		}
+		return nil
 	}
 	return nil
 }
