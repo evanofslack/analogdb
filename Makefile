@@ -1,4 +1,4 @@
-.PHONY: up up-d down log dev test psql
+.PHONY: up up-d down log run dev test psql
 
 up :
 	docker-compose up 
