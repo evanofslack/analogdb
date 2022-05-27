@@ -2,6 +2,7 @@ package http
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/evanofslack/analogdb"
@@ -30,4 +31,9 @@ func getPort() string {
 		fmt.Println("No PORT env variable found, defaulting to: " + port)
 	}
 	return ":" + port
+}
+
+func (s *Server) Run() {
+	fmt.Println("starting server...")
+	http.ListenAndServe(s.port, s.router)
 }
