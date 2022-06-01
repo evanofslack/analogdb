@@ -7,8 +7,8 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/evanofslack/analogdb/http"
 	"github.com/evanofslack/analogdb/postgres"
+	"github.com/evanofslack/analogdb/server"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 
 	ps := postgres.NewPostService(db)
 
-	s := http.NewServer()
+	s := server.New()
 	s.PostService = ps
 	s.MountMiddleware()
 	s.MountStatic()
