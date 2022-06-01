@@ -1,7 +1,4 @@
-.PHONY: validate up up-d down log dev test psql
-
-validate: 
-	docker-compose config --quiet
+.PHONY: up up-d down log run dev test psql
 
 up :
 	docker-compose up 
@@ -15,8 +12,11 @@ down :
 log :
 	docker-compose logs --tail=0 --follow
 
+run :
+	cd server/cmd/analogdb && go run .
+
 dev :
-	docker-compose up -d && cd server && go run .
+	docker-compose up -d && cd server/cmd/analogdb && go run .
 
 test :
 	docker-compose up -d && cd server && go test ./...
