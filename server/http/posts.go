@@ -101,15 +101,15 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 
 	filter := &analogdb.PostFilter{Limit: &defaultLimit}
 
-	if li := r.URL.Query().Get("page_size"); li != "" {
-		if limit, err := strconv.Atoi(li); err != nil {
+	if lim := r.URL.Query().Get("page_size"); lim != "" {
+		if limit, err := strconv.Atoi(lim); err != nil {
 			filter.Limit = &limit
 		} else {
 			return nil, err
 		}
 	}
-	if ke := r.URL.Query().Get("page_id"); ke != "" {
-		if keyset, err := strconv.Atoi(ke); err != nil {
+	if key := r.URL.Query().Get("page_id"); key != "" {
+		if keyset, err := strconv.Atoi(key); err != nil {
 			filter.Keyset = &keyset
 		} else {
 			return nil, err
@@ -124,10 +124,10 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			return nil, errors.New("invalid string to boolean conversion")
 		}
 	}
-	if gr := r.URL.Query().Get("bw"); gr != "" {
-		if yes := truthy[gr]; yes {
+	if bw := r.URL.Query().Get("bw"); bw != "" {
+		if yes := truthy[bw]; yes {
 			filter.Grayscale = &yes
-		} else if no := falsey[strings.ToLower(gr)]; no {
+		} else if no := falsey[strings.ToLower(bw)]; no {
 			filter.Grayscale = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")
