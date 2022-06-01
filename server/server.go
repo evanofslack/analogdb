@@ -1,4 +1,4 @@
-package http
+package server
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ type Server struct {
 	PostService analogdb.PostService
 }
 
-func NewServer() *Server {
+func New() *Server {
 	s := &Server{
 		router: chi.NewRouter(),
 		port:   getPort(),

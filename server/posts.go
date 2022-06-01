@@ -1,4 +1,4 @@
-package http
+package server
 
 import (
 	"encoding/json"
@@ -48,7 +48,11 @@ func (s *Server) MountPostHandlers() {
 
 func (s *Server) latestPosts(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToFilter(r)
+	if filter == nil {
+		fmt.Println("nilllll")
+	}
 	if err != nil {
+		fmt.Println(err)
 		writeError(w, r, err)
 	}
 	sort := "time"
@@ -186,6 +190,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 	}
 	//pageUrl
 	if sort, path := filter.Sort, ""; sort != nil {
+		fmt.Print(*sort)
 		switch *sort {
 		case "time":
 			path += latestPath
@@ -214,6 +219,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		if author := filter.Author; author != nil {
 			path += fmt.Sprintf("%sauthor=%s", paramJoiner(&numParams), *author)
 		}
+		meta.PageURL = path
 	}
 	return meta, nil
 }
@@ -247,67 +253,69 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 
 	filter := &analogdb.PostFilter{Limit: &defaultLimit}
 
-	if li := r.URL.Query().Get("page_size"); li != "" {
-		if limit, err := strconv.Atoi(li); err != nil {
-			filter.Limit = &limit
-		} else {
+	if limit := r.URL.Query().Get("page_size"); limit != "" {
+		fmt.Println(limit)
+		if intLimit, err := strconv.Atoi(limit); err != nil {
 			return nil, err
+		} else {
+			fmt.Println(intLimit)
+			filter.Limit = &intLimit
+			fmt.Println(*filter.Limit)
 		}
 	}
-	if ke := r.URL.Query().Get("page_id"); ke != "" {
-		if keyset, err := strconv.Atoi(ke); err != nil {
+	if key := r.URL.Query().Get("page_id"); key != "" {
+		if keyset, err := strconv.Atoi(key); err != nil {
+			return nil, err
+		} else {
 			filter.Keyset = &keyset
-		} else {
-			return nil, err
 		}
 	}
-	if ns := r.URL.Query().Get("nsfw"); ns != "" {
-		if yes := truthy[ns]; yes {
+	if nsfw := r.URL.Query().Get("nsfw"); nsfw != "" {
+		if yes := truthy[nsfw]; yes {
 			filter.Nsfw = &yes
-		} else if no := falsey[strings.ToLower(ns)]; no {
+		} else if no := falsey[strings.ToLower(nsfw)]; no {
 			filter.Nsfw = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")
 		}
 	}
-	if gr := r.URL.Query().Get("bw"); gr != "" {
-		if yes := truthy[gr]; yes {
+	if bw := r.URL.Query().Get("bw"); bw != "" {
+		if yes := truthy[bw]; yes {
 			filter.Grayscale = &yes
-		} else if no := falsey[strings.ToLower(gr)]; no {
+		} else if no := falsey[strings.ToLower(bw)]; no {
 			filter.Grayscale = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")
 		}
 	}
-	if sp := r.URL.Query().Get("sprocket"); sp != "" {
-		if yes := truthy[sp]; yes {
+	if sprock := r.URL.Query().Get("sprocket"); sprock != "" {
+		if yes := truthy[sprock]; yes {
 			filter.Sprocket = &yes
-		} else if no := falsey[strings.ToLower(sp)]; no {
+		} else if no := falsey[strings.ToLower(sprock)]; no {
 			filter.Sprocket = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")
 		}
 	}
-	if se := r.URL.Query().Get("seed"); se != "" {
-		if seed, err := strconv.Atoi(se); err != nil {
-			filter.Seed = &seed
-		} else {
+	if seed := r.URL.Query().Get("seed"); seed != "" {
+		if seed, err := strconv.Atoi(seed); err != nil {
 			return nil, err
+		} else {
+			filter.Seed = &seed
 		}
 	}
 	if id := r.URL.Query().Get("id"); id != "" {
 		if identify, err := strconv.Atoi(id); err != nil {
-			filter.ID = &identify
-		} else {
 			return nil, err
+		} else {
+			filter.ID = &identify
 		}
 	}
-	if ti := r.URL.Query().Get("title"); ti != "" {
-		filter.Title = &ti
+	if title := r.URL.Query().Get("title"); title != "" {
+		filter.Title = &title
 	}
-	if au := r.URL.Query().Get("author"); au != "" {
-		filter.Author = &au
+	if author := r.URL.Query().Get("author"); author != "" {
+		filter.Author = &author
 	}
-
 	return filter, nil
 }
