@@ -13,13 +13,13 @@ log :
 	docker-compose logs --tail=0 --follow
 
 run :
-	cd server/cmd/analogdb && go run .
+	cd cmd/analogdb && go run .
 
 dev :
-	docker-compose up -d && cd server/cmd/analogdb && go run .
+	docker-compose up -d && cd cmd/analogdb && go run .
 
 test :
-	docker-compose up -d && cd server && go test ./...
+	docker-compose up -d && go test ./...
 
 psql :
 	docker exec -it  postgres psql -U postgres analog-local
