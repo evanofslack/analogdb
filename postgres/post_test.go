@@ -172,8 +172,8 @@ func TestFindPosts(t *testing.T) {
 
 func TestLatestPost(t *testing.T) {
 	t.Run("PostSequential", func(t *testing.T) {
-		db := MustOpen(t)
-		defer MustClose(t, db)
+		db := mustOpen(t)
+		defer mustClose(t, db)
 		ps := NewPostService(db)
 
 		sort := time
@@ -209,8 +209,8 @@ func TestLatestPost(t *testing.T) {
 
 func TestTopPost(t *testing.T) {
 	t.Run("PostTop", func(t *testing.T) {
-		db := MustOpen(t)
-		defer MustClose(t, db)
+		db := mustOpen(t)
+		defer mustClose(t, db)
 		ps := NewPostService(db)
 
 		sort := score
@@ -244,8 +244,8 @@ func TestTopPost(t *testing.T) {
 
 func TestRandomPost(t *testing.T) {
 	t.Run("PostRandom", func(t *testing.T) {
-		db := MustOpen(t)
-		defer MustClose(t, db)
+		db := mustOpen(t)
+		defer mustClose(t, db)
 		ps := NewPostService(db)
 
 		sort := random
@@ -287,8 +287,8 @@ func TestRandomPost(t *testing.T) {
 
 func TestFindPost(t *testing.T) {
 	t.Run("ErrNoPost", func(t *testing.T) {
-		db := MustOpen(t)
-		defer MustClose(t, db)
+		db := mustOpen(t)
+		defer mustClose(t, db)
 		ps := NewPostService(db)
 
 		if _, err := ps.FindPostByID(context.Background(), 69); err == nil {
@@ -297,8 +297,8 @@ func TestFindPost(t *testing.T) {
 	})
 
 	t.Run("ByID", func(t *testing.T) {
-		db := MustOpen(t)
-		defer MustClose(t, db)
+		db := mustOpen(t)
+		defer mustClose(t, db)
 		ps := NewPostService(db)
 
 		post, err := ps.FindPostByID(context.Background(), postID)
@@ -314,8 +314,8 @@ func TestFindPost(t *testing.T) {
 func setupTx(t *testing.T) (context.Context, *sql.Tx) {
 	t.Helper()
 	ctx := context.Background()
-	db := MustOpen(t)
-	defer MustClose(t, db)
+	db := mustOpen(t)
+	defer mustClose(t, db)
 	tx, err := db.db.BeginTx(ctx, nil)
 	if err != nil {
 		t.Fatal(err)

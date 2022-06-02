@@ -9,11 +9,11 @@ import (
 )
 
 func TestDB(t *testing.T) {
-	db := MustOpen(t)
-	MustClose(t, db)
+	db := mustOpen(t)
+	mustClose(t, db)
 }
 
-func MustOpen(t *testing.T) *DB {
+func mustOpen(t *testing.T) *DB {
 	t.Helper()
 
 	if err := godotenv.Load("../.env"); err != nil {
@@ -34,7 +34,7 @@ func MustOpen(t *testing.T) *DB {
 	return db
 }
 
-func MustClose(t *testing.T, db *DB) {
+func mustClose(t *testing.T, db *DB) {
 	t.Helper()
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
