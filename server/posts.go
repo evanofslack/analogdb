@@ -34,7 +34,7 @@ const (
 	findPath   = "/posts/{id}"
 )
 
-func (s *Server) MountPostHandlers() {
+func (s *Server) mountPostHandlers() {
 	s.router.Group(func(r chi.Router) {
 		r.Get(latestPath, s.latestPosts)
 		r.Get(topPath, s.topPosts)
@@ -49,10 +49,8 @@ func (s *Server) MountPostHandlers() {
 func (s *Server) latestPosts(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToFilter(r)
 	if filter == nil {
-		fmt.Println("nilllll")
 	}
 	if err != nil {
-		fmt.Println(err)
 		writeError(w, r, err)
 	}
 	sort := "time"
@@ -103,9 +101,9 @@ func (s *Server) randomPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
-	if id := r.URL.Query().Get("id"); id != "" {
-		if identify, err := strconv.Atoi(id); err != nil {
-			if post, err := s.PostService.FindPostByID(r.Context(), identify); err != nil {
+	if id := chi.URLParam(r, "id"); id != "" {
+		if identify, err := strconv.Atoi(id); err == nil {
+			if post, err := s.PostService.FindPostByID(r.Context(), identify); err == nil {
 				if err := encodeResponse(w, r, post); err != nil {
 					writeError(w, r, err)
 				}
@@ -119,7 +117,7 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
-	if id := r.URL.Query().Get("id"); id != "" {
+	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err != nil {
 			if post, err := s.PostService.DeletePost(r.Context(), identify); err != nil {
 				if err := encodeResponse(w, r, post); err != nil {
@@ -190,7 +188,6 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 	}
 	//pageUrl
 	if sort, path := filter.Sort, ""; sort != nil {
-		fmt.Print(*sort)
 		switch *sort {
 		case "time":
 			path += latestPath
@@ -254,13 +251,10 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	filter := &analogdb.PostFilter{Limit: &defaultLimit}
 
 	if limit := r.URL.Query().Get("page_size"); limit != "" {
-		fmt.Println(limit)
 		if intLimit, err := strconv.Atoi(limit); err != nil {
 			return nil, err
 		} else {
-			fmt.Println(intLimit)
 			filter.Limit = &intLimit
-			fmt.Println(*filter.Limit)
 		}
 	}
 	if key := r.URL.Query().Get("page_id"); key != "" {

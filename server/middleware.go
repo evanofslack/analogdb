@@ -5,7 +5,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func (s *Server) MountMiddleware() {
+func (s *Server) mountMiddleware() {
 
 	s.router.Use(middleware.Logger)
 	s.router.Use(middleware.Recoverer)
