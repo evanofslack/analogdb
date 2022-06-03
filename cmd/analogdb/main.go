@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 
 	"github.com/joho/godotenv"
 
@@ -12,6 +14,11 @@ import (
 )
 
 func main() {
+
+	ctx, cancel := context.WithCancel(context.Background())
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() { <-c; cancel() }()
 
 	if err := godotenv.Load("../../.env"); err != nil {
 		log.Fatal("Error loading .env file")
@@ -32,5 +39,7 @@ func main() {
 	s := server.New()
 	s.PostService = ps
 	s.Run()
+
+	<-ctx.Done()
 
 }
