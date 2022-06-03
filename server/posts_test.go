@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -123,7 +124,8 @@ func TestPosts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := mustOpen(t)
 			defer mustClose(t, s)
-			req := httptest.NewRequest(tc.method, tc.target, nil)
+			req := httptest.NewRequest(tc.method, "http://localhost:8080"+tc.target, nil)
+			fmt.Println(req)
 			w := httptest.NewRecorder()
 			s.router.ServeHTTP(w, req)
 
@@ -132,6 +134,7 @@ func TestPosts(t *testing.T) {
 			}
 
 			res := w.Result()
+			fmt.Println(res)
 			defer res.Body.Close()
 
 			data, err := ioutil.ReadAll(res.Body)
@@ -164,32 +167,32 @@ func TestPosts(t *testing.T) {
 	}
 }
 
-// func TestFindPost(t *testing.T) {
-// 	t.Run("byID", func(t *testing.T) {
-// 		s := mustOpen(t)
-// 		defer mustClose(t, s)
-// 		req := httptest.NewRequest(http.MethodGet, "/posts/2066", nil)
-// 		w := httptest.NewRecorder()
-// 		s.router.ServeHTTP(w, req)
+func TestFindPost(t *testing.T) {
+	t.Run("byID", func(t *testing.T) {
+		s := mustOpen(t)
+		defer mustClose(t, s)
+		req := httptest.NewRequest(http.MethodGet, "/posts/2066", nil)
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, req)
 
-// 		if want, got := http.StatusOK, w.Code; got != want {
-// 			t.Errorf("want status %d, gt %d", want, got)
-// 		}
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, gt %d", want, got)
+		}
 
-// 		res := w.Result()
-// 		defer res.Body.Close()
+		res := w.Result()
+		defer res.Body.Close()
 
-// 		data, err := ioutil.ReadAll(res.Body)
-// 		if err != nil {
-// 			t.Fatal(err)
-// 		}
-// 		var post analogdb.Post
-// 		if err := json.Unmarshal(data, &post); err != nil {
-// 			t.Fatal(err)
-// 		}
+		data, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var post analogdb.Post
+		if err := json.Unmarshal(data, &post); err != nil {
+			t.Fatal(err)
+		}
 
-// 		if got, want := post.Id, 2066; got != want {
-// 			t.Errorf("want %d, got %d", want, got)
-// 		}
-// 	})
-// }
+		if got, want := post.Id, 2066; got != want {
+			t.Errorf("want %d, got %d", want, got)
+		}
+	})
+}

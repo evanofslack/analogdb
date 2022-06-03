@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"testing"
 
@@ -24,14 +23,21 @@ func mustOpen(t *testing.T) *Server {
 
 	db := postgres.NewDB(dsn)
 	if err := db.Open(); err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	ps := postgres.NewPostService(db)
 
 	s := New()
 	s.PostService = ps
-	s.Run()
+	if err := s.Run(); err != nil {
+		t.Fatal(err)
+	}
 	return s
 }
 
