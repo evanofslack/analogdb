@@ -1,14 +1,16 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/go-chi/chi/v5"
 )
 
 type testInfo struct {
@@ -122,19 +124,17 @@ func TestPosts(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			s := mustOpen(t)
-			defer mustClose(t, s)
-			req := httptest.NewRequest(tc.method, "http://localhost:8080"+tc.target, nil)
-			fmt.Println(req)
+			s, db := mustOpen(t)
+			defer mustClose(t, s, db)
+			r := httptest.NewRequest(tc.method, tc.target, nil)
 			w := httptest.NewRecorder()
-			s.router.ServeHTTP(w, req)
+			s.router.ServeHTTP(w, r)
 
 			if want, got := tc.wantStatus, w.Code; got != want {
 				t.Errorf("want status %d, gt %d", want, got)
 			}
 
 			res := w.Result()
-			fmt.Println(res)
 			defer res.Body.Close()
 
 			data, err := ioutil.ReadAll(res.Body)
@@ -168,24 +168,32 @@ func TestPosts(t *testing.T) {
 }
 
 func TestFindPost(t *testing.T) {
-	t.Run("byID", func(t *testing.T) {
-		s := mustOpen(t)
-		defer mustClose(t, s)
-		req := httptest.NewRequest(http.MethodGet, "/posts/2066", nil)
+	t.Run("Existing Post", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		r := httptest.NewRequest(http.MethodGet, "/post/2066", nil)
 		w := httptest.NewRecorder()
-		s.router.ServeHTTP(w, req)
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "2066")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		s.router.ServeHTTP(w, r)
 
 		if want, got := http.StatusOK, w.Code; got != want {
-			t.Errorf("want status %d, gt %d", want, got)
+			t.Errorf("want status %d, got %d", want, got)
 		}
 
 		res := w.Result()
 		defer res.Body.Close()
 
-		data, err := ioutil.ReadAll(res.Body)
+		data, err := io.ReadAll(res.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		var post analogdb.Post
 		if err := json.Unmarshal(data, &post); err != nil {
 			t.Fatal(err)
@@ -193,6 +201,24 @@ func TestFindPost(t *testing.T) {
 
 		if got, want := post.Id, 2066; got != want {
 			t.Errorf("want %d, got %d", want, got)
+		}
+	})
+	t.Run("Nonexisting Post", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		r := httptest.NewRequest(http.MethodGet, "/post/69", nil)
+		w := httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "69")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusNotFound, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
 		}
 	})
 }
