@@ -40,13 +40,11 @@ func getPort() string {
 	var port = os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
-		fmt.Println("No PORT env variable found, defaulting to: " + port)
 	}
 	return ":" + port
 }
 
 func (s *Server) Run() error {
-	fmt.Println("starting server...")
 	go s.server.ListenAndServe()
 	return nil
 }

@@ -16,11 +16,9 @@ var codes = map[string]int{
 }
 
 func errorStatusCode(code string) int {
-	fmt.Println(code)
 	if v, ok := codes[code]; ok {
 		return v
 	}
-	fmt.Println("shouldnt be here")
 	return http.StatusInternalServerError
 }
 
@@ -30,7 +28,6 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 		log.Printf("http error: %s %s: %s", r.Method, r.URL.Path, err)
 	}
 
-	fmt.Println(err)
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(errorStatusCode(code))
 	json.NewEncoder(w).Encode(&ErrorResponse{Error: message})
