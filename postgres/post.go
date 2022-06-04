@@ -73,7 +73,7 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	if err != nil {
 		return nil, err
 	} else if len(posts) == 0 {
-		return nil, errors.New("post not found")
+		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "Post not found"}
 	}
 	return posts[0], nil
 }
