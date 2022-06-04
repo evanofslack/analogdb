@@ -31,7 +31,7 @@ const (
 	latestPath = "/latest"
 	topPath    = "/top"
 	randomPath = "/random"
-	findPath   = "/posts/{id}"
+	findPath   = "/post/{id}"
 )
 
 func (s *Server) mountPostHandlers() {
@@ -242,11 +242,11 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	truthy["1"] = true
 
 	falsey := make(map[string]bool)
-	falsey["false"] = true
-	falsey["f"] = true
-	falsey["no"] = true
-	falsey["n"] = true
-	falsey["0"] = true
+	falsey["false"] = false
+	falsey["f"] = false
+	falsey["no"] = false
+	falsey["n"] = false
+	falsey["0"] = false
 
 	filter := &analogdb.PostFilter{Limit: &defaultLimit}
 
@@ -265,27 +265,27 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 	if nsfw := r.URL.Query().Get("nsfw"); nsfw != "" {
-		if yes := truthy[nsfw]; yes {
+		if yes := truthy[strings.ToLower(nsfw)]; yes {
 			filter.Nsfw = &yes
-		} else if no := falsey[strings.ToLower(nsfw)]; no {
+		} else if no := falsey[strings.ToLower(nsfw)]; !no {
 			filter.Nsfw = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")
 		}
 	}
 	if bw := r.URL.Query().Get("bw"); bw != "" {
-		if yes := truthy[bw]; yes {
+		if yes := truthy[strings.ToLower(bw)]; yes {
 			filter.Grayscale = &yes
-		} else if no := falsey[strings.ToLower(bw)]; no {
+		} else if no := falsey[strings.ToLower(bw)]; !no {
 			filter.Grayscale = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")
 		}
 	}
 	if sprock := r.URL.Query().Get("sprocket"); sprock != "" {
-		if yes := truthy[sprock]; yes {
+		if yes := truthy[strings.ToLower(sprock)]; yes {
 			filter.Sprocket = &yes
-		} else if no := falsey[strings.ToLower(sprock)]; no {
+		} else if no := falsey[strings.ToLower(sprock)]; !no {
 			filter.Sprocket = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")
