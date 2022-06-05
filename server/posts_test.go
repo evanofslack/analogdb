@@ -88,6 +88,23 @@ func TestPosts(t *testing.T) {
 	}
 
 	t5 := testInfo{
+		name:   "inverse nsfw",
+		method: http.MethodGet,
+		target: "/latest?nsfw=false",
+		wantBody: Response{
+			Meta: Meta{
+				TotalPosts: 47,
+				PageSize:   20,
+				PageID:     1646854637,
+				PageURL:    "/latest?page_size=20&page_id=1646854637&nsfw=false",
+				Seed:       0,
+			},
+			Posts: []analogdb.Post{},
+		},
+		wantStatus: http.StatusOK,
+	}
+
+	t6 := testInfo{
 		name:   "title",
 		method: http.MethodGet,
 		target: "/latest?title=portra&page_size=10",
@@ -104,7 +121,7 @@ func TestPosts(t *testing.T) {
 		wantStatus: http.StatusOK,
 	}
 
-	t6 := testInfo{
+	t7 := testInfo{
 		name:   "title next page",
 		method: http.MethodGet,
 		target: "/latest?page_size=10&page_id=1646797974&title=portra",
@@ -120,7 +137,7 @@ func TestPosts(t *testing.T) {
 		},
 		wantStatus: http.StatusOK,
 	}
-	tt := []testInfo{t1, t2, t3, t4, t5, t6}
+	tt := []testInfo{t1, t2, t3, t4, t5, t6, t7}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
