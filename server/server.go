@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/evanofslack/analogdb"
@@ -19,28 +18,20 @@ type Server struct {
 	PostService analogdb.PostService
 }
 
-func New() *Server {
+func New(port string) *Server {
 	s := &Server{
 		server: &http.Server{},
 		router: chi.NewRouter(),
 	}
 
 	s.server.Handler = s.router
-	s.server.Addr = getPort()
+	s.server.Addr = port
 
 	s.mountMiddleware()
 	s.mountPostHandlers()
 	s.mountStatic()
 	s.mountStatus()
 	return s
-}
-
-func getPort() string {
-	var port = os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
-	return ":" + port
 }
 
 func (s *Server) Run() error {

@@ -30,10 +30,10 @@ type Log struct {
 	Level string `yaml:"level" env:"LOG_LEVEL"`
 }
 
-func New() (*Config, error) {
+func New(path string) (*Config, error) {
 	cfg := &Config{}
 
-	if err := cleanenv.ReadConfig("./config/config.yml", cfg); err != nil {
+	if err := cleanenv.ReadConfig(path, cfg); err != nil {
 		return nil, fmt.Errorf("Error loading config: %w", err)
 	}
 	if err := cleanenv.ReadEnv(cfg); err != nil {

@@ -29,7 +29,7 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 
 	ps := postgres.NewPostService(db)
 
-	s := New()
+	s := New("8080")
 	s.PostService = ps
 	if err := s.Run(); err != nil {
 		t.Fatal(err)

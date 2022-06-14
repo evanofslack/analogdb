@@ -9,6 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 
+	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/postgres"
 	"github.com/evanofslack/analogdb/server"
 )
@@ -24,21 +25,26 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	dsn := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
-		os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
+	cfgPath := "../../config/config.yml"
+	cfg, err := config.New(cfgPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	db := postgres.NewDB(dsn)
+	fmt.Println(cfg.DB.URL)
+	db := postgres.NewDB(cfg.DB.URL)
 	if err := db.Open(); err != nil {
 		log.Fatal(err)
 	}
 
 	ps := postgres.NewPostService(db)
 
-	s := server.New()
-	s.PostService = ps
-	s.Run()
+	server := server.New(cfg.HTTP.Port)
+	server.PostService = ps
+	if err := server.Run(); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("running on port ", cfg.HTTP.Port)
 
 	<-ctx.Done()
 
