@@ -2,16 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 
-	"github.com/joho/godotenv"
-
 	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/postgres"
 	"github.com/evanofslack/analogdb/server"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -31,20 +29,16 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(cfg.DB.URL)
 	db := postgres.NewDB(cfg.DB.URL)
 	if err := db.Open(); err != nil {
 		log.Fatal(err)
 	}
 
-	ps := postgres.NewPostService(db)
-
 	server := server.New(cfg.HTTP.Port)
-	server.PostService = ps
+	server.PostService = postgres.NewPostService(db)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("running on port ", cfg.HTTP.Port)
 
 	<-ctx.Done()
 

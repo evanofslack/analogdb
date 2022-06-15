@@ -25,7 +25,7 @@ func New(port string) *Server {
 	}
 
 	s.server.Handler = s.router
-	s.server.Addr = port
+	s.server.Addr = ":" + port
 
 	s.mountMiddleware()
 	s.mountPostHandlers()
