@@ -18,6 +18,17 @@ services:
       - postgres:/var/lib/postgresql/data
       - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
       - ./postgres/csv:/var/lib/postgresql/csv
+    
+  # analogdb:
+  #   container_name: analogdb
+  #   build: .
+  #   ports:
+  #     - 8080:8080
+  #   restart: unless-stopped  
+  #   env_file:
+  #     - .env
+  #   depends_on:
+  #     - postgres
 
 volumes:
   postgres:
