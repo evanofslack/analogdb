@@ -16,16 +16,19 @@ services:
       - '5432:5432'
     volumes:
       - postgres:/var/lib/postgresql/data
-      - ./sql/populate.sql:/docker-entrypoint-initdb.d/populate.sql
-
-  # web:
+      - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
+      - ./postgres/csv:/var/lib/postgresql/csv
+    
+  # analogdb:
   #   container_name: analogdb
   #   build: .
   #   ports:
-  #     - "5000:5000"
-  #   restart: unless-stopped
+  #     - 8080:8080
+  #   restart: unless-stopped  
+  #   env_file:
+  #     - .env
   #   depends_on:
-  #     - "postgres"
-      
+  #     - postgres
+
 volumes:
   postgres:
