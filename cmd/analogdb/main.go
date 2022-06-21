@@ -9,7 +9,6 @@ import (
 	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/postgres"
 	"github.com/evanofslack/analogdb/server"
-	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -19,11 +18,7 @@ func main() {
 	signal.Notify(c, os.Interrupt)
 	go func() { <-c; cancel() }()
 
-	if err := godotenv.Load("../../.env"); err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
-	cfgPath := "../../config/config.yml"
+	cfgPath := "config.yml"
 	cfg, err := config.New(cfgPath)
 	if err != nil {
 		log.Fatal(err)
