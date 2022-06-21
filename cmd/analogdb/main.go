@@ -29,8 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// server := server.New(cfg.HTTP.Port)
-	server := server.New(os.Getenv("PORT"))
+	server := server.New(cfg.HTTP.Port)
 	server.PostService = postgres.NewPostService(db)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
