@@ -3,7 +3,6 @@ RUN mkdir /build
 ADD . /build/
 WORKDIR /build
 RUN go build cmd/analogdb/main.go
-# RUN cd cmd/analogdb && go build
 
 FROM alpine
 RUN adduser -S -D -H -h /app appuser
