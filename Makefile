@@ -12,12 +12,6 @@ down :
 log :
 	docker-compose logs --tail=0 --follow
 
-run :
-	cd cmd/analogdb && go run .
-
-dev :
-	docker-compose up -d && cd cmd/analogdb && go run .
-
 test :
 	docker-compose up -d && go test ./...
 
