@@ -23,7 +23,7 @@ type DB struct {
 }
 
 type HTTP struct {
-	Port string `yaml:"port" env:"HTTP_PORT"`
+	Port string `yaml:"port" env:"PORT"`
 }
 
 type Log struct {
