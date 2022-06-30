@@ -3,24 +3,22 @@
 The collection of film photography
 
 
-### Backend
+### About
 
-* Written in [Go](https://go.dev/) with [Chi](https://github.com/go-chi/chi) HTTP router
-* Consuming data from [analog-scraper](https://github.com/evanofslack/analog-scraper) 
-* Images stored on [AWS S3](https://aws.amazon.com/s3/) and served from [CloudFront CDN](https://aws.amazon.com/cloudfront/)
-* Metadata persisted with [Postgres](https://www.postgresql.org/)
-* Deployed with [Docker](https://www.docker.com/) and [Heroku](https://www.heroku.com/)
+AnalogDB provides a large collection of curated analog photographs to users through a REST API interface. Beyond just returning photos, AnalogDB provides methods for sorting by time or popularity, enables filtering by nsfw, black & white, and exposed sprockets, and allows for querying by film stock, camera model and camera settings. 
 
-### UI
+### Design
 
-* Powered by [Next](https://github.com/vercel/next.js/)
-* With custom styles built with [CSS Modules](https://github.com/css-modules/css-modules)
-* Deployed with [Vercel](https://vercel.com/).
+AnalogDB makes use of several technologies and services to enable a full featured product. 
+
+Data is scraped from reddit and ingested with [analog-scraper](https://github.com/evanofslack/analog-scraper), a python service. In addition to scraping, this service is responsible for transforming raw images, uploading to [AWS S3](https://aws.amazon.com/s3/), and loading metadata into [Postgres](https://www.postgresql.org/). Images from S3 are served from [CloudFront CDN](https://aws.amazon.com/cloudfront/) for quick and reliable delievery. 
+
+The core backend application is written in [Go](https://go.dev/) and makes use of [Chi](https://github.com/go-chi/chi) as an HTTP router. It exposes handlers that are responsible for filtering incoming requests, establishing connections with Postgres, and returning JSON responses. The Go application and Postgres database are containerized with [Docker](https://www.docker.com/) for reliable development and deployment. The backend is currently hosted on [Heroku](https://www.heroku.com/).   
+
+The frontend web application is built with [Next.js](https://github.com/vercel/next.js/), making use of server-side rendering and incremental static regeneration for quick loading pages. [SWR](https://github.com/vercel/swr) is utilized for request caching and revalidation. All styles are built from scratch with [CSS Modules](https://github.com/css-modules/css-modules). The frontend is currently deployed with [Vercel](https://vercel.com/). 
 
 
 ### API
-
-AnalogDB exposes a public REST API that provides access to thousands of film photographs.
 
 Full documentation for the API: https://analogdb.herokuapp.com/
 
@@ -33,7 +31,7 @@ curl https://analogdb.herokuapp.com/latest
 ```yaml
 {
    meta:{
-      total_posts:1019,
+      total_posts:2420,
       page_size:10,
       next_page_id:1640889405,
       next_page_url:/latest?page_size=10&page_id=1640889405,
@@ -68,3 +66,23 @@ curl https://analogdb.herokuapp.com/latest
    ]
 }
 ```
+
+### Developing
+
+Docker and docker-compose can be utilized for a consistent development experience. 
+
+To spin up the backend and database:
+
+`docker-compose up`
+
+To run backend unit tests:
+
+`go test ./...`
+
+To serve the frontend locally:
+
+`cd web && npm run dev`
+
+### Contributing
+
+All contributions are welcomed and encouraged. Please create a new issue to discuss potential improvements or submit a pull request. 
