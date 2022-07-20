@@ -11,6 +11,8 @@ AnalogDB provides a large collection of curated analog photographs to users thro
 
 AnalogDB makes use of several technologies and services to enable a full featured product. 
 
+<img width="681" alt="Screen Shot 2022-07-19 at 8 50 39 PM" src="https://user-images.githubusercontent.com/51209817/179872652-32c019e3-2e3c-4086-84fe-b6e149522e2d.png">
+
 Data is scraped from reddit and ingested with [analog-scraper](https://github.com/evanofslack/analog-scraper), a python service. In addition to scraping, this service is responsible for transforming raw images, uploading to [AWS S3](https://aws.amazon.com/s3/), and loading metadata into [Postgres](https://www.postgresql.org/). Images from S3 are served from [CloudFront CDN](https://aws.amazon.com/cloudfront/) for quick and reliable delievery. 
 
 The core backend application is written in [Go](https://go.dev/) and makes use of [Chi](https://github.com/go-chi/chi) as an HTTP router. It exposes handlers that are responsible for filtering incoming requests, establishing connections with Postgres, and returning JSON responses. The Go application and Postgres database are containerized with [Docker](https://www.docker.com/) for reliable development and deployment. The backend is currently hosted on [Heroku](https://www.heroku.com/).   
