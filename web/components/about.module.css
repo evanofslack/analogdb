@@ -18,13 +18,13 @@
 }
 
  .title {
-  font-size: 3rem;
+  font-size: 2.5rem;
   color: #2e2e2e;
-  font-weight: 600;
+  font-weight: 500;
  }
 
  .subtitle {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   color: #434343;
   font-weight: 300;
   max-width: 40%;
