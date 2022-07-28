@@ -2,6 +2,7 @@ import styles from "./about.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Footer from "./footer";
 
 export default function About() {
     const [post, setPost] = useState();
@@ -76,20 +77,21 @@ export default function About() {
                 <div>
                     <div className={styles.title}>Free and open-source</div>
                     <p className={styles.subtitle}>
-                        All code made publically avaliable on Github with flexible liscening
+                        All code made publically avaliable on Github with flexible licensing.
                     </p>
+                    <a className={styles.link} href="https://github.com/evanofslack/analogdb">view source</a>
+                </div>
+                <div className={styles.imageThree}>
+                    <Image
+                        src={"/github.png"}
+                        alt={`example AnalogDB API call`}
+                        width="1091"
+                        height="342"
+                        quality={100}
+                    />
                 </div>
             </div>
-
-            <div className={styles.sectionFour}>
-                <div>
-                    <div className={styles.title}>Fast image loads</div>
-                    <p className={styles.subtitle}>
-                        Photos are hosted on a CDN to deliever quick and efficient load times
-                        regardless of region.
-                    </p>
-                </div>
-            </div>
+            <Footer/>
         </main>
     );
 }

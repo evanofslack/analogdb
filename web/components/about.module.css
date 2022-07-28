@@ -1,8 +1,9 @@
 
 .sectionOne {
   padding-top: 2rem;
-  padding-left: 8rem;
-  padding-right: 14rem;
+  padding-left: 5vw;
+  padding-right: 5vw;
+  padding-bottom: 7rem;
   flex: 1;
   display: flex;
   flex-direction: row;
@@ -11,38 +12,32 @@
 }
 
 .sectionTwo {
-  padding-top: 14rem;
-  padding-right: 2rem;
-  padding-left: 8rem;
+  padding-top: 8rem;
+  padding-left: 5vw;
+  padding-right: 5vw;
+  padding-bottom: 8rem;
   flex: 1;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+  background-color: #f8f8f8;
+  margin: -1rem
 }
 
 .sectionThree {
-  padding-top: 14rem;
-  padding-left: 8rem;
-  padding-right: 14rem;
+  padding-top: 16rem;
+  padding-left: 5vw;
+  padding-right: 5vw;
+  padding-bottom: 16rem;
   flex: 1;
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
+  background-color: #f1f1f1;
+  margin: -1rem
 }
-
-.sectionFour {
-  padding-top: 14rem;
-  padding-left: 8rem;
-  padding-right: 14rem;
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-}
-
 
  .title {
   font-size: 3.2rem;
@@ -69,7 +64,7 @@
  .link {
   font-size: 1rem;
   color: white;
-  font-weight: 300;
+  font-weight: 400;
   background-color: #2e2e2e;
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
@@ -83,13 +78,20 @@
  }
 
  .imageTwo {
-  max-width: 48%;
-  padding-right: 10rem;
+  max-width: 600px;
+  width: 100%;
+  padding-right: 10vw;
  }
 
  .imageTwoBorder {
   border-radius: 0.3rem;
   overflow: hidden;
+ }
+
+ .imageThree {
+  width: 40%;
+  max-width: 500px;
+  padding-right: 10%;
  }
 
  .grid {
