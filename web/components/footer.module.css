@@ -1,0 +1,16 @@
+.footer {
+    background-color: #eaeaea;
+  /* background-color: #f1f1f1; */
+    padding-top: 1.1rem;
+    padding-bottom: 0.25rem;
+    padding-left: 2.5rem;
+    padding-right: 3.5rem;
+    margin: -1rem;
+    margin-bottom: -4rem;
+    flex: 1;
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+}
