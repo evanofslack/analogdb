@@ -19,21 +19,18 @@ export default function WebNav() {
             <div className={styles.headerContainer}>
                 <Link href="/">
                     <a className={router.pathname == "/" ? styles.linkOn : styles.linkOff}>
-                        LATEST
+                        GALLERY
                     </a>
                 </Link>
-                <Link href="/top">
-                    <a className={router.pathname == "/latest" ? styles.linkOn : styles.linkOff}>
-                        TOP
+                <Link href="/about">
+                    <a className={router.pathname == "/about" ? styles.linkOn : styles.linkOff}>
+                        ABOUT
                     </a>
                 </Link>
-                <Link href="/random">
-                    <a className={router.pathname == "/random" ? styles.linkOn : styles.linkOff}>
-                        RANDOM
+                <Link href="/docs">
+                    <a className={router.pathname == "/docs" ? styles.linkOn : styles.linkOff}>
+                        API
                     </a>
-                </Link>
-                <Link href="/bw">
-                    <a className={router.pathname == "/bw" ? styles.linkOn : styles.linkOff}>B&W</a>
                 </Link>
             </div>
         </nav>

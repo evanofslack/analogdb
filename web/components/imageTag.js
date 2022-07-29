@@ -7,7 +7,7 @@ import { useState } from "react";
 export default function ImageTag(props) {
     let post = props.post;
     const base_user = "https://www.reddit.com/";
-    const api_endpoint = "https://analogdb.herokuapp.com/posts/";
+    const api_endpoint = "https://analogdb.herokuapp.com/post/";
     const [isOpen, setIsOpen] = useState(false);
     const toggle = () => setIsOpen((value) => !value);
 
