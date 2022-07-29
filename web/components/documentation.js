@@ -9,7 +9,7 @@ export default function Documentation() {
                     please excuse our appearance while we are remodeling...
                 </div>
                 <u>
-                    <a href="https://analogdb.herokuapp.com/">visit the old docs -> </a>
+                    <a href="https://analogdb.herokuapp.com/">visit the old docs</a>
                 </u>
             </div>
             <Footer />
