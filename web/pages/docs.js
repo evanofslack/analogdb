@@ -1,9 +1,9 @@
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
 import Header from "../components/header";
-import About from "../components/about";
+import Documentation from "../components/documentation";
 
-export default function AboutPage(props) {
+export default function Docs() {
     return (
         <div className={styles.container}>
             <Head>
@@ -11,7 +11,7 @@ export default function AboutPage(props) {
                 <link rel="icon" href="/favicon.ico" />
             </Head>
             <Header />
-            <About />
+            <Documentation />
         </div>
     );
 }

@@ -27,8 +27,8 @@ export default function WebNav() {
                         ABOUT
                     </a>
                 </Link>
-                <Link href="/api">
-                    <a className={router.pathname == "/api" ? styles.linkOn : styles.linkOff}>
+                <Link href="/docs">
+                    <a className={router.pathname == "/docs" ? styles.linkOn : styles.linkOff}>
                         API
                     </a>
                 </Link>
