@@ -53,7 +53,7 @@ export default function About() {
             <div className={styles.sectionTwo}>
                 <div className={styles.imageTwo}>
                     <Image
-                        src={"/apiExample.png"}
+                        src={"/analogdb_curl.png"}
                         alt={`example AnalogDB API call`}
                         width="1064"
                         height="1224"
@@ -79,19 +79,21 @@ export default function About() {
                     <p className={styles.subtitle}>
                         All code made publically avaliable on Github with flexible licensing.
                     </p>
-                    <a className={styles.link} href="https://github.com/evanofslack/analogdb">view source</a>
+                    <a className={styles.link} href="https://github.com/evanofslack/analogdb">
+                        view source
+                    </a>
                 </div>
                 <div className={styles.imageThree}>
                     <Image
-                        src={"/github.png"}
+                        src={"/github_logo.png"}
                         alt={`example AnalogDB API call`}
-                        width="1091"
-                        height="342"
+                        width="3840"
+                        height="2160"
                         quality={100}
                     />
                 </div>
             </div>
-            <Footer/>
+            <Footer />
         </main>
     );
 }
