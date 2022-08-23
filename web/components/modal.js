@@ -11,19 +11,15 @@ export default function Modal(props) {
 
     let image = post.images[2];
     let fullImage = post.images[3];
+
     if (breakpoints["xs"]) {
-        image = post.images[0];
-        fullImage = post.images[2];
-    } else if (breakpoints["sm"]) {
         image = post.images[1];
-        fullImage = post.images[3];
-    } else if (breakpoints["md"]) {
-        image = post.images[1];
-        fullImage = post.images[3];
-    } else if (breakpoints["lg"]) {
-        image = post.images[2];
         fullImage = post.images[3];
     }
+    // } else if (breakpoints["lg"]) {
+    //     image = post.images[3];
+    //     fullImage = post.images[3];
+    // }
     const [isOpen, setIsOpen] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
     const toggle = () => setIsOpen((value) => !value);
@@ -37,7 +33,7 @@ export default function Modal(props) {
                 width={image.width}
                 height={image.height}
                 alt={`Image ${post.id} by ${post.author}`}
-                quality={50}
+                quality={100}
                 layout="responsive"
                 placeholder="blur"
                 blurDataURL={props.post.images[0].url} // low res image
@@ -49,6 +45,17 @@ export default function Modal(props) {
                     <div className={styles.imageContainer} onClick={toggle}>
                         {/* Preview picture of lower resolution */}
                         <Image
+                            style={isLoaded ? { display: "none" } : {}}
+                            src={image.url}
+                            width={image.width}
+                            height={image.height}
+                            alt={`Image ${post.id} by ${post.author}`}
+                            quality={100}
+                            layout="fill"
+                            objectFit="contain"
+                        />
+                        {/* Replace with full resolution picture when loaded */}
+                        <Image
                             style={isLoaded ? {} : { display: "none" }}
                             src={fullImage.url}
                             width={fullImage.width}
@@ -58,17 +65,6 @@ export default function Modal(props) {
                             layout="fill"
                             objectFit="contain"
                             onLoad={() => setIsLoaded(true)}
-                        />
-                        {/* Replace with full resolution picture when loaded */}
-                        <Image
-                            style={isLoaded ? { display: "none" } : {}}
-                            src={image.url}
-                            width={image.width}
-                            height={image.height}
-                            alt={`Image ${post.id} by ${post.author}`}
-                            quality={50}
-                            layout="fill"
-                            objectFit="contain"
                         />
                     </div>
                 </div>

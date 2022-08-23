@@ -17,6 +17,8 @@
      /* height: auto; */
      position: relative;
      margin-bottom: 1rem;
+     max-width: 1268px;
+     max-height: 1268px;
  }
 
 @media screen and (max-width: 720px) {
