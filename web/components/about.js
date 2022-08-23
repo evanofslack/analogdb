@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Footer from "./footer";
+import { useBreakpoint } from "../providers/breakpoint.js";
 
 export default function About() {
     const [post, setPost] = useState();
@@ -10,6 +11,12 @@ export default function About() {
     const postIDs = [3070, 3059, 2930, 2226, 1997, 1912, 1810, 1775, 1668, 1421, 1262, 359];
     const random = Math.floor(Math.random() * postIDs.length);
     const endpoint = "https://analogdb.herokuapp.com/post/" + postIDs[random];
+
+    const breakpoints = useBreakpoint();
+    let isMobile = false;
+    if (breakpoints["sm"]) {
+        isMobile = true;
+    }
 
     useEffect(() => {
         fetch(endpoint)
@@ -34,7 +41,7 @@ export default function About() {
                         <a className={styles.link}>view latest</a>
                     </Link>
                 </div>
-                {loaded && (
+                {loaded && !isMobile && (
                     <div className={styles.imageOne}>
                         <Image
                             src={post.images[2].url}
@@ -52,14 +59,16 @@ export default function About() {
 
             <div className={styles.sectionTwo}>
                 <div className={styles.imageTwo}>
-                    <Image
-                        src={"/analogdb_curl.png"}
-                        alt={`example AnalogDB API call`}
-                        width="1064"
-                        height="1224"
-                        quality={100}
-                        className={styles.imageTwoBorder}
-                    />
+                    {!isMobile && (
+                        <Image
+                            src={"/analogdb_curl.png"}
+                            alt={`example AnalogDB API call`}
+                            width="1064"
+                            height="1224"
+                            quality={100}
+                            className={styles.imageTwoBorder}
+                        />
+                    )}
                 </div>
                 <div>
                     <div className={styles.title}>Accesible API</div>
@@ -84,13 +93,15 @@ export default function About() {
                     </a>
                 </div>
                 <div className={styles.imageThree}>
-                    <Image
-                        src={"/github_logo.png"}
-                        alt={`example AnalogDB API call`}
-                        width="3840"
-                        height="2160"
-                        quality={100}
-                    />
+                    {!isMobile && (
+                        <Image
+                            src={"/github_logo.png"}
+                            alt={`example AnalogDB API call`}
+                            width="3840"
+                            height="2160"
+                            quality={100}
+                        />
+                    )}
                 </div>
             </div>
             <Footer />

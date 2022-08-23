@@ -30,45 +30,36 @@ export default function MobileNav() {
                             <Link href="/">
                                 <a className={styles.link}>
                                     <div className={styles.icon}>
-                                        <AiOutlineTrophy size="1.8rem" />
+                                        {/* <AiOutlineTrophy size="1.8rem" /> */}
                                         <div className={styles.check}>
-                                            <p className={styles.iconText}>latest</p>
+                                            <p className={styles.iconText}>GALLERY</p>
                                             {router.pathname == "/" && <BiCheck size="1.8rem" />}
                                         </div>
                                     </div>
                                 </a>
                             </Link>
-                            <Link href="/top">
+                            <Link href="/about">
                                 <a className={styles.link}>
                                     <div className={styles.icon}>
-                                        <BiTimeFive size="1.8rem" />
+                                        {/* <BiTimeFive size="1.8rem" /> */}
                                         <div className={styles.check}>
-                                            <p className={styles.iconText}>top</p>
-                                            {router.pathname == "/top" && <BiCheck size="1.8rem" />}
-                                        </div>
-                                    </div>
-                                </a>
-                            </Link>
-                            <Link href="/random">
-                                <a className={styles.link}>
-                                    <div className={styles.icon}>
-                                        <BiShuffle size="1.8rem" />
-                                        <div className={styles.check}>
-                                            <p className={styles.iconText}>random</p>
-                                            {router.pathname == "/random" && (
+                                            <p className={styles.iconText}>ABOUT</p>
+                                            {router.pathname == "/about" && (
                                                 <BiCheck size="1.8rem" />
                                             )}
                                         </div>
                                     </div>
                                 </a>
                             </Link>
-                            <Link href="/bw">
+                            <Link href="/docs">
                                 <a className={styles.link}>
                                     <div className={styles.icon}>
-                                        <RiCameraLensFill size="1.8rem" />
+                                        {/* <BiShuffle size="1.8rem" /> */}
                                         <div className={styles.check}>
-                                            <p className={styles.iconText}>b&w</p>
-                                            {router.pathname == "/bw" && <BiCheck size="1.8rem" />}
+                                            <p className={styles.iconText}>API</p>
+                                            {router.pathname == "/docs" && (
+                                                <BiCheck size="1.8rem" />
+                                            )}
                                         </div>
                                     </div>
                                 </a>
