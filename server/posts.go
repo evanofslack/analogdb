@@ -28,19 +28,17 @@ type Response struct {
 var defaultLimit = 20
 
 const (
-	latestPath = "/latest"
-	topPath    = "/top"
-	randomPath = "/random"
-	findPath   = "/post/{id}"
+	postsPath = "/posts"
+	postPath  = "/post/{id}"
 )
 
 func (s *Server) mountPostHandlers() {
-	s.router.Group(func(r chi.Router) {
-		r.Get(latestPath, s.latestPosts)
-		r.Get(topPath, s.topPosts)
-		r.Get(randomPath, s.randomPosts)
+	s.router.Route(postsPath, func(r chi.Router) {
+		r.Get("/latest", s.latestPosts)
+		r.Get("/top", s.topPosts)
+		r.Get("/random", s.randomPosts)
 	})
-	s.router.Route(findPath, func(r chi.Router) {
+	s.router.Route(postPath, func(r chi.Router) {
 		r.Get("/", s.findPost)
 		r.With(auth).Delete("/", s.deletePost)
 	})
@@ -48,8 +46,6 @@ func (s *Server) mountPostHandlers() {
 
 func (s *Server) latestPosts(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToFilter(r)
-	if filter == nil {
-	}
 	if err != nil {
 		writeError(w, r, err)
 	}
@@ -190,11 +186,11 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 	if sort, path := filter.Sort, ""; sort != nil {
 		switch *sort {
 		case "time":
-			path += latestPath
+			path += postsPath + "/latest"
 		case "score":
-			path += topPath
+			path += postsPath + "/top"
 		case "random":
-			path += randomPath
+			path += postsPath + "/random"
 		}
 		numParams := 0
 		if limit := filter.Limit; limit != nil {
