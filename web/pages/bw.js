@@ -1,13 +1,14 @@
 import Template from "../components/template";
 
-export async function getServerSideProps(context) {
-    const url = "https://analogdb.herokuapp.com/bw?page_size=20&nsfw=true";
+export async function getStaticProps(context) {
+    const url = "https://analogdb.herokuapp.com/latest?page_size=50&bw=true&nsfw=false";
     const response = await fetch(url);
     const data = await response.json();
     return {
         props: {
             data,
         },
+        revalidate: 10,
     };
 }
 
