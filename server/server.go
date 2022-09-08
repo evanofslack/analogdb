@@ -31,6 +31,7 @@ func New(port string) *Server {
 	s.mountPostHandlers()
 	s.mountStatic()
 	s.mountStatus()
+	s.mountStatsHandlers()
 	return s
 }
 
