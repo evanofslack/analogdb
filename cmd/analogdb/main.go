@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 	"os/signal"
 
@@ -21,21 +21,33 @@ func main() {
 	cfgPath := "config.yml"
 	cfg, err := config.New(cfgPath)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	db := postgres.NewDB(cfg.DB.URL)
 	if err := db.Open(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	server := server.New(cfg.HTTP.Port)
 	server.PostService = postgres.NewPostService(db)
 	server.ReadyService = postgres.NewReadyService(db)
 	if err := server.Run(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	<-ctx.Done()
 
+	if err := server.Close(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	if err := db.Close(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }
