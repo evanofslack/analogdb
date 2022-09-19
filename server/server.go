@@ -15,8 +15,8 @@ type Server struct {
 	server *http.Server
 	router *chi.Mux
 
-	PostService   analogdb.PostService
-	HealthService analogdb.HealthService
+	PostService  analogdb.PostService
+	ReadyService analogdb.ReadyService
 }
 
 func New(port string) *Server {

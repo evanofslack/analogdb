@@ -31,7 +31,7 @@ func main() {
 
 	server := server.New(cfg.HTTP.Port)
 	server.PostService = postgres.NewPostService(db)
-	server.HealthService = postgres.NewHealthService(db)
+	server.ReadyService = postgres.NewReadyService(db)
 	if err := server.Run(); err != nil {
 		log.Fatal(err)
 	}

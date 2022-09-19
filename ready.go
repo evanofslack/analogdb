@@ -2,6 +2,6 @@ package analogdb
 
 import "context"
 
-type HealthService interface {
+type ReadyService interface {
 	Readyz(ctx context.Context) error
 }

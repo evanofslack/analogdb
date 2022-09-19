@@ -26,7 +26,7 @@ func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
-	err := s.HealthService.Readyz(r.Context())
+	err := s.ReadyService.Readyz(r.Context())
 	if err != nil {
 		writeError(w, r, err)
 	}

@@ -6,16 +6,16 @@ import (
 	"github.com/evanofslack/analogdb"
 )
 
-var _ analogdb.HealthService = (*HealthService)(nil)
+var _ analogdb.ReadyService = (*ReadyService)(nil)
 
-type HealthService struct {
+type ReadyService struct {
 	db *DB
 }
 
-func NewHealthService(db *DB) *HealthService {
-	return &HealthService{db: db}
+func NewReadyService(db *DB) *ReadyService {
+	return &ReadyService{db: db}
 }
 
-func (s *HealthService) Readyz(ctx context.Context) error {
+func (s *ReadyService) Readyz(ctx context.Context) error {
 	return s.db.db.Ping()
 }
