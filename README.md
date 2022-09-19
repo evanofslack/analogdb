@@ -15,7 +15,7 @@ AnalogDB makes use of several technologies and services to enable a full feature
 
 Data is scraped from reddit and ingested with [analog-scraper](https://github.com/evanofslack/analog-scraper), a python service. In addition to scraping, this service is responsible for transforming raw images, uploading to [AWS S3](https://aws.amazon.com/s3/), and loading metadata into [Postgres](https://www.postgresql.org/). Images from S3 are served from [CloudFront CDN](https://aws.amazon.com/cloudfront/) for quick and reliable delievery. 
 
-The core backend application is written in [Go](https://go.dev/) and makes use of [Chi](https://github.com/go-chi/chi) as an HTTP router. It exposes handlers that are responsible for filtering incoming requests, establishing connections with Postgres, and returning JSON responses. The Go application and Postgres database are containerized with [Docker](https://www.docker.com/) for reliable development and deployment. The backend is currently hosted on [Heroku](https://www.heroku.com/).   
+The core backend application is written in [Go](https://go.dev/) and makes use of [Chi](https://github.com/go-chi/chi) as an HTTP router. It exposes handlers that are responsible for filtering incoming requests, establishing connections with Postgres, and returning JSON responses. The Go application and Postgres database are containerized with [Docker](https://www.docker.com/) for reliable development and deployment. The backend is currently hosted on [Heroku](https://www.heroku.com/). 
 
 The frontend web application is built with [Next.js](https://github.com/vercel/next.js/), making use of server-side rendering and incremental static regeneration for quick loading pages. [SWR](https://github.com/vercel/swr) is utilized for request caching and revalidation. All styles are built from scratch with [CSS Modules](https://github.com/css-modules/css-modules). The frontend is currently deployed with [Vercel](https://vercel.com/). 
 
@@ -27,16 +27,16 @@ Full documentation for the API: https://analogdb.herokuapp.com/
 ### Example
 
 ```bash
-curl https://analogdb.herokuapp.com/latest
+curl https://analogdb.herokuapp.com/posts/latest
 ```
 
 ```yaml
 {
    meta:{
-      total_posts:2420,
-      page_size:10,
+      total_posts:2585,
+      page_size:20,
       next_page_id:1640889405,
-      next_page_url:/latest?page_size=10&page_id=1640889405,
+      next_page_url:/posts/latest?page_size=20&page_id=1640889405,
    },
    posts:[
       {
