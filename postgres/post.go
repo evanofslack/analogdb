@@ -89,7 +89,7 @@ func (s *PostService) DeletePost(ctx context.Context, id int) (*analogdb.Post, e
 		return nil, err
 	}
 	if len(posts) == 0 {
-		return nil, errors.New("post not found")
+		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "Post not found"}
 	}
 	return posts[0], nil
 }
