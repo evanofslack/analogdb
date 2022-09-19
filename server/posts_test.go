@@ -25,13 +25,13 @@ func TestPosts(t *testing.T) {
 	t1 := testInfo{
 		name:   "latest",
 		method: http.MethodGet,
-		target: "/latest?page_size=20",
+		target: "/posts/latest?page_size=20",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 51,
+				TotalPosts: 52,
 				PageSize:   20,
 				PageID:     1646884084,
-				PageURL:    "/latest?page_size=20&page_id=1646884084",
+				PageURL:    "/posts/latest?page_size=20&page_id=1646884084",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -41,13 +41,13 @@ func TestPosts(t *testing.T) {
 	t2 := testInfo{
 		name:   "top",
 		method: http.MethodGet,
-		target: "/top?page_size=10",
+		target: "/posts/top?page_size=10",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 51,
+				TotalPosts: 52,
 				PageSize:   10,
 				PageID:     730,
-				PageURL:    "/top?page_size=10&page_id=730",
+				PageURL:    "/posts/top?page_size=10&page_id=730",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -57,10 +57,10 @@ func TestPosts(t *testing.T) {
 	t3 := testInfo{
 		name:   "random",
 		method: http.MethodGet,
-		target: "/random?page_size=2",
+		target: "/posts/random?page_size=2",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 51,
+				TotalPosts: 52,
 				PageSize:   2,
 				PageID:     0,
 				PageURL:    "",
@@ -73,7 +73,7 @@ func TestPosts(t *testing.T) {
 	t4 := testInfo{
 		name:   "nsfw",
 		method: http.MethodGet,
-		target: "/latest?nsfw=true",
+		target: "/posts/latest?nsfw=true",
 		wantBody: Response{
 			Meta: Meta{
 				TotalPosts: 4,
@@ -90,13 +90,13 @@ func TestPosts(t *testing.T) {
 	t5 := testInfo{
 		name:   "inverse nsfw",
 		method: http.MethodGet,
-		target: "/latest?nsfw=false",
+		target: "/posts/latest?nsfw=false",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 47,
+				TotalPosts: 48,
 				PageSize:   20,
 				PageID:     1646854637,
-				PageURL:    "/latest?page_size=20&page_id=1646854637&nsfw=false",
+				PageURL:    "/posts/latest?page_size=20&page_id=1646854637&nsfw=false",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -107,13 +107,13 @@ func TestPosts(t *testing.T) {
 	t6 := testInfo{
 		name:   "title",
 		method: http.MethodGet,
-		target: "/latest?title=portra&page_size=10",
+		target: "/posts/latest?title=portra&page_size=10",
 		wantBody: Response{
 			Meta: Meta{
 				TotalPosts: 17,
 				PageSize:   10,
 				PageID:     1646797974,
-				PageURL:    "/latest?page_size=10&page_id=1646797974&title=portra",
+				PageURL:    "/posts/latest?page_size=10&page_id=1646797974&title=portra",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -124,7 +124,7 @@ func TestPosts(t *testing.T) {
 	t7 := testInfo{
 		name:   "title next page",
 		method: http.MethodGet,
-		target: "/latest?page_size=10&page_id=1646797974&title=portra",
+		target: "/posts/latest?page_size=10&page_id=1646797974&title=portra",
 		wantBody: Response{
 			Meta: Meta{
 				TotalPosts: 7,
