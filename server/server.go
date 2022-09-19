@@ -9,14 +9,15 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-const shutdownTimeout = 2 * time.Second
+const shutdownTimeout = 5 * time.Second
 
 type Server struct {
-	server *http.Server
-	router *chi.Mux
+	server  *http.Server
+	router  *chi.Mux
+	healthy bool
 
-	PostService   analogdb.PostService
-	HealthService analogdb.HealthService
+	PostService  analogdb.PostService
+	ReadyService analogdb.ReadyService
 }
 
 func New(port string) *Server {
@@ -27,6 +28,7 @@ func New(port string) *Server {
 
 	s.server.Handler = s.router
 	s.server.Addr = ":" + port
+	s.healthy = true
 
 	s.mountMiddleware()
 	s.mountPostHandlers()
@@ -44,5 +46,6 @@ func (s *Server) Run() error {
 func (s *Server) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
+	s.healthy = false
 	return s.server.Shutdown(ctx)
 }
