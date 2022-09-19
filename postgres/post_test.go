@@ -10,7 +10,7 @@ import (
 
 const (
 	// number of posts matching each query from test DB
-	totalPosts     = 51
+	totalPosts     = 52
 	totalNsfw      = 4
 	totalGrayscale = 7
 	totalSprocket  = 2
