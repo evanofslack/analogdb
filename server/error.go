@@ -11,6 +11,7 @@ import (
 var codes = map[string]int{
 	analogdb.ERRINTERNAL:     http.StatusInternalServerError,
 	analogdb.ERRNOTFOUND:     http.StatusNotFound,
+	analogdb.ERRUNAVAILABLE:  http.StatusServiceUnavailable,
 	analogdb.ERRUNAUTHORIZED: http.StatusUnauthorized,
 }
 
