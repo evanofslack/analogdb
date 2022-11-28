@@ -6,7 +6,7 @@ postgres:
   url: ""
 
 http:
-  port: ""
+  port: "8080"
 
 logger:
   level: "debug"
