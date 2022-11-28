@@ -1,12 +1,16 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/evanofslack/analogdb"
@@ -28,7 +32,7 @@ type testInfo struct {
 	wantStatus int
 }
 
-func TestPosts(t *testing.T) {
+func TestGetPosts(t *testing.T) {
 	t1 := testInfo{
 		name:   "latest",
 		method: http.MethodGet,
@@ -245,4 +249,188 @@ func TestFindPost(t *testing.T) {
 			t.Errorf("want status %d, got %d", want, got)
 		}
 	})
+}
+
+func TestCreateAndDeletePost(t *testing.T) {
+	t.Run("Valid put request", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		createPost := makeTestCreatePost(true)
+		jsonCreatePost, _ := json.Marshal(createPost)
+
+		r := httptest.NewRequest(http.MethodPut, "/post", bytes.NewBuffer(jsonCreatePost))
+
+		r.Header.Set("Authorization", makeAuthHeader())
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusCreated, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var createResponse CreateResponse
+		if err := json.Unmarshal(data, &createResponse); err != nil {
+			t.Fatal(err)
+		}
+
+		id := createResponse.Post.Id
+		title := createResponse.Post.Title
+		println(title, id)
+
+		// delete the created post
+		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
+		w = httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", fmt.Sprintf("%d", id))
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		r.Header.Set("Authorization", makeAuthHeader())
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+	t.Run("Valid post request", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		createPost := makeTestCreatePost(true)
+		jsonCreatePost, _ := json.Marshal(createPost)
+
+		r := httptest.NewRequest(http.MethodPost, "/post", bytes.NewBuffer(jsonCreatePost))
+
+		r.Header.Set("Authorization", makeAuthHeader())
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusCreated, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var createResponse CreateResponse
+		if err := json.Unmarshal(data, &createResponse); err != nil {
+			t.Fatal(err)
+		}
+
+		id := createResponse.Post.Id
+		title := createResponse.Post.Title
+		println(title, id)
+
+		// delete the created post
+		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
+		w = httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", fmt.Sprintf("%d", id))
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		r.Header.Set("Authorization", makeAuthHeader())
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+	t.Run("Invalid put request", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		createPost := makeTestCreatePost(false)
+		jsonCreatePost, _ := json.Marshal(createPost)
+
+		r := httptest.NewRequest(http.MethodPut, "/post", bytes.NewBuffer(jsonCreatePost))
+
+		r.Header.Set("Authorization", makeAuthHeader())
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusUnprocessableEntity, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+	t.Run("Invalid post request", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		createPost := makeTestCreatePost(false)
+		jsonCreatePost, _ := json.Marshal(createPost)
+
+		r := httptest.NewRequest(http.MethodPost, "/post", bytes.NewBuffer(jsonCreatePost))
+
+		r.Header.Set("Authorization", makeAuthHeader())
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusUnprocessableEntity, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+}
+
+func makeTestCreatePost(valid bool) analogdb.CreatePost {
+	testImage := analogdb.Image{
+		Label:  "test",
+		Url:    "test.com",
+		Width:  0,
+		Height: 0,
+	}
+	var testImages []analogdb.Image
+	if valid {
+		// valid post has 4 images
+		testImages = append(testImages, testImage, testImage, testImage, testImage)
+	} else {
+		// invalid post has anything other than 4 images
+		testImages = append(testImages, testImage, testImage)
+	}
+
+	testTitle := "test title"
+
+	createPost := analogdb.CreatePost{
+		Images:    testImages,
+		Title:     testTitle,
+		Author:    "test author",
+		Permalink: "test.permalink.com",
+		Score:     0,
+		Nsfw:      false,
+		Grayscale: false,
+		Time:      0,
+		Sprocket:  false,
+	}
+
+	return createPost
+}
+
+func makeAuthHeader() string {
+	username := os.Getenv("AUTH_USERNAME")
+	password := os.Getenv("AUTH_PASSWORD")
+	auth := fmt.Sprintf("%s:%s", username, password)
+	enc_auth := base64.StdEncoding.EncodeToString([]byte(auth))
+	header := fmt.Sprintf("Basic %s", enc_auth)
+
+	return header
 }
