@@ -13,6 +13,13 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	// number of posts matching each query from test DB
+	totalPosts  = 51
+	totalNsfw   = 4
+	totalPortra = 17
+)
+
 type testInfo struct {
 	name       string
 	method     string
@@ -28,7 +35,7 @@ func TestPosts(t *testing.T) {
 		target: "/posts/latest?page_size=20",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 52,
+				TotalPosts: totalPosts,
 				PageSize:   20,
 				PageID:     1646884084,
 				PageURL:    "/posts/latest?page_size=20&page_id=1646884084",
@@ -44,7 +51,7 @@ func TestPosts(t *testing.T) {
 		target: "/posts/top?page_size=10",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 52,
+				TotalPosts: totalPosts,
 				PageSize:   10,
 				PageID:     730,
 				PageURL:    "/posts/top?page_size=10&page_id=730",
@@ -60,7 +67,7 @@ func TestPosts(t *testing.T) {
 		target: "/posts/random?page_size=2",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 52,
+				TotalPosts: totalPosts,
 				PageSize:   2,
 				PageID:     0,
 				PageURL:    "",
@@ -76,7 +83,7 @@ func TestPosts(t *testing.T) {
 		target: "/posts/latest?nsfw=true",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 4,
+				TotalPosts: totalNsfw,
 				PageSize:   20,
 				PageID:     0,
 				PageURL:    "",
@@ -93,7 +100,7 @@ func TestPosts(t *testing.T) {
 		target: "/posts/latest?nsfw=false",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 48,
+				TotalPosts: totalPosts - totalNsfw,
 				PageSize:   20,
 				PageID:     1646854637,
 				PageURL:    "/posts/latest?page_size=20&page_id=1646854637&nsfw=false",
@@ -110,7 +117,7 @@ func TestPosts(t *testing.T) {
 		target: "/posts/latest?title=portra&page_size=10",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 17,
+				TotalPosts: totalPortra,
 				PageSize:   10,
 				PageID:     1646797974,
 				PageURL:    "/posts/latest?page_size=10&page_id=1646797974&title=portra",
@@ -127,7 +134,7 @@ func TestPosts(t *testing.T) {
 		target: "/posts/latest?page_size=10&page_id=1646797974&title=portra",
 		wantBody: Response{
 			Meta: Meta{
-				TotalPosts: 7,
+				TotalPosts: totalPortra - 10,
 				PageSize:   10,
 				PageID:     0,
 				PageURL:    "",
