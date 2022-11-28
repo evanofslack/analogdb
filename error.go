@@ -6,10 +6,11 @@ import (
 )
 
 const (
-	ERRINTERNAL     = "internal"
-	ERRNOTFOUND     = "not_found"
-	ERRUNAVAILABLE  = "service_unavailable"
-	ERRUNAUTHORIZED = "unauthorized"
+	ERRINTERNAL      = "internal"
+	ERRUNPROCESSABLE = "unprocessable"
+	ERRNOTFOUND      = "not_found"
+	ERRUNAVAILABLE   = "service_unavailable"
+	ERRUNAUTHORIZED  = "unauthorized"
 )
 
 type Error struct {

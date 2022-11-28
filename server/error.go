@@ -9,10 +9,11 @@ import (
 )
 
 var codes = map[string]int{
-	analogdb.ERRINTERNAL:     http.StatusInternalServerError,
-	analogdb.ERRNOTFOUND:     http.StatusNotFound,
-	analogdb.ERRUNAVAILABLE:  http.StatusServiceUnavailable,
-	analogdb.ERRUNAUTHORIZED: http.StatusUnauthorized,
+	analogdb.ERRINTERNAL:      http.StatusInternalServerError,
+	analogdb.ERRUNPROCESSABLE: http.StatusUnprocessableEntity,
+	analogdb.ERRNOTFOUND:      http.StatusNotFound,
+	analogdb.ERRUNAVAILABLE:   http.StatusServiceUnavailable,
+	analogdb.ERRUNAUTHORIZED:  http.StatusUnauthorized,
 }
 
 func errorStatusCode(code string) int {

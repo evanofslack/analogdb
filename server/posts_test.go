@@ -1,16 +1,27 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
+)
+
+const (
+	// number of posts matching each query from test DB
+	totalPosts  = 51
+	totalNsfw   = 4
+	totalPortra = 17
 )
 
 type testInfo struct {
@@ -21,14 +32,14 @@ type testInfo struct {
 	wantStatus int
 }
 
-func TestPosts(t *testing.T) {
+func TestGetPosts(t *testing.T) {
 	t1 := testInfo{
 		name:   "latest",
 		method: http.MethodGet,
 		target: "/posts/latest?page_size=20",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
-				TotalPosts: 52,
+				TotalPosts: totalPosts,
 				PageSize:   20,
 				PageID:     1646884084,
 				PageURL:    "/posts/latest?page_size=20&page_id=1646884084",
@@ -42,9 +53,9 @@ func TestPosts(t *testing.T) {
 		name:   "top",
 		method: http.MethodGet,
 		target: "/posts/top?page_size=10",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
-				TotalPosts: 52,
+				TotalPosts: totalPosts,
 				PageSize:   10,
 				PageID:     730,
 				PageURL:    "/posts/top?page_size=10&page_id=730",
@@ -58,9 +69,9 @@ func TestPosts(t *testing.T) {
 		name:   "random",
 		method: http.MethodGet,
 		target: "/posts/random?page_size=2",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
-				TotalPosts: 52,
+				TotalPosts: totalPosts,
 				PageSize:   2,
 				PageID:     0,
 				PageURL:    "",
@@ -74,9 +85,9 @@ func TestPosts(t *testing.T) {
 		name:   "nsfw",
 		method: http.MethodGet,
 		target: "/posts/latest?nsfw=true",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
-				TotalPosts: 4,
+				TotalPosts: totalNsfw,
 				PageSize:   20,
 				PageID:     0,
 				PageURL:    "",
@@ -91,9 +102,9 @@ func TestPosts(t *testing.T) {
 		name:   "inverse nsfw",
 		method: http.MethodGet,
 		target: "/posts/latest?nsfw=false",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
-				TotalPosts: 48,
+				TotalPosts: totalPosts - totalNsfw,
 				PageSize:   20,
 				PageID:     1646854637,
 				PageURL:    "/posts/latest?page_size=20&page_id=1646854637&nsfw=false",
@@ -108,9 +119,9 @@ func TestPosts(t *testing.T) {
 		name:   "title",
 		method: http.MethodGet,
 		target: "/posts/latest?title=portra&page_size=10",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
-				TotalPosts: 17,
+				TotalPosts: totalPortra,
 				PageSize:   10,
 				PageID:     1646797974,
 				PageURL:    "/posts/latest?page_size=10&page_id=1646797974&title=portra",
@@ -125,9 +136,9 @@ func TestPosts(t *testing.T) {
 		name:   "title next page",
 		method: http.MethodGet,
 		target: "/posts/latest?page_size=10&page_id=1646797974&title=portra",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
-				TotalPosts: 7,
+				TotalPosts: totalPortra - 10,
 				PageSize:   10,
 				PageID:     0,
 				PageURL:    "",
@@ -158,25 +169,25 @@ func TestPosts(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			var resp Response
+			var resp PostResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
 				t.Fatal(err)
 			}
 
-			if got, want := resp.Meta.TotalPosts, tc.wantBody.(Response).Meta.TotalPosts; got != want {
+			if got, want := resp.Meta.TotalPosts, tc.wantBody.(PostResponse).Meta.TotalPosts; got != want {
 				t.Errorf("want %d, got %d", want, got)
 			}
 
-			if got, want := resp.Meta.PageSize, tc.wantBody.(Response).Meta.PageSize; got != want {
+			if got, want := resp.Meta.PageSize, tc.wantBody.(PostResponse).Meta.PageSize; got != want {
 				t.Errorf("want %d, got %d", want, got)
 			}
 
 			if tc.name != "random" {
-				if got, want := resp.Meta.PageID, tc.wantBody.(Response).Meta.PageID; got != want {
+				if got, want := resp.Meta.PageID, tc.wantBody.(PostResponse).Meta.PageID; got != want {
 					t.Errorf("want %d, got %d", want, got)
 				}
 
-				if got, want := resp.Meta.PageURL, tc.wantBody.(Response).Meta.PageURL; got != want {
+				if got, want := resp.Meta.PageURL, tc.wantBody.(PostResponse).Meta.PageURL; got != want {
 					t.Errorf("want %s, got %s", want, got)
 				}
 			}
@@ -238,4 +249,188 @@ func TestFindPost(t *testing.T) {
 			t.Errorf("want status %d, got %d", want, got)
 		}
 	})
+}
+
+func TestCreateAndDeletePost(t *testing.T) {
+	t.Run("Valid put request", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		createPost := makeTestCreatePost(true)
+		jsonCreatePost, _ := json.Marshal(createPost)
+
+		r := httptest.NewRequest(http.MethodPut, "/post", bytes.NewBuffer(jsonCreatePost))
+
+		r.Header.Set("Authorization", makeAuthHeader())
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusCreated, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var createResponse CreateResponse
+		if err := json.Unmarshal(data, &createResponse); err != nil {
+			t.Fatal(err)
+		}
+
+		id := createResponse.Post.Id
+		title := createResponse.Post.Title
+		println(title, id)
+
+		// delete the created post
+		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
+		w = httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", fmt.Sprintf("%d", id))
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		r.Header.Set("Authorization", makeAuthHeader())
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+	t.Run("Valid post request", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		createPost := makeTestCreatePost(true)
+		jsonCreatePost, _ := json.Marshal(createPost)
+
+		r := httptest.NewRequest(http.MethodPost, "/post", bytes.NewBuffer(jsonCreatePost))
+
+		r.Header.Set("Authorization", makeAuthHeader())
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusCreated, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var createResponse CreateResponse
+		if err := json.Unmarshal(data, &createResponse); err != nil {
+			t.Fatal(err)
+		}
+
+		id := createResponse.Post.Id
+		title := createResponse.Post.Title
+		println(title, id)
+
+		// delete the created post
+		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
+		w = httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", fmt.Sprintf("%d", id))
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		r.Header.Set("Authorization", makeAuthHeader())
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+	t.Run("Invalid put request", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		createPost := makeTestCreatePost(false)
+		jsonCreatePost, _ := json.Marshal(createPost)
+
+		r := httptest.NewRequest(http.MethodPut, "/post", bytes.NewBuffer(jsonCreatePost))
+
+		r.Header.Set("Authorization", makeAuthHeader())
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusUnprocessableEntity, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+	t.Run("Invalid post request", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		createPost := makeTestCreatePost(false)
+		jsonCreatePost, _ := json.Marshal(createPost)
+
+		r := httptest.NewRequest(http.MethodPost, "/post", bytes.NewBuffer(jsonCreatePost))
+
+		r.Header.Set("Authorization", makeAuthHeader())
+
+		w := httptest.NewRecorder()
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusUnprocessableEntity, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+}
+
+func makeTestCreatePost(valid bool) analogdb.CreatePost {
+	testImage := analogdb.Image{
+		Label:  "test",
+		Url:    "test.com",
+		Width:  0,
+		Height: 0,
+	}
+	var testImages []analogdb.Image
+	if valid {
+		// valid post has 4 images
+		testImages = append(testImages, testImage, testImage, testImage, testImage)
+	} else {
+		// invalid post has anything other than 4 images
+		testImages = append(testImages, testImage, testImage)
+	}
+
+	testTitle := "test title"
+
+	createPost := analogdb.CreatePost{
+		Images:    testImages,
+		Title:     testTitle,
+		Author:    "test author",
+		Permalink: "test.permalink.com",
+		Score:     0,
+		Nsfw:      false,
+		Grayscale: false,
+		Time:      0,
+		Sprocket:  false,
+	}
+
+	return createPost
+}
+
+func makeAuthHeader() string {
+	username := os.Getenv("AUTH_USERNAME")
+	password := os.Getenv("AUTH_PASSWORD")
+	auth := fmt.Sprintf("%s:%s", username, password)
+	enc_auth := base64.StdEncoding.EncodeToString([]byte(auth))
+	header := fmt.Sprintf("Basic %s", enc_auth)
+
+	return header
 }

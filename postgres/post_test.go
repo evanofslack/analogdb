@@ -10,7 +10,7 @@ import (
 
 const (
 	// number of posts matching each query from test DB
-	totalPosts     = 52
+	totalPosts     = 51
 	totalNsfw      = 4
 	totalGrayscale = 7
 	totalSprocket  = 2
@@ -35,7 +35,7 @@ func TestFindPosts(t *testing.T) {
 		if posts, count, err := findPosts(ctx, tx, nilFilter); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts; got != want {
-			t.Fatalf("length of postsG %v, want %v", got, want)
+			t.Fatalf("length of posts %v, want %v", got, want)
 		} else if got, want := count, totalPosts; got != want {
 			t.Fatalf("total count %v, want %v", got, want)
 		}
@@ -223,6 +223,7 @@ func TestTopPost(t *testing.T) {
 
 		top := posts[0].Score
 		bottom := posts[limit-1].Score
+
 		for _, p := range posts {
 			if p.Score > top {
 				t.Fatalf("posts not sorted most to least votes")
@@ -308,6 +309,95 @@ func TestFindPost(t *testing.T) {
 		if got, want := post.Title, postTitle; got != want {
 			t.Fatalf("Post title does not match, got %v, want %v", got, want)
 		}
+	})
+}
+
+func TestCreateAndDeletePost(t *testing.T) {
+	t.Run("4 images is a valid post", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		testImage := analogdb.Image{
+			Label:  "test",
+			Url:    "test.com",
+			Width:  0,
+			Height: 0,
+		}
+		var fourImages []analogdb.Image
+		fourImages = append(fourImages, testImage, testImage, testImage, testImage)
+		testTitle := "test title"
+
+		createPost := analogdb.CreatePost{
+			Images:    fourImages,
+			Title:     testTitle,
+			Author:    "test author",
+			Permalink: "test.permalink.com",
+			Score:     0,
+			Nsfw:      false,
+			Grayscale: false,
+			Time:      0,
+			Sprocket:  false,
+		}
+
+		ctx := context.Background()
+
+		created, err := ps.CreatePost(ctx, &createPost)
+		if err != nil {
+			println(err)
+			t.Fatal("valid post should be created")
+		}
+
+		if created.Title != testTitle {
+			t.Fatalf("created post has invalid title, got %v, want %v", created.Title, testTitle)
+		}
+
+		if err := ps.DeletePost(ctx, created.Id); err != nil {
+			println(err)
+			t.Fatal("unable to delete post created to test create post")
+		}
+	})
+
+	t.Run("3 images is an invalid post", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		testImage := analogdb.Image{
+			Label:  "test",
+			Url:    "test.com",
+			Width:  0,
+			Height: 0,
+		}
+		var threeImages []analogdb.Image
+
+		threeImages = append(threeImages, testImage, testImage, testImage)
+		testTitle := "test title"
+
+		createPost := analogdb.CreatePost{
+			Images:    threeImages,
+			Title:     testTitle,
+			Author:    "test author",
+			Permalink: "test.permalink.com",
+			Score:     0,
+			Nsfw:      false,
+			Grayscale: false,
+			Time:      0,
+			Sprocket:  false,
+		}
+
+		ctx := context.Background()
+
+		_, err := ps.CreatePost(ctx, &createPost)
+		if err == nil {
+			t.Fatal("invalid post should not be created")
+		}
+		if err != nil {
+			if err.Error() != "analogdb error: code: unprocessable message: Unable to create post, expected 4 images (low, medium, high, raw)" {
+				t.Fatal("expected analogdb error message")
+			}
+		}
+
 	})
 }
 
