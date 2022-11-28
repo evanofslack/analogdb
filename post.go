@@ -10,11 +10,10 @@ type Image struct {
 	Height int    `json:"height"`
 }
 
-// Post is the attributes associated with an image.
+// CreatePost is the model for creating a post.
 // This includes info from the original reddit post
-// as well as attributes about the image.
-type Post struct {
-	Id        int     `json:"id"`
+// as well as attributes about the image
+type CreatePost struct {
 	Images    []Image `json:"images"`
 	Title     string  `json:"title"`
 	Author    string  `json:"author"`
@@ -24,6 +23,13 @@ type Post struct {
 	Grayscale bool    `json:"grayscale"`
 	Time      int     `json:"unix_time"`
 	Sprocket  bool    `json:"sprocket"`
+}
+
+// Post is the model of a returned post
+// including the auto-incremented ID from the DB
+type Post struct {
+	Id int `json:"id"`
+	CreatePost
 }
 
 // PostFilter are options used for querying posts
@@ -58,5 +64,6 @@ type Response struct {
 type PostService interface {
 	FindPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
 	FindPostByID(ctx context.Context, id int) (*Post, error)
-	DeletePost(ctx context.Context, id int) (*Post, error)
+	CreatePost(ctx context.Context, post *CreatePost) (*Post, error)
+	DeletePost(ctx context.Context, id int) error
 }

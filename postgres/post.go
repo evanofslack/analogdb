@@ -14,9 +14,8 @@ import (
 // ensure interface is implemented
 var _ analogdb.PostService = (*PostService)(nil)
 
-// rawPost corresponds to the columns as a post is stored in the DB
-type rawPost struct {
-	id         int
+// rawPostCreate corresponds to the columns as a post is inserted in DB
+type rawCreatePost struct {
 	url        string
 	title      string
 	author     string
@@ -39,6 +38,12 @@ type rawPost struct {
 	highHeight int
 }
 
+// rawPost corresponds to the columns as a post is selected from the DB
+type rawPost struct {
+	id int
+	rawCreatePost
+}
+
 type PostService struct {
 	db *DB
 }
@@ -53,6 +58,19 @@ const (
 	score  = "score"
 	random = "random"
 )
+
+func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost) (*analogdb.Post, error) {
+	tx, err := s.db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	createdPost, err := createPost(ctx, tx, post)
+	if err != nil {
+		return nil, err
+	}
+	return createdPost, nil
+}
 
 func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
 	tx, err := s.db.db.BeginTx(ctx, nil)
@@ -78,20 +96,86 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	return posts[0], nil
 }
 
-func (s *PostService) DeletePost(ctx context.Context, id int) (*analogdb.Post, error) {
+func (s *PostService) DeletePost(ctx context.Context, id int) error {
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer tx.Rollback()
-	posts, err := deletePost(ctx, tx, id)
+	err = deletePost(ctx, tx, id)
+	if err != nil {
+		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "Post not found"}
+	}
+	return nil
+}
+
+func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*analogdb.Post, error) {
+
+	create, err := createPostToRawPostCreate(post)
 	if err != nil {
 		return nil, err
 	}
-	if len(posts) == 0 {
-		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "Post not found"}
+
+	var id int64
+
+	query :=
+		`
+	INSERT INTO pictures
+	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) 
+	ON CONFLICT (permalink) DO NOTHING
+	RETURNING id
+	`
+
+	stmt, err := tx.PrepareContext(ctx, query)
+
+	if err != nil {
+		return nil, err
 	}
-	return posts[0], nil
+
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(
+		ctx,
+		create.url,
+		create.title,
+		create.author,
+		create.permalink,
+		create.score,
+		create.nsfw,
+		create.grayscale,
+		create.time,
+		create.width,
+		create.height,
+		create.sprocket,
+		create.lowUrl,
+		create.lowWidth,
+		create.lowHeight,
+		create.medUrl,
+		create.medWidth,
+		create.medHeight,
+		create.highUrl,
+		create.highWidth,
+		create.highHeight).Scan(&id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = tx.Commit()
+
+	if err != nil {
+		return nil, err
+	}
+
+	createdPost := &analogdb.Post{
+		Id:         int(id),
+		CreatePost: *post,
+	}
+
+	println(createdPost.Id)
+
+	return createdPost, nil
 }
 
 // findPosts is the general function responsible for handling all queries
@@ -138,93 +222,48 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 
 	posts := make([]*analogdb.Post, 0)
 	var count int
+	var p *rawPost
 	for rows.Next() {
-		var p rawPost
-		if err := rows.Scan(
-			&p.id,
-			&p.url,
-			&p.title,
-			&p.author,
-			&p.permalink,
-			&p.score,
-			&p.nsfw,
-			&p.grayscale,
-			&p.time,
-			&p.width,
-			&p.height,
-			&p.sprocket,
-			&p.lowUrl,
-			&p.lowWidth,
-			&p.lowHeight,
-			&p.medUrl,
-			&p.medWidth,
-			&p.medHeight,
-			&p.highUrl,
-			&p.highWidth,
-			&p.highHeight,
-			&count,
-		); err != nil {
+		p, count, err = scanRowToRawPostCount(rows)
+		if err != nil {
 			return nil, 0, err
 		}
-		lowImage := analogdb.Image{Label: "low", Url: p.lowUrl, Width: p.lowWidth, Height: p.lowHeight}
-		medImage := analogdb.Image{Label: "medium", Url: p.medUrl, Width: p.medWidth, Height: p.medHeight}
-		highImage := analogdb.Image{Label: "high", Url: p.highUrl, Width: p.highWidth, Height: p.highHeight}
-		rawImage := analogdb.Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
-		images := []analogdb.Image{lowImage, medImage, highImage, rawImage}
-
-		post := &analogdb.Post{Id: p.id, Images: images, Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket}
+		post, err := rawPostToPost(*p)
+		if err != nil {
+			return nil, 0, err
+		}
 		posts = append(posts, post)
+
 	}
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, 0, err
+	}
+
 	return posts, count, nil
 }
 
-func deletePost(ctx context.Context, tx *sql.Tx, id int) ([]*analogdb.Post, error) {
-	query := "DELETE FROM pictures WHERE id = $1"
+func deletePost(ctx context.Context, tx *sql.Tx, id int) error {
+	query := `
+			DELETE FROM pictures 
+			WHERE id = $1 
+			RETURNING id`
 
-	rows, err := tx.QueryContext(ctx, query, id)
+	row := tx.QueryRowContext(ctx, query, id)
+
+	var returnedID int
+	row.Scan(&returnedID)
+
+	if id != returnedID {
+		return fmt.Errorf("error deleting post with id %d", id)
+	}
+
+	err := tx.Commit()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer rows.Close()
-
-	posts := make([]*analogdb.Post, 0)
-	for rows.Next() {
-		var p rawPost
-		if err := rows.Scan(
-			&p.id,
-			&p.url,
-			&p.title,
-			&p.author,
-			&p.permalink,
-			&p.score,
-			&p.nsfw,
-			&p.grayscale,
-			&p.time,
-			&p.width,
-			&p.height,
-			&p.sprocket,
-			&p.lowUrl,
-			&p.lowWidth,
-			&p.lowHeight,
-			&p.medUrl,
-			&p.medWidth,
-			&p.medHeight,
-			&p.highUrl,
-			&p.highWidth,
-			&p.highHeight,
-		); err != nil {
-			return nil, err
-		}
-		lowImage := analogdb.Image{Label: "low", Url: p.lowUrl, Width: p.lowWidth, Height: p.lowHeight}
-		medImage := analogdb.Image{Label: "medium", Url: p.medUrl, Width: p.medWidth, Height: p.medHeight}
-		highImage := analogdb.Image{Label: "high", Url: p.highUrl, Width: p.highWidth, Height: p.highHeight}
-		rawImage := analogdb.Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
-		images := []analogdb.Image{lowImage, medImage, highImage, rawImage}
-
-		post := &analogdb.Post{Id: p.id, Images: images, Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket}
-		posts = append(posts, post)
-	}
-	return posts, nil
+	return nil
 }
 
 // filterToOrder converts filter into an SQL "ORDER BY" statement
@@ -234,7 +273,7 @@ func filterToOrder(filter *analogdb.PostFilter) string {
 		case time:
 			return " ORDER BY time DESC"
 		case score:
-			return "ORDER BY score DESC"
+			return " ORDER BY score DESC"
 		case random:
 			if seed := filter.Seed; seed != nil {
 				return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", *seed)
@@ -327,6 +366,12 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 		args = append(args, matchAuthor)
 		index += 1
 	}
+
+	// no where arguments provided
+	// if index == 1 {
+	// 	return ``, args
+	// }
+
 	return `WHERE ` + strings.Join(where, " AND "), args
 
 }
@@ -345,4 +390,111 @@ func validateFilter(filter *analogdb.PostFilter) error {
 		return nil
 	}
 	return nil
+}
+
+func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
+	if len(p.Images) != 4 {
+		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Unable to create post, expected 4 images (low, medium, high, raw)"}
+	}
+	low := p.Images[0]
+	med := p.Images[1]
+	high := p.Images[2]
+	raw := p.Images[3]
+
+	post := &rawCreatePost{
+		url:        raw.Url,
+		title:      p.Title,
+		author:     p.Author,
+		permalink:  p.Permalink,
+		score:      p.Score,
+		nsfw:       p.Nsfw,
+		grayscale:  p.Grayscale,
+		time:       p.Time,
+		width:      raw.Width,
+		height:     raw.Height,
+		sprocket:   p.Sprocket,
+		lowUrl:     low.Url,
+		lowWidth:   low.Width,
+		lowHeight:  low.Height,
+		medUrl:     med.Url,
+		medWidth:   med.Width,
+		medHeight:  med.Height,
+		highUrl:    high.Url,
+		highWidth:  high.Width,
+		highHeight: high.Height,
+	}
+	return post, nil
+
+}
+
+func rawPostToPost(p rawPost) (*analogdb.Post, error) {
+	lowImage := analogdb.Image{Label: "low", Url: p.lowUrl, Width: p.lowWidth, Height: p.lowHeight}
+	medImage := analogdb.Image{Label: "medium", Url: p.medUrl, Width: p.medWidth, Height: p.medHeight}
+	highImage := analogdb.Image{Label: "high", Url: p.highUrl, Width: p.highWidth, Height: p.highHeight}
+	rawImage := analogdb.Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
+	images := []analogdb.Image{lowImage, medImage, highImage, rawImage}
+
+	post := &analogdb.Post{Id: p.id,
+		CreatePost: analogdb.CreatePost{Images: images, Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket}}
+	return post, nil
+}
+
+func scanRowToRawPost(rows *sql.Rows) (*rawPost, error) {
+	var p rawPost
+	if err := rows.Scan(
+		&p.id,
+		&p.rawCreatePost.url,
+		&p.rawCreatePost.title,
+		&p.rawCreatePost.author,
+		&p.rawCreatePost.permalink,
+		&p.rawCreatePost.score,
+		&p.rawCreatePost.nsfw,
+		&p.rawCreatePost.grayscale,
+		&p.rawCreatePost.time,
+		&p.rawCreatePost.width,
+		&p.rawCreatePost.height,
+		&p.rawCreatePost.sprocket,
+		&p.rawCreatePost.lowUrl,
+		&p.rawCreatePost.lowWidth,
+		&p.rawCreatePost.lowHeight,
+		&p.rawCreatePost.medUrl,
+		&p.rawCreatePost.medWidth,
+		&p.rawCreatePost.medHeight,
+		&p.rawCreatePost.highUrl,
+		&p.rawCreatePost.highWidth,
+		&p.rawCreatePost.highHeight); err != nil {
+		return nil, err
+	}
+	return &p, nil
+}
+
+func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
+	var p rawPost
+	var count int
+	if err := rows.Scan(
+		&p.id,
+		&p.rawCreatePost.url,
+		&p.rawCreatePost.title,
+		&p.rawCreatePost.author,
+		&p.rawCreatePost.permalink,
+		&p.rawCreatePost.score,
+		&p.rawCreatePost.nsfw,
+		&p.rawCreatePost.grayscale,
+		&p.rawCreatePost.time,
+		&p.rawCreatePost.width,
+		&p.rawCreatePost.height,
+		&p.rawCreatePost.sprocket,
+		&p.rawCreatePost.lowUrl,
+		&p.rawCreatePost.lowWidth,
+		&p.rawCreatePost.lowHeight,
+		&p.rawCreatePost.medUrl,
+		&p.rawCreatePost.medWidth,
+		&p.rawCreatePost.medHeight,
+		&p.rawCreatePost.highUrl,
+		&p.rawCreatePost.highWidth,
+		&p.rawCreatePost.highHeight,
+		&count); err != nil {
+		return nil, 0, err
+	}
+	return &p, count, nil
 }
