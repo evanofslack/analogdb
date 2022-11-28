@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -21,10 +20,7 @@ func mustOpen(t *testing.T) *DB {
 	}
 
 	// connect to local db for testing
-	dsn := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
-		os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
+	dsn := os.Getenv("DATABASE_URL")
 
 	db := NewDB(dsn)
 
@@ -38,5 +34,12 @@ func mustClose(t *testing.T, db *DB) {
 	t.Helper()
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestMustOpen(t *testing.T) {
+	db := mustOpen(t)
+	if db == nil {
+		t.Fatal("must return DB")
 	}
 }

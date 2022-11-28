@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -17,10 +16,7 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 	}
 
 	// httpserver test currently require DB, can be mocked out instead
-	dsn := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		os.Getenv("DBHOST"), os.Getenv("DBPORT"), os.Getenv("DBUSER"),
-		os.Getenv("DBPASSWORD"), os.Getenv("DBNAME"))
+	dsn := os.Getenv("DATABASE_URL")
 
 	db := postgres.NewDB(dsn)
 	if err := db.Open(); err != nil {
