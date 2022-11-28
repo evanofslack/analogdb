@@ -33,7 +33,7 @@ func TestPosts(t *testing.T) {
 		name:   "latest",
 		method: http.MethodGet,
 		target: "/posts/latest?page_size=20",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   20,
@@ -49,7 +49,7 @@ func TestPosts(t *testing.T) {
 		name:   "top",
 		method: http.MethodGet,
 		target: "/posts/top?page_size=10",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   10,
@@ -65,7 +65,7 @@ func TestPosts(t *testing.T) {
 		name:   "random",
 		method: http.MethodGet,
 		target: "/posts/random?page_size=2",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   2,
@@ -81,7 +81,7 @@ func TestPosts(t *testing.T) {
 		name:   "nsfw",
 		method: http.MethodGet,
 		target: "/posts/latest?nsfw=true",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalNsfw,
 				PageSize:   20,
@@ -98,7 +98,7 @@ func TestPosts(t *testing.T) {
 		name:   "inverse nsfw",
 		method: http.MethodGet,
 		target: "/posts/latest?nsfw=false",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts - totalNsfw,
 				PageSize:   20,
@@ -115,7 +115,7 @@ func TestPosts(t *testing.T) {
 		name:   "title",
 		method: http.MethodGet,
 		target: "/posts/latest?title=portra&page_size=10",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPortra,
 				PageSize:   10,
@@ -132,7 +132,7 @@ func TestPosts(t *testing.T) {
 		name:   "title next page",
 		method: http.MethodGet,
 		target: "/posts/latest?page_size=10&page_id=1646797974&title=portra",
-		wantBody: Response{
+		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPortra - 10,
 				PageSize:   10,
@@ -165,25 +165,25 @@ func TestPosts(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			var resp Response
+			var resp PostResponse
 			if err := json.Unmarshal(data, &resp); err != nil {
 				t.Fatal(err)
 			}
 
-			if got, want := resp.Meta.TotalPosts, tc.wantBody.(Response).Meta.TotalPosts; got != want {
+			if got, want := resp.Meta.TotalPosts, tc.wantBody.(PostResponse).Meta.TotalPosts; got != want {
 				t.Errorf("want %d, got %d", want, got)
 			}
 
-			if got, want := resp.Meta.PageSize, tc.wantBody.(Response).Meta.PageSize; got != want {
+			if got, want := resp.Meta.PageSize, tc.wantBody.(PostResponse).Meta.PageSize; got != want {
 				t.Errorf("want %d, got %d", want, got)
 			}
 
 			if tc.name != "random" {
-				if got, want := resp.Meta.PageID, tc.wantBody.(Response).Meta.PageID; got != want {
+				if got, want := resp.Meta.PageID, tc.wantBody.(PostResponse).Meta.PageID; got != want {
 					t.Errorf("want %d, got %d", want, got)
 				}
 
-				if got, want := resp.Meta.PageURL, tc.wantBody.(Response).Meta.PageURL; got != want {
+				if got, want := resp.Meta.PageURL, tc.wantBody.(PostResponse).Meta.PageURL; got != want {
 					t.Errorf("want %s, got %s", want, got)
 				}
 			}

@@ -20,9 +20,13 @@ type Meta struct {
 	Seed       int    `json:"seed,omitempty"`
 }
 
-type Response struct {
+type PostResponse struct {
 	Meta  Meta            `json:"meta"`
 	Posts []analogdb.Post `json:"posts"`
+}
+
+type DeleteResponse struct {
+	Message string `json:"message"`
 }
 
 var defaultLimit = 20
@@ -41,6 +45,7 @@ func (s *Server) mountPostHandlers() {
 	s.router.Route(postPath, func(r chi.Router) {
 		r.Get("/", s.findPost)
 		r.With(auth).Delete("/", s.deletePost)
+		r.With(auth).Post("/", s.deletePost)
 	})
 }
 
@@ -52,7 +57,7 @@ func (s *Server) latestPosts(w http.ResponseWriter, r *http.Request) {
 	sort := "time"
 	filter.Sort = &sort
 
-	resp, err := s.createResponse(r, filter)
+	resp, err := s.createPostResponse(r, filter)
 	if err != nil {
 		writeError(w, r, err)
 	}
@@ -69,7 +74,7 @@ func (s *Server) topPosts(w http.ResponseWriter, r *http.Request) {
 	}
 	sort := "score"
 	filter.Sort = &sort
-	resp, err := s.createResponse(r, filter)
+	resp, err := s.createPostResponse(r, filter)
 	if err != nil {
 		writeError(w, r, err)
 	}
@@ -86,7 +91,7 @@ func (s *Server) randomPosts(w http.ResponseWriter, r *http.Request) {
 	}
 	sort := "random"
 	filter.Sort = &sort
-	resp, err := s.createResponse(r, filter)
+	resp, err := s.createPostResponse(r, filter)
 	if err != nil {
 		writeError(w, r, err)
 	}
@@ -114,9 +119,10 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
-		if identify, err := strconv.Atoi(id); err != nil {
-			if post, err := s.PostService.DeletePost(r.Context(), identify); err != nil {
-				if err := encodeResponse(w, r, post); err != nil {
+		if identify, err := strconv.Atoi(id); err == nil {
+			if err := s.PostService.DeletePost(r.Context(), identify); err == nil {
+				sucess := DeleteResponse{Message: "Success, post deleted"}
+				if err := encodeResponse(w, r, sucess); err != nil {
 					writeError(w, r, err)
 				}
 			} else {
@@ -139,18 +145,18 @@ func encodeResponse(w http.ResponseWriter, r *http.Request, v any) error {
 	return nil
 }
 
-func (s *Server) createResponse(r *http.Request, filter *analogdb.PostFilter) (Response, error) {
+func (s *Server) createPostResponse(r *http.Request, filter *analogdb.PostFilter) (PostResponse, error) {
 	posts, count, err := s.PostService.FindPosts(r.Context(), filter)
 	if err != nil {
-		return Response{}, err
+		return PostResponse{}, err
 	}
-	resp := Response{}
+	resp := PostResponse{}
 	for _, p := range posts {
 		resp.Posts = append(resp.Posts, *p)
 	}
 	resp.Meta, err = setMeta(filter, posts, count)
 	if err != nil {
-		return Response{}, err
+		return PostResponse{}, err
 	}
 	return resp, nil
 }
