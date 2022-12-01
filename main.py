@@ -1,81 +1,63 @@
-import dataclasses
-import datetime as dt
 import time
-from typing import List
 
 import boto3.session
 import praw
-import psycopg2
+import schedule
 
-from migrations import resize_all_photos, update_table
-from postgres import create_connection, create_picture, get_all, get_latest
+from api import get_latest, upload_post
+from configuration import init_config
+from constants import (
+    ANALOG_POSTS,
+    ANALOG_SUB,
+    BW_POSTS,
+    BW_SUB,
+    SPROCKET_POSTS,
+    SPROCKET_SUB,
+)
 from s3_upload import init_s3
-from scrape import get_pics, init_reddit
-
-# Define subreddit names
-ANALOG = "analog"
-BW = "analog_bw"
-SPROCKET = "SprocketShots"
+from scrape import get_posts, init_reddit
 
 
-@dataclasses.dataclass
-class Resources:
-    """
-    Struct to hold common dependencies needed for scraper
-
-    """
-
-    conn: psycopg2.connect
-    s3: boto3.session.Session
-    reddit: praw.Reddit
-    latest: List[str]
-
-
-def setup_resources(test: bool):
-    conn = create_connection(test)
-    s3 = init_s3()
-    reddit = init_reddit()
-    latest = get_latest(conn)
-    return Resources(conn, s3, reddit, latest)
+def scrape_posts(
+    s3: boto3.session.Session, reddit: praw.Reddit, subreddit: str, num_posts: int
+):
+    latest_posts = get_latest()
+    for post in get_posts(
+        reddit=reddit,
+        s3=s3,
+        num_posts=num_posts,
+        subreddit=subreddit,
+        latest=latest_posts,
+    ):
+        if post.title not in latest_posts:
+            upload_post(post)
 
 
-def scrape_pics(r: Resources, subreddit: str, num_pics: int) -> None:
-    for data in get_pics(r.reddit, r.s3, num_pics, subreddit, r.latest):
-        if data.title not in r.latest:
-            create_picture(r.conn, r.s3, dataclasses.astuple(data))
+def scrape_analog(s3: boto3.session.Session, reddit: praw.Reddit):
+    scrape_posts(s3=s3, reddit=reddit, subreddit=ANALOG_SUB, num_posts=ANALOG_POSTS)
 
 
-def test():
-    test = True
-    r = setup_resources(test)
-    scrape_pics(r, subreddit=ANALOG, num_pics=4)
-    r.conn.close()
+def scrape_bw(s3: boto3.session.Session, reddit: praw.Reddit):
+    scrape_posts(s3=s3, reddit=reddit, subreddit=BW_SUB, num_posts=BW_POSTS)
 
 
-def migrate():
-    test = False
-    conn = create_connection(test)
-    get_all(conn)
-    conn.close()
+def scrape_sprocket(s3: boto3.session.Session, reddit: praw.Reddit):
+    scrape_posts(s3=s3, reddit=reddit, subreddit=SPROCKET_SUB, num_posts=SPROCKET_POSTS)
 
 
 def main():
-    test = False
-    now = dt.datetime.now()
-    print("\n Running analog scraper...")
 
-    # Scrape r/analog_bw and sprocketshots once a day
-    if now.hour == 0:
-        r = setup_resources(test)
-        scrape_pics(r, subreddit=ANALOG, num_pics=7)
-        scrape_pics(r, subreddit=BW, num_pics=2)
-        scrape_pics(r, subreddit=SPROCKET, num_pics=1)
-        r.conn.close()
+    config = init_config()
+    s3 = init_s3(config=config)
+    reddit = init_reddit(config=config)
 
-    # Scrape r/analog every 8 hours
-    elif now.hour == 8 or now.hour == 16:
-        r = setup_resources(test)
-        scrape_pics(r, subreddit=ANALOG, num_pics=7)
+    schedule.every().day.do(scrape_bw, s3=s3, reddit=reddit)
+    schedule.every().day.do(scrape_sprocket, s3=s3, reddit=reddit)
+    schedule.every(4).hours.do(scrape_analog, s3=s3, reddit=reddit)
+
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
 
 
 if __name__ == "__main__":
