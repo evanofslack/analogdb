@@ -9,6 +9,7 @@ pillow = "*"
 boto3 = "*"
 requests = "*"
 schedule = "*"
+python-dotenv = "*"
 
 [dev-packages]
 black = "*"
