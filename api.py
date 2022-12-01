@@ -3,9 +3,8 @@ from typing import List
 import requests
 from requests.auth import HTTPBasicAuth
 
-from configuration import Config
 from constants import ANALOGDB_URL
-from scrape import AnalogPost
+from models import AnalogPost
 
 
 def get_latest() -> List[str]:
@@ -18,14 +17,16 @@ def get_latest() -> List[str]:
     return latest_titles
 
 
-def upload_post(config: Config, post: AnalogPost):
+def upload_to_analogdb(post: AnalogPost, username: str, password: str):
     data = post_to_json(post)
     url = f"{ANALOGDB_URL}/post"
     r = requests.put(
         url=url,
         data=data,
-        auth=HTTPBasicAuth(config.auth.username, config.auth.password),
+        auth=HTTPBasicAuth(username=username, password=password),
     )
+    print(f"attempted to upload {post.title} to analogdb")
+    print(r)
 
 
 def post_to_json(post: AnalogPost):
