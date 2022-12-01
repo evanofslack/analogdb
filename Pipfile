@@ -5,9 +5,10 @@ name = "pypi"
 
 [packages]
 praw = "*"
-psycopg2 = "*"
 pillow = "*"
 boto3 = "*"
+requests = "*"
+schedule = "*"
 
 [dev-packages]
 black = "*"
