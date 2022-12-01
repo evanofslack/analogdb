@@ -1,13 +1,23 @@
 import uuid
 from dataclasses import dataclass
-from os import getenv
 from typing import List, Optional, Tuple
 
+import boto3
 import praw
 import requests
 from PIL import Image
 
-from s3_upload import init_s3, s3_upload
+from configuration import Config
+from constants import (
+    AWS_BUCKET,
+    BW_SUB,
+    HIGH_RES,
+    LOW_RES,
+    MEDIUM_RES,
+    RAW_RES,
+    SPROCKET_SUB,
+)
+from s3_upload import s3_upload
 
 
 @dataclass
@@ -19,7 +29,7 @@ class MyImage:
 
 
 @dataclass
-class AnalogData:
+class AnalogPost:
     url: str
     title: str
     author: str
@@ -43,11 +53,11 @@ class AnalogData:
     high_height: int
 
 
-def init_reddit() -> praw.Reddit:
+def init_reddit(config: Config) -> praw.Reddit:
     reddit = praw.Reddit(
-        client_id=getenv("client_id"),
-        client_secret=getenv("client_secret"),
-        user_agent=getenv("user_agent"),
+        client_id=config.reddit.client_id,
+        client_secret=config.reddit.client_secret,
+        user_agent=config.reddit.user_agent,
     )
     return reddit
 
@@ -74,7 +84,7 @@ def get_url(s: praw.reddit.Submission) -> str:
 
 
 def is_greyscale(img: Image.Image, subreddit: str):
-    if subreddit == "analog_bw":
+    if subreddit == BW_SUB:
         return True
     img = img.convert("RGB")
     w, h = img.size
@@ -86,7 +96,7 @@ def is_greyscale(img: Image.Image, subreddit: str):
     return True
 
 
-def resize_image(img: Image.Image, size: Optional[List[int]]):
+def resize_image(img: Image.Image, size: Optional[Tuple[int, int]]):
     if not size:
         return img, img.width, img.height
     img_resized = img.copy()
@@ -114,48 +124,45 @@ def create_filename(url: str) -> Tuple[str, str]:
     return filename, content_type
 
 
-def url_to_images(url: str, s3, bucket: Optional[str] = None) -> List[MyImage]:
+def url_to_images(url: str, s3: boto3.session.Session, bucket: str) -> List[MyImage]:
     """
     Download image from URL, create 3 new resolutions, and upload to S3
 
     """
 
-    LOW_RES = [320, 320]
-    MEDIUM_RES = [768, 768]
-    HIGH_RES = [1200, 1200]
-    RAW = None
-    resolutions = [LOW_RES, MEDIUM_RES, HIGH_RES, RAW]
-
-    if not bucket:
-        bucket = "analog-photos"
-
     pic = requests.get(url, stream=True)
     img = Image.open(pic.raw)
+
+    resolutions: List[Tuple[int, int]] = [LOW_RES, MEDIUM_RES, HIGH_RES, RAW_RES]
 
     images: List[MyImage] = []
     for res in resolutions:
         i, w, h = resize_image(img, res)
         f, c = create_filename(url)
-        new_url = s3_upload(s3, bucket=bucket, image=i, filename=f, content_type=c)
-        image = MyImage(image=i, url=new_url, width=w, height=h)
+        cloudfront_url = s3_upload(
+            s3, bucket=bucket, image=i, filename=f, content_type=c
+        )
+        image = MyImage(image=i, url=cloudfront_url, width=w, height=h)
         images.append(image)
 
     return images
 
 
-def get_pics(
+def get_posts(
     reddit: praw.Reddit,
-    s3,
-    num_pics: int,
+    s3: boto3.session.Session,
+    num_posts: int,
     subreddit: str,
     latest: List[str],
-) -> List[AnalogData]:
-    pic_data: List[AnalogData] = []
+) -> List[AnalogPost]:
+
+    # get posts that are not self-posts
     submissions: List[praw.reddit.Submission] = [
-        s for s in reddit.subreddit(subreddit).hot(limit=num_pics) if not s.is_self
+        s for s in reddit.subreddit(subreddit).hot(limit=num_posts) if not s.is_self
     ]
     print(f"Gathered {len(submissions)} posts from {subreddit}")
 
+    posts: List[AnalogPost] = []
     for s in submissions:
         if s.title in latest:
             # Don't upload post if it already exists in database
@@ -164,9 +171,9 @@ def get_pics(
 
         try:
             url = get_url(s)
-            images: List[MyImage] = url_to_images(url, s3)
+            images: List[MyImage] = url_to_images(url=url, s3=s3, bucket=AWS_BUCKET)
 
-            new_pic = AnalogData(
+            post = AnalogPost(
                 url=images[3].url,
                 title=s.title,
                 author="u/" + s.author.name,
@@ -177,7 +184,7 @@ def get_pics(
                 time=int(s.created_utc),
                 width=images[3].width,
                 height=images[3].height,
-                sprocket=True if subreddit == "SprocketShots" else False,
+                sprocket=True if subreddit == SPROCKET_SUB else False,
                 low_url=images[0].url,
                 low_width=images[0].width,
                 low_height=images[0].height,
@@ -188,16 +195,9 @@ def get_pics(
                 high_width=images[2].width,
                 high_height=images[2].height,
             )
-            print(new_pic.title)
-            pic_data.append(new_pic)
+            posts.append(post)
 
         except Exception as e:
             print(f'Could not handle "{s.title}" at {url} with error: {e} ')
 
-    return pic_data
-
-
-if __name__ == "__main__":
-    s3 = init_s3()
-    reddit = init_reddit()
-    get_pics(reddit, s3, 4, "analog")
+    return posts
