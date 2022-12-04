@@ -29,9 +29,8 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
         data=json_post,
         auth=HTTPBasicAuth(username=username, password=password),
     )
-
     code = resp.status_code
-    msg = json.dumps(resp.content, indent=1)
+    msg = json.loads(resp.text)
     if code == 201:
         logger.info(
             f"created post with title: {post.title} with status code: {code} and msg: {msg}"
