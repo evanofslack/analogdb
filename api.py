@@ -2,22 +2,24 @@ import json
 from typing import List
 
 import requests
+from loguru import logger
 from requests.auth import HTTPBasicAuth
 
 from constants import ANALOGDB_URL
 from models import AnalogPost
 
 
+@logger.catch
 def get_latest_links() -> List[str]:
     url = f"{ANALOGDB_URL}/posts/latest?page_size=100"
     r = requests.get(url=url)
     data = r.json()
     posts = data["posts"]
     latest_links = [post["permalink"] for post in posts]
-
     return latest_links
 
 
+@logger.catch
 def upload_to_analogdb(post: AnalogPost, username: str, password: str):
     dict_post = post_to_json(post)
     json_post = json.dumps(dict_post)
@@ -27,31 +29,29 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
         data=json_post,
         auth=HTTPBasicAuth(username=username, password=password),
     )
-    print(f"attempted to upload {post.title} to analogdb")
-    print(resp.status_code)
+
     code = resp.status_code
-    msg = resp.content
+    msg = json.dumps(resp.content, indent=1)
     if code == 201:
-        print(
-            f"success: created post with title: {post.title} with status code: {code} and msg: {msg}"
+        logger.info(
+            f"created post with title: {post.title} with status code: {code} and msg: {msg}"
         )
     else:
-        print(
-            f"error: failed to create post with title: {post.title} with status code: {code} and msg: {msg}"
+        logger.error(
+            f"failed to create post with title: {post.title} with status code: {code} and msg: {msg}"
         )
 
 
 def delete_from_analogdb(id: int, username: str, password: str):
-    # 4736
     url = f"{ANALOGDB_URL}/post/{id}"
     resp = requests.delete(
         url=url,
         auth=HTTPBasicAuth(username=username, password=password),
     )
     if resp.status_code == 200:
-        print("deleted post")
+        logger.info("deleted post")
     else:
-        print("failed to delete post")
+        logger.error("failed to delete post")
 
 
 def post_to_json(post: AnalogPost):

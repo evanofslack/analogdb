@@ -3,9 +3,9 @@ from typing import List, Tuple
 
 import boto3
 import boto3.session
+from loguru import logger
 from PIL.Image import Image
 
-from configuration import Config
 from constants import (
     AWS_BUCKET,
     AWS_BUCKET_TEST,
@@ -33,6 +33,7 @@ def create_filename(content_type: str) -> str:
     return filename
 
 
+@logger.catch
 def upload_image_to_s3(
     s3, bucket: str, image: Image, filename: str, content_type: str
 ) -> str:
@@ -45,13 +46,14 @@ def upload_image_to_s3(
             img_bytes, bucket, filename, ExtraArgs={"ContentType": content_type}
         )
     except Exception as e:
-        print(f"error, failed to upload {filename} to {bucket} with error: {e}")
+        logger.error(f"failed to upload {filename} to {bucket} with error: {e}")
         raise e
 
-    print(f"success, uploaded {filename} to {bucket}")
+    logger.info(f"uploaded {filename} to {bucket}")
     return f"{CLOUDFRONT_URL}/{filename}"
 
 
+@logger.catch
 def upload_to_s3(
     post: RedditPost, s3: boto3.session.Session, bucket: str
 ) -> List[CloudfrontImage]:
