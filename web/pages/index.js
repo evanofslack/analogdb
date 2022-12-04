@@ -1,6 +1,6 @@
 import Template from "../components/template";
 
-const baseURL = "https://analogdb.herokuapp.com";
+const baseURL = "https://api.analogdb.com";
 
 export async function getStaticProps(context) {
     const url = baseURL + "/posts/latest?page_size=50&bw=false&nsfw=false";
