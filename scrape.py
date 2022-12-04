@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 import praw
 import requests
+from loguru import logger
 from PIL.Image import Image
 
 from constants import BW_SUB, REDDIT_URL, SPROCKET_SUB, VALID_CONTENT
@@ -42,7 +43,7 @@ def create_filename(url: str) -> Tuple[str, str]:
 
     content_type = req.headers["content-type"]
     if content_type not in viable_content.keys():
-        print(f"Cannot process {url} with type {content_type}")
+        logger.error(f"Cannot process {url} with type {content_type}")
         return
     filename = str(uuid.uuid4())
     filename += viable_content[content_type]
@@ -75,7 +76,7 @@ def get_posts(
     submissions: List[praw.reddit.Submission] = [
         s for s in reddit.subreddit(subreddit).hot(limit=num_posts) if not s.is_self
     ]
-    print(f"gathered {len(submissions)} posts from {subreddit}")
+    logger.info(f"gathered {len(submissions)} posts from {subreddit}")
 
     posts: List[RedditPost] = []
     for s in submissions:
@@ -84,7 +85,7 @@ def get_posts(
         content_type = get_content_type(url)
 
         if content_type not in VALID_CONTENT:
-            print(f"Cannot process {url} with type {content_type}")
+            logger.error(f"cannot process {url} with type {content_type}")
             continue
 
         post = RedditPost(

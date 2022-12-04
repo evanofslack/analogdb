@@ -1,6 +1,7 @@
 import time
 
 import schedule
+from loguru import logger
 
 from api import delete_from_analogdb, get_latest_links, upload_to_analogdb
 from configuration import dependencies_from_config, init_config
@@ -13,6 +14,7 @@ from constants import (
     SPROCKET_POSTS,
     SPROCKET_SUB,
 )
+from log import init_logger
 from models import Dependencies
 from s3_upload import create_analog_post, upload_to_s3
 from scrape import get_posts
@@ -27,7 +29,7 @@ def scrape_posts(
     s3_client = deps.s3_client
     auth = deps.auth
 
-    print(f"scraping r/{subreddit}")
+    logger.info(f"scraping r/{subreddit}")
 
     saved_post_links = get_latest_links()  # posts already stored in analogdb
 
@@ -42,10 +44,10 @@ def scrape_posts(
     ]
 
     if not unsaved_posts:
-        print("no new posts to upload")
+        logger.info("no new posts to upload")
         return
     else:
-        print(f"uploading {len(unsaved_posts)} new posts")
+        logger.info(f"uploading {len(unsaved_posts)} new posts")
 
     for post in unsaved_posts:
         cf_images = upload_to_s3(post=post, s3=s3_client, bucket=AWS_BUCKET)
@@ -71,11 +73,12 @@ def delete_post():
     config = init_config()
     deps = dependencies_from_config(config=config)
     auth = deps.auth
-    delete_from_analogdb(id=4736, username=auth.username, password=auth.password)
+    delete_from_analogdb(id=99999, username=auth.username, password=auth.password)
 
 
 def main():
 
+    init_logger()
     config = init_config()
     deps = dependencies_from_config(config=config)
 

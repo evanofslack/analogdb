@@ -10,6 +10,7 @@ boto3 = "*"
 requests = "*"
 schedule = "*"
 python-dotenv = "*"
+loguru = "*"
 
 [dev-packages]
 black = "*"
