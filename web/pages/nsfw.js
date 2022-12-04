@@ -1,7 +1,9 @@
 import Template from "../components/template";
 
+const baseURL = "https://api.analogdb.com";
+
 export async function getStaticProps(context) {
-    const url = "https://analogdb.herokuapp.com/posts/latest?page_size=50&nsfw=true";
+    const url = baseURL + "/posts/latest?page_size=50&nsfw=true";
     const response = await fetch(url);
     const data = await response.json();
     return {
