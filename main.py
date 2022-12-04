@@ -86,10 +86,14 @@ def main():
     schedule.every().day.do(scrape_sprocket, deps=deps)
     schedule.every(4).hours.do(scrape_analog, deps=deps)
 
-    schedule.run_all(delay_seconds=10)
+    schedule.run_all()
 
     while True:
-        schedule.run_pending()
+
+        try:
+            schedule.run_pending()
+        except Exception as e:
+            logger.error(f"issue running schedued job: {e}")
         time.sleep(60)
 
 
