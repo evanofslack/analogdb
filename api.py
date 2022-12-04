@@ -1,3 +1,4 @@
+import json
 from typing import List
 
 import requests
@@ -7,26 +8,50 @@ from constants import ANALOGDB_URL
 from models import AnalogPost
 
 
-def get_latest() -> List[str]:
-    url = f"{ANALOGDB_URL}/posts/latest?page_size=30"
+def get_latest_links() -> List[str]:
+    url = f"{ANALOGDB_URL}/posts/latest?page_size=100"
     r = requests.get(url=url)
     data = r.json()
     posts = data["posts"]
-    latest_titles = [post["title"] for post in posts]
+    latest_links = [post["permalink"] for post in posts]
 
-    return latest_titles
+    return latest_links
 
 
 def upload_to_analogdb(post: AnalogPost, username: str, password: str):
-    data = post_to_json(post)
+    dict_post = post_to_json(post)
+    json_post = json.dumps(dict_post)
     url = f"{ANALOGDB_URL}/post"
-    r = requests.put(
+    resp = requests.put(
         url=url,
-        data=data,
+        data=json_post,
         auth=HTTPBasicAuth(username=username, password=password),
     )
     print(f"attempted to upload {post.title} to analogdb")
-    print(r)
+    print(resp.status_code)
+    code = resp.status_code
+    msg = resp.content
+    if code == 201:
+        print(
+            f"success: created post with title: {post.title} with status code: {code} and msg: {msg}"
+        )
+    else:
+        print(
+            f"error: failed to create post with title: {post.title} with status code: {code} and msg: {msg}"
+        )
+
+
+def delete_from_analogdb(id: int, username: str, password: str):
+    # 4736
+    url = f"{ANALOGDB_URL}/post/{id}"
+    resp = requests.delete(
+        url=url,
+        auth=HTTPBasicAuth(username=username, password=password),
+    )
+    if resp.status_code == 200:
+        print("deleted post")
+    else:
+        print("failed to delete post")
 
 
 def post_to_json(post: AnalogPost):

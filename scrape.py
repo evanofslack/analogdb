@@ -75,7 +75,7 @@ def get_posts(
     submissions: List[praw.reddit.Submission] = [
         s for s in reddit.subreddit(subreddit).hot(limit=num_posts) if not s.is_self
     ]
-    print(f"Gathered {len(submissions)} posts from {subreddit}")
+    print(f"gathered {len(submissions)} posts from {subreddit}")
 
     posts: List[RedditPost] = []
     for s in submissions:
@@ -94,7 +94,7 @@ def get_posts(
             content_type=content_type,
             title=s.title,
             author=f"u/{s.author.name}",
-            permalink=f"{REDDIT_URL}/{s.permalink}",
+            permalink=f"{REDDIT_URL}{s.permalink}",
             score=s.score,
             nsfw=s.over_18,
             greyscale=is_post_grayscale(image, subreddit),
