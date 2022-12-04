@@ -1,14 +1,12 @@
-FROM python:3.8
+FROM python:3.10
 
 RUN mkdir /app
-ADD scraper /app/
+ADD . /app/
 WORKDIR /app
 
-#Install the dependencies
 RUN apt-get -y update
 RUN apt-get update && apt-get install -y python3 python3-pip
 RUN pip3 install pipenv
 RUN pipenv install
 
-#Run the command
-ENTRYPOINT [ "python" "main.py" ] 
+ENTRYPOINT ["pipenv", "run", "python", "main.py"] 
