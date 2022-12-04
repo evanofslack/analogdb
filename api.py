@@ -9,7 +9,6 @@ from constants import ANALOGDB_URL
 from models import AnalogPost
 
 
-@logger.catch
 def get_latest_links() -> List[str]:
     url = f"{ANALOGDB_URL}/posts/latest?page_size=100"
     r = requests.get(url=url)
@@ -19,7 +18,6 @@ def get_latest_links() -> List[str]:
     return latest_links
 
 
-@logger.catch
 def upload_to_analogdb(post: AnalogPost, username: str, password: str):
     dict_post = post_to_json(post)
     json_post = json.dumps(dict_post)

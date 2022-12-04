@@ -54,7 +54,6 @@ def init_reddit_client(creds: RedditCreds) -> praw.Reddit:
     return reddit
 
 
-@logger.catch
 def dependencies_from_config(config: Config) -> Dependencies:
     deps = Dependencies(
         s3_client=init_s3_client(creds=config.aws),

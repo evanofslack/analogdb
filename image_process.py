@@ -6,14 +6,12 @@ from loguru import logger
 from PIL.Image import ANTIALIAS, Image, open
 
 
-@logger.catch
 def request_image(url: str) -> Image:
     pic = requests.get(url, stream=True)
     image = open(pic.raw)
     return image
 
 
-@logger.catch
 def resize_image(
     image: Image, size: Optional[Tuple[int, int]]
 ) -> Tuple[Image, int, int]:
@@ -26,7 +24,6 @@ def resize_image(
     return img_resized, w, h
 
 
-@logger.catch
 def is_grayscale(image: Image) -> bool:
     img = image.convert("RGB")
     w, h = img.size
@@ -37,7 +34,6 @@ def is_grayscale(image: Image) -> bool:
                 return False
 
 
-@logger.catch
 def image_to_bytes(image: Image, content_type: str) -> BytesIO:
     image_bytes = BytesIO()
     image.save(image_bytes, content_type.removeprefix("image/"))

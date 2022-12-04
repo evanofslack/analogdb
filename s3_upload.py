@@ -33,7 +33,6 @@ def create_filename(content_type: str) -> str:
     return filename
 
 
-@logger.catch
 def upload_image_to_s3(
     s3, bucket: str, image: Image, filename: str, content_type: str
 ) -> str:
@@ -53,7 +52,6 @@ def upload_image_to_s3(
     return f"{CLOUDFRONT_URL}/{filename}"
 
 
-@logger.catch
 def upload_to_s3(
     post: RedditPost, s3: boto3.session.Session, bucket: str
 ) -> List[CloudfrontImage]:
