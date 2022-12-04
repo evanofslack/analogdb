@@ -11,4 +11,4 @@ RUN pip3 install pipenv
 RUN pipenv install
 
 #Run the command
-CMD python main.py
+ENTRYPOINT [ "python" "main.py" ] 
