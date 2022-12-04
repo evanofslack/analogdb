@@ -2,7 +2,7 @@ import time
 
 import schedule
 
-from api import get_latest, upload_to_analogdb
+from api import delete_from_analogdb, get_latest_links, upload_to_analogdb
 from configuration import dependencies_from_config, init_config
 from constants import (
     ANALOG_POSTS,
@@ -27,14 +27,25 @@ def scrape_posts(
     s3_client = deps.s3_client
     auth = deps.auth
 
-    saved_posts = get_latest()  # posts already stored in analogdb
+    print(f"scraping r/{subreddit}")
+
+    saved_post_links = get_latest_links()  # posts already stored in analogdb
+
     recent_posts = get_posts(
         reddit=reddit_client,
         num_posts=num_posts,
         subreddit=subreddit,
     )
 
-    unsaved_posts = [post for post in recent_posts if post.title not in saved_posts]
+    unsaved_posts = [
+        post for post in recent_posts if post.permalink not in saved_post_links
+    ]
+
+    if not unsaved_posts:
+        print("no new posts to upload")
+        return
+    else:
+        print(f"uploading {len(unsaved_posts)} new posts")
 
     for post in unsaved_posts:
         cf_images = upload_to_s3(post=post, s3=s3_client, bucket=AWS_BUCKET)
@@ -56,34 +67,11 @@ def scrape_sprocket(deps: Dependencies):
     scrape_posts(deps=deps, subreddit=SPROCKET_SUB, num_posts=SPROCKET_POSTS)
 
 
-def test():
+def delete_post():
     config = init_config()
     deps = dependencies_from_config(config=config)
-
-    reddit_client = deps.reddit_client
-    s3_client = deps.s3_client
     auth = deps.auth
-
-    saved_posts = get_latest()  # posts already stored in analogdb
-
-    recent_posts = get_posts(
-        reddit=reddit_client,
-        num_posts=3,
-        subreddit=SPROCKET_SUB,
-    )
-
-    print(f"recent posts: {[post.title for post in recent_posts]}\n")
-
-    unsaved_posts = [post for post in recent_posts if post.title not in saved_posts]
-
-    print(f"unsaved posts: {[post.title for post in unsaved_posts]}\n")
-
-    for post in unsaved_posts:
-        cf_images = upload_to_s3(post=post, s3=s3_client, bucket=AWS_BUCKET)
-        analog_post = create_analog_post(images=cf_images, post=post)
-        upload_to_analogdb(
-            post=analog_post, username=auth.username, password=auth.password
-        )
+    delete_from_analogdb(id=4736, username=auth.username, password=auth.password)
 
 
 def main():
@@ -95,12 +83,12 @@ def main():
     schedule.every().day.do(scrape_sprocket, deps=deps)
     schedule.every(4).hours.do(scrape_analog, deps=deps)
 
+    schedule.run_all(delay_seconds=10)
+
     while True:
         schedule.run_pending()
         time.sleep(60)
 
 
 if __name__ == "__main__":
-    # main()
-
-    test()
+    main()
