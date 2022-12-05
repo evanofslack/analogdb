@@ -94,8 +94,7 @@ def main():
             schedule.run_pending()
         except Exception as e:
             logger.error(f"issue running schedued job: {e}")
-        logger.info("sleeping...")
-        time.sleep(60)
+        time.sleep(4 * 3600)  # sleep for 4 hours
 
 
 if __name__ == "__main__":
