@@ -22,18 +22,18 @@ The frontend web application is built with [Next.js](https://github.com/vercel/n
 
 ### API
 
-Full documentation for the API: https://analogdb.herokuapp.com/
+Full documentation for the API: https://api.analogdb.com/
 
 ### Example
 
 ```bash
-curl https://analogdb.herokuapp.com/posts/latest
+curl https://api.analogdb.com/posts/latest
 ```
 
 ```yaml
 {
    meta:{
-      total_posts:2585,
+      total_posts:3306,
       page_size:20,
       next_page_id:1640889405,
       next_page_url:/posts/latest?page_size=20&page_id=1640889405,
