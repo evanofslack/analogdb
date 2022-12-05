@@ -48,8 +48,9 @@ def upload_image_to_s3(
         logger.error(f"failed to upload {filename} to {bucket} with error: {e}")
         raise e
 
-    logger.info(f"uploaded {filename} to {bucket}")
-    return f"{CLOUDFRONT_URL}/{filename}"
+    url = f"{CLOUDFRONT_URL}/{filename}"
+    logger.info(f"uploaded to {bucket} ({url})")
+    return url
 
 
 def upload_to_s3(

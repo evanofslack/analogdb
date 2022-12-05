@@ -70,23 +70,31 @@ def get_posts(
     reddit: praw.Reddit,
     num_posts: int,
     subreddit: str,
+    latest_permalinks: List[str],
 ) -> List[RedditPost]:
 
     # get posts that are not self-posts
     submissions: List[praw.reddit.Submission] = [
         s for s in reddit.subreddit(subreddit).hot(limit=num_posts) if not s.is_self
     ]
-    logger.info(f"gathered {len(submissions)} posts from {subreddit}")
+    logger.debug(f"gathered {len(submissions)} posts from {subreddit}")
 
     posts: List[RedditPost] = []
     for s in submissions:
+
+        # check if duplicate post
+        permalink = f"{REDDIT_URL}{s.permalink}"
+        if permalink in latest_permalinks:
+            continue
+
         url = get_url(s)
-        image = request_image(url)
         content_type = get_content_type(url)
 
         if content_type not in VALID_CONTENT:
             logger.error(f"cannot process {url} with type {content_type}")
             continue
+
+        image = request_image(url)
 
         post = RedditPost(
             image=image,
@@ -95,7 +103,7 @@ def get_posts(
             content_type=content_type,
             title=s.title,
             author=f"u/{s.author.name}",
-            permalink=f"{REDDIT_URL}{s.permalink}",
+            permalink=permalink,
             score=s.score,
             nsfw=s.over_18,
             greyscale=is_post_grayscale(image, subreddit),

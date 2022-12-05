@@ -31,25 +31,20 @@ def scrape_posts(
 
     logger.info(f"scraping r/{subreddit}")
 
-    saved_post_links = get_latest_links()  # posts already stored in analogdb
-
     recent_posts = get_posts(
         reddit=reddit_client,
         num_posts=num_posts,
         subreddit=subreddit,
+        latest_permalinks=get_latest_links(),
     )
 
-    unsaved_posts = [
-        post for post in recent_posts if post.permalink not in saved_post_links
-    ]
-
-    if not unsaved_posts:
+    if not recent_posts:
         logger.info("no new posts to upload")
         return
     else:
-        logger.info(f"uploading {len(unsaved_posts)} new posts")
+        logger.info(f"uploading {len(recent_posts)} new posts")
 
-    for post in unsaved_posts:
+    for post in recent_posts:
         cf_images = upload_to_s3(post=post, s3=s3_client, bucket=AWS_BUCKET)
         analog_post = create_analog_post(images=cf_images, post=post)
         upload_to_analogdb(
