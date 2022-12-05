@@ -1,5 +1,6 @@
 import styles from "./documentation.module.css";
 import Footer from "./footer";
+import Link from "next/link";
 
 export default function Documentation() {
     return (
@@ -9,7 +10,7 @@ export default function Documentation() {
                     please excuse our appearance while we are remodeling...
                 </div>
                 <u>
-                    <a href="https://analogdb.herokuapp.com/">visit the old docs</a>
+                    <Link href="https://api.analogdb.com">visit the old docs</Link>
                 </u>
             </div>
             <Footer />

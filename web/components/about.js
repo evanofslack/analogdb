@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Footer from "./footer";
 import { useBreakpoint } from "../providers/breakpoint.js";
+import { baseURL } from "../constants.ts";
 
 export default function About() {
     const [post, setPost] = useState();
     const [loaded, setIsLoaded] = useState(false);
     const postIDs = [3070, 3059, 2930, 2226, 1997, 1912, 1810, 1775, 1668, 1421, 1262, 359];
     const random = Math.floor(Math.random() * postIDs.length);
-    const endpoint = "https://analogdb.herokuapp.com/post/" + postIDs[random];
+    const endpoint = baseURL + "/post/" + postIDs[random];
 
     const breakpoints = useBreakpoint();
     let isMobile = false;

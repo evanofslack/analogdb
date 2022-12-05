@@ -1,6 +1,5 @@
 import Template from "../components/template";
-
-const baseURL = "https://api.analogdb.com";
+import { baseURL } from "../constants.ts";
 
 export async function getStaticProps(context) {
     const url = baseURL + "/posts/latest?page_size=50&bw=false&nsfw=false";

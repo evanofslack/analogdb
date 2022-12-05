@@ -3,10 +3,6 @@ import { useState } from "react";
 import styles from "./mobileNav.module.css";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { AiOutlineTrophy } from "react-icons/ai";
-import { BiTimeFive } from "react-icons/bi";
-import { BiShuffle } from "react-icons/bi";
-import { RiCameraLensFill } from "react-icons/ri";
 import { BiCheck } from "react-icons/bi";
 import { GrClose } from "react-icons/gr";
 import { FiGithub } from "react-icons/fi";
@@ -30,7 +26,6 @@ export default function MobileNav() {
                             <Link href="/">
                                 <a className={styles.link}>
                                     <div className={styles.icon}>
-                                        {/* <AiOutlineTrophy size="1.8rem" /> */}
                                         <div className={styles.check}>
                                             <p className={styles.iconText}>GALLERY</p>
                                             {router.pathname == "/" && <BiCheck size="1.8rem" />}
@@ -41,7 +36,6 @@ export default function MobileNav() {
                             <Link href="/about">
                                 <a className={styles.link}>
                                     <div className={styles.icon}>
-                                        {/* <BiTimeFive size="1.8rem" /> */}
                                         <div className={styles.check}>
                                             <p className={styles.iconText}>ABOUT</p>
                                             {router.pathname == "/about" && (
@@ -54,7 +48,6 @@ export default function MobileNav() {
                             <Link href="/docs">
                                 <a className={styles.link}>
                                     <div className={styles.icon}>
-                                        {/* <BiShuffle size="1.8rem" /> */}
                                         <div className={styles.check}>
                                             <p className={styles.iconText}>API</p>
                                             {router.pathname == "/docs" && (
@@ -67,7 +60,7 @@ export default function MobileNav() {
                         </nav>
                         <div className={styles.footer}>
                             <p> &copy; 2022 analogdb </p>
-                            <a href="https://github.com/evanofslack/analog-gallery">
+                            <a href="https://github.com/evanofslack/analogdb">
                                 <FiGithub size="1.2rem" />
                             </a>
                         </div>
