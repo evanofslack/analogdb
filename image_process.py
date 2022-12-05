@@ -32,6 +32,7 @@ def is_grayscale(image: Image) -> bool:
             r, g, b = img.getpixel((i, j))
             if r != g != b:
                 return False
+    return True
 
 
 def image_to_bytes(image: Image, content_type: str) -> BytesIO:
