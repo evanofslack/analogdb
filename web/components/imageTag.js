@@ -1,12 +1,11 @@
 import styles from "./imageTag.module.css";
-import { IoLogoReddit } from "react-icons/io5";
-import { ImReddit } from "react-icons/im";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import { useState } from "react";
+import { baseURL } from "../constants.ts";
 
 export default function ImageTag(props) {
     let post = props.post;
-    const api_endpoint = "https://analogdb.herokuapp.com/post/";
+    const api_endpoint = baseURL + "/post/";
     const [isOpen, setIsOpen] = useState(false);
     const toggle = () => setIsOpen((value) => !value);
 

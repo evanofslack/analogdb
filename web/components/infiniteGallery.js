@@ -2,8 +2,7 @@ import styles from "../styles/Home.module.css";
 import Grid from "../components/grid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useState } from "react";
-
-const baseURL = "https://analogdb.herokuapp.com";
+import { baseURL } from "../constants.ts";
 
 export default function InfiniteGallery(props) {
     const [posts, setPosts] = useState(props.response.posts);
