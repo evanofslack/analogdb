@@ -10,4 +10,7 @@ module.exports = {
             "d3i73ktnzbi69i.cloudfront.net",
         ],
     },
+    experimental: {
+        scrollRestoration: true,
+      },
 };
