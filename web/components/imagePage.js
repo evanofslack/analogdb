@@ -13,11 +13,12 @@ export default function ImagePage(props) {
                 <Image
                     src={image.url}
                     alt={`Image ${post.id} by ${post.author}`}
+                    width={image.width}
+                    height={image.height}
                     quality={100}
                     layout="fill"
                     objectFit="contain"
-                    placeholder="blur"
-                    blurDataURL={placeholder.url}
+                    priority={true}
                 />
             </div>
         </div>
