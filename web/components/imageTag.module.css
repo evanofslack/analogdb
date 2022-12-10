@@ -7,23 +7,16 @@
     max-width: 800px;
 }
 .padding {
-    padding: 1rem 3rem;
+    padding-top: 1rem;
     font-family: 'Courier Prime', Courier, monospace;
 }
-.title {
+.id {
     font-weight: 300;
     padding-right: 3rem;
 }
-.link {
-    padding-right: 0.8rem;
-}
-.info {
-    /* display: flex; */
-    margin-top: -1rem;
-    display: inline-block;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content:flex-start;
+.title {
+    font-weight: 300;
+    max-width: 450px;
 }
 
 @media screen and (max-width: 720px) {
@@ -31,10 +24,7 @@
         font-size: 0.8rem;
         padding-right: 0
     }
-    .link {
+    .id {
         display: none
-    }
-    .icon {
-        display: none;
     }
 }

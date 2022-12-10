@@ -1,6 +1,6 @@
 import Masonry from "react-responsive-masonry";
 import { useBreakpoint } from "../providers/breakpoint.js";
-import Modal from "./modal";
+import GridImage from "./gridImage";
 
 export default function Grid(props) {
     const breakpoints = useBreakpoint();
@@ -20,7 +20,7 @@ export default function Grid(props) {
         <Masonry columnsCount={numColumn} gutter={15}>
             {props.posts.map((post, index) => (
                 <div key={index}>
-                    <Modal post={post}></Modal>
+                    <GridImage post={post}></GridImage>
                 </div>
             ))}
         </Masonry>
