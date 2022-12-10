@@ -1,4 +1,6 @@
+import Image from "next/image";
 import { baseURL } from "../../constants.ts";
+import ImagePage from "../../components/ImagePage"
 
 
 export async function getStaticPaths() {
@@ -12,16 +14,16 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
     const url = `${baseURL}/post/${params.pid}`
     const response = await fetch(url);
-    const data = await response.json();
+    const post = await response.json();
     return {
         props: {
-            data,
+            post,
         },
         revalidate: 10,
     };
 }
 
-export default function Post({ data }) {
-	return <p> Post: {data.title}</p>;
+export default function Post({ post }) {
+    return ImagePage(post={post})
 }
 
