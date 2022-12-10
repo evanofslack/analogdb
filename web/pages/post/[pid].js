@@ -1,10 +1,8 @@
-import Image from "next/image";
 import { baseURL } from "../../constants.ts";
-import ImagePage from "../../components/ImagePage"
+import ImagePage from "../../components/imagePage"
 
 
 export async function getStaticPaths() {
-
     return {
         paths: [],
         fallback: "blocking" //indicates the type of fallback
@@ -26,4 +24,3 @@ export async function getStaticProps({ params }) {
 export default function Post({ post }) {
     return ImagePage(post={post})
 }
-
