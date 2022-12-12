@@ -4,9 +4,9 @@ import ImagePage from "../../components/imagePage";
 export async function getStaticPaths() {
   const url = `${baseURL}/ids`;
   const response = await fetch(url);
-  const ids = await response.json();
-  const paths = ids.map((id) => ({
-    params: { pid: id },
+  const data = await response.json();
+  const paths = data.ids.map((id) => ({
+    params: { pid: id.toString() },
   }));
 
   return { paths, fallback: "blocking" };
