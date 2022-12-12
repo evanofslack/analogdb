@@ -392,6 +392,43 @@ func TestCreateAndDeletePost(t *testing.T) {
 	})
 }
 
+func TestAllPostIDs(t *testing.T) {
+	t.Run("valid IDs", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		r := httptest.NewRequest(http.MethodGet, "/ids", nil)
+		w := httptest.NewRecorder()
+
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+        type IDsResponse struct {
+            Ids []int `json:"ids"`
+        }
+        var ids IDsResponse
+
+		if err := json.Unmarshal(data, &ids); err != nil {
+			t.Fatal(err)
+		}
+
+		if got, want := len(ids.Ids), 51; got != want {
+			t.Errorf("invalid number of post IDs, want %d, got %d", want, got)
+		}
+	})
+}
+
 func makeTestCreatePost(valid bool) analogdb.CreatePost {
 	testImage := analogdb.Image{
 		Label:  "test",
