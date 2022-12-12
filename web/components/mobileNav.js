@@ -23,39 +23,39 @@ export default function MobileNav() {
                         </div>
 
                         <nav className={styles.navContainer}>
-                            <Link href="/">
-                                <a className={styles.link}>
-                                    <div className={styles.icon}>
-                                        <div className={styles.check}>
-                                            <p className={styles.iconText}>GALLERY</p>
-                                            {router.pathname == "/" && <BiCheck size="1.8rem" />}
-                                        </div>
+                            <Link href="/" className={styles.link}>
+
+                                <div className={styles.icon}>
+                                    <div className={styles.check}>
+                                        <p className={styles.iconText}>GALLERY</p>
+                                        {router.pathname == "/" && <BiCheck size="1.8rem" />}
                                     </div>
-                                </a>
+                                </div>
+
                             </Link>
-                            <Link href="/about">
-                                <a className={styles.link}>
-                                    <div className={styles.icon}>
-                                        <div className={styles.check}>
-                                            <p className={styles.iconText}>ABOUT</p>
-                                            {router.pathname == "/about" && (
-                                                <BiCheck size="1.8rem" />
-                                            )}
-                                        </div>
+                            <Link href="/about" className={styles.link}>
+
+                                <div className={styles.icon}>
+                                    <div className={styles.check}>
+                                        <p className={styles.iconText}>ABOUT</p>
+                                        {router.pathname == "/about" && (
+                                            <BiCheck size="1.8rem" />
+                                        )}
                                     </div>
-                                </a>
+                                </div>
+
                             </Link>
-                            <Link href="/docs">
-                                <a className={styles.link}>
-                                    <div className={styles.icon}>
-                                        <div className={styles.check}>
-                                            <p className={styles.iconText}>API</p>
-                                            {router.pathname == "/docs" && (
-                                                <BiCheck size="1.8rem" />
-                                            )}
-                                        </div>
+                            <Link href="/docs" className={styles.link}>
+
+                                <div className={styles.icon}>
+                                    <div className={styles.check}>
+                                        <p className={styles.iconText}>API</p>
+                                        {router.pathname == "/docs" && (
+                                            <BiCheck size="1.8rem" />
+                                        )}
                                     </div>
-                                </a>
+                                </div>
+
                             </Link>
                         </nav>
                         <div className={styles.footer}>

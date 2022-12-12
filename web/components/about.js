@@ -38,8 +38,8 @@ export default function About() {
                         AnalogDB is a curated database featuring thousands of film photographs. And
                         it is always growing, with new pictures added every day.
                     </p>
-                    <Link href="/">
-                        <a className={styles.link}>view latest</a>
+                    <Link href="/" className={styles.link}>
+                        view latest
                     </Link>
                 </div>
                 {loaded && !isMobile && (
@@ -77,8 +77,8 @@ export default function About() {
                         The entire collection of film is exposed through a simple and intuitive API.
                         Embedded any of our photos in your next project with ease.
                     </p>
-                    <Link href="/api">
-                        <a className={styles.link}>read the docs</a>
+                    <Link href="/api" className={styles.link}>
+                        read the docs
                     </Link>
                 </div>
             </div>

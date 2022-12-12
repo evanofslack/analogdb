@@ -7,7 +7,7 @@ export default function GridImage(props) {
     let placeholder = post.images[0]
 
     return (
-        <Link href={`/post/${post.id}`} passHref={true}>
+        <Link href={`/post/${post.id}`} passHref={true} legacyBehavior>
             <div>
                 <Image
                     src={image.url}
