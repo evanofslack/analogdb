@@ -109,6 +109,20 @@ func (s *PostService) DeletePost(ctx context.Context, id int) error {
 	return nil
 }
 
+func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
+	tx, err := s.db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+    ids, err := allPostIDs(ctx, tx)
+
+    if err != nil {
+    return nil, err}
+    
+	return ids, nil
+}
+
 func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*analogdb.Post, error) {
 
 	create, err := createPostToRawPostCreate(post)
@@ -264,6 +278,30 @@ func deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 		return err
 	}
 	return nil
+}
+
+func allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
+	query := `
+			SELECT id FROM pictures`
+	rows, err := tx.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	ids := make([]int, 0)
+	var id int
+	for rows.Next() {
+        if err := rows.Scan(&id); err != nil {
+            return nil, err
+        }
+        ids = append(ids, id)
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return ids, nil
 }
 
 // filterToOrder converts filter into an SQL "ORDER BY" statement
