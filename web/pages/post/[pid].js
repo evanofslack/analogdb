@@ -1,26 +1,29 @@
 import { baseURL } from "../../constants.ts";
-import ImagePage from "../../components/imagePage"
-
+import ImagePage from "../../components/imagePage";
 
 export async function getStaticPaths() {
-    return {
-        paths: [],
-        fallback: "blocking" //indicates the type of fallback
-    }
+  const url = `${baseURL}/ids`;
+  const response = await fetch(url);
+  const ids = await response.json();
+  const paths = ids.map((id) => ({
+    params: { pid: id },
+  }));
+
+  return { paths, fallback: "blocking" };
 }
 
 export async function getStaticProps({ params }) {
-    const url = `${baseURL}/post/${params.pid}`
-    const response = await fetch(url);
-    const post = await response.json();
-    return {
-        props: {
-            post,
-        },
-        revalidate: 10,
-    };
+  const url = `${baseURL}/post/${params.pid}`;
+  const response = await fetch(url);
+  const post = await response.json();
+  return {
+    props: {
+      post,
+    },
+    revalidate: 10,
+  };
 }
 
 export default function Post({ post }) {
-    return ImagePage(post={post})
+  return ImagePage((post = { post }));
 }
