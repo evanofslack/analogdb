@@ -11,6 +11,7 @@ requests = "*"
 schedule = "*"
 python-dotenv = "*"
 loguru = "*"
+notifiers = "*"
 
 [dev-packages]
 black = "*"
