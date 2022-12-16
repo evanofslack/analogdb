@@ -7,7 +7,7 @@ BW_SUB = "analog_bw"
 SPROCKET_SUB = "SprocketShots"
 
 # define number of posts to scrape per subreddit
-ANALOG_POSTS = 8  # only scrapes 6 since 2 pinned self posts
+ANALOG_POSTS = 10  # only scrapes 8 since 2 pinned self posts
 BW_POSTS = 2  # only scrapes 2 since 1 pinned self post
 SPROCKET_POSTS = 1
 
