@@ -74,10 +74,15 @@ class AuthCreds:
 
 
 @dataclass
+class SlackWebhook:
+    url: str
+
+@dataclass
 class Config:
     aws: AwsCreds
     reddit: RedditCreds
     auth: AuthCreds
+    slack: SlackWebhook
 
 
 @dataclass
@@ -85,3 +90,4 @@ class Dependencies:
     s3_client: boto3.session.Session
     reddit_client: praw.Reddit
     auth: AuthCreds
+

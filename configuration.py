@@ -6,7 +6,7 @@ import praw
 from dotenv import load_dotenv
 from loguru import logger
 
-from models import AuthCreds, AwsCreds, Config, Dependencies, RedditCreds
+from models import AuthCreds, AwsCreds, Config, Dependencies, RedditCreds, SlackWebhook
 
 
 @lru_cache(maxsize=None)
@@ -30,7 +30,9 @@ def init_config() -> Config:
         password=os.getenv("AUTH_PASSWORD"),
     )
 
-    config = Config(aws=aws, reddit=reddit, auth=auth)
+    slack = SlackWebhook(url=os.getenv("SLACK_WEBHOOK_URL"))
+
+    config = Config(aws=aws, reddit=reddit, auth=auth, slack=slack)
 
     return config
 
