@@ -1,22 +1,31 @@
 import styles from "./imageTag.module.css";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa";
-import { useState } from "react";
 import { baseURL } from "../constants.ts";
+import { ActionIcon, Badge, Tooltip, Card, Divider } from "@mantine/core";
 
 export default function ImageTag(props) {
-    let post = props.post;
-    const api_endpoint = baseURL + "/post/";
+  let post = props.post;
+  const api_endpoint = baseURL + "/post/";
+  const redditUserURL = "https://www.reddit.com/user/";
+  const author = post.author.replace("u/", "");
 
-    return (
-        <div className={styles.padding}>
-            <div className={styles.container} >
-                <a href={api_endpoint + post.id}>
-                    <p className={styles.id}>#{post.id}</p>
-                </a>
-                <a href={post.permalink}>
-                    <p className={styles.title}>{post.title}</p>
-                </a>
-            </div>
+  const date = new Date(post.unix_time * 1000).toLocaleDateString("en-US");
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.containerMetadata}>
+        <a href={post.permalink} className={styles.title}>
+          {post.title}
+        </a>
+        <div className={styles.containerAuthor}>
+          <a href={redditUserURL + author} className={styles.author}>
+            {author}
+          </a>
+          <a href={api_endpoint + post.id} className={styles.id}>
+            #{post.id}
+          </a>
+          <div>{date}</div>
         </div>
-    );
+      </div>
+    </div>
+  );
 }

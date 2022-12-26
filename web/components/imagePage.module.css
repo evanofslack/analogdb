@@ -1,34 +1,46 @@
 .fullscreen {
-    position: fixed;
-    top:0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 100;
-    background-color: rgba(255, 255, 255, 0.95);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+  width: 100vw;
+  height: 90vh;
+  /* min-height: 40rem; */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
- .imageContainer {
-     width: 90%;
-     height: 90%;
-     /* height: auto; */
-     position: relative;
-     margin-bottom: 1rem;
-     max-width: 1268px;
-     max-height: 1268px;
- }
+.imageContainer {
+  width: 90%;
+  height: 90%;
+  /* height: auto; */
+  position: relative;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+  max-width: 1268px;
+  max-height: 1268px;
+}
+
+.headerIcons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 90vw;
+  margin-top: 1rem;
+}
+
+.footerIcons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  width: 90vw;
+}
 
 @media screen and (max-width: 720px) {
-     .fullscreen {
-            justify-content: flex-start;
-            padding-top: 2rem;
-        }
-    .imageContainer {
-        margin-top: 0rem;
-        height: 75%;
-    }
+  .fullscreen {
+    justify-content: flex-start;
+    padding-top: 2rem;
+  }
+  .imageContainer {
+    margin-top: 0rem;
+    height: 75%;
+  }
 }

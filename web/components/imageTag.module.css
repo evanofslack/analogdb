@@ -1,30 +1,60 @@
-
 .container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100vw;
+  margin-top: 0.5rem;
+  margin-bottom: 2.5rem;
 }
-.padding {
-    padding-top: 1rem;
-    font-family: 'Courier Prime', Courier, monospace;
+
+.containerMetadata {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 60%;
 }
-.id {
-    font-weight: 300;
-    padding-right: 3rem;
+
+.containerAuthor {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-top: 1rem;
+  color: gray;
+  font-weight: 400;
+  font-family: "Courier Prime", Courier, monospace;
 }
+
 .title {
-    font-weight: 300;
-    max-width: 450px;
+  font-size: 1.3rem;
+  font-weight: 500;
+  font-family: "Courier Prime", Courier, monospace;
+}
+.title:hover {
+  text-decoration: underline;
+}
+
+.author {
+  font-size: 1rem;
+  color: gray;
+  margin-bottom: 0.3rem;
+}
+.author:hover {
+  text-decoration: underline;
+}
+
+.id {
+  margin-bottom: 0.3rem;
+  font-size: 1rem;
+  font-weight: 400;
+}
+.id:hover {
+  text-decoration: underline;
 }
 
 @media screen and (max-width: 720px) {
-    .title {
-        font-size: 0.8rem;
-        padding-right: 0
-    }
-    .id {
-        display: none
-    }
+  .title {
+  }
+  .id {
+  }
 }
