@@ -66,4 +66,5 @@ type PostService interface {
 	FindPostByID(ctx context.Context, id int) (*Post, error)
 	CreatePost(ctx context.Context, post *CreatePost) (*Post, error)
 	DeletePost(ctx context.Context, id int) error
+    AllPostIDs(ctx context.Context) ([]int, error)
 }

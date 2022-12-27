@@ -34,11 +34,16 @@ type CreateResponse struct {
 	Post    analogdb.Post `json:"post"`
 }
 
+type IDsResponse struct {
+	Ids []int `json:"ids"`
+}
+
 var defaultLimit = 20
 
 const (
 	postsPath = "/posts"
 	postPath  = "/post"
+	idsPath   = "/ids"
 )
 
 func (s *Server) mountPostHandlers() {
@@ -52,6 +57,9 @@ func (s *Server) mountPostHandlers() {
 		r.With(auth).Delete("/{id}", s.deletePost)
 		r.With(auth).Put("/", s.createPost)
 		r.With(auth).Post("/", s.createPost)
+	})
+	s.router.Route(idsPath, func(r chi.Router) {
+		r.Get("/", s.allPostIDs)
 	})
 }
 
@@ -149,7 +157,6 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	}
 	created, err := s.PostService.CreatePost(r.Context(), &createPost)
 	if err != nil {
-		println(err.Error())
 		writeError(w, r, err)
 	}
 	createdResponse := CreateResponse{
@@ -157,6 +164,19 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		Post:    *created,
 	}
 	if err := encodeResponse(w, r, http.StatusCreated, createdResponse); err != nil {
+		writeError(w, r, err)
+	}
+}
+
+func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
+	ids, err := s.PostService.AllPostIDs(r.Context())
+	if err != nil {
+		writeError(w, r, err)
+	}
+	idsResponse := IDsResponse{
+		Ids: ids,
+	}
+	if err := encodeResponse(w, r, http.StatusOK, idsResponse); err != nil {
 		writeError(w, r, err)
 	}
 }

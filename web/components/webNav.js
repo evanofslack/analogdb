@@ -17,20 +17,26 @@ export default function WebNav() {
     return (
         <nav>
             <div className={styles.headerContainer}>
-                <Link href="/">
-                    <a className={router.pathname == "/" ? styles.linkOn : styles.linkOff}>
+                <Link
+                    href="/"
+                    className={router.pathname == "/" ? styles.linkOn : styles.linkOff}>
+                    
                         GALLERY
-                    </a>
+                    
                 </Link>
-                <Link href="/about">
-                    <a className={router.pathname == "/about" ? styles.linkOn : styles.linkOff}>
+                <Link
+                    href="/about"
+                    className={router.pathname == "/about" ? styles.linkOn : styles.linkOff}>
+                    
                         ABOUT
-                    </a>
+                    
                 </Link>
-                <Link href="/docs">
-                    <a className={router.pathname == "/docs" ? styles.linkOn : styles.linkOff}>
+                <Link
+                    href="/docs"
+                    className={router.pathname == "/docs" ? styles.linkOn : styles.linkOff}>
+                    
                         API
-                    </a>
+                    
                 </Link>
             </div>
         </nav>

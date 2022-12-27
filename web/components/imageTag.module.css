@@ -1,40 +1,60 @@
-
 .container {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  width: 100vw;
+  margin-top: 0.5rem;
+  margin-bottom: 2.5rem;
 }
-.padding {
-    padding: 1rem 3rem;
-    font-family: 'Courier Prime', Courier, monospace;
+
+.containerMetadata {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 60%;
 }
+
+.containerAuthor {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-top: 1rem;
+  color: gray;
+  font-weight: 400;
+  font-family: "Courier Prime", Courier, monospace;
+}
+
 .title {
-    font-weight: 300;
-    padding-right: 3rem;
+  font-size: 1.3rem;
+  font-weight: 500;
+  font-family: "Courier Prime", Courier, monospace;
 }
-.link {
-    padding-right: 0.8rem;
+.title:hover {
+  text-decoration: underline;
 }
-.info {
-    /* display: flex; */
-    margin-top: -1rem;
-    display: inline-block;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content:flex-start;
+
+.author {
+  font-size: 1rem;
+  color: gray;
+  margin-bottom: 0.3rem;
+}
+.author:hover {
+  text-decoration: underline;
+}
+
+.id {
+  margin-bottom: 0.3rem;
+  font-size: 1rem;
+  font-weight: 400;
+}
+.id:hover {
+  text-decoration: underline;
 }
 
 @media screen and (max-width: 720px) {
-    .title {
-        font-size: 0.8rem;
-        padding-right: 0
-    }
-    .link {
-        display: none
-    }
-    .icon {
-        display: none;
-    }
+  .title {
+  }
+  .id {
+  }
 }

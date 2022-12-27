@@ -401,6 +401,36 @@ func TestCreateAndDeletePost(t *testing.T) {
 	})
 }
 
+func TestAllPostIDs(t *testing.T) {
+	t.Run("Number of IDs", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		ids, err := ps.AllPostIDs(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+        numIDs := len(ids)
+        if numIDs != totalPosts {
+            t.Fatalf("wrong number of total post IDs, wanted %d, got %d", totalPosts, numIDs)
+        }
+	})
+	t.Run("IDs are correct", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		ids, err := ps.AllPostIDs(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+        if ids[0] != 1765 || ids[1] != 1766 || ids[2] != 1767 {
+            t.Fatalf("wrong values of post IDs, wanted %d, %d, %d, got %d, %d, %d", 1765, 1766, 1767, ids[0], ids[1], ids[2])
+        }
+	})
+}
+
 func setupTx(t *testing.T) (context.Context, *sql.Tx) {
 	t.Helper()
 	ctx := context.Background()
