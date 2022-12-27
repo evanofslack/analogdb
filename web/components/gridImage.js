@@ -1,25 +1,25 @@
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Link from "next/link";
 
 export default function GridImage(props) {
-    let post = props.post
-    let image = post.images[2]
-    let placeholder = post.images[0]
+  let post = props.post;
+  let image = post.images[2];
+  let placeholder = post.images[0];
 
-    return (
-        <Link href={`/post/${post.id}`} passHref={true} legacyBehavior>
-            <div>
-                <Image
-                    src={image.url}
-                    width={image.width}
-                    height={image.height}
-                    alt={`Image ${post.id} by ${post.author}`}
-                    quality={100}
-                    layout="responsive"
-                    placeholder="blur"
-                    blurDataURL={placeholder.url} // low res image
-                    />
-              </div>
-        </Link>
-    );
+  return (
+    <Link href={`/post/${post.id}`} passHref={true} legacyBehavior>
+      <div>
+        <Image
+          src={image.url}
+          width={image.width}
+          height={image.height}
+          alt={`image ${post.id} by ${post.author}`}
+          quality={100}
+          layout="responsive"
+          placeholder="blur"
+          blurDataURL={placeholder.url}
+        />
+      </div>
+    </Link>
+  );
 }

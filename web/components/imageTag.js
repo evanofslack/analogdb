@@ -1,6 +1,5 @@
 import styles from "./imageTag.module.css";
 import { baseURL } from "../constants.ts";
-import { ActionIcon, Badge, Tooltip, Card, Divider } from "@mantine/core";
 
 export default function ImageTag(props) {
   let post = props.post;
