@@ -8,15 +8,8 @@
   overflow-x: hidden;
 }
 
-.loading {
-  padding-top: 3rem;
-  text-align: center;
-  font-weight: 500;
-}
-
 @media screen and (max-width: 720px) {
   .container {
     text-align: left;
   }
 }
-
