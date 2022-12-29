@@ -1,7 +1,7 @@
 import styles from "./infiniteGallery.module.css";
 import Grid from "../components/grid";
 import InfiniteScroll from "react-infinite-scroll-component";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { baseURL } from "../constants.ts";
 
 export default function InfiniteGallery(props) {
@@ -10,6 +10,13 @@ export default function InfiniteGallery(props) {
     baseURL + props.response.meta.next_page_url
   );
   const [hasMore, setHasMore] = useState(props.response.meta.next_page_id);
+
+  // this seems like a hack
+  useEffect(() => {
+    setPosts(props.response.posts);
+    setNextPageURL(baseURL + props.response.meta.next_page_url);
+    setHasMore(props.response.meta.next_page_id);
+  }, [props.response]);
 
   // Fetch next page of results for infinite scroll
   const fetchMore = () => {
@@ -31,11 +38,16 @@ export default function InfiniteGallery(props) {
       dataLength={posts.length}
       next={fetchMore}
       hasMore={hasMore}
-      loader={<h4 className={styles.loading}>Loading...</h4>}
-      endMessage={<h4 className={styles.loading}>Go take some pictures...</h4>}
+      loader={<h4 className={styles.loading}>loading...</h4>}
+      endMessage={
+        <h4 className={styles.loading}>
+          that's all folks, go take some pictures...
+        </h4>
+      }
       style={{ overflowY: "hidden" }}
     >
       <Grid posts={posts} />
+      <span />
     </InfiniteScroll>
   );
 }

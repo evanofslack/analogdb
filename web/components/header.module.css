@@ -1,6 +1,4 @@
-
 .main {
-  padding-bottom: 1rem;
   margin: 2rem 3rem;
   flex: 1;
   display: flex;
@@ -8,7 +6,6 @@
   justify-content: space-between;
   align-items: center;
 }
-
 
 .title {
   margin: 0;
@@ -20,17 +17,16 @@
 }
 
 .about {
-  display: none
+  display: none;
 }
 
 .description {
   margin-top: 0.3rem;
   line-height: 1.5;
   font-size: 1.1rem;
-  margin-bottom : 0;
+  margin-bottom: 0;
   font-weight: 400;
 }
-
 
 @media screen and (max-width: 1024px) {
   .title {
@@ -46,21 +42,20 @@
   }
 }
 @media screen and (max-width: 720px) {
-.main {
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  margin: 1rem 1rem;
+  .main {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin: 1rem 1rem;
+  }
+  .title {
+    text-align: left;
+    font-size: 2.1rem;
+    margin-right: 0;
+    text-align: left;
+  }
+  .about {
+    display: inline;
+    padding-right: 0.5rem;
+  }
 }
-.title{
-  text-align: left;
-  font-size: 2.1rem;
-  margin-right: 0;
-  text-align: left;
-}
-.about {
-  display: inline;
-  padding-right: .5rem;
-}
-}
-
