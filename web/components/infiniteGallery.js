@@ -3,6 +3,7 @@ import Grid from "../components/grid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useState, useEffect } from "react";
 import { baseURL } from "../constants.ts";
+import Footer from "./footer";
 
 export default function InfiniteGallery(props) {
   const [posts, setPosts] = useState(props.response.posts);
@@ -41,7 +42,7 @@ export default function InfiniteGallery(props) {
       loader={<h4 className={styles.loading}>loading...</h4>}
       endMessage={
         <h4 className={styles.loading}>
-          that's all folks, go take some pictures...
+          thats all folks, go take some pictures...
         </h4>
       }
       style={{ overflowY: "hidden" }}

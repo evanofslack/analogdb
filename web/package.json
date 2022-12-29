@@ -19,5 +19,9 @@
     "react-infinite-scroll-component": "^6.1.0",
     "react-responsive-masonry": "^2.1.4",
     "sharp": "^0.30.7"
+  },
+  "devDependencies": {
+    "eslint": "^8.30.0",
+    "eslint-config-next": "^13.1.1"
   }
 }
