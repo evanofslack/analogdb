@@ -1,5 +1,5 @@
 import styles from "./about.module.css";
-import Image from "next/image";
+import Image from "next/legacy/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Footer from "./footer";
@@ -41,14 +41,39 @@ export default function About() {
             photographs. And it is always growing, with new pictures added every
             day.
           </p>
-          <Link href="/" className={styles.link}>
-            view latest
+          <Link href="/" legacyBehavior>
+            <a className={styles.link}>view latest</a>
           </Link>
         </div>
+        {loaded && !isMobile && (
+          <div className={styles.imageOne}>
+            <Image
+              src={post.images[2].url}
+              width={post.images[2].width}
+              height={post.images[2].height}
+              alt={`Image ${post.id} by ${post.author}`}
+              quality={100}
+              placeholder="blur"
+              blurDataURL={post.images[0].url} // low res image
+            />
+            {/* <p>{postIDs[random]}</p> */}
+          </div>
+        )}
       </div>
 
       <div className={styles.sectionTwo}>
-        <div className={styles.imageTwo}></div>
+        <div className={styles.imageTwo}>
+          {!isMobile && (
+            <Image
+              src={"/analogdb_curl.png"}
+              alt={`example AnalogDB API call`}
+              width="1064"
+              height="1224"
+              quality={100}
+              className={styles.imageTwoBorder}
+            />
+          )}
+        </div>
         <div>
           <div className={styles.title}>Accesible API</div>
           <p className={styles.subtitle}>
@@ -56,8 +81,8 @@ export default function About() {
             intuitive API. Embedded any of our photos in your next project with
             ease.
           </p>
-          <Link href="/api" className={styles.link}>
-            read the docs
+          <Link href="/api" legacyBehavior>
+            <a className={styles.link}>read the docs</a>
           </Link>
         </div>
       </div>
@@ -75,6 +100,17 @@ export default function About() {
           >
             view source
           </a>
+        </div>
+        <div className={styles.imageThree}>
+          {!isMobile && (
+            <Image
+              src={"/github_logo.png"}
+              alt={`example AnalogDB API call`}
+              width="3840"
+              height="2160"
+              quality={100}
+            />
+          )}
         </div>
       </div>
       <Footer />
