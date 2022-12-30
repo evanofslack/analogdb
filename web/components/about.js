@@ -5,31 +5,79 @@ import { useEffect, useState } from "react";
 import Footer from "./footer";
 import { useBreakpoint } from "../providers/breakpoint.js";
 import { baseURL } from "../constants.ts";
+import { Prism } from "@mantine/prism";
+import { IconPolaroid, IconUsers } from "@tabler/icons";
 
 export default function About() {
-  const [post, setPost] = useState();
-  const [loaded, setIsLoaded] = useState(false);
-  const postIDs = [
-    3070, 3059, 2930, 2226, 1997, 1912, 1810, 1775, 1668, 1421, 1262, 359,
-  ];
-  const random = Math.floor(Math.random() * postIDs.length);
-  const endpoint = baseURL + "/post/" + postIDs[random];
-
   const breakpoints = useBreakpoint();
   let isMobile = false;
   if (breakpoints["sm"]) {
     isMobile = true;
   }
 
+  const [numPosts, setNumPosts] = useState();
+  const [numPhotographers, setNumPhotographers] = useState(3609);
+  const [loaded, setIsLoaded] = useState(false);
+
   useEffect(() => {
+    const endpoint = baseURL + "/posts/latest";
     fetch(endpoint)
       .then((response) => response.json())
       .then((resp) => {
-        setPost(resp);
+        setNumPosts(resp.meta.total_posts);
         setIsLoaded(true);
-        console.log(post);
       });
   }, []);
+
+  const apiQuery = "curl https://api.analogdb.com/posts/latest";
+
+  const apiResponse = `
+"meta":{
+  "total_posts":3637,
+  "page_size":20,
+  "next_page_id":1672251647,
+  "next_page_url":"/posts/latest?page_size=20&page_id=1672251647"
+},
+"posts":[
+  {
+    "id":5127,
+    "title":"Exam | Olympus OM-2n | 50mm 1.8 | Vision3 250D",
+    "author":"u/Crazylyric",
+    "permalink":"https://www.reddit.com/r/analog/comments/zyk2sp/exam_olympus_om2n_50mm_18_vision3_250d/",
+    "upvotes":163,
+    "nsfw":false,
+    "grayscale":false,
+    "unix_time":1672356457,
+    "sprocket":false
+    "images":[
+      {
+        "resolution":"low",
+        "url":"https://d3i73ktnzbi69i.cloudfront.net/8ed69a77-83fc-4a82-8994-935f82cada2e.jpeg",
+        "width":720,
+        "height":477
+      },
+      {
+        "resolution":"medium",
+        "url":"https://d3i73ktnzbi69i.cloudfront.net/d3ed07e5-b094-452f-b567-6d24b7d93f39.jpeg"
+        "width":720,
+        "height":477
+      },
+      {
+        "resolution":"high",
+        "url":"https://d3i73ktnzbi69i.cloudfront.net/b68bb45b-e723-4010-81d7-2c1a38cdffe1.jpeg"
+        "width":1440,
+        "height":955
+      },
+      {
+        "resolution":"raw",
+        "url":"https://d3i73ktnzbi69i.cloudfront.net/de6a9627-5127-4920-b6f4-d1078e7d3c35.jpeg"
+        "width":3089,
+        "height":2048
+      }
+     ],
+  },
+  ...
+]`;
 
   return (
     <main>
@@ -45,41 +93,78 @@ export default function About() {
             <a className={styles.link}>view latest</a>
           </Link>
         </div>
-        {loaded && !isMobile && (
-          <div className={styles.imageOne}>
-            <Image
-              src={post.images[2].url}
-              width={post.images[2].width}
-              height={post.images[2].height}
-              alt={`Image ${post.id} by ${post.author}`}
-              quality={100}
-              placeholder="blur"
-              blurDataURL={post.images[0].url} // low res image
-            />
-            {/* <p>{postIDs[random]}</p> */}
+        {!isMobile && (
+          <div className={styles.stats}>
+            <div className={styles.statRow}>
+              <IconPolaroid
+                size={40}
+                color="#cacaca"
+                stroke={1.1}
+                className={styles.statIcon}
+              />
+              <div className={styles.statCol}>
+                <p className={styles.statNum}>{numPosts}</p>
+                <p className={styles.statTitle}>posts</p>
+              </div>
+            </div>
+
+            <div className={styles.statRow}>
+              <IconUsers
+                size={36}
+                color="#cacaca"
+                stroke={1.5}
+                className={styles.statIcon}
+              />
+              <div className={styles.statCol}>
+                <p className={styles.statNum}>{numPhotographers}</p>
+                <p className={styles.statTitle}>photographers</p>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
       <div className={styles.sectionTwo}>
-        <div className={styles.imageTwo}>
+        <div>
           {!isMobile && (
-            <Image
-              src={"/analogdb_curl.png"}
-              alt={`example AnalogDB API call`}
-              width="1064"
-              height="1224"
-              quality={100}
-              className={styles.imageTwoBorder}
-            />
+            <div className={styles.apiDemoContainer}>
+              <div className={styles.apiDemo}>
+                <Prism
+                  language="javascript"
+                  styles={() => ({
+                    code: {
+                      fontSize: "0.75rem",
+                      maxWidth: "40vw",
+                    },
+                  })}
+                >
+                  {apiQuery}
+                </Prism>
+              </div>
+              <div className={styles.apiDemo}>
+                <Prism
+                  withLineNumbers
+                  language="javascript"
+                  styles={() => ({
+                    code: {
+                      fontSize: "0.75rem",
+                      maxHeight: "70vh",
+                      maxWidth: "40vw",
+                    },
+                  })}
+                >
+                  {apiResponse}
+                </Prism>
+              </div>
+            </div>
           )}
         </div>
         <div>
           <div className={styles.title}>Accesible API</div>
           <p className={styles.subtitle}>
-            The entire collection of film is exposed through a simple and
-            intuitive API. Embedded any of our photos in your next project with
-            ease.
+            The entire collection of film is exposed through a simple and modern
+            JSON API. Embeddeding beautiful film photos in your projects has
+            never been easier.
           </p>
           <Link href="/api" legacyBehavior>
             <a className={styles.link}>read the docs</a>
@@ -89,10 +174,11 @@ export default function About() {
 
       <div className={styles.sectionThree}>
         <div>
-          <div className={styles.title}>Free and open-source</div>
+          <div className={styles.title}>Free & open-source</div>
           <p className={styles.subtitle}>
             All code made publically avaliable on Github with flexible
-            licensing.
+            licensing. Analogdb is an open community where all contributions are
+            welcome!
           </p>
           <a
             className={styles.link}
