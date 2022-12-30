@@ -9,9 +9,6 @@ import useKeyPress from "../hooks/useKeyPress";
 import {
   IconSearch,
   IconArrowsSort,
-  IconClock,
-  IconQuestionMark,
-  IconTrophy,
   IconAdjustmentsHorizontal,
 } from "@tabler/icons";
 
@@ -102,7 +99,7 @@ export default function Gallery(props) {
               variant="outline"
               color="gray"
               leftIcon={<IconArrowsSort size={18} stroke={1.5} />}
-              styles={(theme) => ({
+              styles={() => ({
                 root: {
                   marginRight: 10,
                   paddingLeft: 10,
@@ -146,7 +143,7 @@ export default function Gallery(props) {
               variant="outline"
               color="gray"
               leftIcon={<IconAdjustmentsHorizontal size={18} stroke={1.5} />}
-              styles={(theme) => ({
+              styles={() => ({
                 root: {
                   marginRight: 10,
                   paddingLeft: 10,

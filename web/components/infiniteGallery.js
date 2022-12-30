@@ -11,12 +11,14 @@ export default function InfiniteGallery(props) {
     baseURL + props.response.meta.next_page_url
   );
   const [hasMore, setHasMore] = useState(props.response.meta.next_page_id);
+  const [totalPosts, setTotalPosts] = useState(props.response.meta.total_posts);
 
   // this seems like a hack
   useEffect(() => {
     setPosts(props.response.posts);
     setNextPageURL(baseURL + props.response.meta.next_page_url);
     setHasMore(props.response.meta.next_page_id);
+    setTotalPosts(props.response.meta.total_posts);
   }, [props.response]);
 
   // Fetch next page of results for infinite scroll
@@ -35,20 +37,29 @@ export default function InfiniteGallery(props) {
   };
 
   return (
-    <InfiniteScroll
-      dataLength={posts.length}
-      next={fetchMore}
-      hasMore={hasMore}
-      loader={<h4 className={styles.loading}>loading...</h4>}
-      endMessage={
-        <h4 className={styles.loading}>
-          thats all folks, go take some pictures...
-        </h4>
-      }
-      style={{ overflowY: "hidden" }}
-    >
-      <Grid posts={posts} />
-      <span />
-    </InfiniteScroll>
+    <div>
+      {totalPosts != 0 && (
+        <InfiniteScroll
+          dataLength={posts.length}
+          next={fetchMore}
+          hasMore={hasMore}
+          loader={<h4 className={styles.loading}>loading...</h4>}
+          endMessage={
+            <h3 className={styles.loading}>
+              thats all folks, go take some pictures...
+            </h3>
+          }
+          style={{ overflowY: "hidden" }}
+        >
+          <Grid posts={posts} />
+          <span />
+        </InfiniteScroll>
+      )}
+      {totalPosts == 0 && (
+        <div className={styles.noResultsContainer}>
+          <h3 className={styles.noResults}> No posts found :( </h3>
+        </div>
+      )}
+    </div>
   );
 }
