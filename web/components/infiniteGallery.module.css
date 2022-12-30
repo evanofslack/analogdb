@@ -2,5 +2,20 @@
   padding-top: 3rem;
   padding-bottom: 3rem;
   text-align: center;
-  font-weight: 500;
+  font-weight: 400;
+}
+
+.noResultsContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 65vh;
+}
+
+.noResults {
+  font-weight: 400;
 }
