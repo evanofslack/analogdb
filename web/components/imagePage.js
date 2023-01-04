@@ -11,7 +11,7 @@ import {
   completeNavigationProgress,
   NavigationProgress,
 } from "@mantine/nprogress";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 async function downloadImage(targetImage, name) {
   const image = await fetch(targetImage);
@@ -26,13 +26,15 @@ async function downloadImage(targetImage, name) {
 }
 
 export default function ImagePage(props) {
+  const [isHighResLoaded, setIsHighResLoaded] = useState(false);
+
   useEffect(() => {
     startNavigationProgress();
   }, []);
 
   let post = props.post;
-  let placeholder = post.images[0];
-  let image = post.images[3];
+  let lowResImage = post.images[2];
+  let highResImage = post.images[3];
   return (
     <div>
       <NavigationProgress autoReset={true} />
@@ -53,15 +55,27 @@ export default function ImagePage(props) {
         </div>
         <div className={styles.imageContainer}>
           <Image
+            priority
+            style={
+              isHighResLoaded ? { display: "none" } : { objectFit: "contain" }
+            }
             fill
-            src={image.url}
+            src={lowResImage.url}
             alt={`image ${post.id} by ${post.author}`}
             sizes="100vw"
-            style={{ objectFit: "contain" }}
             quality={100}
-            placeholder="blur"
-            blurDataURL={placeholder.url}
             onLoadingComplete={completeNavigationProgress}
+          />
+          {/* replace with full resolution picture when loaded */}
+          <Image
+            priority
+            style={{ objectFit: "contain" }}
+            fill
+            src={highResImage.url}
+            alt={`image ${post.id} by ${post.author}`}
+            sizes="100vw"
+            quality={100}
+            onLoadingComplete={() => setIsHighResLoaded(true)}
           />
         </div>
         <div className={styles.footerIcons}>
