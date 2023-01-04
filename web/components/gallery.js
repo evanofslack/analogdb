@@ -11,6 +11,7 @@ import {
   IconArrowsSort,
   IconAdjustmentsHorizontal,
 } from "@tabler/icons";
+import useQuery from "../stores/query";
 
 import {
   TextInput,
@@ -65,11 +66,24 @@ function filterQueryParams(sort, nsfw, bw, sprocket, search) {
 }
 
 export default function Gallery(props) {
-  const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("latest");
-  const [nsfw, setNsfw] = useState("exclude");
-  const [bw, setBw] = useState("exclude");
-  const [sprocket, setSprocket] = useState("include");
+  const { search, sort, nsfw, bw, sprocket } = useQuery((store) => ({
+    search: store.search,
+    sort: store.sort,
+    nsfw: store.nsfw,
+    bw: store.bw,
+    sprocket: store.sprocket,
+  }));
+
+  const { setSearch, setSort, setNsfw, setBw, setSprocket } = useQuery(
+    (store) => ({
+      setSearch: store.setSearch,
+      setSort: store.setSort,
+      setNsfw: store.setNsfw,
+      setBw: store.setBw,
+      setSprocket: store.setSprocket,
+    })
+  );
+
   const [response, setResponse] = useState(props.data);
 
   const updateRequest = async () => {
