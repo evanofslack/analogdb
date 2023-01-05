@@ -1,4 +1,3 @@
-import Head from "next/head";
 import styles from "./gallery.module.css";
 import Header from "../components/header";
 import Footer from "./footer";
@@ -100,12 +99,7 @@ export default function Gallery(props) {
 
   return (
     <div className={styles.main}>
-      <Head>
-        <title>AnalogDB</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <Header />
-
       <div className={styles.query}>
         <Menu shadow="md" width={125}>
           <Menu.Target>
