@@ -1,7 +1,8 @@
+import Head from "next/head";
 import Gallery from "../components/gallery";
 import { baseURL } from "../constants.ts";
 
-export async function getStaticProps(context) {
+export async function getStaticProps() {
   const url = baseURL + "/posts/latest?page_size=50&bw=false&nsfw=false";
   const response = await fetch(url);
   const data = await response.json();
@@ -14,5 +15,13 @@ export async function getStaticProps(context) {
 }
 
 export default function Home({ data }) {
-  return <Gallery data={data}></Gallery>;
+  return (
+    <div>
+      <Head>
+        <title>AnalogDB</title>
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      <Gallery data={data}></Gallery>;
+    </div>
+  );
 }

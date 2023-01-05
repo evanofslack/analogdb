@@ -3,7 +3,7 @@ import styles from "../components/gallery.module.css";
 import Header from "../components/header";
 import About from "../components/about";
 
-export default function AboutPage(props) {
+export default function AboutPage() {
   return (
     <div className={styles.container}>
       <Head>
