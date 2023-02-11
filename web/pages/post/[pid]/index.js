@@ -1,5 +1,5 @@
-import { baseURL } from "../../constants.ts";
-import ImagePage from "../../components/imagePage";
+import { baseURL } from "../../../constants.ts";
+import ImagePage from "../../../components/imagePage";
 
 export async function getStaticPaths() {
   const url = `${baseURL}/ids`;
