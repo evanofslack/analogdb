@@ -36,13 +36,13 @@ func TestGetPosts(t *testing.T) {
 	t1 := testInfo{
 		name:   "latest",
 		method: http.MethodGet,
-		target: "/posts/latest?page_size=20",
+		target: "/posts?page_size=20",
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   20,
 				PageID:     1646884084,
-				PageURL:    "/posts/latest?page_size=20&page_id=1646884084",
+				PageURL:    "/posts?sort=latest&page_size=20&page_id=1646884084",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -52,13 +52,13 @@ func TestGetPosts(t *testing.T) {
 	t2 := testInfo{
 		name:   "top",
 		method: http.MethodGet,
-		target: "/posts/top?page_size=10",
+		target: "/posts?sort=top&page_size=10",
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   10,
 				PageID:     730,
-				PageURL:    "/posts/top?page_size=10&page_id=730",
+				PageURL:    "/posts?sort=top&page_size=10&page_id=730",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -68,7 +68,7 @@ func TestGetPosts(t *testing.T) {
 	t3 := testInfo{
 		name:   "random",
 		method: http.MethodGet,
-		target: "/posts/random?page_size=2",
+		target: "/posts?sort=random&page_size=10",
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts,
@@ -84,7 +84,7 @@ func TestGetPosts(t *testing.T) {
 	t4 := testInfo{
 		name:   "nsfw",
 		method: http.MethodGet,
-		target: "/posts/latest?nsfw=true",
+		target: "/posts?nsfw=true",
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalNsfw,
@@ -101,13 +101,13 @@ func TestGetPosts(t *testing.T) {
 	t5 := testInfo{
 		name:   "inverse nsfw",
 		method: http.MethodGet,
-		target: "/posts/latest?nsfw=false",
+		target: "/posts?nsfw=false",
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts - totalNsfw,
 				PageSize:   20,
 				PageID:     1646854637,
-				PageURL:    "/posts/latest?page_size=20&page_id=1646854637&nsfw=false",
+				PageURL:    "/posts?sort=latest&page_size=20&page_id=1646854637&nsfw=false",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -118,13 +118,13 @@ func TestGetPosts(t *testing.T) {
 	t6 := testInfo{
 		name:   "title",
 		method: http.MethodGet,
-		target: "/posts/latest?title=portra&page_size=10",
+		target: "/posts?title=portra&page_size=10",
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPortra,
 				PageSize:   10,
 				PageID:     1646797974,
-				PageURL:    "/posts/latest?page_size=10&page_id=1646797974&title=portra",
+				PageURL:    "/posts?sort=latest&page_size=10&page_id=1646797974&title=portra",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -135,7 +135,7 @@ func TestGetPosts(t *testing.T) {
 	t7 := testInfo{
 		name:   "title next page",
 		method: http.MethodGet,
-		target: "/posts/latest?page_size=10&page_id=1646797974&title=portra",
+		target: "/posts?page_size=10&page_id=1646797974&title=portra",
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPortra - 10,
@@ -414,10 +414,10 @@ func TestAllPostIDs(t *testing.T) {
 			t.Fatal(err)
 		}
 
-        type IDsResponse struct {
-            Ids []int `json:"ids"`
-        }
-        var ids IDsResponse
+		type IDsResponse struct {
+			Ids []int `json:"ids"`
+		}
+		var ids IDsResponse
 
 		if err := json.Unmarshal(data, &ids); err != nil {
 			t.Fatal(err)
