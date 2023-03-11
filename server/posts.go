@@ -215,8 +215,8 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		if nsfw := filter.Nsfw; nsfw != nil {
 			path += fmt.Sprintf("%snsfw=%t", paramJoiner(&numParams), *nsfw)
 		}
-		if bw := filter.Grayscale; bw != nil {
-			path += fmt.Sprintf("%sbw=%t", paramJoiner(&numParams), *bw)
+		if grayscale := filter.Grayscale; grayscale != nil {
+			path += fmt.Sprintf("%sgrayscale=%t", paramJoiner(&numParams), *grayscale)
 		}
 		if sprock := filter.Sprocket; sprock != nil {
 			path += fmt.Sprintf("%ssprocket=%t", paramJoiner(&numParams), *sprock)
@@ -302,10 +302,10 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			return nil, errors.New("invalid string to boolean conversion")
 		}
 	}
-	if bw := r.URL.Query().Get("bw"); bw != "" {
-		if yes := truthy[strings.ToLower(bw)]; yes {
+	if grayscale := r.URL.Query().Get("grayscale"); grayscale != "" {
+		if yes := truthy[strings.ToLower(grayscale)]; yes {
 			filter.Grayscale = &yes
-		} else if no := falsey[strings.ToLower(bw)]; !no {
+		} else if no := falsey[strings.ToLower(grayscale)]; !no {
 			filter.Grayscale = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")

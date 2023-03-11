@@ -28,7 +28,6 @@ type CreatePost struct {
 // DisplayPost is the model for displaying a post.
 // Renames some of the json keys.
 type DisplayPost struct {
-	Images    []Image `json:"images"`
 	Title     string  `json:"title"`
 	Author    string  `json:"author"`
 	Permalink string  `json:"permalink"`
@@ -37,6 +36,7 @@ type DisplayPost struct {
 	Grayscale bool    `json:"grayscale"`
 	Time      int     `json:"timestamp"`
 	Sprocket  bool    `json:"sprocket"`
+	Images    []Image `json:"images"`
 }
 
 // Post is the model of a returned post
@@ -64,7 +64,6 @@ type PostFilter struct {
 type Meta struct {
 	TotalPosts int    `json:"total_posts"`
 	PageSize   int    `json:"page_size"`
-	PageID     string `json:"page_id"`
 	NextPageID string `json:"next_page_id"`
 	PageURL    string `json:"next_page_url"`
 	Seed       int    `json:"seed,omitempty"`
