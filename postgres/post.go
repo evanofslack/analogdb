@@ -257,6 +257,10 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 			return nil, 0, err
 		}
 		post, err := rawPostToPost(*p)
+
+		// strip `u/` prefix from author (modifies in place)
+		stripAuthorPrefix(post)
+
 		if err != nil {
 			return nil, 0, err
 		}
@@ -549,4 +553,10 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		return nil, 0, err
 	}
 	return &p, count, nil
+}
+
+// Strip the `u/` prefix from author
+// Modifies the post in place
+func stripAuthorPrefix(post *analogdb.Post) {
+	post.Author = strings.TrimPrefix(post.Author, "u/")
 }
