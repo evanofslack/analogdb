@@ -38,7 +38,13 @@ type IDsResponse struct {
 	Ids []int `json:"ids"`
 }
 
+// default limit on number of posts returned
 var defaultLimit = 20
+
+// max limit of posts returned
+var maxLimit = 200
+
+// default to sorting by time descending (latest)
 var defaultSort = "time"
 
 const (
@@ -283,7 +289,12 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		if intLimit, err := strconv.Atoi(limit); err != nil {
 			return nil, err
 		} else {
-			filter.Limit = &intLimit
+			// ensure limit is less than configured max
+			if intLimit <= maxLimit {
+				filter.Limit = &intLimit
+			} else {
+				filter.Limit = &maxLimit
+			}
 		}
 	}
 	if key := r.URL.Query().Get("page_id"); key != "" {
