@@ -25,11 +25,25 @@ type CreatePost struct {
 	Sprocket  bool    `json:"sprocket"`
 }
 
+// DisplayPost is the model for displaying a post.
+// Renames some of the json keys.
+type DisplayPost struct {
+	Images    []Image `json:"images"`
+	Title     string  `json:"title"`
+	Author    string  `json:"author"`
+	Permalink string  `json:"permalink"`
+	Score     int     `json:"score"`
+	Nsfw      bool    `json:"nsfw"`
+	Grayscale bool    `json:"grayscale"`
+	Time      int     `json:"timestamp"`
+	Sprocket  bool    `json:"sprocket"`
+}
+
 // Post is the model of a returned post
 // including the auto-incremented ID from the DB
 type Post struct {
 	Id int `json:"id"`
-	CreatePost
+	DisplayPost
 }
 
 // PostFilter are options used for querying posts
@@ -50,7 +64,8 @@ type PostFilter struct {
 type Meta struct {
 	TotalPosts int    `json:"total_posts"`
 	PageSize   int    `json:"page_size"`
-	PageID     string `json:"next_page_id"`
+	PageID     string `json:"page_id"`
+	NextPageID string `json:"next_page_id"`
 	PageURL    string `json:"next_page_url"`
 	Seed       int    `json:"seed,omitempty"`
 }
@@ -66,5 +81,5 @@ type PostService interface {
 	FindPostByID(ctx context.Context, id int) (*Post, error)
 	CreatePost(ctx context.Context, post *CreatePost) (*Post, error)
 	DeletePost(ctx context.Context, id int) error
-    AllPostIDs(ctx context.Context) ([]int, error)
+	AllPostIDs(ctx context.Context) ([]int, error)
 }

@@ -156,10 +156,10 @@ func encodeResponse(w http.ResponseWriter, r *http.Request, status int, v any) e
 
 func (s *Server) makePostResponse(r *http.Request, filter *analogdb.PostFilter) (PostResponse, error) {
 	posts, count, err := s.PostService.FindPosts(r.Context(), filter)
-	if err != nil {
-		return PostResponse{}, err
-	}
 	resp := PostResponse{}
+	if err != nil {
+		return resp, err
+	}
 	for _, p := range posts {
 		resp.Posts = append(resp.Posts, *p)
 	}
