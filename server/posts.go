@@ -204,7 +204,8 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		}
 	}
 	//pageUrl
-	if sort, path := filter.Sort, ""; sort != nil {
+	if sort := filter.Sort; sort != nil {
+		path := postsPath
 		numParams := 0
 		switch *sort {
 		case "time":
