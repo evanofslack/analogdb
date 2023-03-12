@@ -22,14 +22,14 @@ import {
 import { baseURL } from "../constants.ts";
 
 async function makeRequest(queryParams) {
-  const url = baseURL + "/posts/" + queryParams;
+  const url = baseURL + "/posts" + queryParams;
   const response = await fetch(url);
   const data = await response.json();
   return data;
 }
 
 function filterQueryParams(sort, nsfw, bw, sprocket, search) {
-  let queryParams = sort + "?";
+  let queryParams = "?" + "sort=" + sort;
 
   switch (nsfw) {
     case "exclude":
@@ -42,10 +42,10 @@ function filterQueryParams(sort, nsfw, bw, sprocket, search) {
 
   switch (bw) {
     case "exclude":
-      queryParams = queryParams.concat("&bw=false");
+      queryParams = queryParams.concat("&grayscale=false");
       break;
     case "only":
-      queryParams = queryParams.concat("&bw=true");
+      queryParams = queryParams.concat("&grayscale=true");
       break;
   }
 

@@ -20,7 +20,7 @@ export default function About() {
   const [loaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const endpoint = baseURL + "/posts/latest";
+    const endpoint = baseURL + "/posts";
     fetch(endpoint)
       .then((response) => response.json())
       .then((resp) => {
@@ -29,25 +29,25 @@ export default function About() {
       });
   }, []);
 
-  const apiQuery = "curl https://api.analogdb.com/posts/latest";
+  const apiQuery = "curl https://api.analogdb.com/posts";
 
   const apiResponse = `
 "meta":{
   "total_posts":3637,
   "page_size":20,
   "next_page_id":1672251647,
-  "next_page_url":"/posts/latest?page_size=20&page_id=1672251647"
+  "next_page_url":"/posts?sort=latest&page_size=20&page_id=1672251647"
 },
 "posts":[
   {
     "id":5127,
     "title":"Exam | Olympus OM-2n | 50mm 1.8 | Vision3 250D",
-    "author":"u/Crazylyric",
+    "author":"Crazylyric",
     "permalink":"https://www.reddit.com/r/analog/comments/zyk2sp/exam_olympus_om2n_50mm_18_vision3_250d/",
-    "upvotes":163,
+    "score":163,
     "nsfw":false,
     "grayscale":false,
-    "unix_time":1672356457,
+    "timestamp":1672356457,
     "sprocket":false
     "images":[
       {
