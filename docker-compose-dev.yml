@@ -1,10 +1,10 @@
-version: '3.7'
+version: "3.7"
 services:
   postgres:
     container_name: postgres
     image: postgres:latest
     restart: unless-stopped
-    environment: 
+    environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PW}
       - POSTGRES_DB=${POSTGRES_DB}
@@ -13,22 +13,20 @@ services:
         max-size: 10m
         max-file: "3"
     ports:
-      - '5432:5432'
+      - "5432:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
       - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
       - ./postgres/csv:/var/lib/postgresql/csv
-    
   analogdb:
     container_name: analogdb
     build: .
     ports:
       - 8080:8080
-    restart: unless-stopped  
+    restart: unless-stopped
     env_file:
       - .env
     depends_on:
       - postgres
-
 volumes:
   postgres:

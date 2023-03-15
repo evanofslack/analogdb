@@ -7,7 +7,7 @@ export default function ImageTag(props) {
   const redditUserURL = "https://www.reddit.com/user/";
   const author = post.author.replace("u/", "");
 
-  const date = new Date(post.unix_time * 1000).toLocaleDateString("en-US");
+  const date = new Date(post.timestamp * 1000).toLocaleDateString("en-US");
 
   return (
     <div className={styles.container}>

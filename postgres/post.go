@@ -115,11 +115,12 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 		return nil, err
 	}
 	defer tx.Rollback()
-    ids, err := allPostIDs(ctx, tx)
+	ids, err := allPostIDs(ctx, tx)
 
-    if err != nil {
-    return nil, err}
-    
+	if err != nil {
+		return nil, err
+	}
+
 	return ids, nil
 }
 
@@ -135,8 +136,8 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 	query :=
 		`
 	INSERT INTO pictures
-	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) 
+	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
 	ON CONFLICT (permalink) DO NOTHING
 	RETURNING id
 	`
@@ -182,9 +183,22 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 		return nil, err
 	}
 
+	// convert the CreatePost to a DisplayPost for return.
+	displayPost := analogdb.DisplayPost{
+		Images:    post.Images,
+		Title:     post.Title,
+		Author:    post.Author,
+		Permalink: post.Permalink,
+		Score:     post.Score,
+		Nsfw:      post.Nsfw,
+		Grayscale: post.Grayscale,
+		Time:      post.Time,
+		Sprocket:  post.Sprocket,
+	}
+
 	createdPost := &analogdb.Post{
-		Id:         int(id),
-		CreatePost: *post,
+		Id:          int(id),
+		DisplayPost: displayPost,
 	}
 
 	println(createdPost.Id)
@@ -243,6 +257,10 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 			return nil, 0, err
 		}
 		post, err := rawPostToPost(*p)
+
+		// strip `u/` prefix from author (modifies in place)
+		stripAuthorPrefix(post)
+
 		if err != nil {
 			return nil, 0, err
 		}
@@ -260,8 +278,8 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 
 func deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 	query := `
-			DELETE FROM pictures 
-			WHERE id = $1 
+			DELETE FROM pictures
+			WHERE id = $1
 			RETURNING id`
 
 	row := tx.QueryRowContext(ctx, query, id)
@@ -292,10 +310,10 @@ func allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 	ids := make([]int, 0)
 	var id int
 	for rows.Next() {
-        if err := rows.Scan(&id); err != nil {
-            return nil, err
-        }
-        ids = append(ids, id)
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
 	}
 	err = tx.Commit()
 	if err != nil {
@@ -473,7 +491,7 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	images := []analogdb.Image{lowImage, medImage, highImage, rawImage}
 
 	post := &analogdb.Post{Id: p.id,
-		CreatePost: analogdb.CreatePost{Images: images, Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket}}
+		DisplayPost: analogdb.DisplayPost{Images: images, Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket}}
 	return post, nil
 }
 
@@ -535,4 +553,10 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		return nil, 0, err
 	}
 	return &p, count, nil
+}
+
+// Strip the `u/` prefix from author
+// Modifies the post in place
+func stripAuthorPrefix(post *analogdb.Post) {
+	post.Author = strings.TrimPrefix(post.Author, "u/")
 }

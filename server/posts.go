@@ -38,7 +38,14 @@ type IDsResponse struct {
 	Ids []int `json:"ids"`
 }
 
+// default limit on number of posts returned
 var defaultLimit = 20
+
+// max limit of posts returned
+var maxLimit = 200
+
+// default to sorting by time descending (latest)
+var defaultSort = "time"
 
 const (
 	postsPath = "/posts"
@@ -48,9 +55,7 @@ const (
 
 func (s *Server) mountPostHandlers() {
 	s.router.Route(postsPath, func(r chi.Router) {
-		r.Get("/latest", s.latestPosts)
-		r.Get("/top", s.topPosts)
-		r.Get("/random", s.randomPosts)
+		r.Get("/", s.getPosts)
 	})
 	s.router.Route(postPath, func(r chi.Router) {
 		r.Get("/{id}", s.findPost)
@@ -63,48 +68,11 @@ func (s *Server) mountPostHandlers() {
 	})
 }
 
-func (s *Server) latestPosts(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToFilter(r)
 	if err != nil {
 		writeError(w, r, err)
 	}
-	sort := "time"
-	filter.Sort = &sort
-
-	resp, err := s.makePostResponse(r, filter)
-	if err != nil {
-		writeError(w, r, err)
-	}
-	err = encodeResponse(w, r, http.StatusOK, resp)
-	if err != nil {
-		writeError(w, r, err)
-	}
-}
-
-func (s *Server) topPosts(w http.ResponseWriter, r *http.Request) {
-	filter, err := parseToFilter(r)
-	if err != nil {
-		writeError(w, r, err)
-	}
-	sort := "score"
-	filter.Sort = &sort
-	resp, err := s.makePostResponse(r, filter)
-	if err != nil {
-		writeError(w, r, err)
-	}
-	err = encodeResponse(w, r, http.StatusOK, resp)
-	if err != nil {
-		writeError(w, r, err)
-	}
-}
-
-func (s *Server) randomPosts(w http.ResponseWriter, r *http.Request) {
-	filter, err := parseToFilter(r)
-	if err != nil {
-		writeError(w, r, err)
-	}
-	sort := "random"
-	filter.Sort = &sort
 	resp, err := s.makePostResponse(r, filter)
 	if err != nil {
 		writeError(w, r, err)
@@ -194,10 +162,10 @@ func encodeResponse(w http.ResponseWriter, r *http.Request, status int, v any) e
 
 func (s *Server) makePostResponse(r *http.Request, filter *analogdb.PostFilter) (PostResponse, error) {
 	posts, count, err := s.PostService.FindPosts(r.Context(), filter)
-	if err != nil {
-		return PostResponse{}, err
-	}
 	resp := PostResponse{}
+	if err != nil {
+		return resp, err
+	}
 	for _, p := range posts {
 		resp.Posts = append(resp.Posts, *p)
 	}
@@ -236,16 +204,17 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		}
 	}
 	//pageUrl
-	if sort, path := filter.Sort, ""; sort != nil {
+	if sort := filter.Sort; sort != nil {
+		path := postsPath
+		numParams := 0
 		switch *sort {
 		case "time":
-			path += postsPath + "/latest"
+			path += fmt.Sprintf("%ssort=latest", paramJoiner(&numParams))
 		case "score":
-			path += postsPath + "/top"
+			path += fmt.Sprintf("%ssort=top", paramJoiner(&numParams))
 		case "random":
-			path += postsPath + "/random"
+			path += fmt.Sprintf("%ssort=random", paramJoiner(&numParams))
 		}
-		numParams := 0
 		if limit := filter.Limit; limit != nil {
 			path += fmt.Sprintf("%spage_size=%d", paramJoiner(&numParams), *limit)
 		}
@@ -253,8 +222,8 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		if nsfw := filter.Nsfw; nsfw != nil {
 			path += fmt.Sprintf("%snsfw=%t", paramJoiner(&numParams), *nsfw)
 		}
-		if bw := filter.Grayscale; bw != nil {
-			path += fmt.Sprintf("%sbw=%t", paramJoiner(&numParams), *bw)
+		if grayscale := filter.Grayscale; grayscale != nil {
+			path += fmt.Sprintf("%sgrayscale=%t", paramJoiner(&numParams), *grayscale)
 		}
 		if sprock := filter.Sprocket; sprock != nil {
 			path += fmt.Sprintf("%ssprocket=%t", paramJoiner(&numParams), *sprock)
@@ -297,13 +266,36 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	falsey["n"] = false
 	falsey["0"] = false
 
-	filter := &analogdb.PostFilter{Limit: &defaultLimit}
+	filter := &analogdb.PostFilter{Limit: &defaultLimit, Sort: &defaultSort}
+
+	if sort := r.URL.Query().Get("sort"); sort != "" {
+		if sort == "latest" || sort == "top" || sort == "random" {
+			switch sort {
+			case "latest":
+				time := "time"
+				filter.Sort = &time
+			case "top":
+				score := "score"
+				filter.Sort = &score
+			case "random":
+				random := "random"
+				filter.Sort = &random
+			}
+		} else {
+			return nil, errors.New("invalid sort parameter - valid options: latest, top, random")
+		}
+	}
 
 	if limit := r.URL.Query().Get("page_size"); limit != "" {
 		if intLimit, err := strconv.Atoi(limit); err != nil {
 			return nil, err
 		} else {
-			filter.Limit = &intLimit
+			// ensure limit is less than configured max
+			if intLimit <= maxLimit {
+				filter.Limit = &intLimit
+			} else {
+				filter.Limit = &maxLimit
+			}
 		}
 	}
 	if key := r.URL.Query().Get("page_id"); key != "" {
@@ -322,10 +314,10 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			return nil, errors.New("invalid string to boolean conversion")
 		}
 	}
-	if bw := r.URL.Query().Get("bw"); bw != "" {
-		if yes := truthy[strings.ToLower(bw)]; yes {
+	if grayscale := r.URL.Query().Get("grayscale"); grayscale != "" {
+		if yes := truthy[strings.ToLower(grayscale)]; yes {
 			filter.Grayscale = &yes
-		} else if no := falsey[strings.ToLower(bw)]; !no {
+		} else if no := falsey[strings.ToLower(grayscale)]; !no {
 			filter.Grayscale = &no
 		} else {
 			return nil, errors.New("invalid string to boolean conversion")
