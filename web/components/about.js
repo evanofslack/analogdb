@@ -166,7 +166,7 @@ export default function About() {
             JSON API. Embeddeding beautiful film photos in your projects has
             never been easier.
           </p>
-          <Link href="/api" legacyBehavior>
+          <Link href="/docs" legacyBehavior>
             <a className={styles.link}>read the docs</a>
           </Link>
         </div>
