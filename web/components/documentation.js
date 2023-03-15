@@ -5,6 +5,27 @@ import { Prism } from "@mantine/prism";
 import { Table, Code, Divider } from "@mantine/core";
 
 export default function Documentation() {
+  const paginations = [
+    {
+      field: "page_size",
+      description:
+        "set the number of records to return on each page (default 20, maximum 200)",
+    },
+    {
+      field: "page_id",
+      description:
+        "request a specific page of results. Each request returns a next_page_id that can be used to access the next page of results",
+    },
+  ];
+
+  const paginationRows = paginations.map((page) => (
+    <tr key={page.field}>
+      <td>
+        <Code>{page.field}</Code>
+      </td>
+      <td>{page.description}</td>
+    </tr>
+  ));
   // image resource table
   const images = [
     { field: "url", type: "string", description: "link to image" },
@@ -51,12 +72,12 @@ export default function Documentation() {
     {
       field: "permalink",
       type: "string",
-      description: "url of source post",
+      description: "url of post source",
     },
     {
       field: "score",
       type: "integer",
-      description: "total votes of source post",
+      description: "total votes of post",
     },
     {
       field: "timestamp",
@@ -66,12 +87,12 @@ export default function Documentation() {
     {
       field: "nsfw",
       type: "bool",
-      description: "image is 'not safe for work' (18+)",
+      description: "image is NSFW (not safe for work, 18+)",
     },
     {
       field: "grayscale",
       type: "bool",
-      description: "image is graysacle (black and white)",
+      description: "image is graysacle (black & white)",
     },
     {
       field: "sprocket",
@@ -100,12 +121,12 @@ export default function Documentation() {
     {
       field: "total_posts",
       type: "integer",
-      description: "total number of posts served by endpoint",
+      description: "total number of posts served by endpoint query",
     },
     {
       field: "page_size",
       type: "integer",
-      description: "maximum number of posts returned on page",
+      description: "maximum number of posts returned per page",
     },
     {
       field: "next_page_id",
@@ -166,15 +187,15 @@ export default function Documentation() {
   const filters = [
     {
       param: "nsfw",
-      description: "whether to include nsfw (18+) images",
+      description: "include nsfw (18+) images",
     },
     {
       param: "grayscale",
-      description: "whether to include grayscale (black and white) images",
+      description: "include grayscale (black & white) images",
     },
     {
       param: "sprocket",
-      description: "whether to include sprocket images",
+      description: "include sprocket images",
     },
   ];
 
@@ -193,17 +214,21 @@ export default function Documentation() {
         <div className={styles.container}>
           <h1 className={styles.h1}> Overview </h1>
           <p>
-            This document outlines the resources that comprise the AnalogDB API.
-            The API provides film photograph data in JSON form as a REST-style
-            service.
-          </p>
-          <p>
-            The API is open-source and available on{" "}
+            This document outlines the AnalogDB API. This API provides film
+            photographs and metadata in JSON form as a REST-style service. The
+            API is open-source and available on{" "}
             <u>
               <Link href="https://github.com/evanofslack/analogdb">github</Link>
             </u>
-            . The AnalogDB project is currently under development and subject to
-            change.
+            .
+          </p>
+          <p>
+            The AnalogDB project is currently under development and subject to
+            change. All film pictures are scrapped from{" "}
+            <u>
+              <Link href="https://www.reddit.com/r/analog/">reddit</Link>
+            </u>
+            . All credit goes to the original photographers.
           </p>
           <p>
             Use the following URI to access the endpoints:{" "}
@@ -231,20 +256,19 @@ export default function Documentation() {
             default, 20 records are returned per page. Pagination can be
             controlled with the following parameters:
           </p>
-          <ul className={styles.ul}>
-            <li className={styles.li}>
-              <Code>page_size</Code> - set the number of records to return on
-              each page (default 20, maximum 200)
-            </li>
-            <li className={styles.li}>
-              <Code>page_id</Code> - request a specific page of results. Each
-              request returns a <Code>next_page_id</Code>
-              that can be used to access the next page of results
-            </li>
-          </ul>
-
+          <Table highlightOnHover withColumnBorders>
+            <thead>
+              <tr>
+                <th>param</th>
+                <th>description</th>
+              </tr>
+            </thead>
+            <tbody>{paginationRows}</tbody>
+          </Table>
           <div className={styles.codeblock}>
             <Prism
+              copyLabel="copy example"
+              copiedLabel="copied"
               language="yaml"
               styles={() => ({
                 code: {
@@ -278,7 +302,7 @@ export default function Documentation() {
           <p>
             The <Code>post</Code> resource contains a list of <Code>image</Code>
             (same picture, multiple resolutions) as well as metadata about the
-            post (title, author, etc.)
+            post (title, author, etc).
           </p>
           <Table highlightOnHover withColumnBorders>
             <thead>
@@ -333,6 +357,8 @@ export default function Documentation() {
           </Table>
           <div className={styles.codeblock}>
             <Prism
+              copyLabel="copy example"
+              copiedLabel="copied"
               language="yaml"
               styles={() => ({
                 code: {
@@ -364,6 +390,8 @@ export default function Documentation() {
           </Table>
           <div className={styles.codeblock}>
             <Prism
+              copyLabel="copy example"
+              copiedLabel="copied"
               language="yaml"
               styles={() => ({
                 code: {
@@ -382,6 +410,8 @@ export default function Documentation() {
           </p>
           <div className={styles.codeblock}>
             <Prism
+              copyLabel="copy example"
+              copiedLabel="copied"
               language="yaml"
               styles={() => ({
                 code: {
