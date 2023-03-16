@@ -10,9 +10,15 @@ from models import AnalogPost
 
 
 def get_latest_links() -> List[str]:
-    url = f"{ANALOGDB_URL}/posts/latest?page_size=100"
-    r = requests.get(url=url)
-    data = r.json()
+    url = f"{ANALOGDB_URL}/posts?sort=latest&page_size=100"
+    try:
+        r = requests.get(url=url)
+    except Exception as e:
+        raise Exception(f"Error making get request to analogdb: {e}")
+    try:
+        data = r.json()
+    except Exception as e:
+        raise Exception(f"Error unmarshalling json from analogdb: {e}")
     posts = data["posts"]
     latest_links = [post["permalink"] for post in posts]
     return latest_links
