@@ -12,7 +12,8 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  width: 60%;
+  width: 90vw;
+  max-width: 900px;
 }
 
 .containerAuthor {
@@ -50,11 +51,4 @@
 }
 .id:hover {
   text-decoration: underline;
-}
-
-@media screen and (max-width: 720px) {
-  .title {
-  }
-  .id {
-  }
 }
