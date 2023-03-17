@@ -33,3 +33,15 @@ VALID_CONTENT = [
     "image/jpg",
     "image/gif",
 ]
+
+# Upper limit to the number of extracted
+# colors presented in the output.
+COLOR_LIMIT = 5
+
+# Group colors to limit the output and give a
+# better visual representation. Based on a
+# scale from 0 to 100. Where 0 won't group any
+# color and 100 will group all colors into one.
+# Tolerance 0 will bypass all conversion.
+# Defaults to 32.
+COLOR_TOLERANCE = 25

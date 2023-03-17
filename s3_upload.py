@@ -6,15 +6,8 @@ import boto3.session
 from loguru import logger
 from PIL.Image import Image
 
-from constants import (
-    AWS_BUCKET,
-    AWS_BUCKET_TEST,
-    CLOUDFRONT_URL,
-    HIGH_RES,
-    LOW_RES,
-    MEDIUM_RES,
-    RAW_RES,
-)
+from constants import (AWS_BUCKET, AWS_BUCKET_TEST, CLOUDFRONT_URL, HIGH_RES,
+                       LOW_RES, MEDIUM_RES, RAW_RES)
 from image_process import image_to_bytes, resize_image
 from models import AnalogPost, CloudfrontImage, RedditPost
 

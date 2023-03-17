@@ -54,6 +54,12 @@ class CloudfrontImage:
 
 
 @dataclass
+class Color:
+    hex: str
+    percent: int
+
+
+@dataclass
 class AwsCreds:
     access_key_id: str
     secret_access_key: str
@@ -77,6 +83,7 @@ class AuthCreds:
 class SlackWebhook:
     url: str
 
+
 @dataclass
 class Config:
     aws: AwsCreds
@@ -90,4 +97,3 @@ class Dependencies:
     s3_client: boto3.session.Session
     reddit_client: praw.Reddit
     auth: AuthCreds
-

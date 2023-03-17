@@ -12,6 +12,7 @@ schedule = "*"
 python-dotenv = "*"
 loguru = "*"
 notifiers = "*"
+extcolors = "*"
 
 [dev-packages]
 black = "*"
