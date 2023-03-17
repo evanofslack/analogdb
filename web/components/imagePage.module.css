@@ -1,7 +1,6 @@
 .fullscreen {
   width: 100vw;
-  height: 90vh;
-  /* min-height: 40rem; */
+  height: 93vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -11,7 +10,6 @@
 .imageContainer {
   width: 90%;
   height: 90%;
-  /* height: auto; */
   position: relative;
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
@@ -32,15 +30,4 @@
   flex-direction: row;
   justify-content: flex-end;
   width: 90vw;
-}
-
-@media screen and (max-width: 720px) {
-  .fullscreen {
-    justify-content: flex-start;
-    padding-top: 2rem;
-  }
-  .imageContainer {
-    margin-top: 0rem;
-    height: 75%;
-  }
 }

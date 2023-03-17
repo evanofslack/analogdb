@@ -4,7 +4,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 100%;
+  width: 100vw;
 }
 .container {
   padding-left: 5vw;
@@ -16,7 +16,7 @@
   flex-direction: column;
   justify-items: center;
   align-items: left;
-  max-width: 800px;
+  max-width: 900px;
 }
 
 .code {
@@ -28,20 +28,6 @@
   white-space: pre;
   background: #f7f7f7;
 }
-
-/* .codeblock { */
-/*   font-family: monospace; */
-/*   color: black; */
-/*   padding: 3px; */
-/*   padding-top: 10px; */
-/*   padding-bottom: 10px; */
-/*   margin-top: 20px; */
-/*   margin-bottom: 20px; */
-/*   border-radius: 3px; */
-/*   font-size: 105%; */
-/*   white-space: pre; */
-/*   background: #f7f7f7; */
-/* } */
 
 .codeblock {
   padding-top: 1rem;

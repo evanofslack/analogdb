@@ -8,16 +8,32 @@
   font-size: 1.2rem;
   color: #2e2e2e;
   font-weight: 400;
-  max-width: 30vw;
+  max-width: 20rem;
   margin-bottom: 2rem;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
 }
 
 .sectionOne {
   padding-top: 8rem;
-  padding-left: 1vw;
-  padding-right: 5vw;
-  padding-bottom: 10rem;
+  padding-bottom: 8rem;
   flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  max-width: 900px;
+}
+
+.sectionTwoBg {
+  background-color: #fbfbfb;
+  width: 100vw;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -26,29 +42,33 @@
 
 .sectionTwo {
   padding-top: 3rem;
-  padding-left: 5vw;
-  padding-right: 5vw;
   padding-bottom: 4rem;
   flex: 1;
   display: flex;
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
-  background-color: #fbfbfb;
+  max-width: 1000px;
+}
+
+.sectionThreeBg {
+  width: 100vw;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
 }
 
 .sectionThree {
-  padding-top: 10rem;
-  padding-left: 5vw;
-  padding-right: 5vw;
-  padding-bottom: 10rem;
+  padding-top: 8rem;
+  padding-bottom: 8rem;
   flex: 1;
   display: flex;
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
-  background-color: #f1f1f1;
   background-color: #ffffff;
+  max-width: 900px;
 }
 
 .link {
@@ -107,7 +127,7 @@
 
 .apiDemo {
   margin-top: 1rem;
-  max-width: 650px;
+  max-width: 600px;
   width: 100%;
   margin-right: 5vw;
   box-shadow: 0px 1px 10px 0.1px #dbdbdb;
