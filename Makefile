@@ -22,4 +22,4 @@ test :
 	docker-compose -f docker-compose-dev.yml up -d && go test ./...
 
 psql :
-	docker exec -it postgres psql -U postgres analog-local
+	docker exec -it postgres psql -U postgres analogdb

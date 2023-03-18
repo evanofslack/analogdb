@@ -26,7 +26,7 @@ var (
 	// sample post
 	postID     = 2066
 	postTitle  = "Up on Melancholy Hill [Canon TLB / 28-55mm 3.5 / Portra 400]"
-	postAuthor = "u/sunnyintheoffice"
+	postAuthor = "sunnyintheoffice"
 )
 
 func TestFindPosts(t *testing.T) {
@@ -411,10 +411,10 @@ func TestAllPostIDs(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-        numIDs := len(ids)
-        if numIDs != totalPosts {
-            t.Fatalf("wrong number of total post IDs, wanted %d, got %d", totalPosts, numIDs)
-        }
+		numIDs := len(ids)
+		if numIDs != totalPosts {
+			t.Fatalf("wrong number of total post IDs, wanted %d, got %d", totalPosts, numIDs)
+		}
 	})
 	t.Run("IDs are correct", func(t *testing.T) {
 		db := mustOpen(t)
@@ -425,9 +425,52 @@ func TestAllPostIDs(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-        if ids[0] != 1765 || ids[1] != 1766 || ids[2] != 1767 {
-            t.Fatalf("wrong values of post IDs, wanted %d, %d, %d, got %d, %d, %d", 1765, 1766, 1767, ids[0], ids[1], ids[2])
-        }
+		if ids[0] != 1765 || ids[1] != 1766 || ids[2] != 1767 {
+			t.Fatalf("wrong values of post IDs, wanted %d, %d, %d, got %d, %d, %d", 1765, 1766, 1767, ids[0], ids[1], ids[2])
+		}
+	})
+}
+
+func TestPatchPost(t *testing.T) {
+	t.Run("ErrNoFields", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		patch := analogdb.PatchPost{}
+
+		if err := ps.PatchPost(context.Background(), &patch, postID); err == nil {
+			t.Fatal("error should be returned when no patch fields are provided")
+		}
+	})
+
+	t.Run("UpdateScore", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		og, err := ps.FindPostByID(context.Background(), postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		newScore := 696969
+		patch := analogdb.PatchPost{
+			Score: &newScore,
+		}
+		err = ps.PatchPost(context.Background(), &patch, postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		updated, err := ps.FindPostByID(context.Background(), postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if og.Score == updated.Score {
+			t.Fatal("updated post should have different score than original post")
+		}
 	})
 }
 

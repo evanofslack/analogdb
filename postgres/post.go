@@ -96,6 +96,19 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	return posts[0], nil
 }
 
+func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, id int) error {
+	tx, err := s.db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	err = patchPost(ctx, tx, patch, id)
+	if err != nil {
+		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: err.Error()}
+	}
+	return nil
+}
+
 func (s *PostService) DeletePost(ctx context.Context, id int) error {
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -104,7 +117,7 @@ func (s *PostService) DeletePost(ctx context.Context, id int) error {
 	defer tx.Rollback()
 	err = deletePost(ctx, tx, id)
 	if err != nil {
-		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "Post not found"}
+		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: err.Error()}
 	}
 	return nil
 }
@@ -200,9 +213,6 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 		Id:          int(id),
 		DisplayPost: displayPost,
 	}
-
-	println(createdPost.Id)
-
 	return createdPost, nil
 }
 
@@ -276,6 +286,34 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 	return posts, count, nil
 }
 
+func patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+
+	set, args, err := patchToSet(patch)
+	if err != nil {
+		return err
+	}
+
+	args = append(args, id)
+	idPos := len(args)
+
+	query :=
+		"UPDATE pictures " + set + fmt.Sprintf(" WHERE id =  $%d", idPos)
+
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 	query := `
 			DELETE FROM pictures
@@ -285,13 +323,16 @@ func deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 	row := tx.QueryRowContext(ctx, query, id)
 
 	var returnedID int
-	row.Scan(&returnedID)
+	err := row.Scan(&returnedID)
+	if err != nil {
+		return err
+	}
 
 	if id != returnedID {
 		return fmt.Errorf("error deleting post with id %d", id)
 	}
 
-	err := tx.Commit()
+	err = tx.Commit()
 	if err != nil {
 		return err
 	}
@@ -446,6 +487,42 @@ func validateFilter(filter *analogdb.PostFilter) error {
 		return nil
 	}
 	return nil
+}
+
+// Converts a patch to an SQL set statement
+func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
+
+	index := 1
+	set, args := []string{}, []any{}
+
+	if score := patch.Score; score != nil {
+		set = append(set, fmt.Sprintf("score = $%d", index))
+		args = append(args, *score)
+		index += 1
+	}
+
+	if nsfw := patch.Nsfw; nsfw != nil {
+		set = append(set, fmt.Sprintf("nsfw = $%d", index))
+		args = append(args, *nsfw)
+		index += 1
+	}
+	if grayscale := patch.Grayscale; grayscale != nil {
+		set = append(set, fmt.Sprintf("greyscale = $%d", index))
+		args = append(args, *grayscale)
+		index += 1
+	}
+	if sprocket := patch.Sprocket; sprocket != nil {
+		set = append(set, fmt.Sprintf("sprocket = $%d", index))
+		args = append(args, *sprocket)
+		index += 1
+	}
+
+	// no update fields provided
+	if len(set) == 0 {
+		return "", args, fmt.Errorf("No updated fields were provided in patch")
+	}
+
+	return `SET ` + strings.Join(set, ", "), args, nil
 }
 
 func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
