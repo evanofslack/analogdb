@@ -119,7 +119,6 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
-		println("here: cant parse response body")
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Error parsing post from request body"}
 		writeError(w, r, err)
 	}

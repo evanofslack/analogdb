@@ -10,11 +10,11 @@ import (
 
 const (
 	// number of posts matching each query from test DB
-	totalPosts     = 51
-	totalNsfw      = 4
-	totalGrayscale = 7
-	totalSprocket  = 2
-	totalPortra    = 17
+	totalPosts     = 4864
+	totalNsfw      = 275
+	totalGrayscale = 931
+	totalSprocket  = 204
+	totalPortra    = 1463
 )
 
 var (
@@ -26,7 +26,7 @@ var (
 	// sample post
 	postID     = 2066
 	postTitle  = "Up on Melancholy Hill [Canon TLB / 28-55mm 3.5 / Portra 400]"
-	postAuthor = "sunnyintheoffice"
+	postAuthor = "u/sunnyintheoffice"
 )
 
 func TestFindPosts(t *testing.T) {
@@ -149,7 +149,7 @@ func TestFindPosts(t *testing.T) {
 
 	t.Run("SearchTitleOne", func(t *testing.T) {
 		ctx, tx := setupTx(t)
-		keyword := "Melancholy"
+		keyword := postTitle
 		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
 			t.Fatal(err)
 		} else if len(posts) != 1 || count != 1 {
@@ -344,7 +344,6 @@ func TestCreateAndDeletePost(t *testing.T) {
 
 		created, err := ps.CreatePost(ctx, &createPost)
 		if err != nil {
-			println(err)
 			t.Fatal("valid post should be created")
 		}
 
@@ -353,7 +352,6 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 
 		if err := ps.DeletePost(ctx, created.Id); err != nil {
-			println(err)
 			t.Fatal("unable to delete post created to test create post")
 		}
 	})
@@ -425,8 +423,8 @@ func TestAllPostIDs(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if ids[0] != 1765 || ids[1] != 1766 || ids[2] != 1767 {
-			t.Fatalf("wrong values of post IDs, wanted %d, %d, %d, got %d, %d, %d", 1765, 1766, 1767, ids[0], ids[1], ids[2])
+		if ids[0] != 1 || ids[1] != 2 || ids[2] != 3 {
+			t.Fatalf("wrong values of post IDs, wanted %d, %d, %d, got %d, %d, %d", 1, 2, 3, ids[0], ids[1], ids[2])
 		}
 	})
 }
@@ -454,7 +452,7 @@ func TestPatchPost(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		newScore := 696969
+		newScore := og.Score + 1
 		patch := analogdb.PatchPost{
 			Score: &newScore,
 		}
@@ -469,7 +467,63 @@ func TestPatchPost(t *testing.T) {
 		}
 
 		if og.Score == updated.Score {
-			t.Fatal("updated post should have different score than original post")
+			t.Fatalf("updated post should have different score than original post, original: %d, updated: %d", og.Score, updated.Score)
+		}
+	})
+	t.Run("UpdateNsfw", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		og, err := ps.FindPostByID(context.Background(), postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		newNsfw := !og.Nsfw
+		patch := analogdb.PatchPost{
+			Nsfw: &newNsfw,
+		}
+		err = ps.PatchPost(context.Background(), &patch, postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		updated, err := ps.FindPostByID(context.Background(), postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if og.Nsfw == updated.Nsfw {
+			t.Fatalf("updated post should have different nsfw than original post, original: %t, updated: %t", og.Nsfw, updated.Nsfw)
+		}
+	})
+	t.Run("UpdateGrayscale", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		og, err := ps.FindPostByID(context.Background(), postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		newGrayscale := !og.Grayscale
+		patch := analogdb.PatchPost{
+			Grayscale: &newGrayscale,
+		}
+		err = ps.PatchPost(context.Background(), &patch, postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		updated, err := ps.FindPostByID(context.Background(), postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if og.Grayscale == updated.Grayscale {
+			t.Fatalf("updated post should have different grayscale than original post, original: %t, updated: %t", og.Grayscale, updated.Grayscale)
 		}
 	})
 }

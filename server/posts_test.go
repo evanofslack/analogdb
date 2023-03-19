@@ -19,9 +19,9 @@ import (
 
 const (
 	// number of posts matching each query from test DB
-	totalPosts  = 51
-	totalNsfw   = 4
-	totalPortra = 17
+	totalPosts  = 4864
+	totalNsfw   = 275
+	totalPortra = 1463
 )
 
 type testInfo struct {
@@ -41,8 +41,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   20,
-				PageID:     1646884084,
-				PageURL:    "/posts?sort=latest&page_size=20&page_id=1646884084",
+				PageID:     1679063590,
+				PageURL:    "/posts?sort=latest&page_size=20&page_id=1679063590",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -57,8 +57,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   10,
-				PageID:     730,
-				PageURL:    "/posts?sort=top&page_size=10&page_id=730",
+				PageID:     5568,
+				PageURL:    "/posts?sort=top&page_size=10&page_id=5568",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -72,9 +72,9 @@ func TestGetPosts(t *testing.T) {
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts,
-				PageSize:   2,
-				PageID:     0,
-				PageURL:    "",
+				PageSize:   10,
+				PageID:     1675964298,
+				PageURL:    "/posts?sort=random&page_size=10&page_id=1675964298",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -89,8 +89,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalNsfw,
 				PageSize:   20,
-				PageID:     0,
-				PageURL:    "",
+				PageID:     1676314409,
+				PageURL:    "/posts?sort=latest&page_size=20&page_id=1676314409&nsfw=true",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -106,8 +106,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPosts - totalNsfw,
 				PageSize:   20,
-				PageID:     1646854637,
-				PageURL:    "/posts?sort=latest&page_size=20&page_id=1646854637&nsfw=false",
+				PageID:     1679063590,
+				PageURL:    "/posts?sort=latest&page_size=20&page_id=1679063590&nsfw=false",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -123,8 +123,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPortra,
 				PageSize:   10,
-				PageID:     1646797974,
-				PageURL:    "/posts?sort=latest&page_size=10&page_id=1646797974&title=portra",
+				PageID:     1679038927,
+				PageURL:    "/posts?sort=latest&page_size=10&page_id=1679038927&title=portra",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -135,13 +135,14 @@ func TestGetPosts(t *testing.T) {
 	t7 := testInfo{
 		name:   "title next page",
 		method: http.MethodGet,
-		target: "/posts?page_size=10&page_id=1646797974&title=portra",
+		target: "/posts?sort=latest&page_size=10&page_id=1679038927&title=portra",
+
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPortra - 10,
 				PageSize:   10,
-				PageID:     0,
-				PageURL:    "",
+				PageID:     1678898231,
+				PageURL:    "/posts?sort=latest&page_size=10&page_id=1678898231&title=portra",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -285,7 +286,6 @@ func TestCreateAndDeletePost(t *testing.T) {
 
 		id := createResponse.Post.Id
 		title := createResponse.Post.Title
-		println(title, id)
 
 		// delete the created post
 		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
@@ -335,8 +335,6 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 
 		id := createResponse.Post.Id
-		title := createResponse.Post.Title
-		println(title, id)
 
 		// delete the created post
 		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
@@ -423,7 +421,7 @@ func TestAllPostIDs(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if got, want := len(ids.Ids), 51; got != want {
+		if got, want := len(ids.Ids), totalPosts; got != want {
 			t.Errorf("invalid number of post IDs, want %d, got %d", want, got)
 		}
 	})
