@@ -39,6 +39,16 @@ type DisplayPost struct {
 	Images    []Image `json:"images"`
 }
 
+// PatchPost is the model for patching a post.
+// Intentionally only allow certain fields to be updated.
+// Uses pointers and omit empty to allow partial unmarshalling
+type PatchPost struct {
+	Score     *int  `json:"upvotes,omitempty"`
+	Nsfw      *bool `json:"nsfw,omitempty"`
+	Grayscale *bool `json:"grayscale,omitempty"`
+	Sprocket  *bool `json:"sprocket,omitempty"`
+}
+
 // Post is the model of a returned post
 // including the auto-incremented ID from the DB
 type Post struct {
@@ -79,6 +89,7 @@ type PostService interface {
 	FindPosts(ctx context.Context, filter *PostFilter) ([]*Post, int, error)
 	FindPostByID(ctx context.Context, id int) (*Post, error)
 	CreatePost(ctx context.Context, post *CreatePost) (*Post, error)
+	PatchPost(ctx context.Context, post *PatchPost, id int) error
 	DeletePost(ctx context.Context, id int) error
 	AllPostIDs(ctx context.Context) ([]int, error)
 }
