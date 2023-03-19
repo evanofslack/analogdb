@@ -16,7 +16,7 @@ export default function About() {
   }
 
   const [numPosts, setNumPosts] = useState();
-  const [numPhotographers, setNumPhotographers] = useState(3609);
+  const [numPhotographers, setNumPhotographers] = useState(1792);
   const [loaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -81,122 +81,128 @@ export default function About() {
 
   return (
     <main>
-      <div className={styles.sectionOne}>
-        <div className={styles.subSection}>
-          <div className={styles.title}>Film for all</div>
-          <p className={styles.subtitle}>
-            AnalogDB is a curated database featuring thousands of film
-            photographs. And it is always growing, with new pictures added every
-            day.
-          </p>
-          <Link href="/" legacyBehavior>
-            <a className={styles.link}>view latest</a>
-          </Link>
-        </div>
-        {!isMobile && (
-          <div className={styles.stats}>
-            <div className={styles.statRow}>
-              <IconPolaroid
-                size={40}
-                color="#cacaca"
-                stroke={1.1}
-                className={styles.statIcon}
-              />
-              <div className={styles.statCol}>
-                <p className={styles.statNum}>{numPosts}</p>
-                <p className={styles.statTitle}>posts</p>
+      <div className={styles.container}>
+        <div className={styles.sectionOne}>
+          <div className={styles.subSection}>
+            <div className={styles.title}>Film for all</div>
+            <p className={styles.subtitle}>
+              AnalogDB is a curated database featuring thousands of film
+              photographs. And it is always growing, with new pictures added
+              every day.
+            </p>
+            <Link href="/" legacyBehavior>
+              <a className={styles.link}>view latest</a>
+            </Link>
+          </div>
+          {!isMobile && (
+            <div className={styles.stats}>
+              <div className={styles.statRow}>
+                <IconPolaroid
+                  size={40}
+                  color="#cacaca"
+                  stroke={1.1}
+                  className={styles.statIcon}
+                />
+                <div className={styles.statCol}>
+                  <p className={styles.statNum}>{numPosts}</p>
+                  <p className={styles.statTitle}>posts</p>
+                </div>
+              </div>
+
+              <div className={styles.statRow}>
+                <IconUsers
+                  size={36}
+                  color="#cacaca"
+                  stroke={1.5}
+                  className={styles.statIcon}
+                />
+                <div className={styles.statCol}>
+                  <p className={styles.statNum}>{numPhotographers}</p>
+                  <p className={styles.statTitle}>photographers</p>
+                </div>
               </div>
             </div>
+          )}
+        </div>
 
-            <div className={styles.statRow}>
-              <IconUsers
-                size={36}
-                color="#cacaca"
-                stroke={1.5}
-                className={styles.statIcon}
-              />
-              <div className={styles.statCol}>
-                <p className={styles.statNum}>{numPhotographers}</p>
-                <p className={styles.statTitle}>photographers</p>
-              </div>
+        <div className={styles.sectionTwoBg}>
+          <div className={styles.sectionTwo}>
+            <div>
+              {!isMobile && (
+                <div className={styles.apiDemoContainer}>
+                  <div className={styles.apiDemo}>
+                    <Prism
+                      language="javascript"
+                      styles={() => ({
+                        code: {
+                          fontSize: "0.75rem",
+                          maxWidth: "40vw",
+                        },
+                      })}
+                    >
+                      {apiQuery}
+                    </Prism>
+                  </div>
+                  <div className={styles.apiDemo}>
+                    <Prism
+                      withLineNumbers
+                      language="javascript"
+                      styles={() => ({
+                        code: {
+                          fontSize: "0.75rem",
+                          maxHeight: "70vh",
+                          maxWidth: "40vw",
+                        },
+                      })}
+                    >
+                      {apiResponse}
+                    </Prism>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div>
+              <div className={styles.title}>Accesible API</div>
+              <p className={styles.subtitle}>
+                The entire collection of film is exposed through a simple and
+                modern JSON API. Embeddeding beautiful film photos in your
+                projects has never been easier.
+              </p>
+              <Link href="/docs" legacyBehavior>
+                <a className={styles.link}>read the docs</a>
+              </Link>
             </div>
           </div>
-        )}
-      </div>
+        </div>
 
-      <div className={styles.sectionTwo}>
-        <div>
-          {!isMobile && (
-            <div className={styles.apiDemoContainer}>
-              <div className={styles.apiDemo}>
-                <Prism
-                  language="javascript"
-                  styles={() => ({
-                    code: {
-                      fontSize: "0.75rem",
-                      maxWidth: "40vw",
-                    },
-                  })}
-                >
-                  {apiQuery}
-                </Prism>
-              </div>
-              <div className={styles.apiDemo}>
-                <Prism
-                  withLineNumbers
-                  language="javascript"
-                  styles={() => ({
-                    code: {
-                      fontSize: "0.75rem",
-                      maxHeight: "70vh",
-                      maxWidth: "40vw",
-                    },
-                  })}
-                >
-                  {apiResponse}
-                </Prism>
-              </div>
+        <div className={styles.sectionThreeBg}>
+          <div className={styles.sectionThree}>
+            <div>
+              <div className={styles.title}>Open-source</div>
+              <p className={styles.subtitle}>
+                All code made publically avaliable on Github with flexible
+                licensing. Analogdb is an open community where all contributions
+                are welcome!
+              </p>
+              <a
+                className={styles.link}
+                href="https://github.com/evanofslack/analogdb"
+              >
+                view source
+              </a>
             </div>
-          )}
-        </div>
-        <div>
-          <div className={styles.title}>Accesible API</div>
-          <p className={styles.subtitle}>
-            The entire collection of film is exposed through a simple and modern
-            JSON API. Embeddeding beautiful film photos in your projects has
-            never been easier.
-          </p>
-          <Link href="/docs" legacyBehavior>
-            <a className={styles.link}>read the docs</a>
-          </Link>
-        </div>
-      </div>
-
-      <div className={styles.sectionThree}>
-        <div>
-          <div className={styles.title}>Free & open-source</div>
-          <p className={styles.subtitle}>
-            All code made publically avaliable on Github with flexible
-            licensing. Analogdb is an open community where all contributions are
-            welcome!
-          </p>
-          <a
-            className={styles.link}
-            href="https://github.com/evanofslack/analogdb"
-          >
-            view source
-          </a>
-        </div>
-        <div className={styles.imageThree}>
-          {!isMobile && (
-            <Image
-              src={"/github_logo.png"}
-              alt={`example AnalogDB API call`}
-              width="3840"
-              height="2160"
-              quality={100}
-            />
-          )}
+            {!isMobile && (
+              <div className={styles.imageThree}>
+                <Image
+                  src={"/github_logo.png"}
+                  alt={`example AnalogDB API call`}
+                  width="3840"
+                  height="2160"
+                  quality={100}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <Footer />

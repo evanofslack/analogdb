@@ -31,7 +31,10 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(errorStatusCode(code))
-	json.NewEncoder(w).Encode(&ErrorResponse{Error: message})
+	marshallErr := json.NewEncoder(w).Encode(&ErrorResponse{Error: message})
+	if marshallErr != nil {
+		log.Fatal(marshallErr)
+	}
 }
 
 type ErrorResponse struct {

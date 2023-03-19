@@ -19,9 +19,9 @@ import (
 
 const (
 	// number of posts matching each query from test DB
-	totalPosts  = 51
-	totalNsfw   = 4
-	totalPortra = 17
+	totalPosts  = 4864
+	totalNsfw   = 276
+	totalPortra = 1463
 )
 
 type testInfo struct {
@@ -41,8 +41,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   20,
-				PageID:     1646884084,
-				PageURL:    "/posts?sort=latest&page_size=20&page_id=1646884084",
+				PageID:     1679063590,
+				PageURL:    "/posts?sort=latest&page_size=20&page_id=1679063590",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -57,8 +57,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   10,
-				PageID:     730,
-				PageURL:    "/posts?sort=top&page_size=10&page_id=730",
+				PageID:     5493,
+				PageURL:    "/posts?sort=top&page_size=10&page_id=5493",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -72,9 +72,9 @@ func TestGetPosts(t *testing.T) {
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPosts,
-				PageSize:   2,
-				PageID:     0,
-				PageURL:    "",
+				PageSize:   10,
+				PageID:     1675964298,
+				PageURL:    "/posts?sort=random&page_size=10&page_id=1675964298",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -89,8 +89,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalNsfw,
 				PageSize:   20,
-				PageID:     0,
-				PageURL:    "",
+				PageID:     1676314409,
+				PageURL:    "/posts?sort=latest&page_size=20&page_id=1676314409&nsfw=true",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -106,8 +106,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPosts - totalNsfw,
 				PageSize:   20,
-				PageID:     1646854637,
-				PageURL:    "/posts?sort=latest&page_size=20&page_id=1646854637&nsfw=false",
+				PageID:     1679063590,
+				PageURL:    "/posts?sort=latest&page_size=20&page_id=1679063590&nsfw=false",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -123,8 +123,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPortra,
 				PageSize:   10,
-				PageID:     1646797974,
-				PageURL:    "/posts?sort=latest&page_size=10&page_id=1646797974&title=portra",
+				PageID:     1679038927,
+				PageURL:    "/posts?sort=latest&page_size=10&page_id=1679038927&title=portra",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -135,13 +135,14 @@ func TestGetPosts(t *testing.T) {
 	t7 := testInfo{
 		name:   "title next page",
 		method: http.MethodGet,
-		target: "/posts?page_size=10&page_id=1646797974&title=portra",
+		target: "/posts?sort=latest&page_size=10&page_id=1679038927&title=portra",
+
 		wantBody: PostResponse{
 			Meta: Meta{
 				TotalPosts: totalPortra - 10,
 				PageSize:   10,
-				PageID:     0,
-				PageURL:    "",
+				PageID:     1678898231,
+				PageURL:    "/posts?sort=latest&page_size=10&page_id=1678898231&title=portra",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -284,8 +285,6 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 
 		id := createResponse.Post.Id
-		title := createResponse.Post.Title
-		println(title, id)
 
 		// delete the created post
 		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
@@ -335,8 +334,6 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 
 		id := createResponse.Post.Id
-		title := createResponse.Post.Title
-		println(title, id)
 
 		// delete the created post
 		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
@@ -392,6 +389,116 @@ func TestCreateAndDeletePost(t *testing.T) {
 	})
 }
 
+func TestPatchPost(t *testing.T) {
+	t.Run("Valid Patch", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		// first we get an existing post so that we can modify it
+		r := httptest.NewRequest(http.MethodGet, "/post/2066", nil)
+		w := httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "2066")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var ogPost analogdb.Post
+		if err := json.Unmarshal(data, &ogPost); err != nil {
+			t.Fatal(err)
+		}
+
+		if got, want := ogPost.Id, 2066; got != want {
+			t.Errorf("want %d, got %d", want, got)
+		}
+
+		// then we modify that post by patching it
+		newScore := ogPost.Score + 1
+
+		patchPost := analogdb.PatchPost{
+			Score: &newScore,
+		}
+
+		jsonPatchPost, _ := json.Marshal(patchPost)
+
+		r = httptest.NewRequest(http.MethodPatch, "/post/2066", bytes.NewBuffer(jsonPatchPost))
+		w = httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx = chi.NewRouteContext()
+		rctx.URLParams.Add("id", "2066")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		r.Header.Set("Authorization", makeAuthHeader())
+		s.router.ServeHTTP(w, r)
+
+		// then we need to again get the post and confirm its been modified
+		r = httptest.NewRequest(http.MethodGet, "/post/2066", nil)
+		w = httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx = chi.NewRouteContext()
+		rctx.URLParams.Add("id", "2066")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res = w.Result()
+		defer res.Body.Close()
+
+		data, err = io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var modifiedPost analogdb.Post
+		if err := json.Unmarshal(data, &modifiedPost); err != nil {
+			t.Fatal(err)
+		}
+
+		if og, mod := ogPost.Score, modifiedPost.Score; og == mod {
+			t.Errorf("Updated post should have different score than original post, og %d, new %d", og, mod)
+		}
+
+	})
+	t.Run("Nonexisting Post", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		r := httptest.NewRequest(http.MethodGet, "/post/69", nil)
+		w := httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "69")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusNotFound, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+}
+
 func TestAllPostIDs(t *testing.T) {
 	t.Run("valid IDs", func(t *testing.T) {
 		s, db := mustOpen(t)
@@ -423,7 +530,7 @@ func TestAllPostIDs(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if got, want := len(ids.Ids), 51; got != want {
+		if got, want := len(ids.Ids), totalPosts; got != want {
 			t.Errorf("invalid number of post IDs, want %d, got %d", want, got)
 		}
 	})

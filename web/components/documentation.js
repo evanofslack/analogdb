@@ -3,8 +3,15 @@ import Footer from "./footer";
 import Link from "next/link";
 import { Prism } from "@mantine/prism";
 import { Table, Code, Divider } from "@mantine/core";
+import { useBreakpoint } from "../providers/breakpoint.js";
 
 export default function Documentation() {
+  const breakpoints = useBreakpoint();
+  let isMobile = false;
+  if (breakpoints["sm"]) {
+    isMobile = true;
+  }
+
   const paginations = [
     {
       field: "page_size",
@@ -265,20 +272,22 @@ export default function Documentation() {
             </thead>
             <tbody>{paginationRows}</tbody>
           </Table>
-          <div className={styles.codeblock}>
-            <Prism
-              copyLabel="copy example"
-              copiedLabel="copied"
-              language="yaml"
-              styles={() => ({
-                code: {
-                  fontSize: "0.75rem",
-                },
-              })}
-            >
-              curl https://api.analogdb.com/posts?page_size=10&page_id=774
-            </Prism>
-          </div>
+          {!isMobile && (
+            <div className={styles.codeblock}>
+              <Prism
+                copyLabel="copy example"
+                copiedLabel="copied"
+                language="yaml"
+                styles={() => ({
+                  code: {
+                    fontSize: "0.75rem",
+                  },
+                })}
+              >
+                curl https://api.analogdb.com/posts?page_size=10&page_id=774
+              </Prism>
+            </div>
+          )}
           <div className={styles.divider}>
             <Divider my="sm" />
           </div>
@@ -355,20 +364,22 @@ export default function Documentation() {
             </thead>
             <tbody>{generalRows}</tbody>
           </Table>
-          <div className={styles.codeblock}>
-            <Prism
-              copyLabel="copy example"
-              copiedLabel="copied"
-              language="yaml"
-              styles={() => ({
-                code: {
-                  fontSize: "0.75rem",
-                },
-              })}
-            >
-              curl https://api.analogdb.com/posts?sort=top&page_size=50
-            </Prism>
-          </div>
+          {!isMobile && (
+            <div className={styles.codeblock}>
+              <Prism
+                copyLabel="copy example"
+                copiedLabel="copied"
+                language="yaml"
+                styles={() => ({
+                  code: {
+                    fontSize: "0.75rem",
+                  },
+                })}
+              >
+                curl https://api.analogdb.com/posts?sort=top&page_size=50
+              </Prism>
+            </div>
+          )}
           <p>
             Additionally, posts can be filtered to include, exclude or only
             return grayscale, nsfw and sprocket images.
@@ -388,40 +399,44 @@ export default function Documentation() {
             </thead>
             <tbody>{filterRows}</tbody>
           </Table>
-          <div className={styles.codeblock}>
-            <Prism
-              copyLabel="copy example"
-              copiedLabel="copied"
-              language="yaml"
-              styles={() => ({
-                code: {
-                  fontSize: "0.75rem",
-                },
-              })}
-            >
-              curl
-              https://api.analogdb.com/posts?grayscale=true&sprocket=true&nsfw=false
-            </Prism>
-          </div>
+          {!isMobile && (
+            <div className={styles.codeblock}>
+              <Prism
+                copyLabel="copy example"
+                copiedLabel="copied"
+                language="yaml"
+                styles={() => ({
+                  code: {
+                    fontSize: "0.75rem",
+                  },
+                })}
+              >
+                curl
+                https://api.analogdb.com/posts?grayscale=true&sprocket=true&nsfw=false
+              </Prism>
+            </div>
+          )}
           <h2 className={styles.h2}> /post/:id </h2>
           <p>
             Returns a single specific <Code>post</Code> resource as identified
             by ID.
           </p>
-          <div className={styles.codeblock}>
-            <Prism
-              copyLabel="copy example"
-              copiedLabel="copied"
-              language="yaml"
-              styles={() => ({
-                code: {
-                  fontSize: "0.75rem",
-                },
-              })}
-            >
-              curl https://api.analogdb.com/post/1924
-            </Prism>
-          </div>
+          {!isMobile && (
+            <div className={styles.codeblock}>
+              <Prism
+                copyLabel="copy example"
+                copiedLabel="copied"
+                language="yaml"
+                styles={() => ({
+                  code: {
+                    fontSize: "0.75rem",
+                  },
+                })}
+              >
+                curl https://api.analogdb.com/post/1924
+              </Prism>
+            </div>
+          )}
           <div className={styles.divider}>
             <Divider my="sm" />
           </div>

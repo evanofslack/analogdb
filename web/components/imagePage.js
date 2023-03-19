@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import ImageTag from "../components/imageTag";
 import Footer from "../components/footer";
 import styles from "./imagePage.module.css";
@@ -28,6 +29,9 @@ async function downloadImage(targetImage, name) {
 export default function ImagePage(props) {
   const [isHighResLoaded, setIsHighResLoaded] = useState(false);
 
+  // to navigate back in browser history
+  const router = useRouter();
+
   useEffect(() => {
     startNavigationProgress();
   }, []);
@@ -40,13 +44,11 @@ export default function ImagePage(props) {
       <NavigationProgress autoReset={true} />
       <div className={styles.fullscreen}>
         <div className={styles.headerIcons}>
-          <Link href="/">
-            <Tooltip label="back to gallery" withArrow className="px-2">
-              <ActionIcon>
-                <HiArrowLeft size="2rem" />
-              </ActionIcon>
-            </Tooltip>
-          </Link>
+          <Tooltip label="back to gallery" withArrow className="px-2">
+            <ActionIcon onClick={() => router.back()}>
+              <HiArrowLeft size="2rem" />
+            </ActionIcon>
+          </Tooltip>
           <Tooltip label="fullscreen" withArrow className="px-2">
             <ActionIcon component="a" href={post.images[3].url}>
               <AiOutlineArrowsAlt size="2rem"></AiOutlineArrowsAlt>

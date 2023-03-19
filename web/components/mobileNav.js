@@ -26,24 +26,24 @@ export default function MobileNav() {
               <Link href="/" className={styles.link}>
                 <div className={styles.icon}>
                   <div className={styles.check}>
-                    <p className={styles.iconText}>GALLERY</p>
-                    {router.pathname == "/" && <BiCheck size="1.8rem" />}
+                    <h1 className={styles.iconText}>GALLERY</h1>
+                    {router.pathname == "/" && <BiCheck size="2rem" />}
                   </div>
                 </div>
               </Link>
               <Link href="/about" className={styles.link}>
                 <div className={styles.icon}>
                   <div className={styles.check}>
-                    <p className={styles.iconText}>ABOUT</p>
-                    {router.pathname == "/about" && <BiCheck size="1.8rem" />}
+                    <h1 className={styles.iconText}>ABOUT</h1>
+                    {router.pathname == "/about" && <BiCheck size="2rem" />}
                   </div>
                 </div>
               </Link>
               <Link href="/docs" className={styles.link}>
                 <div className={styles.icon}>
                   <div className={styles.check}>
-                    <p className={styles.iconText}>API</p>
-                    {router.pathname == "/docs" && <BiCheck size="1.8rem" />}
+                    <h1 className={styles.iconText}>API</h1>
+                    {router.pathname == "/docs" && <BiCheck size="2rem" />}
                   </div>
                 </div>
               </Link>

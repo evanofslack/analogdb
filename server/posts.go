@@ -60,6 +60,7 @@ func (s *Server) mountPostHandlers() {
 	s.router.Route(postPath, func(r chi.Router) {
 		r.Get("/{id}", s.findPost)
 		r.With(auth).Delete("/{id}", s.deletePost)
+		r.With(auth).Patch("/{id}", s.patchPost)
 		r.With(auth).Put("/", s.createPost)
 		r.With(auth).Post("/", s.createPost)
 	})
@@ -119,13 +120,13 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
-		println("here: cant parse response body")
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Error parsing post from request body"}
 		writeError(w, r, err)
 	}
 	created, err := s.PostService.CreatePost(r.Context(), &createPost)
-	if err != nil {
+	if err != nil || created == nil {
 		writeError(w, r, err)
+		return
 	}
 	createdResponse := CreateResponse{
 		Message: "Success, post created",
@@ -133,6 +134,30 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := encodeResponse(w, r, http.StatusCreated, createdResponse); err != nil {
 		writeError(w, r, err)
+	}
+}
+
+func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
+
+	var patchPost analogdb.PatchPost
+	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Error parsing patch from request body"}
+		writeError(w, r, err)
+	}
+
+	if id := chi.URLParam(r, "id"); id != "" {
+		if identify, err := strconv.Atoi(id); err == nil {
+			if err := s.PostService.PatchPost(r.Context(), &patchPost, identify); err == nil {
+				success := DeleteResponse{Message: "Success, post patched"}
+				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
+					writeError(w, r, err)
+				}
+			} else {
+				writeError(w, r, err)
+			}
+		} else {
+			writeError(w, r, err)
+		}
 	}
 }
 
