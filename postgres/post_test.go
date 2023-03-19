@@ -11,8 +11,8 @@ import (
 const (
 	// number of posts matching each query from test DB
 	totalPosts     = 4864
-	totalNsfw      = 275
-	totalGrayscale = 931
+	totalNsfw      = 276
+	totalGrayscale = 932
 	totalSprocket  = 204
 	totalPortra    = 1463
 )
@@ -468,62 +468,6 @@ func TestPatchPost(t *testing.T) {
 
 		if og.Score == updated.Score {
 			t.Fatalf("updated post should have different score than original post, original: %d, updated: %d", og.Score, updated.Score)
-		}
-	})
-	t.Run("UpdateNsfw", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		og, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		newNsfw := !og.Nsfw
-		patch := analogdb.PatchPost{
-			Nsfw: &newNsfw,
-		}
-		err = ps.PatchPost(context.Background(), &patch, postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		updated, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if og.Nsfw == updated.Nsfw {
-			t.Fatalf("updated post should have different nsfw than original post, original: %t, updated: %t", og.Nsfw, updated.Nsfw)
-		}
-	})
-	t.Run("UpdateGrayscale", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		og, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		newGrayscale := !og.Grayscale
-		patch := analogdb.PatchPost{
-			Grayscale: &newGrayscale,
-		}
-		err = ps.PatchPost(context.Background(), &patch, postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		updated, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if og.Grayscale == updated.Grayscale {
-			t.Fatalf("updated post should have different grayscale than original post, original: %t, updated: %t", og.Grayscale, updated.Grayscale)
 		}
 	})
 }

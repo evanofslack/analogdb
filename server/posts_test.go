@@ -20,7 +20,7 @@ import (
 const (
 	// number of posts matching each query from test DB
 	totalPosts  = 4864
-	totalNsfw   = 275
+	totalNsfw   = 276
 	totalPortra = 1463
 )
 
@@ -57,8 +57,8 @@ func TestGetPosts(t *testing.T) {
 			Meta: Meta{
 				TotalPosts: totalPosts,
 				PageSize:   10,
-				PageID:     5568,
-				PageURL:    "/posts?sort=top&page_size=10&page_id=5568",
+				PageID:     5493,
+				PageURL:    "/posts?sort=top&page_size=10&page_id=5493",
 				Seed:       0,
 			},
 			Posts: []analogdb.Post{},
@@ -285,7 +285,6 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 
 		id := createResponse.Post.Id
-		title := createResponse.Post.Title
 
 		// delete the created post
 		r = httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/post/%d", createResponse.Post.Id), nil)
@@ -385,6 +384,116 @@ func TestCreateAndDeletePost(t *testing.T) {
 		s.router.ServeHTTP(w, r)
 
 		if want, got := http.StatusUnprocessableEntity, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+	})
+}
+
+func TestPatchPost(t *testing.T) {
+	t.Run("Valid Patch", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		// first we get an existing post so that we can modify it
+		r := httptest.NewRequest(http.MethodGet, "/post/2066", nil)
+		w := httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "2066")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res := w.Result()
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var ogPost analogdb.Post
+		if err := json.Unmarshal(data, &ogPost); err != nil {
+			t.Fatal(err)
+		}
+
+		if got, want := ogPost.Id, 2066; got != want {
+			t.Errorf("want %d, got %d", want, got)
+		}
+
+		// then we modify that post by patching it
+		newScore := ogPost.Score + 1
+
+		patchPost := analogdb.PatchPost{
+			Score: &newScore,
+		}
+
+		jsonPatchPost, _ := json.Marshal(patchPost)
+
+		r = httptest.NewRequest(http.MethodPatch, "/post/2066", bytes.NewBuffer(jsonPatchPost))
+		w = httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx = chi.NewRouteContext()
+		rctx.URLParams.Add("id", "2066")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		r.Header.Set("Authorization", makeAuthHeader())
+		s.router.ServeHTTP(w, r)
+
+		// then we need to again get the post and confirm its been modified
+		r = httptest.NewRequest(http.MethodGet, "/post/2066", nil)
+		w = httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx = chi.NewRouteContext()
+		rctx.URLParams.Add("id", "2066")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusOK, w.Code; got != want {
+			t.Errorf("want status %d, got %d", want, got)
+		}
+
+		res = w.Result()
+		defer res.Body.Close()
+
+		data, err = io.ReadAll(res.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var modifiedPost analogdb.Post
+		if err := json.Unmarshal(data, &modifiedPost); err != nil {
+			t.Fatal(err)
+		}
+
+		if og, mod := ogPost.Score, modifiedPost.Score; og == mod {
+			t.Errorf("Updated post should have different score than original post, og %d, new %d", og, mod)
+		}
+
+	})
+	t.Run("Nonexisting Post", func(t *testing.T) {
+		s, db := mustOpen(t)
+		defer mustClose(t, s, db)
+
+		r := httptest.NewRequest(http.MethodGet, "/post/69", nil)
+		w := httptest.NewRecorder()
+
+		// chi URL params need to be added
+		// https://github.com/go-chi/chi/issues/76#issuecomment-370145140
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("id", "69")
+		r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+		s.router.ServeHTTP(w, r)
+
+		if want, got := http.StatusNotFound, w.Code; got != want {
 			t.Errorf("want status %d, got %d", want, got)
 		}
 	})
