@@ -3,8 +3,8 @@ import sys
 from loguru import logger
 from notifiers import get_notifier
 from notifiers.logging import NotificationHandler
-from configuration import init_config
 
+from configuration import init_config
 
 
 def init_logger():

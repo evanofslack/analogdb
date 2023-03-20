@@ -4,16 +4,10 @@ import schedule
 from loguru import logger
 
 from api import delete_from_analogdb, get_latest_links, upload_to_analogdb
+from batch import update_latest_post_scores
 from configuration import dependencies_from_config, init_config
-from constants import (
-    ANALOG_POSTS,
-    ANALOG_SUB,
-    AWS_BUCKET,
-    BW_POSTS,
-    BW_SUB,
-    SPROCKET_POSTS,
-    SPROCKET_SUB,
-)
+from constants import (ANALOG_POSTS, ANALOG_SUB, AWS_BUCKET, BW_POSTS, BW_SUB,
+                       SPROCKET_POSTS, SPROCKET_SUB)
 from log import init_logger
 from models import Dependencies
 from s3_upload import create_analog_post, upload_to_s3
@@ -71,15 +65,28 @@ def delete_post():
     delete_from_analogdb(id=99999, username=auth.username, password=auth.password)
 
 
+def update_post_score(deps: Dependencies):
+    update_latest_post_scores(
+        reddit=deps.reddit_client,
+        count=100,
+        username=deps.auth.username,
+        password=deps.auth.password,
+    )
+
+
 def main():
 
     init_logger()
     config = init_config()
     deps = dependencies_from_config(config=config)
 
+    # scrape posts
     schedule.every().day.do(scrape_bw, deps=deps)
     schedule.every().day.do(scrape_sprocket, deps=deps)
     schedule.every(4).hours.do(scrape_analog, deps=deps)
+
+    # update latest 100 post scores each day
+    schedule.every().day.do(update_post_score, deps=deps)
 
     schedule.run_all()
 
