@@ -25,10 +25,12 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 
 	ps := postgres.NewPostService(db)
 	rs := postgres.NewReadyService(db)
+	as := postgres.NewAuthorService(db)
 
 	s := New("8080")
 	s.PostService = ps
 	s.ReadyService = rs
+	s.AuthorService = as
 	if err := s.Run(); err != nil {
 		t.Fatal(err)
 	}
