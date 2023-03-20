@@ -91,7 +91,7 @@ def get_posts(
         content_type = get_content_type(url)
 
         if content_type not in VALID_CONTENT:
-            logger.error(f"cannot process {url} with type {content_type}")
+            logger.warning(f"cannot process {url} with type {content_type}")
             continue
 
         image = request_image(url)

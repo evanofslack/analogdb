@@ -10,22 +10,31 @@ from models import AnalogDisplayPost, AnalogPost, PatchPost
 
 
 def get_latest_posts(count: int) -> List[AnalogDisplayPost]:
+
+    # max page size is 200
     url = f"{ANALOGDB_URL}/posts?sort=latest&page_size={count}"
-    try:
-        r = requests.get(url=url)
-    except Exception as e:
-        raise Exception(f"Error making get request to analogdb: {e}")
-    try:
-        data = r.json()
-    except Exception as e:
-        raise Exception(f"Error unmarshalling json from analogdb: {e}")
-
-    json_posts = data["posts"]
-
     analog_posts: List[AnalogDisplayPost] = []
-    for json_post in json_posts:
-        post = json_to_post(json_post)
-        analog_posts.append(post)
+
+    # loop until all pages have been queried
+    while len(analog_posts) < count:
+        try:
+            r = requests.get(url=url)
+        except Exception as e:
+            raise Exception(f"Error making get request to analogdb: {e}")
+        try:
+            data = r.json()
+        except Exception as e:
+            raise Exception(f"Error unmarshalling json from analogdb: {e}")
+
+        json_posts = data["posts"]
+
+        for json_post in json_posts:
+            post = json_to_post(json_post)
+            analog_posts.append(post)
+
+        url = data["next_page_url"]
+        if url == "":
+            break
 
     return analog_posts
 
@@ -60,16 +69,15 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
 def patch_to_analogdb(patch: PatchPost, id: int, username: str, password: str):
     dict_patch = patch_to_json(patch)
     json_patch = json.dumps(dict_patch)
+    print(json_patch)
     url = f"{ANALOGDB_URL}/post/{id}"
     resp = requests.patch(
         url=url,
         data=json_patch,
         auth=HTTPBasicAuth(username=username, password=password),
     )
-    if resp.status_code == 200:
-        logger.info("patched post")
-    else:
-        logger.error("failed to patch post")
+    if resp.status_code != 200:
+        raise Exception(f"failed to patch post with response: {resp.content}")
 
 
 def delete_from_analogdb(id: int, username: str, password: str):
@@ -78,37 +86,38 @@ def delete_from_analogdb(id: int, username: str, password: str):
         url=url,
         auth=HTTPBasicAuth(username=username, password=password),
     )
-    if resp.status_code == 200:
-        logger.info("deleted post")
-    else:
-        logger.error("failed to delete post")
+    if resp.status_code != 200:
+        raise Exception(f"failed to delete post with response: {resp.json()}")
 
 
 def json_to_post(data: dict) -> AnalogDisplayPost:
 
-    post = AnalogDisplayPost(
-        id=data["id"],
-        title=data["title"],
-        author=data["author"],
-        permalink=data["permalink"],
-        score=data["score"],
-        nsfw=data["nsfw"],
-        grayscale=data["grayscale"],
-        timestamp=data["timestamp"],
-        sprocket=data["sprocket"],
-        low_url=data["images"][0]["url"],
-        low_width=data["images"][0]["width"],
-        low_height=data["images"][0]["height"],
-        med_url=data["images"][1]["url"],
-        med_width=data["images"][1]["width"],
-        med_height=data["images"][1]["height"],
-        high_url=data["images"][2]["url"],
-        high_width=data["images"][2]["width"],
-        high_height=data["images"][2]["height"],
-        raw_url=data["images"][3]["url"],
-        raw_width=data["images"][3]["width"],
-        raw_height=data["images"][3]["height"],
-    )
+    try:
+        post = AnalogDisplayPost(
+            id=data["id"],
+            title=data["title"],
+            author=data["author"],
+            permalink=data["permalink"],
+            score=data["score"],
+            nsfw=data["nsfw"],
+            grayscale=data["grayscale"],
+            timestamp=data["timestamp"],
+            sprocket=data["sprocket"],
+            low_url=data["images"][0]["url"],
+            low_width=data["images"][0]["width"],
+            low_height=data["images"][0]["height"],
+            med_url=data["images"][1]["url"],
+            med_width=data["images"][1]["width"],
+            med_height=data["images"][1]["height"],
+            high_url=data["images"][2]["url"],
+            high_width=data["images"][2]["width"],
+            high_height=data["images"][2]["height"],
+            raw_url=data["images"][3]["url"],
+            raw_width=data["images"][3]["width"],
+            raw_height=data["images"][3]["height"],
+        )
+    except Exception as e:
+        raise Exception(f"Error unmarshalling json posts from analogdb: {e}")
 
     return post
 
