@@ -21,18 +21,18 @@ export default function About() {
 
   useEffect(() => {
     // get total posts
-    const endpoint = baseURL + "/posts";
-    fetch(endpoint)
+    const postEndpoint = baseURL + "/posts";
+    fetch(postEndpoint)
       .then((response) => response.json())
       .then((resp) => {
         setNumPosts(resp.meta.total_posts);
         setIsLoaded(true);
+      });
 
-    const endpoint = baseURL + "/authors";
-    fetch(endpoint)
+    const authorEndpoint = baseURL + "/authors";
+    fetch(authorEndpoint)
       .then((response) => response.json())
       .then((resp) => {
-
         setNumPhotographers(length([...new Set(resp.authors)]));
         setIsLoaded(true);
       });
