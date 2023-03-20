@@ -32,7 +32,8 @@ def get_latest_posts(count: int) -> List[AnalogDisplayPost]:
             post = json_to_post(json_post)
             analog_posts.append(post)
 
-        url = data["next_page_url"]
+        meta = data["meta"]
+        url = meta["next_page_url"]
         if url == "":
             break
 
