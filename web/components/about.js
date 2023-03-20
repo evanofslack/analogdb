@@ -33,7 +33,7 @@ export default function About() {
     fetch(authorEndpoint)
       .then((response) => response.json())
       .then((resp) => {
-        setNumPhotographers(length([...new Set(resp.authors)]));
+        setNumPhotographers([...new Set(resp.authors)].length);
         setIsLoaded(true);
       });
   }, []);
