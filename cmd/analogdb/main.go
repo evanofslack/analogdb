@@ -34,6 +34,7 @@ func main() {
 	server := server.New(cfg.HTTP.Port)
 	server.PostService = postgres.NewPostService(db)
 	server.ReadyService = postgres.NewReadyService(db)
+	server.AuthorService = postgres.NewAuthorService(db)
 	if err := server.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

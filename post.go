@@ -93,3 +93,7 @@ type PostService interface {
 	DeletePost(ctx context.Context, id int) error
 	AllPostIDs(ctx context.Context) ([]int, error)
 }
+
+type AuthorService interface {
+	FindAuthors(ctx context.Context) ([]string, error)
+}
