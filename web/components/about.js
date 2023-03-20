@@ -16,15 +16,24 @@ export default function About() {
   }
 
   const [numPosts, setNumPosts] = useState();
-  const [numPhotographers, setNumPhotographers] = useState(1792);
+  const [numPhotographers, setNumPhotographers] = useState();
   const [loaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    // get total posts
     const endpoint = baseURL + "/posts";
     fetch(endpoint)
       .then((response) => response.json())
       .then((resp) => {
         setNumPosts(resp.meta.total_posts);
+        setIsLoaded(true);
+
+    const endpoint = baseURL + "/authors";
+    fetch(endpoint)
+      .then((response) => response.json())
+      .then((resp) => {
+
+        setNumPhotographers(length([...new Set(resp.authors)]));
         setIsLoaded(true);
       });
   }, []);
