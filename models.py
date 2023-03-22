@@ -56,6 +56,7 @@ class CloudfrontImage:
 @dataclass
 class Color:
     hex: str
+    css: str
     percent: int
 
 

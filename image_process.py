@@ -4,6 +4,8 @@ from typing import List, Optional, Tuple
 import extcolors
 from loguru import logger
 from PIL.Image import ANTIALIAS, Image, open
+from scipy.spatial import KDTree
+from webcolors import CSS3_HEX_TO_NAMES, hex_to_rgb, rgb_to_hex
 
 from constants import COLOR_LIMIT, COLOR_TOLERANCE, LOW_RES
 from models import Color
@@ -45,12 +47,29 @@ def image_to_bytes(image: Image, content_type: str) -> BytesIO:
     return image_bytes
 
 
-def rgb2hex(r, g, b):
-    def pre(x):
-        # clamp, round and convert to int
-        return max(0, min(int(round(x)), 255))
+# def rgb_to_hex(r, g, b):
+#     def pre(x):
+#         # clamp, round and convert to int
+#         return max(0, min(int(round(x)), 255))
+#
+#     return f"#{pre(r):02x}{pre(g):02x}{pre(b):02x}"
+#
 
-    return f"#{pre(r):02x}{pre(g):02x}{pre(b):02x}"
+
+def rgb_to_name(rgb: Tuple[int, int, int]) -> str:
+    # use KDTree to find closest CSS name for RGB color
+
+    names = []
+    rgb_values = []
+
+    for hex, name in CSS3_HEX_TO_NAMES.items():
+        names.append(name)
+        rgb_values.append(hex_to_rgb(hex))
+
+    kdt_db = KDTree(rgb_values)
+    _, index = kdt_db.query(rgb)
+    match = names[index]
+    return match
 
 
 def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
@@ -71,13 +90,16 @@ def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
     for rgb, pixels in colors:
 
         # convert color to hex
-        hex = rgb2hex(*rgb)
+        hex = rgb_to_hex(rgb)
+
+        # get closest matching css color
+        css = rgb_to_name(rgb)
 
         # get percent of image with this color
-        percent = (pixels / total_pixels) * 100
+        percent = round(pixels / total_pixels, 8)
 
         # append it
-        extracted.append(Color(hex=hex, percent=percent))
+        extracted.append(Color(hex=hex, css=css, percent=percent))
 
     return extracted
 
