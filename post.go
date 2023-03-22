@@ -12,8 +12,8 @@ type Image struct {
 
 type Color struct {
 	Hex     string  `json:"hex"`
-	Css     string  `json:"url"`
-	Percent float64 `json:"width"`
+	Css     string  `json:"css"`
+	Percent float64 `json:"percent"`
 }
 
 // CreatePost is the model for creating a post.
