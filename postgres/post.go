@@ -516,6 +516,30 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 		args = append(args, *sprocket)
 		index += 1
 	}
+	if colors := patch.Colors; colors != nil {
+		if len(*colors) != 5 {
+			return "", args, fmt.Errorf("Invalid color array provided, expected %d colors, got %d", 5, len(*colors))
+		}
+
+		// for each color in colors, we need to append hex, css and percent fields
+		for i, color := range *colors {
+
+			// add the hex
+			set = append(set, fmt.Sprintf("c%d_hex = $%d", i+1, index))
+			args = append(args, color.Hex)
+			index += 1
+
+			// add the css
+			set = append(set, fmt.Sprintf("c%d_css = $%d", i+1, index))
+			args = append(args, color.Css)
+			index += 1
+
+			// add the percent
+			set = append(set, fmt.Sprintf("c%d_percent = $%d", i+1, index))
+			args = append(args, color.Percent)
+			index += 1
+		}
+	}
 
 	// no update fields provided
 	if len(set) == 0 {

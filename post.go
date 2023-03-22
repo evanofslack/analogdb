@@ -10,6 +10,12 @@ type Image struct {
 	Height int    `json:"height"`
 }
 
+type Color struct {
+	Hex     string  `json:"hex"`
+	Css     string  `json:"url"`
+	Percent float64 `json:"width"`
+}
+
 // CreatePost is the model for creating a post.
 // This includes info from the original reddit post
 // as well as attributes about the image
@@ -43,10 +49,11 @@ type DisplayPost struct {
 // Intentionally only allow certain fields to be updated.
 // Uses pointers and omit empty to allow partial unmarshalling
 type PatchPost struct {
-	Score     *int  `json:"upvotes,omitempty"`
-	Nsfw      *bool `json:"nsfw,omitempty"`
-	Grayscale *bool `json:"grayscale,omitempty"`
-	Sprocket  *bool `json:"sprocket,omitempty"`
+	Score     *int     `json:"upvotes,omitempty"`
+	Nsfw      *bool    `json:"nsfw,omitempty"`
+	Grayscale *bool    `json:"grayscale,omitempty"`
+	Sprocket  *bool    `json:"sprocket,omitempty"`
+	Colors    *[]Color `json:"colors,omitempty"`
 }
 
 // Post is the model of a returned post
