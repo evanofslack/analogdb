@@ -313,7 +313,7 @@ func TestFindPost(t *testing.T) {
 }
 
 func TestCreateAndDeletePost(t *testing.T) {
-	t.Run("4 images is a valid post", func(t *testing.T) {
+	t.Run("valid post", func(t *testing.T) {
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ps := NewPostService(db)
@@ -324,12 +324,18 @@ func TestCreateAndDeletePost(t *testing.T) {
 			Width:  0,
 			Height: 0,
 		}
-		var fourImages []analogdb.Image
-		fourImages = append(fourImages, testImage, testImage, testImage, testImage)
+		fourImages := []analogdb.Image{testImage, testImage, testImage, testImage}
+
+		testColor := analogdb.Color{
+			Hex:     "#000000",
+			Css:     "Black",
+			Percent: 0.2500000,
+		}
+		fiveColors := []analogdb.Color{testColor, testColor, testColor, testColor, testColor}
+
 		testTitle := "test title"
 
 		createPost := analogdb.CreatePost{
-			Images:    fourImages,
 			Title:     testTitle,
 			Author:    "test author",
 			Permalink: "test.permalink.com",
@@ -338,6 +344,8 @@ func TestCreateAndDeletePost(t *testing.T) {
 			Grayscale: false,
 			Time:      0,
 			Sprocket:  false,
+			Images:    fourImages,
+			Colors:    fiveColors,
 		}
 
 		ctx := context.Background()
@@ -370,10 +378,17 @@ func TestCreateAndDeletePost(t *testing.T) {
 		var threeImages []analogdb.Image
 
 		threeImages = append(threeImages, testImage, testImage, testImage)
+
+		testColor := analogdb.Color{
+			Hex:     "#000000",
+			Css:     "Black",
+			Percent: 0.2500000,
+		}
+		fiveColors := []analogdb.Color{testColor, testColor, testColor, testColor, testColor}
+
 		testTitle := "test title"
 
 		createPost := analogdb.CreatePost{
-			Images:    threeImages,
 			Title:     testTitle,
 			Author:    "test author",
 			Permalink: "test.permalink.com",
@@ -382,6 +397,8 @@ func TestCreateAndDeletePost(t *testing.T) {
 			Grayscale: false,
 			Time:      0,
 			Sprocket:  false,
+			Images:    threeImages,
+			Colors:    fiveColors,
 		}
 
 		ctx := context.Background()

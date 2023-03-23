@@ -35,7 +35,7 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 
 func findAuthors(ctx context.Context, tx *sql.Tx) ([]string, error) {
 	query := `
-			SELECT author FROM pictures`
+			SELECT id, author FROM pictures ORDER BY id ASC`
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -43,9 +43,10 @@ func findAuthors(ctx context.Context, tx *sql.Tx) ([]string, error) {
 	defer rows.Close()
 
 	authors := make([]string, 0)
+	var id int
 	var author string
 	for rows.Next() {
-		if err := rows.Scan(&author); err != nil {
+		if err := rows.Scan(&id, &author); err != nil {
 			return nil, err
 		}
 		authors = append(authors, author)

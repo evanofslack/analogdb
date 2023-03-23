@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS pictures(
+   ids serial PRIMARY KEY,
+   url text UNIQUE NOT NULL,
+   title text,
+   author text,
+   permalink text UNIQUE NOT NULL,
+   score integer,
+   nsfw boolean,
+   greyscale boolean,
+   time integer,
+   width integer,
+   height integer,
+   sprocket boolean,
+   lowurl text,
+   lowwidth integer,
+   lowheight integer,
+   medurl text,
+   medwidth integer,
+   medheight integer,
+   highurl text,
+   highwidth integer,
+   highheight integer
+);

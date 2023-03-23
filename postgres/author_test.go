@@ -7,9 +7,9 @@ import (
 
 const (
 	totalAuthors = 4864
-	author1      = "u/supersoldierpeek"
-	author2      = "u/jshank20"
-	author3      = "u/_INLIVINGCOLOR"
+	author1      = "u/photocactus"
+	author2      = "u/_markforbes_"
+	author3      = "u/26Point2"
 )
 
 func TestFindAuthors(t *testing.T) {
@@ -37,7 +37,7 @@ func TestFindAuthors(t *testing.T) {
 			t.Fatal(err)
 		}
 		if authors[0] != author1 || authors[1] != author2 || authors[2] != author3 {
-			t.Fatalf("wrong values of authors, got %s, %s, %s, wanted %s, %s, %s", author1, author2, author3, authors[0], authors[1], authors[2])
+			t.Fatalf("wrong values of authors, want %s, %s, %s, got %s, %s, %s", author1, author2, author3, authors[0], authors[1], authors[2])
 		}
 	})
 }

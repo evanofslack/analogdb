@@ -1,0 +1,20 @@
+BEGIN;
+
+ALTER TABLE pictures
+DROP COLUMN c1_hex,
+DROP COLUMN c1_css,
+DROP COLUMN c1_percent,
+DROP COLUMN c2_hex,
+DROP COLUMN c2_css,
+DROP COLUMN c2_percent,
+DROP COLUMN c3_hex,
+DROP COLUMN c3_css,
+DROP COLUMN c3_percent,
+DROP COLUMN c4_hex,
+DROP COLUMN c4_css,
+DROP COLUMN c4_percent,
+DROP COLUMN c5_hex,
+DROP COLUMN c5_css,
+DROP COLUMN c5_percent,
+
+COMMIT;
