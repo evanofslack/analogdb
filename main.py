@@ -4,7 +4,7 @@ import schedule
 from loguru import logger
 
 from api import delete_from_analogdb, get_latest_links, upload_to_analogdb
-from batch import update_latest_post_scores
+from batch import update_latest_post_colors, update_latest_post_scores
 from configuration import dependencies_from_config, init_config
 from constants import (ANALOG_POSTS, ANALOG_SUB, AWS_BUCKET, BW_POSTS, BW_SUB,
                        SPROCKET_POSTS, SPROCKET_SUB)
@@ -74,11 +74,16 @@ def update_post_score(deps: Dependencies):
     )
 
 
-def main():
+def update_post_colors(deps: Dependencies):
+    update_latest_post_colors(
+        reddit=deps.reddit_client,
+        count=5100,
+        username=deps.auth.username,
+        password=deps.auth.password,
+    )
 
-    init_logger()
-    config = init_config()
-    deps = dependencies_from_config(config=config)
+
+def run_schedule(deps: Dependencies):
 
     # scrape posts
     schedule.every().day.do(scrape_bw, deps=deps)
@@ -97,6 +102,15 @@ def main():
         except Exception as e:
             logger.error(f"issue running schedued job: {e}")
         time.sleep(4 * 3600)  # sleep for 4 hours
+
+
+def main():
+
+    init_logger()
+    config = init_config()
+    deps = dependencies_from_config(config=config)
+
+    run_schedule(deps=deps)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ CLOUDFRONT_URL = "https://d3i73ktnzbi69i.cloudfront.net"
 
 # analogdb base url
 ANALOGDB_URL = "https://api.analogdb.com"
+# ANALOGDB_URL = "http://10.33.1.142:8080"
 
 # reddit base url
 REDDIT_URL = "https://www.reddit.com"
@@ -33,3 +34,14 @@ VALID_CONTENT = [
     "image/jpg",
     "image/gif",
 ]
+
+# Upper limit to the number of extracted
+# colors presented in the output.
+COLOR_LIMIT = 5
+
+# Group colors to limit the output and give a
+# better visual representation. Based on a
+# scale from 0 to 100. Where 0 won't group any
+# color and 100 will group all colors into one.
+# Tolerance 0 will bypass all conversion.
+COLOR_TOLERANCE = 20

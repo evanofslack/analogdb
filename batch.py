@@ -6,6 +6,7 @@ from loguru import logger
 
 from api import get_latest_posts, json_to_post, new_patch, patch_to_analogdb
 from constants import ANALOGDB_URL
+from image_process import extract_colors, request_image, resize_image
 from models import AnalogDisplayPost
 
 
@@ -57,7 +58,7 @@ def update_post_score(
         submission = reddit.submission(url=url)
         new_score = submission.score
     except Exception as e:
-        raise Exception(
+        logger.error(
             f"Error fetching submission with url: {post.permalink}, with error: {e}"
         )
 
@@ -78,6 +79,38 @@ def update_latest_post_scores(
 ):
     apply_to_recent_posts(
         modifier=update_post_score,
+        count=count,
+        reddit=reddit,
+        username=username,
+        password=password,
+    )
+
+
+def update_post_colors(
+    reddit: praw.Reddit, post: AnalogDisplayPost, username: str, password: str
+):
+    url = post.low_url
+
+    # extract primary colors
+    try:
+        image = request_image(url=url)
+        colors = extract_colors(image)
+    except Exception as e:
+        logger.error(f"Error fetching iamge with url: {url}, with error: {e}")
+
+    # update post in analogdb
+    patch = new_patch(colors=colors)
+    patch_to_analogdb(patch, id=post.id, username=username, password=password)
+    logger.info(
+        f"post with ID: {post.id} has colors updated to {[c.css for c in colors]}"
+    )
+
+
+def update_latest_post_colors(
+    reddit: praw.Reddit, count: int, username: str, password: str
+):
+    apply_to_recent_posts(
+        modifier=update_post_colors,
         count=count,
         reddit=reddit,
         username=username,
