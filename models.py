@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import List, Optional
 
 import boto3
 import praw
@@ -46,6 +46,22 @@ class AnalogPost:
     high_width: int
     high_height: int
 
+    c1_hex: str
+    c1_css: str
+    c1_percent: float
+    c2_hex: str
+    c2_css: str
+    c2_percent: float
+    c3_hex: str
+    c3_css: str
+    c3_percent: float
+    c4_hex: str
+    c4_css: str
+    c4_percent: float
+    c5_hex: str
+    c5_css: str
+    c5_percent: float
+
 
 @dataclass
 class AnalogDisplayPost:
@@ -77,6 +93,22 @@ class AnalogDisplayPost:
     raw_width: int
     raw_height: int
 
+    c1_hex: str
+    c1_css: str
+    c1_percent: float
+    c2_hex: str
+    c2_css: str
+    c2_percent: float
+    c3_hex: str
+    c3_css: str
+    c3_percent: float
+    c4_hex: str
+    c4_css: str
+    c4_percent: float
+    c5_hex: str
+    c5_css: str
+    c5_percent: float
+
 
 @dataclass
 class CloudfrontImage:
@@ -89,7 +121,7 @@ class CloudfrontImage:
 class Color:
     hex: str
     css: str
-    percent: int
+    percent: float
 
 
 @dataclass
@@ -98,6 +130,7 @@ class PatchPost:
     nsfw: Optional[bool]
     greyscale: Optional[bool]
     sprocket: Optional[bool]
+    colors: Optional[List[Color]]
 
 
 @dataclass

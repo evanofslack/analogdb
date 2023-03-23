@@ -2,8 +2,10 @@ from io import BytesIO
 from typing import List, Optional, Tuple
 
 import extcolors
+import requests
 from loguru import logger
-from PIL.Image import ANTIALIAS, Image, open
+from PIL import ImageChops
+from PIL.Image import ANTIALIAS, Image, new, open
 from scipy.spatial import KDTree
 from webcolors import CSS3_HEX_TO_NAMES, hex_to_rgb, rgb_to_hex
 
@@ -47,13 +49,15 @@ def image_to_bytes(image: Image, content_type: str) -> BytesIO:
     return image_bytes
 
 
-# def rgb_to_hex(r, g, b):
-#     def pre(x):
-#         # clamp, round and convert to int
-#         return max(0, min(int(round(x)), 255))
-#
-#     return f"#{pre(r):02x}{pre(g):02x}{pre(b):02x}"
-#
+def remove_border(image: Image) -> Image:
+    bg = new(image.mode, image.size, image.getpixel((0, 0)))
+    diff = ImageChops.difference(image, bg)
+    diff = ImageChops.add(diff, diff, 1.0, -100)
+    bbox = diff.getbbox()
+    if bbox:
+        return image.crop(bbox)
+    else:
+        return image
 
 
 def rgb_to_name(rgb: Tuple[int, int, int]) -> str:
@@ -81,9 +85,11 @@ def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
 
     # resize the image for faster processing
     resized, _, _ = resize_image(image=image, size=LOW_RES)
+    # remove border if found
+    trim = remove_border(resized)
 
     colors, total_pixels = extcolors.extract_from_image(
-        img=resized, tolerance=COLOR_TOLERANCE, limit=count
+        img=trim, tolerance=COLOR_TOLERANCE, limit=count
     )
 
     extracted: List[Color] = []
@@ -101,14 +107,21 @@ def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
         # append it
         extracted.append(Color(hex=hex, css=css, percent=percent))
 
+    # we need to send 5 colors to analogdb
+    # if we dont have 5 colors, append fillers
+    num_filler = COLOR_LIMIT - len(extracted)
+    if num_filler > 0:
+        filler = Color(hex="null", css="null", percent=0.0)
+        for _ in range(num_filler):
+            extracted.append(filler)
+
     return extracted
 
 
 def test_extract_colors():
     import PIL
-    import requests
 
-    url = "https://d3i73ktnzbi69i.cloudfront.net/0beebf59-4b2d-461e-b261-afcd19c51064.jpeg"
+    url = "https://d3i73ktnzbi69i.cloudfront.net/98fe51da-4b04-47db-b529-ce94f2c31219.jpeg"
     im = PIL.Image.open(requests.get(url, stream=True).raw)
 
     extracted = extract_colors(im)

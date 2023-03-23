@@ -6,7 +6,7 @@ from loguru import logger
 from requests.auth import HTTPBasicAuth
 
 from constants import ANALOGDB_URL
-from models import AnalogDisplayPost, AnalogPost, PatchPost
+from models import AnalogDisplayPost, AnalogPost, Color, PatchPost
 
 
 def get_latest_posts(count: int) -> List[AnalogDisplayPost]:
@@ -70,7 +70,6 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
 def patch_to_analogdb(patch: PatchPost, id: int, username: str, password: str):
     dict_patch = patch_to_json(patch)
     json_patch = json.dumps(dict_patch)
-    print(json_patch)
     url = f"{ANALOGDB_URL}/post/{id}"
     resp = requests.patch(
         url=url,
@@ -94,6 +93,10 @@ def delete_from_analogdb(id: int, username: str, password: str):
 def json_to_post(data: dict) -> AnalogDisplayPost:
 
     try:
+
+        images = data["images"]
+        colors = data["colors"]
+
         post = AnalogDisplayPost(
             id=data["id"],
             title=data["title"],
@@ -104,18 +107,33 @@ def json_to_post(data: dict) -> AnalogDisplayPost:
             grayscale=data["grayscale"],
             timestamp=data["timestamp"],
             sprocket=data["sprocket"],
-            low_url=data["images"][0]["url"],
-            low_width=data["images"][0]["width"],
-            low_height=data["images"][0]["height"],
-            med_url=data["images"][1]["url"],
-            med_width=data["images"][1]["width"],
-            med_height=data["images"][1]["height"],
-            high_url=data["images"][2]["url"],
-            high_width=data["images"][2]["width"],
-            high_height=data["images"][2]["height"],
-            raw_url=data["images"][3]["url"],
-            raw_width=data["images"][3]["width"],
-            raw_height=data["images"][3]["height"],
+            low_url=images[0]["url"],
+            low_width=images[0]["width"],
+            low_height=images[0]["height"],
+            med_url=images[1]["url"],
+            med_width=images[1]["width"],
+            med_height=images[1]["height"],
+            high_url=images[2]["url"],
+            high_width=images[2]["width"],
+            high_height=images[2]["height"],
+            raw_url=images[3]["url"],
+            raw_width=images[3]["width"],
+            raw_height=images[3]["height"],
+            c1_hex=colors[0]["hex"],
+            c1_css=colors[0]["css"],
+            c1_percent=colors[0]["percent"],
+            c2_hex=colors[0]["hex"],
+            c2_css=colors[0]["css"],
+            c2_percent=colors[0]["percent"],
+            c3_hex=colors[0]["hex"],
+            c3_css=colors[0]["css"],
+            c3_percent=colors[0]["percent"],
+            c4_hex=colors[0]["hex"],
+            c4_css=colors[0]["css"],
+            c4_percent=colors[0]["percent"],
+            c5_hex=colors[0]["hex"],
+            c5_css=colors[0]["css"],
+            c5_percent=colors[0]["percent"],
         )
     except Exception as e:
         raise Exception(f"Error unmarshalling json posts from analogdb: {e}")
@@ -125,8 +143,8 @@ def json_to_post(data: dict) -> AnalogDisplayPost:
 
 def post_to_json(post: AnalogPost):
     images = post_to_json_images(post)
+    colors = post_to_json_colors(post)
     body = {
-        "images": images,
         "title": post.title,
         "author": post.author,
         "permalink": post.permalink,
@@ -135,6 +153,8 @@ def post_to_json(post: AnalogPost):
         "grayscale": post.greyscale,
         "unix_time": post.time,
         "sprocket": post.sprocket,
+        "images": images,
+        "colors": colors,
     }
     return body
 
@@ -168,6 +188,45 @@ def post_to_json_images(post: AnalogPost) -> List[dict]:
     return [low, med, high, raw]
 
 
+def post_to_json_colors(post: AnalogPost) -> List[dict]:
+    # expected 5 colors
+    c1 = {
+        "hex": post.c1_hex,
+        "css": post.c1_css,
+        "percent": post.c1_percent,
+    }
+    c2 = {
+        "hex": post.c2_hex,
+        "css": post.c2_css,
+        "percent": post.c2_percent,
+    }
+    c3 = {
+        "hex": post.c3_hex,
+        "css": post.c3_css,
+        "percent": post.c3_percent,
+    }
+    c4 = {
+        "hex": post.c4_hex,
+        "css": post.c4_css,
+        "percent": post.c4_percent,
+    }
+    c5 = {
+        "hex": post.c5_hex,
+        "css": post.c5_css,
+        "percent": post.c5_percent,
+    }
+    return [c1, c2, c3, c4, c5]
+
+
+def colors_to_json(colors: List[Color]) -> List[dict]:
+    # expected 5 colors from highest to lowest percent
+    json_colors = []
+    for c in colors:
+        temp = {"hex": c.hex, "css": c.css, "percent": c.percent}
+        json_colors.append(temp)
+    return json_colors
+
+
 def patch_to_json(patch: PatchPost):
     body = {}
     if patch.score is not None:
@@ -178,6 +237,8 @@ def patch_to_json(patch: PatchPost):
         body["grayscale"] = patch.greyscale
     if patch.sprocket is not None:
         body["sprocket"] = patch.sprocket
+    if patch.colors is not None:
+        body["colors"] = colors_to_json(colors=patch.colors)
     return body
 
 
@@ -186,6 +247,9 @@ def new_patch(
     nsfw: Optional[bool] = None,
     greyscale: Optional[bool] = None,
     sprocket: Optional[bool] = None,
+    colors: Optional[List[Color]] = None,
 ) -> PatchPost:
-    patch = PatchPost(score=score, nsfw=nsfw, greyscale=greyscale, sprocket=sprocket)
+    patch = PatchPost(
+        score=score, nsfw=nsfw, greyscale=greyscale, sprocket=sprocket, colors=colors
+    )
     return patch
