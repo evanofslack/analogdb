@@ -14,16 +14,49 @@
   justify-content: flex-start;
   width: 90vw;
   max-width: 900px;
+  margin-right: 1rem;
+  margin-left: 1rem;
+}
+
+.containerSub {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.5rem;
 }
 
 .containerAuthor {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  margin-top: 1rem;
+  justify-content: flex-start;
   color: gray;
   font-weight: 400;
   font-family: "Courier Prime", Courier, monospace;
+}
+
+.containerColors {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  height: 100%;
+}
+
+.colorSquare {
+  min-width: 3rem;
+  min-height: 3rem;
+  width: 10vw;
+  height: 10vw;
+  max-width: 4rem;
+  max-height: 4rem;
+  margin: 0.3rem;
+  box-shadow: 1px 1px 8px lightgray;
+}
+
+.colorSquare:hover {
+  box-shadow: 2px 2px 16px lightgray;
+  transform: scale(1.035);
 }
 
 .title {
@@ -51,4 +84,10 @@
 }
 .id:hover {
   text-decoration: underline;
+}
+
+@media screen and (max-width: 720px) {
+  .colorSquare {
+    margin: 0.15rem;
+  }
 }
