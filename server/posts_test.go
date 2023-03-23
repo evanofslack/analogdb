@@ -552,10 +552,16 @@ func makeTestCreatePost(valid bool) analogdb.CreatePost {
 		testImages = append(testImages, testImage, testImage)
 	}
 
+	testColor := analogdb.Color{
+		Hex:     "#000000",
+		Css:     "Black",
+		Percent: 0.2500000,
+	}
+	fiveColors := []analogdb.Color{testColor, testColor, testColor, testColor, testColor}
+
 	testTitle := "test title"
 
 	createPost := analogdb.CreatePost{
-		Images:    testImages,
 		Title:     testTitle,
 		Author:    "test author",
 		Permalink: "test.permalink.com",
@@ -564,6 +570,8 @@ func makeTestCreatePost(valid bool) analogdb.CreatePost {
 		Grayscale: false,
 		Time:      0,
 		Sprocket:  false,
+		Images:    testImages,
+		Colors:    fiveColors,
 	}
 
 	return createPost

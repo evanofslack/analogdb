@@ -164,8 +164,8 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 	query :=
 		`
 	INSERT INTO pictures
-	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight, c1_hex, c1_css, c1_percent, c2_hex, c2_css, c2_percent, c3_hex, c3_css, c3_percent, c4_hex, c4_css, c4_percent, c5_hex, c5_css, c5_percent)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
 	ON CONFLICT (permalink) DO NOTHING
 	RETURNING id
 	`
@@ -199,7 +199,22 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 		create.medHeight,
 		create.highUrl,
 		create.highWidth,
-		create.highHeight).Scan(&id)
+		create.highHeight,
+		create.c1_hex,
+		create.c1_css,
+		create.c1_percent,
+		create.c2_hex,
+		create.c2_css,
+		create.c2_percent,
+		create.c3_hex,
+		create.c3_css,
+		create.c3_percent,
+		create.c4_hex,
+		create.c4_css,
+		create.c4_percent,
+		create.c5_hex,
+		create.c5_css,
+		create.c5_percent).Scan(&id)
 
 	if err != nil {
 		return nil, err
@@ -213,7 +228,6 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 
 	// convert the CreatePost to a DisplayPost for return.
 	displayPost := analogdb.DisplayPost{
-		Images:    post.Images,
 		Title:     post.Title,
 		Author:    post.Author,
 		Permalink: post.Permalink,
@@ -222,6 +236,8 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 		Grayscale: post.Grayscale,
 		Time:      post.Time,
 		Sprocket:  post.Sprocket,
+		Images:    post.Images,
+		Colors:    post.Colors,
 	}
 
 	createdPost := &analogdb.Post{
@@ -371,7 +387,7 @@ func deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 
 func allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 	query := `
-			SELECT id FROM pictures`
+			SELECT id FROM pictures ORDER BY id ASC`
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -588,6 +604,18 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	high := p.Images[2]
 	raw := p.Images[3]
 
+	if len(p.Colors) != 5 {
+		fmt.Println(p.Colors)
+		fmt.Println(len(p.Colors))
+		fmt.Println("HEREERERERE")
+		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Unable to create post, expected 5 colors"}
+	}
+	c1 := p.Colors[0]
+	c2 := p.Colors[1]
+	c3 := p.Colors[2]
+	c4 := p.Colors[3]
+	c5 := p.Colors[4]
+
 	post := &rawCreatePost{
 		url:        raw.Url,
 		title:      p.Title,
@@ -609,6 +637,21 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		highUrl:    high.Url,
 		highWidth:  high.Width,
 		highHeight: high.Height,
+		c1_hex:     c1.Hex,
+		c1_css:     c1.Css,
+		c1_percent: c1.Percent,
+		c2_hex:     c2.Hex,
+		c2_css:     c2.Css,
+		c2_percent: c2.Percent,
+		c3_hex:     c3.Hex,
+		c3_css:     c3.Css,
+		c3_percent: c3.Percent,
+		c4_hex:     c4.Hex,
+		c4_css:     c4.Css,
+		c4_percent: c4.Percent,
+		c5_hex:     c5.Hex,
+		c5_css:     c5.Css,
+		c5_percent: c5.Percent,
 	}
 	return post, nil
 
@@ -631,7 +674,6 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	c5 := analogdb.Color{Hex: p.c5_hex, Css: p.c5_css, Percent: p.c5_percent}
 	colors := []analogdb.Color{c1, c2, c3, c4, c5}
 
-	// assemble the post
 	post := &analogdb.Post{Id: p.id,
 		DisplayPost: analogdb.DisplayPost{Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket, Images: images, Colors: colors}}
 	return post, nil

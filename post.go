@@ -21,6 +21,7 @@ type Color struct {
 // as well as attributes about the image
 type CreatePost struct {
 	Images    []Image `json:"images"`
+	Colors    []Color `json:"colors"`
 	Title     string  `json:"title"`
 	Author    string  `json:"author"`
 	Permalink string  `json:"permalink"`
