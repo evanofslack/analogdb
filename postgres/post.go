@@ -280,21 +280,6 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 				highUrl,
 				highWidth,
 				highHeight,
-				c1_hex,
-				c1_css,
-				c1_percent,
-				c2_hex,
-				c2_css,
-				c2_percent,
-				c3_hex,
-				c3_css,
-				c3_percent,
-				c4_hex,
-				c4_css,
-				c4_percent,
-				c5_hex,
-				c5_css,
-				c5_percent,
 				COUNT(*) OVER()
 			FROM pictures ` + where + order + limit
 	rows, err := tx.QueryContext(ctx, query, args...)
@@ -733,21 +718,6 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		&p.rawCreatePost.highUrl,
 		&p.rawCreatePost.highWidth,
 		&p.rawCreatePost.highHeight,
-		&p.rawCreatePost.c1_hex,
-		&p.rawCreatePost.c1_css,
-		&p.rawCreatePost.c1_percent,
-		&p.rawCreatePost.c2_hex,
-		&p.rawCreatePost.c2_css,
-		&p.rawCreatePost.c2_percent,
-		&p.rawCreatePost.c3_hex,
-		&p.rawCreatePost.c3_css,
-		&p.rawCreatePost.c3_percent,
-		&p.rawCreatePost.c4_hex,
-		&p.rawCreatePost.c4_css,
-		&p.rawCreatePost.c4_percent,
-		&p.rawCreatePost.c5_hex,
-		&p.rawCreatePost.c5_css,
-		&p.rawCreatePost.c5_percent,
 		&count); err != nil {
 		return nil, 0, err
 	}
