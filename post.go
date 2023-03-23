@@ -43,6 +43,7 @@ type DisplayPost struct {
 	Time      int     `json:"timestamp"`
 	Sprocket  bool    `json:"sprocket"`
 	Images    []Image `json:"images"`
+	Colors    []Color `json:"colors"`
 }
 
 // PatchPost is the model for patching a post.
