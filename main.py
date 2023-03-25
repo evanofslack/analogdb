@@ -4,7 +4,8 @@ import schedule
 from loguru import logger
 
 from api import delete_from_analogdb, get_latest_links, upload_to_analogdb
-from batch import update_latest_post_colors, update_latest_post_scores
+from batch import (download_posts_comments, update_posts_colors,
+                   update_posts_keywords, update_posts_scores)
 from configuration import dependencies_from_config, init_config
 from constants import (ANALOG_POSTS, ANALOG_SUB, AWS_BUCKET, BW_POSTS, BW_SUB,
                        SPROCKET_POSTS, SPROCKET_SUB)
@@ -58,29 +59,14 @@ def scrape_sprocket(deps: Dependencies):
     scrape_posts(deps=deps, subreddit=SPROCKET_SUB, num_posts=SPROCKET_POSTS)
 
 
-def delete_post():
-    config = init_config()
-    deps = dependencies_from_config(config=config)
-    auth = deps.auth
-    delete_from_analogdb(id=99999, username=auth.username, password=auth.password)
-
-
-def update_post_score(deps: Dependencies):
-    update_latest_post_scores(
-        reddit=deps.reddit_client,
-        count=100,
-        username=deps.auth.username,
-        password=deps.auth.password,
+def delete_post(deps: Dependencies):
+    delete_from_analogdb(
+        id=6404, username=deps.auth.username, password=deps.auth.password
     )
 
 
-def update_post_colors(deps: Dependencies):
-    update_latest_post_colors(
-        reddit=deps.reddit_client,
-        count=5100,
-        username=deps.auth.username,
-        password=deps.auth.password,
-    )
+def update_scores(deps: Dependencies):
+    update_posts_scores(deps=deps, count=100)
 
 
 def run_schedule(deps: Dependencies):
@@ -91,7 +77,7 @@ def run_schedule(deps: Dependencies):
     schedule.every(4).hours.do(scrape_analog, deps=deps)
 
     # update latest 100 post scores each day
-    schedule.every().day.do(update_post_score, deps=deps)
+    schedule.every().day.do(update_scores, deps=deps)
 
     schedule.run_all()
 
@@ -110,7 +96,9 @@ def main():
     config = init_config()
     deps = dependencies_from_config(config=config)
 
-    run_schedule(deps=deps)
+    # run_schedule(deps=deps)
+    # download_post_comments(deps=deps)
+    update_posts_keywords(deps=deps, count=10, limit=10)
 
 
 if __name__ == "__main__":

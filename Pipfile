@@ -15,6 +15,8 @@ notifiers = "*"
 extcolors = "*"
 scipy = "*"
 webcolors = "*"
+spacy = "*"
+pytextrank = "*"
 
 [dev-packages]
 black = "*"

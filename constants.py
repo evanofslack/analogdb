@@ -45,3 +45,5 @@ COLOR_LIMIT = 5
 # color and 100 will group all colors into one.
 # Tolerance 0 will bypass all conversion.
 COLOR_TOLERANCE = 20
+
+BLACKLIST_KEYWORDS_PATH = "keyword_blacklist.txt"

@@ -1,30 +1,25 @@
-from typing import Callable, List
+from typing import List, Optional, Set
 
 import praw
 import requests
 from loguru import logger
 
-from api import get_latest_posts, json_to_post, new_patch, patch_to_analogdb
+from api import json_to_post, new_patch, patch_to_analogdb
+from comment import post_keywords_from_disk, write_comments_to_json
 from constants import ANALOGDB_URL
-from image_process import extract_colors, request_image, resize_image
-from models import AnalogDisplayPost
+from image_process import extract_colors, request_image
+from models import AnalogDisplayPost, Dependencies
 
 
-# takes a modifier function and applies it each post
-# in an arbitrary amount of recent posts
-def apply_to_recent_posts(
-    modifier: Callable[[praw.Reddit, AnalogDisplayPost, str, str], None],
-    count: int,
-    reddit: praw.Reddit,
-    username: str,
-    password: str,
-):
+def unlimited_posts(count: int) -> List[AnalogDisplayPost]:
     # max page size is 200
-    url = f"{ANALOGDB_URL}/posts?sort=latest&page_size={count}"
-    seen = 0
+    # url = f"{ANALOGDB_URL}/posts?sort=latest&page_size={count}"
+    url = f"{ANALOGDB_URL}/posts?sort=top&page_size={count}"
+
+    posts: List[AnalogDisplayPost] = []
 
     # loop until all pages have been queried
-    while seen < count:
+    while len(posts) < count:
         try:
             r = requests.get(url=url)
         except Exception as e:
@@ -35,21 +30,19 @@ def apply_to_recent_posts(
             raise Exception(f"Error unmarshalling json from analogdb: {e}")
 
         json_posts = data["posts"]
-
         for json_post in json_posts:
-            post = json_to_post(json_post)
-            modifier(reddit, post, username, password)
+            posts.append(json_to_post(json_post))
 
-        meta = data["meta"]
-        seen += int(meta["page_size"])
-        next_page_url = meta["next_page_url"]
+        next_page_url = data["meta"]["next_page_url"]
 
         url = f"{ANALOGDB_URL}{next_page_url}"
         if url == "":
             break
 
+    return posts
 
-def update_post_score(
+
+def _update_post_score(
     reddit: praw.Reddit, post: AnalogDisplayPost, username: str, password: str
 ):
     url = post.permalink
@@ -61,6 +54,7 @@ def update_post_score(
         logger.error(
             f"Error fetching submission with url: {post.permalink}, with error: {e}"
         )
+        return
 
     # only update the score if the new score is higher than original
     if new_score <= post.score:
@@ -74,19 +68,18 @@ def update_post_score(
     )
 
 
-def update_latest_post_scores(
-    reddit: praw.Reddit, count: int, username: str, password: str
-):
-    apply_to_recent_posts(
-        modifier=update_post_score,
-        count=count,
-        reddit=reddit,
-        username=username,
-        password=password,
-    )
+def update_posts_scores(deps: Dependencies, count: int):
+    posts = unlimited_posts(count=count)
+    for post in posts:
+        _update_post_score(
+            reddit=deps.reddit_client,
+            post=post,
+            username=deps.auth.username,
+            password=deps.auth.password,
+        )
 
 
-def update_post_colors(
+def _update_post_colors(
     reddit: praw.Reddit, post: AnalogDisplayPost, username: str, password: str
 ):
     url = post.low_url
@@ -106,13 +99,50 @@ def update_post_colors(
     )
 
 
-def update_latest_post_colors(
-    reddit: praw.Reddit, count: int, username: str, password: str
+def update_posts_colors(deps: Dependencies, count: int):
+    posts = unlimited_posts(count=count)
+    for post in posts:
+        _update_post_colors(
+            reddit=deps.reddit_client,
+            post=post,
+            username=deps.auth.username,
+            password=deps.auth.password,
+        )
+
+
+def _download_post_comments(reddit: praw.Reddit, post: AnalogDisplayPost):
+    try:
+        write_comments_to_json(reddit=reddit, post=post)
+    except Exception as e:
+        logger.info(
+            f"Error getting post comments for {post.permalink}, with error: {e}"
+        )
+
+    logger.info(f"saved post comments to comments/{post.id}.json")
+
+
+def download_posts_comments(deps: Dependencies, count: int):
+    posts = unlimited_posts(count=count)
+    for post in posts:
+        _download_post_comments(reddit=deps.reddit_client, post=post)
+
+
+def _update_post_keywords(
+    post: AnalogDisplayPost,
+    limit: Optional[int] = None,
+    blacklist: Optional[Set[str]] = None,
 ):
-    apply_to_recent_posts(
-        modifier=update_post_colors,
-        count=count,
-        reddit=reddit,
-        username=username,
-        password=password,
-    )
+    try:
+        keywords = post_keywords_from_disk(post=post, limit=limit, blacklist=blacklist)
+        print(post.title)
+        for kw in keywords:
+            print(kw.word, kw.weight)
+
+    except Exception as e:
+        logger.info(f"Error reading json post comments for {post.id}, with error: {e}")
+
+
+def update_posts_keywords(deps: Dependencies, count: int, limit: Optional[int] = None):
+    posts = unlimited_posts(count=count)
+    for post in posts:
+        _update_post_keywords(post=post, limit=limit, blacklist=deps.blacklist)

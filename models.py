@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Set
 
 import boto3
 import praw
@@ -18,8 +18,17 @@ class RedditPost:
     score: int
     nsfw: bool
     greyscale: bool
-    time: float
+    time: int
     sprocket: bool
+
+
+@dataclass
+class RedditComment:
+    body: str
+    score: int
+    author: str
+    time: int
+    permalink: str
 
 
 @dataclass
@@ -31,7 +40,7 @@ class AnalogPost:
     score: int
     nsfw: bool
     greyscale: bool
-    time: float
+    time: int
     width: int
     height: int
     sprocket: bool
@@ -111,6 +120,12 @@ class AnalogDisplayPost:
 
 
 @dataclass
+class AnalogKeyword:
+    word: str
+    weight: float
+
+
+@dataclass
 class CloudfrontImage:
     url: str
     width: int
@@ -171,3 +186,4 @@ class Dependencies:
     s3_client: boto3.session.Session
     reddit_client: praw.Reddit
     auth: AuthCreds
+    blacklist: Set[str]
