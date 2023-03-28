@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS pictures(
-   ids serial PRIMARY KEY,
+   id serial PRIMARY KEY,
    url text UNIQUE NOT NULL,
    title text,
    author text,
