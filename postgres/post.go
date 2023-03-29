@@ -16,41 +16,43 @@ var _ analogdb.PostService = (*PostService)(nil)
 
 // rawPostCreate corresponds to the columns as a post is inserted in DB
 type rawCreatePost struct {
-	url        string
-	title      string
-	author     string
-	permalink  string
-	score      int
-	nsfw       bool
-	grayscale  bool
-	time       int
-	width      int
-	height     int
-	sprocket   bool
-	lowUrl     string
-	lowWidth   int
-	lowHeight  int
-	medUrl     string
-	medWidth   int
-	medHeight  int
-	highUrl    string
-	highWidth  int
-	highHeight int
-	c1_hex     string
-	c1_css     string
-	c1_percent float64
-	c2_hex     string
-	c2_css     string
-	c2_percent float64
-	c3_hex     string
-	c3_css     string
-	c3_percent float64
-	c4_hex     string
-	c4_css     string
-	c4_percent float64
-	c5_hex     string
-	c5_css     string
-	c5_percent float64
+	url              string
+	title            string
+	author           string
+	permalink        string
+	score            int
+	nsfw             bool
+	grayscale        bool
+	time             int
+	width            int
+	height           int
+	sprocket         bool
+	lowUrl           string
+	lowWidth         int
+	lowHeight        int
+	medUrl           string
+	medWidth         int
+	medHeight        int
+	highUrl          string
+	highWidth        int
+	highHeight       int
+	c1_hex           string
+	c1_css           string
+	c1_percent       float64
+	c2_hex           string
+	c2_css           string
+	c2_percent       float64
+	c3_hex           string
+	c3_css           string
+	c3_percent       float64
+	c4_hex           string
+	c4_css           string
+	c4_percent       float64
+	c5_hex           string
+	c5_css           string
+	c5_percent       float64
+	keywords         string
+	keywords_percent string
 }
 
 // rawPost corresponds to the columns as a post is selected from the DB
@@ -255,48 +257,53 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 	}
 
 	where, args := filterToWhere(filter)
+	groupby := ` GROUP BY p.id`
 	order := filterToOrder(filter)
 	limit := formatLimit(filter)
 	query := `
 			SELECT
-				id,
-				url,
-				title,
-				author,
-				permalink,
-				score,
-				nsfw,
-				greyscale,
-				time,
-				width,
-				height,
-				sprocket,
-				lowUrl,
-				lowWidth,
-				lowHeight,
-				medUrl,
-				medWidth,
-				medHeight,
-				highUrl,
-				highWidth,
-				highHeight,
-				c1_hex,
-				c1_css,
-				c1_percent,
-				c2_hex,
-				c2_css,
-				c2_percent,
-				c3_hex,
-				c3_css,
-				c3_percent,
-				c4_hex,
-				c4_css,
-				c4_percent,
-				c5_hex,
-				c5_css,
-				c5_percent,
+				p.id,
+				p.url,
+				p.title,
+				p.author,
+				p.permalink,
+				p.score,
+				p.nsfw,
+				p.greyscale,
+				p.time,
+				p.width,
+				p.height,
+				p.sprocket,
+				p.lowUrl,
+				p.lowWidth,
+				p.lowHeight,
+				p.medUrl,
+				p.medWidth,
+				p.medHeight,
+				p.highUrl,
+				p.highWidth,
+				p.highHeight,
+				p.c1_hex,
+				p.c1_css,
+				p.c1_percent,
+				p.c2_hex,
+				p.c2_css,
+				p.c2_percent,
+				p.c3_hex,
+				p.c3_css,
+				p.c3_percent,
+				p.c4_hex,
+				p.c4_css,
+				p.c4_percent,
+				p.c5_hex,
+				p.c5_css,
+				p.c5_percent,
+				STRING_AGG(k.word, ',' ORDER BY k.percent DESC) as keywords,
+				ARRAY_AGG(k.percent, ORDER BY k.percent DESC) as keywords,
 				COUNT(*) OVER()
-			FROM pictures ` + where + order + limit
+			FROM pictures p
+			LEFT OUTER JOIN keywords k ON (k.post_id = p.id)` + where + groupby + order + limit
+
 	rows, err := tx.QueryContext(ctx, query, args...)
 
 	if err != nil {
@@ -748,6 +755,7 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		&p.rawCreatePost.c5_hex,
 		&p.rawCreatePost.c5_css,
 		&p.rawCreatePost.c5_percent,
+		&p.rawCreatePost.keywords,
 		&count); err != nil {
 		return nil, 0, err
 	}
