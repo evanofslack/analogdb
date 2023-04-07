@@ -25,9 +25,6 @@ type Keyword struct {
 // This includes info from the original reddit post
 // as well as attributes about the image
 type CreatePost struct {
-	Images    []Image   `json:"images"`
-	Colors    []Color   `json:"colors"`
-	Keywords  []Keyword `json:"keywords"`
 	Title     string    `json:"title"`
 	Author    string    `json:"author"`
 	Permalink string    `json:"permalink"`
@@ -36,6 +33,9 @@ type CreatePost struct {
 	Grayscale bool      `json:"grayscale"`
 	Time      int       `json:"unix_time"`
 	Sprocket  bool      `json:"sprocket"`
+	Images    []Image   `json:"images"`
+	Colors    []Color   `json:"colors"`
+	Keywords  []Keyword `json:"keywords"`
 }
 
 // DisplayPost is the model for displaying a post.

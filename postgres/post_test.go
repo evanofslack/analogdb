@@ -333,6 +333,9 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 		fiveColors := []analogdb.Color{testColor, testColor, testColor, testColor, testColor}
 
+		keyword := analogdb.Keyword{Word: "keyword", Percent: 0.1}
+		keywords := []analogdb.Keyword{keyword, keyword, keyword}
+
 		testTitle := "test title"
 
 		createPost := analogdb.CreatePost{
@@ -346,13 +349,14 @@ func TestCreateAndDeletePost(t *testing.T) {
 			Sprocket:  false,
 			Images:    fourImages,
 			Colors:    fiveColors,
+			Keywords:  keywords,
 		}
 
 		ctx := context.Background()
 
 		created, err := ps.CreatePost(ctx, &createPost)
 		if err != nil {
-			t.Fatal("valid post should be created")
+			t.Fatalf("valid post should be created, error: %s", err)
 		}
 
 		if created.Title != testTitle {
@@ -360,7 +364,7 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 
 		if err := ps.DeletePost(ctx, created.Id); err != nil {
-			t.Fatal("unable to delete post created to test create post")
+			t.Fatalf("unable to delete post created to test create post, error: %s", err)
 		}
 	})
 

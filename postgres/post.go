@@ -223,12 +223,6 @@ func insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*in
 		return nil, err
 	}
 
-	err = tx.Commit()
-
-	if err != nil {
-		return nil, err
-	}
-
 	return &id, nil
 }
 
@@ -249,14 +243,15 @@ func insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 	VALUES `
 
 	for _, kw := range keywords {
-		inserts = append(inserts, fmt.Sprint("($%d, $%d, $%d),", first, second, third))
+		inserts = append(inserts, fmt.Sprintf("($%d, $%d, $%d)", first, second, third))
 		vals = append(vals, kw.Word, kw.Percent, postID)
-		first += 1
-		second += 1
-		third += 1
+		first += 3
+		second += 3
+		third += 3
 	}
 
 	query += strings.Join(inserts, ",")
+	fmt.Println(query)
 	stmt, err := tx.PrepareContext(ctx, query)
 
 	if err != nil {
@@ -271,11 +266,6 @@ func insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 		return err
 	}
 
-	err = tx.Commit()
-
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -286,7 +276,16 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 		return nil, err
 	}
 
-	err = insertKeywords(ctx, tx, post.Keywords, *id)
+	// insert keywords if they are provided
+	if len(post.Keywords) != 0 {
+		err = insertKeywords(ctx, tx, post.Keywords, *id)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// commit transaction if both inserts are ok
+	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
@@ -485,16 +484,16 @@ func filterToOrder(filter *analogdb.PostFilter) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
 		case time:
-			return " ORDER BY time DESC"
+			return " ORDER BY p.time DESC"
 		case score:
-			return " ORDER BY score DESC"
+			return " ORDER BY p.score DESC"
 		case random:
 			if seed := filter.Seed; seed != nil {
-				return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", *seed)
+				return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", *seed)
 			} else {
 				newSeed := seedGenerator()
 				filter.Seed = &newSeed
-				return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", newSeed)
+				return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", newSeed)
 			}
 		}
 	}
@@ -684,6 +683,11 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	c4 := p.Colors[3]
 	c5 := p.Colors[4]
 
+	// we don't actually use these when creating the post here
+	// keywords are handled with seperate function
+	words := NullString{}
+	percents := NullString{}
+
 	post := &rawCreatePost{
 		url:        raw.Url,
 		title:      p.Title,
@@ -720,6 +724,8 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		c5_hex:     c5.Hex,
 		c5_css:     c5.Css,
 		c5_percent: c5.Percent,
+		words:      words,
+		percents:   percents,
 	}
 	return post, nil
 
@@ -776,35 +782,6 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	post := &analogdb.Post{Id: p.id,
 		DisplayPost: analogdb.DisplayPost{Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket, Images: images, Colors: colors, Keywords: keywords}}
 	return post, nil
-}
-
-func scanRowToRawPost(rows *sql.Rows) (*rawPost, error) {
-	var p rawPost
-	if err := rows.Scan(
-		&p.id,
-		&p.rawCreatePost.url,
-		&p.rawCreatePost.title,
-		&p.rawCreatePost.author,
-		&p.rawCreatePost.permalink,
-		&p.rawCreatePost.score,
-		&p.rawCreatePost.nsfw,
-		&p.rawCreatePost.grayscale,
-		&p.rawCreatePost.time,
-		&p.rawCreatePost.width,
-		&p.rawCreatePost.height,
-		&p.rawCreatePost.sprocket,
-		&p.rawCreatePost.lowUrl,
-		&p.rawCreatePost.lowWidth,
-		&p.rawCreatePost.lowHeight,
-		&p.rawCreatePost.medUrl,
-		&p.rawCreatePost.medWidth,
-		&p.rawCreatePost.medHeight,
-		&p.rawCreatePost.highUrl,
-		&p.rawCreatePost.highWidth,
-		&p.rawCreatePost.highHeight); err != nil {
-		return nil, err
-	}
-	return &p, nil
 }
 
 func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
