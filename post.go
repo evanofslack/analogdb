@@ -16,46 +16,54 @@ type Color struct {
 	Percent float64 `json:"percent"`
 }
 
+type Keyword struct {
+	Word    string  `json:"word"`
+	Percent float64 `json:"percent"`
+}
+
 // CreatePost is the model for creating a post.
 // This includes info from the original reddit post
 // as well as attributes about the image
 type CreatePost struct {
-	Images    []Image `json:"images"`
-	Colors    []Color `json:"colors"`
-	Title     string  `json:"title"`
-	Author    string  `json:"author"`
-	Permalink string  `json:"permalink"`
-	Score     int     `json:"upvotes"`
-	Nsfw      bool    `json:"nsfw"`
-	Grayscale bool    `json:"grayscale"`
-	Time      int     `json:"unix_time"`
-	Sprocket  bool    `json:"sprocket"`
+	Images    []Image   `json:"images"`
+	Colors    []Color   `json:"colors"`
+	Keywords  []Keyword `json:"keywords"`
+	Title     string    `json:"title"`
+	Author    string    `json:"author"`
+	Permalink string    `json:"permalink"`
+	Score     int       `json:"upvotes"`
+	Nsfw      bool      `json:"nsfw"`
+	Grayscale bool      `json:"grayscale"`
+	Time      int       `json:"unix_time"`
+	Sprocket  bool      `json:"sprocket"`
 }
 
 // DisplayPost is the model for displaying a post.
 // Renames some of the json keys.
 type DisplayPost struct {
-	Title     string  `json:"title"`
-	Author    string  `json:"author"`
-	Permalink string  `json:"permalink"`
-	Score     int     `json:"score"`
-	Nsfw      bool    `json:"nsfw"`
-	Grayscale bool    `json:"grayscale"`
-	Time      int     `json:"timestamp"`
-	Sprocket  bool    `json:"sprocket"`
-	Images    []Image `json:"images"`
-	Colors    []Color `json:"colors"`
+	Title     string    `json:"title"`
+	Author    string    `json:"author"`
+	Permalink string    `json:"permalink"`
+	Score     int       `json:"score"`
+	Nsfw      bool      `json:"nsfw"`
+	Grayscale bool      `json:"grayscale"`
+	Time      int       `json:"timestamp"`
+	Sprocket  bool      `json:"sprocket"`
+	Images    []Image   `json:"images"`
+	Colors    []Color   `json:"colors"`
+	Keywords  []Keyword `json:"keywords,omitempty"`
 }
 
 // PatchPost is the model for patching a post.
 // Intentionally only allow certain fields to be updated.
 // Uses pointers and omit empty to allow partial unmarshalling
 type PatchPost struct {
-	Score     *int     `json:"upvotes,omitempty"`
-	Nsfw      *bool    `json:"nsfw,omitempty"`
-	Grayscale *bool    `json:"grayscale,omitempty"`
-	Sprocket  *bool    `json:"sprocket,omitempty"`
-	Colors    *[]Color `json:"colors,omitempty"`
+	Score     *int       `json:"upvotes,omitempty"`
+	Nsfw      *bool      `json:"nsfw,omitempty"`
+	Grayscale *bool      `json:"grayscale,omitempty"`
+	Sprocket  *bool      `json:"sprocket,omitempty"`
+	Colors    *[]Color   `json:"colors,omitempty"`
+	Keywords  *[]Keyword `json:"keywords"`
 }
 
 // Post is the model of a returned post
