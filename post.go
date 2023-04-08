@@ -17,8 +17,8 @@ type Color struct {
 }
 
 type Keyword struct {
-	Word    string  `json:"word"`
-	Percent float64 `json:"percent"`
+	Word   string  `json:"word"`
+	Weight float64 `json:"weight"`
 }
 
 // CreatePost is the model for creating a post.

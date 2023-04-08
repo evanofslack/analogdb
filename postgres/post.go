@@ -53,7 +53,7 @@ type rawCreatePost struct {
 	c5_css     string
 	c5_percent float64
 	words      NullString
-	percents   NullString
+	weights    NullString
 }
 
 // rawPost corresponds to the columns as a post is selected from the DB
@@ -239,12 +239,12 @@ func insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 	query :=
 		`
 	INSERT INTO keywords
-	(word, percent, post_id)
+	(word, weight, post_id)
 	VALUES `
 
 	for _, kw := range keywords {
 		inserts = append(inserts, fmt.Sprintf("($%d, $%d, $%d)", first, second, third))
-		vals = append(vals, kw.Word, kw.Percent, postID)
+		vals = append(vals, kw.Word, kw.Weight, postID)
 		first += 3
 		second += 3
 		third += 3
@@ -686,7 +686,7 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	// we don't actually use these when creating the post here
 	// keywords are handled with seperate function
 	words := NullString{}
-	percents := NullString{}
+	weights := NullString{}
 
 	post := &rawCreatePost{
 		url:        raw.Url,
@@ -725,7 +725,7 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		c5_css:     c5.Css,
 		c5_percent: c5.Percent,
 		words:      words,
-		percents:   percents,
+		weights:    weights,
 	}
 	return post, nil
 
@@ -749,34 +749,34 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	colors := []analogdb.Color{c1, c2, c3, c4, c5}
 
 	// grab the keywords
-	var words, percents []string
+	var words, weights []string
 	var keywords = []analogdb.Keyword{}
 
 	// check for null
 	if p.words.Valid {
 		words = strings.Split(p.words.String, ",")
 	}
-	if p.percents.Valid {
+	if p.weights.Valid {
 		// remove '{}' from postgres array then split on commas
-		percents = strings.Split(strings.Trim(p.percents.String, "{}"), ",")
+		weights = strings.Split(strings.Trim(p.weights.String, "{}"), ",")
 
 	}
 
 	// iterate over keywords or percents, whichever is smaller
 	// technically should both be the same size but we can't be sure
 	var iter []string
-	if len(percents) <= len(words) {
-		iter = percents
+	if len(weights) <= len(words) {
+		iter = weights
 	} else {
 		iter = words
 	}
 
 	for i := range iter {
-		percent, err := strconv.ParseFloat(percents[i], 64)
+		weight, err := strconv.ParseFloat(weights[i], 64)
 		if err != nil {
-			percent = 0.0
+			weight = 0.0
 		}
-		keywords = append(keywords, analogdb.Keyword{Word: words[i], Percent: percent})
+		keywords = append(keywords, analogdb.Keyword{Word: words[i], Weight: weight})
 	}
 
 	post := &analogdb.Post{Id: p.id,
@@ -825,7 +825,7 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		&p.rawCreatePost.c5_css,
 		&p.rawCreatePost.c5_percent,
 		&p.rawCreatePost.words,
-		&p.rawCreatePost.percents,
+		&p.rawCreatePost.weights,
 		&count); err != nil {
 		return nil, 0, err
 	}

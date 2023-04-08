@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS keywords(
 id SERIAL PRIMARY KEY,
 word VARCHAR(255) NOT NULL,
-percent NUMERIC(9, 8),
+weight NUMERIC(9, 8),
 post_id INT NOT NULL,
 CONSTRAINT fk_post_id
 	FOREIGN KEY(post_id)
