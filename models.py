@@ -32,6 +32,19 @@ class RedditComment:
 
 
 @dataclass
+class AnalogKeyword:
+    word: str
+    weight: float
+
+
+@dataclass
+class Color:
+    hex: str
+    css: str
+    percent: float
+
+
+@dataclass
 class AnalogPost:
     url: str
     title: str
@@ -70,6 +83,8 @@ class AnalogPost:
     c5_hex: str
     c5_css: str
     c5_percent: float
+
+    keywords: List[AnalogKeyword]
 
 
 @dataclass
@@ -120,23 +135,10 @@ class AnalogDisplayPost:
 
 
 @dataclass
-class AnalogKeyword:
-    word: str
-    weight: float
-
-
-@dataclass
 class CloudfrontImage:
     url: str
     width: int
     height: int
-
-
-@dataclass
-class Color:
-    hex: str
-    css: str
-    percent: float
 
 
 @dataclass
@@ -146,6 +148,7 @@ class PatchPost:
     greyscale: Optional[bool]
     sprocket: Optional[bool]
     colors: Optional[List[Color]]
+    keywords: Optional[List[Keyword]]
 
 
 @dataclass

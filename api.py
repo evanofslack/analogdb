@@ -6,7 +6,8 @@ from loguru import logger
 from requests.auth import HTTPBasicAuth
 
 from constants import ANALOGDB_URL
-from models import AnalogDisplayPost, AnalogPost, Color, PatchPost
+from models import (AnalogDisplayPost, AnalogKeyword, AnalogPost, Color,
+                    PatchPost)
 
 
 def get_latest_posts(count: int) -> List[AnalogDisplayPost]:
@@ -144,6 +145,7 @@ def json_to_post(data: dict) -> AnalogDisplayPost:
 def post_to_json(post: AnalogPost):
     images = post_to_json_images(post)
     colors = post_to_json_colors(post)
+    keywords = keywords_to_json(post.keywords)
     body = {
         "title": post.title,
         "author": post.author,
@@ -155,6 +157,7 @@ def post_to_json(post: AnalogPost):
         "sprocket": post.sprocket,
         "images": images,
         "colors": colors,
+        "keywords": keywords,
     }
     return body
 
@@ -218,6 +221,15 @@ def post_to_json_colors(post: AnalogPost) -> List[dict]:
     return [c1, c2, c3, c4, c5]
 
 
+def keywords_to_json(keywords: List[AnalogKeyword]) -> List[dict]:
+
+    json_keywords: List[dict] = []
+    for kw in keywords:
+        json_keywords.append({"word": kw.word, "weight": kw.weight})
+
+    return json_keywords
+
+
 def colors_to_json(colors: List[Color]) -> List[dict]:
     # expected 5 colors from highest to lowest percent
     json_colors = []
@@ -239,6 +251,8 @@ def patch_to_json(patch: PatchPost):
         body["sprocket"] = patch.sprocket
     if patch.colors is not None:
         body["colors"] = colors_to_json(colors=patch.colors)
+    if patch.keywords is not None:
+        body["keywords"] = keywords_to_json(keywords=patch.keywords)
     return body
 
 
@@ -248,8 +262,14 @@ def new_patch(
     greyscale: Optional[bool] = None,
     sprocket: Optional[bool] = None,
     colors: Optional[List[Color]] = None,
+    keywords: Optional[List[AnalogKeyword]] = None,
 ) -> PatchPost:
     patch = PatchPost(
-        score=score, nsfw=nsfw, greyscale=greyscale, sprocket=sprocket, colors=colors
+        score=score,
+        nsfw=nsfw,
+        greyscale=greyscale,
+        sprocket=sprocket,
+        colors=colors,
+        keywords=keywords,
     )
     return patch

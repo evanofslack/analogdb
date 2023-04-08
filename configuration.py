@@ -70,8 +70,8 @@ def load_blacklist(filepath) -> Set[str]:
 def dependencies_from_config(config: Config) -> Dependencies:
     deps = Dependencies(
         s3_client=init_s3_client(creds=config.aws),
+        blacklist=load_blacklist(filepath=BLACKLIST_KEYWORDS_PATH),
         reddit_client=init_reddit_client(creds=config.reddit),
         auth=config.auth,
-        blacklist=load_blacklist(filepath=BLACKLIST_KEYWORDS_PATH),
     )
     return deps
