@@ -251,7 +251,6 @@ func insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 	}
 
 	query += strings.Join(inserts, ",")
-	fmt.Println(query)
 	stmt, err := tx.PrepareContext(ctx, query)
 
 	if err != nil {
@@ -260,12 +259,26 @@ func insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 
 	defer stmt.Close()
 
-	_, err = stmt.Exec(vals...)
+	_, err = stmt.ExecContext(ctx, vals...)
 
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+// deleteKeywords deletes all keywords for a given post
+func deleteKeywords(ctx context.Context, tx *sql.Tx, postID int64) error {
+
+	query :=
+		"DELETE FROM keywords WHERE post_id = $1"
+
+	rows, err := tx.QueryContext(ctx, query, postID)
+	defer rows.Close()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -361,8 +374,8 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 				p.c5_hex,
 				p.c5_css,
 				p.c5_percent,
-				STRING_AGG(k.word, ',' ORDER BY k.percent DESC) as keywords,
-				ARRAY_AGG(k.percent ORDER BY k.percent DESC) as percents,
+				STRING_AGG(k.word, ',' ORDER BY k.weight DESC) as keywords,
+				ARRAY_AGG(k.weight ORDER BY k.weight DESC) as weights,
 				COUNT(*) OVER()
 			FROM pictures p
 			LEFT OUTER JOIN keywords k ON (k.post_id = p.id)` + where + groupby + order + limit
@@ -404,6 +417,47 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 
 func patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
 
+	if patch.Nsfw != nil || patch.Sprocket != nil || patch.Grayscale != nil || patch.Score != nil || patch.Colors != nil {
+		if err := updatePost(ctx, tx, patch, id); err != nil {
+			return err
+		}
+
+	}
+	if patch.Keywords != nil {
+		if err := updateKeywords(ctx, tx, *patch.Keywords, id); err != nil {
+			return err
+		}
+	}
+
+	err := tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword, id int) error {
+
+	// first delete all keywords associated with post
+	if err := deleteKeywords(ctx, tx, int64(id)); err != nil {
+		return err
+	}
+
+	// if we have no keywords to insert, just return early
+	if len(keywords) == 0 {
+		return nil
+	}
+
+	// otherwise insert all new keywords
+	if err := insertKeywords(ctx, tx, keywords, int64(id)); err != nil {
+		return err
+	}
+	return nil
+}
+
+func updatePost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+
 	set, args, err := patchToSet(patch)
 	if err != nil {
 		return err
@@ -419,14 +473,7 @@ func patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id in
 	if err != nil {
 		return err
 	}
-
 	defer rows.Close()
-
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

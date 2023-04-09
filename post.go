@@ -63,7 +63,7 @@ type PatchPost struct {
 	Grayscale *bool      `json:"grayscale,omitempty"`
 	Sprocket  *bool      `json:"sprocket,omitempty"`
 	Colors    *[]Color   `json:"colors,omitempty"`
-	Keywords  *[]Keyword `json:"keywords"`
+	Keywords  *[]Keyword `json:"keywords,omitempty"`
 }
 
 // Post is the model of a returned post
