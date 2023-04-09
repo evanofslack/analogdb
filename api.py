@@ -59,12 +59,10 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
     code = resp.status_code
     msg = json.loads(resp.text)
     if code == 201:
-        logger.info(
-            f"created post with title: {post.title} with status code: {code} and msg: {msg}"
-        )
+        logger.info(f"created post (title: {post.title} | status: {code} | msg: {msg})")
     else:
         logger.error(
-            f"failed to create post with title: {post.title} with status code: {code} and msg: {msg}"
+            f"failed to create post (title: {post.title} | status: {code} | msg: {msg})"
         )
 
 

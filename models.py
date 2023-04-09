@@ -148,7 +148,7 @@ class PatchPost:
     greyscale: Optional[bool]
     sprocket: Optional[bool]
     colors: Optional[List[Color]]
-    keywords: Optional[List[Keyword]]
+    keywords: Optional[List[AnalogKeyword]]
 
 
 @dataclass
