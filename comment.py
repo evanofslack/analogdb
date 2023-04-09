@@ -1,5 +1,6 @@
 import json
 import os
+import string
 from collections import Counter
 from string import punctuation
 from typing import List, Optional, Set
@@ -23,10 +24,17 @@ def get_comments(reddit: praw.Reddit, url: str) -> List[RedditComment]:
     # iterate over posts comments and convert to native type
     for c in submission.comments.list():
         try:
+
+            # deleted account's comments have text but no author
+            if c.author.name is None:
+                author = "deleted"
+            else:
+                author = c.author.name
+
             comment = RedditComment(
                 body=c.body,
                 score=c.score,
-                author=f"u/{c.author.name}",
+                author=f"u/{author}",
                 time=int(c.created_utc),
                 permalink=f"{REDDIT_URL}{c.permalink}",
             )
@@ -41,6 +49,10 @@ def get_comments(reddit: praw.Reddit, url: str) -> List[RedditComment]:
 def write_comments_to_json(reddit: praw.Reddit, post: AnalogDisplayPost):
 
     filepath = f"comments/{post.id}.json"
+
+    if os.path.exists(filepath):
+        print("encountered existing downloaded file, skipping")
+        return
 
     if not os.path.exists(os.path.dirname(filepath)):
         os.makedirs(os.path.dirname(filepath))
@@ -74,12 +86,19 @@ def extract_keywords(text: str, blacklist: Optional[Set[str]] = None) -> List[st
     keywords = []
     pos_tag = ["PROPN", "ADJ", "NOUN"]
     doc = nlp(text.lower())
+    printable = set(string.printable)
 
     for token in doc:
-        if token.text in nlp.Defaults.stop_words or token.text in punctuation:
+        # no stop words
+        if token.text in nlp.Defaults.stop_words:
             continue
+        # no punctuation
         if punctuation in token.text:
             continue
+        # we dont want any non printable charecters
+        if not set(token.text).issubset(printable):
+            continue
+        # no blacklisted words
         if blacklist and token.text in blacklist:
             continue
         if token.pos_ in pos_tag:

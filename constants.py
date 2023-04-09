@@ -1,5 +1,6 @@
-AWS_BUCKET = "analog-photos"
+AWS_BUCKET_PHOTOS = "analog-photos"
 AWS_BUCKET_TEST = "analog-photos-test"
+AWS_BUCKET_COMMENTS = "analog-comments"
 
 # Define subreddit names
 ANALOG_SUB = "analog"
@@ -21,8 +22,8 @@ RAW_RES = None
 CLOUDFRONT_URL = "https://d3i73ktnzbi69i.cloudfront.net"
 
 # analogdb base url
-ANALOGDB_URL = "https://api.analogdb.com"
-# ANALOGDB_URL = "http://10.33.1.142:8080"
+# ANALOGDB_URL = "https://api.analogdb.com"
+ANALOGDB_URL = "http://10.33.1.142:8080"
 
 # reddit base url
 REDDIT_URL = "https://www.reddit.com"
@@ -35,11 +36,11 @@ VALID_CONTENT = [
     "image/gif",
 ]
 
-# Upper limit to the number of extracted
+# upper limit to the number of extracted
 # colors presented in the output.
 COLOR_LIMIT = 5
 
-# Group colors to limit the output and give a
+# group colors to limit the output and give a
 # better visual representation. Based on a
 # scale from 0 to 100. Where 0 won't group any
 # color and 100 will group all colors into one.
@@ -47,3 +48,8 @@ COLOR_LIMIT = 5
 COLOR_TOLERANCE = 20
 
 BLACKLIST_KEYWORDS_PATH = "keyword_blacklist.txt"
+
+# maximum number of keywords to store in DB
+KEYWORD_LIMIT = 10
+# only update keywords for posts older than 2 days
+KEYWORD_UPDATE_CUTOFF_DAYS = 2

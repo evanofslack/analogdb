@@ -4,14 +4,15 @@ import schedule
 from loguru import logger
 
 from api import delete_from_analogdb, get_latest_links, upload_to_analogdb
-from batch import (download_posts_comments, update_posts_colors,
-                   update_posts_keywords, update_posts_scores)
+from batch import (download_posts_comments, update_posts_keywords,
+                   update_posts_scores)
+from comment import get_comments, post_keywords
 from configuration import dependencies_from_config, init_config
-from constants import (ANALOG_POSTS, ANALOG_SUB, AWS_BUCKET, BW_POSTS, BW_SUB,
-                       SPROCKET_POSTS, SPROCKET_SUB)
+from constants import (ANALOG_POSTS, ANALOG_SUB, AWS_BUCKET_PHOTOS, BW_POSTS,
+                       BW_SUB, KEYWORD_LIMIT, SPROCKET_POSTS, SPROCKET_SUB)
 from log import init_logger
 from models import Dependencies
-from s3_upload import create_analog_post, upload_to_s3
+from s3_upload import create_analog_post, upload_images_to_s3
 from scrape import get_posts
 
 
@@ -40,8 +41,19 @@ def scrape_posts(
         logger.info(f"uploading {len(recent_posts)} new posts")
 
     for post in recent_posts:
-        cf_images = upload_to_s3(post=post, s3=s3_client, bucket=AWS_BUCKET)
-        analog_post = create_analog_post(images=cf_images, post=post)
+        # upload images to s3
+        cf_images = upload_images_to_s3(post=post, s3=s3_client)
+        # parse comments from post
+        comments = get_comments(reddit=reddit_client, url=post.permalink)
+        # get keywords from comments
+        keywords = post_keywords(
+            title=post.title,
+            comments=comments,
+            limit=KEYWORD_LIMIT,
+            blacklist=deps.blacklist,
+        )
+        # create and upload the post
+        analog_post = create_analog_post(images=cf_images, post=post, keywords=keywords)
         upload_to_analogdb(
             post=analog_post, username=auth.username, password=auth.password
         )
@@ -69,6 +81,10 @@ def update_scores(deps: Dependencies):
     update_posts_scores(deps=deps, count=100)
 
 
+def update_keywords(deps: Dependencies):
+    update_posts_keywords(deps=deps, count=1, limit=KEYWORD_LIMIT)
+
+
 def run_schedule(deps: Dependencies):
 
     # scrape posts
@@ -82,7 +98,6 @@ def run_schedule(deps: Dependencies):
     schedule.run_all()
 
     while True:
-
         try:
             schedule.run_pending()
         except Exception as e:
@@ -97,8 +112,8 @@ def main():
     deps = dependencies_from_config(config=config)
 
     # run_schedule(deps=deps)
-    # download_post_comments(deps=deps)
-    update_posts_keywords(deps=deps, count=10, limit=10)
+    # download_posts_comments(deps=deps, count=300)
+    update_keywords(deps=deps)
 
 
 if __name__ == "__main__":

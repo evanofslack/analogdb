@@ -1,3 +1,5 @@
+import datetime
+import time
 from typing import List, Optional, Set
 
 import praw
@@ -5,16 +7,17 @@ import requests
 from loguru import logger
 
 from api import json_to_post, new_patch, patch_to_analogdb
-from comment import post_keywords_from_disk, write_comments_to_json
-from constants import ANALOGDB_URL
+from comment import (get_comments, post_keywords, post_keywords_from_disk,
+                     write_comments_to_json)
+from constants import ANALOGDB_URL, KEYWORD_UPDATE_CUTOFF_DAYS
 from image_process import extract_colors, request_image
 from models import AnalogDisplayPost, Dependencies
+from s3_upload import upload_comments_to_s3
 
 
 def unlimited_posts(count: int) -> List[AnalogDisplayPost]:
     # max page size is 200
-    # url = f"{ANALOGDB_URL}/posts?sort=latest&page_size={count}"
-    url = f"{ANALOGDB_URL}/posts?sort=top&page_size={count}"
+    url = f"{ANALOGDB_URL}/posts?sort=latest&page_size={count}"
 
     posts: List[AnalogDisplayPost] = []
 
@@ -90,6 +93,7 @@ def _update_post_colors(
         colors = extract_colors(image)
     except Exception as e:
         logger.error(f"Error fetching iamge with url: {url}, with error: {e}")
+        return
 
     # update post in analogdb
     patch = new_patch(colors=colors)
@@ -129,20 +133,51 @@ def download_posts_comments(deps: Dependencies, count: int):
 
 def _update_post_keywords(
     post: AnalogDisplayPost,
+    reddit: praw.Reddit,
+    s3,
+    username: str,
+    password: str,
     limit: Optional[int] = None,
     blacklist: Optional[Set[str]] = None,
 ):
     try:
-        keywords = post_keywords_from_disk(post=post, limit=limit, blacklist=blacklist)
-        print(post.title)
-        for kw in keywords:
-            print(kw.word, kw.weight)
-
+        comments = get_comments(reddit=reddit, url=post.permalink)
     except Exception as e:
-        logger.info(f"Error reading json post comments for {post.id}, with error: {e}")
+        logger.info(f"Error getting comments for {post.id}, with error: {e}")
+        return
+
+    keywords = post_keywords(
+        title=post.title, comments=comments, limit=limit, blacklist=blacklist
+    )
+    logger.debug(post.title)
+    logger.debug([kw.word for kw in keywords])
+
+    # update post in analogdb
+    patch = new_patch(keywords=keywords)
+    patch_to_analogdb(patch, id=post.id, username=username, password=password)
+    logger.info(f"updated keywords for post {post.id}")
+
+    # upload the comments as json to s3
+    upload_comments_to_s3(s3=s3, comments=comments, filename=f"{post.id}.json")
 
 
 def update_posts_keywords(deps: Dependencies, count: int, limit: Optional[int] = None):
     posts = unlimited_posts(count=count)
+
+    # only update keywords for posts older than 2 days
+    cutoff = (
+        datetime.datetime.fromtimestamp(time.time())
+        - datetime.timedelta(days=KEYWORD_UPDATE_CUTOFF_DAYS)
+    ).timestamp()
+
     for post in posts:
-        _update_post_keywords(post=post, limit=limit, blacklist=deps.blacklist)
+        if post.timestamp < cutoff:
+            _update_post_keywords(
+                post=post,
+                reddit=deps.reddit_client,
+                s3=deps.s3_client,
+                username=deps.auth.username,
+                password=deps.auth.password,
+                limit=limit,
+                blacklist=deps.blacklist,
+            )
