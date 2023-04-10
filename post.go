@@ -114,3 +114,7 @@ type PostService interface {
 type AuthorService interface {
 	FindAuthors(ctx context.Context) ([]string, error)
 }
+
+type ScrapeService interface {
+	KeywordUpdatedPostIDs(ctx context.Context) ([]int, error)
+}

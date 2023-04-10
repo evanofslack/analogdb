@@ -174,17 +174,6 @@ func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func encodeResponse(w http.ResponseWriter, r *http.Request, status int, v any) error {
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(status)
-	enc := json.NewEncoder(w)
-	enc.SetEscapeHTML(false)
-	if err := enc.Encode(v); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (s *Server) makePostResponse(r *http.Request, filter *analogdb.PostFilter) (PostResponse, error) {
 	posts, count, err := s.PostService.FindPosts(r.Context(), filter)
 	resp := PostResponse{}

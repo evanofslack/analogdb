@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	goTime "time"
 
 	"github.com/evanofslack/analogdb"
 )
@@ -417,16 +418,22 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 
 func patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
 
+	// if the patch includes updates for the post
 	if patch.Nsfw != nil || patch.Sprocket != nil || patch.Grayscale != nil || patch.Score != nil || patch.Colors != nil {
 		if err := updatePost(ctx, tx, patch, id); err != nil {
 			return err
 		}
-
 	}
+	// if the patch includes updates for keywords
 	if patch.Keywords != nil {
 		if err := updateKeywords(ctx, tx, *patch.Keywords, id); err != nil {
 			return err
 		}
+	}
+
+	// always update the timestamp
+	if err := updatePostUpdateTimes(ctx, tx, patch, id); err != nil {
+		return err
 	}
 
 	err := tx.Commit()
@@ -444,12 +451,12 @@ func updateKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 		return err
 	}
 
-	// if we have no keywords to insert, just return early
+	// if we have no keywords to insert, just return
 	if len(keywords) == 0 {
 		return nil
 	}
 
-	// otherwise insert all new keywords
+	// then insert all new keywords
 	if err := insertKeywords(ctx, tx, keywords, int64(id)); err != nil {
 		return err
 	}
@@ -468,6 +475,27 @@ func updatePost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id i
 
 	query :=
 		"UPDATE pictures " + set + fmt.Sprintf(" WHERE id =  $%d", idPos)
+
+	rows, err := tx.QueryContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
+}
+
+func updatePostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+
+	set, args, err := patchToPostUpdatesSet(patch)
+	if err != nil {
+		return err
+	}
+
+	args = append(args, id)
+	idPos := len(args)
+
+	query :=
+		"UPDATE post_updates " + set + fmt.Sprintf(" WHERE id =  $%d", idPos)
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -702,6 +730,51 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 			args = append(args, color.Percent)
 			index += 1
 		}
+	}
+
+	// no update fields provided
+	if len(set) == 0 {
+		return "", args, fmt.Errorf("No updated fields were provided in patch")
+	}
+
+	return `SET ` + strings.Join(set, ", "), args, nil
+}
+
+func patchToPostUpdatesSet(patch *analogdb.PatchPost) (string, []any, error) {
+
+	index := 1
+	set, args := []string{}, []any{}
+	now := goTime.Now().Unix()
+
+	if score := patch.Score; score != nil {
+		set = append(set, fmt.Sprintf("score_update_time = $%d", index))
+		args = append(args, now)
+		index += 1
+	}
+	if nsfw := patch.Nsfw; nsfw != nil {
+		set = append(set, fmt.Sprintf("nsfw_update_time = $%d", index))
+		args = append(args, now)
+		index += 1
+	}
+	if grayscale := patch.Grayscale; grayscale != nil {
+		set = append(set, fmt.Sprintf("greyscale_update_time = $%d", index))
+		args = append(args, now)
+		index += 1
+	}
+	if sprocket := patch.Sprocket; sprocket != nil {
+		set = append(set, fmt.Sprintf("sprocket_update_time = $%d", index))
+		args = append(args, now)
+		index += 1
+	}
+	if color := patch.Colors; color != nil {
+		set = append(set, fmt.Sprintf("colors_update_time = $%d", index))
+		args = append(args, now)
+		index += 1
+	}
+	if keyword := patch.Keywords; keyword != nil {
+		set = append(set, fmt.Sprintf("keywords_update_time = $%d", index))
+		args = append(args, now)
+		index += 1
 	}
 
 	// no update fields provided
