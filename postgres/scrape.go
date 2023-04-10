@@ -35,7 +35,7 @@ func (s *ScrapeService) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error
 
 func keywordUpdatedPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 	query := `
-			SELECT post_id FROM post_updates WHERE keywords_update_time IS NOT NULL ORDER BY post_id ASC`
+			SELECT DISTINCT post_id FROM post_updates WHERE keywords_update_time IS NOT NULL ORDER BY post_id ASC`
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err

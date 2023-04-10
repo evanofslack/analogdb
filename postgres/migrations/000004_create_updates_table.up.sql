@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS post_updates(
    id SERIAL PRIMARY KEY,
-   post_id INT UNIQUE NOT NULL,
+   post_id INT NOT NULL,
    score_update_time integer,
    nsfw_update_time integer,
    greyscale_update_time integer,
