@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	goTime "time"
 
 	"github.com/evanofslack/analogdb"
 )
@@ -417,16 +418,30 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 
 func patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
 
+	hasPatchFields := false
+
+	// if the patch includes updates for the post
 	if patch.Nsfw != nil || patch.Sprocket != nil || patch.Grayscale != nil || patch.Score != nil || patch.Colors != nil {
+		hasPatchFields = true
 		if err := updatePost(ctx, tx, patch, id); err != nil {
 			return err
 		}
-
 	}
+	// if the patch includes updates for keywords
 	if patch.Keywords != nil {
+		hasPatchFields = true
 		if err := updateKeywords(ctx, tx, *patch.Keywords, id); err != nil {
 			return err
 		}
+	}
+
+	if !hasPatchFields {
+		return errors.New("must include patch parameters")
+	}
+
+	// always insert the updated timestamp
+	if err := insertPostUpdateTimes(ctx, tx, patch, id); err != nil {
+		return err
 	}
 
 	err := tx.Commit()
@@ -444,12 +459,12 @@ func updateKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 		return err
 	}
 
-	// if we have no keywords to insert, just return early
+	// if we have no keywords to insert, just return
 	if len(keywords) == 0 {
 		return nil
 	}
 
-	// otherwise insert all new keywords
+	// then insert all new keywords
 	if err := insertKeywords(ctx, tx, keywords, int64(id)); err != nil {
 		return err
 	}
@@ -475,6 +490,63 @@ func updatePost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id i
 	}
 	defer rows.Close()
 	return nil
+}
+
+func insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+
+	query :=
+		`
+		INSERT INTO post_updates
+	(post_id, score_update_time, nsfw_update_time, greyscale_update_time, sprocket_update_time, colors_update_time, keywords_update_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`
+
+	stmt, err := tx.PrepareContext(ctx, query)
+
+	if err != nil {
+		return err
+	}
+
+	defer stmt.Close()
+
+	// helper func to add update time if passed, else add null string
+	addTimeOrNull := func(addTime bool, values *[]any) {
+		now := goTime.Now().Unix()
+		if addTime {
+			*values = append(*values, now)
+		} else {
+			*values = append(*values, sql.NullInt64{})
+		}
+
+	}
+
+	// we have to include post_id
+	values := []any{id}
+
+	score := patch.Score != nil
+	addTimeOrNull(score, &values)
+	nsfw := patch.Nsfw != nil
+	addTimeOrNull(nsfw, &values)
+	grayscale := patch.Grayscale != nil
+	addTimeOrNull(grayscale, &values)
+	sprocket := patch.Sprocket != nil
+	addTimeOrNull(sprocket, &values)
+	colors := patch.Colors != nil
+	addTimeOrNull(colors, &values)
+	keywords := patch.Keywords != nil
+	addTimeOrNull(keywords, &values)
+
+	fmt.Println(query)
+	fmt.Println(values)
+
+	rows, err := stmt.QueryContext(ctx, values...)
+	defer rows.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 func deletePost(ctx context.Context, tx *sql.Tx, id int) error {

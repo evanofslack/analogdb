@@ -35,6 +35,7 @@ func main() {
 	server.PostService = postgres.NewPostService(db)
 	server.ReadyService = postgres.NewReadyService(db)
 	server.AuthorService = postgres.NewAuthorService(db)
+	server.ScrapeService = postgres.NewScrapeService(db)
 	if err := server.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

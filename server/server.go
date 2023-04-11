@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -19,6 +20,7 @@ type Server struct {
 	PostService   analogdb.PostService
 	ReadyService  analogdb.ReadyService
 	AuthorService analogdb.AuthorService
+	ScrapeService analogdb.ScrapeService
 }
 
 func New(port string) *Server {
@@ -34,6 +36,7 @@ func New(port string) *Server {
 	s.mountMiddleware()
 	s.mountPostHandlers()
 	s.mountAuthorHandlers()
+	s.mountScrapeHandlers()
 	s.mountStatic()
 	s.mountStatus()
 	s.mountStatsHandlers()
@@ -50,4 +53,15 @@ func (s *Server) Close() error {
 	defer cancel()
 	s.healthy = false
 	return s.server.Shutdown(ctx)
+}
+
+func encodeResponse(w http.ResponseWriter, r *http.Request, status int, v any) error {
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(status)
+	enc := json.NewEncoder(w)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(v); err != nil {
+		return err
+	}
+	return nil
 }
