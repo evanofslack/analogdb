@@ -333,6 +333,9 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 		fiveColors := []analogdb.Color{testColor, testColor, testColor, testColor, testColor}
 
+		keyword := analogdb.Keyword{Word: "keyword", Weight: 0.1}
+		keywords := []analogdb.Keyword{keyword, keyword, keyword}
+
 		testTitle := "test title"
 
 		createPost := analogdb.CreatePost{
@@ -346,13 +349,14 @@ func TestCreateAndDeletePost(t *testing.T) {
 			Sprocket:  false,
 			Images:    fourImages,
 			Colors:    fiveColors,
+			Keywords:  keywords,
 		}
 
 		ctx := context.Background()
 
 		created, err := ps.CreatePost(ctx, &createPost)
 		if err != nil {
-			t.Fatal("valid post should be created")
+			t.Fatalf("valid post should be created, error: %s", err)
 		}
 
 		if created.Title != testTitle {
@@ -360,7 +364,7 @@ func TestCreateAndDeletePost(t *testing.T) {
 		}
 
 		if err := ps.DeletePost(ctx, created.Id); err != nil {
-			t.Fatal("unable to delete post created to test create post")
+			t.Fatalf("unable to delete post created to test create post, error: %s", err)
 		}
 	})
 
@@ -456,6 +460,46 @@ func TestPatchPost(t *testing.T) {
 
 		if err := ps.PatchPost(context.Background(), &patch, postID); err == nil {
 			t.Fatal("error should be returned when no patch fields are provided")
+		}
+	})
+
+	t.Run("UpdateKeywords", func(t *testing.T) {
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ps := NewPostService(db)
+
+		og, err := ps.FindPostByID(context.Background(), postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		keyword := analogdb.Keyword{Word: "keyword", Weight: 0.1}
+		keywords := []analogdb.Keyword{keyword, keyword, keyword}
+		patch := analogdb.PatchPost{
+			Keywords: &keywords,
+		}
+		err = ps.PatchPost(context.Background(), &patch, postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		updated, err := ps.FindPostByID(context.Background(), postID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(og.Keywords) == len(updated.Keywords) {
+			t.Fatalf("updated keywords should have different length than original, original: %d, updated: %d", len(og.Keywords), len(updated.Keywords))
+		}
+
+		// remove added keywords for idempotency
+		keywords = []analogdb.Keyword{}
+		patch = analogdb.PatchPost{
+			Keywords: &keywords,
+		}
+		err = ps.PatchPost(context.Background(), &patch, postID)
+		if err != nil {
+			t.Fatal(err)
 		}
 	})
 

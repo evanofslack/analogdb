@@ -61,6 +61,9 @@ function filterQueryParams(sort, nsfw, bw, sprocket, search) {
   if (search !== "") {
     queryParams = queryParams.concat("&title=" + search);
   }
+
+  queryParams = queryParams.concat("&page_size=" + 100);
+
   return queryParams;
 }
 
