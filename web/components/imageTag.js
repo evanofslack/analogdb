@@ -1,6 +1,6 @@
 import styles from "./imageTag.module.css";
 import { baseURL } from "../constants.ts";
-import { Tooltip } from "@mantine/core";
+import { Tooltip, Badge, Box } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
 
 export default function ImageTag(props) {
@@ -26,6 +26,79 @@ export default function ImageTag(props) {
     };
   };
 
+  const keywordToColor = (keyword) => {
+    const colors = [
+      "red",
+      "pink",
+      "grape",
+      "violet",
+      "indigo",
+      "blue",
+      "cyan",
+      "teal",
+      "green",
+      "lime",
+      "yellow",
+      "orange",
+      "dark",
+      "gray",
+    ];
+
+    switch (keyword[0]) {
+      case "e":
+        return colors[0];
+      case "t":
+        return colors[1];
+      case "a":
+      case "z":
+        return colors[2];
+      case "o":
+      case "j":
+        return colors[3];
+      case "i":
+      case "q":
+        return colors[4];
+      case "n":
+      case "x":
+        return colors[5];
+      case "s":
+      case "k":
+        return colors[6];
+      case "r":
+      case "v":
+        return colors[7];
+      case "h":
+      case "b":
+        return colors[8];
+      case "d":
+      case "p":
+        return colors[9];
+      case "l":
+      case "g":
+        return colors[10];
+      case "u":
+      case "w":
+        return colors[11];
+      case "c":
+      case "y":
+        return colors[12];
+      case "m":
+      case "f":
+        return colors[13];
+      default:
+        return colors[13];
+    }
+  };
+
+  const keywords =
+    Object.hasOwn(post, "keywords") && post.keywords.length > 0
+      ? post.keywords
+          .map((item) => {
+            return item.word;
+          })
+          .slice(0, 15)
+      : [];
+
   return (
     <div className={styles.container}>
       <div className={styles.containerMetadata}>
@@ -42,23 +115,35 @@ export default function ImageTag(props) {
             </a>
             <div>{date}</div>
           </div>
-          <div className={styles.containerColors}>
-            {hex_colors.map((hex) => {
-              return (
-                <Tooltip
-                  key={hex.id}
-                  label={clipboard.copied ? "copied" : hex}
-                  position="bottom"
-                  color="gray"
-                >
-                  <div
-                    style={color(hex)}
-                    className={styles.colorSquare}
-                    onClick={() => clipboard.copy(hex)}
-                  ></div>
-                </Tooltip>
-              );
-            })}
+          <div className={styles.containerColorsAndKeywords}>
+            <div className={styles.containerColors}>
+              {hex_colors.map((hex) => {
+                return (
+                  <Tooltip
+                    key={hex.id}
+                    label={clipboard.copied ? "copied" : hex}
+                    position="top"
+                    color="gray"
+                  >
+                    <div
+                      key={hex.id}
+                      style={color(hex)}
+                      className={styles.colorSquare}
+                      onClick={() => clipboard.copy(hex)}
+                    ></div>
+                  </Tooltip>
+                );
+              })}
+            </div>
+            <div className={styles.containerKeywords}>
+              {keywords.map((word) => {
+                return (
+                  <div className={styles.keyword} key={word.id}>
+                    {word}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
