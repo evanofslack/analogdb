@@ -1,11 +1,15 @@
 app:
   name: "analogdb"
   version: "0.1.0"
-postgres:
+database:
   url: ""
-weaviate:
+vector_database:
   host: ""
+  scheme: "http"
 http:
   port: "8080"
 logger:
-  level: "debug"
+  level: "info"
+auth:
+  username: ""
+  password: ""

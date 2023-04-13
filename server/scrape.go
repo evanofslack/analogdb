@@ -6,7 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type KeywordsUpdatedResponse struct {
+type keywordsUpdatedResponse struct {
 	Ids []int `json:"ids"`
 }
 
@@ -26,10 +26,10 @@ func (s *Server) getKeywordUpdatedPosts(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		writeError(w, r, err)
 	}
-	keywordsUpdatedResponse := KeywordsUpdatedResponse{
+	response := keywordsUpdatedResponse{
 		Ids: ids,
 	}
-	if err := encodeResponse(w, r, http.StatusOK, keywordsUpdatedResponse); err != nil {
+	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
 		writeError(w, r, err)
 	}
 }

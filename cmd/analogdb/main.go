@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -12,6 +13,8 @@ import (
 	"github.com/evanofslack/analogdb/weaviate"
 )
 
+const defaultConfigPath = "config.yml"
+
 func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -19,7 +22,10 @@ func main() {
 	signal.Notify(c, os.Interrupt)
 	go func() { <-c; cancel() }()
 
-	cfgPath := "config.yml"
+	var cfgPath string
+	flag.StringVar(&cfgPath, "config", defaultConfigPath, "path to config.yml")
+	flag.Parse()
+
 	cfg, err := config.New(cfgPath)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -32,8 +38,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	// open connection to weaviate
 	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme)
-	if err := db.Open(); err != nil {
+	if err := dbVec.Open(); err != nil {
+		fmt.Println("failed to open dbVec")
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	// run migrations if needed
+	// creates the schema if it does not exist
+	if err := dbVec.Migrate(ctx); err != nil {
+		fmt.Println("failed to migrate dbVec")
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -47,6 +62,13 @@ func main() {
 	server.ScrapeService = postgres.NewScrapeService(db)
 	server.SimilarityService = weaviate.NewSimilarityService(dbVec, postService)
 	if err := server.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	// temp test
+	err = server.SimilarityService.BatchEncodePosts(ctx, []int{4000, 4001})
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

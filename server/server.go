@@ -38,8 +38,8 @@ func New(port string) *Server {
 	s.mountPostHandlers()
 	s.mountAuthorHandlers()
 	s.mountScrapeHandlers()
-	s.mountStatic()
-	s.mountStatus()
+	s.mountStaticHandlers()
+	s.mountStatusHandlers()
 	s.mountStatsHandlers()
 	return s
 }

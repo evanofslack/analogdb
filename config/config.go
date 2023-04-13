@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
 	App      `yaml:"app"`
-	DB       `yaml:"postgres"`
-	VectorDB `yaml:"weaviate"`
+	DB       `yaml:"database"`
+	VectorDB `yaml:"vector_database"`
 	HTTP     `yaml:"http"`
 	Log      `yaml:"logger"`
 }
@@ -29,21 +30,29 @@ type VectorDB struct {
 }
 
 type HTTP struct {
-	Port string `yaml:"port" env:"PORT"`
+	Port string `yaml:"port" env:"HTTP_PORT"`
 }
 
 type Log struct {
 	Level string `yaml:"level" env:"LOG_LEVEL"`
 }
 
+type Auth struct {
+	Username string `yaml:"username" env:"AUTH_USERNAME"`
+	Password string `yaml:"password" env:"AUTH_PASSWORD"`
+}
+
 func New(path string) (*Config, error) {
 	cfg := &Config{}
 
 	if err := cleanenv.ReadConfig(path, cfg); err != nil {
-		return nil, fmt.Errorf("Error loading config: %w", err)
+		return nil, fmt.Errorf("error loading config: %w", err)
+	}
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("warning: failed to load .env file: %w", err)
 	}
 	if err := cleanenv.ReadEnv(cfg); err != nil {
-		return nil, fmt.Errorf("Error loading env: %w", err)
+		return nil, fmt.Errorf("error loading env: %w", err)
 	}
 	return cfg, nil
 }

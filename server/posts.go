@@ -104,7 +104,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
 			if err := s.PostService.DeletePost(r.Context(), identify); err == nil {
-				success := DeleteResponse{Message: "Success, post deleted"}
+				success := DeleteResponse{Message: "success, post deleted"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
 					writeError(w, r, err)
 				}
@@ -120,7 +120,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Error parsing post from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing post from request body"}
 		writeError(w, r, err)
 	}
 	created, err := s.PostService.CreatePost(r.Context(), &createPost)
@@ -141,14 +141,14 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 
 	var patchPost analogdb.PatchPost
 	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Error parsing patch from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing patch from request body"}
 		writeError(w, r, err)
 	}
 
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
 			if err := s.PostService.PatchPost(r.Context(), &patchPost, identify); err == nil {
-				success := DeleteResponse{Message: "Success, post patched"}
+				success := DeleteResponse{Message: "success, post patched"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
 					writeError(w, r, err)
 				}
@@ -357,7 +357,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		if identify, err := strconv.Atoi(id); err != nil {
 			return nil, err
 		} else {
-			filter.ID = &identify
+			filter.IDs = &[]int{identify}
 		}
 	}
 	if title := r.URL.Query().Get("title"); title != "" {
