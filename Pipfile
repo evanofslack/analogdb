@@ -18,9 +18,6 @@ webcolors = "*"
 spacy = "*"
 pytextrank = "*"
 install = "*"
-torch = "*"
-torchvision = "*"
-img2vec-pytorch = "*"
 
 [dev-packages]
 black = "*"
