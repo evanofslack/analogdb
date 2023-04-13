@@ -10,12 +10,14 @@ type Image struct {
 	Height int    `json:"height"`
 }
 
+// Color represents a single color of an image
 type Color struct {
 	Hex     string  `json:"hex"`
 	Css     string  `json:"css"`
 	Percent float64 `json:"percent"`
 }
 
+// Keyword represents a single word/tag for a post
 type Keyword struct {
 	Word   string  `json:"word"`
 	Weight float64 `json:"weight"`
@@ -109,18 +111,4 @@ type PostService interface {
 	PatchPost(ctx context.Context, post *PatchPost, id int) error
 	DeletePost(ctx context.Context, id int) error
 	AllPostIDs(ctx context.Context) ([]int, error)
-}
-
-type AuthorService interface {
-	FindAuthors(ctx context.Context) ([]string, error)
-}
-
-type ScrapeService interface {
-	KeywordUpdatedPostIDs(ctx context.Context) ([]int, error)
-}
-
-type SimilarityService interface {
-	CreateSchemas(ctx context.Context) error
-	BatchEncodePosts(ctx context.Context, ids []int) error
-	FindSimilarPostsByImage(ctx context.Context, id int) ([]*Post, error)
 }
