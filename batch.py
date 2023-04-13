@@ -6,10 +6,13 @@ import praw
 import requests
 from loguru import logger
 
-from api import json_to_post, new_patch, patch_to_analogdb
-from comment import (get_comments, post_keywords, post_keywords_from_disk,
-                     write_comments_to_json)
-from constants import ANALOGDB_URL, KEYWORD_UPDATE_CUTOFF_DAYS
+from api import (get_keyword_updated_post_ids, json_to_post, new_patch,
+                 patch_to_analogdb)
+from comment import (get_comments, post_keywords, read_comments_from_json,
+                     write_comments_to_json, write_keywords_to_disk)
+from constants import (ALL_KEYWORDS_FILEPATH, ANALOGDB_URL,
+                       KEYWORD_UPDATE_CUTOFF_DAYS, READ_COMMENTS_FROM_DISK,
+                       WRITE_KEYWORDS_TO_DISK)
 from image_process import extract_colors, request_image
 from models import AnalogDisplayPost, Dependencies
 from s3_upload import upload_comments_to_s3
@@ -140,17 +143,30 @@ def _update_post_keywords(
     limit: Optional[int] = None,
     blacklist: Optional[Set[str]] = None,
 ):
-    try:
-        comments = get_comments(reddit=reddit, url=post.permalink)
-    except Exception as e:
-        logger.info(f"Error getting comments for {post.id}, with error: {e}")
-        return
+
+    if READ_COMMENTS_FROM_DISK:
+        filepath = f"comments/{post.id}.json"
+        comments = read_comments_from_json(filepath=filepath)
+
+    else:
+        try:
+            comments = get_comments(reddit=reddit, url=post.permalink)
+        except Exception as e:
+            logger.info(f"Error getting comments for {post.id}, with error: {e}")
+            return
 
     keywords = post_keywords(
-        title=post.title, comments=comments, limit=limit, blacklist=blacklist
+        title=post.title,
+        comments=comments,
+        post_score=post.score,
+        limit=limit,
+        blacklist=blacklist,
     )
     logger.debug(post.title)
-    logger.debug([kw.word for kw in keywords])
+    logger.debug([f"{kw.word}, {kw.weight}" for kw in keywords])
+
+    if WRITE_KEYWORDS_TO_DISK:
+        write_keywords_to_disk(keywords=keywords, filepath=ALL_KEYWORDS_FILEPATH)
 
     # update post in analogdb
     patch = new_patch(keywords=keywords)
@@ -164,6 +180,13 @@ def _update_post_keywords(
 def update_posts_keywords(deps: Dependencies, count: int, limit: Optional[int] = None):
     posts = unlimited_posts(count=count)
 
+    # don't update a post's keywords more than once
+    updated_ids = set(
+        get_keyword_updated_post_ids(
+            username=deps.auth.username, password=deps.auth.password
+        )
+    )
+
     # only update keywords for posts older than 2 days
     cutoff = (
         datetime.datetime.fromtimestamp(time.time())
@@ -171,13 +194,22 @@ def update_posts_keywords(deps: Dependencies, count: int, limit: Optional[int] =
     ).timestamp()
 
     for post in posts:
-        if post.timestamp < cutoff:
-            _update_post_keywords(
-                post=post,
-                reddit=deps.reddit_client,
-                s3=deps.s3_client,
-                username=deps.auth.username,
-                password=deps.auth.password,
-                limit=limit,
-                blacklist=deps.blacklist,
-            )
+        # post has already been updated, skip
+        if post.id in updated_ids:
+            logger.debug(f"post {post.id} already keyword updated")
+            continue
+        # post is too new, skip
+        if post.timestamp > cutoff:
+            logger.debug(f"post {post.id} too new to update keywords")
+            continue
+
+        # otherwise, update it
+        _update_post_keywords(
+            post=post,
+            reddit=deps.reddit_client,
+            s3=deps.s3_client,
+            username=deps.auth.username,
+            password=deps.auth.password,
+            limit=limit,
+            blacklist=deps.blacklist,
+        )

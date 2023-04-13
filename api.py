@@ -89,6 +89,27 @@ def delete_from_analogdb(id: int, username: str, password: str):
         raise Exception(f"failed to delete post with response: {resp.json()}")
 
 
+def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
+
+    url = f"{ANALOGDB_URL}/scrape/keywords/updated"
+    r = requests.get(
+        url=url,
+        auth=HTTPBasicAuth(username=username, password=password),
+    )
+    if r.status_code != 200:
+        raise Exception(
+            f"failed to fetch scrape/keyword/updated with response: {r.json()}"
+        )
+    try:
+        data = r.json()
+    except Exception as e:
+        raise Exception(f"Error unmarshalling json from analogdb: {e}")
+
+    ids = data["ids"]
+
+    return ids
+
+
 def json_to_post(data: dict) -> AnalogDisplayPost:
 
     try:

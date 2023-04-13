@@ -22,8 +22,8 @@ RAW_RES = None
 CLOUDFRONT_URL = "https://d3i73ktnzbi69i.cloudfront.net"
 
 # analogdb base url
-# ANALOGDB_URL = "https://api.analogdb.com"
-ANALOGDB_URL = "http://10.33.1.142:8080"
+ANALOGDB_URL = "https://api.analogdb.com"
+# ANALOGDB_URL = "http://10.33.1.142:8080"
 
 # reddit base url
 REDDIT_URL = "https://www.reddit.com"
@@ -50,6 +50,16 @@ COLOR_TOLERANCE = 20
 BLACKLIST_KEYWORDS_PATH = "keyword_blacklist.txt"
 
 # maximum number of keywords to store in DB
-KEYWORD_LIMIT = 10
+KEYWORD_LIMIT = 50
 # only update keywords for posts older than 2 days
 KEYWORD_UPDATE_CUTOFF_DAYS = 2
+
+
+##### RUNTIME #####
+WRITE_KEYWORDS_TO_DISK = False
+ALL_KEYWORDS_FILEPATH = "keywords/all.txt"
+READ_COMMENTS_FROM_DISK = False
+
+
+UPLOAD_COMMENTS_TO_S3 = True
+UPLOAD_PICTURES_TO_S3 = True

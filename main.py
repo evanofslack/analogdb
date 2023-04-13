@@ -4,12 +4,11 @@ import schedule
 from loguru import logger
 
 from api import delete_from_analogdb, get_latest_links, upload_to_analogdb
-from batch import (download_posts_comments, update_posts_keywords,
-                   update_posts_scores)
+from batch import update_posts_keywords, update_posts_scores
 from comment import get_comments, post_keywords
 from configuration import dependencies_from_config, init_config
-from constants import (ANALOG_POSTS, ANALOG_SUB, AWS_BUCKET_PHOTOS, BW_POSTS,
-                       BW_SUB, KEYWORD_LIMIT, SPROCKET_POSTS, SPROCKET_SUB)
+from constants import (ANALOG_POSTS, ANALOG_SUB, BW_POSTS, BW_SUB,
+                       KEYWORD_LIMIT, SPROCKET_POSTS, SPROCKET_SUB)
 from log import init_logger
 from models import Dependencies
 from s3_upload import create_analog_post, upload_images_to_s3
@@ -49,6 +48,7 @@ def scrape_posts(
         keywords = post_keywords(
             title=post.title,
             comments=comments,
+            post_score=post.score,
             limit=KEYWORD_LIMIT,
             blacklist=deps.blacklist,
         )
@@ -82,7 +82,7 @@ def update_scores(deps: Dependencies):
 
 
 def update_keywords(deps: Dependencies):
-    update_posts_keywords(deps=deps, count=1, limit=KEYWORD_LIMIT)
+    update_posts_keywords(deps=deps, count=100, limit=KEYWORD_LIMIT)
 
 
 def run_schedule(deps: Dependencies):
@@ -92,8 +92,8 @@ def run_schedule(deps: Dependencies):
     schedule.every().day.do(scrape_sprocket, deps=deps)
     schedule.every(4).hours.do(scrape_analog, deps=deps)
 
-    # update latest 100 post scores each day
     schedule.every().day.do(update_scores, deps=deps)
+    schedule.every().day.do(update_keywords, deps=deps)
 
     schedule.run_all()
 
@@ -111,9 +111,7 @@ def main():
     config = init_config()
     deps = dependencies_from_config(config=config)
 
-    # run_schedule(deps=deps)
-    # download_posts_comments(deps=deps, count=300)
-    update_keywords(deps=deps)
+    run_schedule(deps=deps)
 
 
 if __name__ == "__main__":

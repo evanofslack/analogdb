@@ -9,7 +9,8 @@ from loguru import logger
 from PIL.Image import Image
 
 from constants import (AWS_BUCKET_COMMENTS, AWS_BUCKET_PHOTOS, CLOUDFRONT_URL,
-                       HIGH_RES, LOW_RES, MEDIUM_RES, RAW_RES)
+                       HIGH_RES, LOW_RES, MEDIUM_RES, RAW_RES,
+                       UPLOAD_COMMENTS_TO_S3)
 from image_process import extract_colors, image_to_bytes, resize_image
 from models import (AnalogKeyword, AnalogPost, CloudfrontImage, RedditComment,
                     RedditPost)
@@ -72,6 +73,10 @@ def upload_images_to_s3(
 
 
 def upload_comments_to_s3(s3, comments: List[RedditComment], filename: str):
+
+    if not UPLOAD_COMMENTS_TO_S3:
+        logger.debug("upload comments to s3 disabled")
+        return
 
     bucket = AWS_BUCKET_COMMENTS
     body = BytesIO(
