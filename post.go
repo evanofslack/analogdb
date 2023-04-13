@@ -84,7 +84,7 @@ type PostFilter struct {
 	Grayscale *bool
 	Sprocket  *bool
 	Seed      *int
-	ID        *int
+	IDs       *[]int
 	Title     *string
 	Author    *string
 }
