@@ -15,11 +15,14 @@ build :
 db :
 	docker-compose -f docker-compose-dev.yml up -d postgres
 
+infra :
+	docker-compose -f docker-compose-dev.yml up -d postgres weaviate i2v-neural
+
 prod :
 	docker-compose -f docker-compose.yml up -d
 
 log :
-	docker-compose -f docker-compose-dev.yml logs --tail=0 --follow
+	docker-compose -f docker-compose-dev.yml logs --follow
 
 test :
 	docker-compose -f docker-compose-dev.yml up -d && go test ./...

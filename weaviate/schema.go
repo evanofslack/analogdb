@@ -3,12 +3,26 @@ package weaviate
 import (
 	"context"
 
+	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
 func (ss SimilarityService) CreateSchemas(ctx context.Context) error {
-	err := ss.db.createPictureSchema(ctx)
+	err := ss.db.createSchemas(ctx)
 	return err
+}
+
+func (db *DB) createSchemas(ctx context.Context) error {
+	err := db.createPictureSchema(ctx)
+	return err
+}
+
+func (db *DB) getSchema(ctx context.Context) (*schema.Dump, error) {
+	schema, err := db.db.Schema().Getter().Do(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return schema, nil
 }
 
 func (db *DB) createPictureSchema(ctx context.Context) error {
@@ -36,7 +50,7 @@ func (db *DB) createPictureSchema(ctx context.Context) error {
 				Description: "image",
 			},
 			{
-				Name:        "id",
+				Name:        "post_id",
 				DataType:    []string{"int"},
 				Description: "unique post_id",
 			},

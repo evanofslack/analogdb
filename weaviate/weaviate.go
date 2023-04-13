@@ -44,6 +44,20 @@ func (db *DB) Open() error {
 	return err
 }
 
+func (db *DB) Migrate(ctx context.Context) error {
+	schema, err := db.getSchema(ctx)
+	if err != nil {
+		return err
+	}
+	// if no classes, create schemas
+	if len(schema.Classes) == 0 {
+		if err := db.createSchemas(ctx); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (db *DB) Close() error {
 	db.cancel()
 	return nil
