@@ -15,9 +15,16 @@ notifiers = "*"
 extcolors = "*"
 scipy = "*"
 webcolors = "*"
+spacy = "*"
+pytextrank = "*"
+install = "*"
+torch = "*"
+torchvision = "*"
+img2vec-pytorch = "*"
 
 [dev-packages]
 black = "*"
+scikit-learn = "*"
 
 [requires]
 python_version = "3.10"

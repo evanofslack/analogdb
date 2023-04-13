@@ -1,5 +1,6 @@
-AWS_BUCKET = "analog-photos"
+AWS_BUCKET_PHOTOS = "analog-photos"
 AWS_BUCKET_TEST = "analog-photos-test"
+AWS_BUCKET_COMMENTS = "analog-comments"
 
 # Define subreddit names
 ANALOG_SUB = "analog"
@@ -35,13 +36,30 @@ VALID_CONTENT = [
     "image/gif",
 ]
 
-# Upper limit to the number of extracted
+# upper limit to the number of extracted
 # colors presented in the output.
 COLOR_LIMIT = 5
 
-# Group colors to limit the output and give a
+# group colors to limit the output and give a
 # better visual representation. Based on a
 # scale from 0 to 100. Where 0 won't group any
 # color and 100 will group all colors into one.
 # Tolerance 0 will bypass all conversion.
 COLOR_TOLERANCE = 20
+
+BLACKLIST_KEYWORDS_PATH = "keyword_blacklist.txt"
+
+# maximum number of keywords to store in DB
+KEYWORD_LIMIT = 50
+# only update keywords for posts older than 2 days
+KEYWORD_UPDATE_CUTOFF_DAYS = 2
+
+
+##### RUNTIME #####
+WRITE_KEYWORDS_TO_DISK = False
+ALL_KEYWORDS_FILEPATH = "keywords/all.txt"
+READ_COMMENTS_FROM_DISK = False
+
+
+UPLOAD_COMMENTS_TO_S3 = True
+UPLOAD_PICTURES_TO_S3 = True

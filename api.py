@@ -6,7 +6,8 @@ from loguru import logger
 from requests.auth import HTTPBasicAuth
 
 from constants import ANALOGDB_URL
-from models import AnalogDisplayPost, AnalogPost, Color, PatchPost
+from models import (AnalogDisplayPost, AnalogKeyword, AnalogPost, Color,
+                    PatchPost)
 
 
 def get_latest_posts(count: int) -> List[AnalogDisplayPost]:
@@ -58,12 +59,10 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
     code = resp.status_code
     msg = json.loads(resp.text)
     if code == 201:
-        logger.info(
-            f"created post with title: {post.title} with status code: {code} and msg: {msg}"
-        )
+        logger.info(f"created post (title: {post.title} | status: {code} | msg: {msg})")
     else:
         logger.error(
-            f"failed to create post with title: {post.title} with status code: {code} and msg: {msg}"
+            f"failed to create post (title: {post.title} | status: {code} | msg: {msg})"
         )
 
 
@@ -88,6 +87,27 @@ def delete_from_analogdb(id: int, username: str, password: str):
     )
     if resp.status_code != 200:
         raise Exception(f"failed to delete post with response: {resp.json()}")
+
+
+def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
+
+    url = f"{ANALOGDB_URL}/scrape/keywords/updated"
+    r = requests.get(
+        url=url,
+        auth=HTTPBasicAuth(username=username, password=password),
+    )
+    if r.status_code != 200:
+        raise Exception(
+            f"failed to fetch scrape/keyword/updated with response: {r.json()}"
+        )
+    try:
+        data = r.json()
+    except Exception as e:
+        raise Exception(f"Error unmarshalling json from analogdb: {e}")
+
+    ids = data["ids"]
+
+    return ids
 
 
 def json_to_post(data: dict) -> AnalogDisplayPost:
@@ -144,6 +164,7 @@ def json_to_post(data: dict) -> AnalogDisplayPost:
 def post_to_json(post: AnalogPost):
     images = post_to_json_images(post)
     colors = post_to_json_colors(post)
+    keywords = keywords_to_json(post.keywords)
     body = {
         "title": post.title,
         "author": post.author,
@@ -155,6 +176,7 @@ def post_to_json(post: AnalogPost):
         "sprocket": post.sprocket,
         "images": images,
         "colors": colors,
+        "keywords": keywords,
     }
     return body
 
@@ -218,6 +240,15 @@ def post_to_json_colors(post: AnalogPost) -> List[dict]:
     return [c1, c2, c3, c4, c5]
 
 
+def keywords_to_json(keywords: List[AnalogKeyword]) -> List[dict]:
+
+    json_keywords: List[dict] = []
+    for kw in keywords:
+        json_keywords.append({"word": kw.word, "weight": kw.weight})
+
+    return json_keywords
+
+
 def colors_to_json(colors: List[Color]) -> List[dict]:
     # expected 5 colors from highest to lowest percent
     json_colors = []
@@ -239,6 +270,8 @@ def patch_to_json(patch: PatchPost):
         body["sprocket"] = patch.sprocket
     if patch.colors is not None:
         body["colors"] = colors_to_json(colors=patch.colors)
+    if patch.keywords is not None:
+        body["keywords"] = keywords_to_json(keywords=patch.keywords)
     return body
 
 
@@ -248,8 +281,14 @@ def new_patch(
     greyscale: Optional[bool] = None,
     sprocket: Optional[bool] = None,
     colors: Optional[List[Color]] = None,
+    keywords: Optional[List[AnalogKeyword]] = None,
 ) -> PatchPost:
     patch = PatchPost(
-        score=score, nsfw=nsfw, greyscale=greyscale, sprocket=sprocket, colors=colors
+        score=score,
+        nsfw=nsfw,
+        greyscale=greyscale,
+        sprocket=sprocket,
+        colors=colors,
+        keywords=keywords,
     )
     return patch

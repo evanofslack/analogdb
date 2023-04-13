@@ -1,4 +1,6 @@
+import json
 import uuid
+from io import BytesIO
 from typing import List, Tuple
 
 import boto3
@@ -6,10 +8,12 @@ import boto3.session
 from loguru import logger
 from PIL.Image import Image
 
-from constants import (AWS_BUCKET, AWS_BUCKET_TEST, CLOUDFRONT_URL, HIGH_RES,
-                       LOW_RES, MEDIUM_RES, RAW_RES)
+from constants import (AWS_BUCKET_COMMENTS, AWS_BUCKET_PHOTOS, CLOUDFRONT_URL,
+                       HIGH_RES, LOW_RES, MEDIUM_RES, RAW_RES,
+                       UPLOAD_COMMENTS_TO_S3)
 from image_process import extract_colors, image_to_bytes, resize_image
-from models import AnalogPost, CloudfrontImage, RedditPost
+from models import (AnalogKeyword, AnalogPost, CloudfrontImage, RedditComment,
+                    RedditPost)
 
 
 def create_filename(content_type: str) -> str:
@@ -20,17 +24,15 @@ def create_filename(content_type: str) -> str:
         "image/gif": "gif",
     }
 
-    _uuid = str(uuid.uuid4())
+    id = str(uuid.uuid4())
     suffix = content_suffix[content_type]
-    filename = f"{_uuid}.{suffix}"
+    filename = f"{id}.{suffix}"
     return filename
 
 
-def upload_image_to_s3(
-    s3, bucket: str, image: Image, filename: str, content_type: str
-) -> str:
-    assert bucket == AWS_BUCKET or bucket == AWS_BUCKET_TEST
+def upload_image_to_s3(s3, image: Image, filename: str, content_type: str) -> str:
 
+    bucket = AWS_BUCKET_PHOTOS
     img_bytes = image_to_bytes(image=image, content_type=content_type)
 
     try:
@@ -46,8 +48,8 @@ def upload_image_to_s3(
     return url
 
 
-def upload_to_s3(
-    post: RedditPost, s3: boto3.session.Session, bucket: str
+def upload_images_to_s3(
+    post: RedditPost, s3: boto3.session.Session
 ) -> List[CloudfrontImage]:
 
     cf_images: List[CloudfrontImage] = []
@@ -59,7 +61,6 @@ def upload_to_s3(
 
         url = upload_image_to_s3(
             s3=s3,
-            bucket=bucket,
             image=image,
             filename=filename,
             content_type=post.content_type,
@@ -71,7 +72,29 @@ def upload_to_s3(
     return cf_images
 
 
-def create_analog_post(images: List[CloudfrontImage], post: RedditPost) -> AnalogPost:
+def upload_comments_to_s3(s3, comments: List[RedditComment], filename: str):
+
+    if not UPLOAD_COMMENTS_TO_S3:
+        logger.debug("upload comments to s3 disabled")
+        return
+
+    bucket = AWS_BUCKET_COMMENTS
+    body = BytesIO(
+        json.dumps([comment.__dict__ for comment in comments]).encode("UTF-8")
+    )
+
+    try:
+        s3.upload_fileobj(body, bucket, filename)
+
+    except Exception as e:
+        logger.error(f"failed to upload {filename} to {bucket} with error: {e}")
+
+    logger.info(f"uploaded comments for {filename} to S3")
+
+
+def create_analog_post(
+    images: List[CloudfrontImage], post: RedditPost, keywords: List[AnalogKeyword]
+) -> AnalogPost:
 
     low_img = images[0]
     med_img = images[1]
@@ -121,6 +144,7 @@ def create_analog_post(images: List[CloudfrontImage], post: RedditPost) -> Analo
         c5_hex=c5.hex,
         c5_css=c5.css,
         c5_percent=c5.percent,
+        keywords=keywords,
     )
 
     return analog_post

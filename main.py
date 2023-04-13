@@ -4,13 +4,14 @@ import schedule
 from loguru import logger
 
 from api import delete_from_analogdb, get_latest_links, upload_to_analogdb
-from batch import update_latest_post_colors, update_latest_post_scores
+from batch import update_posts_keywords, update_posts_scores
+from comment import get_comments, post_keywords
 from configuration import dependencies_from_config, init_config
-from constants import (ANALOG_POSTS, ANALOG_SUB, AWS_BUCKET, BW_POSTS, BW_SUB,
-                       SPROCKET_POSTS, SPROCKET_SUB)
+from constants import (ANALOG_POSTS, ANALOG_SUB, BW_POSTS, BW_SUB,
+                       KEYWORD_LIMIT, SPROCKET_POSTS, SPROCKET_SUB)
 from log import init_logger
 from models import Dependencies
-from s3_upload import create_analog_post, upload_to_s3
+from s3_upload import create_analog_post, upload_images_to_s3
 from scrape import get_posts
 
 
@@ -39,8 +40,20 @@ def scrape_posts(
         logger.info(f"uploading {len(recent_posts)} new posts")
 
     for post in recent_posts:
-        cf_images = upload_to_s3(post=post, s3=s3_client, bucket=AWS_BUCKET)
-        analog_post = create_analog_post(images=cf_images, post=post)
+        # upload images to s3
+        cf_images = upload_images_to_s3(post=post, s3=s3_client)
+        # parse comments from post
+        comments = get_comments(reddit=reddit_client, url=post.permalink)
+        # get keywords from comments
+        keywords = post_keywords(
+            title=post.title,
+            comments=comments,
+            post_score=post.score,
+            limit=KEYWORD_LIMIT,
+            blacklist=deps.blacklist,
+        )
+        # create and upload the post
+        analog_post = create_analog_post(images=cf_images, post=post, keywords=keywords)
         upload_to_analogdb(
             post=analog_post, username=auth.username, password=auth.password
         )
@@ -58,29 +71,18 @@ def scrape_sprocket(deps: Dependencies):
     scrape_posts(deps=deps, subreddit=SPROCKET_SUB, num_posts=SPROCKET_POSTS)
 
 
-def delete_post():
-    config = init_config()
-    deps = dependencies_from_config(config=config)
-    auth = deps.auth
-    delete_from_analogdb(id=99999, username=auth.username, password=auth.password)
-
-
-def update_post_score(deps: Dependencies):
-    update_latest_post_scores(
-        reddit=deps.reddit_client,
-        count=100,
-        username=deps.auth.username,
-        password=deps.auth.password,
+def delete_post(deps: Dependencies):
+    delete_from_analogdb(
+        id=6404, username=deps.auth.username, password=deps.auth.password
     )
 
 
-def update_post_colors(deps: Dependencies):
-    update_latest_post_colors(
-        reddit=deps.reddit_client,
-        count=5100,
-        username=deps.auth.username,
-        password=deps.auth.password,
-    )
+def update_scores(deps: Dependencies):
+    update_posts_scores(deps=deps, count=100)
+
+
+def update_keywords(deps: Dependencies):
+    update_posts_keywords(deps=deps, count=100, limit=KEYWORD_LIMIT)
 
 
 def run_schedule(deps: Dependencies):
@@ -90,13 +92,12 @@ def run_schedule(deps: Dependencies):
     schedule.every().day.do(scrape_sprocket, deps=deps)
     schedule.every(4).hours.do(scrape_analog, deps=deps)
 
-    # update latest 100 post scores each day
-    schedule.every().day.do(update_post_score, deps=deps)
+    schedule.every().day.do(update_scores, deps=deps)
+    schedule.every().day.do(update_keywords, deps=deps)
 
     schedule.run_all()
 
     while True:
-
         try:
             schedule.run_pending()
         except Exception as e:

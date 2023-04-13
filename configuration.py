@@ -1,12 +1,15 @@
 import os
 from functools import lru_cache
+from typing import Set
 
 import boto3
 import praw
 from dotenv import load_dotenv
 from loguru import logger
 
-from models import AuthCreds, AwsCreds, Config, Dependencies, RedditCreds, SlackWebhook
+from constants import BLACKLIST_KEYWORDS_PATH
+from models import (AuthCreds, AwsCreds, Config, Dependencies, RedditCreds,
+                    SlackWebhook)
 
 
 @lru_cache(maxsize=None)
@@ -56,9 +59,18 @@ def init_reddit_client(creds: RedditCreds) -> praw.Reddit:
     return reddit
 
 
+def load_blacklist(filepath) -> Set[str]:
+
+    with open(filepath, "r") as f:
+        lines = f.read().splitlines()
+
+    return set(lines)
+
+
 def dependencies_from_config(config: Config) -> Dependencies:
     deps = Dependencies(
         s3_client=init_s3_client(creds=config.aws),
+        blacklist=load_blacklist(filepath=BLACKLIST_KEYWORDS_PATH),
         reddit_client=init_reddit_client(creds=config.reddit),
         auth=config.auth,
     )
