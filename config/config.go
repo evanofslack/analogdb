@@ -7,10 +7,11 @@ import (
 )
 
 type Config struct {
-	App  `yaml:"app"`
-	DB   `yaml:"postgres"`
-	HTTP `yaml:"http"`
-	Log  `yaml:"logger"`
+	App      `yaml:"app"`
+	DB       `yaml:"postgres"`
+	VectorDB `yaml:"weaviate"`
+	HTTP     `yaml:"http"`
+	Log      `yaml:"logger"`
 }
 
 type App struct {
@@ -20,6 +21,11 @@ type App struct {
 
 type DB struct {
 	URL string `yaml:"url" env:"DATABASE_URL"`
+}
+
+type VectorDB struct {
+	Host   string `yaml:"host" env:"VECTOR_DATABASE_HOST"`
+	Scheme string `yaml:"scheme" env:"VECTOR_DATABASE_SCHEME"`
 }
 
 type HTTP struct {

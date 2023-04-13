@@ -118,3 +118,9 @@ type AuthorService interface {
 type ScrapeService interface {
 	KeywordUpdatedPostIDs(ctx context.Context) ([]int, error)
 }
+
+type SimilarityService interface {
+	CreateSchemas(ctx context.Context) error
+	BatchEncodePosts(ctx context.Context, ids []int) error
+	FindSimilarPostsByImage(ctx context.Context, id int) ([]*Post, error)
+}

@@ -9,6 +9,7 @@ import (
 	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/postgres"
 	"github.com/evanofslack/analogdb/server"
+	"github.com/evanofslack/analogdb/weaviate"
 )
 
 func main() {
@@ -31,11 +32,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme)
+	if err := db.Open(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	postService := postgres.NewPostService(db)
+
 	server := server.New(cfg.HTTP.Port)
-	server.PostService = postgres.NewPostService(db)
+	server.PostService = postService
 	server.ReadyService = postgres.NewReadyService(db)
 	server.AuthorService = postgres.NewAuthorService(db)
 	server.ScrapeService = postgres.NewScrapeService(db)
+	server.SimilarityService = weaviate.NewSimilarityService(dbVec, postService)
 	if err := server.Run(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)

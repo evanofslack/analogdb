@@ -1,12 +1,11 @@
 app:
-  name: 'analogdb'
-  version: '0.1.0'
-
-postgres: 
+  name: "analogdb"
+  version: "0.1.0"
+postgres:
   url: ""
-
+weaviate:
+  host: ""
 http:
   port: "8080"
-
 logger:
   level: "debug"
