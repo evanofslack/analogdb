@@ -3,11 +3,11 @@
 up :
 	docker-compose -f docker-compose-dev.yml up
 
-up-d :
+upd :
 	docker-compose -f docker-compose-dev.yml up -d
 
 down :
-	docker-compose down --remove-orphans
+	docker-compose -f docker-compose-dev.yml down --remove-orphans
 
 build :
 	docker-compose -f docker-compose-dev.yml up -d --force-recreate --build
@@ -15,8 +15,11 @@ build :
 db :
 	docker-compose -f docker-compose-dev.yml up -d postgres
 
+prod :
+	docker-compose -f docker-compose.yml up -d
+
 log :
-	docker-compose logs --tail=0 --follow
+	docker-compose -f docker-compose-dev.yml logs --tail=0 --follow
 
 test :
 	docker-compose -f docker-compose-dev.yml up -d && go test ./...
