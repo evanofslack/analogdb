@@ -25,6 +25,10 @@ type PostResponse struct {
 	Posts []analogdb.Post `json:"posts"`
 }
 
+type SimilarPostsResponse struct {
+	Posts []analogdb.Post `json:"posts"`
+}
+
 type DeleteResponse struct {
 	Message string `json:"message"`
 }
@@ -40,6 +44,9 @@ type IDsResponse struct {
 
 // default limit on number of posts returned
 var defaultLimit = 20
+
+// default limit on number of posts returned
+var defaultSimilarityLimit = 10
 
 // max limit of posts returned
 var maxLimit = 200
@@ -59,6 +66,7 @@ func (s *Server) mountPostHandlers() {
 	})
 	s.router.Route(postPath, func(r chi.Router) {
 		r.Get("/{id}", s.findPost)
+		r.Get("/{id}/similar", s.getSimilarPosts)
 		r.With(auth).Delete("/{id}", s.deletePost)
 		r.With(auth).Patch("/{id}", s.patchPost)
 		r.With(auth).Put("/", s.createPost)
@@ -81,6 +89,28 @@ func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 	err = encodeResponse(w, r, http.StatusOK, resp)
 	if err != nil {
 		writeError(w, r, err)
+	}
+}
+
+func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
+
+	resp := SimilarPostsResponse{}
+
+	if id := chi.URLParam(r, "id"); id != "" {
+		if identify, err := strconv.Atoi(id); err == nil {
+			if posts, err := s.SimilarityService.FindSimilarPostsByImage(r.Context(), identify, defaultSimilarityLimit); err == nil {
+				for _, p := range posts {
+					resp.Posts = append(resp.Posts, *p)
+				}
+				if err := encodeResponse(w, r, http.StatusOK, resp); err != nil {
+					writeError(w, r, err)
+				}
+			} else {
+				writeError(w, r, err)
+			}
+		} else {
+			writeError(w, r, err)
+		}
 	}
 }
 

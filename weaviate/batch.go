@@ -7,28 +7,29 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
-func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int) error {
-	fmt.Println("start batch encode")
-	filter := analogdb.PostFilter{IDs: &ids}
-	posts, _, err := ss.postService.FindPosts(ctx, &filter)
-	if err != nil {
-		return err
-	}
-	fmt.Println("got batch encode posts")
-	fmt.Println(len(posts))
-	pictureObjects := postsToPictureObjects(posts)
-	fmt.Println("got batch encode objects")
-	err = ss.db.batchUploadObjects(ctx, pictureObjects)
-	if err != nil {
-		return err
+func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error {
+
+	batches := batchBy(ids, batchSize)
+	for _, batch := range batches {
+		filter := analogdb.PostFilter{IDs: &batch}
+		posts, _, err := ss.postService.FindPosts(ctx, &filter)
+		if err != nil {
+			return err
+		}
+		pictureObjects := postsToPictureObjects(posts)
+		fmt.Println("start put to img2vec")
+		err = ss.db.batchUploadObjects(ctx, pictureObjects)
+		if err != nil {
+			return err
+		}
 	}
 	fmt.Println("batch encode success")
-
 	return nil
 }
 
@@ -44,6 +45,20 @@ func (db *DB) batchUploadObjects(ctx context.Context, objects []*models.Object) 
 	return nil
 }
 
+func maxThreadsDownload(maxGoroutines int, posts []*analogdb.Post, wg *sync.WaitGroup, encodesChan chan string, postsChan chan *analogdb.Post, failedChan chan int) {
+	// limit max concurrent goroutines
+	guard := make(chan int, maxGoroutines)
+
+	for _, post := range posts {
+		wg.Add(1)
+		guard <- 1
+		go func(post *analogdb.Post, wg *sync.WaitGroup, encodesChan chan string, postsChan chan *analogdb.Post, failedChan chan int) {
+			downloadAndEncodePost(post, wg, encodesChan, postsChan, failedChan)
+			<-guard
+		}(post, wg, encodesChan, postsChan, failedChan)
+	}
+}
+
 func downloadAndEncodePosts(posts []*analogdb.Post) ([]string, []*analogdb.Post, []int) {
 	var wg sync.WaitGroup
 
@@ -51,15 +66,13 @@ func downloadAndEncodePosts(posts []*analogdb.Post) ([]string, []*analogdb.Post,
 	postsChan := make(chan *analogdb.Post)
 	failedChan := make(chan int)
 
-	for _, post := range posts {
-		wg.Add(1)
-		fmt.Println("add WG")
-		go downloadAndEncodePost(post, &wg, encodesChan, postsChan, failedChan)
-	}
+	maxGoroutines := 10
+	go maxThreadsDownload(maxGoroutines, posts, &wg, encodesChan, postsChan, failedChan)
 
 	go func() {
+		time.Sleep(10000)
 		wg.Wait()
-		fmt.Println("done waiting WG")
+		fmt.Println("waitgroup finished")
 		close(encodesChan)
 		close(postsChan)
 		close(failedChan)
@@ -75,18 +88,21 @@ func downloadAndEncodePosts(posts []*analogdb.Post) ([]string, []*analogdb.Post,
 			if ok {
 				encodedImages = append(encodedImages, encoded)
 			} else {
+				fmt.Println("encodedChan closed")
 				return encodedImages, successPosts, failedIDs
 			}
 		case post, ok := <-postsChan:
 			if ok {
 				successPosts = append(successPosts, post)
 			} else {
+				fmt.Println("successPosts closed")
 				return encodedImages, successPosts, failedIDs
 			}
 		case id, ok := <-failedChan:
 			if ok {
 				failedIDs = append(failedIDs, id)
 			} else {
+				fmt.Println("failedChan closed")
 				return encodedImages, successPosts, failedIDs
 			}
 		}
@@ -113,12 +129,13 @@ func downloadAndEncodePost(post *analogdb.Post, wg *sync.WaitGroup, encodes chan
 	encoded := base64.StdEncoding.EncodeToString(data)
 	encodes <- encoded
 	posts <- post
-	fmt.Println("close WG")
 	return
 }
 
 func postsToPictureObjects(posts []*analogdb.Post) []*models.Object {
+	fmt.Println("starting download pictures")
 	encodedImages, successPosts, failedIDs := downloadAndEncodePosts(posts)
+	fmt.Println("converting encoded images to weaviate objects")
 	var pictureObjects []*models.Object
 
 	for i := range encodedImages {
@@ -148,4 +165,11 @@ func newPictureObject(image string, postID int, grayscale bool, nsfw bool, sproc
 		},
 	}
 	return &object
+}
+
+func batchBy[T any](items []T, batchSize int) (batchs [][]T) {
+	for batchSize < len(items) {
+		items, batchs = items[batchSize:], append(batchs, items[0:batchSize:batchSize])
+	}
+	return append(batchs, items)
 }

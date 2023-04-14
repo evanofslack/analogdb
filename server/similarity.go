@@ -20,7 +20,8 @@ func (s *Server) mountSimilarityHandlers() {
 }
 
 type encodePostsRequest struct {
-	Ids []int `json:"ids"`
+	Ids       []int `json:"ids"`
+	BatchSize int   `json:"batch_size"`
 }
 
 type encodePostsResponse struct {
@@ -35,7 +36,7 @@ func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
 		writeError(w, r, err)
 	}
 
-	err := s.SimilarityService.BatchEncodePosts(r.Context(), request.Ids)
+	err := s.SimilarityService.BatchEncodePosts(r.Context(), request.Ids, request.BatchSize)
 	if err != nil {
 		writeError(w, r, err)
 	}
