@@ -29,6 +29,10 @@
   padding-bottom: 0.5rem;
 }
 
+.radioButton {
+  padding: 0.5rem;
+}
+
 .segment {
   display: flex;
   flex-direction: column;

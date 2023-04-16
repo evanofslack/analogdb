@@ -37,17 +37,22 @@ export default function ImagePage(props) {
   }, []);
 
   let post = props.post;
+  let similar = props.similar;
+
   let lowResImage = post.images[2];
   let highResImage = post.images[3];
+
   return (
     <div>
       <NavigationProgress autoReset={true} />
       <div className={styles.fullscreen}>
         <div className={styles.headerIcons}>
           <Tooltip label="back to gallery" withArrow className="px-2">
-            <ActionIcon onClick={() => router.back()}>
-              <HiArrowLeft size="2rem" />
-            </ActionIcon>
+            <Link href={`/`} passHref={true} legacyBehavior>
+              <ActionIcon>
+                <HiArrowLeft size="2rem" />
+              </ActionIcon>
+            </Link>
           </Tooltip>
           <Tooltip label="fullscreen" withArrow className="px-2">
             <ActionIcon component="a" href={post.images[3].url}>
@@ -90,7 +95,8 @@ export default function ImagePage(props) {
           </Tooltip>
         </div>
       </div>
-      <ImageTag post={post} />
+      <ImageTag post={post} similar={similar} />
+
       <Footer />
     </div>
   );

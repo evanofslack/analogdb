@@ -1,12 +1,16 @@
 import styles from "./imageTag.module.css";
 import { baseURL } from "../constants.ts";
-import { Tooltip, Badge, Box } from "@mantine/core";
+import Image from "next/image";
+import Link from "next/link";
+import { Tooltip } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
 
 export default function ImageTag(props) {
   const clipboard = useClipboard({ timeout: 1000 });
 
   let post = props.post;
+  let similarPosts = props.similar.posts;
+
   const api_endpoint = baseURL + "/post/";
   const redditUserURL = "https://www.reddit.com/user/";
   const author = post.author.replace("u/", "");
@@ -24,70 +28,6 @@ export default function ImageTag(props) {
     return {
       backgroundColor: hex,
     };
-  };
-
-  const keywordToColor = (keyword) => {
-    const colors = [
-      "red",
-      "pink",
-      "grape",
-      "violet",
-      "indigo",
-      "blue",
-      "cyan",
-      "teal",
-      "green",
-      "lime",
-      "yellow",
-      "orange",
-      "dark",
-      "gray",
-    ];
-
-    switch (keyword[0]) {
-      case "e":
-        return colors[0];
-      case "t":
-        return colors[1];
-      case "a":
-      case "z":
-        return colors[2];
-      case "o":
-      case "j":
-        return colors[3];
-      case "i":
-      case "q":
-        return colors[4];
-      case "n":
-      case "x":
-        return colors[5];
-      case "s":
-      case "k":
-        return colors[6];
-      case "r":
-      case "v":
-        return colors[7];
-      case "h":
-      case "b":
-        return colors[8];
-      case "d":
-      case "p":
-        return colors[9];
-      case "l":
-      case "g":
-        return colors[10];
-      case "u":
-      case "w":
-        return colors[11];
-      case "c":
-      case "y":
-        return colors[12];
-      case "m":
-      case "f":
-        return colors[13];
-      default:
-        return colors[13];
-    }
   };
 
   const keywords =
@@ -147,6 +87,35 @@ export default function ImageTag(props) {
           </div>
         </div>
       </div>
+      {similarPosts && (
+        <div className={styles.similar}>
+          <h2 className={styles.similarTitle}>discover similar</h2>
+          <div className={styles.similarContainer}>
+            {similarPosts.map((post) => {
+              return (
+                <div key={post.id} className={styles.similarImage}>
+                  <Link
+                    href={`/post/${post.id}`}
+                    passHref={true}
+                    legacyBehavior
+                  >
+                    <Image
+                      key={post.id}
+                      priority
+                      style={{ objectFit: "cover" }}
+                      src={post.images[1].url}
+                      alt={`image ${post.id} by ${post.author}`}
+                      sizes="100vw"
+                      fill
+                      quality={100}
+                    />
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -67,11 +67,17 @@ func main() {
 	}
 
 	// temp test
-	err = server.SimilarityService.BatchEncodePosts(ctx, []int{4000, 4001})
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	// allIDs, err := server.PostService.AllPostIDs(ctx)
+	// if err != nil {
+	// 	fmt.Fprintln(os.Stderr, err)
+	// 	os.Exit(1)
+	// }
+
+	// err = server.SimilarityService.BatchEncodePosts(ctx, allIDs, 100)
+	// if err != nil {
+	// 	fmt.Fprintln(os.Stderr, err)
+	// 	os.Exit(1)
+	// }
 
 	<-ctx.Done()
 

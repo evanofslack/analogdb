@@ -5,7 +5,7 @@
   justify-content: space-between;
   width: 100vw;
   margin-top: 0.5rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 4rem;
 }
 
 .containerMetadata {
@@ -128,7 +128,41 @@
   text-decoration: underline;
 }
 
-@media screen and (max-width: 720px) {
+.similar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.similarTitle {
+  margin-top: 5rem;
+  margin-left: 3rem;
+  max-width: 800px;
+  width: 100%;
+  font-weight: 500;
+  font-size: 1.5rem;
+  max-width: 800px;
+}
+
+.similarContainer {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  max-width: 1200px;
+}
+
+.similarImage {
+  overflow: hidden;
+  width: 290px;
+  height: 290px;
+  position: relative;
+  margin: 5px;
+}
+
+@media screen and (max-width: 900px) {
   .colorSquare {
     margin: 0.15rem;
   }
@@ -144,5 +178,11 @@
   .containerColors {
     margin-top: 2rem;
     margin-bottom: 0.5rem;
+  }
+
+  .similarImage {
+    width: 176px;
+    height: 176px;
+    margin: 2px;
   }
 }
