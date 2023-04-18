@@ -47,11 +47,13 @@ func (db *DB) Open() error {
 func (db *DB) Migrate(ctx context.Context) error {
 	schema, err := db.getSchema(ctx)
 	if err != nil {
+		fmt.Println("failed to get weaviate schema")
 		return err
 	}
 	// if no classes, create schemas
 	if len(schema.Classes) == 0 {
 		if err := db.createSchemas(ctx); err != nil {
+			fmt.Println("failed to create weaviate schema")
 			return err
 		}
 	}

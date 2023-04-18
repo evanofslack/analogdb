@@ -89,6 +89,16 @@ type PostFilter struct {
 	Author    *string
 }
 
+// PostSimilarityFilter are options used for querying similar posts
+type PostSimilarityFilter struct {
+	Limit      *int
+	Nsfw       *bool
+	Grayscale  *bool
+	Sprocket   *bool
+	ID         *int
+	ExcludeIDs *[]int
+}
+
 // Meta includes details about the response.
 type Meta struct {
 	TotalPosts int    `json:"total_posts"`

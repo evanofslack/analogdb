@@ -45,11 +45,14 @@ type IDsResponse struct {
 // default limit on number of posts returned
 var defaultLimit = 20
 
-// default limit on number of posts returned
-var defaultSimilarityLimit = 10
-
 // max limit of posts returned
 var maxLimit = 200
+
+// default limit on number of similar posts returned
+var defaultSimilarityLimit = 12
+
+// max limit of similar posts returned
+var maxSimilarityLimit = 50
 
 // default to sorting by time descending (latest)
 var defaultSort = "time"
@@ -96,9 +99,13 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 
 	resp := SimilarPostsResponse{}
 
+	similarityFilter, err := parseToSimilarityFilter(r)
+	if err != nil {
+		writeError(w, r, err)
+	}
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
-			if posts, err := s.SimilarityService.FindSimilarPostsByImage(r.Context(), identify, defaultSimilarityLimit); err == nil {
+			if posts, err := s.SimilarityService.FindSimilarPostsByImage(r.Context(), identify, similarityFilter); err == nil {
 				for _, p := range posts {
 					resp.Posts = append(resp.Posts, *p)
 				}
@@ -153,11 +160,21 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing post from request body"}
 		writeError(w, r, err)
 	}
+
+	// create the post in db
 	created, err := s.PostService.CreatePost(r.Context(), &createPost)
 	if err != nil || created == nil {
 		writeError(w, r, err)
 		return
 	}
+
+	// encode the post in vector db
+	toEncode := []int{created.Id}
+	err = s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
+	if err != nil {
+		writeError(w, r, err)
+	}
+
 	createdResponse := CreateResponse{
 		Message: "Success, post created",
 		Post:    *created,
@@ -395,6 +412,69 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 	if author := r.URL.Query().Get("author"); author != "" {
 		filter.Author = &author
+	}
+	return filter, nil
+}
+
+// parse URL for query parameters and
+// convert to PostSimilarityFilter (query vector db)
+func parseToSimilarityFilter(r *http.Request) (*analogdb.PostSimilarityFilter, error) {
+
+	truthy := make(map[string]bool)
+	truthy["true"] = true
+	truthy["t"] = true
+	truthy["yes"] = true
+	truthy["y"] = true
+	truthy["1"] = true
+
+	falsey := make(map[string]bool)
+	falsey["false"] = false
+	falsey["f"] = false
+	falsey["no"] = false
+	falsey["n"] = false
+	falsey["0"] = false
+
+	filter := &analogdb.PostSimilarityFilter{Limit: &defaultSimilarityLimit}
+
+	if limit := r.URL.Query().Get("page_size"); limit != "" {
+		if intLimit, err := strconv.Atoi(limit); err != nil {
+			return nil, err
+		} else {
+			// ensure limit is less than configured max
+			if intLimit <= maxSimilarityLimit {
+				filter.Limit = &intLimit
+			} else {
+				filter.Limit = &maxSimilarityLimit
+			}
+		}
+
+	}
+	if nsfw := r.URL.Query().Get("nsfw"); nsfw != "" {
+		if yes := truthy[strings.ToLower(nsfw)]; yes {
+			filter.Nsfw = &yes
+		} else if no := falsey[strings.ToLower(nsfw)]; !no {
+			filter.Nsfw = &no
+		} else {
+			return nil, errors.New("invalid string to boolean conversion")
+		}
+	}
+	if grayscale := r.URL.Query().Get("grayscale"); grayscale != "" {
+		if yes := truthy[strings.ToLower(grayscale)]; yes {
+			filter.Grayscale = &yes
+		} else if no := falsey[strings.ToLower(grayscale)]; !no {
+			filter.Grayscale = &no
+		} else {
+			return nil, errors.New("invalid string to boolean conversion")
+		}
+	}
+	if sprock := r.URL.Query().Get("sprocket"); sprock != "" {
+		if yes := truthy[strings.ToLower(sprock)]; yes {
+			filter.Sprocket = &yes
+		} else if no := falsey[strings.ToLower(sprock)]; !no {
+			filter.Sprocket = &no
+		} else {
+			return nil, errors.New("invalid string to boolean conversion")
+		}
 	}
 	return filter, nil
 }
