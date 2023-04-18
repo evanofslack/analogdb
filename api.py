@@ -89,6 +89,19 @@ def delete_from_analogdb(id: int, username: str, password: str):
         raise Exception(f"failed to delete post with response: {resp.json()}")
 
 
+def get_all_post_ids() -> List[int]:
+    url = f"{ANALOGDB_URL}/ids"
+    resp = requests.get(
+        url=url,
+    )
+    if resp.status_code != 200:
+        raise Exception(f"failed to delete post with response: {resp.json()}")
+
+    json_ids = resp.json()["ids"]
+
+    return [int(id) for id in json_ids]
+
+
 def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
 
     url = f"{ANALOGDB_URL}/scrape/keywords/updated"
@@ -108,6 +121,27 @@ def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
     ids = data["ids"]
 
     return ids
+
+
+# type encodePostsRequest struct {
+# 	Ids       []int `json:"ids"`
+# 	BatchSize int   `json:"batch_size"`
+# }
+#
+
+
+def encode_images(ids: List[int], batch_size: int, username: str, password: str):
+    data = {"ids": ids, "batch_size": batch_size}
+    body = json.dumps(data)
+    url = f"{ANALOGDB_URL}/similar/encode"
+    resp = requests.patch(
+        url=url,
+        data=body,
+        auth=HTTPBasicAuth(username=username, password=password),
+    )
+    if resp.status_code != 200:
+        raise Exception(f"failed encode posts with response: {resp.content}")
+    logger.info(f"{len(ids)} posts had similar posts updated")
 
 
 def json_to_post(data: dict) -> AnalogDisplayPost:

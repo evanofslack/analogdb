@@ -6,8 +6,8 @@ import praw
 import requests
 from loguru import logger
 
-from api import (get_keyword_updated_post_ids, json_to_post, new_patch,
-                 patch_to_analogdb)
+from api import (encode_images, get_all_post_ids, get_keyword_updated_post_ids,
+                 json_to_post, new_patch, patch_to_analogdb)
 from comment import (get_comments, post_keywords, read_comments_from_json,
                      write_comments_to_json, write_keywords_to_disk)
 from constants import (ALL_KEYWORDS_FILEPATH, ANALOGDB_URL,
@@ -213,3 +213,24 @@ def update_posts_keywords(deps: Dependencies, count: int, limit: Optional[int] =
             limit=limit,
             blacklist=deps.blacklist,
         )
+
+
+def update_post_similars_by_id(deps: Dependencies, id: int):
+    encode_images(
+        ids=[id],
+        batch_size=1,
+        username=deps.auth.username,
+        password=deps.auth.password,
+    )
+
+
+def update_post_similars(deps: Dependencies, count: int, batch_size: int):
+    ids = get_all_post_ids()
+    ids.sort(reverse=True)
+    ids = ids[:count]
+    encode_images(
+        ids=ids,
+        batch_size=batch_size,
+        username=deps.auth.username,
+        password=deps.auth.password,
+    )
