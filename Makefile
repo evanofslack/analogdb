@@ -25,7 +25,7 @@ log :
 	docker-compose -f docker-compose-dev.yml logs --follow
 
 test :
-	docker-compose -f docker-compose-dev.yml up -d && go test ./...
+	go test ./...
 
 psql :
 	docker exec -it postgres psql -U postgres analogdb
