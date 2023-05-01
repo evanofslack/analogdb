@@ -17,7 +17,12 @@ export async function getStaticProps({ params }) {
   const response = await fetch(postURL);
   const post = await response.json();
 
-  const similarURL = `${baseURL}/post/${params.pid}/similar`;
+  // only show nsfw results if the original image was nsfw
+  let query = "?nsfw=false";
+  if (post.nsfw) {
+    query = "";
+  }
+  const similarURL = `${baseURL}/post/${params.pid}/similar` + query;
   const similarResp = await fetch(similarURL);
   const similar = await similarResp.json();
   return {
