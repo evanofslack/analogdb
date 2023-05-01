@@ -261,6 +261,9 @@ func TestCreateAndDeletePost(t *testing.T) {
 		jsonCreatePost, _ := json.Marshal(createPost)
 
 		r := httptest.NewRequest(http.MethodPut, "/post", bytes.NewBuffer(jsonCreatePost))
+		// bypass encoding with context
+		ctx := context.WithValue(r.Context(), analogdb.EncodeContextKey, false)
+		r = r.WithContext(ctx)
 
 		r.Header.Set("Authorization", makeAuthHeader())
 
@@ -311,6 +314,10 @@ func TestCreateAndDeletePost(t *testing.T) {
 
 		r := httptest.NewRequest(http.MethodPost, "/post", bytes.NewBuffer(jsonCreatePost))
 
+		// bypass encoding
+		ctx := context.WithValue(r.Context(), analogdb.EncodeContextKey, false)
+		r = r.WithContext(ctx)
+
 		r.Header.Set("Authorization", makeAuthHeader())
 
 		w := httptest.NewRecorder()
@@ -359,6 +366,9 @@ func TestCreateAndDeletePost(t *testing.T) {
 		jsonCreatePost, _ := json.Marshal(createPost)
 
 		r := httptest.NewRequest(http.MethodPut, "/post", bytes.NewBuffer(jsonCreatePost))
+		// bypass encoding
+		ctx := context.WithValue(r.Context(), analogdb.EncodeContextKey, false)
+		r = r.WithContext(ctx)
 
 		r.Header.Set("Authorization", makeAuthHeader())
 
@@ -377,6 +387,9 @@ func TestCreateAndDeletePost(t *testing.T) {
 		jsonCreatePost, _ := json.Marshal(createPost)
 
 		r := httptest.NewRequest(http.MethodPost, "/post", bytes.NewBuffer(jsonCreatePost))
+		// bypass encoding
+		ctx := context.WithValue(r.Context(), analogdb.EncodeContextKey, false)
+		r = r.WithContext(ctx)
 
 		r.Header.Set("Authorization", makeAuthHeader())
 

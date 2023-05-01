@@ -14,20 +14,25 @@ import (
 )
 
 func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error {
+	fmt.Println("entering BatchEncodePosts")
 
 	batches := batchBy(ids, batchSize)
 	for _, batch := range batches {
+		fmt.Println("looping batches")
 		filter := analogdb.PostFilter{IDs: &batch}
 		posts, _, err := ss.postService.FindPosts(ctx, &filter)
+		fmt.Println("found post by id")
 		if err != nil {
 			return err
 		}
+		fmt.Println("convert post to pic object")
 		pictureObjects := postsToPictureObjects(posts)
 		fmt.Println("start put to img2vec")
 		err = ss.db.batchUploadObjects(ctx, pictureObjects)
 		if err != nil {
 			return err
 		}
+		fmt.Println("img2vec success")
 	}
 	fmt.Println("batch encode success")
 	return nil
@@ -70,7 +75,7 @@ func downloadAndEncodePosts(posts []*analogdb.Post) ([]string, []*analogdb.Post,
 	go maxThreadsDownload(maxGoroutines, posts, &wg, encodesChan, postsChan, failedChan)
 
 	go func() {
-		time.Sleep(10000)
+		time.Sleep(time.Second * 2)
 		wg.Wait()
 		fmt.Println("waitgroup finished")
 		close(encodesChan)

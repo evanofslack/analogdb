@@ -45,7 +45,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	// run migrations if needed
+	// run weaviate migrations if needed
 	// creates the schema if it does not exist
 	if err := dbVec.Migrate(ctx); err != nil {
 		fmt.Println("failed to migrate dbVec")

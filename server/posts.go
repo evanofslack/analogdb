@@ -84,10 +84,12 @@ func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToFilter(r)
 	if err != nil {
 		writeError(w, r, err)
+		return
 	}
 	resp, err := s.makePostResponse(r, filter)
 	if err != nil {
 		writeError(w, r, err)
+		return
 	}
 	err = encodeResponse(w, r, http.StatusOK, resp)
 	if err != nil {
@@ -102,6 +104,7 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 	similarityFilter, err := parseToSimilarityFilter(r)
 	if err != nil {
 		writeError(w, r, err)
+		return
 	}
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
@@ -159,6 +162,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing post from request body"}
 		writeError(w, r, err)
+		return
 	}
 
 	// create the post in db
@@ -168,11 +172,18 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// encode the post in vector db
-	toEncode := []int{created.Id}
-	err = s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
-	if err != nil {
-		writeError(w, r, err)
+	// check if encoding is disabled
+	encode := r.Context().Value(analogdb.EncodeContextKey)
+	doEncode, _ := encode.(bool)
+
+	// if there is no context value or context value is true, do encode
+	if encode == nil || doEncode {
+		toEncode := []int{created.Id}
+		err = s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
 	}
 
 	createdResponse := CreateResponse{
@@ -190,6 +201,7 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing patch from request body"}
 		writeError(w, r, err)
+		return
 	}
 
 	if id := chi.URLParam(r, "id"); id != "" {
@@ -212,6 +224,7 @@ func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
 	ids, err := s.PostService.AllPostIDs(r.Context())
 	if err != nil {
 		writeError(w, r, err)
+		return
 	}
 	idsResponse := IDsResponse{
 		Ids: ids,
