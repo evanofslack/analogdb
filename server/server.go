@@ -17,10 +17,11 @@ type Server struct {
 	router  *chi.Mux
 	healthy bool
 
-	PostService   analogdb.PostService
-	ReadyService  analogdb.ReadyService
-	AuthorService analogdb.AuthorService
-	ScrapeService analogdb.ScrapeService
+	PostService       analogdb.PostService
+	ReadyService      analogdb.ReadyService
+	AuthorService     analogdb.AuthorService
+	ScrapeService     analogdb.ScrapeService
+	SimilarityService analogdb.SimilarityService
 }
 
 func New(port string) *Server {
@@ -37,8 +38,8 @@ func New(port string) *Server {
 	s.mountPostHandlers()
 	s.mountAuthorHandlers()
 	s.mountScrapeHandlers()
-	s.mountStatic()
-	s.mountStatus()
+	s.mountStaticHandlers()
+	s.mountStatusHandlers()
 	s.mountStatsHandlers()
 	return s
 }

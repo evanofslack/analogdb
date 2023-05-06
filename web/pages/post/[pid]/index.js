@@ -13,17 +13,27 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const url = `${baseURL}/post/${params.pid}`;
-  const response = await fetch(url);
+  const postURL = `${baseURL}/post/${params.pid}`;
+  const response = await fetch(postURL);
   const post = await response.json();
+
+  // only show nsfw results if the original image was nsfw
+  let query = "?nsfw=false";
+  if (post.nsfw) {
+    query = "";
+  }
+  const similarURL = `${baseURL}/post/${params.pid}/similar` + query;
+  const similarResp = await fetch(similarURL);
+  const similar = await similarResp.json();
   return {
     props: {
       post,
+      similar,
     },
     revalidate: 10,
   };
 }
 
-export default function Post({ post }) {
-  return ImagePage((post = { post }));
+export default function Post({ post, similar }) {
+  return ImagePage({ post, similar });
 }

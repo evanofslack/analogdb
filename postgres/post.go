@@ -106,7 +106,8 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 		return nil, err
 	}
 	defer tx.Rollback()
-	posts, _, err := findPosts(ctx, tx, &analogdb.PostFilter{ID: &id})
+	ids := []int{id}
+	posts, _, err := findPosts(ctx, tx, &analogdb.PostFilter{IDs: &ids})
 	if err != nil {
 		return nil, err
 	} else if len(posts) == 0 {
@@ -675,9 +676,22 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 		args = append(args, *sprocket)
 		index += 1
 	}
-	if id := filter.ID; id != nil {
-		where = append(where, fmt.Sprintf("p.id = $%d", index))
-		args = append(args, *id)
+	if ids := filter.IDs; ids != nil {
+		where = append(where, fmt.Sprintf("p.id = ANY($%d::int[])", index))
+		// turn the slice of ids into a string i.e. "(1,2,3)"
+		var idsFormat string
+		if len(*ids) == 1 {
+			// single id can't have a comma
+			id := (*ids)[0]
+			idsFormat = fmt.Sprintf("{%s}", strconv.Itoa(id))
+		} else {
+			idsString := []string{}
+			for _, i := range *ids {
+				idsString = append(idsString, strconv.Itoa(i))
+			}
+			idsFormat = "{" + strings.Join(idsString, ",") + "}"
+		}
+		args = append(args, idsFormat)
 		index += 1
 	}
 	// match partial text in post title with ILIKE

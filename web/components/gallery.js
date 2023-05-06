@@ -139,11 +139,23 @@ export default function Gallery(props) {
                   onChange={setSort}
                   name="Sort"
                   orientation="vertical"
-                  spacing="sm"
+                  spacing="md"
                 >
-                  <Radio value="latest" label="latest" />
-                  <Radio value="top" label="top" />
-                  <Radio value="random" label="random" />
+                  <Radio
+                    value="latest"
+                    label="latest"
+                    className={styles.radioButton}
+                  />
+                  <Radio
+                    value="top"
+                    label="top"
+                    className={styles.radioButton}
+                  />
+                  <Radio
+                    value="random"
+                    label="random"
+                    className={styles.radioButton}
+                  />
                 </Radio.Group>
               </div>
             </Menu.Dropdown>

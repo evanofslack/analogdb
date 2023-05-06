@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func (s *Server) mountStatus() {
+func (s *Server) mountStatusHandlers() {
 
 	s.router.Route("/ping", func(r chi.Router) { r.Get("/", s.ping) })
 	s.router.Route("/healthz", func(r chi.Router) { r.Get("/", s.healthz) })

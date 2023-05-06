@@ -15,9 +15,45 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres:/var/lib/postgresql/data
+      # - postgres:/var/lib/postgresql/data
       - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
-      - ./postgres/csv:/var/lib/postgresql/csv
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  weaviate:
+    command:
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --scheme
+      - http
+    image: semitechnologies/weaviate:1.18.3
+    ports:
+      - 8081:8080
+    restart: unless-stopped
+    environment:
+      IMAGE_INFERENCE_API: "http://i2v-neural:8080"
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      DEFAULT_VECTORIZER_MODULE: "img2vec-neural"
+      ENABLE_MODULES: "img2vec-neural"
+      CLUSTER_HOSTNAME: "node1"
+    volumes:
+      - ./weaviate-data:/var/lib/weaviate
+
+  i2v-neural:
+    image: semitechnologies/img2vec-pytorch:resnet50
+    ports:
+      - 8082:8080
+    restart: unless-stopped
+    environment:
+      ENABLE_CUDA: "0"
+
   analogdb:
     container_name: analogdb
     build: .
@@ -27,6 +63,7 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres
-volumes:
-  postgres:
+      postgres:
+        condition: service_healthy
+# volumes:
+#   postgres:

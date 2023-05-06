@@ -21,4 +21,9 @@ praw.ini
 api/go-reddit
 .DS_Store
 
+# dev helpers
+dev
+
+# docker
 postgres-data
+weaviate-data

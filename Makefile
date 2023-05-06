@@ -1,13 +1,13 @@
-.PHONY: up up-d down log run dev test psql
+.PHONY: up upd down build db infra log test web prod
 
 up :
 	docker-compose -f docker-compose-dev.yml up
 
-up-d :
+upd :
 	docker-compose -f docker-compose-dev.yml up -d
 
 down :
-	docker-compose down --remove-orphans
+	docker-compose -f docker-compose-dev.yml down --remove-orphans
 
 build :
 	docker-compose -f docker-compose-dev.yml up -d --force-recreate --build
@@ -15,11 +15,18 @@ build :
 db :
 	docker-compose -f docker-compose-dev.yml up -d postgres
 
+infra :
+	docker-compose -f docker-compose-dev.yml up -d postgres weaviate i2v-neural
+
 log :
-	docker-compose logs --tail=0 --follow
+	docker-compose -f docker-compose-dev.yml logs --follow
 
 test :
-	docker-compose -f docker-compose-dev.yml up -d && go test ./...
+	go test ./...
 
-psql :
-	docker exec -it postgres psql -U postgres analogdb
+web :
+	cd web && npm run dev
+
+prod :
+	docker-compose -f docker-compose.yml up -d
+

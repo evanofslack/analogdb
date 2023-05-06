@@ -25,6 +25,10 @@ type PostResponse struct {
 	Posts []analogdb.Post `json:"posts"`
 }
 
+type SimilarPostsResponse struct {
+	Posts []analogdb.Post `json:"posts"`
+}
+
 type DeleteResponse struct {
 	Message string `json:"message"`
 }
@@ -44,6 +48,12 @@ var defaultLimit = 20
 // max limit of posts returned
 var maxLimit = 200
 
+// default limit on number of similar posts returned
+var defaultSimilarityLimit = 12
+
+// max limit of similar posts returned
+var maxSimilarityLimit = 50
+
 // default to sorting by time descending (latest)
 var defaultSort = "time"
 
@@ -59,6 +69,7 @@ func (s *Server) mountPostHandlers() {
 	})
 	s.router.Route(postPath, func(r chi.Router) {
 		r.Get("/{id}", s.findPost)
+		r.Get("/{id}/similar", s.getSimilarPosts)
 		r.With(auth).Delete("/{id}", s.deletePost)
 		r.With(auth).Patch("/{id}", s.patchPost)
 		r.With(auth).Put("/", s.createPost)
@@ -73,14 +84,43 @@ func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToFilter(r)
 	if err != nil {
 		writeError(w, r, err)
+		return
 	}
 	resp, err := s.makePostResponse(r, filter)
 	if err != nil {
 		writeError(w, r, err)
+		return
 	}
 	err = encodeResponse(w, r, http.StatusOK, resp)
 	if err != nil {
 		writeError(w, r, err)
+	}
+}
+
+func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
+
+	resp := SimilarPostsResponse{}
+
+	similarityFilter, err := parseToSimilarityFilter(r)
+	if err != nil {
+		writeError(w, r, err)
+		return
+	}
+	if id := chi.URLParam(r, "id"); id != "" {
+		if identify, err := strconv.Atoi(id); err == nil {
+			if posts, err := s.SimilarityService.FindSimilarPostsByImage(r.Context(), identify, similarityFilter); err == nil {
+				for _, p := range posts {
+					resp.Posts = append(resp.Posts, *p)
+				}
+				if err := encodeResponse(w, r, http.StatusOK, resp); err != nil {
+					writeError(w, r, err)
+				}
+			} else {
+				writeError(w, r, err)
+			}
+		} else {
+			writeError(w, r, err)
+		}
 	}
 }
 
@@ -104,7 +144,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
 			if err := s.PostService.DeletePost(r.Context(), identify); err == nil {
-				success := DeleteResponse{Message: "Success, post deleted"}
+				success := DeleteResponse{Message: "success, post deleted"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
 					writeError(w, r, err)
 				}
@@ -120,14 +160,32 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Error parsing post from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing post from request body"}
 		writeError(w, r, err)
+		return
 	}
+
+	// create the post in db
 	created, err := s.PostService.CreatePost(r.Context(), &createPost)
 	if err != nil || created == nil {
 		writeError(w, r, err)
 		return
 	}
+
+	// check if encoding is disabled
+	encode := r.Context().Value(analogdb.EncodeContextKey)
+	doEncode, _ := encode.(bool)
+
+	// if there is no context value or context value is true, do encode
+	if encode == nil || doEncode {
+		toEncode := []int{created.Id}
+		err = s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
+		if err != nil {
+			writeError(w, r, err)
+			return
+		}
+	}
+
 	createdResponse := CreateResponse{
 		Message: "Success, post created",
 		Post:    *created,
@@ -141,14 +199,15 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 
 	var patchPost analogdb.PatchPost
 	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Error parsing patch from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing patch from request body"}
 		writeError(w, r, err)
+		return
 	}
 
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
 			if err := s.PostService.PatchPost(r.Context(), &patchPost, identify); err == nil {
-				success := DeleteResponse{Message: "Success, post patched"}
+				success := DeleteResponse{Message: "success, post patched"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
 					writeError(w, r, err)
 				}
@@ -165,6 +224,7 @@ func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
 	ids, err := s.PostService.AllPostIDs(r.Context())
 	if err != nil {
 		writeError(w, r, err)
+		return
 	}
 	idsResponse := IDsResponse{
 		Ids: ids,
@@ -357,7 +417,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		if identify, err := strconv.Atoi(id); err != nil {
 			return nil, err
 		} else {
-			filter.ID = &identify
+			filter.IDs = &[]int{identify}
 		}
 	}
 	if title := r.URL.Query().Get("title"); title != "" {
@@ -365,6 +425,69 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 	if author := r.URL.Query().Get("author"); author != "" {
 		filter.Author = &author
+	}
+	return filter, nil
+}
+
+// parse URL for query parameters and
+// convert to PostSimilarityFilter (query vector db)
+func parseToSimilarityFilter(r *http.Request) (*analogdb.PostSimilarityFilter, error) {
+
+	truthy := make(map[string]bool)
+	truthy["true"] = true
+	truthy["t"] = true
+	truthy["yes"] = true
+	truthy["y"] = true
+	truthy["1"] = true
+
+	falsey := make(map[string]bool)
+	falsey["false"] = false
+	falsey["f"] = false
+	falsey["no"] = false
+	falsey["n"] = false
+	falsey["0"] = false
+
+	filter := &analogdb.PostSimilarityFilter{Limit: &defaultSimilarityLimit}
+
+	if limit := r.URL.Query().Get("page_size"); limit != "" {
+		if intLimit, err := strconv.Atoi(limit); err != nil {
+			return nil, err
+		} else {
+			// ensure limit is less than configured max
+			if intLimit <= maxSimilarityLimit {
+				filter.Limit = &intLimit
+			} else {
+				filter.Limit = &maxSimilarityLimit
+			}
+		}
+
+	}
+	if nsfw := r.URL.Query().Get("nsfw"); nsfw != "" {
+		if yes := truthy[strings.ToLower(nsfw)]; yes {
+			filter.Nsfw = &yes
+		} else if no := falsey[strings.ToLower(nsfw)]; !no {
+			filter.Nsfw = &no
+		} else {
+			return nil, errors.New("invalid string to boolean conversion")
+		}
+	}
+	if grayscale := r.URL.Query().Get("grayscale"); grayscale != "" {
+		if yes := truthy[strings.ToLower(grayscale)]; yes {
+			filter.Grayscale = &yes
+		} else if no := falsey[strings.ToLower(grayscale)]; !no {
+			filter.Grayscale = &no
+		} else {
+			return nil, errors.New("invalid string to boolean conversion")
+		}
+	}
+	if sprock := r.URL.Query().Get("sprocket"); sprock != "" {
+		if yes := truthy[strings.ToLower(sprock)]; yes {
+			filter.Sprocket = &yes
+		} else if no := falsey[strings.ToLower(sprock)]; !no {
+			filter.Sprocket = &no
+		} else {
+			return nil, errors.New("invalid string to boolean conversion")
+		}
 	}
 	return filter, nil
 }

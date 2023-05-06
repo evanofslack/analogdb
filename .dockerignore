@@ -1,1 +1,6 @@
+dev
+web
+postgres/populate.sql
+postgres/migrations
 postgres-data
+weaviate-data
