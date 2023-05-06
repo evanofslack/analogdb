@@ -1,4 +1,4 @@
-.PHONY: up upd down build db infra log test prod
+.PHONY: up upd down build db infra log test web prod
 
 up :
 	docker-compose -f docker-compose-dev.yml up
@@ -23,6 +23,9 @@ log :
 
 test :
 	go test ./...
+
+web :
+	cd web && npm run dev
 
 prod :
 	docker-compose -f docker-compose.yml up -d
