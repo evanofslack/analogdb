@@ -1,4 +1,4 @@
-.PHONY: up up-d down log run dev test psql
+.PHONY: up upd down build db infra log test prod
 
 up :
 	docker-compose -f docker-compose-dev.yml up
@@ -18,14 +18,12 @@ db :
 infra :
 	docker-compose -f docker-compose-dev.yml up -d postgres weaviate i2v-neural
 
-prod :
-	docker-compose -f docker-compose.yml up -d
-
 log :
 	docker-compose -f docker-compose-dev.yml logs --follow
 
 test :
 	go test ./...
 
-psql :
-	docker exec -it postgres psql -U postgres analogdb
+prod :
+	docker-compose -f docker-compose.yml up -d
+
