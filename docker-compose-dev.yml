@@ -22,6 +22,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
   weaviate:
     command:
       - --host
@@ -44,6 +45,7 @@ services:
       CLUSTER_HOSTNAME: "node1"
     volumes:
       - ./weaviate-data:/var/lib/weaviate
+
   i2v-neural:
     image: semitechnologies/img2vec-pytorch:resnet50
     ports:
@@ -51,6 +53,7 @@ services:
     restart: unless-stopped
     environment:
       ENABLE_CUDA: "0"
+
   analogdb:
     container_name: analogdb
     build: .
@@ -62,6 +65,5 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-        # weaviate
 # volumes:
 #   postgres:
