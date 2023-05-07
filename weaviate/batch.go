@@ -14,27 +14,20 @@ import (
 )
 
 func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error {
-	fmt.Println("entering BatchEncodePosts")
 
 	batches := batchBy(ids, batchSize)
 	for _, batch := range batches {
-		fmt.Println("looping batches")
 		filter := analogdb.PostFilter{IDs: &batch}
 		posts, _, err := ss.postService.FindPosts(ctx, &filter)
-		fmt.Println("found post by id")
 		if err != nil {
 			return err
 		}
-		fmt.Println("convert post to pic object")
 		pictureObjects := postsToPictureObjects(posts)
-		fmt.Println("start put to img2vec")
 		err = ss.db.batchUploadObjects(ctx, pictureObjects)
 		if err != nil {
 			return err
 		}
-		fmt.Println("img2vec success")
 	}
-	fmt.Println("batch encode success")
 	return nil
 }
 
@@ -77,7 +70,6 @@ func downloadAndEncodePosts(posts []*analogdb.Post) ([]string, []*analogdb.Post,
 	go func() {
 		time.Sleep(time.Second * 2)
 		wg.Wait()
-		fmt.Println("waitgroup finished")
 		close(encodesChan)
 		close(postsChan)
 		close(failedChan)
@@ -93,21 +85,18 @@ func downloadAndEncodePosts(posts []*analogdb.Post) ([]string, []*analogdb.Post,
 			if ok {
 				encodedImages = append(encodedImages, encoded)
 			} else {
-				fmt.Println("encodedChan closed")
 				return encodedImages, successPosts, failedIDs
 			}
 		case post, ok := <-postsChan:
 			if ok {
 				successPosts = append(successPosts, post)
 			} else {
-				fmt.Println("successPosts closed")
 				return encodedImages, successPosts, failedIDs
 			}
 		case id, ok := <-failedChan:
 			if ok {
 				failedIDs = append(failedIDs, id)
 			} else {
-				fmt.Println("failedChan closed")
 				return encodedImages, successPosts, failedIDs
 			}
 		}
@@ -120,9 +109,9 @@ func downloadAndEncodePost(post *analogdb.Post, wg *sync.WaitGroup, encodes chan
 	url := post.Images[1].Url
 	id := post.Id
 	resp, err := http.Get(url)
-	fmt.Println(resp)
 	if err != nil {
-		fmt.Println("request errored")
+		fmt.Println("image download request errored with resp:")
+		fmt.Println(resp)
 		failed <- id
 	}
 	defer resp.Body.Close()
@@ -138,9 +127,7 @@ func downloadAndEncodePost(post *analogdb.Post, wg *sync.WaitGroup, encodes chan
 }
 
 func postsToPictureObjects(posts []*analogdb.Post) []*models.Object {
-	fmt.Println("starting download pictures")
 	encodedImages, successPosts, failedIDs := downloadAndEncodePosts(posts)
-	fmt.Println("converting encoded images to weaviate objects")
 	var pictureObjects []*models.Object
 
 	for i := range encodedImages {
