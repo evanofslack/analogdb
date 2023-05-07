@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	similarityPath = "/similarity"
-	encodePath     = similarityPath + "/encode"
+	encodePath = "/encode"
 )
 
 func (s *Server) mountSimilarityHandlers() {
@@ -32,7 +31,7 @@ func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
 
 	var request encodePostsRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing ids from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing ids or batch_size from request body"}
 		writeError(w, r, err)
 	}
 

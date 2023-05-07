@@ -37,6 +37,7 @@ func New(port string) *Server {
 	s.mountMiddleware()
 	s.mountPostHandlers()
 	s.mountAuthorHandlers()
+	s.mountSimilarityHandlers()
 	s.mountScrapeHandlers()
 	s.mountStaticHandlers()
 	s.mountStatusHandlers()
