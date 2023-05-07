@@ -3,20 +3,24 @@ package weaviate
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 )
 
+const weaviateClientTimeout = 30 * time.Second
+
 type DB struct {
-	db     *weaviate.Client
-	host   string
-	scheme string
-	ctx    context.Context
-	cancel func()
+	db      *weaviate.Client
+	host    string
+	scheme  string
+	timeout time.Duration
+	ctx     context.Context
+	cancel  func()
 }
 
 func NewDB(host string, scheme string) *DB {
-	db := &DB{host: host, scheme: scheme}
+	db := &DB{host: host, scheme: scheme, timeout: weaviateClientTimeout}
 	db.ctx, db.cancel = context.WithCancel(context.Background())
 	return db
 }
@@ -32,8 +36,9 @@ func (db *DB) Open() error {
 	}
 
 	cfg := weaviate.Config{
-		Host:   db.host,
-		Scheme: db.scheme,
+		Host:           db.host,
+		Scheme:         db.scheme,
+		StartupTimeout: db.timeout,
 	}
 
 	var err error
