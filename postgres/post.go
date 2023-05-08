@@ -537,9 +537,6 @@ func insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *analogdb.Patc
 	keywords := patch.Keywords != nil
 	addTimeOrNull(keywords, &values)
 
-	fmt.Println(query)
-	fmt.Println(values)
-
 	rows, err := stmt.QueryContext(ctx, values...)
 	defer rows.Close()
 	if err != nil {

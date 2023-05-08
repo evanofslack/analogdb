@@ -16,7 +16,7 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 	}
 
 	// httpserver test currently require DB, can be mocked out instead
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("POSTGRES_DATABASE_URL")
 
 	db := postgres.NewDB(dsn)
 	if err := db.Open(); err != nil {

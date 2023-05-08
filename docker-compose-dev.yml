@@ -1,13 +1,34 @@
 version: "3.7"
 services:
+
+  analogdb:
+    container_name: analogdb
+    build: .
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${ANALOGDB_APP_NAME}
+      APP_VERSION: ${ANALOGDB_APP_VERSION}
+      HTTP_PORT: ${ANALOGDB_HTTP_PORT}
+      LOG_LEVEL: ${ANALOGDB_LOG_LEVEL}
+      AUTH_USERNAME: ${ANALOGDB_AUTH_USERNAME}
+      AUTH_PASSWORD: ${ANALOGDB_AUTH_PASSWORD}
+      DATABASE_URL: ${POSTGRES_DATABASE_URL}
+      VECTOR_DATABASE_HOST: ${WEAVIATE_HOST}
+      VECTOR_DATABASE_SCHEME: ${WEAVIATE_SCHEME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   postgres:
     container_name: postgres
     image: postgres:latest
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PW}
-      - POSTGRES_DB=${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PW}
+      POSTGRES_DB: ${POSTGRES_DB}
     logging:
       options:
         max-size: 10m
@@ -34,6 +55,7 @@ services:
     image: semitechnologies/weaviate:1.18.3
     ports:
       - 8081:8080
+      - ${WEAVIATE_METRICS_PORT}:2112
     restart: unless-stopped
     environment:
       IMAGE_INFERENCE_API: "http://i2v-neural:8080"
@@ -43,6 +65,14 @@ services:
       DEFAULT_VECTORIZER_MODULE: "img2vec-neural"
       ENABLE_MODULES: "img2vec-neural"
       CLUSTER_HOSTNAME: "node1"
+      PROMETHEUS_MONITORING_ENABLED: "true"
+      PROMETHEUS_MONITORING_PORT: 2112
+      BACKUP_S3_BUCKET: ${WEAVIATE_BACKUP_S3_BUCKET}
+      BACKUP_S3_PATH: ${WEAVIATE_BACKUP_S3_PATH}
+      BACKUP_S3_ENDPOINT: ${WEAVIATE_BACKUP_S3_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${WEAVIATE_AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${WEAVIATE_AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${WEAVIATE_AWS_REGION}
     volumes:
       - ./weaviate-data:/var/lib/weaviate
 
@@ -52,18 +82,30 @@ services:
       - 8082:8080
     restart: unless-stopped
     environment:
-      ENABLE_CUDA: "0"
+      ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA}
 
-  analogdb:
-    container_name: analogdb
-    build: .
+  prometheus:
+    image: prom/prometheus:v2.36.2
+    volumes:
+      - ./prometheus:/etc/prometheus/
+      - ./prometheus-data/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
     ports:
-      - 8080:8080
-    restart: unless-stopped
-    env_file:
-      - .env
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - 9090:9090
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
+      - 3000:3000
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/prometheus.yml
+      - ./grafana/dashboard_provider.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+
 # volumes:
 #   postgres:

@@ -3,7 +3,6 @@ package weaviate
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
@@ -176,7 +175,6 @@ func unmarshallPicturesResp(result *models.GraphQLResponse) ([]pictureResponse, 
 
 	var picturesResponse []pictureResponse
 
-	fmt.Println(result)
 	data := result.Data["Get"].(map[string]interface{})
 
 	// dear god i hate this
