@@ -1,4 +1,4 @@
-.PHONY: up upd down build db infra log test web prod
+.PHONY: up upd down build db infra mon log test web prod
 
 up :
 	docker-compose -f docker-compose-dev.yml up
@@ -17,6 +17,9 @@ db :
 
 infra :
 	docker-compose -f docker-compose-dev.yml up -d postgres weaviate i2v-neural
+
+mon :
+	docker-compose -f docker-compose-dev.yml up -d prometheus grafana
 
 log :
 	docker-compose -f docker-compose-dev.yml logs --follow
