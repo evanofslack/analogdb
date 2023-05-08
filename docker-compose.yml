@@ -1,13 +1,34 @@
 version: "3.7"
 services:
+
+  analogdb:
+    container_name: analogdb
+    build: .
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${ANALOGDB_APP_NAME}
+      APP_VERSION: ${ANALOGDB_APP_VERSION}
+      HTTP_PORT: ${ANALOGDB_HTTP_PORT}
+      LOG_LEVEL: ${ANALOGDB_LOG_LEVEL}
+      AUTH_USERNAME: ${ANALOGDB_AUTH_USERNAME}
+      AUTH_PASSWORD: ${ANALOGDB_AUTH_PASSWORD}
+      DATABASE_URL: ${POSTGRES_DATABASE_URL}
+      VECTOR_DATABASE_HOST: ${WEAVIATE_HOST}
+      VECTOR_DATABASE_SCHEME: ${WEAVIATE_SCHEME}
+    depends_on:
+      - postgres:
+          condition: service_healthy
+
   postgres:
     container_name: postgres
     image: postgres:latest
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PW}
-      - POSTGRES_DB=${POSTGRES_DB}
+    POSTGRES_USER: ${POSTGRES_USER}
+    POSTGRES_PASSWORD: ${POSTGRES_PW}
+    POSTGRES_DB: ${POSTGRES_DB}
     logging:
       options:
         max-size: 10m
@@ -31,6 +52,8 @@ services:
       - --scheme
       - http
     image: semitechnologies/weaviate:1.18.3
+    ports:
+      - ${WEAVIATE_METRICS_PORT}:2112
     restart: unless-stopped
     environment:
       IMAGE_INFERENCE_API: "http://i2v-neural:8080"
@@ -38,8 +61,16 @@ services:
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
       PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
       DEFAULT_VECTORIZER_MODULE: "img2vec-neural"
-      ENABLE_MODULES: "img2vec-neural"
+      ENABLE_MODULES: "backup-s3,img2vec-neural"
       CLUSTER_HOSTNAME: "node1"
+      PROMETHEUS_MONITORING_ENABLED: "true"
+      PROMETHEUS_MONITORING_PORT: 2112
+      BACKUP_S3_BUCKET: ${WEAVIATE_BACKUP_S3_BUCKET}
+      BACKUP_S3_PATH: ${WEAVIATE_BACKUP_S3_PATH}
+      BACKUP_S3_ENDPOINT: ${WEAVIATE_BACKUP_S3_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${WEAVIATE_AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${WEAVIATE_AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${WEAVIATE_AWS_REGION}
     volumes:
       - ./weaviate-data:/var/lib/weaviate
 
@@ -47,16 +78,4 @@ services:
     image: semitechnologies/img2vec-pytorch:resnet50
     restart: unless-stopped
     environment:
-      ENABLE_CUDA: "0"
-
-  analogdb:
-    container_name: analogdb
-    build: .
-    ports:
-      - 8080:8080
-    restart: unless-stopped
-    env_file:
-      - .env
-    depends_on:
-      - postgres:
-          condition: service_healthy
+      ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA}

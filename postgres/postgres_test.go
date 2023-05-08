@@ -20,7 +20,7 @@ func mustOpen(t *testing.T) *DB {
 	}
 
 	// connect to local db for testing
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("POSTGRES_DATABASE_URL")
 
 	db := NewDB(dsn)
 
