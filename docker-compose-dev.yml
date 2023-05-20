@@ -29,12 +29,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PW}
       POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - 5432:5432
     logging:
       options:
         max-size: 10m
         max-file: "3"
-    ports:
-      - "5432:5432"
     volumes:
       # - postgres:/var/lib/postgresql/data
       - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
@@ -94,6 +94,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+      - "--log.level=warn"
     ports:
       - 9090:9090
 
