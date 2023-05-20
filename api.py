@@ -133,15 +133,15 @@ def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
 def encode_images(ids: List[int], batch_size: int, username: str, password: str):
     data = {"ids": ids, "batch_size": batch_size}
     body = json.dumps(data)
-    url = f"{ANALOGDB_URL}/similar/encode"
-    resp = requests.patch(
+    url = f"{ANALOGDB_URL}/encode"
+    logger.info(f"encoding post ids {ids}")
+    resp = requests.put(
         url=url,
         data=body,
         auth=HTTPBasicAuth(username=username, password=password),
     )
     if resp.status_code != 200:
-        raise Exception(f"failed encode posts with response: {resp.content}")
-    logger.info(f"{len(ids)} posts had similar posts updated")
+        raise Exception(f"failed encode posts {ids} with response: {resp.content}")
 
 
 def json_to_post(data: dict) -> AnalogDisplayPost:

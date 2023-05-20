@@ -215,10 +215,10 @@ def update_posts_keywords(deps: Dependencies, count: int, limit: Optional[int] =
         )
 
 
-def update_post_similars_by_id(deps: Dependencies, id: int):
+def update_post_similars_by_ids(deps: Dependencies, ids: List[int], batch_size: int):
     encode_images(
-        ids=[id],
-        batch_size=1,
+        ids=ids,
+        batch_size=batch_size,
         username=deps.auth.username,
         password=deps.auth.password,
     )
@@ -227,6 +227,14 @@ def update_post_similars_by_id(deps: Dependencies, id: int):
 def update_post_similars(deps: Dependencies, count: int, batch_size: int):
     ids = get_all_post_ids()
     ids.sort(reverse=True)
+
+    # do not go out of bounds
+    if count > len(ids):
+        count = len(ids)
+
+    logger.info(
+        f"updating post similars for {count} posts with batch size {batch_size}"
+    )
     ids = ids[:count]
     encode_images(
         ids=ids,
@@ -234,3 +242,26 @@ def update_post_similars(deps: Dependencies, count: int, batch_size: int):
         username=deps.auth.username,
         password=deps.auth.password,
     )
+
+def chunk_list(data: List, chunksize: int):
+    for i in range(0, len(data), chunksize):
+        yield data[i:i + chunksize]
+
+def batch():
+    from configuration import dependencies_from_config, init_config
+    from log import init_logger
+
+    init_logger(with_file=False, with_slack=False)
+    config = init_config()
+    deps = dependencies_from_config(config=config)
+
+    ids = get_all_post_ids()
+    ids.sort(reverse=True)
+
+    for ids_chunk in chunk_list(data=ids, chunksize=10):
+        update_post_similars_by_ids(deps=deps, ids=ids_chunk, batch_size=1)
+        time.sleep(1)
+
+
+if __name__ == "__main__":
+    batch()
