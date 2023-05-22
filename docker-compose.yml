@@ -2,11 +2,11 @@ version: "3.7"
 services:
 
   analogdb:
+    image: evanofslack/analogdb:main
     container_name: analogdb
-    build: .
+    restart: unless-stopped
     ports:
       - 8080:8080
-    restart: unless-stopped
     environment:
       APP_NAME: ${ANALOGDB_APP_NAME}
       APP_VERSION: ${ANALOGDB_APP_VERSION}
@@ -39,7 +39,7 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - ./postgres-data:/var/lib/postgresql/data
+      - .data/postgres:/var/lib/postgresql/data
 
   weaviate:
     command:
@@ -70,7 +70,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${WEAVIATE_AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${WEAVIATE_AWS_REGION}
     volumes:
-      - ./weaviate-data:/var/lib/weaviate
+      - .data/weaviate:/var/lib/weaviate
 
   i2v-neural:
     image: semitechnologies/img2vec-pytorch:resnet50

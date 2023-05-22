@@ -25,6 +25,4 @@ api/go-reddit
 dev
 
 # docker
-postgres-data
-weaviate-data
-prometheus-data
+data
