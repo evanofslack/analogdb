@@ -8,6 +8,7 @@ import (
 	"os/signal"
 
 	"github.com/evanofslack/analogdb/config"
+	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/postgres"
 	"github.com/evanofslack/analogdb/server"
 	"github.com/evanofslack/analogdb/weaviate"
@@ -28,28 +29,40 @@ func main() {
 
 	cfg, err := config.New(cfgPath)
 	if err != nil {
+		err = fmt.Errorf("Failed to parse app config: %w", err)
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	db := postgres.NewDB(cfg.DB.URL)
-	if err := db.Open(); err != nil {
+	logger, err := logger.New(cfg.Log.Level, cfg.App.Env)
+	if err != nil {
+		err = fmt.Errorf("Failed to create logger: %w", err)
 		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Msg("Initializing application")
+
+	dbLogger := logger.WithService("database")
+	db := postgres.NewDB(cfg.DB.URL, dbLogger)
+	if err := db.Open(); err != nil {
+		err = fmt.Errorf("Failed to startup datebase: %w", err)
+		logger.Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 
 	// open connection to weaviate
-	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme)
+	dbVecLogger := logger.WithService("vector-database")
+	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme, dbVecLogger)
 	if err := dbVec.Open(); err != nil {
-		fmt.Println("failed to open dbVec")
-		fmt.Fprintln(os.Stderr, err)
+		err = fmt.Errorf("Failed to startup vector datebase: %w", err)
+		logger.Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 	// run weaviate migrations if needed
 	// creates the schema if it does not exist
 	if err := dbVec.Migrate(ctx); err != nil {
-		fmt.Println("failed to migrate dbVec")
-		fmt.Fprintln(os.Stderr, err)
+		err = fmt.Errorf("Failed to migrate vector datebase: %w", err)
+		logger.Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 

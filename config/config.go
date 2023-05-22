@@ -18,6 +18,7 @@ type Config struct {
 type App struct {
 	Name    string `yaml:"name" env:"APP_NAME"`
 	Version string `yaml:"version" env:"APP_VERSION"`
+	Env     string `yaml:"env" env:"APP_ENV"`
 }
 
 type DB struct {
@@ -49,7 +50,7 @@ func New(path string) (*Config, error) {
 		return nil, fmt.Errorf("error loading config: %w", err)
 	}
 	if err := godotenv.Load(); err != nil {
-		fmt.Println("warning: failed to load .env file: %w", err)
+		fmt.Println("Could not load .env file: %w", err)
 	}
 	if err := cleanenv.ReadEnv(cfg); err != nil {
 		return nil, fmt.Errorf("error loading env: %w", err)

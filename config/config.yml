@@ -1,6 +1,7 @@
 app:
   name: "analogdb"
   version: "0.1.0"
+  env: "prod"
 database:
   url: ""
 vector_database:

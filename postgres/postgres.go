@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/evanofslack/analogdb/logger"
 	_ "github.com/lib/pq"
 )
 
@@ -14,24 +15,28 @@ type DB struct {
 	dsn    string
 	ctx    context.Context
 	cancel func()
+	logger logger.Logger
 }
 
-func NewDB(dsn string) *DB {
-	db := &DB{dsn: dsn}
+func NewDB(dsn string, logger logger.Logger) *DB {
+	db := &DB{dsn: dsn, logger: logger}
 	db.ctx, db.cancel = context.WithCancel(context.Background())
+	db.logger.Logger.Info().Msg("Initialized DB instance")
 	return db
 }
 
 func (db *DB) Open() error {
 	if db.dsn == "" {
-		return fmt.Errorf("Data source name must be set")
+		return fmt.Errorf("DB data source name must be set")
 	}
 	var err error
 	if db.db, err = sql.Open("postgres", db.dsn); err != nil {
+		err = fmt.Errorf("Failed to open connection to DB: %w", err)
 		return err
 	}
 	go db.monitor()
 
+	db.logger.Logger.Info().Msg("Opened new DB connection")
 	return db.db.Ping()
 }
 
@@ -41,6 +46,8 @@ func (db *DB) Close() error {
 	if db.db != nil {
 		db.db.Close()
 	}
+
+	db.logger.Logger.Info().Msg("Closed DB connection")
 	return nil
 }
 

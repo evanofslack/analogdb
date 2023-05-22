@@ -202,5 +202,5 @@ func unmarshallPicturesResp(result *models.GraphQLResponse) ([]pictureResponse, 
 	if len(picturesResponse) > 0 {
 		return picturesResponse, nil
 	}
-	return picturesResponse, errors.New("Failed to unmarshall pictures from vector database")
+	return picturesResponse, errors.New("Failed to unmarshall pictures from vector DB")
 }

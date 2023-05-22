@@ -2,6 +2,7 @@ package weaviate
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
 	"github.com/weaviate/weaviate/entities/models"
@@ -73,5 +74,11 @@ func (db *DB) createPictureSchema(ctx context.Context) error {
 	}
 
 	err := db.db.Schema().ClassCreator().WithClass(classObj).Do(context.Background())
-	return err
+	if err != nil {
+		err = fmt.Errorf("Failed to create vector DB picture schema, %w", err)
+		return err
+	}
+
+	db.logger.Info().Msg("Created vector DB picture schema")
+	return nil
 }
