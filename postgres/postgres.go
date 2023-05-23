@@ -15,10 +15,10 @@ type DB struct {
 	dsn    string
 	ctx    context.Context
 	cancel func()
-	logger logger.Logger
+	logger *logger.Logger
 }
 
-func NewDB(dsn string, logger logger.Logger) *DB {
+func NewDB(dsn string, logger *logger.Logger) *DB {
 	db := &DB{dsn: dsn, logger: logger}
 	db.ctx, db.cancel = context.WithCancel(context.Background())
 	db.logger.Logger.Info().Msg("Initialized DB instance")

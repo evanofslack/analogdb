@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
-	"runtime/debug"
 	"strings"
 	"time"
 
@@ -17,7 +15,7 @@ type Logger struct {
 	zerolog.Logger
 }
 
-func New(level string, env string) (Logger, error) {
+func New(level string, env string) (*Logger, error) {
 
 	switch level {
 	case "debug":
@@ -36,14 +34,10 @@ func New(level string, env string) (Logger, error) {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
 
-	var output io.Writer
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 
-	if env == "prod" || env == "production" {
-		output = zerolog.ConsoleWriter{
-			Out:        os.Stderr,
-			TimeFormat: time.RFC3339,
-		}
-	} else {
+	var output io.Writer
+	if env == "debug" {
 		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 		output = zerolog.ConsoleWriter{
 			Out:        os.Stderr,
@@ -54,40 +48,26 @@ func New(level string, env string) (Logger, error) {
 			FormatMessage: func(i interface{}) string {
 				return fmt.Sprintf("| %s |", i)
 			},
-			FormatCaller: func(i interface{}) string {
-				return filepath.Base(fmt.Sprintf("%s", i))
-			},
 		}
-	}
-
-	var gitRevision string
-	buildInfo, ok := debug.ReadBuildInfo()
-	if ok {
-		for _, v := range buildInfo.Settings {
-			if v.Key == "vcs.revision" {
-				gitRevision = v.Value
-				break
-			}
-		}
+	} else {
+		output = os.Stderr
 	}
 
 	zerologger := zerolog.New(output).
 		With().
+		Caller().
 		Timestamp().
-		Int("pid", os.Getpid()).
-		Str("git_revision", gitRevision).
-		Str("go_version", buildInfo.GoVersion).
 		Logger()
 
 	logger := Logger{zerologger}
 	logger.Debug().Msg("Created new base logger")
-	return logger, nil
+	return &logger, nil
 }
 
-func (l Logger) WithService(name string) Logger {
+func (l Logger) WithService(name string) *Logger {
 	serviceLogger := l.Logger.With().Str("service", name).Logger()
 	serviceLogger.Debug().Msg("Created new service logger")
-	return Logger{
+	return &Logger{
 		serviceLogger,
 	}
 }
