@@ -42,6 +42,10 @@ func main() {
 	}
 	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Msg("Initializing application")
 
+	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" {
+		logger = logger.WithSlackNotifier(webhookURL)
+	}
+
 	dbLogger := logger.WithService("database")
 	db := postgres.NewDB(cfg.DB.URL, dbLogger)
 	if err := db.Open(); err != nil {

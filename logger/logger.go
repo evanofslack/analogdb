@@ -71,3 +71,12 @@ func (l Logger) WithService(name string) *Logger {
 		serviceLogger,
 	}
 }
+
+func (l Logger) WithSlackNotifier(url string) *Logger {
+	notifier := newSlackNotifier(url)
+	slackLogger := l.Hook(notifier)
+	slackLogger.Debug().Msg("Added slack notifier to logger")
+	return &Logger{
+		slackLogger,
+	}
+}
