@@ -36,6 +36,7 @@ type HTTP struct {
 
 type Log struct {
 	Level string `yaml:"level" env:"LOG_LEVEL"`
+	WebhookURL string `yaml:"webhook" env:"WEBHOOK_URL"`
 }
 
 type Auth struct {
@@ -50,10 +51,10 @@ func New(path string) (*Config, error) {
 		return nil, fmt.Errorf("error loading config: %w", err)
 	}
 	if err := godotenv.Load(); err != nil {
-		fmt.Println("Could not load .env file: %w", err)
+		fmt.Println("Could not load .env file")
 	}
 	if err := cleanenv.ReadEnv(cfg); err != nil {
-		return nil, fmt.Errorf("error loading env: %w", err)
+		return nil, fmt.Errorf("Error loading env: %w", err)
 	}
 	return cfg, nil
 }

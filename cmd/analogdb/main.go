@@ -42,6 +42,10 @@ func main() {
 	}
 	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Msg("Initializing application")
 
+	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" {
+		logger = logger.WithSlackNotifier(webhookURL)
+	}
+
 	dbLogger := logger.WithService("database")
 	db := postgres.NewDB(cfg.DB.URL, dbLogger)
 	if err := db.Open(); err != nil {
@@ -68,39 +72,31 @@ func main() {
 
 	postService := postgres.NewPostService(db)
 
-	server := server.New(cfg.HTTP.Port)
+	httpLogger := logger.WithService("http")
+	server := server.New(cfg.HTTP.Port, httpLogger)
 	server.PostService = postService
 	server.ReadyService = postgres.NewReadyService(db)
 	server.AuthorService = postgres.NewAuthorService(db)
 	server.ScrapeService = postgres.NewScrapeService(db)
 	server.SimilarityService = weaviate.NewSimilarityService(dbVec, postService)
 	if err := server.Run(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		err = fmt.Errorf("Failed to start http server: %w", err)
+		logger.Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 
-	// temp test
-	// allIDs, err := server.PostService.AllPostIDs(ctx)
-	// if err != nil {
-	// 	fmt.Fprintln(os.Stderr, err)
-	// 	os.Exit(1)
-	// }
-
-	// err = server.SimilarityService.BatchEncodePosts(ctx, allIDs, 100)
-	// if err != nil {
-	// 	fmt.Fprintln(os.Stderr, err)
-	// 	os.Exit(1)
-	// }
-
 	<-ctx.Done()
+	logger.Info().Msg("Got shutdown signal, starting graceful shutdown")
 
 	if err := server.Close(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		err = fmt.Errorf("Failed to shutdown http server: %w", err)
+		logger.Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 
 	if err := db.Close(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		err = fmt.Errorf("Failed to shutdown DB: %w", err)
+		logger.Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 }

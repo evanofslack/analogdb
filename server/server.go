@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
 )
@@ -16,6 +17,7 @@ type Server struct {
 	server  *http.Server
 	router  *chi.Mux
 	healthy bool
+	logger *logger.Logger
 
 	PostService       analogdb.PostService
 	ReadyService      analogdb.ReadyService
@@ -24,10 +26,11 @@ type Server struct {
 	SimilarityService analogdb.SimilarityService
 }
 
-func New(port string) *Server {
+func New(port string, logger *logger.Logger) *Server {
 	s := &Server{
 		server: &http.Server{},
 		router: chi.NewRouter(),
+		logger: logger,
 	}
 
 	s.server.Handler = s.router

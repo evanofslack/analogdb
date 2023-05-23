@@ -18,10 +18,10 @@ type DB struct {
 	timeout time.Duration
 	ctx     context.Context
 	cancel  func()
-	logger  logger.Logger
+	logger  *logger.Logger
 }
 
-func NewDB(host string, scheme string, logger logger.Logger) *DB {
+func NewDB(host string, scheme string, logger *logger.Logger) *DB {
 	db := &DB{host: host, scheme: scheme, timeout: weaviateClientTimeout, logger: logger}
 	db.ctx, db.cancel = context.WithCancel(context.Background())
 	db.logger.Logger.Info().Msg("Initialized vector DB instance")

@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"sync"
-	"time"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/weaviate/weaviate/entities/models"

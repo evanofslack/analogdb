@@ -11,6 +11,7 @@ http:
   port: "8080"
 logger:
   level: "info"
+  webhook: ""
 auth:
   username: ""
   password: ""
