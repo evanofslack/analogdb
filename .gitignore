@@ -14,11 +14,8 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 .env
-praw.ini
-.vscode
 *.db
 *.pyc
-api/go-reddit
 .DS_Store
 
 # dev helpers
