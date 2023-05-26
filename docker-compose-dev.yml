@@ -3,7 +3,7 @@ services:
 
   analogdb:
     container_name: analogdb
-    build: .
+    build: ./backend
     ports:
       - 8080:8080
     restart: unless-stopped
@@ -39,7 +39,7 @@ services:
         max-file: "3"
     volumes:
       # - postgres:/var/lib/postgresql/data
-      - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
+      - ./backend/postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -76,7 +76,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${WEAVIATE_AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${WEAVIATE_AWS_REGION}
     volumes:
-      - .weaviate/weaviate-data:/var/lib/weaviate
+      - weaviate:/var/lib/weaviate
 
   i2v-neural:
     image: semitechnologies/img2vec-pytorch:resnet50
@@ -86,5 +86,6 @@ services:
     environment:
       ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA}
 
-# volumes:
-#   postgres:
+volumes:
+  # postgres:
+  weaviate:

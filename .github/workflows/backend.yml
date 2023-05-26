@@ -6,10 +6,8 @@ on:
       - 'main'
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - 'main'
-
+    paths:
+      - 'backend/**'
 env:
   REGISTRY: docker.io
   IMAGE_NAME: ${{ github.repository }}
@@ -47,8 +45,7 @@ jobs:
       - name: build and push
         uses: docker/build-push-action@v4
         with:
-          context: .
+          context: "{{defaultContext}}:backend"
           file: ./Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
