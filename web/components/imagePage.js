@@ -27,20 +27,13 @@ async function downloadImage(targetImage, name) {
 }
 
 export default function ImagePage(props) {
-  const [isHighResLoaded, setIsHighResLoaded] = useState(false);
-
-  // to navigate back in browser history
-  const router = useRouter();
-
   useEffect(() => {
     startNavigationProgress();
   }, []);
 
   let post = props.post;
   let similar = props.similar;
-
-  let lowResImage = post.images[2];
-  let highResImage = post.images[3];
+  let image = post.images[2];
 
   return (
     <div>
@@ -63,26 +56,13 @@ export default function ImagePage(props) {
         <div className={styles.imageContainer}>
           <Image
             priority
-            style={
-              isHighResLoaded ? { display: "none" } : { objectFit: "contain" }
-            }
+            style={{ objectFit: "contain" }}
             fill
-            src={lowResImage.url}
+            src={image.url}
             alt={`image ${post.id} by ${post.author}`}
             sizes="100vw"
             quality={100}
             onLoadingComplete={completeNavigationProgress}
-          />
-          {/* replace with full resolution picture when loaded */}
-          <Image
-            priority
-            style={{ objectFit: "contain" }}
-            fill
-            src={highResImage.url}
-            alt={`image ${post.id} by ${post.author}`}
-            sizes="100vw"
-            quality={100}
-            onLoadingComplete={() => setIsHighResLoaded(true)}
           />
         </div>
         <div className={styles.footerIcons}>

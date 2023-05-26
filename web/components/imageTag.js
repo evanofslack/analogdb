@@ -98,6 +98,7 @@ export default function ImageTag(props) {
                     href={`/post/${post.id}`}
                     passHref={true}
                     legacyBehavior
+                    key={post.id}
                   >
                     <Image
                       key={post.id}
