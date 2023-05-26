@@ -3,8 +3,9 @@ import Gallery from "../components/gallery";
 import { baseURL } from "../constants.ts";
 
 export async function getStaticProps() {
+  const numPosts = 100
   const url =
-    baseURL + "/posts?sort=latest&page_size=200&grayscale=false&nsfw=false";
+    baseURL + `/posts?sort=latest&page_size=${numPosts}&grayscale=false&nsfw=false`;
   const response = await fetch(url);
   const data = await response.json();
   return {

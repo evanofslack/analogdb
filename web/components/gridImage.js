@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function GridImage(props) {
   let post = props.post;
-  let image = post.images[2];
+  let image = post.images[1];
   let placeholder = post.images[0];
 
   return (

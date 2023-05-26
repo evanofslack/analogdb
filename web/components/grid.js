@@ -5,15 +5,15 @@ import GridImage from "./gridImage";
 export default function Grid(props) {
   const breakpoints = useBreakpoint();
 
-  let numColumn = 4;
+  let numColumn = 5;
   if (breakpoints["xs"]) {
-    numColumn = 1;
-  } else if (breakpoints["sm"]) {
     numColumn = 2;
-  } else if (breakpoints["md"]) {
+  } else if (breakpoints["sm"]) {
     numColumn = 3;
-  } else if (breakpoints["lg"]) {
+  } else if (breakpoints["md"]) {
     numColumn = 4;
+  } else if (breakpoints["lg"]) {
+    numColumn = 5;
   }
 
   return (
