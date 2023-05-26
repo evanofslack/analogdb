@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import praw
 import requests
@@ -32,7 +32,7 @@ def get_url(s: praw.reddit.Submission) -> str:
         return s.url
 
 
-def create_filename(url: str) -> Tuple[str, str]:
+def create_filename(url: str) -> Optional[Tuple[str, str]]:
     viable_content = {
         "image/png": ".png",
         "image/jpeg": ".jpeg",
@@ -42,17 +42,31 @@ def create_filename(url: str) -> Tuple[str, str]:
     req = requests.get(url, stream=True)
 
     content_type = req.headers["content-type"]
+    if content_type is None:
+        return
     if content_type not in viable_content.keys():
-        logger.error(f"Cannot process {url} with type {content_type}")
+        logger.warning(f"Cannot process {url} with type {content_type}")
         return
     filename = str(uuid.uuid4())
     filename += viable_content[content_type]
     return filename, content_type
 
 
-def get_content_type(url) -> str:
-    req = requests.get(url, stream=True)
+def get_content_type(url) -> Optional[str]:
+    try:
+        req = requests.get(url, stream=True)
+    except Exception as e:
+        logger.error(f"get request for url failed; url={url} error={e}")
+        return None
+
     content_type = req.headers["content-type"]
+
+    try:
+        content_type = req.headers["content-type"]
+    except Exception as e:
+        logger.error(f"get content type from request failed; url={url} error={e}")
+        return None
+
     return content_type
 
 
