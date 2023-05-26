@@ -1,4 +1,4 @@
-name: build and publish backend
+name: publish-web
 on:
   workflow_dispatch:
   push:
@@ -7,10 +7,11 @@ on:
     tags:
       - 'v*'
     paths:
-      - 'backend/**'
+      - 'web/**'
+
 env:
   REGISTRY: docker.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ${{ github.repository }}-web
 
 jobs:
   build:
@@ -45,7 +46,8 @@ jobs:
       - name: build and push
         uses: docker/build-push-action@v4
         with:
-          context: "{{defaultContext}}:backend"
+          context: "{{defaultContext}}:web"
           file: ./Dockerfile
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
