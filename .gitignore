@@ -23,3 +23,6 @@ api/go-reddit
 
 # dev helpers
 dev
+
+# prod docker volumes
+data
