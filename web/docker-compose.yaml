@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  web:
+    build:
+      context: ./
+      target: runner
+    container_name: analogdb-web
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
