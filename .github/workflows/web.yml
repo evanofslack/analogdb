@@ -8,11 +8,6 @@ on:
       - 'v*'
     paths:
       - 'web/**'
-  pull_request:
-    branches:
-      - 'main'
-    paths:
-      - 'web/**'
 
 env:
   REGISTRY: docker.io
@@ -53,6 +48,5 @@ jobs:
         with:
           context: "{{defaultContext}}:web"
           file: ./Dockerfile
-          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

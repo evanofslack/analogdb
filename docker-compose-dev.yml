@@ -76,7 +76,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${WEAVIATE_AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${WEAVIATE_AWS_REGION}
     volumes:
-      - ./weaviate-data:/var/lib/weaviate
+      - .weaviate/weaviate-data:/var/lib/weaviate
 
   i2v-neural:
     image: semitechnologies/img2vec-pytorch:resnet50
