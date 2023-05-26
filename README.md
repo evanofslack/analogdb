@@ -2,28 +2,26 @@
 
 The collection of film photography
 
-
 ### About
 
-[AnalogDB](https://analogdb.com) provides a large collection of curated analog photographs to users through a REST API interface. Beyond just returning photos, AnalogDB enables discovery of similar images, provides relevant keywords, extracts dominant colors, and allows for filtering, sorting and searching across all images. 
+[AnalogDB](https://analogdb.com) provides a large collection of curated analog photographs to users through a REST API interface. Beyond just returning photos, AnalogDB enables discovery of similar images, provides relevant keywords, extracts dominant colors, and allows for filtering, sorting and searching across all images.
 
 ### Design
 
-AnalogDB makes use of several technologies and services to enable a full featured product. 
+AnalogDB makes use of several technologies and services to enable a full featured product.
 
 <img alt="analogdb-diagram" src="https://github.com/evanofslack/analogdb/assets/51209817/cd0f5de5-32be-44af-914e-4cdadb8b2bdf">
 <br/><br/>
 
-Data is scraped from reddit and ingested with [analogdb-scraper](https://github.com/evanofslack/analogdb-scraper), a python service. In addition to scraping, this service is responsible for transforming raw images, extraction of keywords and colors, uploading to [AWS S3](https://aws.amazon.com/s3/), and creation of resources through the backend api. Images from S3 are served from [CloudFront CDN](https://aws.amazon.com/cloudfront/) for quick and reliable delievery. 
+Data is scraped from reddit and ingested with [analogdb-scraper](https://github.com/evanofslack/analogdb-scraper), a python service. In addition to scraping, this service is responsible for transforming raw images, extraction of keywords and colors, uploading to [AWS S3](https://aws.amazon.com/s3/), and creation of resources through the backend api. Images from S3 are served from [CloudFront CDN](https://aws.amazon.com/cloudfront/) for quick and reliable delievery.
 
 The core backend application is written in [Go](https://go.dev/) and makes use of [Chi](https://github.com/go-chi/chi) as an HTTP router. It exposes handlers that are responsible for parsing authentication headers, filtering incoming requests, querying databases, and returning JSON responses. Upon upload, all images are transformed with the [ResNet-50 CNN](https://datagen.tech/guides/computer-vision/resnet-50/) to create embeddings which are stored in a [Weaviate](https://github.com/weaviate/weaviate) vector database. The backend is packaged as several docker containers and hosted on a VPS.
 
-The frontend web application is built with [Next.js](https://github.com/vercel/next.js/), making use of server-side rendering and incremental static regeneration for quick loading pages. [Zustand](https://github.com/pmndrs/zustand) is utilized for state management. All styles are built from scratch with [CSS Modules](https://github.com/css-modules/css-modules). The frontend is currently deployed with [Vercel](https://vercel.com/). 
-
+The frontend web application is built with [Next.js](https://github.com/vercel/next.js/), making use of server-side rendering and incremental static regeneration for quick loading pages. [Zustand](https://github.com/pmndrs/zustand) is utilized for state management. All styles are built from scratch with [CSS Modules](https://github.com/css-modules/css-modules). The frontend is currently deployed with [Vercel](https://vercel.com/).
 
 ### API
 
-Full documentation for the API: https://api.analogdb.com/
+Full documentation for the API: <https://api.analogdb.com/>
 
 ### Example
 
@@ -102,7 +100,7 @@ Please see [docker-compose.yaml](https://github.com/evanofslack/analogdb/blob/ma
 
 ### Developing
 
-Docker and docker-compose can be utilized for a consistent development experience. 
+Docker and docker-compose can be utilized for a consistent development experience.
 
 To spin up the backend and database:
 
@@ -118,4 +116,4 @@ To serve the frontend locally:
 
 ### Contributing
 
-All contributions are welcomed and encouraged. Please create a new issue to discuss potential improvements or submit a pull request. 
+All contributions are welcomed and encouraged. Please create a new issue to discuss potential improvements or submit a pull request.
