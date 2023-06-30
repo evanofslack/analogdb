@@ -60,15 +60,27 @@ def scrape_posts(
 
 
 def scrape_analog(deps: Dependencies):
-    scrape_posts(deps=deps, subreddit=ANALOG_SUB, num_posts=ANALOG_POSTS)
+    sub = ANALOG_SUB
+    try:
+        scrape_posts(deps=deps, subreddit=sub, num_posts=ANALOG_POSTS)
+    except Exception as e:
+        logger.error(f"issue scraping {sub}: {e}")
 
 
 def scrape_bw(deps: Dependencies):
-    scrape_posts(deps=deps, subreddit=BW_SUB, num_posts=BW_POSTS)
+    sub = BW_SUB
+    try:
+        scrape_posts(deps=deps, subreddit=sub, num_posts=BW_POSTS)
+    except Exception as e:
+        logger.error(f"issue scraping {sub}: {e}")
 
 
 def scrape_sprocket(deps: Dependencies):
-    scrape_posts(deps=deps, subreddit=SPROCKET_SUB, num_posts=SPROCKET_POSTS)
+    sub = SPROCKET_SUB
+    try:
+        scrape_posts(deps=deps, subreddit=sub, num_posts=SPROCKET_POSTS)
+    except Exception as e:
+        logger.error(f"issue scraping {sub}: {e}")
 
 
 def delete_post(deps: Dependencies):
@@ -78,11 +90,17 @@ def delete_post(deps: Dependencies):
 
 
 def update_scores(deps: Dependencies):
-    update_posts_scores(deps=deps, count=100)
+    try:
+        update_posts_scores(deps=deps, count=100)
+    except Exception as e:
+        logger.error(f"issue updating post scores: {e}")
 
 
 def update_keywords(deps: Dependencies):
-    update_posts_keywords(deps=deps, count=100, limit=KEYWORD_LIMIT)
+    try:
+        update_posts_keywords(deps=deps, count=100, limit=KEYWORD_LIMIT)
+    except Exception as e:
+        logger.error(f"issue updating keywords: {e}")
 
 
 def run_schedule(deps: Dependencies):
@@ -98,10 +116,7 @@ def run_schedule(deps: Dependencies):
     schedule.run_all()
 
     while True:
-        try:
-            schedule.run_pending()
-        except Exception as e:
-            logger.error(f"issue running schedued job: {e}")
+        schedule.run_pending()
         time.sleep(4 * 3600)  # sleep for 4 hours
 
 
