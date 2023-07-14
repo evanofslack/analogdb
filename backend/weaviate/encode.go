@@ -63,10 +63,14 @@ func postToPictureObject(post *analogdb.Post) (*models.Object, error) {
 }
 
 func (db *DB) uploadObject(ctx context.Context, obj *models.Object) error {
+
+	db.logger.Debug().Msg("Starting upload object to vector DB")
+
 	batcher := db.db.Batch().ObjectsBatcher()
 	_, err := batcher.WithObject(obj).Do(ctx)
 	if err != nil {
-		err = fmt.Errorf("failed to batch to weaviate: %w", err)
+		err = fmt.Errorf("failed to upload to vector DB: %w", err)
+		db.logger.Error().Err(err).Msg("Failed upload to vector DB")
 		return err
 	}
 	return nil
