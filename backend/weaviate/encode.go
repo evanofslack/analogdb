@@ -37,11 +37,13 @@ func downloadPostImage(post *analogdb.Post) (string, error) {
 
 	url := post.Images[1].Url
 	resp, err := http.Get(url)
-	defer resp.Body.Close()
 	if err != nil {
+		resp.Body.Close()
 		err = fmt.Errorf("failed to request post image: %w", err)
 		return encode, err
 	}
+
+	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

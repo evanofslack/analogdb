@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"github.com/evanofslack/analogdb"
@@ -34,7 +33,6 @@ func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
 	marshallErr := json.NewEncoder(w).Encode(&ErrorResponse{Error: message})
 	if marshallErr != nil {
 		s.logger.Error().Err(err).Msg("Failed to marshall json")
-		log.Printf("http marshall error: %w", err)
 	}
 }
 
