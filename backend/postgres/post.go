@@ -84,7 +84,7 @@ func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost)
 		return nil, err
 	}
 	defer tx.Rollback()
-	createdPost, err := createPost(ctx, tx, post)
+	createdPost, err := s.db.createPost(ctx, tx, post)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 		return nil, 0, err
 	}
 	defer tx.Rollback()
-	return findPosts(ctx, tx, filter)
+	return s.db.findPosts(ctx, tx, filter)
 }
 
 func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post, error) {
@@ -107,7 +107,7 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	}
 	defer tx.Rollback()
 	ids := []int{id}
-	posts, _, err := findPosts(ctx, tx, &analogdb.PostFilter{IDs: &ids})
+	posts, _, err := s.db.findPosts(ctx, tx, &analogdb.PostFilter{IDs: &ids})
 	if err != nil {
 		return nil, err
 	} else if len(posts) == 0 {
@@ -122,7 +122,7 @@ func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, 
 		return err
 	}
 	defer tx.Rollback()
-	err = patchPost(ctx, tx, patch, id)
+	err = s.db.patchPost(ctx, tx, patch, id)
 	if err != nil {
 		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: err.Error()}
 	}
@@ -135,7 +135,7 @@ func (s *PostService) DeletePost(ctx context.Context, id int) error {
 		return err
 	}
 	defer tx.Rollback()
-	err = deletePost(ctx, tx, id)
+	err = s.db.deletePost(ctx, tx, id)
 	if err != nil {
 		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: err.Error()}
 	}
@@ -148,7 +148,7 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 		return nil, err
 	}
 	defer tx.Rollback()
-	ids, err := allPostIDs(ctx, tx)
+	ids, err := s.db.allPostIDs(ctx, tx)
 
 	if err != nil {
 		return nil, err
@@ -158,9 +158,13 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 }
 
 // insertPost inserts a post into the DB and returns the post's ID
-func insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*int64, error) {
+func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*int64, error) {
+
+	db.logger.Debug().Msg("Starting insert post")
+
 	create, err := createPostToRawPostCreate(post)
 	if err != nil {
+		db.logger.Error().Err(err).Msg("Failed to insert post")
 		return nil, err
 	}
 
@@ -178,6 +182,7 @@ func insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*in
 	stmt, err := tx.PrepareContext(ctx, query)
 
 	if err != nil {
+		db.logger.Error().Err(err).Int64("postID", id).Msg("Failed to insert post")
 		return nil, err
 	}
 
@@ -222,14 +227,19 @@ func insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*in
 		create.c5_percent).Scan(&id)
 
 	if err != nil {
+		db.logger.Error().Err(err).Int64("postID", id).Msg("Failed to insert post")
 		return nil, err
 	}
+
+	db.logger.Info().Int64("postID", id).Msg("Finished inserting post")
 
 	return &id, nil
 }
 
 // insertKeywords inserts a post's keywords into the DB
-func insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword, postID int64) error {
+func (db *DB) insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword, postID int64) error {
+
+	db.logger.Debug().Int64("postID", postID).Msg("Starting insert keywords")
 
 	first := 1
 	second := 2
@@ -256,6 +266,7 @@ func insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 	stmt, err := tx.PrepareContext(ctx, query)
 
 	if err != nil {
+		db.logger.Error().Err(err).Int64("postID", postID).Msg("Failed to insert keywords")
 		return err
 	}
 
@@ -264,14 +275,19 @@ func insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword
 	_, err = stmt.ExecContext(ctx, vals...)
 
 	if err != nil {
+		db.logger.Error().Err(err).Int64("postID", postID).Msg("Failed to insert keywords")
 		return err
 	}
+
+	db.logger.Info().Int64("postID", postID).Msg("Finished inserting keywords")
 
 	return nil
 }
 
 // deleteKeywords deletes all keywords for a given post
-func deleteKeywords(ctx context.Context, tx *sql.Tx, postID int64) error {
+func (db *DB) deleteKeywords(ctx context.Context, tx *sql.Tx, postID int64) error {
+
+	db.logger.Debug().Int64("postID", postID).Msg("Starting delete keywords")
 
 	query :=
 		"DELETE FROM keywords WHERE post_id = $1"
@@ -279,21 +295,26 @@ func deleteKeywords(ctx context.Context, tx *sql.Tx, postID int64) error {
 	rows, err := tx.QueryContext(ctx, query, postID)
 	defer rows.Close()
 	if err != nil {
+		db.logger.Error().Err(err).Int64("postID", postID).Msg("Failed to delete keywords")
 		return err
 	}
+
+	db.logger.Info().Int64("postID", postID).Msg("Finished deleting keywords")
 	return nil
 }
 
-func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*analogdb.Post, error) {
+func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*analogdb.Post, error) {
 
-	id, err := insertPost(ctx, tx, post)
+	db.logger.Debug().Msg("Starting create post")
+
+	id, err := db.insertPost(ctx, tx, post)
 	if err != nil {
 		return nil, err
 	}
 
 	// insert keywords if they are provided
 	if len(post.Keywords) != 0 {
-		err = insertKeywords(ctx, tx, post.Keywords, *id)
+		err = db.insertKeywords(ctx, tx, post.Keywords, *id)
 		if err != nil {
 			return nil, err
 		}
@@ -302,6 +323,7 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 	// commit transaction if both inserts are ok
 	err = tx.Commit()
 	if err != nil {
+		db.logger.Error().Err(err).Int64("postID", *id).Msg("Failed to create post")
 		return nil, err
 	}
 
@@ -324,13 +346,19 @@ func createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*an
 		Id:          int(*id),
 		DisplayPost: displayPost,
 	}
+
+	db.logger.Info().Int64("postID", *id).Msg("Finished creating post")
+
 	return createdPost, nil
 }
 
 // findPosts is the general function responsible for handling all queries
-func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
+func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
+
+	db.logger.Debug().Msg("Starting find posts")
 
 	if err := validateFilter(filter); err != nil {
+		db.logger.Error().Err(err).Msg("Failed to find posts")
 		return nil, 0, err
 	}
 
@@ -385,6 +413,7 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 	rows, err := tx.QueryContext(ctx, query, args...)
 
 	if err != nil {
+		db.logger.Error().Err(err).Msg("Failed to find posts")
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -395,6 +424,7 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 	for rows.Next() {
 		p, count, err = scanRowToRawPostCount(rows)
 		if err != nil {
+			db.logger.Error().Err(err).Msg("Failed to find posts")
 			return nil, 0, err
 		}
 		post, err := rawPostToPost(*p)
@@ -403,6 +433,7 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 		stripAuthorPrefix(post)
 
 		if err != nil {
+			db.logger.Error().Err(err).Msg("Failed to find posts")
 			return nil, 0, err
 		}
 		posts = append(posts, post)
@@ -411,71 +442,94 @@ func findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]
 
 	err = tx.Commit()
 	if err != nil {
+		db.logger.Error().Err(err).Msg("Failed to find posts")
 		return nil, 0, err
 	}
+
+	db.logger.Info().Msg("Finished finding posts")
 
 	return posts, count, nil
 }
 
-func patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+
+	db.logger.Debug().Int("postID", id).Msg("Starting patch post")
 
 	hasPatchFields := false
 
 	// if the patch includes updates for the post
 	if patch.Nsfw != nil || patch.Sprocket != nil || patch.Grayscale != nil || patch.Score != nil || patch.Colors != nil {
 		hasPatchFields = true
-		if err := updatePost(ctx, tx, patch, id); err != nil {
+		if err := db.updatePost(ctx, tx, patch, id); err != nil {
+			db.logger.Error().Err(err).Int("postID", id).Msg("Failed to patch post")
 			return err
 		}
 	}
 	// if the patch includes updates for keywords
 	if patch.Keywords != nil {
 		hasPatchFields = true
-		if err := updateKeywords(ctx, tx, *patch.Keywords, id); err != nil {
+		if err := db.updateKeywords(ctx, tx, *patch.Keywords, id); err != nil {
+			db.logger.Error().Err(err).Int("postID", id).Msg("Failed to patch post")
 			return err
 		}
 	}
 
 	if !hasPatchFields {
-		return errors.New("must include patch parameters")
+		err := errors.New("must include patch parameters")
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to patch post")
+		return err
 	}
 
 	// always insert the updated timestamp
-	if err := insertPostUpdateTimes(ctx, tx, patch, id); err != nil {
+	if err := db.insertPostUpdateTimes(ctx, tx, patch, id); err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to patch post")
 		return err
 	}
 
 	err := tx.Commit()
 	if err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to patch post")
 		return err
 	}
+
+	db.logger.Info().Int("postID", id).Msg("Finished patching post")
 
 	return nil
 }
 
-func updateKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword, id int) error {
+func (db *DB) updateKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword, id int) error {
+
+	db.logger.Debug().Int("postID", id).Msg("Starting update keywords")
 
 	// first delete all keywords associated with post
-	if err := deleteKeywords(ctx, tx, int64(id)); err != nil {
+	if err := db.deleteKeywords(ctx, tx, int64(id)); err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to update keywords")
 		return err
 	}
 
 	// if we have no keywords to insert, just return
 	if len(keywords) == 0 {
+		db.logger.Info().Int("postID", id).Msg("Finished updating keywords (dropped all keywords)")
 		return nil
 	}
 
 	// then insert all new keywords
-	if err := insertKeywords(ctx, tx, keywords, int64(id)); err != nil {
+	if err := db.insertKeywords(ctx, tx, keywords, int64(id)); err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to update keywords")
 		return err
 	}
+
+	db.logger.Info().Int("postID", id).Msg("Finished updating keywords")
 	return nil
 }
 
-func updatePost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+func (db *DB) updatePost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+
+	db.logger.Debug().Int("postID", id).Msg("Starting update post")
 
 	set, args, err := patchToSet(patch)
 	if err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to update post")
 		return err
 	}
 
@@ -487,13 +541,19 @@ func updatePost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id i
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to update post")
 		return err
 	}
 	defer rows.Close()
+
+
+	db.logger.Info().Int("postID", id).Msg("Finished updating post")
 	return nil
 }
 
-func insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+func (db *DB) insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+
+	db.logger.Debug().Int("postID", id).Msg("Starting post update times")
 
 	query :=
 		`
@@ -505,6 +565,7 @@ func insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *analogdb.Patc
 	stmt, err := tx.PrepareContext(ctx, query)
 
 	if err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to post update times")
 		return err
 	}
 
@@ -540,14 +601,20 @@ func insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *analogdb.Patc
 	rows, err := stmt.QueryContext(ctx, values...)
 	defer rows.Close()
 	if err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to post update times")
 		return err
 	}
+
+	db.logger.Info().Int("postID", id).Msg("Finished post update times")
 
 	return nil
 
 }
 
-func deletePost(ctx context.Context, tx *sql.Tx, id int) error {
+func (db *DB) deletePost(ctx context.Context, tx *sql.Tx, id int) error {
+
+	db.logger.Debug().Int("postID", id).Msg("Starting delete post")
+
 	query := `
 			DELETE FROM pictures
 			WHERE id = $1
@@ -558,25 +625,36 @@ func deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 	var returnedID int
 	err := row.Scan(&returnedID)
 	if err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to delete post")
 		return err
 	}
 
 	if id != returnedID {
-		return fmt.Errorf("error deleting post with id %d", id)
+
+		err := fmt.Errorf("error deleting post with id %d", id)
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to delete post")
+		return err
 	}
 
 	err = tx.Commit()
 	if err != nil {
+		db.logger.Error().Err(err).Int("postID", id).Msg("Failed to delete post")
 		return err
 	}
+
+	db.logger.Info().Int("postID", id).Msg("Finished deleting post")
 	return nil
 }
 
-func allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
+func (db *DB) allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
+
+	db.logger.Debug().Msg("Starting get all post IDs")
+
 	query := `
 			SELECT id FROM pictures ORDER BY id ASC`
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
+		db.logger.Error().Err(err).Msg("Failed to get all post IDs")
 		return nil, err
 	}
 	defer rows.Close()
@@ -585,14 +663,18 @@ func allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 	var id int
 	for rows.Next() {
 		if err := rows.Scan(&id); err != nil {
+			db.logger.Error().Err(err).Msg("Failed to get all post IDs")
 			return nil, err
 		}
 		ids = append(ids, id)
 	}
 	err = tx.Commit()
 	if err != nil {
+		db.logger.Error().Err(err).Msg("Failed to get all post IDs")
 		return nil, err
 	}
+
+	db.logger.Info().Msg("Finished getting all post IDs")
 	return ids, nil
 }
 

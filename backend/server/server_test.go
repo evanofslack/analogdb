@@ -16,14 +16,15 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 		t.Error("Error loading .env file")
 	}
 
-	// httpserver test currently require DB, can be mocked out instead
-	dsn := os.Getenv("POSTGRES_DATABASE_URL")
 
 	logger, err := logger.New("debug", "debug")
 	if err != nil {
 		t.Fatal(err)
-
 	}
+
+	// httpserver test currently require DB, can be mocked out instead
+	dsn := os.Getenv("POSTGRES_DATABASE_URL")
+
 	db := postgres.NewDB(dsn, logger)
 	if err := db.Open(); err != nil {
 		t.Fatal(err)
