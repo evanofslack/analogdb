@@ -83,17 +83,17 @@ func (s *Server) mountPostHandlers() {
 func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToFilter(r)
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 		return
 	}
 	resp, err := s.makePostResponse(r, filter)
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 		return
 	}
 	err = encodeResponse(w, r, http.StatusOK, resp)
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }
 
@@ -103,7 +103,7 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 
 	similarityFilter, err := parseToSimilarityFilter(r)
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 		return
 	}
 	if id := chi.URLParam(r, "id"); id != "" {
@@ -113,13 +113,13 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 					resp.Posts = append(resp.Posts, *p)
 				}
 				if err := encodeResponse(w, r, http.StatusOK, resp); err != nil {
-					writeError(w, r, err)
+					s.writeError(w, r, err)
 				}
 			} else {
-				writeError(w, r, err)
+				s.writeError(w, r, err)
 			}
 		} else {
-			writeError(w, r, err)
+			s.writeError(w, r, err)
 		}
 	}
 }
@@ -129,31 +129,49 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 		if identify, err := strconv.Atoi(id); err == nil {
 			if post, err := s.PostService.FindPostByID(r.Context(), identify); err == nil {
 				if err := encodeResponse(w, r, http.StatusOK, post); err != nil {
-					writeError(w, r, err)
+					s.writeError(w, r, err)
 				}
 			} else {
-				writeError(w, r, err)
+				s.writeError(w, r, err)
 			}
 		} else {
-			writeError(w, r, err)
+			s.writeError(w, r, err)
 		}
 	}
 }
 
 func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
-	if id := chi.URLParam(r, "id"); id != "" {
-		if identify, err := strconv.Atoi(id); err == nil {
-			if err := s.PostService.DeletePost(r.Context(), identify); err == nil {
-				success := DeleteResponse{Message: "success, post deleted"}
-				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
-					writeError(w, r, err)
-				}
-			} else {
-				writeError(w, r, err)
-			}
-		} else {
-			writeError(w, r, err)
-		}
+
+	var err error
+
+	var id string
+	if id = chi.URLParam(r, "id"); id == "" {
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Must provide id as parameter"}
+		s.writeError(w, r, err)
+		return
+	}
+
+	var identify int
+	if identify, err = strconv.Atoi(id); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+
+	if err := s.PostService.DeletePost(r.Context(), identify); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+
+	if err := s.SimilarityService.DeletePost(r.Context(), identify); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+
+	success := DeleteResponse{Message: "success, post deleted"}
+
+	if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
+		s.writeError(w, r, err)
+		return
 	}
 }
 
@@ -161,14 +179,14 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing post from request body"}
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 		return
 	}
 
 	// create the post in db
 	created, err := s.PostService.CreatePost(r.Context(), &createPost)
 	if err != nil || created == nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 		return
 	}
 
@@ -181,7 +199,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		toEncode := []int{created.Id}
 		err = s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
 		if err != nil {
-			writeError(w, r, err)
+			s.writeError(w, r, err)
 			return
 		}
 	}
@@ -191,7 +209,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		Post:    *created,
 	}
 	if err := encodeResponse(w, r, http.StatusCreated, createdResponse); err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }
 
@@ -200,7 +218,7 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	var patchPost analogdb.PatchPost
 	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing patch from request body"}
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 		return
 	}
 
@@ -209,13 +227,13 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 			if err := s.PostService.PatchPost(r.Context(), &patchPost, identify); err == nil {
 				success := DeleteResponse{Message: "success, post patched"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
-					writeError(w, r, err)
+					s.writeError(w, r, err)
 				}
 			} else {
-				writeError(w, r, err)
+				s.writeError(w, r, err)
 			}
 		} else {
-			writeError(w, r, err)
+			s.writeError(w, r, err)
 		}
 	}
 }
@@ -223,14 +241,14 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
 	ids, err := s.PostService.AllPostIDs(r.Context())
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 		return
 	}
 	idsResponse := IDsResponse{
 		Ids: ids,
 	}
 	if err := encodeResponse(w, r, http.StatusOK, idsResponse); err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }
 

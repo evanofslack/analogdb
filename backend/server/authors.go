@@ -21,12 +21,12 @@ func (s *Server) mountAuthorHandlers() {
 func (s *Server) getAuthors(w http.ResponseWriter, r *http.Request) {
 	authors, err := s.AuthorService.FindAuthors(r.Context())
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 	authorsResponse := AuthorsResponse{
 		Authors: authors,
 	}
 	if err := encodeResponse(w, r, http.StatusOK, authorsResponse); err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }

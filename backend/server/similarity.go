@@ -32,17 +32,17 @@ func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
 	var request encodePostsRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing ids or batch_size from request body"}
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 
 	err := s.SimilarityService.BatchEncodePosts(r.Context(), request.Ids, request.BatchSize)
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 	response := encodePostsResponse{
 		Message: "successfully encoded posts",
 	}
 	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }
