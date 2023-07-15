@@ -37,11 +37,13 @@ func downloadPostImage(post *analogdb.Post) (string, error) {
 
 	url := post.Images[1].Url
 	resp, err := http.Get(url)
-	defer resp.Body.Close()
 	if err != nil {
+		resp.Body.Close()
 		err = fmt.Errorf("failed to request post image: %w", err)
 		return encode, err
 	}
+
+	defer resp.Body.Close()
 
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -63,10 +65,14 @@ func postToPictureObject(post *analogdb.Post) (*models.Object, error) {
 }
 
 func (db *DB) uploadObject(ctx context.Context, obj *models.Object) error {
+
+	db.logger.Debug().Msg("Starting upload object to vector DB")
+
 	batcher := db.db.Batch().ObjectsBatcher()
 	_, err := batcher.WithObject(obj).Do(ctx)
 	if err != nil {
-		err = fmt.Errorf("failed to batch to weaviate: %w", err)
+		err = fmt.Errorf("failed to upload to vector DB: %w", err)
+		db.logger.Error().Err(err).Msg("Failed upload to vector DB")
 		return err
 	}
 	return nil

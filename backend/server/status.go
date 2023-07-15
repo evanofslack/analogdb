@@ -16,26 +16,26 @@ func (s *Server) mountStatusHandlers() {
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	if err := encodeResponse(w, r, http.StatusOK, "message: pong"); err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }
 
 func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 	if !s.healthy {
 		err := &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "Service not available"}
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 	if err := encodeResponse(w, r, http.StatusOK, "message: healthy"); err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }
 
 func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 	err := s.ReadyService.Readyz(r.Context())
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 	if err := encodeResponse(w, r, http.StatusOK, "message: ready"); err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }

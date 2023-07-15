@@ -12,6 +12,7 @@ type SimilarityService interface {
 	EncodePost(ctx context.Context, id int) error
 	BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error
 	FindSimilarPostsByImage(ctx context.Context, id int, filter *PostSimilarityFilter) ([]*Post, error)
+	DeletePost(ctx context.Context, id int) error
 }
 
 // used to enable encoding in http request

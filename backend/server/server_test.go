@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/evanofslack/analogdb/postgres"
+	"github.com/evanofslack/analogdb/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -15,10 +16,16 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 		t.Error("Error loading .env file")
 	}
 
+
+	logger, err := logger.New("debug", "debug")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// httpserver test currently require DB, can be mocked out instead
 	dsn := os.Getenv("POSTGRES_DATABASE_URL")
 
-	db := postgres.NewDB(dsn)
+	db := postgres.NewDB(dsn, logger)
 	if err := db.Open(); err != nil {
 		t.Fatal(err)
 	}
@@ -27,7 +34,7 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 	rs := postgres.NewReadyService(db)
 	as := postgres.NewAuthorService(db)
 
-	s := New("8080")
+	s := New("8080", logger)
 	s.PostService = ps
 	s.ReadyService = rs
 	s.AuthorService = as

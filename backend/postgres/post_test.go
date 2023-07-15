@@ -31,8 +31,12 @@ var (
 
 func TestFindPosts(t *testing.T) {
 	t.Run("Default", func(t *testing.T) {
-		ctx, tx := setupTx(t)
-		if posts, count, err := findPosts(ctx, tx, nilFilter); err != nil {
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
+		if posts, count, err := db.findPosts(ctx, tx, nilFilter); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -42,8 +46,12 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("Limit", func(t *testing.T) {
-		ctx, tx := setupTx(t)
-		if posts, count, err := findPosts(ctx, tx, limitFilter); err != nil {
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
+		if posts, count, err := db.findPosts(ctx, tx, limitFilter); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), limit; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -53,9 +61,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("NoNSFW", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		nsfw := false
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}); err != nil {
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts-totalNsfw; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -65,9 +77,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("OnlyNSFW", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		nsfw := true
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}); err != nil {
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalNsfw; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -77,9 +93,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("NoBW", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		grayscale := false
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}); err != nil {
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts-totalGrayscale; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -89,9 +109,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("OnlyBW", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		grayscale := true
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}); err != nil {
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalGrayscale; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -101,9 +125,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("NoSprocket", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		sprocket := false
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}); err != nil {
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPosts-totalSprocket; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -113,9 +141,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("OnlySprocket", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		sprocket := true
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}); err != nil {
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalSprocket; got != want {
 			t.Fatalf("length of posts %v, want %v", got, want)
@@ -125,8 +157,12 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("ByAuthor", func(t *testing.T) {
-		ctx, tx := setupTx(t)
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Author: &postAuthor}); err != nil {
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Author: &postAuthor}); err != nil {
 			t.Fatal(err)
 		} else if len(posts) != 1 || count != 1 {
 			t.Fatal("must be one matching post")
@@ -136,9 +172,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("ByAuthorAddPrefix", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		noPrefixAuthor := postAuthor[2:]
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Author: &noPrefixAuthor}); err != nil {
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Author: &noPrefixAuthor}); err != nil {
 			t.Fatal(err)
 		} else if len(posts) != 1 || count != 1 {
 			t.Fatal("must be one matching post")
@@ -148,9 +188,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("SearchTitleOne", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		keyword := postTitle
-		if posts, count, err := findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
+		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
 			t.Fatal(err)
 		} else if len(posts) != 1 || count != 1 {
 			t.Fatal("must be one matching post")
@@ -160,9 +204,13 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("SearchTitleMultiple", func(t *testing.T) {
-		ctx, tx := setupTx(t)
+
+		db := mustOpen(t)
+		defer mustClose(t, db)
+		ctx, tx := setupTx(t, db)
+
 		keyword := "Portra"
-		if posts, _, err := findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
+		if posts, _, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
 			t.Fatal(err)
 		} else if got, want := len(posts), totalPortra; got != want {
 			t.Fatalf("number of matching titles not equal, got %v, want %v", got, want)
@@ -533,11 +581,9 @@ func TestPatchPost(t *testing.T) {
 	})
 }
 
-func setupTx(t *testing.T) (context.Context, *sql.Tx) {
+func setupTx(t *testing.T, db *DB) (context.Context, *sql.Tx) {
 	t.Helper()
 	ctx := context.Background()
-	db := mustOpen(t)
-	defer mustClose(t, db)
 	tx, err := db.db.BeginTx(ctx, nil)
 	if err != nil {
 		t.Fatal(err)

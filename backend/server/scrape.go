@@ -24,12 +24,12 @@ func (s *Server) mountScrapeHandlers() {
 func (s *Server) getKeywordUpdatedPosts(w http.ResponseWriter, r *http.Request) {
 	ids, err := s.ScrapeService.KeywordUpdatedPostIDs(r.Context())
 	if err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 	response := keywordsUpdatedResponse{
 		Ids: ids,
 	}
 	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
-		writeError(w, r, err)
+		s.writeError(w, r, err)
 	}
 }

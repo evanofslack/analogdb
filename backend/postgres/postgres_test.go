@@ -3,6 +3,7 @@ package postgres
 import (
 	"os"
 	"testing"
+	"github.com/evanofslack/analogdb/logger"
 
 	"github.com/joho/godotenv"
 )
@@ -19,10 +20,14 @@ func mustOpen(t *testing.T) *DB {
 		t.Error("Error loading .env file")
 	}
 
+	logger, err := logger.New("debug", "debug")
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// connect to local db for testing
 	dsn := os.Getenv("POSTGRES_DATABASE_URL")
-
-	db := NewDB(dsn)
+	db := NewDB(dsn, logger)
 
 	if err := db.Open(); err != nil {
 		t.Fatal(err)

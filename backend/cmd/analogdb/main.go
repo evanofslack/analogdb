@@ -40,9 +40,9 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Msg("Initializing application")
+	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
 
-	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" {
+	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" && cfg.App.Env != "debug" {
 		logger = logger.WithSlackNotifier(webhookURL)
 	}
 
@@ -50,7 +50,7 @@ func main() {
 	db := postgres.NewDB(cfg.DB.URL, dbLogger)
 	if err := db.Open(); err != nil {
 		err = fmt.Errorf("Failed to startup datebase: %w", err)
-		logger.Err(err).Msg("Fatal error, exiting")
+		logger.Error().Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 
@@ -59,14 +59,14 @@ func main() {
 	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme, dbVecLogger)
 	if err := dbVec.Open(); err != nil {
 		err = fmt.Errorf("Failed to startup vector datebase: %w", err)
-		logger.Err(err).Msg("Fatal error, exiting")
+		logger.Error().Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 	// run weaviate migrations if needed
 	// creates the schema if it does not exist
 	if err := dbVec.Migrate(ctx); err != nil {
 		err = fmt.Errorf("Failed to migrate vector datebase: %w", err)
-		logger.Err(err).Msg("Fatal error, exiting")
+		logger.Error().Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 
@@ -81,7 +81,7 @@ func main() {
 	server.SimilarityService = weaviate.NewSimilarityService(dbVec, postService)
 	if err := server.Run(); err != nil {
 		err = fmt.Errorf("Failed to start http server: %w", err)
-		logger.Err(err).Msg("Fatal error, exiting")
+		logger.Error().Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 
@@ -90,13 +90,19 @@ func main() {
 
 	if err := server.Close(); err != nil {
 		err = fmt.Errorf("Failed to shutdown http server: %w", err)
-		logger.Err(err).Msg("Fatal error, exiting")
+		logger.Error().Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 
 	if err := db.Close(); err != nil {
 		err = fmt.Errorf("Failed to shutdown DB: %w", err)
-		logger.Err(err).Msg("Fatal error, exiting")
+		logger.Error().Err(err).Msg("Fatal error, exiting")
+		os.Exit(1)
+	}
+
+	if err := dbVec.Close(); err != nil {
+		err = fmt.Errorf("Failed to shutdown vector DB: %w", err)
+		logger.Error().Err(err).Msg("Fatal error, exiting")
 		os.Exit(1)
 	}
 }
