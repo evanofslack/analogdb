@@ -15,6 +15,11 @@ export async function getStaticPaths() {
 export async function getStaticProps({ params }) {
   const postURL = `${baseURL}/post/${params.pid}`;
   const response = await fetch(postURL);
+  if (!response.ok) {
+    return {
+      notFound: true,
+    }
+}
   const post = await response.json();
 
   // only show nsfw results if the original image was nsfw
