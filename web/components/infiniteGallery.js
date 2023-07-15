@@ -57,7 +57,7 @@ export default function InfiniteGallery(props) {
       )}
       {totalPosts == 0 && (
         <div className={styles.noResultsContainer}>
-          <h3 className={styles.noResults}> No posts found :( </h3>
+          <h3 className={styles.noResults}> no posts found :( </h3>
         </div>
       )}
     </div>
