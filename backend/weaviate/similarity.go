@@ -25,7 +25,7 @@ func NewSimilarityService(db *DB, ps analogdb.PostService) *SimilarityService {
 	return &SimilarityService{db: db, postService: ps}
 }
 
-func (ss SimilarityService) DeletePost(ctx context.Context, postID int) (error) {
+func (ss SimilarityService) DeletePost(ctx context.Context, postID int) error {
 	return ss.db.deletePost(ctx, postID)
 }
 
@@ -49,11 +49,18 @@ func (ss SimilarityService) FindSimilarPostsByImage(ctx context.Context, postID 
 	return posts, err
 }
 
-
-func (db *DB) deletePost(ctx context.Context, postID int) (error) {
+func (db *DB) deletePost(ctx context.Context, postID int) error {
 
 	db.logger.Debug().Int("postID", postID).Msg("Starting delete post from vector DB")
-	 
+
+	fields := []graphql.Field{
+		{Name: "post_id"},
+		{Name: "_additional", Fields: []graphql.Field{
+			{Name: "distance"},
+			{Name: "id"},
+		}},
+	}
+
 	where := filters.Where().
 		WithPath([]string{"post_id"}).
 		WithOperator(filters.Equal).
@@ -61,11 +68,12 @@ func (db *DB) deletePost(ctx context.Context, postID int) (error) {
 
 	result, err := db.db.GraphQL().Get().
 		WithClassName(PictureClass).
+		WithFields(fields...).
 		WithLimit(1).
 		WithWhere(where).
 		Do(ctx)
 
-	if err != nil {
+	if err != nil || result == nil {
 		err = fmt.Errorf("Failed to find postID in vector DB, err=%w", err)
 		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to delete post from vectorDB")
 		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("Post %d not found", postID)}
@@ -80,13 +88,13 @@ func (db *DB) deletePost(ctx context.Context, postID int) (error) {
 	err = db.db.Data().Deleter().
 		WithClassName(PictureClass).
 		WithID(pics[0].uuid).
-		WithConsistencyLevel(replication.ConsistencyLevel.ALL).  // default QUORUM
+		WithConsistencyLevel(replication.ConsistencyLevel.ALL). // default QUORUM
 		Do(ctx)
 
-  if err != nil {
-	db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to delete post from vector DB")
-	return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: fmt.Sprintf("Post %d could not be deleted from vector DB", postID)}
-  }
+	if err != nil {
+		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to delete post from vector DB")
+		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: fmt.Sprintf("Post %d could not be deleted from vector DB", postID)}
+	}
 
 	db.logger.Info().Int("postID", postID).Msg("Deleted post from vector DB")
 
@@ -155,7 +163,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, postID int, filter *analogd
 
 	nearObject := db.db.GraphQL().NearObjectArgBuilder().WithID(pics[0].uuid)
 	result, err = db.db.GraphQL().Get().
-		WithClassName("Picture").
+		WithClassName(PictureClass).
 		WithFields(fields...).
 		WithLimit(limit).
 		WithWhere(where).
