@@ -1,42 +1,20 @@
 import styles from "./about.module.css";
 import Image from "next/legacy/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import Footer from "./footer";
 import { useBreakpoint } from "../providers/breakpoint.js";
-import { baseURL } from "../constants.ts";
 import { Prism } from "@mantine/prism";
 import { IconPolaroid, IconUsers } from "@tabler/icons";
 
-export default function About() {
+export default function About(props) {
   const breakpoints = useBreakpoint();
   let isMobile = false;
   if (breakpoints["sm"]) {
     isMobile = true;
   }
 
-  const [numPosts, setNumPosts] = useState();
-  const [numPhotographers, setNumPhotographers] = useState();
-  const [loaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    // get total posts
-    const postEndpoint = baseURL + "/posts";
-    fetch(postEndpoint)
-      .then((response) => response.json())
-      .then((resp) => {
-        setNumPosts(resp.meta.total_posts);
-        setIsLoaded(true);
-      });
-
-    const authorEndpoint = baseURL + "/authors";
-    fetch(authorEndpoint)
-      .then((response) => response.json())
-      .then((resp) => {
-        setNumPhotographers([...new Set(resp.authors)].length);
-        setIsLoaded(true);
-      });
-  }, []);
+  let numPosts = props.data.numPosts
+  let numAuthors = props.data.numAuthors
 
   const apiQuery = "curl https://api.analogdb.com/posts";
 
@@ -126,7 +104,7 @@ export default function About() {
                   className={styles.statIcon}
                 />
                 <div className={styles.statCol}>
-                  <p className={styles.statNum}>{numPhotographers}</p>
+                  <p className={styles.statNum}>{numAuthors}</p>
                   <p className={styles.statTitle}>photographers</p>
                 </div>
               </div>
