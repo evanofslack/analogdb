@@ -40,9 +40,9 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Msg("Initializing application")
+	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
 
-	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" {
+	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" && cfg.App.Env != "debug" {
 		logger = logger.WithSlackNotifier(webhookURL)
 	}
 
