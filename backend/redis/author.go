@@ -2,7 +2,6 @@ package redis
 
 import (
 	"context"
-	"strings"
 	goTime "time"
 
 	"github.com/evanofslack/analogdb"
@@ -38,44 +37,41 @@ func NewCacheAuthorService(rdb *RDB, dbService analogdb.AuthorService) *AuthorSe
 
 func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 
-	s.rdb.logger.Debug().Msg("Getting authors with cache")
+	s.rdb.logger.Debug().Msg("Starting find authors with cache")
+	defer func() {
+		s.rdb.logger.Debug().Msg("Finished find authors with cache")
+	}()
 
-	var cachedAuthors string
+	var cachedAuthors []string
 
 	// try to get from the cache
 	err := s.cache.Get(ctx, authorsKey, &cachedAuthors)
-
-	// we found in cache, return
-	if cachedAuthors != "" && err == nil {
+	if err == nil {
 		s.rdb.logger.Debug().Msg("Found authors in cache")
-		authors := strings.Split(cachedAuthors, ",")
-		return authors, nil
-	}
-
-	s.rdb.logger.Debug().Msg("Failed to get authors from cache (cache miss)")
-	if err != nil {
-		s.rdb.logger.Info().Str("error", err.Error()).Msg("Failed to get authors from cache")
+		return cachedAuthors, nil
 	}
 
 	// fallback to postgres if not in cache
+	s.rdb.logger.Info().Str("error", err.Error()).Msg("Failed to get authors from cache")
 	authors, err := s.dbService.FindAuthors(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	authorsString := strings.Join(authors, ",")
-
 	// add to cache
-	if err := s.cache.Set(&cache.Item{
-		Ctx:   ctx,
-		Key:   authorsKey,
-		Value: &authorsString,
-		TTL:   authorsTTL,
-	}); err != nil {
-		s.rdb.logger.Err(err).Msg("Failed to add authors to cache")
-	}
-
-	s.rdb.logger.Debug().Msg("Added authors to cache")
+	// do this async so response is returned quicker
+	go func() {
+		if err := s.cache.Set(&cache.Item{
+			Ctx:   ctx,
+			Key:   authorsKey,
+			Value: &authors,
+			TTL:   authorsTTL,
+		}); err != nil {
+			s.rdb.logger.Err(err).Msg("Failed to add authors to cache")
+		} else {
+			s.rdb.logger.Debug().Msg("Added authors to cache")
+		}
+	}()
 
 	return authors, nil
 }

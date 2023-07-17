@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/evanofslack/analogdb"
 	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
@@ -95,23 +96,31 @@ func main() {
 	httpLogger := logger.WithService("http")
 	server := server.New(cfg.HTTP.Port, httpLogger, metrics)
 
+	var postService analogdb.PostService
+	var authorService analogdb.AuthorService
+	var readyService analogdb.ReadyService
+	var scrapeService analogdb.ScrapeService
+	var similarityService analogdb.SimilarityService
+
 	// create service implementations
-	postService := postgres.NewPostService(db)
-	readyService := postgres.NewReadyService(db)
-	authorService := postgres.NewAuthorService(db)
-	scrapeService := postgres.NewScrapeService(db)
-	similarityService := weaviate.NewSimilarityService(dbVec, postService)
+	postService = postgres.NewPostService(db)
+	authorService = postgres.NewAuthorService(db)
+	readyService = postgres.NewReadyService(db)
+	scrapeService = postgres.NewScrapeService(db)
+
+	// if cache enabled, replace the with cache implementation
+	if cfg.Redis.Enabled {
+		postService = redis.NewCachePostService(rdb, postService)
+		authorService = redis.NewCacheAuthorService(rdb, authorService)
+	}
+
+	similarityService = weaviate.NewSimilarityService(dbVec, postService)
 
 	server.PostService = postService
 	server.ReadyService = readyService
 	server.AuthorService = authorService
 	server.ScrapeService = scrapeService
 	server.SimilarityService = similarityService
-
-	// if cache enabled, replace the with cache implementation
-	if cfg.Redis.Enabled {
-		server.AuthorService = redis.NewCacheAuthorService(rdb, authorService)
-	}
 
 	if err := server.Run(); err != nil {
 		err = fmt.Errorf("Failed to start http server: %w", err)
