@@ -4,8 +4,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/evanofslack/analogdb/postgres"
 	"github.com/evanofslack/analogdb/logger"
+	"github.com/evanofslack/analogdb/metrics"
+	"github.com/evanofslack/analogdb/postgres"
 	"github.com/joho/godotenv"
 )
 
@@ -16,8 +17,12 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 		t.Error("Error loading .env file")
 	}
 
-
 	logger, err := logger.New("debug", "debug")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	metrics, err := metrics.New(logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +39,7 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 	rs := postgres.NewReadyService(db)
 	as := postgres.NewAuthorService(db)
 
-	s := New("8080", logger)
+	s := New("8080", logger, metrics)
 	s.PostService = ps
 	s.ReadyService = rs
 	s.AuthorService = as
