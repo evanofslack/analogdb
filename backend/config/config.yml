@@ -4,6 +4,9 @@ app:
   env: "prod"
 database:
   url: ""
+redis:
+  url: ""
+  enabled: true
 vector_database:
   host: ""
   scheme: "http"

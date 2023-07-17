@@ -21,7 +21,7 @@ type DB struct {
 func NewDB(dsn string, logger *logger.Logger) *DB {
 	db := &DB{dsn: dsn, logger: logger}
 	db.ctx, db.cancel = context.WithCancel(context.Background())
-	db.logger.Logger.Info().Msg("Initialized DB instance")
+	db.logger.Info().Msg("Initialized DB instance")
 	return db
 }
 
@@ -36,7 +36,7 @@ func (db *DB) Open() error {
 	}
 	go db.monitor()
 
-	db.logger.Logger.Info().Msg("Opened new DB connection")
+	db.logger.Info().Msg("Opened new DB connection")
 	return db.db.Ping()
 }
 
@@ -47,7 +47,7 @@ func (db *DB) Close() error {
 		db.db.Close()
 	}
 
-	db.logger.Logger.Info().Msg("Closed DB connection")
+	db.logger.Info().Msg("Closed DB connection")
 	return nil
 }
 
