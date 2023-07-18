@@ -16,7 +16,9 @@ services:
       WEBHOOK_URL: ${ANALOGDB_WEBHOOK_URL}
       AUTH_USERNAME: ${ANALOGDB_AUTH_USERNAME}
       AUTH_PASSWORD: ${ANALOGDB_AUTH_PASSWORD}
+      CACHE_ENABLED: ${ANALOGDB_CACHE_ENABLED}
       DATABASE_URL: ${POSTGRES_DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
       VECTOR_DATABASE_HOST: ${WEAVIATE_HOST}
       VECTOR_DATABASE_SCHEME: ${WEAVIATE_SCHEME}
     depends_on:
@@ -41,7 +43,16 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - .data/postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql/data
+
+  redis:
+    image: "bitnami/redis:latest"
+    container_name: "redis"
+    environment:
+      - REDIS_USER=${REDIS_USER}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - redis:/bitnami/redis/data
 
   weaviate:
     command:
@@ -72,10 +83,15 @@ services:
       AWS_SECRET_ACCESS_KEY: ${WEAVIATE_AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${WEAVIATE_AWS_REGION}
     volumes:
-      - .data/weaviate:/var/lib/weaviate
+      - weaviate:/var/lib/weaviate
 
   i2v-neural:
     image: semitechnologies/img2vec-pytorch:resnet50
     restart: unless-stopped
     environment:
       ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA}
+
+volumes:
+  postgres:
+  weaviate:
+  redis:

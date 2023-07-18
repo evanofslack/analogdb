@@ -17,9 +17,10 @@ type Config struct {
 }
 
 type App struct {
-	Name    string `yaml:"name" env:"APP_NAME"`
-	Version string `yaml:"version" env:"APP_VERSION"`
-	Env     string `yaml:"env" env:"APP_ENV"`
+	Name         string `yaml:"name" env:"APP_NAME"`
+	Version      string `yaml:"version" env:"APP_VERSION"`
+	Env          string `yaml:"env" env:"APP_ENV"`
+	CacheEnabled bool   `yaml:"cache_enabled" env:"CACHE_ENABLED"`
 }
 
 type DB struct {
@@ -27,8 +28,7 @@ type DB struct {
 }
 
 type Redis struct {
-	URL     string `yaml:"url" env:"REDIS_URL"`
-	Enabled bool   `yaml:"enabled" env:"REDIS_ENABLED"`
+	URL string `yaml:"url" env:"REDIS_URL"`
 }
 
 type VectorDB struct {

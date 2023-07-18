@@ -72,16 +72,19 @@ func main() {
 		fatal(logger, err)
 	}
 
-	// open connection to redis
-	redisLogger := logger.WithService("redis")
-	rdb, err := redis.NewRDB(cfg.Redis.URL, redisLogger)
-	if err != nil {
-		err = fmt.Errorf("Failed to startup redis: %w", err)
-		fatal(logger, err)
-	}
-	if err := rdb.Open(); err != nil {
-		err = fmt.Errorf("Failed to connect to redis: %w", err)
-		fatal(logger, err)
+	// open connection to redis if cache enabled
+	var rdb *redis.RDB
+	if cfg.App.CacheEnabled {
+		redisLogger := logger.WithService("redis")
+		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger)
+		if err != nil {
+			err = fmt.Errorf("Failed to startup redis: %w", err)
+			fatal(logger, err)
+		}
+		if err := rdb.Open(); err != nil {
+			err = fmt.Errorf("Failed to connect to redis: %w", err)
+			fatal(logger, err)
+		}
 	}
 
 	// initialize prometheus metrics
@@ -110,7 +113,7 @@ func main() {
 	scrapeService = postgres.NewScrapeService(db)
 
 	// if cache enabled, replace the with cache implementation
-	if cfg.Redis.Enabled {
+	if cfg.App.CacheEnabled {
 		postService = redis.NewCachePostService(rdb, postService)
 		authorService = redis.NewCacheAuthorService(rdb, authorService)
 	}
@@ -118,7 +121,7 @@ func main() {
 	similarityService = weaviate.NewSimilarityService(dbVec, postService)
 
 	// if cache enabled, replace the with cache implementation
-	if cfg.Redis.Enabled {
+	if cfg.App.CacheEnabled {
 		similarityService = redis.NewCacheSimilarityService(rdb, similarityService)
 	}
 
