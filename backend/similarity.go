@@ -11,7 +11,7 @@ type SimilarityService interface {
 	CreateSchemas(ctx context.Context) error
 	EncodePost(ctx context.Context, id int) error
 	BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error
-	FindSimilarPostsByImage(ctx context.Context, id int, filter *PostSimilarityFilter) ([]*Post, error)
+	FindSimilarPosts(ctx context.Context, filter *PostSimilarityFilter) ([]*Post, error)
 	DeletePost(ctx context.Context, id int) error
 }
 

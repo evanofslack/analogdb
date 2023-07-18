@@ -7,12 +7,14 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/evanofslack/analogdb"
 	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/logger"
+	"github.com/evanofslack/analogdb/metrics"
 	"github.com/evanofslack/analogdb/postgres"
+	"github.com/evanofslack/analogdb/redis"
 	"github.com/evanofslack/analogdb/server"
 	"github.com/evanofslack/analogdb/weaviate"
-	"github.com/evanofslack/analogdb/metrics"
 )
 
 const defaultConfigPath = "config.yml"
@@ -32,16 +34,14 @@ func main() {
 	cfg, err := config.New(cfgPath)
 	if err != nil {
 		err = fmt.Errorf("Failed to parse app config: %w", err)
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		fatal(nil, err)
 	}
 
 	// create logger instance
 	logger, err := logger.New(cfg.Log.Level, cfg.App.Env)
 	if err != nil {
 		err = fmt.Errorf("Failed to create logger: %w", err)
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		fatal(nil, err)
 	}
 	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
 
@@ -54,25 +54,37 @@ func main() {
 	dbLogger := logger.WithService("database")
 	db := postgres.NewDB(cfg.DB.URL, dbLogger)
 	if err := db.Open(); err != nil {
-		err = fmt.Errorf("Failed to startup datebase: %w", err)
-		logger.Error().Err(err).Msg("Fatal error, exiting")
-		os.Exit(1)
+		err = fmt.Errorf("Failed to startup database: %w", err)
+		fatal(logger, err)
 	}
 
 	// open connection to weaviate
 	dbVecLogger := logger.WithService("vector-database")
 	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme, dbVecLogger)
 	if err := dbVec.Open(); err != nil {
-		err = fmt.Errorf("Failed to startup vector datebase: %w", err)
-		logger.Error().Err(err).Msg("Fatal error, exiting")
-		os.Exit(1)
+		err = fmt.Errorf("Failed to startup vector database: %w", err)
+		fatal(logger, err)
 	}
 	// run weaviate migrations if needed
 	// creates the schema if it does not exist
 	if err := dbVec.Migrate(ctx); err != nil {
-		err = fmt.Errorf("Failed to migrate vector datebase: %w", err)
-		logger.Error().Err(err).Msg("Fatal error, exiting")
-		os.Exit(1)
+		err = fmt.Errorf("Failed to migrate vector database: %w", err)
+		fatal(logger, err)
+	}
+
+	// open connection to redis if cache enabled
+	var rdb *redis.RDB
+	if cfg.App.CacheEnabled {
+		redisLogger := logger.WithService("redis")
+		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger)
+		if err != nil {
+			err = fmt.Errorf("Failed to startup redis: %w", err)
+			fatal(logger, err)
+		}
+		if err := rdb.Open(); err != nil {
+			err = fmt.Errorf("Failed to connect to redis: %w", err)
+			fatal(logger, err)
+		}
 	}
 
 	// initialize prometheus metrics
@@ -80,25 +92,48 @@ func main() {
 	metrics, err := metrics.New(metricsLogger)
 	if err != nil {
 		err = fmt.Errorf("Failed to initialize prometheus metrics: %w", err)
-		logger.Error().Err(err).Msg("Fatal error, exiting")
-		os.Exit(1)
+		fatal(logger, err)
 	}
 
 	// initialize http server
 	httpLogger := logger.WithService("http")
 	server := server.New(cfg.HTTP.Port, httpLogger, metrics)
 
-	postService := postgres.NewPostService(db)
+	// need to clean up this dependency injection
+	var postService analogdb.PostService
+	var authorService analogdb.AuthorService
+	var readyService analogdb.ReadyService
+	var scrapeService analogdb.ScrapeService
+	var similarityService analogdb.SimilarityService
+
+	// create service implementations
+	postService = postgres.NewPostService(db)
+	authorService = postgres.NewAuthorService(db)
+	readyService = postgres.NewReadyService(db)
+	scrapeService = postgres.NewScrapeService(db)
+
+	// if cache enabled, replace the with cache implementation
+	if cfg.App.CacheEnabled {
+		postService = redis.NewCachePostService(rdb, postService)
+		authorService = redis.NewCacheAuthorService(rdb, authorService)
+	}
+
+	similarityService = weaviate.NewSimilarityService(dbVec, postService)
+
+	// if cache enabled, replace the with cache implementation
+	if cfg.App.CacheEnabled {
+		similarityService = redis.NewCacheSimilarityService(rdb, similarityService)
+	}
 
 	server.PostService = postService
-	server.ReadyService = postgres.NewReadyService(db)
-	server.AuthorService = postgres.NewAuthorService(db)
-	server.ScrapeService = postgres.NewScrapeService(db)
-	server.SimilarityService = weaviate.NewSimilarityService(dbVec, postService)
+	server.ReadyService = readyService
+	server.AuthorService = authorService
+	server.ScrapeService = scrapeService
+	server.SimilarityService = similarityService
+
 	if err := server.Run(); err != nil {
 		err = fmt.Errorf("Failed to start http server: %w", err)
-		logger.Error().Err(err).Msg("Fatal error, exiting")
-		os.Exit(1)
+		fatal(logger, err)
 	}
 
 	// wait for shutdown
@@ -107,19 +142,32 @@ func main() {
 
 	if err := server.Close(); err != nil {
 		err = fmt.Errorf("Failed to shutdown http server: %w", err)
-		logger.Error().Err(err).Msg("Fatal error, exiting")
-		os.Exit(1)
+		fatal(logger, err)
 	}
 
 	if err := db.Close(); err != nil {
 		err = fmt.Errorf("Failed to shutdown DB: %w", err)
-		logger.Error().Err(err).Msg("Fatal error, exiting")
-		os.Exit(1)
+		fatal(logger, err)
 	}
 
 	if err := dbVec.Close(); err != nil {
 		err = fmt.Errorf("Failed to shutdown vector DB: %w", err)
-		logger.Error().Err(err).Msg("Fatal error, exiting")
-		os.Exit(1)
+		fatal(logger, err)
 	}
+
+	if err := rdb.Close(); err != nil {
+		err = fmt.Errorf("Failed to shutdown redis: %w", err)
+		fatal(logger, err)
+	}
+}
+
+func fatal(logger *logger.Logger, err error) {
+	if logger != nil {
+		logger.Error().Err(err).Msg("Fatal error, exiting")
+	} else {
+		err := fmt.Errorf("Fatal error, exiting; error=%w", err)
+		fmt.Fprintln(os.Stderr, err)
+	}
+	os.Exit(1)
+
 }

@@ -10,19 +10,25 @@ import (
 type Config struct {
 	App      `yaml:"app"`
 	DB       `yaml:"database"`
+	Redis    `yaml:"redis"`
 	VectorDB `yaml:"vector_database"`
 	HTTP     `yaml:"http"`
 	Log      `yaml:"logger"`
 }
 
 type App struct {
-	Name    string `yaml:"name" env:"APP_NAME"`
-	Version string `yaml:"version" env:"APP_VERSION"`
-	Env     string `yaml:"env" env:"APP_ENV"`
+	Name         string `yaml:"name" env:"APP_NAME"`
+	Version      string `yaml:"version" env:"APP_VERSION"`
+	Env          string `yaml:"env" env:"APP_ENV"`
+	CacheEnabled bool   `yaml:"cache_enabled" env:"CACHE_ENABLED"`
 }
 
 type DB struct {
 	URL string `yaml:"url" env:"DATABASE_URL"`
+}
+
+type Redis struct {
+	URL string `yaml:"url" env:"REDIS_URL"`
 }
 
 type VectorDB struct {
@@ -35,7 +41,7 @@ type HTTP struct {
 }
 
 type Log struct {
-	Level string `yaml:"level" env:"LOG_LEVEL"`
+	Level      string `yaml:"level" env:"LOG_LEVEL"`
 	WebhookURL string `yaml:"webhook" env:"WEBHOOK_URL"`
 }
 

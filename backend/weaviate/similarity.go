@@ -29,16 +29,12 @@ func (ss SimilarityService) DeletePost(ctx context.Context, postID int) error {
 	return ss.db.deletePost(ctx, postID)
 }
 
-func (ss SimilarityService) FindSimilarPostsByImage(ctx context.Context, postID int, similarityFilter *analogdb.PostSimilarityFilter) ([]*analogdb.Post, error) {
+func (ss SimilarityService) FindSimilarPosts(ctx context.Context, similarityFilter *analogdb.PostSimilarityFilter) ([]*analogdb.Post, error) {
 
 	var posts []*analogdb.Post
 
-	// make sure we exclude the post we are query from the results
-	excluded := []int{postID}
-	similarityFilter.ExcludeIDs = &excluded
-
 	// get similar IDs
-	ids, err := ss.db.getSimilarPostIDs(ctx, postID, similarityFilter)
+	ids, err := ss.db.getSimilarPostIDs(ctx, similarityFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -107,11 +103,17 @@ type pictureResponse struct {
 	uuid     string
 }
 
-func (db *DB) getSimilarPostIDs(ctx context.Context, postID int, filter *analogdb.PostSimilarityFilter) ([]int, error) {
-
-	db.logger.Debug().Int("postID", postID).Msg("Starting get similar posts from vector DB")
+func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimilarityFilter) ([]int, error) {
 
 	var ids []int
+
+	if filter.ID == nil {
+		return ids, fmt.Errorf("postID cannot be nil")
+	}
+
+	postID := *filter.ID
+
+	db.logger.Debug().Int("postID", postID).Msg("Starting get similar posts from vector DB")
 
 	// first make the query to lookup UUID associated with post's embedding
 

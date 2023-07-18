@@ -19,6 +19,8 @@ func NewAuthorService(db *DB) *AuthorService {
 }
 
 func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
+
+	s.db.logger.Debug().Msg("Starting find authors")
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -29,6 +31,8 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	s.db.logger.Debug().Msg("Finished find authors")
 
 	return authors, nil
 }

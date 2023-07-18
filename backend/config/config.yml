@@ -2,7 +2,10 @@ app:
   name: "analogdb"
   version: "0.1.0"
   env: "prod"
+  cache_enabled: true
 database:
+  url: ""
+redis:
   url: ""
 vector_database:
   host: ""
