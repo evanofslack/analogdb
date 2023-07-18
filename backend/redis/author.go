@@ -61,6 +61,12 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 	// add to cache
 	// do this async so response is returned quicker
 	go func() {
+
+		s.rdb.logger.Debug().Msg("Adding authors to cache")
+		// create a new context; orignal one will be canceled when request is closed
+		ctx, cancel := context.WithTimeout(context.Background(), cacheSetTimeout)
+		defer cancel()
+
 		if err := s.cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   authorsKey,

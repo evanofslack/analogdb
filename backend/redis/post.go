@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"fmt"
+	"time"
 	goTime "time"
 
 	"github.com/go-redis/cache/v8"
@@ -12,7 +13,9 @@ import (
 )
 
 const (
-	postsTTL = goTime.Hour * 4
+	postsTTL        = goTime.Hour * 4
+	postTTL        = goTime.Hour * 24
+	cacheSetTimeout = time.Second * 5
 )
 
 // ensure interface is implemented
@@ -88,7 +91,12 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	// add posts to cache
 	// do this async so response is returned quicker
 	go func() {
+
 		s.rdb.logger.Debug().Msg("Adding posts and posts counts to cache")
+		// create a new context; orignal one will be canceled when request is closed
+		ctx, cancel := context.WithTimeout(context.Background(), cacheSetTimeout)
+		defer cancel()
+
 		if err := s.cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   postsHash,
@@ -116,9 +124,56 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 }
 
 func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post, error) {
-	s.rdb.logger.Debug().Msg("Starting find posts by id with cache")
-	return s.FindPostByID(ctx, id)
 
+	s.rdb.logger.Debug().Int("postID", id).Msg("Starting find post by id with cache")
+	defer func() {
+		s.rdb.logger.Debug().Int("postID", id).Msg("Finished find post by id with cache")
+	}()
+
+	var post *analogdb.Post
+	postKey := fmt.Sprint(id)
+
+	// try to get post from the cache
+	err := s.cache.Get(ctx, postKey, &post)
+	if err != nil {
+		s.rdb.logger.Info().Int("postID", id).Str("error", err.Error()).Msg("Failed to find post by id from cache")
+	}
+
+	// no error means we found in cache
+	if err == nil {
+		s.rdb.logger.Debug().Int("postID", id).Msg("Found post by id in cache")
+		return post, nil
+	}
+
+	// otherwise we must fallback to db
+	s.rdb.logger.Info().Int("postID", id).Str("error", err.Error()).Msg("Failed to find post by id from cache")
+	post, err = s.dbService.FindPostByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// add post to cache
+	// do this async so response is returned quicker
+	go func() {
+
+		s.rdb.logger.Debug().Int("postID", id).Msg("Adding post to cache")
+		// create a new context; orignal one will be canceled when request is closed
+		ctx, cancel := context.WithTimeout(context.Background(), cacheSetTimeout)
+		defer cancel()
+
+		// add to cache
+		if err := s.cache.Set(&cache.Item{
+			Ctx:   ctx,
+			Key:   postKey,
+			Value: &post,
+			TTL:   postTTL,
+		}); err != nil {
+			s.rdb.logger.Err(err).Int("postID", id).Msg("Failed to add post to cache")
+		} else {
+			s.rdb.logger.Debug().Int("postID", id).Msg("Added post to cache")
+		}
+	}()
+	return post, nil
 }
 
 func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, id int) error {
