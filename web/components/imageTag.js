@@ -34,7 +34,7 @@ export default function ImageTag(props) {
     Object.hasOwn(post, "keywords") && post.keywords.length > 0
       ? post.keywords
           .map((item) => {
-            return item.word;
+            return <span key={item.id}>{item.word}</span>;
           })
           .slice(0, 15)
       : [];

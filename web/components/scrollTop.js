@@ -28,7 +28,7 @@ const ScrollTop = () => {
 
   return (
     <BsChevronDoubleUp
-      size="3rem"
+      size="42px"
       onClick={scrollToTop}
       className={visible ? styles.visible : styles.hidden}
       title="Back to top"

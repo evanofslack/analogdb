@@ -3,7 +3,6 @@ import Grid from "../components/grid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useState, useEffect } from "react";
 import { baseURL } from "../constants.ts";
-import Footer from "./footer";
 
 export default function InfiniteGallery(props) {
   const [posts, setPosts] = useState(props.response.posts);

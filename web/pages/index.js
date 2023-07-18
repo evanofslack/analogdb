@@ -3,7 +3,7 @@ import Gallery from "../components/gallery";
 import { baseURL } from "../constants.ts";
 
 export async function getStaticProps() {
-  const numPosts = 100
+  const numPosts = 40
   const url =
     baseURL + `/posts?sort=latest&page_size=${numPosts}&grayscale=false&nsfw=false`;
   const response = await fetch(url);

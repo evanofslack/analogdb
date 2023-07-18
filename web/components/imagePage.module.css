@@ -7,6 +7,13 @@
   justify-content: center;
 }
 
+.title {
+  line-height: 1.15;
+  font-size: 1.5rem;
+  text-align: left;
+  color: #2e2e2e;
+}
+
 .imageContainer {
   width: 90%;
   height: 90%;

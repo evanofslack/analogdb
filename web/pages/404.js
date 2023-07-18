@@ -12,7 +12,9 @@ export default function Custom404() {
       </Head>
       <Header />
       <div className={styles.center}>
-        <h3 className={styles.error}>sorry, something went wrong [404]</h3>
+        <h3 className={styles.error}>
+          sorry, this page got lost somewhere along the way [404]
+        </h3>
       </div>
       <Footer />
     </div>
