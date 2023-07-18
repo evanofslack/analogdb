@@ -1,6 +1,7 @@
 .main {
   padding-bottom: 4rem;
   width: 100%;
+  /* box-sizing: border-box; */
   overflow-y: scroll;
   overflow-x: hidden;
 }

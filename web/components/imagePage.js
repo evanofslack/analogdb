@@ -34,22 +34,19 @@ export default function ImagePage(props) {
   let post = props.post;
   let similar = props.similar;
   let image = post.images[2];
+  let placeholder = post.images[0];
 
   return (
     <div>
       <NavigationProgress autoReset={true} />
       <div className={styles.fullscreen}>
         <div className={styles.headerIcons}>
-          <Tooltip label="back to gallery" withArrow className="px-2">
-            <Link href={`/`} passHref={true} legacyBehavior>
-              <ActionIcon>
-                <HiArrowLeft size="2rem" />
-              </ActionIcon>
-            </Link>
-          </Tooltip>
+          <Link href={`/`} passHref={true}>
+            <h1 className={styles.title}>Analogdb</h1>
+          </Link>
           <Tooltip label="fullscreen" withArrow className="px-2">
             <ActionIcon component="a" href={post.images[3].url}>
-              <AiOutlineArrowsAlt size="2rem"></AiOutlineArrowsAlt>
+              <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
             </ActionIcon>
           </Tooltip>
         </div>
@@ -63,6 +60,8 @@ export default function ImagePage(props) {
             sizes="100vw"
             quality={100}
             onLoadingComplete={completeNavigationProgress}
+            placeholder="blur"
+            blurDataURL={placeholder.url}
           />
         </div>
         <div className={styles.footerIcons}>
@@ -70,7 +69,7 @@ export default function ImagePage(props) {
             <ActionIcon
               onClick={() => downloadImage(post.images[3].url, post.id)}
             >
-              <AiOutlineDownload size="2rem" />
+              <AiOutlineDownload size="24px" />
             </ActionIcon>
           </Tooltip>
         </div>

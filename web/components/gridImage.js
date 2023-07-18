@@ -3,11 +3,24 @@ import Link from "next/link";
 
 export default function GridImage(props) {
   let post = props.post;
-  let image = post.images[1];
-  let placeholder = post.images[0];
+
+  let low = post.images[0];
+  let medium = post.images[1];
+  let placeholder = low;
+
+  // 1st gen low res is too small, use medium res
+  // 2nd gen low res is fine
+  let image = medium;
+  if (low.width >= 720 || low.height >= 720) {
+    image = low;
+  }
 
   return (
-    <Link href={`/post/${post.id}`} passHref={true} legacyBehavior>
+    <Link
+      href={`/post/${post.id}`}
+      passHref={true}
+      // legacyBehavior
+    >
       <div>
         <Image
           src={image.url}
