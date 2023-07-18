@@ -106,21 +106,16 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, r, err)
 		return
 	}
-	if id := chi.URLParam(r, "id"); id != "" {
-		if identify, err := strconv.Atoi(id); err == nil {
-			if posts, err := s.SimilarityService.FindSimilarPostsByImage(r.Context(), identify, similarityFilter); err == nil {
-				for _, p := range posts {
-					resp.Posts = append(resp.Posts, *p)
-				}
-				if err := encodeResponse(w, r, http.StatusOK, resp); err != nil {
-					s.writeError(w, r, err)
-				}
-			} else {
-				s.writeError(w, r, err)
-			}
-		} else {
+
+	if posts, err := s.SimilarityService.FindSimilarPosts(r.Context(), similarityFilter); err == nil {
+		for _, p := range posts {
+			resp.Posts = append(resp.Posts, *p)
+		}
+		if err := encodeResponse(w, r, http.StatusOK, resp); err != nil {
 			s.writeError(w, r, err)
 		}
+	} else {
+		s.writeError(w, r, err)
 	}
 }
 
@@ -466,6 +461,21 @@ func parseToSimilarityFilter(r *http.Request) (*analogdb.PostSimilarityFilter, e
 	falsey["0"] = false
 
 	filter := &analogdb.PostSimilarityFilter{Limit: &defaultSimilarityLimit}
+
+	// there must be a post id
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		return nil, errors.New("must include post id to query similar from")
+	}
+	postID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, fmt.Errorf("post id to query similar from must convert to int, error=%w", err)
+	}
+	filter.ID = &postID
+
+	// if we are getting similar to that post, we don't want to match the same post
+	excluded := []int{postID}
+	filter.ExcludeIDs = &excluded
 
 	if limit := r.URL.Query().Get("page_size"); limit != "" {
 		if intLimit, err := strconv.Atoi(limit); err != nil {

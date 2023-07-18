@@ -96,6 +96,7 @@ func main() {
 	httpLogger := logger.WithService("http")
 	server := server.New(cfg.HTTP.Port, httpLogger, metrics)
 
+	// need to clean up this dependency injection
 	var postService analogdb.PostService
 	var authorService analogdb.AuthorService
 	var readyService analogdb.ReadyService
@@ -115,6 +116,11 @@ func main() {
 	}
 
 	similarityService = weaviate.NewSimilarityService(dbVec, postService)
+
+	// if cache enabled, replace the with cache implementation
+	if cfg.Redis.Enabled {
+		similarityService = redis.NewCacheSimilarityService(rdb, similarityService)
+	}
 
 	server.PostService = postService
 	server.ReadyService = readyService

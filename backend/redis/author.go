@@ -2,14 +2,14 @@ package redis
 
 import (
 	"context"
-	goTime "time"
+	"time"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-redis/cache/v8"
 )
 
 const (
-	authorsTTL = goTime.Hour * 4
+	authorsTTL = time.Hour * 4
 	authorsKey = "authors"
 )
 
@@ -42,18 +42,18 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 		s.rdb.logger.Debug().Msg("Finished find authors with cache")
 	}()
 
-	var cachedAuthors []string
+	var authors []string
 
 	// try to get from the cache
-	err := s.cache.Get(ctx, authorsKey, &cachedAuthors)
+	err := s.cache.Get(ctx, authorsKey, &authors)
 	if err == nil {
 		s.rdb.logger.Debug().Msg("Found authors in cache")
-		return cachedAuthors, nil
+		return authors, nil
 	}
 
 	// fallback to postgres if not in cache
 	s.rdb.logger.Info().Str("error", err.Error()).Msg("Failed to get authors from cache")
-	authors, err := s.dbService.FindAuthors(ctx)
+	authors, err = s.dbService.FindAuthors(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 
 		s.rdb.logger.Debug().Msg("Adding authors to cache")
 		// create a new context; orignal one will be canceled when request is closed
-		ctx, cancel := context.WithTimeout(context.Background(), cacheSetTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
 		if err := s.cache.Set(&cache.Item{

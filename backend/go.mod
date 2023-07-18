@@ -16,6 +16,7 @@ require (
 	github.com/rs/zerolog v1.29.1
 	github.com/weaviate/weaviate v1.18.3
 	github.com/weaviate/weaviate-go-client/v4 v4.7.0
+	github.com/mitchellh/hashstructure/v2 v2.0.2
 )
 
 require (
@@ -43,7 +44,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/mitchellh/hashstructure/v2 v2.0.2 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/parnurzeal/gorequest v0.2.16 // indirect
