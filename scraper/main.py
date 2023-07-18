@@ -1,4 +1,5 @@
 import time
+import gc
 
 import schedule
 from loguru import logger
@@ -117,6 +118,7 @@ def run_schedule(deps: Dependencies):
 
     while True:
         schedule.run_pending()
+        gc.collect() # cleanup
         time.sleep(4 * 3600)  # sleep for 4 hours
 
 
