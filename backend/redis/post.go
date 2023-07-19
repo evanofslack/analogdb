@@ -15,7 +15,7 @@ const (
 	// timeout for cache operations
 	cacheOpTimeout = time.Second * 5
 
-	// ttl for individual posts in cache
+	// ttl for individual post in cache
 	postTTL = time.Hour * 24
 	// im memory cache size for individual posts
 	postLocalSize = 1000
@@ -24,9 +24,6 @@ const (
 	generalTTL = time.Hour * 4
 	// in memory cache size all other post service data
 	generalLocalSize = 100
-
-	// key for all post ids
-	allPostIDsKey = "allpostids"
 )
 
 // ensure interface is implemented
@@ -60,14 +57,6 @@ func NewCachePostService(rdb *RDB, dbService analogdb.PostService) *PostService 
 }
 
 func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost) (*analogdb.Post, error) {
-
-	s.rdb.logger.Debug().Msg("Starting create post with cache")
-	defer func() {
-		s.rdb.logger.Debug().Msg("Finished create post with cache")
-	}()
-
-	// cache is now stale, remove old entries
-	go s.removeAllPostIDsFromCache()
 	return s.dbService.CreatePost(ctx, post)
 }
 
@@ -222,56 +211,13 @@ func (s *PostService) DeletePost(ctx context.Context, id int) error {
 	// cache is now stale, delete old entries
 	go func() {
 		s.removePostFromCache(id)
-		s.removeAllPostIDsFromCache()
 	}()
 
 	return s.dbService.DeletePost(ctx, id)
 }
 
 func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
-
-	s.rdb.logger.Debug().Msg("Starting get all post ids with cache")
-	defer func() {
-		s.rdb.logger.Debug().Msg("Finished get all post ids with cache")
-	}()
-
-	var ids []int
-
-	// try to get from the cache
-	err := s.genCache.Get(ctx, allPostIDsKey, &ids)
-	if err == nil {
-		s.rdb.logger.Debug().Msg("Found all post ids in cache")
-		return ids, nil
-	}
-
-	// fallback to postgres if not in cache
-	s.rdb.logger.Info().Str("error", err.Error()).Msg("Failed to get all post ids from cache")
-	ids, err = s.dbService.AllPostIDs(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// add to cache
-	// do this async so response is returned quicker
-	go func() {
-
-		s.rdb.logger.Debug().Msg("Adding all post ids to cache")
-		// create a new context; orignal one will be canceled when request is closed
-		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
-		defer cancel()
-
-		if err := s.genCache.Set(&cache.Item{
-			Ctx:   ctx,
-			Key:   allPostIDsKey,
-			Value: &ids,
-			TTL:   generalTTL,
-		}); err != nil {
-			s.rdb.logger.Err(err).Msg("Failed to add all post ids to cache")
-		} else {
-			s.rdb.logger.Debug().Msg("Added all post ids to cache")
-		}
-	}()
-	return ids, nil
+	return s.dbService.AllPostIDs(ctx)
 }
 
 func (s *PostService) removePostFromCache(id int) {
@@ -287,19 +233,5 @@ func (s *PostService) removePostFromCache(id int) {
 		s.rdb.logger.Info().Str("error", err.Error()).Int("postID", id).Msg("Failed to remove post from cache")
 	} else {
 		s.rdb.logger.Debug().Int("postID", id).Msg("Removed post from cache")
-	}
-}
-
-func (s *PostService) removeAllPostIDsFromCache() {
-
-	s.rdb.logger.Debug().Msg("Removing all post ids from cache")
-
-	// create a new context
-	ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
-	defer cancel()
-	if err := s.genCache.Delete(ctx, allPostIDsKey); err != nil {
-		s.rdb.logger.Info().Str("error", err.Error()).Msg("Failed to remove all post ids from cache")
-	} else {
-		s.rdb.logger.Debug().Msg("Removed all post ids from cache")
 	}
 }
