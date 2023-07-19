@@ -15,7 +15,7 @@ const (
 
 func (s *Server) mountSimilarityHandlers() {
 	s.router.Route(encodePath, func(r chi.Router) {
-		r.With(auth).Put("/", s.encodePosts)
+		r.With(s.auth).Put("/", s.encodePosts)
 	})
 }
 

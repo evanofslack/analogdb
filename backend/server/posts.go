@@ -70,10 +70,10 @@ func (s *Server) mountPostHandlers() {
 	s.router.Route(postPath, func(r chi.Router) {
 		r.Get("/{id}", s.findPost)
 		r.Get("/{id}/similar", s.getSimilarPosts)
-		r.With(auth).Delete("/{id}", s.deletePost)
-		r.With(auth).Patch("/{id}", s.patchPost)
-		r.With(auth).Put("/", s.createPost)
-		r.With(auth).Post("/", s.createPost)
+		r.With(s.auth).Delete("/{id}", s.deletePost)
+		r.With(s.auth).Patch("/{id}", s.patchPost)
+		r.With(s.auth).Put("/", s.createPost)
+		r.With(s.auth).Post("/", s.createPost)
 	})
 	s.router.Route(idsPath, func(r chi.Router) {
 		r.Get("/", s.allPostIDs)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
 	"github.com/go-chi/chi/v5"
@@ -15,11 +16,12 @@ import (
 const shutdownTimeout = 5 * time.Second
 
 type Server struct {
-	server  *http.Server
-	router  *chi.Mux
-	healthy bool
-	logger  *logger.Logger
-	metrics *metrics.Metrics
+	server    *http.Server
+	router    *chi.Mux
+	healthy   bool
+	logger    *logger.Logger
+	metrics   *metrics.Metrics
+	basicAuth *config.Auth
 
 	PostService       analogdb.PostService
 	ReadyService      analogdb.ReadyService
@@ -28,12 +30,13 @@ type Server struct {
 	SimilarityService analogdb.SimilarityService
 }
 
-func New(port string, logger *logger.Logger, metrics *metrics.Metrics) *Server {
+func New(port string, logger *logger.Logger, metrics *metrics.Metrics, basicAuth *config.Auth) *Server {
 	s := &Server{
-		server:  &http.Server{},
-		router:  chi.NewRouter(),
-		logger:  logger,
-		metrics: metrics,
+		server:    &http.Server{},
+		router:    chi.NewRouter(),
+		logger:    logger,
+		metrics:   metrics,
+		basicAuth: basicAuth,
 	}
 
 	s.server.Handler = s.router
