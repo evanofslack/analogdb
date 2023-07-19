@@ -2,7 +2,7 @@ module.exports = {
   output: 'standalone',
   reactStrictMode: true,
   images: {
-    unoptimized: false,
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",
