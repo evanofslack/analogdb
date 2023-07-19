@@ -4,30 +4,35 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"net/http"
-	"os"
 )
 
-func auth(next http.Handler) http.Handler {
+func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, password, ok := r.BasicAuth()
-		if ok {
-			auth_username := os.Getenv("AUTH_USERNAME")
-			auth_password := os.Getenv("AUTH_PASSWORD")
-
-			usernameHash := sha256.Sum256([]byte(username))
-			passwordHash := sha256.Sum256([]byte(password))
-			expectedUsernameHash := sha256.Sum256([]byte(auth_username))
-			expectedPasswordHash := sha256.Sum256([]byte(auth_password))
-
-			usernameMatch := (subtle.ConstantTimeCompare(usernameHash[:], expectedUsernameHash[:]) == 1)
-			passwordMatch := (subtle.ConstantTimeCompare(passwordHash[:], expectedPasswordHash[:]) == 1)
-
-			if usernameMatch && passwordMatch {
-				next.ServeHTTP(w, r)
-				return
-			}
+		authenticated := s.passBasicAuth(r)
+		if authenticated {
+			s.logger.Debug().Bool("authenticated", authenticated).Msg("Authorized with basic auth")
+			next.ServeHTTP(w, r)
+			return
 		}
+		s.logger.Debug().Bool("authenticated", authenticated).Msg("Unauthorized with basic auth")
 		w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 	})
+}
+
+func (s *Server) passBasicAuth(r *http.Request) bool {
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		return false
+	}
+
+	usernameHash := sha256.Sum256([]byte(username))
+	passwordHash := sha256.Sum256([]byte(password))
+	expectedUsernameHash := sha256.Sum256([]byte(s.basicAuth.Username))
+	expectedPasswordHash := sha256.Sum256([]byte(s.basicAuth.Password))
+
+	usernameMatch := (subtle.ConstantTimeCompare(usernameHash[:], expectedUsernameHash[:]) == 1)
+	passwordMatch := (subtle.ConstantTimeCompare(passwordHash[:], expectedPasswordHash[:]) == 1)
+
+	return usernameMatch && passwordMatch
 }

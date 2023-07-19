@@ -17,7 +17,7 @@ const (
 
 func (s *Server) mountScrapeHandlers() {
 	s.router.Route(keywordsUpdatedPath, func(r chi.Router) {
-		r.With(auth).Get("/", s.getKeywordUpdatedPosts)
+		r.With(s.auth).Get("/", s.getKeywordUpdatedPosts)
 	})
 }
 

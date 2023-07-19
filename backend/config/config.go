@@ -14,6 +14,7 @@ type Config struct {
 	VectorDB `yaml:"vector_database"`
 	HTTP     `yaml:"http"`
 	Log      `yaml:"logger"`
+	Auth     `yaml:"auth"`
 }
 
 type App struct {

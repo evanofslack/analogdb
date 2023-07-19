@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
 	"github.com/evanofslack/analogdb/postgres"
@@ -27,6 +28,11 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 		t.Fatal(err)
 	}
 
+	config := &config.Auth{
+		Username: "",
+		Password: "",
+	}
+
 	// httpserver test currently require DB, can be mocked out instead
 	dsn := os.Getenv("POSTGRES_DATABASE_URL")
 
@@ -39,7 +45,7 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 	rs := postgres.NewReadyService(db)
 	as := postgres.NewAuthorService(db)
 
-	s := New("8080", logger, metrics)
+	s := New("8080", logger, metrics, config)
 	s.PostService = ps
 	s.ReadyService = rs
 	s.AuthorService = as
