@@ -21,6 +21,7 @@ type Server struct {
 	healthy   bool
 	logger    *logger.Logger
 	metrics   *metrics.Metrics
+	stats     *httpStats
 	basicAuth *config.Auth
 
 	PostService       analogdb.PostService
@@ -41,7 +42,9 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, basicAuth
 
 	s.server.Handler = s.router
 	s.server.Addr = ":" + port
-	s.healthy = true
+
+	s.stats = newHttpStats()
+	s.stats.register(s.metrics.Registry)
 
 	s.mountMiddleware()
 	s.mountPostHandlers()
@@ -52,6 +55,8 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, basicAuth
 	s.mountStatusHandlers()
 	s.mountStatsHandlers()
 	s.mountMetricsHandlers()
+
+	s.healthy = true
 	return s
 }
 

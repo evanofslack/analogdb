@@ -15,44 +15,41 @@ const (
 	// timeout for cache operations
 	cacheOpTimeout = time.Second * 5
 
+	// name of post cache
+	postInstance = "post"
 	// ttl for individual post in cache
 	postTTL = time.Hour * 24
 	// im memory cache size for individual posts
 	postLocalSize = 1000
 
+	// name of posts cache
+	postsInstance = "posts"
 	// ttl for all other post service data
-	generalTTL = time.Hour * 4
+	postsTTL = time.Hour * 4
 	// in memory cache size all other post service data
-	generalLocalSize = 100
+	postsLocalSize = 100
 )
 
 // ensure interface is implemented
 var _ analogdb.PostService = (*PostService)(nil)
 
 type PostService struct {
-	rdb       *RDB
-	postCache *cache.Cache
-	genCache  *cache.Cache
-	dbService analogdb.PostService
+	rdb        *RDB
+	postCache  *Cache
+	postsCache *Cache
+	dbService  analogdb.PostService
 }
 
 func NewCachePostService(rdb *RDB, dbService analogdb.PostService) *PostService {
 
-	postCache := cache.New(&cache.Options{
-		Redis:      rdb.db,
-		LocalCache: cache.NewTinyLFU(postLocalSize, postTTL),
-	})
-
-	genCache := cache.New(&cache.Options{
-		Redis:      rdb.db,
-		LocalCache: cache.NewTinyLFU(generalLocalSize, generalTTL),
-	})
+	postCache := rdb.NewCache(postInstance, postLocalSize, postTTL)
+	postsCache := rdb.NewCache(postsInstance, postsLocalSize, postsTTL)
 
 	return &PostService{
-		rdb:       rdb,
-		postCache: postCache,
-		genCache:  genCache,
-		dbService: dbService,
+		rdb:        rdb,
+		postCache:  postCache,
+		postsCache: postsCache,
+		dbService:  dbService,
 	}
 }
 
@@ -83,12 +80,12 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	var count int
 
 	// try to get posts from the cache
-	err = s.genCache.Get(ctx, postsHash, &posts)
+	err = s.postsCache.cache.Get(ctx, postsHash, &posts)
 	if err != nil {
 		s.rdb.logger.Info().Str("error", err.Error()).Msg("Failed to find posts from cache")
 	}
 	// try to get posts count from the cache
-	err = s.genCache.Get(ctx, postsCountHash, &count)
+	err = s.postsCache.cache.Get(ctx, postsCountHash, &count)
 
 	// no error means we found in cache
 	if err == nil {
@@ -112,22 +109,22 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
-		if err := s.genCache.Set(&cache.Item{
+		if err := s.postsCache.cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   postsHash,
 			Value: &posts,
-			TTL:   generalTTL,
+			TTL:   postsTTL,
 		}); err != nil {
 			s.rdb.logger.Err(err).Msg("Failed to add posts to cache")
 		} else {
 			s.rdb.logger.Debug().Msg("Added posts to cache")
 		}
 		// add posts count to cache
-		if err := s.genCache.Set(&cache.Item{
+		if err := s.postsCache.cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   postsCountHash,
 			Value: &count,
-			TTL:   generalTTL,
+			TTL:   postsTTL,
 		}); err != nil {
 			s.rdb.logger.Err(err).Msg("Failed to add posts count to cache")
 		} else {
@@ -149,7 +146,7 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	postKey := fmt.Sprint(id)
 
 	// try to get post from the cache
-	err := s.postCache.Get(ctx, postKey, &post)
+	err := s.postCache.cache.Get(ctx, postKey, &post)
 
 	// no error means we found in cache
 	if err == nil {
@@ -174,7 +171,7 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 		defer cancel()
 
 		// add to cache
-		if err := s.postCache.Set(&cache.Item{
+		if err := s.postCache.cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   postKey,
 			Value: &post,
@@ -229,7 +226,7 @@ func (s *PostService) removePostFromCache(id int) {
 	// create a new context
 	ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 	defer cancel()
-	if err := s.postCache.Delete(ctx, postKey); err != nil {
+	if err := s.postCache.cache.Delete(ctx, postKey); err != nil {
 		s.rdb.logger.Info().Str("error", err.Error()).Int("postID", id).Msg("Failed to remove post from cache")
 	} else {
 		s.rdb.logger.Debug().Int("postID", id).Msg("Removed post from cache")

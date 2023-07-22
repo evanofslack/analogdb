@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	authorsTTL = time.Hour * 4
-	authorsKey = "authors"
+	authorsInstance  = "authors"
+	authorsLocalSize = 1000
+	authorsTTL       = time.Hour * 4
+	authorsKey       = "authors"
 )
 
 // ensure interface is implemented
@@ -18,15 +20,13 @@ var _ analogdb.AuthorService = (*AuthorService)(nil)
 
 type AuthorService struct {
 	rdb       *RDB
-	cache     *cache.Cache
+	cache     *Cache
 	dbService analogdb.AuthorService
 }
 
 func NewCacheAuthorService(rdb *RDB, dbService analogdb.AuthorService) *AuthorService {
-	cache := cache.New(&cache.Options{
-		Redis:      rdb.db,
-		LocalCache: cache.NewTinyLFU(1000, authorsTTL),
-	})
+
+	cache := rdb.NewCache(authorsInstance, authorsLocalSize, authorsTTL)
 
 	return &AuthorService{
 		rdb:       rdb,
@@ -45,7 +45,7 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 	var authors []string
 
 	// try to get from the cache
-	err := s.cache.Get(ctx, authorsKey, &authors)
+	err := s.cache.cache.Get(ctx, authorsKey, &authors)
 	if err == nil {
 		s.rdb.logger.Debug().Msg("Found authors in cache")
 		return authors, nil
@@ -67,7 +67,7 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
-		if err := s.cache.Set(&cache.Item{
+		if err := s.cache.cache.Set(&cache.Item{
 			Ctx:   ctx,
 			Key:   authorsKey,
 			Value: &authors,

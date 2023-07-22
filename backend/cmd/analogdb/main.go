@@ -72,11 +72,19 @@ func main() {
 		fatal(logger, err)
 	}
 
+	// initialize prometheus metrics
+	metricsLogger := logger.WithService("metrics")
+	metrics, err := metrics.New(metricsLogger)
+	if err != nil {
+		err = fmt.Errorf("Failed to initialize prometheus metrics: %w", err)
+		fatal(logger, err)
+	}
+
 	// open connection to redis if cache enabled
 	var rdb *redis.RDB
 	if cfg.App.CacheEnabled {
 		redisLogger := logger.WithService("redis")
-		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger)
+		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger, metrics)
 		if err != nil {
 			err = fmt.Errorf("Failed to startup redis: %w", err)
 			fatal(logger, err)
@@ -85,14 +93,6 @@ func main() {
 			err = fmt.Errorf("Failed to connect to redis: %w", err)
 			fatal(logger, err)
 		}
-	}
-
-	// initialize prometheus metrics
-	metricsLogger := logger.WithService("metrics")
-	metrics, err := metrics.New(metricsLogger)
-	if err != nil {
-		err = fmt.Errorf("Failed to initialize prometheus metrics: %w", err)
-		fatal(logger, err)
 	}
 
 	// initialize http server
