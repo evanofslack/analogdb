@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb/logger"
-	"github.com/evanofslack/analogdb/metrics"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
@@ -20,7 +19,7 @@ func (s *Server) mountMiddleware() {
 
 	s.router.Use(middleware.Recoverer)
 	s.router.Use(logger.Middleware(s.logger))
-	s.router.Use(metrics.Middleware(s.metrics))
+	s.router.Use(s.collectStats)
 
 	// rate limit by IP with json response
 	rateLimiter := httprate.Limit(rateLimit, rateLimitPeriod,

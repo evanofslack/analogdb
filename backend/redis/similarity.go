@@ -12,42 +12,41 @@ import (
 )
 
 const (
-	similarTTL       = time.Hour * 24
+	similarInstance  = "similar"
 	similarLocalSize = 10000
+	similarTTL       = time.Hour * 24
+
+	idKeysInstance  = "idkeys"
+	idKeysLocalSize = 1000
+	idKeysTTL       = time.Hour * 24
 )
 
 // ensure interface is implemented
 var _ analogdb.SimilarityService = (*SimilarityService)(nil)
 
 type SimilarityService struct {
-	rdb         *RDB
-	postsCache  *cache.Cache
-	idKeysCache *cache.Cache
-	dbService   analogdb.SimilarityService
+	rdb          *RDB
+	similarCache *Cache
+	idKeysCache  *Cache
+	dbService    analogdb.SimilarityService
 }
 
 func NewCacheSimilarityService(rdb *RDB, dbService analogdb.SimilarityService) *SimilarityService {
 
 	// stores similar posts
-	postsCache := cache.New(&cache.Options{
-		Redis:      rdb.db,
-		LocalCache: cache.NewTinyLFU(1000, similarTTL),
-	})
+	similarCache := rdb.NewCache(similarInstance, similarLocalSize, similarTTL)
 
 	// map of post id to list of posts cache keys.
 	// each post id can map to many similarity filters.
 	// When a post is deleted, need to remove all matching
 	// cached similarity filters.
-	idKeysCache := cache.New(&cache.Options{
-		Redis:      rdb.db,
-		LocalCache: cache.NewTinyLFU(1000, similarTTL),
-	})
+	idKeysCache := rdb.NewCache(idKeysInstance, idKeysLocalSize, idKeysTTL)
 
 	return &SimilarityService{
-		rdb:         rdb,
-		postsCache:  postsCache,
-		idKeysCache: idKeysCache,
-		dbService:   dbService,
+		rdb:          rdb,
+		similarCache: similarCache,
+		idKeysCache:  idKeysCache,
+		dbService:    dbService,
 	}
 }
 
@@ -71,15 +70,15 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 
 	id := *filter.ID
 
-	s.rdb.logger.Debug().Int("postID", id).Msg("Starting find similar posts by image with cache")
+	s.rdb.logger.Debug().Str("instance", s.similarCache.instance).Int("postID", id).Msg("Starting find similar posts by image with cache")
 	defer func() {
-		s.rdb.logger.Debug().Int("postID", id).Msg("Finished find similar posts by image with cache")
+		s.rdb.logger.Debug().Str("instance", s.similarCache.instance).Int("postID", id).Msg("Finished find similar posts by image with cache")
 	}()
 
 	// generate a unique hash from the filter struct
 	hash, err := hashstructure.Hash(filter, hashstructure.FormatV2, nil)
 	if err != nil {
-		s.rdb.logger.Err(err).Int("postID", id).Msg("Failed to hash post similarity filter")
+		s.rdb.logger.Err(err).Str("instance", s.similarCache.instance).Int("postID", id).Msg("Failed to hash post similarity filter")
 
 		// if we failed, fallback to db
 		return s.dbService.FindSimilarPosts(ctx, filter)
@@ -88,21 +87,19 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 	postKey := fmt.Sprint(hash)
 	idKey := fmt.Sprint(id)
 
-	s.rdb.logger.Debug().Int("postID", id).Str("hash", postKey).Msg("Generated post key hash from similarity filter")
+	s.rdb.logger.Debug().Str("instance", s.similarCache.instance).Int("postID", id).Str("hash", postKey).Msg("Generated post key hash from similarity filter")
 
 	var posts []*analogdb.Post
 
 	// try to get posts from the cache
-	err = s.postsCache.Get(ctx, postKey, &posts)
+	err = s.similarCache.get(ctx, postKey, &posts)
 
 	// no error means we found in cache
 	if err == nil {
-		s.rdb.logger.Debug().Int("postID", id).Msg("Found similar posts in cache")
 		return posts, nil
 	}
 
-	s.rdb.logger.Info().Int("postID", id).Str("error", err.Error()).Msg("Failed to find similar posts in cache")
-
+	// fallback to db
 	posts, err = s.dbService.FindSimilarPosts(ctx, filter)
 	if err != nil {
 		return nil, err
@@ -112,28 +109,24 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 	// do this async so response is returned quicker
 	go func() {
 
-		s.rdb.logger.Debug().Msg("Adding similar posts to cache")
+		s.rdb.logger.Debug().Str("instance", s.similarCache.instance).Msg("Adding similar posts to cache")
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
-		if err := s.postsCache.Set(&cache.Item{
+		s.similarCache.set(&cache.Item{
 			Ctx:   ctx,
 			Key:   postKey,
 			Value: &posts,
 			TTL:   similarTTL,
-		}); err != nil {
-			s.rdb.logger.Err(err).Msg("Failed to add similar posts to cache")
-		} else {
-			s.rdb.logger.Debug().Msg("Added similar posts to cache")
-		}
+		})
 	}()
 
 	// update id's hashes in cache
 	// do this async so response is returned quicker
 	go func() {
 
-		s.rdb.logger.Debug().Msg("Adding id hashes to cache")
+		s.rdb.logger.Debug().Str("instance", s.idKeysCache.instance).Msg("Adding id hashes to cache")
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
@@ -143,18 +136,12 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 		var idKeyHashes []string
 
 		// try to get id key's hashes from cache
-		err = s.idKeysCache.Get(ctx, idKey, &idKeyHashes)
-
-		if err == nil {
-			s.rdb.logger.Debug().Int("postID", id).Msg("Found id's hashes in cache")
-		} else {
-			s.rdb.logger.Info().Int("postID", id).Str("error", err.Error()).Msg("Failed to find id's hashes in cache")
-		}
+		err = s.idKeysCache.get(ctx, idKey, &idKeyHashes)
 
 		// check if key already in slice; if not, add it.
 		for _, h := range idKeyHashes {
 			if postKey == h {
-				s.rdb.logger.Debug().Int("postID", id).Str("hash", postKey).Msg("Post key hash already exists in cache, skipping")
+				s.rdb.logger.Debug().Str("instance", s.idKeysCache.instance).Int("postID", id).Str("hash", postKey).Msg("Post key hash already exists in cache, skipping")
 				return
 			}
 		}
@@ -164,16 +151,12 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 		s.rdb.logger.Debug().Int("postID", id).Str("hash", postKey).Msg(fmt.Sprintf("Added hash for postID, now has %d hashes", len(idKeyHashes)))
 
 		// save this back to the cache
-		if err := s.idKeysCache.Set(&cache.Item{
+		s.idKeysCache.set(&cache.Item{
 			Ctx:   ctx,
 			Key:   idKey,
 			Value: &idKeyHashes,
 			TTL:   similarTTL,
-		}); err != nil {
-			s.rdb.logger.Err(err).Msg("Failed to add id hashes to cache")
-		} else {
-			s.rdb.logger.Debug().Msg("Added id hashes to cache")
-		}
+		})
 	}()
 
 	return posts, nil
@@ -194,32 +177,21 @@ func (s *SimilarityService) DeletePost(ctx context.Context, id int) error {
 		var idKeyHashes []string
 
 		// try to get id key's hashes from cache
-		err := s.idKeysCache.Get(ctx, idKey, &idKeyHashes)
+		err := s.idKeysCache.get(ctx, idKey, &idKeyHashes)
 
-		if err == nil {
-			s.rdb.logger.Debug().Int("postID", id).Msg("Found id's hashes in cache")
-		} else {
-			s.rdb.logger.Info().Int("postID", id).Str("error", err.Error()).Msg("Failed to find id's hashes in cache")
+		if err != nil {
 			return
 		}
 
 		// for all hashes, remove from posts cache
 		for _, hash := range idKeyHashes {
-			s.rdb.logger.Debug().Int("postID", id).Str("hash", hash).Msg("Deleting hash from similar posts cache")
-			if err := s.postsCache.Delete(ctx, hash); err != nil {
-				s.rdb.logger.Info().Str("error", err.Error()).Int("postID", id).Str("hash", hash).Msg("Failed deleting hash from similar posts cache")
-			} else {
-				s.rdb.logger.Debug().Int("postID", id).Str("hash", hash).Msg("Success deleting hash from similar posts cache")
-			}
+			s.rdb.logger.Debug().Str("instance", s.similarCache.instance).Int("postID", id).Str("hash", hash).Msg("Deleting hash from similar posts cache")
+			s.similarCache.delete(ctx, hash)
 		}
 
 		// and remove from key ids cache
-		s.rdb.logger.Debug().Int("postID", id).Msg("Deleting key from post ids cache")
-		if err := s.idKeysCache.Delete(ctx, idKey); err != nil {
-			s.rdb.logger.Info().Str("error", err.Error()).Int("postID", id).Msg("Failed deleting key from key ids cache")
-		} else {
-			s.rdb.logger.Info().Int("postID", id).Msg("Success deleting key from key ids cache")
-		}
+		s.rdb.logger.Debug().Str("instance", s.idKeysCache.instance).Int("postID", id).Msg("Deleting key from post ids cache")
+		s.idKeysCache.delete(ctx, idKey)
 	}()
 
 	return s.dbService.DeletePost(ctx, id)
