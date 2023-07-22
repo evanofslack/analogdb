@@ -59,15 +59,15 @@ func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost)
 
 func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
 
-	s.rdb.logger.Debug().Msg("Starting find posts with cache")
+	s.rdb.logger.Debug().Str("instance", s.postsCache.instance).Msg("Starting find posts with cache")
 	defer func() {
-		s.rdb.logger.Debug().Msg("Finished find posts with cache")
+		s.rdb.logger.Debug().Str("instance", s.postsCache.instance).Msg("Finished find posts with cache")
 	}()
 
 	// generate a unique hash from the filter struct
 	hash, err := hashstructure.Hash(filter, hashstructure.FormatV2, nil)
 	if err != nil {
-		s.rdb.logger.Err(err).Msg("Failed to hash post filter")
+		s.rdb.logger.Err(err).Str("instance", s.postsCache.instance).Msg("Failed to hash post filter")
 
 		// if we failed, fallback to db
 		return s.dbService.FindPosts(ctx, filter)
@@ -79,22 +79,18 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	var posts []*analogdb.Post
 	var count int
 
-	// try to get posts from the cache
-	err = s.postsCache.cache.Get(ctx, postsHash, &posts)
-	if err != nil {
-		s.rdb.logger.Info().Str("error", err.Error()).Msg("Failed to find posts from cache")
-	}
-	// try to get posts count from the cache
-	err = s.postsCache.cache.Get(ctx, postsCountHash, &count)
+	// try to get posts from cache
+	err = s.postCache.get(ctx, postsHash, &posts)
+
+	// try to get posts count from cache
+	err = s.postsCache.get(ctx, postsCountHash, &count)
 
 	// no error means we found in cache
 	if err == nil {
-		s.rdb.logger.Debug().Msg("Found posts and posts count in cache")
 		return posts, count, nil
 	}
 
-	// otherwise we must fallback to db
-	s.rdb.logger.Info().Str("error", err.Error()).Msg("Failed to find posts count from cache")
+	// fallback to db
 	posts, count, err = s.dbService.FindPosts(ctx, filter)
 	if err != nil {
 		return nil, 0, err
@@ -104,32 +100,25 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	// do this async so response is returned quicker
 	go func() {
 
-		s.rdb.logger.Debug().Msg("Adding posts and posts counts to cache")
+		s.rdb.logger.Debug().Str("instance", s.postsCache.instance).Msg("Adding posts and posts counts to cache")
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
-		if err := s.postsCache.cache.Set(&cache.Item{
+		// add posts to cache
+		s.postsCache.set(&cache.Item{
 			Ctx:   ctx,
 			Key:   postsHash,
 			Value: &posts,
 			TTL:   postsTTL,
-		}); err != nil {
-			s.rdb.logger.Err(err).Msg("Failed to add posts to cache")
-		} else {
-			s.rdb.logger.Debug().Msg("Added posts to cache")
-		}
+		})
 		// add posts count to cache
-		if err := s.postsCache.cache.Set(&cache.Item{
+		s.postsCache.set(&cache.Item{
 			Ctx:   ctx,
 			Key:   postsCountHash,
 			Value: &count,
 			TTL:   postsTTL,
-		}); err != nil {
-			s.rdb.logger.Err(err).Msg("Failed to add posts count to cache")
-		} else {
-			s.rdb.logger.Debug().Msg("Added posts count to cache")
-		}
+		})
 	}()
 
 	return posts, count, nil
@@ -137,25 +126,23 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 
 func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post, error) {
 
-	s.rdb.logger.Debug().Int("postID", id).Msg("Starting find post by id with cache")
+	s.rdb.logger.Debug().Str("instance", s.postCache.instance).Int("postID", id).Msg("Starting find post by id with cache")
 	defer func() {
-		s.rdb.logger.Debug().Int("postID", id).Msg("Finished find post by id with cache")
+		s.rdb.logger.Debug().Str("instance", s.postCache.instance).Int("postID", id).Msg("Finished find post by id with cache")
 	}()
 
 	var post *analogdb.Post
 	postKey := fmt.Sprint(id)
 
 	// try to get post from the cache
-	err := s.postCache.cache.Get(ctx, postKey, &post)
+	err := s.postCache.get(ctx, postKey, &post)
 
 	// no error means we found in cache
 	if err == nil {
-		s.rdb.logger.Debug().Int("postID", id).Msg("Found post by id in cache")
 		return post, nil
 	}
 
-	// otherwise we must fallback to db
-	s.rdb.logger.Info().Int("postID", id).Str("error", err.Error()).Msg("Failed to find post by id from cache")
+	// error means we must fallback to db
 	post, err = s.dbService.FindPostByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -165,31 +152,27 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	// do this async so response is returned quicker
 	go func() {
 
-		s.rdb.logger.Debug().Int("postID", id).Msg("Adding post to cache")
+		s.rdb.logger.Debug().Str("instance", s.postCache.instance).Int("postID", id).Msg("Adding post to cache")
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
 		// add to cache
-		if err := s.postCache.cache.Set(&cache.Item{
+		s.postCache.set(&cache.Item{
 			Ctx:   ctx,
 			Key:   postKey,
 			Value: &post,
 			TTL:   postTTL,
-		}); err != nil {
-			s.rdb.logger.Err(err).Int("postID", id).Msg("Failed to add post to cache")
-		} else {
-			s.rdb.logger.Debug().Int("postID", id).Msg("Added post to cache")
-		}
+		})
 	}()
 	return post, nil
 }
 
 func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, id int) error {
 
-	s.rdb.logger.Debug().Int("postID", id).Msg("Starting patch post with cache")
+	s.rdb.logger.Debug().Str("instance", s.postCache.instance).Int("postID", id).Msg("Starting patch post with cache")
 	defer func() {
-		s.rdb.logger.Debug().Int("postID", id).Msg("Finished patch post with cache")
+		s.rdb.logger.Debug().Str("instance", s.postCache.instance).Int("postID", id).Msg("Finished patch post with cache")
 	}()
 
 	// remove post from the cache
@@ -200,9 +183,9 @@ func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, 
 
 func (s *PostService) DeletePost(ctx context.Context, id int) error {
 
-	s.rdb.logger.Debug().Int("postID", id).Msg("Starting delete post with cache")
+	s.rdb.logger.Debug().Str("instance", s.postCache.instance).Int("postID", id).Msg("Starting delete post with cache")
 	defer func() {
-		s.rdb.logger.Debug().Int("postID", id).Msg("Finished delete post with cache")
+		s.rdb.logger.Debug().Str("instance", s.postCache.instance).Int("postID", id).Msg("Finished delete post with cache")
 	}()
 
 	// cache is now stale, delete old entries
@@ -219,16 +202,12 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 
 func (s *PostService) removePostFromCache(id int) {
 
-	s.rdb.logger.Debug().Int("postID", id).Msg("Removing post from cache")
+	s.rdb.logger.Debug().Str("instance", s.postCache.instance).Int("postID", id).Msg("Removing post from cache")
 
 	postKey := fmt.Sprint(id)
 
 	// create a new context
 	ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 	defer cancel()
-	if err := s.postCache.cache.Delete(ctx, postKey); err != nil {
-		s.rdb.logger.Info().Str("error", err.Error()).Int("postID", id).Msg("Failed to remove post from cache")
-	} else {
-		s.rdb.logger.Debug().Int("postID", id).Msg("Removed post from cache")
-	}
+	s.postCache.delete(ctx, postKey)
 }
