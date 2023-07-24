@@ -48,8 +48,10 @@ type Log struct {
 }
 
 type Auth struct {
-	Username string `yaml:"username" env:"AUTH_USERNAME"`
-	Password string `yaml:"password" env:"AUTH_PASSWORD"`
+	Username          string `yaml:"username" env:"AUTH_USERNAME"`
+	Password          string `yaml:"password" env:"AUTH_PASSWORD"`
+	RateLimitUsername string `yaml:"rate_limit_username" env:"RATE_LIMIT_AUTH_USERNAME"`
+	RateLimitPassword string `yaml:"rate_limit_password" env:"RATE_LIMIT_AUTH_PASSWORD"`
 }
 
 type Metrics struct {
