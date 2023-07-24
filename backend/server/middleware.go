@@ -48,7 +48,10 @@ func (s *Server) mountMiddleware() {
 // apply rate limit only if user is not authenticated
 func (s *Server) applyRateLimit(r *http.Request) bool {
 
-	authenticated := s.passBasicAuth(r)
+	rl_username := s.basicAuth.RateLimitUsername
+	rl_password := s.basicAuth.RateLimitPassword
+
+	authenticated := s.passBasicAuth(rl_username, rl_password, r)
 	if authenticated {
 		s.logger.Debug().Bool("authenticated", authenticated).Msg("Bypassing rate limit")
 		return false

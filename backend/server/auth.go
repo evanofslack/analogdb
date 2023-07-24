@@ -8,7 +8,11 @@ import (
 
 func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authenticated := s.passBasicAuth(r)
+
+		username := s.basicAuth.Username
+		password := s.basicAuth.Password
+
+		authenticated := s.passBasicAuth(username, password, r)
 		if authenticated {
 			s.logger.Debug().Bool("authenticated", authenticated).Msg("Authorized with basic auth")
 			next.ServeHTTP(w, r)
@@ -20,7 +24,7 @@ func (s *Server) auth(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) passBasicAuth(r *http.Request) bool {
+func (s *Server) passBasicAuth(username, password string, r *http.Request) bool {
 	username, password, ok := r.BasicAuth()
 	if !ok {
 		return false
@@ -28,8 +32,8 @@ func (s *Server) passBasicAuth(r *http.Request) bool {
 
 	usernameHash := sha256.Sum256([]byte(username))
 	passwordHash := sha256.Sum256([]byte(password))
-	expectedUsernameHash := sha256.Sum256([]byte(s.basicAuth.Username))
-	expectedPasswordHash := sha256.Sum256([]byte(s.basicAuth.Password))
+	expectedUsernameHash := sha256.Sum256([]byte(username))
+	expectedPasswordHash := sha256.Sum256([]byte(password))
 
 	usernameMatch := (subtle.ConstantTimeCompare(usernameHash[:], expectedUsernameHash[:]) == 1)
 	passwordMatch := (subtle.ConstantTimeCompare(passwordHash[:], expectedPasswordHash[:]) == 1)
