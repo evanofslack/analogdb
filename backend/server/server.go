@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -54,18 +55,24 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, basicAuth
 	s.mountStaticHandlers()
 	s.mountStatusHandlers()
 	s.mountStatsHandlers()
-	s.mountMetricsHandlers()
 
 	s.healthy = true
 	return s
 }
 
 func (s *Server) Run() error {
+
+	s.logger.Info().Msg(fmt.Sprintf("Serving http server at address %s", s.server.Addr))
+
 	go s.server.ListenAndServe()
 	return nil
 }
 
 func (s *Server) Close() error {
+
+	s.logger.Debug().Msg("Starting http server close")
+	defer s.logger.Info().Msg("Closed http server")
+
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 	s.healthy = false
