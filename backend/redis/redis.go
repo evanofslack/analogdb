@@ -67,6 +67,9 @@ func (rdb *RDB) Open() error {
 
 func (rdb *RDB) Close() error {
 
+	rdb.logger.Debug().Msg("Starting redis server close")
+	defer rdb.logger.Info().Msg("Closed redis server")
+
 	rdb.cancel()
 	if rdb.db != nil {
 		if err := rdb.db.Close(); err != nil {

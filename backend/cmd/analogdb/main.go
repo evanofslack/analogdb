@@ -50,6 +50,18 @@ func main() {
 		logger = logger.WithSlackNotifier(webhookURL)
 	}
 
+	// initialize prometheus metrics
+	metricsLogger := logger.WithService("metrics")
+	metrics, err := metrics.New(metricsLogger)
+	if err != nil {
+		err = fmt.Errorf("Failed to initialize prometheus metrics: %w", err)
+		fatal(logger, err)
+	}
+
+	if cfg.Metrics.Enabled {
+		metrics.Serve(cfg.Metrics.Port)
+	}
+
 	// open connection to postgres
 	dbLogger := logger.WithService("database")
 	db := postgres.NewDB(cfg.DB.URL, dbLogger)
@@ -66,17 +78,8 @@ func main() {
 		fatal(logger, err)
 	}
 	// run weaviate migrations if needed
-	// creates the schema if it does not exist
 	if err := dbVec.Migrate(ctx); err != nil {
 		err = fmt.Errorf("Failed to migrate vector database: %w", err)
-		fatal(logger, err)
-	}
-
-	// initialize prometheus metrics
-	metricsLogger := logger.WithService("metrics")
-	metrics, err := metrics.New(metricsLogger)
-	if err != nil {
-		err = fmt.Errorf("Failed to initialize prometheus metrics: %w", err)
 		fatal(logger, err)
 	}
 
@@ -157,6 +160,11 @@ func main() {
 
 	if err := rdb.Close(); err != nil {
 		err = fmt.Errorf("Failed to shutdown redis: %w", err)
+		fatal(logger, err)
+	}
+
+	if err := metrics.Close(); err != nil {
+		err = fmt.Errorf("Failed to shutdown metrics server: %w", err)
 		fatal(logger, err)
 	}
 }

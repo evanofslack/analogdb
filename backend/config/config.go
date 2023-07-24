@@ -15,6 +15,7 @@ type Config struct {
 	HTTP     `yaml:"http"`
 	Log      `yaml:"logger"`
 	Auth     `yaml:"auth"`
+	Metrics  `yaml:"metrics"`
 }
 
 type App struct {
@@ -49,6 +50,11 @@ type Log struct {
 type Auth struct {
 	Username string `yaml:"username" env:"AUTH_USERNAME"`
 	Password string `yaml:"password" env:"AUTH_PASSWORD"`
+}
+
+type Metrics struct {
+	Enabled bool   `yaml:"enabled" env:"METRICS_ENABLED"`
+	Port    string `yaml:"port" env:"METRICS_PORT"`
 }
 
 func New(path string) (*Config, error) {

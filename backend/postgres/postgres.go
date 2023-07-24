@@ -41,6 +41,9 @@ func (db *DB) Open() error {
 }
 
 func (db *DB) Close() error {
+
+	db.logger.Debug().Msg("Starting to close DB connection")
+
 	db.cancel()
 
 	if db.db != nil {

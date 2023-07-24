@@ -7,19 +7,11 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb/metrics"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-const metricsPath = "/metrics"
-
-func (s *Server) mountMetricsHandlers() {
-	promHandler := promhttp.HandlerFor(s.metrics.Registry, promhttp.HandlerOpts{})
-	s.router.Handle(metricsPath, promHandler)
-}
 
 // track stats from http server
 type httpStats struct {

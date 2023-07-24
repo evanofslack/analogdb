@@ -1,12 +1,23 @@
 version: "3.7"
-services:
 
+networks:
+  default:
+    external: true
+    name: analogdb
+
+volumes:
+  # postgres:
+  weaviate:
+  # redis:
+
+services:
   analogdb:
-    image: evanofslack/analogdb:main
     container_name: analogdb
-    restart: unless-stopped
+    build: .
     ports:
-      - 8080:8080
+      - 8080:${ANALOGDB_HTTP_PORT}
+      - 9091:${ANALOGDB_METRICS_PORT}
+    restart: unless-stopped
     environment:
       APP_NAME: ${ANALOGDB_APP_NAME}
       APP_VERSION: ${ANALOGDB_APP_VERSION}
@@ -16,14 +27,16 @@ services:
       WEBHOOK_URL: ${ANALOGDB_WEBHOOK_URL}
       AUTH_USERNAME: ${ANALOGDB_AUTH_USERNAME}
       AUTH_PASSWORD: ${ANALOGDB_AUTH_PASSWORD}
+      METRICS_ENABLED: ${ANALOGDB_METRICS_ENABLED}
+      METRICS_PORT: ${ANALOGDB_METRICS_PORT}
       CACHE_ENABLED: ${ANALOGDB_CACHE_ENABLED}
       DATABASE_URL: ${POSTGRES_DATABASE_URL}
       REDIS_URL: ${REDIS_URL}
       VECTOR_DATABASE_HOST: ${WEAVIATE_HOST}
       VECTOR_DATABASE_SCHEME: ${WEAVIATE_SCHEME}
     depends_on:
-      - postgres:
-          condition: service_healthy
+      postgres:
+        condition: service_healthy
 
   postgres:
     container_name: postgres
@@ -33,17 +46,20 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PW}
       POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - 5432:5432
     logging:
       options:
         max-size: 10m
         max-file: "3"
+    volumes:
+      # - postgres:/var/lib/postgresql/data
+      - ./backend/postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-    volumes:
-      - postgres:/var/lib/postgresql/data
 
   redis:
     image: "bitnami/redis:latest"
@@ -51,8 +67,8 @@ services:
     environment:
       - REDIS_USER=${REDIS_USER}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
-    volumes:
-      - redis:/bitnami/redis/data
+    # volumes:
+    # - redis:/bitnami/redis/data
 
   weaviate:
     command:
@@ -64,7 +80,8 @@ services:
       - http
     image: semitechnologies/weaviate:1.18.3
     ports:
-      - ${WEAVIATE_METRICS_PORT}:2112
+      - 8081:8080
+      - 9092:2112
     restart: unless-stopped
     environment:
       IMAGE_INFERENCE_API: "http://i2v-neural:8080"
@@ -72,7 +89,7 @@ services:
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
       PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
       DEFAULT_VECTORIZER_MODULE: "img2vec-neural"
-      ENABLE_MODULES: "backup-s3,img2vec-neural"
+      ENABLE_MODULES: "img2vec-neural"
       CLUSTER_HOSTNAME: "node1"
       PROMETHEUS_MONITORING_ENABLED: "true"
       PROMETHEUS_MONITORING_PORT: 2112
@@ -87,11 +104,8 @@ services:
 
   i2v-neural:
     image: semitechnologies/img2vec-pytorch:resnet50
+    ports:
+      - 8082:8080
     restart: unless-stopped
     environment:
       ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA}
-
-volumes:
-  postgres:
-  weaviate:
-  redis:
