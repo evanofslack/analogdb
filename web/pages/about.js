@@ -2,24 +2,20 @@ import Head from "next/head";
 import styles from "../components/gallery.module.css";
 import Header from "../components/header";
 import About from "../components/about";
-import { baseURL } from "../constants.ts";
+import { authorized_fetch } from "../fetch.js";
 
 export async function getStaticProps() {
-  const postsURL =
-    baseURL + "/posts";
-  const postsResp = await fetch(postsURL);
-  const postsData = await postsResp.json();
+  const postsRoute = "/posts";
+  const postsResponse = await authorized_fetch(postsRoute, "GET");
+  const postsData = await postsResponse.json();
   const numPosts = postsData.meta.total_posts;
 
-  const authorsURL =
-    baseURL + "/authors";
-  const authorsResp = await fetch(authorsURL);
-  const authorsData = await authorsResp.json();
+  const authorsRoute = "/authors";
+  const authorsResponse = await authorized_fetch(authorsRoute, "GET");
+  const authorsData = await authorsResponse.json();
   const numAuthors = [...new Set(authorsData.authors)].length;
 
-  const data = {numPosts: numPosts, numAuthors: numAuthors}
-
-  console.log(data)
+  const data = { numPosts: numPosts, numAuthors: numAuthors };
 
   return {
     props: {

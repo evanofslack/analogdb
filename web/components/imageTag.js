@@ -1,5 +1,5 @@
 import styles from "./imageTag.module.css";
-import { baseURL } from "../constants.ts";
+import { baseURL } from "../constants.js";
 import Image from "next/image";
 import Link from "next/link";
 import { Tooltip } from "@mantine/core";

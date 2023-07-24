@@ -19,11 +19,11 @@ import {
   Menu,
   Radio,
 } from "@mantine/core";
-import { baseURL } from "../constants.ts";
+import { authorized_fetch } from "../fetch.js";
 
 async function makeRequest(queryParams) {
-  const url = baseURL + "/posts" + queryParams;
-  const response = await fetch(url);
+  const route = "/posts" + queryParams;
+  const response = await authorized_fetch(route, "GET");
   const data = await response.json();
   return data;
 }

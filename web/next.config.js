@@ -1,5 +1,5 @@
 module.exports = {
-  output: 'standalone',
+  output: "standalone",
   reactStrictMode: true,
   images: {
     unoptimized: true,
@@ -12,5 +12,13 @@ module.exports = {
   },
   experimental: {
     scrollRestoration: true,
+  },
+  env: {
+    AUTH_USERNAME: process.env.AUTH_USERNAME,
+    AUTH_PASSWORD: process.env.AUTH_PASSWORD,
+  },
+  publicRuntimeConfig: {
+    AUTH_USERNAME: process.env.AUTH_USERNAME,
+    AUTH_PASSWORD: process.env.AUTH_PASSWORD,
   },
 };

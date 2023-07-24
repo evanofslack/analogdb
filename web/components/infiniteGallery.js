@@ -2,12 +2,13 @@ import styles from "./infiniteGallery.module.css";
 import Grid from "../components/grid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useState, useEffect } from "react";
-import { baseURL } from "../constants.ts";
+import { baseURL } from "../constants.js";
+import { authorized_fetch } from "../fetch.js";
 
 export default function InfiniteGallery(props) {
   const [posts, setPosts] = useState(props.response.posts);
-  const [nextPageURL, setNextPageURL] = useState(
-    baseURL + props.response.meta.next_page_url
+  const [nextPageRoute, setNextPageRoute] = useState(
+    props.response.meta.next_page_url
   );
   const [hasMore, setHasMore] = useState(props.response.meta.next_page_id);
   const [totalPosts, setTotalPosts] = useState(props.response.meta.total_posts);
@@ -15,25 +16,23 @@ export default function InfiniteGallery(props) {
   // this seems like a hack
   useEffect(() => {
     setPosts(props.response.posts);
-    setNextPageURL(baseURL + props.response.meta.next_page_url);
+    setNextPageRoute(props.response.meta.next_page_url);
     setHasMore(props.response.meta.next_page_id);
     setTotalPosts(props.response.meta.total_posts);
   }, [props.response]);
 
   // Fetch next page of results for infinite scroll
-  const fetchMore = () => {
-    fetch(nextPageURL)
-      .then((res) => res.json())
-      .then((response) => {
-        if (response.meta.next_page_id == "") {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-          setNextPageURL(baseURL + response.meta.next_page_url);
-        }
-        setPosts(posts.concat(response.posts));
-      });
-  };
+  async function fetchMore() {
+    response = await authorized_fetch(nextPageRoute, "GET");
+    data = await response.json();
+    if (data.meta.next_page_id == "") {
+      setHasMore(false);
+    } else {
+      setHasMore(true);
+      setNextPageRoute(response.meta.next_page_url);
+    }
+    setPosts(posts.concat(response.posts));
+  }
 
   return (
     <div>
