@@ -17,13 +17,13 @@ import (
 const shutdownTimeout = 5 * time.Second
 
 type Server struct {
-	server    *http.Server
-	router    *chi.Mux
-	healthy   bool
-	logger    *logger.Logger
-	metrics   *metrics.Metrics
-	stats     *httpStats
-	basicAuth *config.Auth
+	server  *http.Server
+	router  *chi.Mux
+	healthy bool
+	logger  *logger.Logger
+	metrics *metrics.Metrics
+	config  *config.Config
+	stats   *httpStats
 
 	PostService       analogdb.PostService
 	ReadyService      analogdb.ReadyService
@@ -32,13 +32,13 @@ type Server struct {
 	SimilarityService analogdb.SimilarityService
 }
 
-func New(port string, logger *logger.Logger, metrics *metrics.Metrics, basicAuth *config.Auth) *Server {
+func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *config.Config) *Server {
 	s := &Server{
-		server:    &http.Server{},
-		router:    chi.NewRouter(),
-		logger:    logger,
-		metrics:   metrics,
-		basicAuth: basicAuth,
+		server:  &http.Server{},
+		router:  chi.NewRouter(),
+		logger:  logger,
+		metrics: metrics,
+		config:  config,
 	}
 
 	s.server.Handler = s.router

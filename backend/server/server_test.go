@@ -28,10 +28,7 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 		t.Fatal(err)
 	}
 
-	config := &config.Auth{
-		Username: "",
-		Password: "",
-	}
+	config := &config.Config{}
 
 	// httpserver test currently require DB, can be mocked out instead
 	dsn := os.Getenv("POSTGRES_DATABASE_URL")

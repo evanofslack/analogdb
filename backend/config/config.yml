@@ -3,6 +3,7 @@ app:
   version: "0.1.0"
   env: "prod"
   cache_enabled: true
+  rate_limit_enabled: true
 database:
   url: ""
 redis:
