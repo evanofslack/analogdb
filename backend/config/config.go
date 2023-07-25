@@ -19,10 +19,11 @@ type Config struct {
 }
 
 type App struct {
-	Name         string `yaml:"name" env:"APP_NAME"`
-	Version      string `yaml:"version" env:"APP_VERSION"`
-	Env          string `yaml:"env" env:"APP_ENV"`
-	CacheEnabled bool   `yaml:"cache_enabled" env:"CACHE_ENABLED"`
+	Name             string `yaml:"name" env:"APP_NAME"`
+	Version          string `yaml:"version" env:"APP_VERSION"`
+	Env              string `yaml:"env" env:"APP_ENV"`
+	CacheEnabled     bool   `yaml:"cache_enabled" env:"CACHE_ENABLED"`
+	RateLimitEnabled bool   `yaml:"rate_limit_enabled" env:"RATE_LIMIT_ENABLED"`
 }
 
 type DB struct {

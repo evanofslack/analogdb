@@ -100,7 +100,7 @@ func main() {
 
 	// initialize http server
 	httpLogger := logger.WithService("http")
-	server := server.New(cfg.HTTP.Port, httpLogger, metrics, &cfg.Auth)
+	server := server.New(cfg.HTTP.Port, httpLogger, metrics, cfg)
 
 	// need to clean up this dependency injection
 	var postService analogdb.PostService
