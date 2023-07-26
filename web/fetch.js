@@ -1,7 +1,7 @@
 import { baseURL } from "./constants.js";
 import getConfig from "next/config";
 
-const { publicConfig } = getConfig();
+const { serverConfig } = getConfig();
 
 // for buildtime
 let username = process.env.AUTH_USERNAME;
@@ -9,10 +9,10 @@ let password = process.env.AUTH_PASSWORD;
 
 // for runtime
 if (username == "") {
-  username = publicConfig.AUTH_USERNAME;
+  username = serverConfig.AUTH_USERNAME;
 }
 if (password == "") {
-  password = publicConfig.AUTH_PASSWORD;
+  password = serverConfig.AUTH_PASSWORD;
 }
 
 export async function authorized_fetch(route, method) {
