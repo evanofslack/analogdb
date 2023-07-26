@@ -3,11 +3,11 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'main'
+      - "main"
     tags:
-      - 'v*'
+      - "v*"
     paths:
-      - 'web/**'
+      - "web/**"
 
 env:
   REGISTRY: docker.io
@@ -50,3 +50,6 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            AUTH_USERNAME=${{ secrets.AUTH_USERNAME }}
+            AUTH_PASSWORD=${{ secrets.AUTH_PASSWORD }}

@@ -1,4 +1,4 @@
-import { baseURL } from "../../../constants.ts";
+import { baseURL } from "../../../constants.js";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 

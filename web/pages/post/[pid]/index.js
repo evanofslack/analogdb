@@ -1,10 +1,20 @@
-import { baseURL } from "../../../constants.ts";
+import { authorized_fetch } from "../../../fetch.js";
 import ImagePage from "../../../components/imagePage";
 
 export async function getStaticPaths() {
-  const url = `${baseURL}/ids`;
-  const response = await fetch(url);
+  // for debug environments, skip rendering static pages
+  if (process.env.NODE_ENV == "development") {
+    console.log("Development env, skipping static page generation");
+    return {
+      paths: [],
+      fallback: "blocking",
+    };
+  }
+
+  // for production, get all ids and generate all static pages
+  const response = await authorized_fetch("/ids", "GET");
   const data = await response.json();
+
   const paths = data.ids.map((id) => ({
     params: { pid: id.toString() },
   }));
@@ -13,13 +23,15 @@ export async function getStaticPaths() {
 }
 
 export async function getStaticProps({ params }) {
-  const postURL = `${baseURL}/post/${params.pid}`;
-  const response = await fetch(postURL);
+  const postRoute = `/post/${params.pid}`;
+
+  const response = await authorized_fetch(postRoute, "GET");
+
   if (!response.ok) {
     return {
       notFound: true,
-    }
-}
+    };
+  }
   const post = await response.json();
 
   // only show nsfw results if the original image was nsfw
@@ -27,15 +39,15 @@ export async function getStaticProps({ params }) {
   if (post.nsfw) {
     query = "";
   }
-  const similarURL = `${baseURL}/post/${params.pid}/similar` + query;
-  const similarResp = await fetch(similarURL);
-  const similar = await similarResp.json();
+  const similarRoute = `/post/${params.pid}/similar` + query;
+  const similarResponse = await authorized_fetch(similarRoute, "GET");
+  const similar = await similarResponse.json();
   return {
     props: {
       post,
       similar,
     },
-    revalidate: 10,
+    revalidate: 60,
   };
 }
 

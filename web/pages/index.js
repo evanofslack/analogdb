@@ -1,12 +1,11 @@
 import Head from "next/head";
 import Gallery from "../components/gallery";
-import { baseURL } from "../constants.ts";
+import { authorized_fetch } from "../fetch.js";
 
 export async function getStaticProps() {
-  const numPosts = 40
-  const url =
-    baseURL + `/posts?sort=latest&page_size=${numPosts}&grayscale=false&nsfw=false`;
-  const response = await fetch(url);
+  const numPosts = 50;
+  const route = `/posts?sort=latest&page_size=${numPosts}&grayscale=false&nsfw=false`;
+  const response = await authorized_fetch(route, "GET");
   const data = await response.json();
   return {
     props: {

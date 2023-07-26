@@ -17,20 +17,32 @@ RUN \
 # 2. Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+ARG AUTH_USERNAME
+ENV AUTH_USERNAME=$AUTH_USERNAME
+ARG AUTH_PASSWORD
+ENV AUTH_PASSWORD=$AUTH_PASSWORD
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# This will do the trick, use the corresponding env file for each environment.
-# COPY .env.production.sample .env.production
+
 RUN yarn build
 
 # 3. Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production
-
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
+
+ARG AUTH_USERNAME
+ENV AUTH_USERNAME=$AUTH_USERNAME
+ARG AUTH_PASSWORD
+ENV AUTH_PASSWORD=$AUTH_PASSWORD
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
 
 COPY --from=builder /app/public ./public
 
