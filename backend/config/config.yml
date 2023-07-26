@@ -22,3 +22,6 @@ auth:
 metrics:
   enabled: true
   port: "8090"
+tracing:
+  enabled: true
+  endpoint: ""

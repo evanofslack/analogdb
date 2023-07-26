@@ -14,6 +14,7 @@ import (
 	"github.com/evanofslack/analogdb/postgres"
 	"github.com/evanofslack/analogdb/redis"
 	"github.com/evanofslack/analogdb/server"
+	"github.com/evanofslack/analogdb/trace"
 	"github.com/evanofslack/analogdb/weaviate"
 )
 
@@ -48,6 +49,18 @@ func main() {
 	// add slack webhook to logger to notify on error
 	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" && cfg.App.Env != "debug" {
 		logger = logger.WithSlackNotifier(webhookURL)
+	}
+
+	// initialize otlp tracing
+	tracingLogger := logger.WithService("trace")
+	tracer, err := trace.New(tracingLogger, cfg)
+	if err != nil {
+		err = fmt.Errorf("Failed to initialize otlp tracing: %w", err)
+		fatal(logger, err)
+	}
+
+	if cfg.Tracing.Enabled {
+		tracer.StartExporter()
 	}
 
 	// initialize prometheus metrics

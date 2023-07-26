@@ -16,6 +16,7 @@ type Config struct {
 	Log      `yaml:"logger"`
 	Auth     `yaml:"auth"`
 	Metrics  `yaml:"metrics"`
+	Tracing  `yaml:"tracing"`
 }
 
 type App struct {
@@ -58,6 +59,11 @@ type Auth struct {
 type Metrics struct {
 	Enabled bool   `yaml:"enabled" env:"METRICS_ENABLED"`
 	Port    string `yaml:"port" env:"METRICS_PORT"`
+}
+
+type Tracing struct {
+	Enabled  bool   `yaml:"enabled" env:"TRACING_ENABLED"`
+	Endpoint string `yaml:"endpoint" env:"OTLP_ENDPOINT"`
 }
 
 func New(path string) (*Config, error) {
