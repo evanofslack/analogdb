@@ -63,7 +63,7 @@ type Metrics struct {
 
 type Tracing struct {
 	Enabled  bool   `yaml:"enabled" env:"TRACING_ENABLED"`
-	Endpoint string `yaml:"endpoint" env:"OTLP_ENDPOINT"`
+	Endpoint string `yaml:"endpoint" env:"TRACING_ENDPOINT"`
 }
 
 func New(path string) (*Config, error) {

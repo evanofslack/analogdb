@@ -44,7 +44,7 @@ func main() {
 		err = fmt.Errorf("Failed to create logger: %w", err)
 		fatal(nil, err)
 	}
-	logger.Info().Str("App", cfg.App.Name).Str("Version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
+	logger.Info().Str("app", cfg.App.Name).Str("version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
 
 	// add slack webhook to logger to notify on error
 	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" && cfg.App.Env != "debug" {

@@ -56,7 +56,7 @@ func (tracer *Tracer) StartExporter() error {
 
 	service := tracer.config.App.Name
 	version := tracer.config.App.Version
-	tracer.logger.Debug().Str("service", service).Str("version", version).Msg("Creating new tracing resource")
+	tracer.logger.Debug().Str("service-name", service).Str("version", version).Msg("Creating new tracing resource")
 
 	resource, err := resource.New(ctx,
 		resource.WithAttributes(
