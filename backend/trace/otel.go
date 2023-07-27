@@ -51,6 +51,13 @@ func (tracer *Tracer) StartExporter() error {
 
 	tracer.logger.Debug().Msg("Starting up tracing exporter")
 
+	endpoint := tracer.config.Tracing.Endpoint
+	if endpoint == "" {
+		tracer.logger.Warn().Msg("Tracing endpoint is not set, skipping otel exporter startup")
+		return nil
+
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
 	defer cancel()
 
