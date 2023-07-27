@@ -1,0 +1,77 @@
+version: "3.8"
+
+networks:
+  default:
+    external: true
+    name: analogdb
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib
+    container_name: otel-collector
+    restart: unless-stopped
+    volumes:
+      - ./config/otel-collector.yaml:/etc/otelcol-contrib/config.yaml
+    ports:
+      - 1888:1888 # pprof extension
+      - 13133:13133 # health_check extension
+      - 55679:55679 # zpages extension
+      - 4317:4317 # OTLP gRPC receiver
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686"
+      - "4317"
+      - "4318"
+      - "14268"
+      - "14250"
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    restart: unless-stopped
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - tempo:/tmp/tempo
+      - ./config/tempo.yaml:/etc/tempo.yaml
+    ports:
+      - "3200:3200" # tempo
+      - "4317" # otlp grpc
+
+  prometheus:
+    image: prom/prometheus:latest
+    command:
+      - --config.file=/etc/prometheus.yaml
+      - --web.enable-remote-write-receiver
+      - --enable-feature=exemplar-storage
+    volumes:
+      - prometheus:/prometheus
+      - ./config/prometheus.yaml:/etc/prometheus.yaml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-oss:latest
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    volumes:
+      - grafana:/var/lib/grafana
+      - ./config/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/provisioning-datasources.yaml
+      - ./config/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/provisioning-dashboards.yaml
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_LOG_LEVEL=warn
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor
+
+volumes:
+  tempo:
+  prometheus:
+  grafana:

@@ -28,10 +28,11 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha
 
       - name: login to docker hub
         uses: docker/login-action@v2
