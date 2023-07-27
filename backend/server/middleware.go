@@ -8,6 +8,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
+	"github.com/riandyrn/otelchi"
 )
 
 const (
@@ -20,6 +21,12 @@ func (s *Server) mountMiddleware() {
 	s.router.Use(middleware.Recoverer)
 	s.router.Use(logger.Middleware(s.logger))
 	s.router.Use(s.collectStats)
+
+	// is tracing enabled?
+	if s.config.Tracing.Enabled {
+		s.router.Use(otelchi.Middleware("http", otelchi.WithChiRoutes(s.router)))
+		s.logger.Info().Msg("Added tracing middleware")
+	}
 
 	// is rate limiting enabled?
 	if s.config.App.RateLimitEnabled {
