@@ -77,7 +77,6 @@ func (tracer *Tracer) StartExporter() error {
 		return err
 	}
 
-	endpoint := tracer.config.Tracing.Endpoint
 	tracer.logger.Debug().Str("endpoint", endpoint).Msg("Dialing GRPC endpoint for OTLP exporter")
 
 	conn, err := grpc.DialContext(ctx, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
