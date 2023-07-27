@@ -77,7 +77,7 @@ func main() {
 
 	// open connection to postgres
 	dbLogger := logger.WithService("database")
-	db := postgres.NewDB(cfg.DB.URL, dbLogger)
+	db := postgres.NewDB(cfg.DB.URL, dbLogger, cfg.Tracing.Enabled)
 	if err := db.Open(); err != nil {
 		err = fmt.Errorf("Failed to startup database: %w", err)
 		fatal(logger, err)
@@ -100,7 +100,7 @@ func main() {
 	var rdb *redis.RDB
 	if cfg.App.CacheEnabled {
 		redisLogger := logger.WithService("redis")
-		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger, metrics)
+		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger, metrics, cfg.Tracing.Enabled)
 		if err != nil {
 			err = fmt.Errorf("Failed to startup redis: %w", err)
 			fatal(logger, err)

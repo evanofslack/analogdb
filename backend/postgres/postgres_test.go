@@ -3,6 +3,7 @@ package postgres
 import (
 	"os"
 	"testing"
+
 	"github.com/evanofslack/analogdb/logger"
 
 	"github.com/joho/godotenv"
@@ -27,7 +28,7 @@ func mustOpen(t *testing.T) *DB {
 
 	// connect to local db for testing
 	dsn := os.Getenv("POSTGRES_DATABASE_URL")
-	db := NewDB(dsn, logger)
+	db := NewDB(dsn, logger, false)
 
 	if err := db.Open(); err != nil {
 		t.Fatal(err)

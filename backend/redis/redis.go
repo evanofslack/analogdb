@@ -27,7 +27,7 @@ type RDB struct {
 }
 
 // create a new redis database
-func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics) (*RDB, error) {
+func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics, tracingEnabled bool) (*RDB, error) {
 
 	logger.Debug().Msg("Initializing cache instance")
 
@@ -61,10 +61,12 @@ func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics) (*RDB, 
 	rdb.logger.Info().Msg("Registered cache collector with prometheus")
 
 	// otel instrumentation of redis
-	if err := redisotel.InstrumentTracing(db); err != nil {
-		rdb.logger.Err(err).Msg("Failed to instrument redis with tracing")
-	} else {
-		rdb.logger.Info().Msg("Instrumented redis with tracing")
+	if tracingEnabled {
+		if err := redisotel.InstrumentTracing(db); err != nil {
+			rdb.logger.Err(err).Msg("Failed to instrument redis with tracing")
+		} else {
+			rdb.logger.Info().Msg("Instrumented redis with tracing")
+		}
 	}
 
 	rdb.logger.Info().Msg("Initialized cache instance")
