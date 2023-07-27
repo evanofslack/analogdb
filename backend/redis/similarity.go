@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/cache/v8"
+	"github.com/go-redis/cache/v9"
 	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/evanofslack/analogdb"

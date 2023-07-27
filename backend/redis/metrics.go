@@ -5,6 +5,7 @@ import (
 
 	"github.com/evanofslack/analogdb/metrics"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/redis/go-redis/extra/redisprometheus/v9"
 )
 
 type cacheStats struct {
@@ -39,7 +40,7 @@ func (stats *cacheStats) getMisses() uint64 {
 }
 
 func (stats *cacheStats) incErrors() {
-	atomic.AddUint64(&stats.errors, 1)	
+	atomic.AddUint64(&stats.errors, 1)
 }
 
 func (stats *cacheStats) getErrors() uint64 {
@@ -91,4 +92,9 @@ func (collector *cacheCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(collector.cacheMisses, prometheus.CounterValue, misses, instance)
 		ch <- prometheus.MustNewConstMetric(collector.cacheErrors, prometheus.CounterValue, errors, instance)
 	}
+}
+
+func newRedisCollector(client redisprometheus.StatGetter) *redisprometheus.Collector {
+	collector := redisprometheus.NewCollector(metrics.AnalogdbNamespace, metrics.RedisSubsystem, client)
+	return collector
 }

@@ -7,8 +7,10 @@ import (
 
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
-	"github.com/go-redis/cache/v8"
-	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/cache/v9"
+	"github.com/redis/go-redis/v9"
+
+	"github.com/redis/go-redis/extra/redisotel/v9"
 )
 
 const (
@@ -37,8 +39,12 @@ func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics) (*RDB, 
 	db := redis.NewClient(opt)
 	logger.Debug().Msg("Created new redis client")
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// prometheus metrics for redis
+	redisCollector := newRedisCollector(db)
+	metrics.Registry.MustRegister(redisCollector)
+	logger.Info().Msg("Registered redis collector with prometheus")
 
+	ctx, cancel := context.WithCancel(context.Background())
 	collector := newCacheCollector()
 
 	rdb := &RDB{
@@ -50,8 +56,16 @@ func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics) (*RDB, 
 		collector: collector,
 	}
 
+	// prometheus metrics for redis based caches
 	rdb.metrics.Registry.MustRegister(rdb.collector)
 	rdb.logger.Info().Msg("Registered cache collector with prometheus")
+
+	// otel instrumentation of redis
+	if err := redisotel.InstrumentTracing(db); err != nil {
+		rdb.logger.Err(err).Msg("Failed to instrument redis with tracing")
+	} else {
+		rdb.logger.Info().Msg("Instrumented redis with tracing")
+	}
 
 	rdb.logger.Info().Msg("Initialized cache instance")
 
