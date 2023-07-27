@@ -19,6 +19,7 @@ export default function GridImage(props) {
     <Link
       href={`/post/${post.id}`}
       passHref={true}
+      prefetch={false}
       // legacyBehavior
     >
       <div>
