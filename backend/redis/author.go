@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb"
-	"github.com/go-redis/cache/v8"
+	"github.com/go-redis/cache/v9"
 )
 
 const (

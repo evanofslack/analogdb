@@ -14,7 +14,7 @@ import (
 	"github.com/evanofslack/analogdb/postgres"
 	"github.com/evanofslack/analogdb/redis"
 	"github.com/evanofslack/analogdb/server"
-	"github.com/evanofslack/analogdb/trace"
+	"github.com/evanofslack/analogdb/tracer"
 	"github.com/evanofslack/analogdb/weaviate"
 )
 
@@ -53,7 +53,7 @@ func main() {
 
 	// initialize otlp tracing
 	tracingLogger := logger.WithService("trace")
-	tracer, err := trace.New(tracingLogger, cfg)
+	tracer, err := tracer.New(tracingLogger, cfg)
 	if err != nil {
 		err = fmt.Errorf("Failed to initialize otlp tracing: %w", err)
 		fatal(logger, err)
@@ -77,7 +77,7 @@ func main() {
 
 	// open connection to postgres
 	dbLogger := logger.WithService("database")
-	db := postgres.NewDB(cfg.DB.URL, dbLogger)
+	db := postgres.NewDB(cfg.DB.URL, dbLogger, cfg.Tracing.Enabled)
 	if err := db.Open(); err != nil {
 		err = fmt.Errorf("Failed to startup database: %w", err)
 		fatal(logger, err)
@@ -85,7 +85,7 @@ func main() {
 
 	// open connection to weaviate
 	dbVecLogger := logger.WithService("vector-database")
-	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme, dbVecLogger)
+	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme, dbVecLogger, tracer)
 	if err := dbVec.Open(); err != nil {
 		err = fmt.Errorf("Failed to startup vector database: %w", err)
 		fatal(logger, err)
@@ -100,7 +100,7 @@ func main() {
 	var rdb *redis.RDB
 	if cfg.App.CacheEnabled {
 		redisLogger := logger.WithService("redis")
-		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger, metrics)
+		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger, metrics, cfg.Tracing.Enabled)
 		if err != nil {
 			err = fmt.Errorf("Failed to startup redis: %w", err)
 			fatal(logger, err)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb/logger"
+	"github.com/evanofslack/analogdb/tracer"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
 )
 
@@ -19,10 +20,17 @@ type DB struct {
 	ctx     context.Context
 	cancel  func()
 	logger  *logger.Logger
+	tracer  *tracer.Tracer
 }
 
-func NewDB(host string, scheme string, logger *logger.Logger) *DB {
-	db := &DB{host: host, scheme: scheme, timeout: weaviateClientTimeout, logger: logger}
+func NewDB(host string, scheme string, logger *logger.Logger, tracer *tracer.Tracer) *DB {
+	db := &DB{
+		host:    host,
+		scheme:  scheme,
+		timeout: weaviateClientTimeout,
+		logger:  logger,
+		tracer:  tracer,
+	}
 	db.ctx, db.cancel = context.WithCancel(context.Background())
 	db.logger.Info().Msg("Initialized vector DB instance")
 	return db

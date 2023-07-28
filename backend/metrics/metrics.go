@@ -17,6 +17,7 @@ const (
 	AnalogdbNamespace = "analogdb"
 	HttpSubsystem     = "http"
 	CacheSubsystem    = "cache"
+	RedisSubsystem    = "redis"
 )
 
 // track stats from cache

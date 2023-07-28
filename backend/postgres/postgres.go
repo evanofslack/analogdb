@@ -8,36 +8,68 @@ import (
 
 	"github.com/evanofslack/analogdb/logger"
 	_ "github.com/lib/pq"
+	"go.nhat.io/otelsql"
+	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
 
 type DB struct {
-	db     *sql.DB
-	dsn    string
-	ctx    context.Context
-	cancel func()
-	logger *logger.Logger
+	db             *sql.DB
+	dsn            string
+	ctx            context.Context
+	cancel         func()
+	logger         *logger.Logger
+	tracingEnabled bool
 }
 
-func NewDB(dsn string, logger *logger.Logger) *DB {
-	db := &DB{dsn: dsn, logger: logger}
-	db.ctx, db.cancel = context.WithCancel(context.Background())
+func NewDB(dsn string, logger *logger.Logger, tracingEnabled bool) *DB {
+
+	logger.Debug().Msg("Initializing DB instance")
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	db := &DB{
+		dsn:            dsn,
+		ctx:            ctx,
+		cancel:         cancel,
+		logger:         logger,
+		tracingEnabled: tracingEnabled,
+	}
+
 	db.logger.Info().Msg("Initialized DB instance")
+
 	return db
 }
 
 func (db *DB) Open() error {
+
+	db.logger.Debug().Msg("Opening DB instance")
+
 	if db.dsn == "" {
 		return fmt.Errorf("DB data source name must be set")
 	}
+
 	var err error
-	if db.db, err = sql.Open("postgres", db.dsn); err != nil {
+	driver := "postgres"
+
+	if db.tracingEnabled {
+		driver, err = otelsql.Register("postgres",
+			otelsql.TraceQueryWithoutArgs(),
+			otelsql.TraceRowsClose(),
+			otelsql.TraceRowsAffected(),
+			otelsql.WithDatabaseName("analogdb"),
+			otelsql.WithSystem(semconv.DBSystemPostgreSQL),
+		)
+		db.logger.Info().Msg("Instrumented DB with tracing")
+	}
+
+	if db.db, err = sql.Open(driver, db.dsn); err != nil {
 		err = fmt.Errorf("Failed to open connection to DB: %w", err)
 		return err
 	}
-	go db.monitor()
 
-	db.logger.Info().Msg("Opened new DB connection")
-	return db.db.Ping()
+	db.logger.Info().Msg("Opened new DB instance")
+
+	return db.db.PingContext(db.ctx)
 }
 
 func (db *DB) Close() error {
@@ -52,10 +84,6 @@ func (db *DB) Close() error {
 
 	db.logger.Info().Msg("Closed DB connection")
 	return nil
-}
-
-func (db *DB) monitor() {
-	// add prometheous metrics
 }
 
 // NullString is an alias for sql.NullString data type
