@@ -61,6 +61,19 @@ func (tracer *Tracer) StartExporter() error {
 	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
 	defer cancel()
 
+	tracer.logger.Debug().Str("endpoint", endpoint).Msg("Dialing GRPC endpoint for OTLP exporter")
+
+	conn, err := grpc.DialContext(ctx, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
+	if err != nil {
+		tracer.logger.Err(err).Str("endpoint", endpoint).Msg("Failed to dial GRPC endpoint for OTLP exporter")
+	}
+
+	tracer.logger.Debug().Msg("Creating new OTLP exporter")
+	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
+	if err != nil {
+		tracer.logger.Err(err).Msg("Failed to create new OTLP exporter")
+	}
+
 	service := tracer.config.App.Name
 	version := tracer.config.App.Version
 	tracer.logger.Debug().Str("service-name", service).Str("version", version).Msg("Creating new tracing resource")
@@ -75,19 +88,6 @@ func (tracer *Tracer) StartExporter() error {
 	if err != nil {
 		tracer.logger.Err(err).Msg("Failed to created tracing resource")
 		return err
-	}
-
-	tracer.logger.Debug().Str("endpoint", endpoint).Msg("Dialing GRPC endpoint for OTLP exporter")
-
-	conn, err := grpc.DialContext(ctx, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
-	if err != nil {
-		tracer.logger.Err(err).Str("endpoint", endpoint).Msg("Failed to dial GRPC endpoint for OTLP exporter")
-	}
-
-	tracer.logger.Debug().Msg("Creating new OTLP exporter")
-	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
-	if err != nil {
-		tracer.logger.Err(err).Msg("Failed to create new OTLP exporter")
 	}
 
 	tracer.logger.Debug().Msg("Creating new tracing provider")
