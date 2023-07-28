@@ -1,4 +1,4 @@
-package trace
+package tracer
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -20,12 +21,14 @@ import (
 const (
 	connectTimeout  = 5 * time.Second
 	shutdownTimeout = 5 * time.Second
+	tracerName      = "github.com/evanofslack/analogdb"
 )
 
 type Tracer struct {
 	logger         *logger.Logger
 	config         *config.Config
 	tracerProvider *sdktrace.TracerProvider
+	Tracer         trace.Tracer
 }
 
 func New(logger *logger.Logger, config *config.Config) (*Tracer, error) {
@@ -55,7 +58,6 @@ func (tracer *Tracer) StartExporter() error {
 	if endpoint == "" {
 		tracer.logger.Warn().Msg("Tracing endpoint is not set, skipping otel exporter startup")
 		return nil
-
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), connectTimeout)
@@ -63,6 +65,7 @@ func (tracer *Tracer) StartExporter() error {
 
 	tracer.logger.Debug().Str("endpoint", endpoint).Msg("Dialing GRPC endpoint for OTLP exporter")
 
+	// dial the grpc endpoint where traces are exported
 	conn, err := grpc.DialContext(ctx, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		tracer.logger.Err(err).Str("endpoint", endpoint).Msg("Failed to dial GRPC endpoint for OTLP exporter")
@@ -78,6 +81,7 @@ func (tracer *Tracer) StartExporter() error {
 	version := tracer.config.App.Version
 	tracer.logger.Debug().Str("service-name", service).Str("version", version).Msg("Creating new tracing resource")
 
+	// create new otel resource, this defines the service name
 	resource, err := resource.New(ctx,
 		resource.WithAttributes(
 			semconv.ServiceNameKey.String(service),
@@ -90,6 +94,7 @@ func (tracer *Tracer) StartExporter() error {
 		return err
 	}
 
+	// create new tracing provider, this links the resource and batcher and is shared globally
 	tracer.logger.Debug().Msg("Creating new tracing provider")
 	batchSpanProcessor := sdktrace.NewBatchSpanProcessor(exporter)
 	tracerProvider := sdktrace.NewTracerProvider(
@@ -97,9 +102,12 @@ func (tracer *Tracer) StartExporter() error {
 		sdktrace.WithResource(resource),
 		sdktrace.WithSpanProcessor(batchSpanProcessor),
 	)
-
 	tracer.tracerProvider = tracerProvider
 	otel.SetTracerProvider(tracerProvider)
+
+	// create named tracer to be used by this library
+	tracer.logger.Debug().Str("name", tracerName).Msg("Creating new internal tracer")
+	tracer.Tracer = tracerProvider.Tracer(tracerName)
 
 	tracer.logger.Info().Str("endpoint", endpoint).Msg("Started tracing exporter")
 
