@@ -1,5 +1,6 @@
 import { baseURL } from "./constants.js";
 import getConfig from "next/config";
+import fetch from 'node-fetch';
 
 const { serverConfig } = getConfig();
 
@@ -15,17 +16,19 @@ if (password == "") {
   password = serverConfig.AUTH_PASSWORD;
 }
 
+
 export async function authorized_fetch(route, method) {
+
   const url = `${baseURL}${route}`;
   let headers = new Headers();
 
   if (username != "" && password != "") {
-    headers.set(
-      "Authorization",
-      "Basic " + Buffer.from(username + ":" + password).toString("base64")
-    );
+    let auth =
+      "Basic " + Buffer.from(username + ":" + password).toString("base64");
+    headers.append("Authorization", auth);
   }
 
   const response = await fetch(url, { method: method, headers: headers });
+
   return response;
 }

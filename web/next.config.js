@@ -12,6 +12,7 @@ module.exports = {
   },
   experimental: {
     scrollRestoration: true,
+    instrumentationHook: true,
   },
   env: {
     AUTH_USERNAME: process.env.AUTH_USERNAME,
