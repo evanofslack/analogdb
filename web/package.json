@@ -13,14 +13,18 @@
     "@mantine/core": "^6.0.7",
     "@mantine/nprogress": "^6.0.7",
     "@mantine/prism": "^6.0.7",
-    "@opentelemetry/auto-instrumentations-node": "^0.38.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.41.1",
+    "@opentelemetry/api": "^1.4.1",
+    "@opentelemetry/exporter-trace-otlp-proto": "^0.41.1",
+    "@opentelemetry/instrumentation-fetch": "^0.41.1",
+    "@opentelemetry/instrumentation-grpc": "^0.41.1",
+    "@opentelemetry/instrumentation-http": "^0.41.1",
     "@opentelemetry/resources": "^1.15.1",
     "@opentelemetry/sdk-node": "^0.41.1",
     "@opentelemetry/semantic-conventions": "^1.15.1",
     "@tabler/icons": "^1.118.0",
     "embla-carousel-react": "^7.1.0",
-    "next": "^13.0.6",
+    "next": "^13.4.12",
+    "node-fetch": "^3.3.2",
     "prettier": "^2.8.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -32,6 +36,6 @@
   },
   "devDependencies": {
     "eslint": "^8.30.0",
-    "eslint-config-next": "^13.1.1"
+    "eslint-config-next": "^13.4.12"
   }
 }
