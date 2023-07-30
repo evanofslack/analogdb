@@ -52,7 +52,7 @@ func main() {
 	}
 
 	// initialize otlp tracing
-	tracingLogger := logger.WithService("trace")
+	tracingLogger := logger.WithService("tracer")
 	tracer, err := tracer.New(tracingLogger, cfg)
 	if err != nil {
 		err = fmt.Errorf("Failed to initialize otlp tracing: %w", err)
