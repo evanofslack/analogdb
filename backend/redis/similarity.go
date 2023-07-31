@@ -141,7 +141,11 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 		err = s.idKeysCache.get(ctx, idKey, &idKeyHashesString)
 
 		// split string to list
-		idKeyHashes := strings.Split(idKeyHashesString, delimiter)
+		var idKeyHashes []string
+
+		if idKeyHashesString != "" {
+			idKeyHashes = strings.Split(idKeyHashesString, delimiter)
+		}
 
 		// if key already exists in slice, no more to do
 		for _, h := range idKeyHashes {
@@ -192,7 +196,11 @@ func (s *SimilarityService) DeletePost(ctx context.Context, id int) error {
 		}
 
 		// split string to list
-		idKeyHashes := strings.Split(idKeyHashesString, delimiter)
+		var idKeyHashes []string
+
+		if idKeyHashesString != "" {
+			idKeyHashes = strings.Split(idKeyHashesString, delimiter)
+		}
 
 		// for all hashes, remove from posts cache
 		for _, hash := range idKeyHashes {

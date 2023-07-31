@@ -101,10 +101,12 @@ func (db *DB) startTrace(ctx context.Context, spanName string, opts ...trace.Spa
 	dbSystem := attribute.String("db.system", "weaviate")
 	dbName := attribute.String("db.name", "pictures")
 	serverAddress := attribute.String("server.address", db.host)
+
+	attributes := trace.WithAttributes(dbSystem, dbName, serverAddress)
 	spanKind := trace.WithSpanKind(trace.SpanKindClient)
 
-	opts = append(opts, dbSystem, dbName, serverAddress, spanKind)
+	opts = append(opts, attributes, spanKind)
 
-	return db.tracer.Tracer.Start(ctx, spanName, opts)
+	return db.tracer.Tracer.Start(ctx, spanName, opts...)
 
 }
