@@ -14,7 +14,7 @@ import (
 
 func (ss SimilarityService) EncodePost(ctx context.Context, id int) error {
 
-	ss.db.logger.Debug().Int("postID", id).Msg("Starting encode post")
+	ss.db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting encode post")
 
 	ctx, span := ss.db.tracer.Tracer.Start(ctx, "vector:encode_post")
 	defer span.End()
@@ -29,7 +29,7 @@ func (ss SimilarityService) EncodePost(ctx context.Context, id int) error {
 		err = fmt.Errorf("failed to convert post to picture object: %w", err)
 		return err
 	}
-	err = ss.db.uploadObject(ctx,  obj)
+	err = ss.db.uploadObject(ctx, obj)
 	if err != nil {
 		err = fmt.Errorf("failed to upload picture object: %w", err)
 		return err
@@ -37,10 +37,9 @@ func (ss SimilarityService) EncodePost(ctx context.Context, id int) error {
 	return nil
 }
 
-
 func (db *DB) downloadPostImage(ctx context.Context, post *analogdb.Post) (string, error) {
 
-	db.logger.Debug().Msg("Starting download post")
+	db.logger.Debug().Ctx(ctx).Msg("Starting download post")
 
 	ctx, span := db.tracer.Tracer.Start(ctx, "vector:download_post_image")
 	defer span.End()
@@ -81,7 +80,7 @@ func (db *DB) downloadPostImage(ctx context.Context, post *analogdb.Post) (strin
 
 func (db *DB) postToPictureObject(ctx context.Context, post *analogdb.Post) (*models.Object, error) {
 
-	db.logger.Debug().Msg("Starting convert post to picture object")
+	db.logger.Debug().Ctx(ctx).Msg("Starting convert post to picture object")
 
 	image, err := db.downloadPostImage(ctx, post)
 	if err != nil {
@@ -94,16 +93,16 @@ func (db *DB) postToPictureObject(ctx context.Context, post *analogdb.Post) (*mo
 
 func (db *DB) uploadObject(ctx context.Context, obj *models.Object) error {
 
-	db.logger.Debug().Msg("Starting upload object")
+	db.logger.Debug().Ctx(ctx).Msg("Starting upload object")
 
-	ctx, span := db.tracer.Tracer.Start(ctx, "vector:upload_object")
+	ctx, span := db.startTrace(ctx, "vector:upload_object")
 	defer span.End()
 
 	batcher := db.db.Batch().ObjectsBatcher()
 	_, err := batcher.WithObject(obj).Do(ctx)
 	if err != nil {
 		err = fmt.Errorf("failed to upload to vector DB: %w", err)
-		db.logger.Error().Err(err).Msg("Failed upload to vector DB")
+		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed upload to vector DB")
 		span.SetStatus(codes.Error, "Upload object failed")
 		span.RecordError(err)
 		return err

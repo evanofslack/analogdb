@@ -8,6 +8,8 @@ import (
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/tracer"
 	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const weaviateClientTimeout = 30 * time.Second
@@ -91,4 +93,20 @@ func (db *DB) Close() error {
 	db.cancel()
 	db.logger.Info().Msg("Closed vector DB connection")
 	return nil
+}
+
+// start a trace targeting the weaviate server
+func (db *DB) startTrace(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+
+	dbSystem := attribute.String("db.system", "weaviate")
+	dbName := attribute.String("db.name", "pictures")
+	serverAddress := attribute.String("server.address", db.host)
+
+	attributes := trace.WithAttributes(dbSystem, dbName, serverAddress)
+	spanKind := trace.WithSpanKind(trace.SpanKindClient)
+
+	opts = append(opts, attributes, spanKind)
+
+	return db.tracer.Tracer.Start(ctx, spanName, opts...)
+
 }

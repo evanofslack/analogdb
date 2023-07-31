@@ -15,7 +15,7 @@ type Logger struct {
 	zerolog.Logger
 }
 
-func New(level string, env string) (*Logger, error) {
+func New(level , env , app string) (*Logger, error) {
 
 	switch level {
 	case "debug":
@@ -57,16 +57,18 @@ func New(level string, env string) (*Logger, error) {
 		With().
 		Caller().
 		Timestamp().
+		Str("app", app).
 		Logger()
+
 
 	logger := Logger{zerologger}
 	logger.Debug().Msg("Created new base logger")
 	return &logger, nil
 }
 
-func (l Logger) WithService(name string) *Logger {
-	serviceLogger := l.Logger.With().Str("service", name).Logger()
-	serviceLogger.Debug().Msg("Created new service logger")
+func (l Logger) WithSubsystem(name string) *Logger {
+	serviceLogger := l.Logger.With().Str("subsystem", name).Logger()
+	serviceLogger.Debug().Msg("Created new subsystem logger")
 	return &Logger{
 		serviceLogger,
 	}
@@ -75,8 +77,18 @@ func (l Logger) WithService(name string) *Logger {
 func (l Logger) WithSlackNotifier(url string) *Logger {
 	notifier := newSlackNotifier(url)
 	slackLogger := l.Hook(notifier)
-	slackLogger.Debug().Msg("Added slack notifier to logger")
+	slackLogger.Info().Msg("Added slack notifier to logger")
 	return &Logger{
 		slackLogger,
+	}
+}
+
+func (l Logger) WithTracer(serviceName string) *Logger {
+
+	tracer := newTracerHook(serviceName)
+	tracerLogger := l.Hook(tracer)
+	tracerLogger.Info().Msg("Added tracer to logger")
+	return &Logger{
+		tracerLogger,
 	}
 }

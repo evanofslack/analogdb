@@ -18,15 +18,21 @@ const (
 
 func (s *Server) mountMiddleware() {
 
+	// add recoverer first
 	s.router.Use(middleware.Recoverer)
-	s.router.Use(logger.Middleware(s.logger))
+
+	// collect prom metrics
 	s.router.Use(s.collectStats)
 
 	// is tracing enabled?
+	// attach before logger so span id is logged
 	if s.config.Tracing.Enabled {
 		s.router.Use(otelchi.Middleware("http", otelchi.WithChiRoutes(s.router)))
 		s.logger.Info().Msg("Added tracing middleware")
 	}
+
+	// log all requests
+	s.router.Use(logger.Middleware(s.logger))
 
 	// is rate limiting enabled?
 	if s.config.App.RateLimitEnabled {
@@ -53,21 +59,25 @@ func (s *Server) mountMiddleware() {
 		AllowCredentials: true,
 		MaxAge:           500,
 	})
+
+	// CORS
 	s.router.Use(corsHandler)
 }
 
 // apply rate limit only if user is not authenticated
 func (s *Server) applyRateLimit(r *http.Request) bool {
 
+	ctx := r.Context()
+
 	rl_username := s.config.Auth.RateLimitUsername
 	rl_password := s.config.Auth.RateLimitPassword
 
 	authenticated := s.passBasicAuth(rl_username, rl_password, r)
 	if authenticated {
-		s.logger.Debug().Bool("authenticated", authenticated).Msg("Bypassing rate limit")
+		s.logger.Debug().Ctx(ctx).Bool("authenticated", authenticated).Msg("Bypassing rate limit")
 		return false
 	}
 
-	s.logger.Debug().Bool("authenticated", authenticated).Msg("Applying rate limit")
+	s.logger.Debug().Ctx(ctx).Bool("authenticated", authenticated).Msg("Applying rate limit")
 	return true
 }

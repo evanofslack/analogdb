@@ -64,7 +64,7 @@ func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics, tracing
 	// otel instrumentation of redis
 	if tracingEnabled {
 		if err := redisotel.InstrumentTracing(db); err != nil {
-			rdb.logger.Err(err).Msg("Failed to instrument redis with tracing")
+			rdb.logger.Error().Err(err).Msg("Failed to instrument redis with tracing")
 		} else {
 			rdb.logger.Info().Msg("Instrumented redis with tracing")
 		}
@@ -134,7 +134,7 @@ func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
 
 func (cache *Cache) get(ctx context.Context, key string, item interface{}) error {
 
-	cache.logger.Debug().Str("instance", cache.instance).Msg("Getting item from cache")
+	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Getting item from cache")
 
 	// do the lookup on the inner cache
 	err := cache.cache.Get(ctx, key, item)
@@ -144,50 +144,50 @@ func (cache *Cache) get(ctx context.Context, key string, item interface{}) error
 
 		// was it a cache miss?
 		if strings.Contains(err.Error(), cacheMissErr) {
-			cache.logger.Debug().Str("instance", cache.instance).Msg("Cache miss")
+			cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Cache miss")
 			cache.stats.incMisses()
 
 			// or error decoding an empty array? this is fine and not an error
-		} else if strings.Contains(err.Error(), decodeArrayErr) {
-			cache.logger.Debug().Str("instance", cache.instance).Msg("Error decoding array on cache get, proceeding")
-			cache.stats.incMisses()
+			// } else if strings.Contains(err.Error(), decodeArrayErr) {
+			// 	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Error decoding array on cache get, proceeding")
+			// 	cache.stats.incMisses()
 
 			// or an actual error
 		} else {
-			cache.logger.Err(err).Str("instance", cache.instance).Msg("Error getting item from cache")
+			cache.logger.Error().Err(err).Ctx(ctx).Str("instance", cache.instance).Msg("Error getting item from cache")
 			cache.stats.incErrors()
 		}
 		return err
 	}
 
 	// no error means cache hit
-	cache.logger.Debug().Str("instance", cache.instance).Msg("Cache hit")
+	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Cache hit")
 	cache.stats.incHits()
 	return nil
 }
 
-func (cache *Cache) set(item *cache.Item) error {
+func (cache *Cache) set(ctx context.Context, item *cache.Item) error {
 
-	cache.logger.Debug().Str("instance", cache.instance).Msg("Setting item in cache")
+	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Setting item in cache")
 
 	err := cache.cache.Set(item)
 	if err != nil {
-		cache.logger.Err(err).Str("instance", cache.instance).Msg("Failed to set item")
+		cache.logger.Error().Err(err).Ctx(ctx).Str("instance", cache.instance).Msg("Failed to set item")
 	}
 
-	cache.logger.Debug().Str("instance", cache.instance).Msg("Added item cache")
+	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Added item cache")
 	return err
 }
 
 func (cache *Cache) delete(ctx context.Context, key string) error {
 
-	cache.logger.Debug().Str("instance", cache.instance).Msg("Deleting item from cache")
+	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Deleting item from cache")
 
 	err := cache.cache.Delete(ctx, key)
 	if err != nil {
-		cache.logger.Err(err).Str("instance", cache.instance).Msg("Failed to delete item")
+		cache.logger.Error().Err(err).Ctx(ctx).Str("instance", cache.instance).Msg("Failed to delete item")
 	}
 
-	cache.logger.Debug().Str("instance", cache.instance).Msg("Deleted item from cache")
+	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Deleted item from cache")
 	return err
 }
