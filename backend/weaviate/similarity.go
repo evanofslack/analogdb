@@ -53,9 +53,10 @@ func (ss SimilarityService) FindSimilarPosts(ctx context.Context, similarityFilt
 
 func (db *DB) deletePost(ctx context.Context, postID int) error {
 
-	db.logger.Debug().Int("postID", postID).Msg("Starting delete post from vector DB")
+	db.logger.Debug().Ctx(ctx).Int("postID", postID).Msg("Starting delete post from vector DB")
 
-	ctx, span := db.tracer.Tracer.Start(ctx, "vector:delete_post", trace.WithAttributes(attribute.Int("postID", postID)))
+
+	ctx, span := db.startTrace(ctx, "vector:delete_post", trace.WithAttributes(attribute.Int("postID", postID)))
 	defer span.End()
 
 	fields := []graphql.Field{
@@ -80,7 +81,7 @@ func (db *DB) deletePost(ctx context.Context, postID int) error {
 
 	if err != nil || result == nil {
 		err = fmt.Errorf("Failed to find postID in vector DB, err=%w", err)
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to delete post from vectorDB")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to delete post from vectorDB")
 		span.SetStatus(codes.Error, "Get embedding by postID failed")
 		span.RecordError(err)
 		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("Post %d not found", postID)}
@@ -89,7 +90,7 @@ func (db *DB) deletePost(ctx context.Context, postID int) error {
 
 	pics, err := unmarshallPicturesResp(result)
 	if err != nil {
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to delete post from vector DB")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to delete post from vector DB")
 		span.SetStatus(codes.Error, "Unmarshall embedding failed")
 		span.RecordError(err)
 		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("Post %d not found", postID)}
@@ -104,14 +105,14 @@ func (db *DB) deletePost(ctx context.Context, postID int) error {
 		Do(ctx)
 
 	if err != nil {
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to delete post from vector DB")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to delete post from vector DB")
 		span.SetStatus(codes.Error, "Delete picture failed")
 		span.RecordError(err)
 		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: fmt.Sprintf("Post %d could not be deleted from vector DB", postID)}
 	}
 	span.AddEvent("Deleted picture", trace.WithAttributes(attribute.Int("postID", postID), attribute.String("uuid", uuid)))
 
-	db.logger.Info().Int("postID", postID).Msg("Deleted post from vector DB")
+	db.logger.Info().Ctx(ctx).Int("postID", postID).Msg("Deleted post from vector DB")
 
 	return err
 }
@@ -132,9 +133,9 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 
 	postID := *filter.ID
 
-	db.logger.Debug().Int("postID", postID).Msg("Starting get similar posts from vector DB")
+	db.logger.Debug().Ctx(ctx).Int("postID", postID).Msg("Starting get similar posts from vector DB")
 
-	ctx, span := db.tracer.Tracer.Start(ctx, "vector:get_similar_post_ids", trace.WithAttributes(attribute.Int("postID", postID)))
+	ctx, span := db.startTrace(ctx, "vector:get_similar_post_ids", trace.WithAttributes(attribute.Int("postID", postID)))
 	defer span.End()
 
 	// first make the query to lookup UUID associated with post's embedding
@@ -160,7 +161,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 		Do(ctx)
 
 	if err != nil {
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to find post in vector DB")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to find post in vector DB")
 		span.SetStatus(codes.Error, "Get embedding by postID failed")
 		span.RecordError(err)
 		return ids, err
@@ -169,7 +170,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 
 	pics, err := unmarshallPicturesResp(result)
 	if err != nil {
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to unmarshall post from vector DB")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to unmarshall post from vector DB")
 		span.SetStatus(codes.Error, "Unmarshall embedding failed")
 		span.RecordError(err)
 		return ids, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("Post %d not found", postID)}
@@ -182,7 +183,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 	// this is where we narrow down the results
 	where, err = filterToWhere(filter)
 	if err != nil {
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to convert similarity filter to where clause")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to convert similarity filter to where clause")
 		span.SetStatus(codes.Error, "Similarity filter to where clause failed")
 		span.RecordError(err)
 		return ids, err
@@ -204,7 +205,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 		Do(ctx)
 
 	if err != nil {
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to find near embeddings in vector DB")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to find near embeddings in vector DB")
 		span.SetStatus(codes.Error, "Failed to find similar embeddings in vector DB")
 		span.RecordError(err)
 		return ids, err
@@ -213,7 +214,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 
 	pics, err = unmarshallPicturesResp(result)
 	if err != nil {
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Failed to unmarshall post from vector DB")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to unmarshall post from vector DB")
 		span.SetStatus(codes.Error, "Unmarshall embedding failed")
 		span.RecordError(err)
 		return ids, err
@@ -225,7 +226,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 	}
 
 	if len(ids) == 0 {
-		db.logger.Error().Err(err).Int("postID", postID).Msg("Found zero similar posts")
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Found zero similar posts")
 		span.SetStatus(codes.Error, "Found zero similar posts")
 		span.RecordError(err)
 		return ids, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "No similar posts found"}

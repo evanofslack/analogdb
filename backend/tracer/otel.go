@@ -6,6 +6,7 @@ import (
 
 	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/logger"
+	"go.opentelemetry.io/contrib"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -107,7 +108,7 @@ func (tracer *Tracer) StartExporter() error {
 
 	// create named tracer to be used by this library
 	tracer.logger.Debug().Str("name", tracerName).Msg("Creating new internal tracer")
-	tracer.Tracer = tracerProvider.Tracer(tracerName)
+	tracer.Tracer = tracerProvider.Tracer(tracerName, trace.WithInstrumentationVersion(contrib.SemVersion()))
 
 	tracer.logger.Info().Str("endpoint", endpoint).Msg("Started tracing exporter")
 

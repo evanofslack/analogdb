@@ -66,11 +66,8 @@ func (slackhook *SlackHook) shouldNotify(message string) bool {
 	return false
 }
 
-func (slackhook *SlackHook) Run(
-	e *zerolog.Event,
-	level zerolog.Level,
-	message string,
-) {
+func (slackhook *SlackHook) Run(e *zerolog.Event, level zerolog.Level, message string) {
+
 	// if the level is less than our notify threshold, don't notify
 	if level <= zerolog.WarnLevel {
 		return

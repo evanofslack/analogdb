@@ -28,7 +28,7 @@ func (db *DB) getSchema(ctx context.Context) (*schema.Dump, error) {
 
 func (db *DB) createPictureSchema(ctx context.Context) error {
 
-	db.logger.Debug().Msg("Starting to create picture schema in vector DB")
+	db.logger.Debug().Ctx(ctx).Msg("Starting to create picture schema in vector DB")
 
 	classObj := &models.Class{
 		Class:       "Picture",
@@ -78,10 +78,10 @@ func (db *DB) createPictureSchema(ctx context.Context) error {
 	err := db.db.Schema().ClassCreator().WithClass(classObj).Do(context.Background())
 	if err != nil {
 		err = fmt.Errorf("Failed to create picture schema, %w", err)
-		db.logger.Error().Err(err).Msg("Failed to create picture schema in vector DB")
+		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed to create picture schema in vector DB")
 		return err
 	}
 
-	db.logger.Info().Msg("Created picture schema in vector DB")
+	db.logger.Info().Ctx(ctx).Msg("Created picture schema in vector DB")
 	return nil
 }

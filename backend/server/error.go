@@ -24,15 +24,17 @@ func errorStatusCode(code string) int {
 
 func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
 
+	ctx := r.Context()
+
 	code, message := analogdb.ErrorCode(err), analogdb.ErrorMessage(err)
 
-	s.logger.Error().Err(err).Str("method", r.Method).Str("path", r.URL.Path).Str("code", code).Msg(message)
+	s.logger.Error().Err(err).Ctx(ctx).Str("method", r.Method).Str("path", r.URL.Path).Str("code", code).Msg(message)
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(errorStatusCode(code))
 	marshallErr := json.NewEncoder(w).Encode(&ErrorResponse{Error: message})
 	if marshallErr != nil {
-		s.logger.Error().Err(err).Msg("Failed to marshall json")
+		s.logger.Error().Err(err).Ctx(ctx).Msg("Failed to marshall json")
 	}
 }
 

@@ -9,16 +9,18 @@ import (
 func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		ctx := r.Context()
+
 		username := s.config.Auth.Username
 		password := s.config.Auth.Password
 
 		authenticated := s.passBasicAuth(username, password, r)
 		if authenticated {
-			s.logger.Debug().Bool("authenticated", authenticated).Msg("Authorized with basic auth")
+			s.logger.Debug().Ctx(ctx).Bool("authenticated", authenticated).Msg("Authorized with basic auth")
 			next.ServeHTTP(w, r)
 			return
 		}
-		s.logger.Debug().Bool("authenticated", authenticated).Msg("Unauthorized with basic auth")
+		s.logger.Debug().Ctx(ctx).Bool("authenticated", authenticated).Msg("Unauthorized with basic auth")
 		w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 	})

@@ -39,20 +39,25 @@ func main() {
 	}
 
 	// create logger instance
-	logger, err := logger.New(cfg.Log.Level, cfg.App.Env)
+	logger, err := logger.New(cfg.Log.Level, cfg.App.Env, cfg.App.Name)
 	if err != nil {
 		err = fmt.Errorf("Failed to create logger: %w", err)
 		fatal(nil, err)
 	}
-	logger.Info().Str("app", cfg.App.Name).Str("version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
+	logger.Info().Str("version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
 
 	// add slack webhook to logger to notify on error
 	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" && cfg.App.Env != "debug" {
 		logger = logger.WithSlackNotifier(webhookURL)
 	}
 
+	// add otel tracing to logger if enabled
+	if cfg.Tracing.Enabled {
+		logger = logger.WithTracer(cfg.App.Name)
+	}
+
 	// initialize otlp tracing
-	tracingLogger := logger.WithService("tracer")
+	tracingLogger := logger.WithSubsystem("tracer")
 	tracer, err := tracer.New(tracingLogger, cfg)
 	if err != nil {
 		err = fmt.Errorf("Failed to initialize otlp tracing: %w", err)
@@ -64,7 +69,7 @@ func main() {
 	}
 
 	// initialize prometheus metrics
-	metricsLogger := logger.WithService("metrics")
+	metricsLogger := logger.WithSubsystem("metrics")
 	metrics, err := metrics.New(metricsLogger)
 	if err != nil {
 		err = fmt.Errorf("Failed to initialize prometheus metrics: %w", err)
@@ -76,7 +81,7 @@ func main() {
 	}
 
 	// open connection to postgres
-	dbLogger := logger.WithService("database")
+	dbLogger := logger.WithSubsystem("database")
 	db := postgres.NewDB(cfg.DB.URL, dbLogger, cfg.Tracing.Enabled)
 	if err := db.Open(); err != nil {
 		err = fmt.Errorf("Failed to startup database: %w", err)
@@ -84,7 +89,7 @@ func main() {
 	}
 
 	// open connection to weaviate
-	dbVecLogger := logger.WithService("vector-database")
+	dbVecLogger := logger.WithSubsystem("vector-database")
 	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme, dbVecLogger, tracer)
 	if err := dbVec.Open(); err != nil {
 		err = fmt.Errorf("Failed to startup vector database: %w", err)
@@ -99,7 +104,7 @@ func main() {
 	// open connection to redis if cache enabled
 	var rdb *redis.RDB
 	if cfg.App.CacheEnabled {
-		redisLogger := logger.WithService("redis")
+		redisLogger := logger.WithSubsystem("redis")
 		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger, metrics, cfg.Tracing.Enabled)
 		if err != nil {
 			err = fmt.Errorf("Failed to startup redis: %w", err)
@@ -112,7 +117,7 @@ func main() {
 	}
 
 	// initialize http server
-	httpLogger := logger.WithService("http")
+	httpLogger := logger.WithSubsystem("http")
 	server := server.New(cfg.HTTP.Port, httpLogger, metrics, cfg)
 
 	// need to clean up this dependency injection

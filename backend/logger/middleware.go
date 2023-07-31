@@ -15,21 +15,24 @@ func Middleware(logger *Logger) func(next http.Handler) http.Handler {
 			start := time.Now()
 			log := logger.With().Logger()
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+			ctx := r.Context()
 
 			defer func() {
 				// Recover and record stack traces in case of a panic
 				if rec := recover(); rec != nil {
 					log.Error().
+						Ctx(ctx).
 						Str("type", "error").
 						Timestamp().
 						Interface("recover_info", rec).
 						Bytes("debug_stack", debug.Stack()).
-						Msg("log system error")
+						Msg("Log system error")
 					http.Error(ww, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				}
 
 				// log end request
 				log.Info().
+					Ctx(ctx).
 					Str("type", "access").
 					Timestamp().
 					Fields(map[string]interface{}{
@@ -43,7 +46,7 @@ func Middleware(logger *Logger) func(next http.Handler) http.Handler {
 						"bytes_in":   r.Header.Get("Content-Length"),
 						"bytes_out":  ww.BytesWritten(),
 					}).
-					Msg("incoming_request")
+					Msg("Incoming request")
 			}()
 
 			next.ServeHTTP(ww, r)
