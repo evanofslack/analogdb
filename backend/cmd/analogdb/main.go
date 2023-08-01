@@ -46,6 +46,9 @@ func main() {
 	}
 	logger.Info().Str("version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
 
+	// add stack trace
+	logger = logger.WithStackTrace()
+
 	// add slack webhook to logger to notify on error
 	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" && cfg.App.Env != "debug" {
 		logger = logger.WithSlackNotifier(webhookURL)
@@ -65,7 +68,10 @@ func main() {
 	}
 
 	if cfg.Tracing.Enabled {
-		tracer.StartExporter()
+		if err := tracer.StartExporter(); err != nil {
+			err = fmt.Errorf("Failed to start otel exporter: %w", err)
+			fatal(logger, err)
+		}
 	}
 
 	// initialize prometheus metrics
