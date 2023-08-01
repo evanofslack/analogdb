@@ -2,6 +2,7 @@ package tracer
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/evanofslack/analogdb/config"
@@ -69,13 +70,13 @@ func (tracer *Tracer) StartExporter() error {
 	// dial the grpc endpoint where traces are exported
 	conn, err := grpc.DialContext(ctx, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		tracer.logger.Err(err).Str("endpoint", endpoint).Msg("Failed to dial GRPC endpoint for OTLP exporter")
+		return fmt.Errorf("Failed to dial GRPC endpoint for OTLP exporter, err=%w", err)
 	}
 
 	tracer.logger.Debug().Msg("Creating new OTLP exporter")
 	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
 	if err != nil {
-		tracer.logger.Err(err).Msg("Failed to create new OTLP exporter")
+		return fmt.Errorf("Failed to create tracegrpc, err=%w", err)
 	}
 
 	service := tracer.config.App.Name
@@ -89,10 +90,8 @@ func (tracer *Tracer) StartExporter() error {
 			attribute.String("version", version),
 		),
 	)
-
 	if err != nil {
-		tracer.logger.Err(err).Msg("Failed to created tracing resource")
-		return err
+		return fmt.Errorf("Failed to created tracing resource, err=%w", err)
 	}
 
 	// create new tracing provider, this links the resource and batcher and is shared globally

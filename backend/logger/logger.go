@@ -15,7 +15,7 @@ type Logger struct {
 	zerolog.Logger
 }
 
-func New(level , env , app string) (*Logger, error) {
+func New(level, env, app string) (*Logger, error) {
 
 	switch level {
 	case "debug":
@@ -38,7 +38,6 @@ func New(level , env , app string) (*Logger, error) {
 
 	var output io.Writer
 	if env == "debug" {
-		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 		output = zerolog.ConsoleWriter{
 			Out:        os.Stderr,
 			TimeFormat: time.RFC3339,
@@ -60,10 +59,18 @@ func New(level , env , app string) (*Logger, error) {
 		Str("app", app).
 		Logger()
 
-
 	logger := Logger{zerologger}
 	logger.Debug().Msg("Created new base logger")
 	return &logger, nil
+}
+
+func (l Logger) WithStackTrace() *Logger {
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	stackLogger := l.With().Stack().Logger()
+	stackLogger.Info().Msg("Added stack trace to logger")
+	return &Logger{
+		stackLogger,
+	}
 }
 
 func (l Logger) WithSubsystem(name string) *Logger {
