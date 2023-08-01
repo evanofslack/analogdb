@@ -42,15 +42,18 @@ export let options = {
   },
 };
 
+const baseURL = "http://analogdb:8080";
+// const baseURL = "https://api.analogdb.com";
+
 export function Random() {
-  http.get('https://api.analogdb.com/posts?sort=random');
+  http.get(`${baseURL}/posts?sort=random`);
 }
 
 export function Top() {
-  http.get('https://api.analogdb.com/posts?sort=top');
+  http.get(`${baseURL}/posts?sort=top`);
 }
 
 export function Latest() {
-  http.get('https://api.analogdb.com/posts?sort=latest');
+  http.get(`${baseURL}/posts?sort=latest`);
 }
 
