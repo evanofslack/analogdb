@@ -46,15 +46,14 @@ func (ss SimilarityService) FindSimilarPosts(ctx context.Context, similarityFilt
 	}
 
 	// turn IDs into posts
-	filter := analogdb.PostFilter{IDs: &ids}
-	posts, _, err = ss.postService.FindPosts(ctx, &filter)
+	filter := analogdb.NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil)
+	posts, _, err = ss.postService.FindPosts(ctx, filter)
 	return posts, err
 }
 
 func (db *DB) deletePost(ctx context.Context, postID int) error {
 
 	db.logger.Debug().Ctx(ctx).Int("postID", postID).Msg("Starting delete post from vector DB")
-
 
 	ctx, span := db.startTrace(ctx, "vector:delete_post", trace.WithAttributes(attribute.Int("postID", postID)))
 	defer span.End()
