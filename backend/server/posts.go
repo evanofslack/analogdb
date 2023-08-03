@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
@@ -56,10 +54,7 @@ var defaultSimilarityLimit = 12
 var maxSimilarityLimit = 50
 
 // default to sorting by time descending (latest)
-var defaultSort = "time"
-
-// seeds for random post order
-var primes = []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 107, 113, 131, 137, 149, 167, 173, 179, 191, 197, 227, 233, 239, 251, 257, 263}
+var defaultSort = analogdb.SortTime
 
 const (
 	postsPath = "/posts"
@@ -291,12 +286,13 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 
 	//pageID
 	if sort := filter.Sort; sort != nil {
-		if *sort == "time" || *sort == "random" {
+		sortVal := *sort
+		if sortVal == analogdb.SortTime || sortVal == analogdb.SortRandom {
 			meta.PageID = posts[len(posts)-1].Time
-		} else if *sort == "score" {
+		} else if sortVal == analogdb.SortScore {
 			meta.PageID = posts[len(posts)-1].Score
 		} else {
-			return Meta{}, errors.New("invalid sort parameter: " + *sort)
+			return Meta{}, fmt.Errorf("invalid sort parameter: %s", sortVal.String())
 		}
 	}
 
@@ -305,11 +301,11 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		path := postsPath
 		numParams := 0
 		switch *sort {
-		case "time":
+		case analogdb.SortTime:
 			path += fmt.Sprintf("%ssort=latest", paramJoiner(&numParams))
-		case "score":
+		case analogdb.SortScore:
 			path += fmt.Sprintf("%ssort=top", paramJoiner(&numParams))
-		case "random":
+		case analogdb.SortRandom:
 			path += fmt.Sprintf("%ssort=random", paramJoiner(&numParams))
 		}
 		if limit := filter.Limit; limit != nil {
@@ -347,52 +343,47 @@ func paramJoiner(numParams *int) string {
 	}
 }
 
-func newSeed() int {
-	randomIndex := rand.Intn(len(primes))
-	return primes[randomIndex]
+func stringToBool(query string) (bool, error) {
+	val, err := strconv.ParseBool(query)
+	if err != nil {
+		return false, fmt.Errorf("failed to parse %s to bool, err=%w", query, err)
+	}
+	return val, nil
+}
+
+func stringToInt(query string) (int, error) {
+	val, err := strconv.Atoi(query)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse %s to integer, err=%w", query, err)
+	}
+	return val, nil
 }
 
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 
-	truthy := make(map[string]bool)
-	truthy["true"] = true
-	truthy["t"] = true
-	truthy["yes"] = true
-	truthy["y"] = true
-	truthy["1"] = true
-
-	falsey := make(map[string]bool)
-	falsey["false"] = false
-	falsey["f"] = false
-	falsey["no"] = false
-	falsey["n"] = false
-	falsey["0"] = false
-
-	filter := &analogdb.PostFilter{Limit: &defaultLimit, Sort: &defaultSort}
+	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	if sort := r.URL.Query().Get("sort"); sort != "" {
 		if sort == "latest" || sort == "top" || sort == "random" {
 			switch sort {
 			case "latest":
-				time := "time"
+				time := analogdb.SortTime
 				filter.Sort = &time
 			case "top":
-				score := "score"
-				filter.Sort = &score
+				top := analogdb.SortScore
+				filter.Sort = &top
 			case "random":
-				random := "random"
-				seed := newSeed()
+				random := analogdb.SortRandom
 				filter.Sort = &random
-				filter.Seed = &seed
 			}
 		} else {
-			return nil, errors.New("invalid sort parameter - valid options: latest, top, random")
+			return nil, fmt.Errorf("invalid sort parameter %s, valid options are 'latest', 'top', 'random'", sort)
 		}
 	}
 
 	if limit := r.URL.Query().Get("page_size"); limit != "" {
-		if intLimit, err := strconv.Atoi(limit); err != nil {
+		if intLimit, err := stringToInt(limit); err != nil {
 			return nil, err
 		} else {
 			// ensure limit is less than configured max
@@ -403,47 +394,48 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			}
 		}
 	}
+
 	if key := r.URL.Query().Get("page_id"); key != "" {
-		if keyset, err := strconv.Atoi(key); err != nil {
+		if keyset, err := stringToInt(key); err != nil {
+			err := fmt.Errorf("failed to parse %s to integer, err=%w", key, err)
 			return nil, err
 		} else {
 			filter.Keyset = &keyset
 		}
 	}
+
 	if nsfw := r.URL.Query().Get("nsfw"); nsfw != "" {
-		if yes := truthy[strings.ToLower(nsfw)]; yes {
-			filter.Nsfw = &yes
-		} else if no := falsey[strings.ToLower(nsfw)]; !no {
-			filter.Nsfw = &no
+		if val, err := stringToBool(nsfw); err != nil {
+			return nil, err
 		} else {
-			return nil, errors.New("invalid string to boolean conversion")
+			filter.Nsfw = &val
 		}
 	}
+
 	if grayscale := r.URL.Query().Get("grayscale"); grayscale != "" {
-		if yes := truthy[strings.ToLower(grayscale)]; yes {
-			filter.Grayscale = &yes
-		} else if no := falsey[strings.ToLower(grayscale)]; !no {
-			filter.Grayscale = &no
+		if val, err := stringToBool(grayscale); err != nil {
+			return nil, err
 		} else {
-			return nil, errors.New("invalid string to boolean conversion")
+			filter.Grayscale = &val
 		}
 	}
+
 	if sprock := r.URL.Query().Get("sprocket"); sprock != "" {
-		if yes := truthy[strings.ToLower(sprock)]; yes {
-			filter.Sprocket = &yes
-		} else if no := falsey[strings.ToLower(sprock)]; !no {
-			filter.Sprocket = &no
+		if val, err := stringToBool(sprock); err != nil {
+			return nil, err
 		} else {
-			return nil, errors.New("invalid string to boolean conversion")
+			filter.Sprocket = &val
 		}
 	}
+
 	if seed := r.URL.Query().Get("seed"); seed != "" {
-		if seed, err := strconv.Atoi(seed); err != nil {
+		if seed, err := stringToInt(seed); err != nil {
 			return nil, err
 		} else {
 			filter.Seed = &seed
 		}
 	}
+
 	if id := r.URL.Query().Get("id"); id != "" {
 		if identify, err := strconv.Atoi(id); err != nil {
 			return nil, err
@@ -451,32 +443,34 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			filter.IDs = &[]int{identify}
 		}
 	}
+
 	if title := r.URL.Query().Get("title"); title != "" {
 		filter.Title = &title
 	}
+
 	if author := r.URL.Query().Get("author"); author != "" {
 		filter.Author = &author
 	}
+
+	if color := r.URL.Query().Get("color"); color != "" {
+		filter.Color = &color
+	}
+
+	if colorPercent := r.URL.Query().Get("min_color_percent"); colorPercent != "" {
+		if percent, err := strconv.ParseFloat(colorPercent, 64); err != nil {
+			err := fmt.Errorf("failed to parse %s to float, err=%w", colorPercent, err)
+			return nil, err
+		} else {
+			filter.ColorPercent = &percent
+		}
+	}
+
 	return filter, nil
 }
 
 // parse URL for query parameters and
 // convert to PostSimilarityFilter (query vector db)
 func parseToSimilarityFilter(r *http.Request) (*analogdb.PostSimilarityFilter, error) {
-
-	truthy := make(map[string]bool)
-	truthy["true"] = true
-	truthy["t"] = true
-	truthy["yes"] = true
-	truthy["y"] = true
-	truthy["1"] = true
-
-	falsey := make(map[string]bool)
-	falsey["false"] = false
-	falsey["f"] = false
-	falsey["no"] = false
-	falsey["n"] = false
-	falsey["0"] = false
 
 	filter := &analogdb.PostSimilarityFilter{Limit: &defaultSimilarityLimit}
 
@@ -506,34 +500,31 @@ func parseToSimilarityFilter(r *http.Request) (*analogdb.PostSimilarityFilter, e
 				filter.Limit = &maxSimilarityLimit
 			}
 		}
+	}
 
-	}
 	if nsfw := r.URL.Query().Get("nsfw"); nsfw != "" {
-		if yes := truthy[strings.ToLower(nsfw)]; yes {
-			filter.Nsfw = &yes
-		} else if no := falsey[strings.ToLower(nsfw)]; !no {
-			filter.Nsfw = &no
+		if val, err := stringToBool(nsfw); err != nil {
+			return nil, err
 		} else {
-			return nil, errors.New("invalid string to boolean conversion")
+			filter.Nsfw = &val
 		}
 	}
+
 	if grayscale := r.URL.Query().Get("grayscale"); grayscale != "" {
-		if yes := truthy[strings.ToLower(grayscale)]; yes {
-			filter.Grayscale = &yes
-		} else if no := falsey[strings.ToLower(grayscale)]; !no {
-			filter.Grayscale = &no
+		if val, err := stringToBool(grayscale); err != nil {
+			return nil, err
 		} else {
-			return nil, errors.New("invalid string to boolean conversion")
+			filter.Grayscale = &val
 		}
 	}
+
 	if sprock := r.URL.Query().Get("sprocket"); sprock != "" {
-		if yes := truthy[strings.ToLower(sprock)]; yes {
-			filter.Sprocket = &yes
-		} else if no := falsey[strings.ToLower(sprock)]; !no {
-			filter.Sprocket = &no
+		if val, err := stringToBool(sprock); err != nil {
+			return nil, err
 		} else {
-			return nil, errors.New("invalid string to boolean conversion")
+			filter.Sprocket = &val
 		}
 	}
+
 	return filter, nil
 }

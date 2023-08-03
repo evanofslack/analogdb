@@ -224,7 +224,7 @@ func TestLatestPost(t *testing.T) {
 		defer mustClose(t, db)
 		ps := NewPostService(db)
 
-		sort := time
+		sort := analogdb.SortTime
 		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
 
 		posts, _, err := ps.FindPosts(context.Background(), filter)
@@ -261,7 +261,7 @@ func TestTopPost(t *testing.T) {
 		defer mustClose(t, db)
 		ps := NewPostService(db)
 
-		sort := score
+		sort := analogdb.SortScore
 		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
 
 		posts, _, err := ps.FindPosts(context.Background(), filter)
@@ -297,7 +297,7 @@ func TestRandomPost(t *testing.T) {
 		defer mustClose(t, db)
 		ps := NewPostService(db)
 
-		sort := random
+		sort := analogdb.SortRandom
 		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
 
 		if seed := filter.Seed; seed != nil {

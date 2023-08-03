@@ -18,7 +18,7 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 		t.Error("Error loading .env file")
 	}
 
-	logger, err := logger.New("debug", "debug")
+	logger, err := logger.New("debug", "debug", "analogdb-test")
 	if err != nil {
 		t.Fatal(err)
 	}

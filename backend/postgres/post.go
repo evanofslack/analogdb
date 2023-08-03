@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"math/rand"
 	"strconv"
 	"strings"
 	goTime "time"
@@ -71,15 +70,6 @@ func NewPostService(db *DB) *PostService {
 	return &PostService{db: db}
 }
 
-// Sorting constants
-const (
-	time   = "time"
-	score  = "score"
-	random = "random"
-)
-
-var primes = []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 107, 113, 131, 137, 149, 167, 173, 179, 191, 197, 227, 233, 239, 251, 257, 263}
-
 func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost) (*analogdb.Post, error) {
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -109,7 +99,8 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	}
 	defer tx.Rollback()
 	ids := []int{id}
-	posts, _, err := s.db.findPosts(ctx, tx, &analogdb.PostFilter{IDs: &ids})
+	filter := analogdb.NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil)
+	posts, _, err := s.db.findPosts(ctx, tx, filter)
 	if err != nil {
 		return nil, err
 	} else if len(posts) == 0 {
@@ -358,11 +349,6 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
 
 	db.logger.Debug().Ctx(ctx).Msg("Starting find posts")
-
-	if err := validateFilter(filter); err != nil {
-		db.logger.Error().Err(err).Msg("Failed to find posts")
-		return nil, 0, err
-	}
 
 	where, args := filterToWhere(filter)
 	groupby := ` GROUP BY p.id`
@@ -683,15 +669,15 @@ func (db *DB) allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 func filterToOrder(filter *analogdb.PostFilter) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
-		case time:
+		case analogdb.SortTime:
 			return " ORDER BY p.time DESC"
-		case score:
+		case analogdb.SortScore:
 			return " ORDER BY p.score DESC"
-		case random:
+		case analogdb.SortRandom:
 			if seed := filter.Seed; seed != nil {
 				return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", *seed)
 			} else {
-				newSeed := newSeed()
+				newSeed := analogdb.NewSeed()
 				filter.Seed = &newSeed
 				return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", newSeed)
 			}
@@ -710,12 +696,6 @@ func formatLimit(filter *analogdb.PostFilter) string {
 	return ""
 }
 
-// newSeed generates a random prime number
-func newSeed() int {
-	randomIndex := rand.Intn(len(primes))
-	return primes[randomIndex]
-}
-
 // filterToWhere converts a PostFilter to an SQL WHERE statement
 func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 	index := 1
@@ -723,15 +703,15 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 
 	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
 		switch *sort {
-		case time:
+		case analogdb.SortTime:
 			where = append(where, fmt.Sprintf("p.time < $%d", index))
 			args = append(args, *keyset)
 			index += 1
-		case score:
+		case analogdb.SortScore:
 			where = append(where, fmt.Sprintf("p.score < $%d", index))
 			args = append(args, *keyset)
 			index += 1
-		case random:
+		case analogdb.SortRandom:
 			if seed := filter.Seed; seed != nil {
 				where = append(where, fmt.Sprintf("MOD(p.time, $%d) > $%d", index, index+1))
 				args = append(args, *seed, *keyset%*seed)
@@ -745,16 +725,19 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 		args = append(args, *nsfw)
 		index += 1
 	}
+
 	if grayscale := filter.Grayscale; grayscale != nil {
 		where = append(where, fmt.Sprintf("p.greyscale = $%d", index))
 		args = append(args, *grayscale)
 		index += 1
 	}
+
 	if sprocket := filter.Sprocket; sprocket != nil {
 		where = append(where, fmt.Sprintf("p.sprocket = $%d", index))
 		args = append(args, *sprocket)
 		index += 1
 	}
+
 	if ids := filter.IDs; ids != nil {
 		where = append(where, fmt.Sprintf("p.id = ANY($%d::int[])", index))
 		// turn the slice of ids into a string i.e. "(1,2,3)"
@@ -773,12 +756,14 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 		args = append(args, idsFormat)
 		index += 1
 	}
+
 	// match partial text in post title with ILIKE
 	if title := filter.Title; title != nil {
 		where = append(where, fmt.Sprintf("p.title ILIKE $%d", index))
 		args = append(args, "%"+*title+"%")
 		index += 1
 	}
+
 	// if query does not prefix author with 'u/' we need to add it
 	if author := filter.Author; author != nil {
 		var matchAuthor string
@@ -792,29 +777,14 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 		index += 1
 	}
 
-	// no where arguments provided
-	// if index == 1 {
-	// 	return ``, args
-	// }
+	// match against first color (for now)
+	if color, colorPercent := filter.Color, filter.ColorPercent; color != nil {
+		where = append(where, fmt.Sprintf("p.c1_css = $%d AND p.c1_percent > $%d", index, index+1))
+		args = append(args, *color, *colorPercent)
+		index += 2
+	}
 
 	return `WHERE ` + strings.Join(where, " AND "), args
-
-}
-
-// validateSort ensures that provided sort method is defined
-func validateFilter(filter *analogdb.PostFilter) error {
-	validSort := make(map[string]bool)
-	validSort[time] = true
-	validSort[score] = true
-	validSort[random] = true
-
-	if sort := filter.Sort; sort != nil {
-		if !validSort[*sort] {
-			return errors.New("invalid sort parameter, valid options are 'time', 'score' or 'random'")
-		}
-		return nil
-	}
-	return nil
 }
 
 // Converts a patch to an SQL set statement
