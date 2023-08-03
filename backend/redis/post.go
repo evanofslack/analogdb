@@ -25,7 +25,7 @@ const (
 	// name of posts cache
 	postsInstance = "posts"
 	// ttl for all other post service data
-	postsTTL = time.Hour * 4
+	postsTTL = time.Hour * 1
 	// in memory cache size all other post service data
 	postsLocalSize = 100
 )
@@ -78,13 +78,13 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	var count int
 
 	// try to get posts from cache
-	err = s.postCache.get(ctx, postsHash, &posts)
+	postsErr := s.postsCache.get(ctx, postsHash, &posts)
 
 	// try to get posts count from cache
-	err = s.postsCache.get(ctx, postsCountHash, &count)
+	countErr := s.postsCache.get(ctx, postsCountHash, &count)
 
 	// no error means we found in cache
-	if err == nil {
+	if postsErr == nil && countErr == nil {
 		return posts, count, nil
 	}
 
@@ -99,6 +99,7 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	go func() {
 
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postsCache.instance).Msg("Adding posts and posts counts to cache")
+
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
