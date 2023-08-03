@@ -147,11 +147,6 @@ func (cache *Cache) get(ctx context.Context, key string, item interface{}) error
 			cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Cache miss")
 			cache.stats.incMisses()
 
-			// or error decoding an empty array? this is fine and not an error
-			// } else if strings.Contains(err.Error(), decodeArrayErr) {
-			// 	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Error decoding array on cache get, proceeding")
-			// 	cache.stats.incMisses()
-
 			// or an actual error
 		} else {
 			cache.logger.Error().Err(err).Ctx(ctx).Str("instance", cache.instance).Msg("Error getting item from cache")

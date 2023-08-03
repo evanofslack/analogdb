@@ -78,6 +78,8 @@ const (
 	random = "random"
 )
 
+var primes = []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 107, 113, 131, 137, 149, 167, 173, 179, 191, 197, 227, 233, 239, 251, 257, 263}
+
 func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost) (*analogdb.Post, error) {
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -689,7 +691,7 @@ func filterToOrder(filter *analogdb.PostFilter) string {
 			if seed := filter.Seed; seed != nil {
 				return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", *seed)
 			} else {
-				newSeed := seedGenerator()
+				newSeed := newSeed()
 				filter.Seed = &newSeed
 				return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", newSeed)
 			}
@@ -708,11 +710,10 @@ func formatLimit(filter *analogdb.PostFilter) string {
 	return ""
 }
 
-// seedGenerator generates a random prime number
-func seedGenerator() int {
-	prime_seeds := []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97}
-	randomIndex := rand.Intn(len(prime_seeds))
-	return prime_seeds[randomIndex]
+// newSeed generates a random prime number
+func newSeed() int {
+	randomIndex := rand.Intn(len(primes))
+	return primes[randomIndex]
 }
 
 // filterToWhere converts a PostFilter to an SQL WHERE statement
