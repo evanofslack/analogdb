@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -56,6 +57,9 @@ var maxSimilarityLimit = 50
 
 // default to sorting by time descending (latest)
 var defaultSort = "time"
+
+// seeds for random post order
+var primes = []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 107, 113, 131, 137, 149, 167, 173, 179, 191, 197, 227, 233, 239, 251, 257, 263}
 
 const (
 	postsPath = "/posts"
@@ -265,13 +269,17 @@ func (s *Server) makePostResponse(r *http.Request, filter *analogdb.PostFilter) 
 
 // setMeta computes the metadata from a query
 func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Meta, error) {
+
 	meta := Meta{}
+
 	// totalPosts
 	meta.TotalPosts = count
+
 	// seed
 	if seed := filter.Seed; seed != nil {
 		meta.Seed = *seed
 	}
+
 	// pageSize
 	if limit := filter.Limit; limit != nil {
 		meta.PageSize = *limit
@@ -280,6 +288,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 			return meta, nil
 		}
 	}
+
 	//pageID
 	if sort := filter.Sort; sort != nil {
 		if *sort == "time" || *sort == "random" {
@@ -290,6 +299,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 			return Meta{}, errors.New("invalid sort parameter: " + *sort)
 		}
 	}
+
 	//pageUrl
 	if sort := filter.Sort; sort != nil {
 		path := postsPath
@@ -323,6 +333,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		}
 		meta.PageURL = path
 	}
+
 	return meta, nil
 }
 
@@ -334,6 +345,11 @@ func paramJoiner(numParams *int) string {
 		*numParams += 1
 		return "&"
 	}
+}
+
+func newSeed() int {
+	randomIndex := rand.Intn(len(primes))
+	return primes[randomIndex]
 }
 
 // parse URL for query parameters and convert to PostFilter needed to query db
@@ -366,7 +382,9 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 				filter.Sort = &score
 			case "random":
 				random := "random"
+				seed := newSeed()
 				filter.Sort = &random
+				filter.Seed = &seed
 			}
 		} else {
 			return nil, errors.New("invalid sort parameter - valid options: latest, top, random")
