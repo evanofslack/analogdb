@@ -1,0 +1,35 @@
+[api]
+enabled = true
+address = "0.0.0.0:8686"
+playground = true
+
+[sources.docker]
+type = "docker_logs"
+auto_partial_merge = true
+docker_host = "/var/run/docker.sock"
+
+[transforms.parse_docker]
+type = "remap"
+inputs = ["docker"]
+source = '''
+structured =
+  parse_json(.message) ??
+  parse_key_value(.message) ??
+  parse_json(.msg) ??
+  parse_key_value!(.msg)
+. = merge!(., structured)
+'''
+
+[sinks.loki_docker]
+type = "loki"
+inputs = [ "parse_docker" ]
+endpoint = "http://loki:3100"
+path = "/loki/api/v1/push"
+encoding.codec = "json"
+out_of_order_action = "drop"
+remove_timestamp = true
+[sinks.loki_docker.labels]
+forwarder = "vector"
+level = '{{level}}'
+container_name = '{{container_name}}'
+app = '{{app}}'
