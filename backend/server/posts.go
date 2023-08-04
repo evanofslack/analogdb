@@ -329,6 +329,17 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		if author := filter.Author; author != nil {
 			path += fmt.Sprintf("%sauthor=%s", paramJoiner(&numParams), *author)
 		}
+		if color := filter.Color; color != nil {
+			path += fmt.Sprintf("%scolor=%s", paramJoiner(&numParams), *color)
+			if colorPercent := filter.ColorPercent; colorPercent != nil {
+				path += fmt.Sprintf("%smin_color_percent=%.2f", paramJoiner(&numParams), *colorPercent)
+			}
+		}
+		if keywords := filter.Keywords; keywords != nil {
+			for _, keyword := range *keywords {
+				path += fmt.Sprintf("%skeyword=%s", paramJoiner(&numParams), keyword)
+			}
+		}
 		meta.PageURL = path
 	}
 

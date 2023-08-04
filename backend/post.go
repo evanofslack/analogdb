@@ -150,25 +150,29 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 	}
 
 	filter := &PostFilter{
-		Limit:        limit,
-		Sort:         sort,
-		Keyset:       keyset,
-		Nsfw:         nsfw,
-		Grayscale:    grayscale,
-		Sprocket:     sprocket,
-		Seed:         seed,
-		IDs:          ids,
-		Title:        title,
-		Author:       author,
-		Color:        color,
-		ColorPercent: colorPercent,
-		Keywords:     keywords,
+		Limit:     limit,
+		Sort:      sort,
+		Keyset:    keyset,
+		Nsfw:      nsfw,
+		Grayscale: grayscale,
+		Sprocket:  sprocket,
+		Seed:      seed,
+		IDs:       ids,
+		Title:     title,
+		Author:    author,
+		Color:     color,
+		Keywords:  keywords,
 	}
 	return filter
 }
 
 func NewPostFilterWithIDs(ids []int) *PostFilter {
 	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil)
+}
+
+func NewSeed() int {
+	randomIndex := rand.Intn(len(primes))
+	return primes[randomIndex]
 }
 
 // PostSimilarityFilter are options used for querying similar posts
@@ -215,9 +219,4 @@ type PostService interface {
 	PatchPost(ctx context.Context, post *PatchPost, id int) error
 	DeletePost(ctx context.Context, id int) error
 	AllPostIDs(ctx context.Context) ([]int, error)
-}
-
-func NewSeed() int {
-	randomIndex := rand.Intn(len(primes))
-	return primes[randomIndex]
 }
