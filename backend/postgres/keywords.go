@@ -41,7 +41,6 @@ func getKeywordSummary(ctx context.Context, tx *sql.Tx, limit int) (*[]analogdb.
 	query := `
 			SELECT
 				word,
-				avg(weight) as avg_weight,
 				count(word) as count,
 				COUNT(*) OVER() as total
 			FROM keywords
@@ -62,7 +61,7 @@ func getKeywordSummary(ctx context.Context, tx *sql.Tx, limit int) (*[]analogdb.
 	var kw analogdb.KeywordSummary
 	var total int
 	for rows.Next() {
-		if err := rows.Scan(&kw.Word, &kw.Count, &kw.AvgWeight, &total); err != nil {
+		if err := rows.Scan(&kw.Word, &kw.Count, &total); err != nil {
 			return nil, err
 		}
 		keywords = append(keywords, kw)

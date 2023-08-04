@@ -26,12 +26,6 @@ type Color struct {
 	Percent float64 `json:"percent"`
 }
 
-// Keyword represents a single word/tag for a post
-type Keyword struct {
-	Word   string  `json:"word"`
-	Weight float64 `json:"weight"`
-}
-
 // CreatePost is the model for creating a post.
 // This includes info from the original reddit post
 // as well as attributes about the image
@@ -150,18 +144,19 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 	}
 
 	filter := &PostFilter{
-		Limit:     limit,
-		Sort:      sort,
-		Keyset:    keyset,
-		Nsfw:      nsfw,
-		Grayscale: grayscale,
-		Sprocket:  sprocket,
-		Seed:      seed,
-		IDs:       ids,
-		Title:     title,
-		Author:    author,
-		Color:     color,
-		Keywords:  keywords,
+		Limit:        limit,
+		Sort:         sort,
+		Keyset:       keyset,
+		Nsfw:         nsfw,
+		Grayscale:    grayscale,
+		Sprocket:     sprocket,
+		Seed:         seed,
+		IDs:          ids,
+		Title:        title,
+		Author:       author,
+		Color:        color,
+		ColorPercent: colorPercent,
+		Keywords:     keywords,
 	}
 	return filter
 }
