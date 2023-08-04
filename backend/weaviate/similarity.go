@@ -46,7 +46,7 @@ func (ss SimilarityService) FindSimilarPosts(ctx context.Context, similarityFilt
 	}
 
 	// turn IDs into posts
-	filter := analogdb.NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilterWithIDs(ids)
 	posts, _, err = ss.postService.FindPosts(ctx, filter)
 	return posts, err
 }

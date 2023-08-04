@@ -99,7 +99,7 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	}
 	defer tx.Rollback()
 	ids := []int{id}
-	filter := analogdb.NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilterWithIDs(ids)
 	posts, _, err := s.db.findPosts(ctx, tx, filter)
 	if err != nil {
 		return nil, err
@@ -782,6 +782,40 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 		where = append(where, fmt.Sprintf("p.c1_css = $%d AND p.c1_percent > $%d", index, index+1))
 		args = append(args, *color, *colorPercent)
 		index += 2
+	}
+
+	// match keywords
+	if keywords := filter.Keywords; keywords != nil {
+
+		// get all post ids matching all keywords.
+		//
+		// i.e.
+		//
+		// WHERE post_id IN (
+		// 	SELECT post_id
+		// 	FROM keywords
+		// 	WHERE word = '$word1'
+		// 	INTERSECT
+		// 	SELECT post_id
+		// 	FROM keywords
+		// 	WHERE word = '$word2'
+		//  ...
+		// )
+
+		inner := ""
+		// must do one intersection for each keyword.
+		for _, keyword := range *keywords {
+			inner += fmt.Sprintf("SELECT post_id from keywords WHERE word = $%d INTERSECT ", index)
+			index += 1
+			args = append(args, keyword)
+		}
+
+		// strip off the trailing intersect
+		inner = strings.TrimSuffix(inner, " INTERSECT ")
+
+		statement := fmt.Sprintf("p.id IN (%s)", inner)
+
+		where = append(where, statement)
 	}
 
 	return `WHERE ` + strings.Join(where, " AND "), args

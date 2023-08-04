@@ -45,7 +45,7 @@ services:
 
   postgres:
     container_name: postgres
-    image: postgres:latest
+    image: postgres:15
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}

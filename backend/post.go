@@ -26,12 +26,6 @@ type Color struct {
 	Percent float64 `json:"percent"`
 }
 
-// Keyword represents a single word/tag for a post
-type Keyword struct {
-	Word   string  `json:"word"`
-	Weight float64 `json:"weight"`
-}
-
 // CreatePost is the model for creating a post.
 // This includes info from the original reddit post
 // as well as attributes about the image
@@ -134,9 +128,10 @@ type PostFilter struct {
 	Author       *string
 	Color        *string
 	ColorPercent *float64
+	Keywords     *[]string
 }
 
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author, color *string, colorPercent *float64) *PostFilter {
+func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author, color *string, colorPercent *float64, keywords *[]string) *PostFilter {
 
 	if seed == nil {
 		newSeed := NewSeed()
@@ -147,7 +142,6 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 		newColorPercent := defaultMinColorPercent
 		colorPercent = &newColorPercent
 	}
-
 
 	filter := &PostFilter{
 		Limit:        limit,
@@ -162,8 +156,18 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 		Author:       author,
 		Color:        color,
 		ColorPercent: colorPercent,
+		Keywords:     keywords,
 	}
 	return filter
+}
+
+func NewPostFilterWithIDs(ids []int) *PostFilter {
+	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil)
+}
+
+func NewSeed() int {
+	randomIndex := rand.Intn(len(primes))
+	return primes[randomIndex]
 }
 
 // PostSimilarityFilter are options used for querying similar posts
@@ -210,10 +214,4 @@ type PostService interface {
 	PatchPost(ctx context.Context, post *PatchPost, id int) error
 	DeletePost(ctx context.Context, id int) error
 	AllPostIDs(ctx context.Context) ([]int, error)
-}
-
-
-func NewSeed() int {
-	randomIndex := rand.Intn(len(primes))
-	return primes[randomIndex]
 }

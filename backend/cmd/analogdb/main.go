@@ -131,6 +131,7 @@ func main() {
 	var authorService analogdb.AuthorService
 	var readyService analogdb.ReadyService
 	var scrapeService analogdb.ScrapeService
+	var keywordService analogdb.KeywordService
 	var similarityService analogdb.SimilarityService
 
 	// create service implementations
@@ -138,6 +139,7 @@ func main() {
 	authorService = postgres.NewAuthorService(db)
 	readyService = postgres.NewReadyService(db)
 	scrapeService = postgres.NewScrapeService(db)
+	keywordService = postgres.NewKeywordService(db)
 
 	// if cache enabled, replace the with cache implementation
 	if cfg.App.CacheEnabled {
@@ -156,6 +158,7 @@ func main() {
 	server.ReadyService = readyService
 	server.AuthorService = authorService
 	server.ScrapeService = scrapeService
+	server.KeywordService = keywordService
 	server.SimilarityService = similarityService
 
 	if err := server.Run(); err != nil {

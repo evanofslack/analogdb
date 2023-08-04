@@ -147,6 +147,11 @@ func (cache *Cache) get(ctx context.Context, key string, item interface{}) error
 			cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Cache miss")
 			cache.stats.incMisses()
 
+			// temporarily downlevel this error
+		} else if strings.Contains(err.Error(), decodeArrayErr) {
+			cache.logger.Warn().Ctx(ctx).Str("instance", cache.instance).Msg(decodeArrayErr)
+			cache.stats.incErrors()
+
 			// or an actual error
 		} else {
 			cache.logger.Error().Err(err).Ctx(ctx).Str("instance", cache.instance).Msg("Error getting item from cache")
