@@ -270,9 +270,11 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 	// totalPosts
 	meta.TotalPosts = count
 
-	// seed
-	if seed := filter.Seed; seed != nil {
-		meta.Seed = *seed
+	// add seed if sort order is random
+	if sort := filter.Sort; *sort == analogdb.SortRandom {
+		if seed := filter.Seed; seed != nil {
+			meta.Seed = *seed
+		}
 	}
 
 	// pageSize
