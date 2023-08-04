@@ -29,6 +29,7 @@ type Server struct {
 	ReadyService      analogdb.ReadyService
 	AuthorService     analogdb.AuthorService
 	ScrapeService     analogdb.ScrapeService
+	KeywordService    analogdb.KeywordService
 	SimilarityService analogdb.SimilarityService
 }
 
@@ -52,6 +53,7 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	s.mountAuthorHandlers()
 	s.mountSimilarityHandlers()
 	s.mountScrapeHandlers()
+	s.mountKeywordHandlers()
 	s.mountStaticHandlers()
 	s.mountStatusHandlers()
 	s.mountStatsHandlers()
