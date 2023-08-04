@@ -362,9 +362,11 @@ func stringToInt(query string) (int, error) {
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 
-	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
-	if sort := r.URL.Query().Get("sort"); sort != "" {
+	values := r.URL.Query()
+
+	if sort := values.Get("sort"); sort != "" {
 		if sort == "latest" || sort == "top" || sort == "random" {
 			switch sort {
 			case "latest":
@@ -382,7 +384,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if limit := r.URL.Query().Get("page_size"); limit != "" {
+	if limit := values.Get("page_size"); limit != "" {
 		if intLimit, err := stringToInt(limit); err != nil {
 			return nil, err
 		} else {
@@ -395,7 +397,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if key := r.URL.Query().Get("page_id"); key != "" {
+	if key := values.Get("page_id"); key != "" {
 		if keyset, err := stringToInt(key); err != nil {
 			err := fmt.Errorf("failed to parse %s to integer, err=%w", key, err)
 			return nil, err
@@ -404,7 +406,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if nsfw := r.URL.Query().Get("nsfw"); nsfw != "" {
+	if nsfw := values.Get("nsfw"); nsfw != "" {
 		if val, err := stringToBool(nsfw); err != nil {
 			return nil, err
 		} else {
@@ -412,7 +414,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if grayscale := r.URL.Query().Get("grayscale"); grayscale != "" {
+	if grayscale := values.Get("grayscale"); grayscale != "" {
 		if val, err := stringToBool(grayscale); err != nil {
 			return nil, err
 		} else {
@@ -420,7 +422,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if sprock := r.URL.Query().Get("sprocket"); sprock != "" {
+	if sprock := values.Get("sprocket"); sprock != "" {
 		if val, err := stringToBool(sprock); err != nil {
 			return nil, err
 		} else {
@@ -428,7 +430,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if seed := r.URL.Query().Get("seed"); seed != "" {
+	if seed := values.Get("seed"); seed != "" {
 		if seed, err := stringToInt(seed); err != nil {
 			return nil, err
 		} else {
@@ -436,7 +438,7 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if id := r.URL.Query().Get("id"); id != "" {
+	if id := values.Get("id"); id != "" {
 		if identify, err := strconv.Atoi(id); err != nil {
 			return nil, err
 		} else {
@@ -444,25 +446,29 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if title := r.URL.Query().Get("title"); title != "" {
+	if title := values.Get("title"); title != "" {
 		filter.Title = &title
 	}
 
-	if author := r.URL.Query().Get("author"); author != "" {
+	if author := values.Get("author"); author != "" {
 		filter.Author = &author
 	}
 
-	if color := r.URL.Query().Get("color"); color != "" {
+	if color := values.Get("color"); color != "" {
 		filter.Color = &color
 	}
 
-	if colorPercent := r.URL.Query().Get("min_color_percent"); colorPercent != "" {
+	if colorPercent := values.Get("min_color_percent"); colorPercent != "" {
 		if percent, err := strconv.ParseFloat(colorPercent, 64); err != nil {
 			err := fmt.Errorf("failed to parse %s to float, err=%w", colorPercent, err)
 			return nil, err
 		} else {
 			filter.ColorPercent = &percent
 		}
+	}
+
+	if keywords, ok := values["keyword"]; ok {
+		filter.Keywords = &keywords
 	}
 
 	return filter, nil
