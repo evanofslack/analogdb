@@ -21,13 +21,18 @@ func Middleware(logger *Logger) func(next http.Handler) http.Handler {
 					return
 				}
 
+				// don't log healthcheck requests
+				if p := r.URL.Path; p == "/healthz" || p == "/readyz" {
+					return
+				}
+
 				// log end request
 				logger.Info().
 					Ctx(ctx).
 					Timestamp().
 					Fields(map[string]interface{}{
 						"remote_ip":  r.RemoteAddr,
-						"url":        r.URL.Path,
+						"path":       r.URL.Path,
 						"proto":      r.Proto,
 						"method":     r.Method,
 						"user_agent": r.Header.Get("User-Agent"),
