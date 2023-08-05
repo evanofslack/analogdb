@@ -1,16 +1,25 @@
-version: '3.8'
+version: "3.8"
+
+networks:
+  default:
+    external: true
+    name: analogdb
+
 services:
   analogdb-scraper:
+    container_name: analogdb-scraper
     build: .
     restart: unless-stopped
-    container_name: analogdb-scraper
-    image: analogdb-scraper
     environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AWS_REGION=${AWS_REGION}
-      - REDDIT_CLIENT_ID=${REDDIT_CLIENT_ID}
-      - REDDIT_CLIENT_SECRET=${REDDIT_CLIENT_SECRET}
-      - REDDIT_USER_AGENT=${REDDIT_USER_AGENT}
-      - AUTH_USERNAME=${AUTH_USERNAME}
-      - AUTH_PASSWORD=${AUTH_PASSWORD}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET}
+      REDDIT_USER_AGENT: ${REDDIT_USER_AGENT}
+      AUTH_USERNAME: ${ANALOGDB_AUTH_USERNAME}
+      AUTH_PASSWORD: ${ANALOGDB_AUTH_PASSWORD}
+      API_BASE_URL: ${ANALOGDB_API_BASE_URL}
+      APP_ENV: ${ANALOGDB_APP_ENV}
+      LOG_LEVEL: ${ANALOGDB_LOG_LEVEL}
+      SLACK_WEBHOOK_URL: ${ANALOGDB_SLACK_WEBHOOK_URL}

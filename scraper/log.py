@@ -1,4 +1,3 @@
-import os
 import sys
 
 from loguru import logger
@@ -7,22 +6,38 @@ from notifiers.logging import NotificationHandler
 from configuration import init_config
 
 
-def init_logger(with_file: bool = True, with_slack: bool = True):
+def init_logger():
 
-    loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
+    config = init_config()
 
-    format = "{time} {level} {message}"
-    format_color = "<green>{time}</green> <level> {level} {message}</level>"
+    format = "{time} | {level} | {message}"
+
+    serialize = False
+    diagnose = True
+    colorize = True
+
+    if config.app.env == "prod" or config.app.env == "production":
+        serialize = True
+        diagnose = False
+        colorize = False
 
     logger.remove(0)  # remove default handler
-    logger.add(sys.stderr, colorize=True, format=format_color, level=loglevel)
+    logger.add(
+        sys.stderr,
+        colorize=colorize,
+        format=format,
+        level=config.app.log_level,
+        serialize=serialize,
+        diagnose=diagnose,
+        backtrace=True,
+    )
 
-    if with_file:
-        logger.add("info.log", format=format, retention="1 week", level="INFO")
-        logger.add("error.log", format=format, retention="2 months", level="WARNING")
+    logger.info(
+        f"created new logger with app_env={config.app.env}, level={config.app.log_level}"
+    )
 
-    if with_slack:
-        config = init_config()
+    if config.slack.url != "":
+        logger.info("adding slack log notifier")
         slack_params = {"webhook_url": config.slack.url}
         slack_handler = NotificationHandler("slack", defaults=slack_params)
         logger.add(slack_handler, level="WARNING")

@@ -21,9 +21,6 @@ RAW_RES = None
 # cloudfront base url
 CLOUDFRONT_URL = "https://d3i73ktnzbi69i.cloudfront.net"
 
-# analogdb base url
-ANALOGDB_URL = "https://api.analogdb.com"
-
 # reddit base url
 REDDIT_URL = "https://www.reddit.com"
 
