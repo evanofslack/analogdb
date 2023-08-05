@@ -7,11 +7,17 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	pingRoute   = "/ping"
+	healthRoute = "/healthz"
+	readyRoute  = "/readyz"
+)
+
 func (s *Server) mountStatusHandlers() {
 
-	s.router.Route("/ping", func(r chi.Router) { r.Get("/", s.ping) })
-	s.router.Route("/healthz", func(r chi.Router) { r.Get("/", s.healthz) })
-	s.router.Route("/readyz", func(r chi.Router) { r.Get("/", s.readyz) })
+	s.router.Route(pingRoute, func(r chi.Router) { r.Get("/", s.ping) })
+	s.router.Route(healthRoute, func(r chi.Router) { r.Get("/", s.healthz) })
+	s.router.Route(readyRoute, func(r chi.Router) { r.Get("/", s.readyz) })
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {

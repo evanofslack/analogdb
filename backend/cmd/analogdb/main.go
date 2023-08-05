@@ -155,8 +155,8 @@ func main() {
 	}
 
 	server.PostService = postService
-	server.ReadyService = readyService
 	server.AuthorService = authorService
+	server.ReadyService = readyService
 	server.ScrapeService = scrapeService
 	server.KeywordService = keywordService
 	server.SimilarityService = similarityService

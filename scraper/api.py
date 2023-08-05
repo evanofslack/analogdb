@@ -107,14 +107,16 @@ def get_all_post_ids() -> List[int]:
 
 def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
 
-    url = f"{base_url}/scrape/keywords/updated"
+    path = "scrape/keywords/updated"
+
+    url = f"{base_url}/{path}"
     r = requests.get(
         url=url,
         auth=HTTPBasicAuth(username=username, password=password),
     )
     if r.status_code != 200:
         raise Exception(
-            f"failed to fetch scrape/keyword/updated with response: {r.json()}"
+            f"failed to fetch {path} with response: {r.json()}"
         )
     try:
         data = r.json()

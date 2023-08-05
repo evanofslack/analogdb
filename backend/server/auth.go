@@ -1,26 +1,28 @@
 package server
 
 import (
+	"context"
 	"crypto/sha256"
 	"crypto/subtle"
 	"net/http"
 )
 
+type contextKey string
+
+const authKey contextKey = "authorized"
+
 func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		ctx := r.Context()
-
 		username := s.config.Auth.Username
 		password := s.config.Auth.Password
-
 		authenticated := s.passBasicAuth(username, password, r)
+
 		if authenticated {
-			s.logger.Debug().Ctx(ctx).Bool("authenticated", authenticated).Msg("Authorized with basic auth")
-			next.ServeHTTP(w, r)
+			ctx := context.WithValue(r.Context(), authKey, true)
+			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
-		s.logger.Debug().Ctx(ctx).Bool("authenticated", authenticated).Msg("Unauthorized with basic auth")
 		w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 	})
