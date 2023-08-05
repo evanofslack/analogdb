@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	cacheMissErr   = "cache: key is missing"
-	decodeArrayErr = "msgpack: invalid code=8c decoding array length"
+	cacheMissErr    = "cache: key is missing"
+	decodeArrayErr1 = "msgpack: invalid code=8c decoding array length"
+	decodeArrayErr2 = "msgpack: number of fields in array-encoded struct has changed"
 )
 
 type RDB struct {
@@ -148,8 +149,8 @@ func (cache *Cache) get(ctx context.Context, key string, item interface{}) error
 			cache.stats.incMisses()
 
 			// temporarily downlevel this error
-		} else if strings.Contains(err.Error(), decodeArrayErr) {
-			cache.logger.Warn().Ctx(ctx).Str("instance", cache.instance).Msg(decodeArrayErr)
+		} else if strings.Contains(err.Error(), decodeArrayErr1) || strings.Contains(err.Error(), decodeArrayErr2) {
+			cache.logger.Warn().Ctx(ctx).Str("instance", cache.instance).Msg(err.Error())
 			cache.stats.incErrors()
 
 			// or an actual error
