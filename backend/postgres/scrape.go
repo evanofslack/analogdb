@@ -5,15 +5,13 @@ import (
 	"database/sql"
 
 	"github.com/evanofslack/analogdb"
-	"github.com/evanofslack/analogdb/logger"
 )
 
 // ensure interface is implemented
 var _ analogdb.ScrapeService = (*ScrapeService)(nil)
 
 type ScrapeService struct {
-	db     *DB
-	logger *logger.Logger
+	db *DB
 }
 
 func NewScrapeService(db *DB) *ScrapeService {
@@ -22,8 +20,8 @@ func NewScrapeService(db *DB) *ScrapeService {
 
 func (s *ScrapeService) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error) {
 
-	s.logger.Debug().Ctx(ctx).Msg("Starting get keyword updated post ids")
-	defer s.logger.Debug().Ctx(ctx).Msg("Finished keyword updated post ids")
+	s.db.logger.Debug().Ctx(ctx).Msg("Starting get keyword updated post ids")
+	defer s.db.logger.Debug().Ctx(ctx).Msg("Finished keyword updated post ids")
 
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {

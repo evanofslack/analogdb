@@ -83,10 +83,7 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 func (server *Server) collectStats(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// start timing
 		start := time.Now()
-
-		// wrap and serve
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 		next.ServeHTTP(ww, r)
