@@ -10,17 +10,21 @@ from api import (encode_images, get_all_post_ids, get_keyword_updated_post_ids,
                  json_to_post, new_patch, patch_to_analogdb)
 from comment import (get_comments, post_keywords, read_comments_from_json,
                      write_comments_to_json, write_keywords_to_disk)
-from constants import (ALL_KEYWORDS_FILEPATH, ANALOGDB_URL,
-                       KEYWORD_UPDATE_CUTOFF_DAYS, READ_COMMENTS_FROM_DISK,
-                       WRITE_KEYWORDS_TO_DISK)
+from configuration import init_config
+from constants import (ALL_KEYWORDS_FILEPATH, KEYWORD_UPDATE_CUTOFF_DAYS,
+                       READ_COMMENTS_FROM_DISK, WRITE_KEYWORDS_TO_DISK)
 from image_process import extract_colors, request_image
 from models import AnalogDisplayPost, Dependencies
 from s3_upload import upload_comments_to_s3
 
+config = init_config()
+base_url = config.app.api_base_url
 
+
+@logger.catch(message="caught error while getting posts from analogdb")
 def unlimited_posts(count: int) -> List[AnalogDisplayPost]:
     # max page size is 200
-    url = f"{ANALOGDB_URL}/posts?sort=latest&page_size={count}"
+    url = f"{base_url}/posts?sort=latest&page_size={count}"
 
     posts: List[AnalogDisplayPost] = []
 
@@ -41,7 +45,7 @@ def unlimited_posts(count: int) -> List[AnalogDisplayPost]:
 
         next_page_url = data["meta"]["next_page_url"]
 
-        url = f"{ANALOGDB_URL}{next_page_url}"
+        url = f"{base_url}{next_page_url}"
         if url == "":
             break
 
@@ -162,7 +166,7 @@ def _update_post_keywords(
         limit=limit,
         blacklist=blacklist,
     )
-    logger.debug(post.title)
+    logger.debug(f"keywords for post {post.title}")
     logger.debug([f"{kw.word}, {kw.weight}" for kw in keywords])
 
     if WRITE_KEYWORDS_TO_DISK:
@@ -171,13 +175,16 @@ def _update_post_keywords(
     # update post in analogdb
     patch = new_patch(keywords=keywords)
     patch_to_analogdb(patch, id=post.id, username=username, password=password)
-    logger.info(f"updated keywords for post {post.id}")
+    logger.info(f"updated post {post.id} with {len(keywords)} total keywords")
 
     # upload the comments as json to s3
     upload_comments_to_s3(s3=s3, comments=comments, filename=f"{post.id}.json")
 
 
 def update_posts_keywords(deps: Dependencies, count: int, limit: Optional[int] = None):
+
+    logger.debug("start update post keywords")
+
     posts = unlimited_posts(count=count)
 
     # don't update a post's keywords more than once
@@ -243,9 +250,11 @@ def update_post_similars(deps: Dependencies, count: int, batch_size: int):
         password=deps.auth.password,
     )
 
+
 def chunk_list(data: List, chunksize: int):
     for i in range(0, len(data), chunksize):
-        yield data[i:i + chunksize]
+        yield data[i : i + chunksize]
+
 
 def batch():
     from configuration import dependencies_from_config, init_config

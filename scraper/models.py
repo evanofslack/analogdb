@@ -177,11 +177,19 @@ class SlackWebhook:
 
 
 @dataclass
+class App:
+    log_level: str
+    env: str
+    api_base_url: str
+
+
+@dataclass
 class Config:
     aws: AwsCreds
     reddit: RedditCreds
     auth: AuthCreds
     slack: SlackWebhook
+    app: App
 
 
 @dataclass

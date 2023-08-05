@@ -5,15 +5,18 @@ import requests
 from loguru import logger
 from requests.auth import HTTPBasicAuth
 
-from constants import ANALOGDB_URL
+from configuration import init_config
 from models import (AnalogDisplayPost, AnalogKeyword, AnalogPost, Color,
                     PatchPost)
+
+config = init_config()
+base_url = config.app.api_base_url
 
 
 def get_latest_posts(count: int) -> List[AnalogDisplayPost]:
 
     # max page size is 200
-    url = f"{ANALOGDB_URL}/posts?sort=latest&page_size={count}"
+    url = f"{base_url}/posts?sort=latest&page_size={count}"
     analog_posts: List[AnalogDisplayPost] = []
 
     # loop until all pages have been queried
@@ -50,7 +53,7 @@ def get_latest_links() -> List[str]:
 def upload_to_analogdb(post: AnalogPost, username: str, password: str):
     dict_post = post_to_json(post)
     json_post = json.dumps(dict_post)
-    url = f"{ANALOGDB_URL}/post"
+    url = f"{base_url}/post"
     resp = requests.put(
         url=url,
         data=json_post,
@@ -69,7 +72,7 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
 def patch_to_analogdb(patch: PatchPost, id: int, username: str, password: str):
     dict_patch = patch_to_json(patch)
     json_patch = json.dumps(dict_patch)
-    url = f"{ANALOGDB_URL}/post/{id}"
+    url = f"{base_url}/post/{id}"
     resp = requests.patch(
         url=url,
         data=json_patch,
@@ -80,7 +83,7 @@ def patch_to_analogdb(patch: PatchPost, id: int, username: str, password: str):
 
 
 def delete_from_analogdb(id: int, username: str, password: str):
-    url = f"{ANALOGDB_URL}/post/{id}"
+    url = f"{base_url}/post/{id}"
     resp = requests.delete(
         url=url,
         auth=HTTPBasicAuth(username=username, password=password),
@@ -90,7 +93,7 @@ def delete_from_analogdb(id: int, username: str, password: str):
 
 
 def get_all_post_ids() -> List[int]:
-    url = f"{ANALOGDB_URL}/ids"
+    url = f"{base_url}/ids"
     resp = requests.get(
         url=url,
     )
@@ -104,7 +107,7 @@ def get_all_post_ids() -> List[int]:
 
 def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
 
-    url = f"{ANALOGDB_URL}/scrape/keywords/updated"
+    url = f"{base_url}/scrape/keywords/updated"
     r = requests.get(
         url=url,
         auth=HTTPBasicAuth(username=username, password=password),
@@ -133,7 +136,7 @@ def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
 def encode_images(ids: List[int], batch_size: int, username: str, password: str):
     data = {"ids": ids, "batch_size": batch_size}
     body = json.dumps(data)
-    url = f"{ANALOGDB_URL}/encode"
+    url = f"{base_url}/encode"
     logger.info(f"encoding post ids {ids}")
     resp = requests.put(
         url=url,

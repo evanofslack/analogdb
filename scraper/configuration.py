@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 from loguru import logger
 
 from constants import BLACKLIST_KEYWORDS_PATH
-from models import (AuthCreds, AwsCreds, Config, Dependencies, RedditCreds,
-                    SlackWebhook)
+from models import (App, AuthCreds, AwsCreds, Config, Dependencies,
+                    RedditCreds, SlackWebhook)
 
 
 @lru_cache(maxsize=None)
@@ -33,9 +33,17 @@ def init_config() -> Config:
         password=os.getenv("AUTH_PASSWORD"),
     )
 
-    slack = SlackWebhook(url=os.getenv("SLACK_WEBHOOK_URL"))
+    slack = SlackWebhook(
+        url=os.getenv("SLACK_WEBHOOK_URL"),
+    )
 
-    config = Config(aws=aws, reddit=reddit, auth=auth, slack=slack)
+    app = App(
+        log_level=os.getenv("LOG_LEVEL"),
+        env=os.getenv("APP_ENV"),
+        api_base_url=os.getenv("API_BASE_URL"),
+    )
+
+    config = Config(aws=aws, reddit=reddit, auth=auth, slack=slack, app=app)
 
     return config
 
