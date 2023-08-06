@@ -2,6 +2,8 @@ import gc
 import time
 
 import schedule
+from loguru import logger
+
 from api import get_latest_links, upload_to_analogdb
 from batch import update_posts_keywords, update_posts_scores
 from comment import get_comments, post_keywords
@@ -9,7 +11,6 @@ from configuration import dependencies_from_config, init_config
 from constants import (ANALOG_POSTS, ANALOG_SUB, BW_POSTS, BW_SUB,
                        KEYWORD_LIMIT, SPROCKET_POSTS, SPROCKET_SUB)
 from log import init_logger
-from loguru import logger
 from models import Dependencies
 from s3_upload import create_analog_post, upload_images_to_s3
 from scrape import get_posts
@@ -88,9 +89,9 @@ def update_keywords(deps: Dependencies):
 def run_schedule(deps: Dependencies):
 
     # scrape posts
-    # schedule.every().day.do(scrape_bw, deps=deps)
-    # schedule.every().day.do(scrape_sprocket, deps=deps)
-    # schedule.every(4).hours.do(scrape_analog, deps=deps)
+    schedule.every().day.do(scrape_bw, deps=deps)
+    schedule.every().day.do(scrape_sprocket, deps=deps)
+    schedule.every(4).hours.do(scrape_analog, deps=deps)
 
     schedule.every().day.do(update_scores, deps=deps)
     schedule.every().day.do(update_keywords, deps=deps)
