@@ -5,7 +5,8 @@ import schedule
 from loguru import logger
 
 from api import get_latest_links, upload_to_analogdb
-from batch import update_posts_keywords, update_posts_scores
+from batch import (update_posts_colors, update_posts_keywords,
+                   update_posts_scores)
 from comment import get_comments, post_keywords
 from configuration import dependencies_from_config, init_config
 from constants import (ANALOG_POSTS, ANALOG_SUB, BW_POSTS, BW_SUB,
@@ -86,6 +87,11 @@ def update_keywords(deps: Dependencies):
     update_posts_keywords(deps=deps, count=100, limit=KEYWORD_LIMIT)
 
 
+@logger.catch(message="caught error while updating post colors")
+def update_colors(deps: Dependencies):
+    update_posts_colors(deps=deps, count=100)
+
+
 def run_schedule(deps: Dependencies):
 
     # scrape posts
@@ -93,8 +99,8 @@ def run_schedule(deps: Dependencies):
     schedule.every().day.do(scrape_sprocket, deps=deps)
     schedule.every(4).hours.do(scrape_analog, deps=deps)
 
-    schedule.every().day.do(update_scores, deps=deps)
-    schedule.every().day.do(update_keywords, deps=deps)
+    # schedule.every().day.do(update_scores, deps=deps)
+    # schedule.every().day.do(update_keywords, deps=deps)
 
     schedule.run_all()
 

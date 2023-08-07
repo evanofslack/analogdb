@@ -296,6 +296,77 @@ func (db *DB) deleteKeywords(ctx context.Context, tx *sql.Tx, postID int64) erro
 	return nil
 }
 
+// insertKeywords inserts a post's keywords into the DB
+func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Color, postID int64) error {
+
+	db.logger.Debug().Ctx(ctx).Int64("postID", postID).Msg("Starting insert colors")
+
+	first := 1
+	second := 2
+	third := 3
+	fourth := 4
+	fifth := 5
+
+	vals := []any{}
+	inserts := []string{}
+
+	query :=
+		`
+	INSERT INTO colors
+	(hex, css, html, percent, post_id)
+	VALUES `
+
+	for _, c := range colors {
+		inserts = append(inserts, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)", first, second, third, fourth, fifth))
+		vals = append(vals, c.Hex, c.Css, c.Html, c.Percent, postID)
+		first += 5
+		second += 5
+		third += 5
+		fourth += 5
+		fifth += 5
+	}
+
+	query += strings.Join(inserts, ",")
+	stmt, err := tx.PrepareContext(ctx, query)
+
+	if err != nil {
+		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", postID).Msg("Failed to insert colors")
+		return err
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.ExecContext(ctx, vals...)
+
+	if err != nil {
+		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", postID).Msg("Failed to insert colors")
+		return err
+	}
+
+	db.logger.Info().Ctx(ctx).Int64("postID", postID).Msg("Finished inserting colors")
+
+	return nil
+}
+
+// deleteKeywords deletes all keywords for a given post
+func (db *DB) deleteColors(ctx context.Context, tx *sql.Tx, postID int64) error {
+
+	db.logger.Debug().Ctx(ctx).Int64("postID", postID).Msg("Starting delete colors")
+
+	query :=
+		"DELETE FROM colors WHERE post_id = $1"
+
+	rows, err := tx.QueryContext(ctx, query, postID)
+	defer rows.Close()
+	if err != nil {
+		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", postID).Msg("Failed to delete colors")
+		return err
+	}
+
+	db.logger.Info().Ctx(ctx).Int64("postID", postID).Msg("Finished deleting colors")
+	return nil
+}
+
 func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*analogdb.Post, error) {
 
 	db.logger.Debug().Ctx(ctx).Msg("Starting create post")
@@ -313,7 +384,15 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		}
 	}
 
-	// commit transaction if both inserts are ok
+	// insert colors if they are provided
+	if len(post.Colors) != 0 {
+		err = db.insertColors(ctx, tx, post.Colors, *id)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// commit transaction if all inserts are ok
 	err = tx.Commit()
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", *id).Msg("Failed to create post")
@@ -445,18 +524,28 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 
 	hasPatchFields := false
 
-	// if the patch includes updates for the post
-	if patch.Nsfw != nil || patch.Sprocket != nil || patch.Grayscale != nil || patch.Score != nil || patch.Colors != nil {
+	// if the patch includes general updates for the post
+	if patch.Nsfw != nil || patch.Sprocket != nil || patch.Grayscale != nil || patch.Score != nil {
 		hasPatchFields = true
-		if err := db.updatePost(ctx, tx, patch, id); err != nil {
+		if err := db.updatePostGeneral(ctx, tx, patch, id); err != nil {
 			db.logger.Error().Err(err).Ctx(ctx).Int("postID", id).Msg("Failed to patch post")
 			return err
 		}
 	}
+
 	// if the patch includes updates for keywords
 	if patch.Keywords != nil {
 		hasPatchFields = true
 		if err := db.updateKeywords(ctx, tx, *patch.Keywords, id); err != nil {
+			db.logger.Error().Err(err).Ctx(ctx).Int("postID", id).Msg("Failed to patch post")
+			return err
+		}
+	}
+
+	// if the patch includes updates for colors
+	if patch.Colors != nil {
+		hasPatchFields = true
+		if err := db.updateColors(ctx, tx, *patch.Colors, id); err != nil {
 			db.logger.Error().Err(err).Ctx(ctx).Int("postID", id).Msg("Failed to patch post")
 			return err
 		}
@@ -511,7 +600,32 @@ func (db *DB) updateKeywords(ctx context.Context, tx *sql.Tx, keywords []analogd
 	return nil
 }
 
-func (db *DB) updatePost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
+func (db *DB) updateColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Color, id int) error {
+
+	db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting update colors")
+
+	// first delete all colors associated with post
+	if err := db.deleteColors(ctx, tx, int64(id)); err != nil {
+		return err
+	}
+
+	// if we have no colors to insert, just return
+	if len(colors) == 0 {
+		db.logger.Info().Ctx(ctx).Int("postID", id).Msg("Finished updating colors (dropped all colors)")
+		return nil
+	}
+
+	// then insert all new colors
+	if err := db.insertColors(ctx, tx, colors, int64(id)); err != nil {
+		db.logger.Error().Err(err).Ctx(ctx).Int("postID", id).Msg("Failed to update colors")
+		return err
+	}
+
+	db.logger.Info().Ctx(ctx).Int("postID", id).Msg("Finished updating colors")
+	return nil
+}
+
+func (db *DB) updatePostGeneral(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
 
 	db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting update post")
 
@@ -847,30 +961,6 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 		set = append(set, fmt.Sprintf("sprocket = $%d", index))
 		args = append(args, *sprocket)
 		index += 1
-	}
-	if colors := patch.Colors; colors != nil {
-		if len(*colors) != 5 {
-			return "", args, fmt.Errorf("Invalid color array provided, expected %d colors, got %d", 5, len(*colors))
-		}
-
-		// for each color in colors, we need to append hex, css and percent fields
-		for i, color := range *colors {
-
-			// add the hex
-			set = append(set, fmt.Sprintf("c%d_hex = $%d", i+1, index))
-			args = append(args, color.Hex)
-			index += 1
-
-			// add the css
-			set = append(set, fmt.Sprintf("c%d_css = $%d", i+1, index))
-			args = append(args, color.Css)
-			index += 1
-
-			// add the percent
-			set = append(set, fmt.Sprintf("c%d_percent = $%d", i+1, index))
-			args = append(args, color.Percent)
-			index += 1
-		}
 	}
 
 	// no update fields provided

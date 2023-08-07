@@ -145,6 +145,7 @@ def create_analog_post(
         c5_css=c5.css,
         c5_percent=c5.percent,
         keywords=keywords,
+        colors=colors,
     )
 
     return analog_post
