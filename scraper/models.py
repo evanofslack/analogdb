@@ -41,6 +41,7 @@ class AnalogKeyword:
 class Color:
     hex: str
     css: str
+    html: str
     percent: float
 
 
@@ -85,6 +86,7 @@ class AnalogPost:
     c5_percent: float
 
     keywords: List[AnalogKeyword]
+    colors: List[Color]
 
 
 @dataclass

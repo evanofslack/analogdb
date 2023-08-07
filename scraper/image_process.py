@@ -7,7 +7,8 @@ from loguru import logger
 from PIL import ImageChops
 from PIL.Image import ANTIALIAS, Image, new, open
 from scipy.spatial import KDTree
-from webcolors import CSS3_HEX_TO_NAMES, hex_to_rgb, rgb_to_hex
+from webcolors import (CSS3_HEX_TO_NAMES, HTML4_HEX_TO_NAMES, hex_to_rgb,
+                       rgb_to_hex)
 
 from constants import COLOR_LIMIT, COLOR_TOLERANCE, LOW_RES
 from models import Color
@@ -60,13 +61,29 @@ def remove_border(image: Image) -> Image:
         return image
 
 
-def rgb_to_name(rgb: Tuple[int, int, int]) -> str:
+def rgb_to_css(rgb: Tuple[int, int, int]) -> str:
     # use KDTree to find closest CSS name for RGB color
 
     names = []
     rgb_values = []
 
     for hex, name in CSS3_HEX_TO_NAMES.items():
+        names.append(name)
+        rgb_values.append(hex_to_rgb(hex))
+
+    kdt_db = KDTree(rgb_values)
+    _, index = kdt_db.query(rgb)
+    match = names[index]
+    return match
+
+
+def rgb_to_html(rgb: Tuple[int, int, int]) -> str:
+    # use KDTree to find closest HTML name for RGB color
+
+    names = []
+    rgb_values = []
+
+    for hex, name in HTML4_HEX_TO_NAMES.items():
         names.append(name)
         rgb_values.append(hex_to_rgb(hex))
 
@@ -99,19 +116,22 @@ def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
         hex = rgb_to_hex(rgb)
 
         # get closest matching css color
-        css = rgb_to_name(rgb)
+        css = rgb_to_css(rgb)
+
+        # get closest matching html color
+        html = rgb_to_html(rgb)
 
         # get percent of image with this color
         percent = round(pixels / total_pixels, 8)
 
         # append it
-        extracted.append(Color(hex=hex, css=css, percent=percent))
+        extracted.append(Color(hex=hex, css=css, html=html, percent=percent))
 
     # we need to send 5 colors to analogdb
     # if we dont have 5 colors, append fillers
     num_filler = COLOR_LIMIT - len(extracted)
     if num_filler > 0:
-        filler = Color(hex="null", css="null", percent=0.0)
+        filler = Color(hex="null", css="null", html="null", percent=0.0)
         for _ in range(num_filler):
             extracted.append(filler)
 

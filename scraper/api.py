@@ -115,9 +115,7 @@ def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
         auth=HTTPBasicAuth(username=username, password=password),
     )
     if r.status_code != 200:
-        raise Exception(
-            f"failed to fetch {path} with response: {r.json()}"
-        )
+        raise Exception(f"failed to fetch {path} with response: {r.json()}")
     try:
         data = r.json()
     except Exception as e:
@@ -202,7 +200,7 @@ def json_to_post(data: dict) -> AnalogDisplayPost:
 
 def post_to_json(post: AnalogPost):
     images = post_to_json_images(post)
-    colors = post_to_json_colors(post)
+    colors = colors_to_json(post.colors)
     keywords = keywords_to_json(post.keywords)
     body = {
         "title": post.title,
@@ -249,36 +247,6 @@ def post_to_json_images(post: AnalogPost) -> List[dict]:
     return [low, med, high, raw]
 
 
-def post_to_json_colors(post: AnalogPost) -> List[dict]:
-    # expected 5 colors
-    c1 = {
-        "hex": post.c1_hex,
-        "css": post.c1_css,
-        "percent": post.c1_percent,
-    }
-    c2 = {
-        "hex": post.c2_hex,
-        "css": post.c2_css,
-        "percent": post.c2_percent,
-    }
-    c3 = {
-        "hex": post.c3_hex,
-        "css": post.c3_css,
-        "percent": post.c3_percent,
-    }
-    c4 = {
-        "hex": post.c4_hex,
-        "css": post.c4_css,
-        "percent": post.c4_percent,
-    }
-    c5 = {
-        "hex": post.c5_hex,
-        "css": post.c5_css,
-        "percent": post.c5_percent,
-    }
-    return [c1, c2, c3, c4, c5]
-
-
 def keywords_to_json(keywords: List[AnalogKeyword]) -> List[dict]:
 
     json_keywords: List[dict] = []
@@ -292,7 +260,7 @@ def colors_to_json(colors: List[Color]) -> List[dict]:
     # expected 5 colors from highest to lowest percent
     json_colors = []
     for c in colors:
-        temp = {"hex": c.hex, "css": c.css, "percent": c.percent}
+        temp = {"hex": c.hex, "css": c.css, "html": c.html, "percent": c.percent}
         json_colors.append(temp)
     return json_colors
 
