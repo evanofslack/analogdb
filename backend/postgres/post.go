@@ -788,13 +788,10 @@ func filterToOrder(filter *analogdb.PostFilter) string {
 		case analogdb.SortScore:
 			return " ORDER BY p.score DESC"
 		case analogdb.SortRandom:
-			if seed := filter.Seed; seed != nil {
-				return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", *seed)
-			} else {
-				newSeed := analogdb.NewSeed()
-				filter.Seed = &newSeed
-				return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", newSeed)
+			if filter.Seed == nil {
+				filter.SetSeed()
 			}
+			return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", *filter.Seed)
 		}
 	}
 	return ""

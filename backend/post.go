@@ -132,12 +132,15 @@ type PostFilter struct {
 	Keywords     *[]string
 }
 
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author, color *string, colorPercent *float64, keywords *[]string) *PostFilter {
-
-	if seed == nil {
-		newSeed := NewSeed()
-		seed = &newSeed
+func (filter *PostFilter) SetSeed() {
+	if filter.Seed == nil {
+		randomIndex := rand.Intn(len(primes))
+		seed := primes[randomIndex]
+		filter.Seed = &seed
 	}
+}
+
+func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author, color *string, colorPercent *float64, keywords *[]string) *PostFilter {
 
 	if colorPercent == nil {
 		newColorPercent := defaultMinColorPercent
@@ -164,11 +167,6 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 
 func NewPostFilterWithIDs(ids []int) *PostFilter {
 	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil)
-}
-
-func NewSeed() int {
-	randomIndex := rand.Intn(len(primes))
-	return primes[randomIndex]
 }
 
 // PostSimilarityFilter are options used for querying similar posts
