@@ -89,7 +89,7 @@ def update_keywords(deps: Dependencies):
 
 @logger.catch(message="caught error while updating post colors")
 def update_colors(deps: Dependencies):
-    update_posts_colors(deps=deps, count=100)
+    update_posts_colors(deps=deps, count=7000)
 
 
 def run_schedule(deps: Dependencies):
@@ -99,8 +99,8 @@ def run_schedule(deps: Dependencies):
     schedule.every().day.do(scrape_sprocket, deps=deps)
     schedule.every(4).hours.do(scrape_analog, deps=deps)
 
-    # schedule.every().day.do(update_scores, deps=deps)
-    # schedule.every().day.do(update_keywords, deps=deps)
+    schedule.every().day.do(update_scores, deps=deps)
+    schedule.every().day.do(update_keywords, deps=deps)
 
     schedule.run_all()
 

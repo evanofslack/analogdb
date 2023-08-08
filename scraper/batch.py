@@ -31,6 +31,7 @@ def unlimited_posts(count: int) -> List[AnalogDisplayPost]:
     # loop until all pages have been queried
     while len(posts) < count:
         try:
+            logger.debug(f"requesting {url}")
             r = requests.get(url=url)
         except Exception as e:
             raise Exception(f"Error making get request to analogdb: {e}")
@@ -46,8 +47,11 @@ def unlimited_posts(count: int) -> List[AnalogDisplayPost]:
         next_page_url = data["meta"]["next_page_url"]
 
         url = f"{base_url}{next_page_url}"
-        if url == "":
+        if next_page_url == "":
+            logger.debug(f"done requesting, end of posts")
+
             break
+        time.sleep(1)
 
     return posts
 

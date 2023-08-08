@@ -1,3 +1,4 @@
+import json
 import sys
 
 from loguru import logger
@@ -22,6 +23,7 @@ def init_logger():
         colorize = False
 
     logger.remove(0)  # remove default handler
+
     logger.add(
         sys.stderr,
         colorize=colorize,
