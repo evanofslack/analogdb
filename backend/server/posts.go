@@ -329,10 +329,14 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		if author := filter.Author; author != nil {
 			path += fmt.Sprintf("%sauthor=%s", paramJoiner(&numParams), *author)
 		}
-		if color := filter.Color; color != nil {
-			path += fmt.Sprintf("%scolor=%s", paramJoiner(&numParams), *color)
-			if colorPercent := filter.ColorPercent; colorPercent != nil {
-				path += fmt.Sprintf("%smin_color_percent=%.2f", paramJoiner(&numParams), *colorPercent)
+		if colors := filter.Colors; colors != nil {
+			for _, color := range *colors {
+				path += fmt.Sprintf("%scolor=%s", paramJoiner(&numParams), color)
+			}
+		}
+		if colorPercents := filter.ColorPercents; colorPercents != nil {
+			for _, percent := range *colorPercents {
+				path += fmt.Sprintf("%smin_color=%.2f", paramJoiner(&numParams), percent)
 			}
 		}
 		if keywords := filter.Keywords; keywords != nil {
@@ -467,17 +471,21 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		filter.Author = &author
 	}
 
-	if color := values.Get("color"); color != "" {
-		filter.Color = &color
+	if colors, ok := values["color"]; ok {
+		filter.Colors = &colors
 	}
 
-	if colorPercent := values.Get("min_color_percent"); colorPercent != "" {
-		if percent, err := strconv.ParseFloat(colorPercent, 64); err != nil {
-			err := fmt.Errorf("failed to parse %s to float, err=%w", colorPercent, err)
-			return nil, err
-		} else {
-			filter.ColorPercent = &percent
+	if colorPercent, ok := values["min_color"]; ok {
+		percents := []float64{}
+		for _, p := range colorPercent {
+			if percent, err := strconv.ParseFloat(p, 64); err != nil {
+				err := fmt.Errorf("failed to parse %s to float, err=%w", colorPercent, err)
+				return nil, err
+			} else {
+				percents = append(percents, percent)
+			}
 		}
+		filter.ColorPercents = &percents
 	}
 
 	if keywords, ok := values["keyword"]; ok {
