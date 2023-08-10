@@ -37,21 +37,10 @@ type rawCreatePost struct {
 	highUrl    string
 	highWidth  int
 	highHeight int
-	c1_hex     string
-	c1_css     string
-	c1_percent float64
-	c2_hex     string
-	c2_css     string
-	c2_percent float64
-	c3_hex     string
-	c3_css     string
-	c3_percent float64
-	c4_hex     string
-	c4_css     string
-	c4_percent float64
-	c5_hex     string
-	c5_css     string
-	c5_percent float64
+	hexes      NullString
+	csses      NullString
+	htmls      NullString
+	percents   NullString
 	words      NullString
 	weights    NullString
 }
@@ -166,8 +155,8 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	query :=
 		`
 	INSERT INTO pictures
-	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight, c1_hex, c1_css, c1_percent, c2_hex, c2_css, c2_percent, c3_hex, c3_css, c3_percent, c4_hex, c4_css, c4_percent, c5_hex, c5_css, c5_percent)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35)
+	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
 	ON CONFLICT (permalink) DO NOTHING
 	RETURNING id
 	`
@@ -202,22 +191,7 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.medHeight,
 		create.highUrl,
 		create.highWidth,
-		create.highHeight,
-		create.c1_hex,
-		create.c1_css,
-		create.c1_percent,
-		create.c2_hex,
-		create.c2_css,
-		create.c2_percent,
-		create.c3_hex,
-		create.c3_css,
-		create.c3_percent,
-		create.c4_hex,
-		create.c4_css,
-		create.c4_percent,
-		create.c5_hex,
-		create.c5_css,
-		create.c5_percent).Scan(&id)
+		create.highHeight).Scan(&id)
 
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", id).Msg("Failed to insert post")
@@ -429,11 +403,21 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 
 	db.logger.Debug().Ctx(ctx).Msg("Starting find posts")
 
-	where, args := filterToWhere(filter)
-	groupby := ` GROUP BY p.id`
+	var colorArgs, keywordArgs, postArgs []any
+	index := 1
+	var colorWhere, keywordWhere, postWhere string
+
+	colorWhere, colorArgs, index = filterToWhereColor(filter, index)
+	keywordWhere, keywordArgs, index = filterToWhereKeyword(filter, index)
+	postWhere, postArgs, index = filterToWherePost(filter, index)
+
+	args := append(colorArgs, keywordArgs...)
+	args = append(args, postArgs...)
+
+	// groupby := ` GROUP BY p.id`
 	order := filterToOrder(filter)
 	limit := formatLimit(filter)
-	query := `
+	query := fmt.Sprintf(`
 			SELECT
 				p.id,
 				p.url,
@@ -456,26 +440,37 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 				p.highUrl,
 				p.highWidth,
 				p.highHeight,
-				p.c1_hex,
-				p.c1_css,
-				p.c1_percent,
-				p.c2_hex,
-				p.c2_css,
-				p.c2_percent,
-				p.c3_hex,
-				p.c3_css,
-				p.c3_percent,
-				p.c4_hex,
-				p.c4_css,
-				p.c4_percent,
-				p.c5_hex,
-				p.c5_css,
-				p.c5_percent,
-				STRING_AGG(k.word, ',' ORDER BY k.weight DESC) as keywords,
-				ARRAY_AGG(k.weight ORDER BY k.weight DESC) as weights,
+				c.hexes,
+				c.csses,
+				c.htmls,
+				c.percents,
+				k.words,
+				k.weights,
 				COUNT(*) OVER()
-			FROM pictures p
-			LEFT OUTER JOIN keywords k ON (k.post_id = p.id)` + where + groupby + order + limit
+			FROM
+				pictures p
+				INNER JOIN (
+					SELECT
+						post_id,
+						STRING_AGG(colors.hex, ',' ORDER BY colors.percent DESC) as hexes,
+						STRING_AGG(colors.css, ',' ORDER BY colors.percent DESC) as csses,
+						STRING_AGG(colors.html, ',' ORDER BY colors.percent DESC) as htmls,
+						ARRAY_AGG(colors.percent ORDER BY colors.percent DESC) as percents
+					FROM colors
+					WHERE %s
+					GROUP BY post_id
+				) c on c.post_id = p.id
+				INNER JOIN (
+					SELECT
+						post_id,
+						STRING_AGG(keywords.word, ',' ORDER BY keywords.weight DESC) as words,
+						ARRAY_AGG(keywords.weight ORDER BY keywords.weight DESC) as weights
+					FROM keywords
+					WHERE %s
+					GROUP BY post_id
+				) k on k.post_id = p.id
+			WHERE %s
+	`, colorWhere, keywordWhere, postWhere) + order + limit
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 
@@ -807,9 +802,109 @@ func formatLimit(filter *analogdb.PostFilter) string {
 	return ""
 }
 
+func filterToWhereColor(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
+
+	index := startIndex
+	base := "1=1"
+	where, args := []string{base}, []any{}
+	colorsP, colorPercentsP := filter.Colors, filter.ColorPercents
+
+	if colorsP == nil || colorPercentsP == nil {
+		return base, args, index
+	}
+
+	colors, colorPercents := *colorsP, *colorPercentsP
+
+	// percents must not be shorter than colors
+	for len(colors) > len(colorPercents) {
+		colorPercents = append(colorPercents, 0.0)
+	}
+
+	// get all post ids matching colors.
+	// group by html color and sum grouped percents.
+	//
+	// i.e.
+	//
+	// WHERE post_id IN (
+	// 	SELECT post_id
+	// 	FROM colors
+	// 	WHERE html = 'red'
+	// 	GROUP BY post_id, html
+	// 	HAVING sum(percent) > 0.1
+	// 	INTERSECT
+	// 	SELECT post_id
+	// 	FROM colors
+	// 	WHERE html = 'black'
+	// 	GROUP BY post_id, html
+	// 	HAVING sum(percent) > 0.1
+	// )
+
+	inner := ""
+	// must do one intersection for each color.
+	for i := range colors {
+		color, percent := colors[i], colorPercents[i]
+		inner += fmt.Sprintf("SELECT post_id from colors WHERE html = $%d GROUP BY post_id, html HAVING sum(percent) > $%d INTERSECT ", index, index+1)
+		index += 2
+		args = append(args, color, percent)
+	}
+
+	// strip off the trailing intersect
+	inner = strings.TrimSuffix(inner, " INTERSECT ")
+	statement := fmt.Sprintf("post_id IN (%s)", inner)
+	where = append(where, statement)
+
+	whereQuery := strings.Join(where, " AND ")
+
+	return whereQuery, args, index
+}
+
+func filterToWhereKeyword(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
+
+	index := startIndex
+	base := "1=1"
+	where, args := []string{base}, []any{}
+
+	if filter.Keywords == nil {
+		return base, args, index
+	}
+
+	// get all post ids matching all keywords.
+	//
+	// i.e.
+	//
+	// WHERE post_id IN (
+	// 	SELECT post_id
+	// 	FROM keywords
+	// 	WHERE word = '$word1'
+	// 	INTERSECT
+	// 	SELECT post_id
+	// 	FROM keywords
+	// 	WHERE word = '$word2'
+	//  ...
+	// )
+
+	inner := ""
+	// must do one intersection for each keyword.
+	for _, keyword := range *filter.Keywords {
+		inner += fmt.Sprintf("SELECT post_id from keywords WHERE word = $%d INTERSECT ", index)
+		index += 1
+		args = append(args, keyword)
+	}
+
+	// strip off the trailing intersect
+	inner = strings.TrimSuffix(inner, " INTERSECT ")
+	statement := fmt.Sprintf("post_id IN (%s)", inner)
+	where = append(where, statement)
+
+	whereQuery := strings.Join(where, " AND ")
+
+	return whereQuery, args, index
+}
+
 // filterToWhere converts a PostFilter to an SQL WHERE statement
-func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
-	index := 1
+func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
+
+	index := startIndex
 	where, args := []string{"1=1"}, []any{}
 
 	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
@@ -888,48 +983,9 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 		index += 1
 	}
 
-	// match against first color (for now)
-	if color, colorPercent := filter.Color, filter.ColorPercent; color != nil {
-		where = append(where, fmt.Sprintf("p.c1_css = $%d AND p.c1_percent > $%d", index, index+1))
-		args = append(args, *color, *colorPercent)
-		index += 2
-	}
+	whereQuery := strings.Join(where, " AND ")
 
-	// match keywords
-	if keywords := filter.Keywords; keywords != nil {
-
-		// get all post ids matching all keywords.
-		//
-		// i.e.
-		//
-		// WHERE post_id IN (
-		// 	SELECT post_id
-		// 	FROM keywords
-		// 	WHERE word = '$word1'
-		// 	INTERSECT
-		// 	SELECT post_id
-		// 	FROM keywords
-		// 	WHERE word = '$word2'
-		//  ...
-		// )
-
-		inner := ""
-		// must do one intersection for each keyword.
-		for _, keyword := range *keywords {
-			inner += fmt.Sprintf("SELECT post_id from keywords WHERE word = $%d INTERSECT ", index)
-			index += 1
-			args = append(args, keyword)
-		}
-
-		// strip off the trailing intersect
-		inner = strings.TrimSuffix(inner, " INTERSECT ")
-
-		statement := fmt.Sprintf("p.id IN (%s)", inner)
-
-		where = append(where, statement)
-	}
-
-	return `WHERE ` + strings.Join(where, " AND "), args
+	return whereQuery, args, index
 }
 
 // Converts a patch to an SQL set statement
@@ -980,14 +1036,13 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	if len(p.Colors) != 5 {
 		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Unable to create post, expected 5 colors"}
 	}
-	c1 := p.Colors[0]
-	c2 := p.Colors[1]
-	c3 := p.Colors[2]
-	c4 := p.Colors[3]
-	c5 := p.Colors[4]
 
 	// we don't actually use these when creating the post here
 	// keywords are handled with seperate function
+	hexes := NullString{}
+	csses := NullString{}
+	htmls := NullString{}
+	percents := NullString{}
 	words := NullString{}
 	weights := NullString{}
 
@@ -1012,21 +1067,10 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		highUrl:    high.Url,
 		highWidth:  high.Width,
 		highHeight: high.Height,
-		c1_hex:     c1.Hex,
-		c1_css:     c1.Css,
-		c1_percent: c1.Percent,
-		c2_hex:     c2.Hex,
-		c2_css:     c2.Css,
-		c2_percent: c2.Percent,
-		c3_hex:     c3.Hex,
-		c3_css:     c3.Css,
-		c3_percent: c3.Percent,
-		c4_hex:     c4.Hex,
-		c4_css:     c4.Css,
-		c4_percent: c4.Percent,
-		c5_hex:     c5.Hex,
-		c5_css:     c5.Css,
-		c5_percent: c5.Percent,
+		hexes:      hexes,
+		csses:      csses,
+		htmls:      htmls,
+		percents:   percents,
 		words:      words,
 		weights:    weights,
 	}
@@ -1043,13 +1087,45 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	rawImage := analogdb.Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
 	images := []analogdb.Image{lowImage, medImage, highImage, rawImage}
 
-	// grab the colors from raw
-	c1 := analogdb.Color{Hex: p.c1_hex, Css: p.c1_css, Percent: p.c1_percent}
-	c2 := analogdb.Color{Hex: p.c2_hex, Css: p.c2_css, Percent: p.c2_percent}
-	c3 := analogdb.Color{Hex: p.c3_hex, Css: p.c3_css, Percent: p.c3_percent}
-	c4 := analogdb.Color{Hex: p.c4_hex, Css: p.c4_css, Percent: p.c4_percent}
-	c5 := analogdb.Color{Hex: p.c5_hex, Css: p.c5_css, Percent: p.c5_percent}
-	colors := []analogdb.Color{c1, c2, c3, c4, c5}
+	// grab the colors
+	var hexes, csses, htmls, percents []string
+	var colors = []analogdb.Color{}
+
+	// check for null
+	if p.hexes.Valid {
+		hexes = strings.Split(p.hexes.String, ",")
+	}
+	if p.csses.Valid {
+		csses = strings.Split(p.csses.String, ",")
+	}
+	if p.htmls.Valid {
+		htmls = strings.Split(p.htmls.String, ",")
+	}
+	if p.percents.Valid {
+		// remove '{}' from postgres array then split on commas
+		percents = strings.Split(strings.Trim(p.percents.String, "{}"), ",")
+
+	}
+
+	// iterate over shortest slice. should all be same length though
+	var iter = hexes
+	if len(csses) < len(iter) {
+		iter = csses
+	}
+	if len(htmls) < len(iter) {
+		iter = htmls
+	}
+	if len(percents) < len(iter) {
+		iter = percents
+	}
+
+	for i := range iter {
+		percent, err := strconv.ParseFloat(percents[i], 64)
+		if err != nil {
+			percent = 0.0
+		}
+		colors = append(colors, analogdb.Color{Hex: hexes[i], Css: csses[i], Html: htmls[i], Percent: percent})
+	}
 
 	// grab the keywords
 	var words, weights []string
@@ -1067,11 +1143,9 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 
 	// iterate over keywords or percents, whichever is smaller
 	// technically should both be the same size but we can't be sure
-	var iter []string
-	if len(weights) <= len(words) {
+	iter = words
+	if len(weights) < len(words) {
 		iter = weights
-	} else {
-		iter = words
 	}
 
 	for i := range iter {
@@ -1083,7 +1157,18 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	}
 
 	post := &analogdb.Post{Id: p.id,
-		DisplayPost: analogdb.DisplayPost{Title: p.title, Author: p.author, Permalink: p.permalink, Score: p.score, Nsfw: p.nsfw, Grayscale: p.grayscale, Time: p.time, Sprocket: p.sprocket, Images: images, Colors: colors, Keywords: keywords}}
+		DisplayPost: analogdb.DisplayPost{
+			Title:     p.title,
+			Author:    p.author,
+			Permalink: p.permalink,
+			Score:     p.score,
+			Nsfw:      p.nsfw,
+			Grayscale: p.grayscale,
+			Time:      p.time,
+			Sprocket:  p.sprocket,
+			Images:    images,
+			Colors:    colors,
+			Keywords:  keywords}}
 	return post, nil
 }
 
@@ -1112,21 +1197,10 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		&p.rawCreatePost.highUrl,
 		&p.rawCreatePost.highWidth,
 		&p.rawCreatePost.highHeight,
-		&p.rawCreatePost.c1_hex,
-		&p.rawCreatePost.c1_css,
-		&p.rawCreatePost.c1_percent,
-		&p.rawCreatePost.c2_hex,
-		&p.rawCreatePost.c2_css,
-		&p.rawCreatePost.c2_percent,
-		&p.rawCreatePost.c3_hex,
-		&p.rawCreatePost.c3_css,
-		&p.rawCreatePost.c3_percent,
-		&p.rawCreatePost.c4_hex,
-		&p.rawCreatePost.c4_css,
-		&p.rawCreatePost.c4_percent,
-		&p.rawCreatePost.c5_hex,
-		&p.rawCreatePost.c5_css,
-		&p.rawCreatePost.c5_percent,
+		&p.rawCreatePost.hexes,
+		&p.rawCreatePost.csses,
+		&p.rawCreatePost.htmls,
+		&p.rawCreatePost.percents,
 		&p.rawCreatePost.words,
 		&p.rawCreatePost.weights,
 		&count); err != nil {

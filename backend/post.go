@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const defaultMinColorPercent = 0.50
+const defaultMinColorPercent = 0.0
 
 // seeds for random post order
 var primes = []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 107, 113, 131, 137, 149, 167, 173, 179, 191, 197, 227, 233, 239, 251, 257, 263}
@@ -23,7 +23,7 @@ type Image struct {
 type Color struct {
 	Hex     string  `json:"hex"`
 	Css     string  `json:"css"`
-	Html    string  `json:"html,omitempty"`
+	Html    string  `json:"html"`
 	Percent float64 `json:"percent"`
 }
 
@@ -117,19 +117,19 @@ func PostSortFromString(s string) PostSort {
 
 // PostFilter are options used for querying posts
 type PostFilter struct {
-	Limit        *int
-	Sort         *PostSort
-	Keyset       *int
-	Nsfw         *bool
-	Grayscale    *bool
-	Sprocket     *bool
-	Seed         *int
-	IDs          *[]int
-	Title        *string
-	Author       *string
-	Color        *string
-	ColorPercent *float64
-	Keywords     *[]string
+	Limit         *int
+	Sort          *PostSort
+	Keyset        *int
+	Nsfw          *bool
+	Grayscale     *bool
+	Sprocket      *bool
+	Seed          *int
+	IDs           *[]int
+	Title         *string
+	Author        *string
+	Colors        *[]string
+	ColorPercents *[]float64
+	Keywords      *[]string
 }
 
 func (filter *PostFilter) SetSeed() {
@@ -140,28 +140,58 @@ func (filter *PostFilter) SetSeed() {
 	}
 }
 
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author, color *string, colorPercent *float64, keywords *[]string) *PostFilter {
+func (filter *PostFilter) SetMinColorPercent() {
 
-	if colorPercent == nil {
-		newColorPercent := defaultMinColorPercent
-		colorPercent = &newColorPercent
+	// If we have no colors, should have no percent
+	if filter.Colors == nil {
+		filter.ColorPercents = nil
+		return
 	}
+
+	// don't have a valid pointer, create one
+	if filter.ColorPercents == nil {
+		percents := []float64{}
+		filter.ColorPercents = &percents
+	}
+
+	colors, percents := *filter.Colors, *filter.ColorPercents
+
+	// ensure at least as long as colors
+	for len(colors) > len(percents) {
+		percents = append(percents, defaultMinColorPercent)
+	}
+
+	// ensure at no longer than colors
+	for len(percents) > len(colors) {
+		if count := len(percents); count > 0 {
+			percents = (percents)[:count-1]
+		}
+	}
+
+	// finally, set modified back as pointer
+	filter.ColorPercents = &percents
+}
+
+func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
 
 	filter := &PostFilter{
-		Limit:        limit,
-		Sort:         sort,
-		Keyset:       keyset,
-		Nsfw:         nsfw,
-		Grayscale:    grayscale,
-		Sprocket:     sprocket,
-		Seed:         seed,
-		IDs:          ids,
-		Title:        title,
-		Author:       author,
-		Color:        color,
-		ColorPercent: colorPercent,
-		Keywords:     keywords,
+		Limit:         limit,
+		Sort:          sort,
+		Keyset:        keyset,
+		Nsfw:          nsfw,
+		Grayscale:     grayscale,
+		Sprocket:      sprocket,
+		Seed:          seed,
+		IDs:           ids,
+		Title:         title,
+		Author:        author,
+		Colors:        colors,
+		ColorPercents: colorPercents,
+		Keywords:      keywords,
 	}
+
+	filter.SetMinColorPercent()
+
 	return filter
 }
 
