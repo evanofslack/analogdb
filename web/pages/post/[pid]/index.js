@@ -39,9 +39,16 @@ export async function getStaticProps({ params }) {
   if (post.nsfw) {
     query = "";
   }
+
   const similarRoute = `/post/${params.pid}/similar` + query;
-  const similarResponse = await authorized_fetch(similarRoute, "GET");
-  const similar = await similarResponse.json();
+  let similar;
+  try {
+    const similarResponse = await authorized_fetch(similarRoute, "GET");
+    similar = await similarResponse.json();
+  } catch (e) {
+    similar = {};
+  }
+
   return {
     props: {
       post,
