@@ -3,6 +3,7 @@ import Grid from "../components/grid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useState, useEffect } from "react";
 import { baseURL } from "../constants.js";
+import { Loader } from "@mantine/core";
 
 export default function InfiniteGallery(props) {
   const [posts, setPosts] = useState(props.response.posts);
@@ -35,24 +36,32 @@ export default function InfiniteGallery(props) {
       });
   };
 
+  const loader = () => (
+    <h4 className={styles.loading}>
+      <Loader color="gray" variant="dots" />
+    </h4>
+  );
+
   return (
     <div>
       {totalPosts != 0 && (
-        <InfiniteScroll
-          dataLength={posts.length}
-          next={fetchMore}
-          hasMore={hasMore}
-          loader={<h4 className={styles.loading}>loading...</h4>}
-          endMessage={
-            <h3 className={styles.loading}>
-              thats all folks, go take some pictures...
-            </h3>
-          }
-          style={{ overflowY: "hidden" }}
-        >
-          <Grid posts={posts} />
-          <span />
-        </InfiniteScroll>
+        <div>
+          <InfiniteScroll
+            dataLength={posts.length}
+            next={fetchMore}
+            hasMore={hasMore}
+            loader={loader}
+            endMessage={
+              <h3 className={styles.loading}>
+                thats all folks, go take some pictures...
+              </h3>
+            }
+            style={{ overflowY: "hidden" }}
+          >
+            <Grid posts={posts} />
+            <span />
+          </InfiniteScroll>
+        </div>
       )}
       {totalPosts == 0 && (
         <div className={styles.noResultsContainer}>

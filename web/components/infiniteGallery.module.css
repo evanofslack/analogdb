@@ -2,6 +2,12 @@
   padding-top: 3rem;
   padding-bottom: 3rem;
   text-align: center;
+}
+
+.end {
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+  text-align: center;
   font-weight: 400;
 }
 
