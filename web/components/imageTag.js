@@ -34,7 +34,18 @@ export default function ImageTag(props) {
     Object.hasOwn(post, "keywords") && post.keywords.length > 0
       ? post.keywords
           .map((item) => {
-            return <span key={item.id}>{item.word}</span>;
+            return (
+              <span key={item.id}>
+                <Link
+                  href={`/?text=${item.word}`}
+                  passHref={true}
+                  prefetch={false}
+                  shallow={true}
+                >
+                  {item.word}
+                </Link>
+              </span>
+            );
           })
           .slice(0, 15)
       : [];

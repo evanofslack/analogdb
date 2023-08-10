@@ -11,7 +11,6 @@ import {
   IconArrowsSort,
   IconAdjustmentsHorizontal,
   IconPalette,
-  IconCheck,
 } from "@tabler/icons";
 
 import {
@@ -32,7 +31,7 @@ async function makeRequest(queryParams) {
   return data;
 }
 
-function filterQueryParams(sort, nsfw, bw, sprocket, search, color) {
+function filterQueryParams(sort, nsfw, bw, sprocket, text, color) {
   let queryParams = "?" + "sort=" + sort;
 
   switch (nsfw) {
@@ -62,8 +61,11 @@ function filterQueryParams(sort, nsfw, bw, sprocket, search, color) {
       break;
   }
 
-  if (search !== "") {
-    queryParams = queryParams.concat("&title=" + search);
+  if (text !== "") {
+    let keywords = text.split(/[ ,]+/).filter(Boolean);
+    keywords.forEach(
+      (word) => (queryParams = queryParams.concat("&keyword=" + word))
+    );
   }
 
   if (color !== "") {
@@ -87,31 +89,36 @@ function filterQueryParams(sort, nsfw, bw, sprocket, search, color) {
   return queryParams;
 }
 
+const defaultSort = "latest";
+const defaultNsfw = "exclude";
+const defaultBw = "exclude";
+const defaultSprocket = "include";
+const defaultColor = "";
+const defaultText = "";
+
 export default function Gallery(props) {
   // querystate
   const [sort, setSort] = useQueryState(
     "sort",
-    queryTypes.string.withDefault("latest")
+    queryTypes.string.withDefault(defaultSort)
   );
   const [nsfw, setNsfw] = useQueryState(
     "nsfw",
-    queryTypes.string.withDefault("exclude")
+    queryTypes.string.withDefault(defaultNsfw)
   );
   const [bw, setBw] = useQueryState(
     "bw",
-    queryTypes.string.withDefault("exclude")
+    queryTypes.string.withDefault(defaultBw)
   );
   const [sprocket, setSprocket] = useQueryState(
     "sprocket",
-    queryTypes.string.withDefault("include")
+    queryTypes.string.withDefault(defaultSprocket)
   );
-  const [search, setSearch] = useQueryState(
-    "text",
-    queryTypes.string.withDefault("")
-  );
+
+  // handle setting colors
   const [color, setColor] = useQueryState(
     "color",
-    queryTypes.string.withDefault("")
+    queryTypes.string.withDefault(defaultColor)
   );
 
   const handleColorClick = (event) => {
@@ -123,14 +130,25 @@ export default function Gallery(props) {
     }
   };
 
-  const blackCheck = () => {
-    <IconCheck color="#000" />;
-  };
+  // handle setting keywords.
+  // hold input text in temp variable and
+  // only set query state on updateRequest.
+  const [textTemp, setTextTemp] = useState("");
+  const [text, setText] = useQueryState(
+    "text",
+    queryTypes.string.withDefault(defaultText)
+  );
 
   const [response, setResponse] = useState(props.data);
 
   const updateRequest = async () => {
-    let request = filterQueryParams(sort, nsfw, bw, sprocket, search, color);
+    if (textTemp == defaultText) {
+      setText(null);
+    } else {
+      setText(textTemp);
+    }
+
+    let request = filterQueryParams(sort, nsfw, bw, sprocket, text, color);
     const response = await makeRequest(request);
     setResponse(response);
   };
@@ -139,7 +157,7 @@ export default function Gallery(props) {
 
   useEffect(() => {
     updateRequest();
-  }, [sort, nsfw, bw, sprocket, color, returnPress]);
+  }, [sort, nsfw, bw, sprocket, color, text, returnPress]);
 
   return (
     <div className={styles.main}>
@@ -413,8 +431,8 @@ export default function Gallery(props) {
           </Menu>
 
           <TextInput
-            value={search}
-            onChange={(event) => setSearch(event.currentTarget.value)}
+            value={textTemp}
+            onChange={(event) => setTextTemp(event.currentTarget.value)}
             icon={<IconSearch size={18} />}
             placeholder="films, cameras, places..."
           />
