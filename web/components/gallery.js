@@ -5,12 +5,14 @@ import InfiniteGallery from "../components/infiniteGallery";
 import ScrollTop from "../components/scrollTop";
 import { useState, useEffect } from "react";
 import useKeyPress from "../hooks/useKeyPress";
+import { useQueryState, queryTypes } from "next-usequerystate";
 import {
   IconSearch,
   IconArrowsSort,
   IconAdjustmentsHorizontal,
+  IconPalette,
+  IconCheck,
 } from "@tabler/icons";
-import useQuery from "../stores/query";
 
 import {
   TextInput,
@@ -18,7 +20,9 @@ import {
   SegmentedControl,
   Menu,
   Radio,
+  Checkbox,
 } from "@mantine/core";
+
 import { baseURL } from "../constants.js";
 
 async function makeRequest(queryParams) {
@@ -28,7 +32,7 @@ async function makeRequest(queryParams) {
   return data;
 }
 
-function filterQueryParams(sort, nsfw, bw, sprocket, search) {
+function filterQueryParams(sort, nsfw, bw, sprocket, search, color) {
   let queryParams = "?" + "sort=" + sort;
 
   switch (nsfw) {
@@ -62,34 +66,71 @@ function filterQueryParams(sort, nsfw, bw, sprocket, search) {
     queryParams = queryParams.concat("&title=" + search);
   }
 
+  if (color !== "") {
+    queryParams = queryParams.concat("&color=" + color);
+    if (color === "black" || color === "gray") {
+      queryParams = queryParams.concat("&min_color=" + "0.8");
+    }
+    if (color === "white") {
+      queryParams = queryParams.concat("&min_color=" + "0.6");
+    }
+    if (color === "teal") {
+      queryParams = queryParams.concat("&min_color=" + "0.25");
+    }
+    if (color === "navy" || color === "green") {
+      queryParams = queryParams.concat("&min_color=" + "0.15");
+    }
+  }
+
   queryParams = queryParams.concat("&page_size=" + 100);
 
   return queryParams;
 }
 
 export default function Gallery(props) {
-  const { search, sort, nsfw, bw, sprocket } = useQuery((store) => ({
-    search: store.search,
-    sort: store.sort,
-    nsfw: store.nsfw,
-    bw: store.bw,
-    sprocket: store.sprocket,
-  }));
-
-  const { setSearch, setSort, setNsfw, setBw, setSprocket } = useQuery(
-    (store) => ({
-      setSearch: store.setSearch,
-      setSort: store.setSort,
-      setNsfw: store.setNsfw,
-      setBw: store.setBw,
-      setSprocket: store.setSprocket,
-    })
+  // querystate
+  const [sort, setSort] = useQueryState(
+    "sort",
+    queryTypes.string.withDefault("latest")
   );
+  const [nsfw, setNsfw] = useQueryState(
+    "nsfw",
+    queryTypes.string.withDefault("exclude")
+  );
+  const [bw, setBw] = useQueryState(
+    "bw",
+    queryTypes.string.withDefault("exclude")
+  );
+  const [sprocket, setSprocket] = useQueryState(
+    "sprocket",
+    queryTypes.string.withDefault("include")
+  );
+  const [search, setSearch] = useQueryState(
+    "text",
+    queryTypes.string.withDefault("")
+  );
+  const [color, setColor] = useQueryState(
+    "color",
+    queryTypes.string.withDefault("")
+  );
+
+  const handleColorClick = (event) => {
+    let clickedColor = event.target.id;
+    if (clickedColor === color) {
+      setColor(null);
+    } else {
+      setColor(clickedColor);
+    }
+  };
+
+  const blackCheck = () => {
+    <IconCheck color="#000" />;
+  };
 
   const [response, setResponse] = useState(props.data);
 
   const updateRequest = async () => {
-    let request = filterQueryParams(sort, nsfw, bw, sprocket, search);
+    let request = filterQueryParams(sort, nsfw, bw, sprocket, search, color);
     const response = await makeRequest(request);
     setResponse(response);
   };
@@ -98,13 +139,154 @@ export default function Gallery(props) {
 
   useEffect(() => {
     updateRequest();
-  }, [sort, nsfw, bw, sprocket, returnPress]);
+  }, [sort, nsfw, bw, sprocket, color, returnPress]);
 
   return (
     <div className={styles.main}>
       <Header />
       <div className={styles.margin}>
         <div className={styles.query}>
+          <Menu shadow="md" width={100}>
+            <Menu.Target>
+              <Button
+                variant="outline"
+                color="gray"
+                leftIcon={<IconPalette size={18} stroke={1.5} />}
+                styles={() => ({
+                  root: {
+                    marginRight: 10,
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                    color: "#2E2E2E",
+                    fontWeight: 400,
+                    borderColor: "#CED4DA",
+                    "&:hover": {
+                      backgroundColor: "#fbfbfc",
+                    },
+                    leftIcon: {
+                      marginRight: 5,
+                    },
+                  },
+                })}
+              >
+                color
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>with color</Menu.Label>
+              <div className={styles.colors}>
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#f03e3e", border: "None" },
+                  }}
+                  size="md"
+                  color="red.8"
+                  checked={color === "red"}
+                  onChange={handleColorClick}
+                  key={1}
+                  id={"red"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#ffd43b", border: "None" },
+                  }}
+                  size="md"
+                  color="yellow.5"
+                  checked={color === "yellow"}
+                  onChange={handleColorClick}
+                  key={2}
+                  id={"yellow"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#2f9e44", border: "None" },
+                  }}
+                  size="md"
+                  color="green.9"
+                  checked={color === "green"}
+                  onChange={handleColorClick}
+                  key={3}
+                  id={"green"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#22b8cf", border: "None" },
+                  }}
+                  size="md"
+                  color="cyan.6"
+                  checked={color === "teal"}
+                  onChange={handleColorClick}
+                  key={4}
+                  id={"teal"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#1971c2", border: "None" },
+                  }}
+                  size="md"
+                  color="blue.9"
+                  checked={color === "navy"}
+                  onChange={handleColorClick}
+                  key={5}
+                  id={"navy"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#9c36b5", border: "None" },
+                  }}
+                  size="md"
+                  color="grape.9"
+                  checked={color === "purple"}
+                  onChange={handleColorClick}
+                  key={6}
+                  id={"purple"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#868e96", border: "None" },
+                  }}
+                  size="md"
+                  color="dark.3"
+                  checked={color === "gray"}
+                  onChange={handleColorClick}
+                  key={7}
+                  id={"gray"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#141517", border: "None" },
+                  }}
+                  size="md"
+                  color="dark.9"
+                  checked={color === "black"}
+                  onChange={handleColorClick}
+                  key={8}
+                  id={"black"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#e9ecef", border: "None" },
+                  }}
+                  size="md"
+                  color="gray.3"
+                  checked={color === "white"}
+                  onChange={handleColorClick}
+                  key={9}
+                  id={"white"}
+                  className={styles.colorButton}
+                />
+              </div>
+            </Menu.Dropdown>
+          </Menu>
+
           <Menu shadow="md" width={125}>
             <Menu.Target>
               <Button
@@ -132,7 +314,7 @@ export default function Gallery(props) {
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Label>sort posts by</Menu.Label>
+              <Menu.Label>sort by</Menu.Label>
               <div className={styles.radio}>
                 <Radio.Group
                   value={sort}
@@ -188,7 +370,7 @@ export default function Gallery(props) {
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Label>filter posts by</Menu.Label>
+              <Menu.Label>filter by</Menu.Label>
               <div className={styles.segment}>
                 <div className={styles.segmentGroup}>
                   <h5 className={styles.segmentTitle}>18+</h5>
