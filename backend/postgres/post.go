@@ -403,11 +403,21 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 
 	db.logger.Debug().Ctx(ctx).Msg("Starting find posts")
 
-	where, args := filterToWhere(filter)
-	groupby := ` GROUP BY p.id`
+	var colorArgs, keywordArgs, postArgs []any
+	index := 1
+	var colorWhere, keywordWhere, postWhere string
+
+	colorWhere, colorArgs, index = filterToWhereColor(filter, index)
+	keywordWhere, keywordArgs, index = filterToWhereKeyword(filter, index)
+	postWhere, postArgs, index = filterToWherePost(filter, index)
+
+	args := append(colorArgs, keywordArgs...)
+	args = append(args, postArgs...)
+
+	// groupby := ` GROUP BY p.id`
 	order := filterToOrder(filter)
 	limit := formatLimit(filter)
-	query := `
+	query := fmt.Sprintf(`
 			SELECT
 				p.id,
 				p.url,
@@ -430,33 +440,37 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 				p.highUrl,
 				p.highWidth,
 				p.highHeight,
-				k.words,
-				k.weights,
 				c.hexes,
 				c.csses,
 				c.htmls,
 				c.percents,
+				k.words,
+				k.weights,
 				COUNT(*) OVER()
-			FROM pictures p
-			LEFT OUTER JOIN (
-				SELECT
-					post_id,
-					STRING_AGG(keywords.word, ',' ORDER BY keywords.weight DESC) as words,
-					ARRAY_AGG(keywords.weight ORDER BY keywords.weight DESC) as weights
-				FROM keywords
-				GROUP BY post_id
-				) k on k.post_id = p.id
-			LEFT OUTER JOIN (
-				SELECT
-					post_id,
-					STRING_AGG(colors.hex, ',' ORDER BY colors.percent DESC) as hexes,
-					STRING_AGG(colors.css, ',' ORDER BY colors.percent DESC) as csses,
-					STRING_AGG(colors.html, ',' ORDER BY colors.percent DESC) as htmls,
-					ARRAY_AGG(colors.percent ORDER BY colors.percent DESC) as percents
-				FROM colors
-				GROUP BY post_id
+			FROM
+				pictures p
+				INNER JOIN (
+					SELECT
+						post_id,
+						STRING_AGG(colors.hex, ',' ORDER BY colors.percent DESC) as hexes,
+						STRING_AGG(colors.css, ',' ORDER BY colors.percent DESC) as csses,
+						STRING_AGG(colors.html, ',' ORDER BY colors.percent DESC) as htmls,
+						ARRAY_AGG(colors.percent ORDER BY colors.percent DESC) as percents
+					FROM colors
+					WHERE %s
+					GROUP BY post_id
 				) c on c.post_id = p.id
-	` + where + groupby + order + limit
+				INNER JOIN (
+					SELECT
+						post_id,
+						STRING_AGG(keywords.word, ',' ORDER BY keywords.weight DESC) as words,
+						ARRAY_AGG(keywords.weight ORDER BY keywords.weight DESC) as weights
+					FROM keywords
+					WHERE %s
+					GROUP BY post_id
+				) k on k.post_id = p.id
+			WHERE %s
+	`, colorWhere, keywordWhere, postWhere) + order + limit
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 
@@ -788,9 +802,109 @@ func formatLimit(filter *analogdb.PostFilter) string {
 	return ""
 }
 
+func filterToWhereColor(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
+
+	index := startIndex
+	base := "1=1"
+	where, args := []string{base}, []any{}
+	colorsP, colorPercentsP := filter.Colors, filter.ColorPercents
+
+	if colorsP == nil || colorPercentsP == nil {
+		return base, args, index
+	}
+
+	colors, colorPercents := *colorsP, *colorPercentsP
+
+	// percents must not be shorter than colors
+	for len(colors) > len(colorPercents) {
+		colorPercents = append(colorPercents, 0.0)
+	}
+
+	// get all post ids matching colors.
+	// group by html color and sum grouped percents.
+	//
+	// i.e.
+	//
+	// WHERE post_id IN (
+	// 	SELECT post_id
+	// 	FROM colors
+	// 	WHERE html = 'red'
+	// 	GROUP BY post_id, html
+	// 	HAVING sum(percent) > 0.1
+	// 	INTERSECT
+	// 	SELECT post_id
+	// 	FROM colors
+	// 	WHERE html = 'black'
+	// 	GROUP BY post_id, html
+	// 	HAVING sum(percent) > 0.1
+	// )
+
+	inner := ""
+	// must do one intersection for each color.
+	for i := range colors {
+		color, percent := colors[i], colorPercents[i]
+		inner += fmt.Sprintf("SELECT post_id from colors WHERE html = $%d GROUP BY post_id, html HAVING sum(percent) > $%d INTERSECT ", index, index+1)
+		index += 2
+		args = append(args, color, percent)
+	}
+
+	// strip off the trailing intersect
+	inner = strings.TrimSuffix(inner, " INTERSECT ")
+	statement := fmt.Sprintf("post_id IN (%s)", inner)
+	where = append(where, statement)
+
+	whereQuery := strings.Join(where, " AND ")
+
+	return whereQuery, args, index
+}
+
+func filterToWhereKeyword(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
+
+	index := startIndex
+	base := "1=1"
+	where, args := []string{base}, []any{}
+
+	if filter.Keywords == nil {
+		return base, args, index
+	}
+
+	// get all post ids matching all keywords.
+	//
+	// i.e.
+	//
+	// WHERE post_id IN (
+	// 	SELECT post_id
+	// 	FROM keywords
+	// 	WHERE word = '$word1'
+	// 	INTERSECT
+	// 	SELECT post_id
+	// 	FROM keywords
+	// 	WHERE word = '$word2'
+	//  ...
+	// )
+
+	inner := ""
+	// must do one intersection for each keyword.
+	for _, keyword := range *filter.Keywords {
+		inner += fmt.Sprintf("SELECT post_id from keywords WHERE word = $%d INTERSECT ", index)
+		index += 1
+		args = append(args, keyword)
+	}
+
+	// strip off the trailing intersect
+	inner = strings.TrimSuffix(inner, " INTERSECT ")
+	statement := fmt.Sprintf("post_id IN (%s)", inner)
+	where = append(where, statement)
+
+	whereQuery := strings.Join(where, " AND ")
+
+	return whereQuery, args, index
+}
+
 // filterToWhere converts a PostFilter to an SQL WHERE statement
-func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
-	index := 1
+func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
+
+	index := startIndex
 	where, args := []string{"1=1"}, []any{}
 
 	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
@@ -869,83 +983,9 @@ func filterToWhere(filter *analogdb.PostFilter) (string, []any) {
 		index += 1
 	}
 
-	// match against first color (for now)
-	if colorsP, colorPercentsP := filter.Colors, filter.ColorPercents; colorsP != nil {
+	whereQuery := strings.Join(where, " AND ")
 
-		colors, colorPercents := *colorsP, *colorPercentsP
-
-		// percents must not be shorter than colors
-		for len(colors) > len(colorPercents) {
-			colorPercents = append(colorPercents, 0.0)
-		}
-
-		// get all post ids matching colors.
-		// group by html color and sum grouped percents.
-		//
-		// i.e.
-		//
-		// WHERE post_id IN (
-		// 	SELECT post_id
-		// 	FROM colors
-		// 	WHERE html = 'red'
-		// 	GROUP BY post_id, html
-		// 	HAVING sum(percent) > 0.1
-		// 	INTERSECT
-		// 	SELECT post_id
-		// 	FROM colors
-		// 	WHERE html = 'black'
-		// 	GROUP BY post_id, html
-		// 	HAVING sum(percent) > 0.1
-		// )
-
-		inner := ""
-		// must do one intersection for each color.
-		for i := range colors {
-			color, percent := colors[i], colorPercents[i]
-			inner += fmt.Sprintf("SELECT post_id from colors WHERE html = $%d GROUP BY post_id, html HAVING sum(percent) > $%d INTERSECT ", index, index+1)
-			index += 2
-			args = append(args, color, percent)
-		}
-
-		// strip off the trailing intersect
-		inner = strings.TrimSuffix(inner, " INTERSECT ")
-		statement := fmt.Sprintf("p.id IN (%s)", inner)
-		where = append(where, statement)
-	}
-
-	// match keywords
-	if keywords := filter.Keywords; keywords != nil {
-
-		// get all post ids matching all keywords.
-		//
-		// i.e.
-		//
-		// WHERE post_id IN (
-		// 	SELECT post_id
-		// 	FROM keywords
-		// 	WHERE word = '$word1'
-		// 	INTERSECT
-		// 	SELECT post_id
-		// 	FROM keywords
-		// 	WHERE word = '$word2'
-		//  ...
-		// )
-
-		inner := ""
-		// must do one intersection for each keyword.
-		for _, keyword := range *keywords {
-			inner += fmt.Sprintf("SELECT post_id from keywords WHERE word = $%d INTERSECT ", index)
-			index += 1
-			args = append(args, keyword)
-		}
-
-		// strip off the trailing intersect
-		inner = strings.TrimSuffix(inner, " INTERSECT ")
-		statement := fmt.Sprintf("p.id IN (%s)", inner)
-		where = append(where, statement)
-	}
-
-	return `WHERE ` + strings.Join(where, " AND "), args
+	return whereQuery, args, index
 }
 
 // Converts a patch to an SQL set statement
@@ -1061,7 +1101,6 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	if p.htmls.Valid {
 		htmls = strings.Split(p.htmls.String, ",")
 	}
-
 	if p.percents.Valid {
 		// remove '{}' from postgres array then split on commas
 		percents = strings.Split(strings.Trim(p.percents.String, "{}"), ",")

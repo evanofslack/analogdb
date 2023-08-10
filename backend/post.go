@@ -23,7 +23,7 @@ type Image struct {
 type Color struct {
 	Hex     string  `json:"hex"`
 	Css     string  `json:"css"`
-	Html    string  `json:"html,omitempty"`
+	Html    string  `json:"html"`
 	Percent float64 `json:"percent"`
 }
 
@@ -140,7 +140,7 @@ func (filter *PostFilter) SetSeed() {
 	}
 }
 
-func (filter *PostFilter) setMinColorPercent() {
+func (filter *PostFilter) SetMinColorPercent() {
 
 	// If we have no colors, should have no percent
 	if filter.Colors == nil {
@@ -154,18 +154,22 @@ func (filter *PostFilter) setMinColorPercent() {
 		filter.ColorPercents = &percents
 	}
 
+	colors, percents := *filter.Colors, *filter.ColorPercents
+
 	// ensure at least as long as colors
-	for len(*filter.Colors) > len(*filter.ColorPercents) {
-		*filter.ColorPercents = append(*filter.ColorPercents, defaultMinColorPercent)
+	for len(colors) > len(percents) {
+		percents = append(percents, defaultMinColorPercent)
 	}
 
 	// ensure at no longer than colors
-	for len(*filter.ColorPercents) > len(*filter.Colors) {
-		*filter.ColorPercents = append(*filter.ColorPercents, defaultMinColorPercent)
-		if count := len(*filter.ColorPercents); count > 0 {
-			*filter.ColorPercents = (*filter.ColorPercents)[:count-1]
+	for len(percents) > len(colors) {
+		if count := len(percents); count > 0 {
+			percents = (percents)[:count-1]
 		}
 	}
+
+	// finally, set modified back as pointer
+	filter.ColorPercents = &percents
 }
 
 func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
@@ -186,7 +190,7 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 		Keywords:      keywords,
 	}
 
-	filter.setMinColorPercent()
+	filter.SetMinColorPercent()
 
 	return filter
 }

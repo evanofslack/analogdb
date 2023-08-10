@@ -471,10 +471,6 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		filter.Author = &author
 	}
 
-	if colors, ok := values["color"]; ok {
-		filter.Colors = &colors
-	}
-
 	if colorPercent, ok := values["min_color"]; ok {
 		percents := []float64{}
 		for _, p := range colorPercent {
@@ -486,6 +482,11 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			}
 		}
 		filter.ColorPercents = &percents
+	}
+
+	if colors, ok := values["color"]; ok {
+		filter.Colors = &colors
+		filter.SetMinColorPercent()
 	}
 
 	if keywords, ok := values["keyword"]; ok {
