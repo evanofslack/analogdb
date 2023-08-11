@@ -101,9 +101,14 @@ def _update_post_colors(
     # extract primary colors
     try:
         image = request_image(url=url)
+    except Exception as e:
+        logger.error(f"Error fetching image with url: {url}, with error: {e}")
+        return
+
+    try:
         colors = extract_colors(image)
     except Exception as e:
-        logger.error(f"Error fetching iamge with url: {url}, with error: {e}")
+        logger.error(f"Error extracting colors from image: {url}, with error: {e}")
         return
 
     # update post in analogdb
@@ -115,7 +120,7 @@ def _update_post_colors(
 
 
 def update_posts_colors(deps: Dependencies, count: int):
-    posts = unlimited_posts(count=count)
+    posts = reversed(unlimited_posts(count=count))
     for post in posts:
         _update_post_colors(
             reddit=deps.reddit_client,

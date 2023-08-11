@@ -1,4 +1,6 @@
+import functools
 import json
+import time
 from typing import List, Optional
 
 import requests
@@ -11,6 +13,32 @@ from models import (AnalogDisplayPost, AnalogKeyword, AnalogPost, Color,
 
 config = init_config()
 base_url = config.app.api_base_url
+
+# decorator to retry operations
+def retry(delay=1, times=5):
+    def outer_wrapper(function):
+        @functools.wraps(function)
+        def inner_wrapper(*args, **kwargs):
+            final_excep = None
+            for counter in range(times):
+                if counter > 0:
+                    time.sleep(delay)
+                final_excep = None
+                try:
+                    value = function(*args, **kwargs)
+                    return value
+                except Exception as e:
+                    final_excep = e
+                    logger.warning(
+                        f"Error during function call, count={counter}: error:{e}"
+                    )
+
+            if final_excep is not None:
+                raise final_excep
+
+        return inner_wrapper
+
+    return outer_wrapper
 
 
 def get_latest_posts(count: int) -> List[AnalogDisplayPost]:
@@ -69,6 +97,7 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
         )
 
 
+@retry(delay=1, times=5)
 def patch_to_analogdb(patch: PatchPost, id: int, username: str, password: str):
     dict_patch = patch_to_json(patch)
     json_patch = json.dumps(dict_patch)
@@ -176,21 +205,6 @@ def json_to_post(data: dict) -> AnalogDisplayPost:
             raw_url=images[3]["url"],
             raw_width=images[3]["width"],
             raw_height=images[3]["height"],
-            c1_hex=colors[0]["hex"],
-            c1_css=colors[0]["css"],
-            c1_percent=colors[0]["percent"],
-            c2_hex=colors[0]["hex"],
-            c2_css=colors[0]["css"],
-            c2_percent=colors[0]["percent"],
-            c3_hex=colors[0]["hex"],
-            c3_css=colors[0]["css"],
-            c3_percent=colors[0]["percent"],
-            c4_hex=colors[0]["hex"],
-            c4_css=colors[0]["css"],
-            c4_percent=colors[0]["percent"],
-            c5_hex=colors[0]["hex"],
-            c5_css=colors[0]["css"],
-            c5_percent=colors[0]["percent"],
         )
     except Exception as e:
         raise Exception(f"Error unmarshalling json posts from analogdb: {e}")
