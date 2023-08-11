@@ -42,11 +42,6 @@ export default function ImagePage(props) {
           <Link href={`/`} passHref={true}>
             <h1 className={styles.title}>Analogdb</h1>
           </Link>
-          <Tooltip label="fullscreen" withArrow className="px-2">
-            <ActionIcon component="a" href={post.images[3].url}>
-              <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
-            </ActionIcon>
-          </Tooltip>
         </div>
         <div className={styles.imageContainer}>
           <Image
@@ -68,6 +63,11 @@ export default function ImagePage(props) {
               onClick={() => downloadImage(post.images[3].url, post.id)}
             >
               <AiOutlineDownload size="24px" />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label="fullscreen" withArrow className="px-2">
+            <ActionIcon component="a" href={post.images[3].url}>
+              <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
             </ActionIcon>
           </Tooltip>
         </div>

@@ -4,8 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Tooltip } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
+import { useRouter } from "next/navigation";
 
 export default function ImageTag(props) {
+  const router = useRouter();
   const clipboard = useClipboard({ timeout: 1000 });
 
   let post = props.post;
@@ -108,7 +110,6 @@ export default function ImageTag(props) {
                   <Link
                     href={`/post/${post.id}`}
                     passHref={true}
-                    legacyBehavior
                     key={post.id}
                     prefetch={false}
                   >

@@ -72,6 +72,11 @@
   margin: 0.2rem;
 }
 
+/* .grow { transition: all .2s ease-in-out; } */
+.colorButton:hover {
+  transform: scale(1.1);
+}
+
 @media screen and (max-width: 720px) {
   .container {
     text-align: left;
