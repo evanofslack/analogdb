@@ -100,6 +100,11 @@
   background-color: #f5f5f5;
   /* box-shadow: 0.5px 0.5px 20px 0.5px lightgray; */
 }
+.keyword:hover {
+  color: #f5f5f5;
+  background-color: #636363;
+  border-color: #636363;
+}
 
 .title {
   font-size: 1.3rem;

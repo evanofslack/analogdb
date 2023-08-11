@@ -246,13 +246,15 @@ export default function Documentation() {
           </div>
           <h1 className={styles.h1}> Rate Limiting </h1>
           <p>
-            The Analogdb API currently places a limit of 30 requests/min.
+            The Analogdb API currently places a limit of 60 requests/min.
             Current rate limit status is returned in response headers after each
-            request.
+            request including remaining requests and reset time in unix epoch
+            seconds.
           </p>
           <Code block>
-            X-Ratelimit-Limit: 30
-            <br></br>X-Ratelimit-Remaining: 29
+            x-ratelimit-limit: 60
+            <br></br>x-ratelimit-remaining: 59
+            <br></br>x-ratelimit-reset: 1691712960
           </Code>
           <div className={styles.divider}>
             <Divider my="sm" />

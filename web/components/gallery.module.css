@@ -57,6 +57,21 @@
   padding-left: 0.3rem;
 }
 
+.colors {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 1rem;
+}
+
+.colorButton {
+  margin: 0.2rem;
+}
+
 @media screen and (max-width: 720px) {
   .container {
     text-align: left;

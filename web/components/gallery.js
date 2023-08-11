@@ -4,13 +4,15 @@ import Footer from "./footer";
 import InfiniteGallery from "../components/infiniteGallery";
 import ScrollTop from "../components/scrollTop";
 import { useState, useEffect } from "react";
+import { useBreakpoint } from "../providers/breakpoint.js";
 import useKeyPress from "../hooks/useKeyPress";
+import { useQueryState, queryTypes } from "next-usequerystate";
 import {
   IconSearch,
   IconArrowsSort,
   IconAdjustmentsHorizontal,
+  IconPalette,
 } from "@tabler/icons";
-import useQuery from "../stores/query";
 
 import {
   TextInput,
@@ -18,7 +20,9 @@ import {
   SegmentedControl,
   Menu,
   Radio,
+  Checkbox,
 } from "@mantine/core";
+
 import { baseURL } from "../constants.js";
 
 async function makeRequest(queryParams) {
@@ -28,7 +32,7 @@ async function makeRequest(queryParams) {
   return data;
 }
 
-function filterQueryParams(sort, nsfw, bw, sprocket, search) {
+function filterQueryParams(sort, nsfw, bw, sprocket, text, color) {
   let queryParams = "?" + "sort=" + sort;
 
   switch (nsfw) {
@@ -58,8 +62,27 @@ function filterQueryParams(sort, nsfw, bw, sprocket, search) {
       break;
   }
 
-  if (search !== "") {
-    queryParams = queryParams.concat("&title=" + search);
+  if (text !== "") {
+    let keywords = text.split(/[ ,]+/).filter(Boolean);
+    keywords.forEach(
+      (word) => (queryParams = queryParams.concat("&keyword=" + word))
+    );
+  }
+
+  if (color !== "") {
+    queryParams = queryParams.concat("&color=" + color);
+    if (color === "black" || color === "gray") {
+      queryParams = queryParams.concat("&min_color=" + "0.8");
+    }
+    if (color === "white") {
+      queryParams = queryParams.concat("&min_color=" + "0.6");
+    }
+    if (color === "teal") {
+      queryParams = queryParams.concat("&min_color=" + "0.25");
+    }
+    if (color === "navy" || color === "green") {
+      queryParams = queryParams.concat("&min_color=" + "0.15");
+    }
   }
 
   queryParams = queryParams.concat("&page_size=" + 100);
@@ -67,55 +90,112 @@ function filterQueryParams(sort, nsfw, bw, sprocket, search) {
   return queryParams;
 }
 
-export default function Gallery(props) {
-  const { search, sort, nsfw, bw, sprocket } = useQuery((store) => ({
-    search: store.search,
-    sort: store.sort,
-    nsfw: store.nsfw,
-    bw: store.bw,
-    sprocket: store.sprocket,
-  }));
+const defaultSort = "latest";
+const defaultNsfw = "exclude";
+const defaultBw = "exclude";
+const defaultSprocket = "include";
+const defaultColor = "";
+const defaultText = "";
 
-  const { setSearch, setSort, setNsfw, setBw, setSprocket } = useQuery(
-    (store) => ({
-      setSearch: store.setSearch,
-      setSort: store.setSort,
-      setNsfw: store.setNsfw,
-      setBw: store.setBw,
-      setSprocket: store.setSprocket,
-    })
+export default function Gallery(props) {
+  // querystate
+  const [sort, setSort] = useQueryState(
+    "sort",
+    queryTypes.string.withDefault(defaultSort)
+  );
+  const [nsfw, setNsfw] = useQueryState(
+    "nsfw",
+    queryTypes.string.withDefault(defaultNsfw)
+  );
+  const [bw, setBw] = useQueryState(
+    "bw",
+    queryTypes.string.withDefault(defaultBw)
+  );
+  const [sprocket, setSprocket] = useQueryState(
+    "sprocket",
+    queryTypes.string.withDefault(defaultSprocket)
+  );
+
+  // handle setting colors
+  const [color, setColor] = useQueryState(
+    "color",
+    queryTypes.string.withDefault(defaultColor)
+  );
+
+  const handleColorClick = (event) => {
+    let clickedColor = event.target.id;
+    if (clickedColor === color) {
+      setColor(null);
+    } else {
+      setColor(clickedColor);
+    }
+  };
+
+  // handle setting keywords.
+  // hold input text in temp variable and
+  // only set query state on updateRequest.
+  const [textTemp, setTextTemp] = useState("");
+  const [text, setText] = useQueryState(
+    "text",
+    queryTypes.string.withDefault(defaultText)
   );
 
   const [response, setResponse] = useState(props.data);
 
   const updateRequest = async () => {
-    let request = filterQueryParams(sort, nsfw, bw, sprocket, search);
+    if (textTemp == defaultText) {
+      setText(null);
+    } else {
+      setText(textTemp);
+    }
+
+    let request = filterQueryParams(sort, nsfw, bw, sprocket, text, color);
     const response = await makeRequest(request);
     setResponse(response);
   };
 
   const returnPress = useKeyPress("Enter");
 
+  const breakpoints = useBreakpoint();
+
+  let onlyIcon = false;
+  if (breakpoints["xs"] || breakpoints["sm"]) {
+    onlyIcon = true;
+  }
+
+  // const textPlaceholder = () => {
+  //   onlyIcon ? "films, cameras..." : "films, cameras, places...";
+  // };
+
+  const textPlaceholder = () => {
+    const placeholder = onlyIcon
+      ? "films, cameras..."
+      : "films, cameras, places...";
+    return placeholder;
+  };
+
   useEffect(() => {
     updateRequest();
-  }, [sort, nsfw, bw, sprocket, returnPress]);
+  }, [sort, nsfw, bw, sprocket, color, text, returnPress]);
 
   return (
     <div className={styles.main}>
       <Header />
       <div className={styles.margin}>
         <div className={styles.query}>
-          <Menu shadow="md" width={125}>
+          <Menu shadow="md" width={100}>
             <Menu.Target>
               <Button
                 variant="outline"
                 color="gray"
-                leftIcon={<IconArrowsSort size={18} stroke={1.5} />}
+                leftIcon={
+                  <IconPalette size={onlyIcon ? 22 : 18} stroke={1.5} />
+                }
                 styles={() => ({
                   root: {
                     marginRight: 10,
                     paddingLeft: 10,
-                    paddingRight: 10,
+                    paddingRight: onlyIcon ? 0 : 10,
                     color: "#2E2E2E",
                     fontWeight: 400,
                     borderColor: "#CED4DA",
@@ -128,11 +208,154 @@ export default function Gallery(props) {
                   },
                 })}
               >
-                sort
+                {!onlyIcon && <span>color</span>}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Label>sort posts by</Menu.Label>
+              <Menu.Label>with color</Menu.Label>
+              <div className={styles.colors}>
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#f03e3e", border: "None" },
+                  }}
+                  size="md"
+                  color="red.8"
+                  checked={color === "red"}
+                  onChange={handleColorClick}
+                  key={1}
+                  id={"red"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#ffd43b", border: "None" },
+                  }}
+                  size="md"
+                  color="yellow.5"
+                  checked={color === "yellow"}
+                  onChange={handleColorClick}
+                  key={2}
+                  id={"yellow"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#2f9e44", border: "None" },
+                  }}
+                  size="md"
+                  color="green.9"
+                  checked={color === "green"}
+                  onChange={handleColorClick}
+                  key={3}
+                  id={"green"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#22b8cf", border: "None" },
+                  }}
+                  size="md"
+                  color="cyan.6"
+                  checked={color === "teal"}
+                  onChange={handleColorClick}
+                  key={4}
+                  id={"teal"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#1971c2", border: "None" },
+                  }}
+                  size="md"
+                  color="blue.9"
+                  checked={color === "navy"}
+                  onChange={handleColorClick}
+                  key={5}
+                  id={"navy"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#9c36b5", border: "None" },
+                  }}
+                  size="md"
+                  color="grape.9"
+                  checked={color === "purple"}
+                  onChange={handleColorClick}
+                  key={6}
+                  id={"purple"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#868e96", border: "None" },
+                  }}
+                  size="md"
+                  color="dark.3"
+                  checked={color === "gray"}
+                  onChange={handleColorClick}
+                  key={7}
+                  id={"gray"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#141517", border: "None" },
+                  }}
+                  size="md"
+                  color="dark.9"
+                  checked={color === "black"}
+                  onChange={handleColorClick}
+                  key={8}
+                  id={"black"}
+                  className={styles.colorButton}
+                />
+                <Checkbox
+                  styles={{
+                    input: { backgroundColor: "#e9ecef", border: "None" },
+                  }}
+                  size="md"
+                  color="gray.3"
+                  checked={color === "white"}
+                  onChange={handleColorClick}
+                  key={9}
+                  id={"white"}
+                  className={styles.colorButton}
+                />
+              </div>
+            </Menu.Dropdown>
+          </Menu>
+
+          <Menu shadow="md" width={125}>
+            <Menu.Target>
+              <Button
+                variant="outline"
+                color="gray"
+                leftIcon={
+                  <IconArrowsSort size={onlyIcon ? 22 : 18} stroke={1.5} />
+                }
+                styles={() => ({
+                  root: {
+                    marginRight: 10,
+                    paddingLeft: 10,
+                    paddingRight: onlyIcon ? 0 : 10,
+                    color: "#2E2E2E",
+                    fontWeight: 400,
+                    borderColor: "#CED4DA",
+                    "&:hover": {
+                      backgroundColor: "#fbfbfc",
+                    },
+                    leftIcon: {
+                      marginRight: 5,
+                    },
+                  },
+                })}
+              >
+                {!onlyIcon && <span>sort</span>}
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>sort by</Menu.Label>
               <div className={styles.radio}>
                 <Radio.Group
                   value={sort}
@@ -166,12 +389,17 @@ export default function Gallery(props) {
               <Button
                 variant="outline"
                 color="gray"
-                leftIcon={<IconAdjustmentsHorizontal size={18} stroke={1.5} />}
+                leftIcon={
+                  <IconAdjustmentsHorizontal
+                    size={onlyIcon ? 22 : 18}
+                    stroke={1.5}
+                  />
+                }
                 styles={() => ({
                   root: {
                     marginRight: 10,
                     paddingLeft: 10,
-                    paddingRight: 10,
+                    paddingRight: onlyIcon ? 0 : 10,
                     color: "#2E2E2E",
                     fontWeight: 400,
                     borderColor: "#CED4DA",
@@ -184,11 +412,11 @@ export default function Gallery(props) {
                   },
                 })}
               >
-                filter
+                {!onlyIcon && <span>filter</span>}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Label>filter posts by</Menu.Label>
+              <Menu.Label>filter by</Menu.Label>
               <div className={styles.segment}>
                 <div className={styles.segmentGroup}>
                   <h5 className={styles.segmentTitle}>18+</h5>
@@ -231,10 +459,10 @@ export default function Gallery(props) {
           </Menu>
 
           <TextInput
-            value={search}
-            onChange={(event) => setSearch(event.currentTarget.value)}
+            value={textTemp}
+            onChange={(event) => setTextTemp(event.currentTarget.value)}
             icon={<IconSearch size={18} />}
-            placeholder="films, cameras, places..."
+            placeholder={textPlaceholder()}
           />
         </div>
 
