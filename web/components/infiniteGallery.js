@@ -52,7 +52,7 @@ export default function InfiniteGallery(props) {
             hasMore={hasMore}
             loader={loader}
             endMessage={
-              <h3 className={styles.loading}>
+              <h3 className={styles.end}>
                 thats all folks, go take some pictures...
               </h3>
             }

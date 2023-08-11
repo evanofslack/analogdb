@@ -3,6 +3,9 @@ import Link from "next/link";
 
 export default function GridImage(props) {
   let post = props.post;
+  if (post == null) {
+    return;
+  }
 
   let low = post.images[0];
   let medium = post.images[1];
@@ -16,12 +19,7 @@ export default function GridImage(props) {
   }
 
   return (
-    <Link
-      href={`/post/${post.id}`}
-      passHref={true}
-      prefetch={false}
-      // legacyBehavior
-    >
+    <Link href={`/post/${post.id}`} passHref={true} prefetch={false}>
       <div>
         <Image
           src={image.url}

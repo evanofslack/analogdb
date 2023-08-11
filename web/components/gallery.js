@@ -4,6 +4,7 @@ import Footer from "./footer";
 import InfiniteGallery from "../components/infiniteGallery";
 import ScrollTop from "../components/scrollTop";
 import { useState, useEffect } from "react";
+import { useBreakpoint } from "../providers/breakpoint.js";
 import useKeyPress from "../hooks/useKeyPress";
 import { useQueryState, queryTypes } from "next-usequerystate";
 import {
@@ -155,6 +156,24 @@ export default function Gallery(props) {
 
   const returnPress = useKeyPress("Enter");
 
+  const breakpoints = useBreakpoint();
+
+  let onlyIcon = false;
+  if (breakpoints["xs"] || breakpoints["sm"]) {
+    onlyIcon = true;
+  }
+
+  // const textPlaceholder = () => {
+  //   onlyIcon ? "films, cameras..." : "films, cameras, places...";
+  // };
+
+  const textPlaceholder = () => {
+    const placeholder = onlyIcon
+      ? "films, cameras..."
+      : "films, cameras, places...";
+    return placeholder;
+  };
+
   useEffect(() => {
     updateRequest();
   }, [sort, nsfw, bw, sprocket, color, text, returnPress]);
@@ -169,12 +188,14 @@ export default function Gallery(props) {
               <Button
                 variant="outline"
                 color="gray"
-                leftIcon={<IconPalette size={18} stroke={1.5} />}
+                leftIcon={
+                  <IconPalette size={onlyIcon ? 22 : 18} stroke={1.5} />
+                }
                 styles={() => ({
                   root: {
                     marginRight: 10,
                     paddingLeft: 10,
-                    paddingRight: 10,
+                    paddingRight: onlyIcon ? 0 : 10,
                     color: "#2E2E2E",
                     fontWeight: 400,
                     borderColor: "#CED4DA",
@@ -187,7 +208,7 @@ export default function Gallery(props) {
                   },
                 })}
               >
-                color
+                {!onlyIcon && <span>color</span>}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -310,12 +331,14 @@ export default function Gallery(props) {
               <Button
                 variant="outline"
                 color="gray"
-                leftIcon={<IconArrowsSort size={18} stroke={1.5} />}
+                leftIcon={
+                  <IconArrowsSort size={onlyIcon ? 22 : 18} stroke={1.5} />
+                }
                 styles={() => ({
                   root: {
                     marginRight: 10,
                     paddingLeft: 10,
-                    paddingRight: 10,
+                    paddingRight: onlyIcon ? 0 : 10,
                     color: "#2E2E2E",
                     fontWeight: 400,
                     borderColor: "#CED4DA",
@@ -328,7 +351,7 @@ export default function Gallery(props) {
                   },
                 })}
               >
-                sort
+                {!onlyIcon && <span>sort</span>}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -366,12 +389,17 @@ export default function Gallery(props) {
               <Button
                 variant="outline"
                 color="gray"
-                leftIcon={<IconAdjustmentsHorizontal size={18} stroke={1.5} />}
+                leftIcon={
+                  <IconAdjustmentsHorizontal
+                    size={onlyIcon ? 22 : 18}
+                    stroke={1.5}
+                  />
+                }
                 styles={() => ({
                   root: {
                     marginRight: 10,
                     paddingLeft: 10,
-                    paddingRight: 10,
+                    paddingRight: onlyIcon ? 0 : 10,
                     color: "#2E2E2E",
                     fontWeight: 400,
                     borderColor: "#CED4DA",
@@ -384,7 +412,7 @@ export default function Gallery(props) {
                   },
                 })}
               >
-                filter
+                {!onlyIcon && <span>filter</span>}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -434,7 +462,7 @@ export default function Gallery(props) {
             value={textTemp}
             onChange={(event) => setTextTemp(event.currentTarget.value)}
             icon={<IconSearch size={18} />}
-            placeholder="films, cameras, places..."
+            placeholder={textPlaceholder()}
           />
         </div>
 

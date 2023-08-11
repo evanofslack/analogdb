@@ -1,18 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import ImageTag from "../components/imageTag";
 import Footer from "../components/footer";
 import styles from "./imagePage.module.css";
 import { AiOutlineDownload, AiOutlineArrowsAlt } from "react-icons/ai";
-import { HiArrowLeft } from "react-icons/hi";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import {
   startNavigationProgress,
   completeNavigationProgress,
   NavigationProgress,
 } from "@mantine/nprogress";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 async function downloadImage(targetImage, name) {
   const image = await fetch(targetImage);
