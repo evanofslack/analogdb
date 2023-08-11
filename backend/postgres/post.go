@@ -411,10 +411,19 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	keywordWhere, keywordArgs, index = filterToWhereKeyword(filter, index)
 	postWhere, postArgs, index = filterToWherePost(filter, index)
 
+	keywordJoin := "LEFT OUTER"
+	if filter.Keywords != nil {
+		keywordJoin = "INNER"
+	}
+
+	colorJoin := "LEFT OUTER"
+	if filter.Colors != nil {
+		colorJoin = "INNER"
+	}
+
 	args := append(colorArgs, keywordArgs...)
 	args = append(args, postArgs...)
 
-	// groupby := ` GROUP BY p.id`
 	order := filterToOrder(filter)
 	limit := formatLimit(filter)
 	query := fmt.Sprintf(`
@@ -449,7 +458,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 				COUNT(*) OVER()
 			FROM
 				pictures p
-				INNER JOIN (
+				%s JOIN (
 					SELECT
 						post_id,
 						STRING_AGG(colors.hex, ',' ORDER BY colors.percent DESC) as hexes,
@@ -460,7 +469,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 					WHERE %s
 					GROUP BY post_id
 				) c on c.post_id = p.id
-				INNER JOIN (
+				%s JOIN (
 					SELECT
 						post_id,
 						STRING_AGG(keywords.word, ',' ORDER BY keywords.weight DESC) as words,
@@ -470,7 +479,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 					GROUP BY post_id
 				) k on k.post_id = p.id
 			WHERE %s
-	`, colorWhere, keywordWhere, postWhere) + order + limit
+	`, colorJoin, colorWhere, keywordJoin, keywordWhere, postWhere) + order + limit
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 
