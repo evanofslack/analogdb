@@ -1,19 +1,95 @@
 from io import BytesIO
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import extcolors
 import requests
-from loguru import logger
 from PIL import ImageChops
 from PIL.Image import ANTIALIAS, Image, new, open
 from scipy.spatial import KDTree
 from webcolors import (CSS3_HEX_TO_NAMES, HTML4_HEX_TO_NAMES, hex_to_rgb,
                        rgb_to_hex)
 
+from api import retry
 from constants import COLOR_LIMIT, COLOR_TOLERANCE, LOW_RES
 from models import Color
 
+htmlOverrides: Dict[str, str] = {
+    "silver": "gray",
+    "fuschia": "purple",
+    "blue": "teal",
+    "aqua": "teal",
+}
 
+cssOverrides: Dict[str, str] = {
+    "maroon": "red",
+    "firebrick": "red",
+    "salmon": "red",
+    "darkred": "red",
+    "lightsalmon": "orange",
+    "orange": "orange",
+    "darkorange": "orange",
+    "orangered": "orange",
+    "coral": "orange",
+    "mediumseagreen": "green",
+    "seagreen": "green",
+    "yellowgreen": "green",
+    "greenyellow": "green",
+    "steelblue": "teal",
+    "lightsteelblue": "teal",
+    "mediumaquamarine": "teal",
+    "darkcyan": "teal",
+    "darkseagreen": "teal",
+    "paleturquoise": "teal",
+    "cadetblue": "teal",
+    "cornflowerblue": "teal",
+    "lightblue": "teal",
+    "skyblue": "teal",
+    "lightskyblue": "teal",
+    "wienna": "brown",
+    "chocolate": "brown",
+    "rosybrown": "brown",
+    "saddlebrown": "brown",
+    "darkkhaki": "brown",
+    "darksalmon": "brown",
+    "brown": "brown",
+    "burlywood": "tan",
+    "bisque": "tan",
+    "antiquewhite ": "tan",
+    "blanchedalmond": "tan",
+    "peru": "tan",
+    "sandybrown": "tan",
+    "papayawhip ": "tan",
+    "tan": "tan",
+    "navajowhite ": "tan",
+    "moccasin  ": "tan",
+    "peachpuff": "tan",
+    "wheat": "tan",
+    "khaki": "tan",
+    "darkgray": "gray",
+    "dimgray": "gray",
+    "thistle": "gray",
+    "silver": "gray",
+    "lightslategray": "gray",
+    "darkslategray": "gray",
+    "gainsboro": "gray",
+    "lightyellow": "yellow",
+    "lightgoldenrodyellow": "yellow",
+    "lemonchiffon": "yellow",
+    "goldenrod": "yellow",
+    "darkolivegreen": "olive",
+    "olivedrab": "olive",
+    "darkslateblue": "navy",
+    "midnightblue": "navy",
+    "violet": "purple",
+    "lightcoral": "purple",
+    "lightpink": "purple",
+    "royalblue": "purple",
+    "seashell": "white",
+    "snow": "white",
+}
+
+
+@retry(delay=1, times=5)
 def request_image(url: str) -> Image:
     pic = requests.get(url, stream=True)
     image = open(pic.raw)
@@ -93,6 +169,27 @@ def rgb_to_html(rgb: Tuple[int, int, int]) -> str:
     return match
 
 
+def override_color_names(color: Color) -> Color:
+
+    # don't override these colors
+    if color.html in {"navy", "purple"}:
+        return color
+
+    css = color.css
+    if css in cssOverrides.keys():
+        new = cssOverrides.get(css)
+        if new is not None:
+            color.html = new
+
+    html = color.html
+    if html in htmlOverrides.keys():
+        new = htmlOverrides.get(html)
+        if new is not None:
+            color.html = new
+
+    return color
+
+
 def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
     """
 
@@ -124,25 +221,22 @@ def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
         # get percent of image with this color
         percent = round(pixels / total_pixels, 8)
 
-        # append it
-        extracted.append(Color(hex=hex, css=css, html=html, percent=percent))
+        # create color
+        color = Color(hex=hex, css=css, html=html, percent=percent)
 
-    # we need to send 5 colors to analogdb
-    # if we dont have 5 colors, append fillers
-    num_filler = COLOR_LIMIT - len(extracted)
-    if num_filler > 0:
-        filler = Color(hex="null", css="null", html="null", percent=0.0)
-        for _ in range(num_filler):
-            extracted.append(filler)
+        # override color names
+        color = override_color_names(color)
+
+        # append it
+        extracted.append(color)
 
     return extracted
 
 
 def test_extract_colors():
-    import PIL
 
-    url = "https://d3i73ktnzbi69i.cloudfront.net/98fe51da-4b04-47db-b529-ce94f2c31219.jpeg"
-    im = PIL.Image.open(requests.get(url, stream=True).raw)
+    url = "https://d3i73ktnzbi69i.cloudfront.net/9c995e5b-9307-4f51-a58b-170e41e5fef3.jpeg"
+    im = request_image(url)
 
     extracted = extract_colors(im)
     for e in extracted:

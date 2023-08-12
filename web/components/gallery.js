@@ -21,6 +21,7 @@ import {
   Menu,
   Radio,
   Checkbox,
+  Tooltip,
 } from "@mantine/core";
 
 import { baseURL } from "../constants.js";
@@ -71,16 +72,21 @@ function filterQueryParams(sort, nsfw, bw, sprocket, text, color) {
 
   if (color !== "") {
     queryParams = queryParams.concat("&color=" + color);
-    if (color === "black" || color === "gray") {
+    if (color === "gray") {
       queryParams = queryParams.concat("&min_color=" + "0.8");
-    }
-    if (color === "white") {
-      queryParams = queryParams.concat("&min_color=" + "0.6");
-    }
-    if (color === "teal") {
+    } else if (color === "black") {
+      queryParams = queryParams.concat("&min_color=" + "0.7");
+    } else if (color === "white") {
+      queryParams = queryParams.concat("&min_color=" + "0.50");
+    } else if (color === "teal") {
+      queryParams = queryParams.concat("&min_color=" + "0.35");
+    } else if (color === "olive" || color === "brown") {
+      queryParams = queryParams.concat("&min_color=" + "0.35");
+    } else if (color === "tan") {
+      queryParams = queryParams.concat("&min_color=" + "0.30");
+    } else if (color === "navy" || color === "green") {
       queryParams = queryParams.concat("&min_color=" + "0.25");
-    }
-    if (color === "navy" || color === "green") {
+    } else {
       queryParams = queryParams.concat("&min_color=" + "0.15");
     }
   }
@@ -163,10 +169,6 @@ export default function Gallery(props) {
     onlyIcon = true;
   }
 
-  // const textPlaceholder = () => {
-  //   onlyIcon ? "films, cameras..." : "films, cameras, places...";
-  // };
-
   const textPlaceholder = () => {
     const placeholder = onlyIcon
       ? "films, cameras..."
@@ -214,114 +216,266 @@ export default function Gallery(props) {
             <Menu.Dropdown>
               <Menu.Label>with color</Menu.Label>
               <div className={styles.colors}>
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#f03e3e", border: "None" },
-                  }}
-                  size="md"
-                  color="red.8"
-                  checked={color === "red"}
-                  onChange={handleColorClick}
-                  key={1}
-                  id={"red"}
-                  className={styles.colorButton}
-                />
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#ffd43b", border: "None" },
-                  }}
-                  size="md"
-                  color="yellow.5"
-                  checked={color === "yellow"}
-                  onChange={handleColorClick}
-                  key={2}
-                  id={"yellow"}
-                  className={styles.colorButton}
-                />
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#2f9e44", border: "None" },
-                  }}
-                  size="md"
-                  color="green.9"
-                  checked={color === "green"}
-                  onChange={handleColorClick}
-                  key={3}
-                  id={"green"}
-                  className={styles.colorButton}
-                />
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#22b8cf", border: "None" },
-                  }}
-                  size="md"
-                  color="cyan.6"
-                  checked={color === "teal"}
-                  onChange={handleColorClick}
-                  key={4}
-                  id={"teal"}
-                  className={styles.colorButton}
-                />
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#1971c2", border: "None" },
-                  }}
-                  size="md"
-                  color="blue.9"
-                  checked={color === "navy"}
-                  onChange={handleColorClick}
-                  key={5}
-                  id={"navy"}
-                  className={styles.colorButton}
-                />
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#9c36b5", border: "None" },
-                  }}
-                  size="md"
-                  color="grape.9"
-                  checked={color === "purple"}
-                  onChange={handleColorClick}
-                  key={6}
-                  id={"purple"}
-                  className={styles.colorButton}
-                />
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#868e96", border: "None" },
-                  }}
-                  size="md"
-                  color="dark.3"
-                  checked={color === "gray"}
-                  onChange={handleColorClick}
-                  key={7}
-                  id={"gray"}
-                  className={styles.colorButton}
-                />
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#141517", border: "None" },
-                  }}
-                  size="md"
-                  color="dark.9"
-                  checked={color === "black"}
-                  onChange={handleColorClick}
-                  key={8}
-                  id={"black"}
-                  className={styles.colorButton}
-                />
-                <Checkbox
-                  styles={{
-                    input: { backgroundColor: "#e9ecef", border: "None" },
-                  }}
-                  size="md"
-                  color="gray.3"
-                  checked={color === "white"}
-                  onChange={handleColorClick}
-                  key={9}
-                  id={"white"}
-                  className={styles.colorButton}
-                />
+                <Tooltip
+                  label="red"
+                  color={color === "red" ? "red.8" : "red.7"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#f03e3e", border: "None" },
+                    }}
+                    size="md"
+                    color="red.8"
+                    checked={color === "red"}
+                    onChange={handleColorClick}
+                    key={1}
+                    id={"red"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="orange"
+                  color={color === "orange" ? "orange.7" : "orange.6"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#fd7e14", border: "None" },
+                    }}
+                    size="md"
+                    color="orange.7"
+                    checked={color === "orange"}
+                    onChange={handleColorClick}
+                    key={2}
+                    id={"orange"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="beige"
+                  color={color === "tan" ? "brown.2" : "brown.1"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#ffdcb0", border: "None" },
+                    }}
+                    size="md"
+                    color="brown.2"
+                    checked={color === "tan"}
+                    onChange={handleColorClick}
+                    key={3}
+                    id={"tan"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="yellow"
+                  color={color === "yellow" ? "yellow.5" : "yellow.4"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#ffd43b", border: "None" },
+                    }}
+                    size="md"
+                    color="yellow.5"
+                    checked={color === "yellow"}
+                    onChange={handleColorClick}
+                    key={4}
+                    id={"yellow"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="green"
+                  color={color === "green" ? "green.9" : "green.8"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#2f9e44", border: "None" },
+                    }}
+                    size="md"
+                    color="green.9"
+                    checked={color === "green"}
+                    onChange={handleColorClick}
+                    key={5}
+                    id={"green"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="olive"
+                  color={color === "olive" ? "olive.9" : "olive.8"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#4c4d00", border: "None" },
+                    }}
+                    size="md"
+                    color="olive.9"
+                    checked={color === "olive"}
+                    onChange={handleColorClick}
+                    key={6}
+                    id={"olive"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="teal"
+                  color={color === "teal" ? "cyan.6" : "cyan.5"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#22b8cf", border: "None" },
+                    }}
+                    size="md"
+                    color="cyan.6"
+                    checked={color === "teal"}
+                    onChange={handleColorClick}
+                    key={7}
+                    id={"teal"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="navy"
+                  color={color === "navy" ? "navy.8" : "navy.7"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#064679", border: "None" },
+                    }}
+                    size="md"
+                    color="navy.8"
+                    checked={color === "navy"}
+                    onChange={handleColorClick}
+                    key={8}
+                    id={"navy"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="purple"
+                  color={color === "purple" ? "grape.9" : "grape.8"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#9c36b5", border: "None" },
+                    }}
+                    size="md"
+                    color="grape.9"
+                    checked={color === "purple"}
+                    onChange={handleColorClick}
+                    key={9}
+                    id={"purple"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="gray"
+                  color={color === "gray" ? "dark.3" : "dark.2"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#868e96", border: "None" },
+                    }}
+                    size="md"
+                    color="dark.3"
+                    checked={color === "gray"}
+                    onChange={handleColorClick}
+                    key={10}
+                    id={"gray"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="brown"
+                  color={color === "brown" ? "brown.8" : "brown.7"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#7d4500", border: "None" },
+                    }}
+                    size="md"
+                    color="brown.8"
+                    checked={color === "brown"}
+                    onChange={handleColorClick}
+                    key={11}
+                    id={"brown"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="black"
+                  color={color === "black" ? "dark.9" : "dark.8"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#141517", border: "None" },
+                    }}
+                    size="md"
+                    color="dark.9"
+                    checked={color === "black"}
+                    onChange={handleColorClick}
+                    key={12}
+                    id={"black"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
+                <Tooltip
+                  label="white"
+                  color={color === "white" ? "gray.3" : "gray.2"}
+                  position="right"
+                  withArrow
+                >
+                  <Checkbox
+                    styles={{
+                      input: { backgroundColor: "#e9ecef", border: "None" },
+                    }}
+                    size="md"
+                    color="gray.3"
+                    checked={color === "white"}
+                    onChange={handleColorClick}
+                    key={13}
+                    id={"white"}
+                    className={styles.colorButton}
+                    radius="xs"
+                  />
+                </Tooltip>
               </div>
             </Menu.Dropdown>
           </Menu>
