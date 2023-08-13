@@ -2,16 +2,16 @@ import Head from "next/head";
 import Gallery from "../components/gallery";
 import { authorized_fetch } from "../fetch.js";
 
-export async function getStaticProps() {
+export async function getServerSideProps(context) {
+  const params = context.params
+  console.log(params);
+
   const numPosts = 50;
   const route = `/posts?sort=latest&page_size=${numPosts}&grayscale=false&nsfw=false`;
   const response = await authorized_fetch(route, "GET");
   const data = await response.json();
   return {
-    props: {
-      data,
-    },
-    revalidate: 60,
+    props: { data },
   };
 }
 
