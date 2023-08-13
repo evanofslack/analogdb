@@ -7,7 +7,6 @@ import { useClipboard } from "@mantine/hooks";
 import { useRouter } from "next/navigation";
 
 export default function ImageTag(props) {
-  const router = useRouter();
   const clipboard = useClipboard({ timeout: 1000 });
 
   let post = props.post;
@@ -19,12 +18,10 @@ export default function ImageTag(props) {
 
   const date = new Date(post.timestamp * 1000).toLocaleDateString("en-US");
 
-  const c1_hex = post.colors[0].hex;
-  const c2_hex = post.colors[1].hex;
-  const c3_hex = post.colors[2].hex;
-  const c4_hex = post.colors[3].hex;
-  const c5_hex = post.colors[4].hex;
-  const hex_colors = [c1_hex, c2_hex, c3_hex, c4_hex, c5_hex];
+  let hexColors = new Array();
+  post.colors.forEach(function (color) {
+    hexColors.push(color.hex);
+  });
 
   const color = (hex) => {
     return {
@@ -70,7 +67,7 @@ export default function ImageTag(props) {
           </div>
           <div className={styles.containerColorsAndKeywords}>
             <div className={styles.containerColors}>
-              {hex_colors.map((hex) => {
+              {hexColors.map((hex) => {
                 return (
                   <Tooltip
                     key={hex.id}

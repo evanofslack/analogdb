@@ -13,8 +13,8 @@ export default function About(props) {
     isMobile = true;
   }
 
-  let numPosts = props.data.numPosts
-  let numAuthors = props.data.numAuthors
+  let numPosts = props.data.numPosts;
+  let numAuthors = props.data.numAuthors;
 
   const apiQuery = "curl https://api.analogdb.com/posts";
 
@@ -92,7 +92,7 @@ export default function About(props) {
                 />
                 <div className={styles.statCol}>
                   <p className={styles.statNum}>{numPosts}</p>
-                  <p className={styles.statTitle}>posts</p>
+                  <p className={styles.statTitle}>photos</p>
                 </div>
               </div>
 
