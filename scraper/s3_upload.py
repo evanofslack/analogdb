@@ -102,11 +102,6 @@ def create_analog_post(
     raw_img = images[3]
 
     colors = extract_colors(image=post.image)
-    c1 = colors[0]
-    c2 = colors[1]
-    c3 = colors[2]
-    c4 = colors[3]
-    c5 = colors[4]
 
     analog_post = AnalogPost(
         url=raw_img.url,
@@ -129,21 +124,6 @@ def create_analog_post(
         high_url=high_img.url,
         high_width=high_img.width,
         high_height=high_img.height,
-        c1_hex=c1.hex,
-        c1_css=c1.css,
-        c1_percent=c1.percent,
-        c2_hex=c2.hex,
-        c2_css=c2.css,
-        c2_percent=c2.percent,
-        c3_hex=c3.hex,
-        c3_css=c3.css,
-        c3_percent=c3.percent,
-        c4_hex=c4.hex,
-        c4_css=c4.css,
-        c4_percent=c4.percent,
-        c5_hex=c5.hex,
-        c5_css=c5.css,
-        c5_percent=c5.percent,
         keywords=keywords,
         colors=colors,
     )
