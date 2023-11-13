@@ -379,7 +379,7 @@ func stringToInt(query string) (int, error) {
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 
-	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	values := r.URL.Query()
 
@@ -493,6 +493,63 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		filter.Keywords = &keywords
 	}
 
+	if keywords, ok := values["keyword"]; ok {
+		filter.Keywords = &keywords
+	}
+
+	if minWidth := values.Get("width_min"); minWidth != "" {
+		if width, err := strconv.ParseFloat(minWidth, 64); err != nil {
+			err := fmt.Errorf("failed to parse %s to float, err=%w", minWidth, err)
+			return nil, err
+		} else {
+			filter.Width.Min = &width
+		}
+	}
+
+	if maxWidth := values.Get("width_max"); maxWidth != "" {
+		if width, err := strconv.ParseFloat(maxWidth, 64); err != nil {
+			err := fmt.Errorf("failed to parse %s to float, err=%w", maxWidth, err)
+			return nil, err
+		} else {
+			filter.Width.Max = &width
+		}
+	}
+
+	if minHeight := values.Get("height_min"); minHeight != "" {
+		if height, err := strconv.ParseFloat(minHeight, 64); err != nil {
+			err := fmt.Errorf("failed to parse %s to float, err=%w", minHeight, err)
+			return nil, err
+		} else {
+			filter.Height.Min = &height
+		}
+	}
+
+	if maxHeight := values.Get("height_max"); maxHeight != "" {
+		if height, err := strconv.ParseFloat(maxHeight, 64); err != nil {
+			err := fmt.Errorf("failed to parse %s to float, err=%w", maxHeight, err)
+			return nil, err
+		} else {
+			filter.Height.Max = &height
+		}
+	}
+
+	if minRatio := values.Get("ratio_min"); minRatio != "" {
+		if ratio, err := strconv.ParseFloat(minRatio, 64); err != nil {
+			err := fmt.Errorf("failed to parse %s to float, err=%w", minRatio, err)
+			return nil, err
+		} else {
+			filter.AspectRatio.Min = &ratio
+		}
+	}
+
+	if maxRatio := values.Get("ratio_max"); maxRatio != "" {
+		if ratio, err := strconv.ParseFloat(maxRatio, 64); err != nil {
+			err := fmt.Errorf("failed to parse %s to float, err=%w", maxRatio, err)
+			return nil, err
+		} else {
+			filter.AspectRatio.Max = &ratio
+		}
+	}
 	return filter, nil
 }
 

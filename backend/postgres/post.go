@@ -992,6 +992,42 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 		index += 1
 	}
 
+	if minWidth := filter.Width.Min; minWidth != nil {
+		where = append(where, fmt.Sprintf("p.width >= $%d", index))
+		args = append(args, *minWidth)
+		index += 1
+	}
+
+	if maxWidth := filter.Width.Max; maxWidth != nil {
+		where = append(where, fmt.Sprintf("p.width <= $%d", index))
+		args = append(args, *maxWidth)
+		index += 1
+	}
+
+	if minHeight := filter.Height.Min; minHeight != nil {
+		where = append(where, fmt.Sprintf("p.height >= $%d", index))
+		args = append(args, *minHeight)
+		index += 1
+	}
+
+	if maxHeight := filter.Height.Max; maxHeight != nil {
+		where = append(where, fmt.Sprintf("p.height <= $%d", index))
+		args = append(args, *maxHeight)
+		index += 1
+	}
+
+	if minRatio := filter.AspectRatio.Min; minRatio != nil {
+		where = append(where, fmt.Sprintf("p.width / p.height >= $%d", index))
+		args = append(args, *minRatio)
+		index += 1
+	}
+
+	if maxRatio := filter.AspectRatio.Max; maxRatio != nil {
+		where = append(where, fmt.Sprintf("p.width / p.height <= $%d", index))
+		args = append(args, *maxRatio)
+		index += 1
+	}
+
 	whereQuery := strings.Join(where, " AND ")
 
 	return whereQuery, args, index

@@ -112,7 +112,13 @@ func PostSortFromString(s string) PostSort {
 	default:
 		return SortUnknown
 	}
+}
 
+// Dimension represents a dimension with
+// optional minimum and maximum sizes.
+type Dimension struct {
+	Min *float64
+	Max *float64
 }
 
 // PostFilter are options used for querying posts
@@ -130,6 +136,9 @@ type PostFilter struct {
 	Colors        *[]string
 	ColorPercents *[]float64
 	Keywords      *[]string
+	Width         *Dimension
+	Height        *Dimension
+	AspectRatio   *Dimension
 }
 
 func (filter *PostFilter) SetSeed() {
@@ -172,7 +181,7 @@ func (filter *PostFilter) SetMinColorPercent() {
 	filter.ColorPercents = &percents
 }
 
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
+func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, colors *[]string, colorPercents *[]float64, keywords *[]string, width *Dimension, height *Dimension, aspectRatio *Dimension) *PostFilter {
 
 	filter := &PostFilter{
 		Limit:         limit,
@@ -188,6 +197,9 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 		Colors:        colors,
 		ColorPercents: colorPercents,
 		Keywords:      keywords,
+		Width:         width,
+		Height:        height,
+		AspectRatio:   aspectRatio,
 	}
 
 	filter.SetMinColorPercent()
@@ -195,8 +207,10 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 	return filter
 }
 
+// NewPostFilterWithIDs is a convenience function
+// to create a post filter with only IDs set.
 func NewPostFilterWithIDs(ids []int) *PostFilter {
-	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil)
+	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 // PostSimilarityFilter are options used for querying similar posts
