@@ -1017,13 +1017,13 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 	}
 
 	if minRatio := filter.AspectRatio.Min; minRatio != nil {
-		where = append(where, fmt.Sprintf("p.width / p.height >= $%d", index))
+		where = append(where, fmt.Sprintf("p.width / p.height >= $%d::decimal", index))
 		args = append(args, *minRatio)
 		index += 1
 	}
 
 	if maxRatio := filter.AspectRatio.Max; maxRatio != nil {
-		where = append(where, fmt.Sprintf("p.width / p.height <= $%d", index))
+		where = append(where, fmt.Sprintf("p.width / p.height <= $%d::decimal", index))
 		args = append(args, *maxRatio)
 		index += 1
 	}
