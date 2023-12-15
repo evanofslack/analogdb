@@ -141,8 +141,8 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 
 // insertPost inserts a post into the DB and returns the post's ID
 func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*int64, error) {
-
 	db.logger.Debug().Ctx(ctx).Msg("Starting insert post")
+	defer db.logger.Debug().Ctx(ctx).Msg("Finished insert post")
 
 	create, err := createPostToRawPostCreate(post)
 	if err != nil {
@@ -400,8 +400,13 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 
 // findPosts is the general function responsible for handling all queries
 func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
+	filterFmt := "nil"
+	if filter != nil {
+		filterFmt = filter.String()
+	}
 
-	db.logger.Debug().Ctx(ctx).Msg("Starting find posts")
+	db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Starting find posts")
+	defer db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Finished find posts")
 
 	var colorArgs, keywordArgs, postArgs []any
 	index := 1
@@ -989,6 +994,42 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 		}
 		where = append(where, fmt.Sprintf("p.author = $%d", index))
 		args = append(args, matchAuthor)
+		index += 1
+	}
+
+	if minWidth := filter.Width.Min; minWidth != nil {
+		where = append(where, fmt.Sprintf("p.width >= $%d", index))
+		args = append(args, *minWidth)
+		index += 1
+	}
+
+	if maxWidth := filter.Width.Max; maxWidth != nil {
+		where = append(where, fmt.Sprintf("p.width <= $%d", index))
+		args = append(args, *maxWidth)
+		index += 1
+	}
+
+	if minHeight := filter.Height.Min; minHeight != nil {
+		where = append(where, fmt.Sprintf("p.height >= $%d", index))
+		args = append(args, *minHeight)
+		index += 1
+	}
+
+	if maxHeight := filter.Height.Max; maxHeight != nil {
+		where = append(where, fmt.Sprintf("p.height <= $%d", index))
+		args = append(args, *maxHeight)
+		index += 1
+	}
+
+	if minRatio := filter.AspectRatio.Min; minRatio != nil {
+		where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal >= $%d::decimal", index))
+		args = append(args, *minRatio)
+		index += 1
+	}
+
+	if maxRatio := filter.AspectRatio.Max; maxRatio != nil {
+		where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal <= $%d::decimal", index))
+		args = append(args, *maxRatio)
 		index += 1
 	}
 

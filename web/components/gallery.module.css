@@ -57,6 +57,44 @@
   padding-left: 0.3rem;
 }
 
+.dimension {
+  font-size: 0.9rem;
+  width: 100%;
+  padding-right: 1rem;
+  padding-left: 1rem;
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
+}
+
+.subdimension {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.dimensionTitle {
+  font-weight: 500;
+}
+
+.numInputLabel {
+  font-size: 0.8rem;
+  color: #878787;
+}
+
+.numInputRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  padding-top: 0.3rem;
+  width: 100%;
+}
+
+.numInput {
+  max-width: 5rem;
+}
+
 .colors {
   display: flex;
   flex-direction: column;

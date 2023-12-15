@@ -8,6 +8,7 @@ import { useBreakpoint } from "../providers/breakpoint.js";
 import useKeyPress from "../hooks/useKeyPress";
 import { useQueryState, queryTypes } from "next-usequerystate";
 import {
+  IconArrowAutofitWidth,
   IconSearch,
   IconArrowsSort,
   IconAdjustmentsHorizontal,
@@ -22,6 +23,7 @@ import {
   Radio,
   Checkbox,
   Tooltip,
+  NumberInput,
 } from "@mantine/core";
 
 import { baseURL } from "../constants.js";
@@ -33,7 +35,17 @@ async function makeRequest(queryParams) {
   return data;
 }
 
-function filterQueryParams(sort, nsfw, bw, sprocket, text, color) {
+function filterQueryParams(
+  sort,
+  nsfw,
+  bw,
+  sprocket,
+  text,
+  color,
+  width,
+  height,
+  ratio
+) {
   let queryParams = "?" + "sort=" + sort;
 
   switch (nsfw) {
@@ -91,7 +103,16 @@ function filterQueryParams(sort, nsfw, bw, sprocket, text, color) {
     }
   }
 
+  queryParams = queryParams.concat("&width_min=" + width[0]);
+  queryParams = queryParams.concat("&width_max=" + width[1]);
+  queryParams = queryParams.concat("&height_min=" + height[0]);
+  queryParams = queryParams.concat("&height_max=" + height[1]);
+  queryParams = queryParams.concat("&ratio_min=" + ratio[0]);
+  queryParams = queryParams.concat("&ratio_max=" + ratio[1]);
+
   queryParams = queryParams.concat("&page_size=" + 100);
+
+  // console.log(queryParams);
 
   return queryParams;
 }
@@ -121,6 +142,22 @@ export default function Gallery(props) {
     "sprocket",
     queryTypes.string.withDefault(defaultSprocket)
   );
+
+  // handle setting sizes
+  let widthMinLimit = 600;
+  let widthMaxLimit = 15000;
+  const [widthMin, setWidthMin] = useState(widthMinLimit);
+  const [widthMax, setWidthMax] = useState(widthMaxLimit);
+
+  let heightMinLimit = 400;
+  let heightMaxLimit = 12000;
+  const [heightMin, setHeightMin] = useState(heightMinLimit);
+  const [heightMax, setHeightMax] = useState(heightMaxLimit);
+
+  let ratioMinLimit = 0.3;
+  let ratioMaxLimit = 4.8;
+  const [ratioMin, setRatioMin] = useState(ratioMinLimit);
+  const [ratioMax, setRatioMax] = useState(ratioMaxLimit);
 
   // handle setting colors
   const [color, setColor] = useQueryState(
@@ -155,7 +192,17 @@ export default function Gallery(props) {
       setText(textTemp);
     }
 
-    let request = filterQueryParams(sort, nsfw, bw, sprocket, text, color);
+    let request = filterQueryParams(
+      sort,
+      nsfw,
+      bw,
+      sprocket,
+      text,
+      color,
+      [widthMin, widthMax],
+      [heightMin, heightMax],
+      [ratioMin, ratioMax]
+    );
     const response = await makeRequest(request);
     setResponse(response);
   };
@@ -178,13 +225,158 @@ export default function Gallery(props) {
 
   useEffect(() => {
     updateRequest();
-  }, [sort, nsfw, bw, sprocket, color, text, returnPress]);
+  }, [
+    sort,
+    nsfw,
+    bw,
+    sprocket,
+    color,
+    text,
+    widthMin,
+    widthMax,
+    heightMin,
+    heightMax,
+    ratioMin,
+    ratioMax,
+    returnPress,
+  ]);
 
   return (
     <div className={styles.main}>
       <Header />
       <div className={styles.margin}>
         <div className={styles.query}>
+          <Menu shadow="md" width={170}>
+            <Menu.Target>
+              <Button
+                variant="outline"
+                color="gray"
+                leftIcon={
+                  <IconArrowAutofitWidth
+                    size={onlyIcon ? 22 : 18}
+                    stroke={1.6}
+                  />
+                }
+                styles={() => ({
+                  root: {
+                    marginRight: 10,
+                    paddingLeft: 10,
+                    paddingRight: onlyIcon ? 0 : 10,
+                    color: "#2E2E2E",
+                    fontWeight: 400,
+                    borderColor: "#CED4DA",
+                    "&:hover": {
+                      backgroundColor: "#fbfbfc",
+                    },
+                    leftIcon: {
+                      marginRight: 5,
+                    },
+                  },
+                })}
+              >
+                {!onlyIcon && <span>size</span>}
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>with size</Menu.Label>
+              <div>
+                <div className={styles.dimension}>
+                  <span className={styles.dimensionTitle}>aspect ratio</span>
+                  <div className={styles.subdimension}>
+                    <div className={styles.numInputRow}>
+                      <span className={styles.numInputLabel}>min</span>
+                      <div className={styles.numInput}>
+                        <NumberInput
+                          value={ratioMin}
+                          onChange={setRatioMin}
+                          min={ratioMinLimit}
+                          max={ratioMax}
+                          step={0.01}
+                          precision={2}
+                          size="xs"
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.numInputRow}>
+                      <span className={styles.numInputLabel}>max</span>
+                      <div className={styles.numInput}>
+                        <NumberInput
+                          value={ratioMax}
+                          onChange={setRatioMax}
+                          min={ratioMin}
+                          max={ratioMaxLimit}
+                          step={0.01}
+                          precision={2}
+                          size="xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.dimension}>
+                  <span className={styles.dimensionTitle}>width</span>
+                  <div className={styles.subdimension}>
+                    <div className={styles.numInputRow}>
+                      <span className={styles.numInputLabel}>min</span>
+                      <div className={styles.numInput}>
+                        <NumberInput
+                          value={widthMin}
+                          onChange={setWidthMin}
+                          min={widthMinLimit}
+                          max={widthMax}
+                          size="xs"
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.numInputRow}>
+                      <span className={styles.numInputLabel}>max</span>
+                      <div className={styles.numInput}>
+                        <NumberInput
+                          value={widthMax}
+                          onChange={setWidthMax}
+                          allowNegative={false}
+                          min={widthMin}
+                          max={widthMaxLimit}
+                          size="xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className={styles.dimension}>
+                  <span className={styles.dimensionTitle}>height</span>
+                  <div className={styles.subdimension}>
+                    <div className={styles.numInputRow}>
+                      <span className={styles.numInputLabel}>min</span>
+                      <div className={styles.numInput}>
+                        <NumberInput
+                          value={heightMin}
+                          onChange={setHeightMin}
+                          allowNegative={false}
+                          min={heightMinLimit}
+                          max={heightMax}
+                          size="xs"
+                        />
+                      </div>
+                    </div>
+                    <div className={styles.numInputRow}>
+                      <span className={styles.numInputLabel}>max</span>
+                      <div className={styles.numInput}>
+                        <NumberInput
+                          value={heightMax}
+                          onChange={setHeightMax}
+                          min={heightMin}
+                          max={heightMaxLimit}
+                          size="xs"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Menu.Dropdown>
+          </Menu>
+
           <Menu shadow="md" width={100}>
             <Menu.Target>
               <Button

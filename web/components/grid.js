@@ -11,8 +11,10 @@ export default function Grid(props) {
   } else if (breakpoints["sm"]) {
     numColumn = 3;
   } else if (breakpoints["md"]) {
-    numColumn = 4;
+    numColumn = 3;
   } else if (breakpoints["lg"]) {
+    numColumn = 4;
+  } else if (breakpoints["xl"]) {
     numColumn = 5;
   }
 
