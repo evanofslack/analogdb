@@ -141,6 +141,9 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 
 // insertPost inserts a post into the DB and returns the post's ID
 func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*int64, error) {
+	db.logger.Debug().Ctx(ctx).Msg("Starting insert post")
+	defer db.logger.Debug().Ctx(ctx).Msg("Finished insert post")
+
 	create, err := createPostToRawPostCreate(post)
 	if err != nil {
 		db.logger.Error().Ctx(ctx).Err(err).Msg("Failed to insert post")
