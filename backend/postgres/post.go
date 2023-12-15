@@ -141,9 +141,6 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 
 // insertPost inserts a post into the DB and returns the post's ID
 func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*int64, error) {
-
-	db.logger.Debug().Ctx(ctx).Msg("Starting insert post")
-
 	create, err := createPostToRawPostCreate(post)
 	if err != nil {
 		db.logger.Error().Ctx(ctx).Err(err).Msg("Failed to insert post")
@@ -400,8 +397,13 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 
 // findPosts is the general function responsible for handling all queries
 func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
+	filterFmt := "nil"
+	if filter != nil {
+		filterFmt = filter.String()
+	}
 
-	db.logger.Debug().Ctx(ctx).Msg("Starting find posts")
+	db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Starting find posts")
+	defer db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Finished find posts")
 
 	var colorArgs, keywordArgs, postArgs []any
 	index := 1
@@ -1017,13 +1019,13 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 	}
 
 	if minRatio := filter.AspectRatio.Min; minRatio != nil {
-		where = append(where, fmt.Sprintf("p.width / p.height >= $%d::decimal", index))
+		where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal >= $%d::decimal", index))
 		args = append(args, *minRatio)
 		index += 1
 	}
 
 	if maxRatio := filter.AspectRatio.Max; maxRatio != nil {
-		where = append(where, fmt.Sprintf("p.width / p.height <= $%d::decimal", index))
+		where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal <= $%d::decimal", index))
 		args = append(args, *maxRatio)
 		index += 1
 	}
