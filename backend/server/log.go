@@ -54,7 +54,15 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 					"bytes_out":  ww.BytesWritten(),
 					"authorized": authorized,
 				}).
-				Msg("Incoming request")
+				Msg("Handled request")
+
+			// log query params at debug level
+			server.logger.Debug().
+				Ctx(ctx).
+				Fields(map[string]interface{}{
+					"query": r.URL.Query(),
+				}).
+				Msg("Request query params")
 		}()
 
 	})
