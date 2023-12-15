@@ -2,6 +2,7 @@ package analogdb
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"strings"
 )
@@ -121,6 +122,18 @@ type Dimension struct {
 	Max *float64
 }
 
+func (dim *Dimension) String() string {
+	min, max := "min=nil", "max=nil"
+	if dim.Min != nil {
+		min = fmt.Sprintf("min=%.2f", *dim.Min)
+	}
+	if dim.Max != nil {
+		max = fmt.Sprintf("max=%.2f", *dim.Max)
+	}
+	return fmt.Sprintf("%s, %s", min, max)
+
+}
+
 // PostFilter are options used for querying posts
 type PostFilter struct {
 	Limit         *int
@@ -139,6 +152,59 @@ type PostFilter struct {
 	Width         *Dimension
 	Height        *Dimension
 	AspectRatio   *Dimension
+}
+
+func (filter *PostFilter) String() string {
+	out := []string{}
+	if filter.Limit != nil {
+		out = append(out, fmt.Sprintf("limit: %d", filter.Limit))
+	}
+	if filter.Sort != nil {
+		out = append(out, fmt.Sprintf("sort: %s", filter.Sort))
+	}
+	if filter.Keyset != nil {
+		out = append(out, fmt.Sprintf("keyset: %d", *filter.Keyset))
+	}
+	if filter.Nsfw != nil {
+		out = append(out, fmt.Sprintf("keyset: %t", *filter.Nsfw))
+	}
+	if filter.Grayscale != nil {
+		out = append(out, fmt.Sprintf("grayscale: %t", *filter.Grayscale))
+	}
+	if filter.Sprocket != nil {
+		out = append(out, fmt.Sprintf("sprocket: %t", *filter.Sprocket))
+	}
+	if filter.Seed != nil {
+		out = append(out, fmt.Sprintf("seed: %d", *filter.Seed))
+	}
+	if filter.IDs != nil {
+		out = append(out, fmt.Sprintf("ids: %v", *filter.IDs))
+	}
+	if filter.Title != nil {
+		out = append(out, fmt.Sprintf("title: %s", *filter.Title))
+	}
+	if filter.Author != nil {
+		out = append(out, fmt.Sprintf("author: %s", *filter.Author))
+	}
+	if filter.Colors != nil {
+		out = append(out, fmt.Sprintf("colors: %v", *filter.Colors))
+	}
+	if filter.ColorPercents != nil {
+		out = append(out, fmt.Sprintf("color_percents: %v", *filter.ColorPercents))
+	}
+	if filter.Keywords != nil {
+		out = append(out, fmt.Sprintf("keywords: %v", *filter.Keywords))
+	}
+	if filter.Width != nil {
+		out = append(out, fmt.Sprintf("width: %s", filter.Width))
+	}
+	if filter.Height != nil {
+		out = append(out, fmt.Sprintf("height: %s", filter.Height.String()))
+	}
+	if filter.AspectRatio != nil {
+		out = append(out, fmt.Sprintf("aspect_ratio: %s", filter.AspectRatio))
+	}
+	return strings.Join(out, ", ")
 }
 
 func (filter *PostFilter) SetSeed() {
