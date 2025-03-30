@@ -91,7 +91,7 @@ export default function About(props) {
                   className={styles.statIcon}
                 />
                 <div className={styles.statCol}>
-                  <p className={styles.statNum}>{numPosts}</p>
+                  <p className={styles.statNum}>{numPosts.toLocaleString()}</p>
                   <p className={styles.statTitle}>photos</p>
                 </div>
               </div>
@@ -104,7 +104,7 @@ export default function About(props) {
                   className={styles.statIcon}
                 />
                 <div className={styles.statCol}>
-                  <p className={styles.statNum}>{numAuthors}</p>
+                  <p className={styles.statNum}>{numAuthors.toLocaleString()}</p>
                   <p className={styles.statTitle}>photographers</p>
                 </div>
               </div>
