@@ -11,11 +11,12 @@ export async function getStaticPaths() {
     };
   }
 
-  // for production, get all ids and generate all static pages
+  // for production, get all ids and generate static pages for latest 500 posts
   const response = await authorized_fetch("/ids", "GET");
   const data = await response.json();
 
-  const paths = data.ids.map((id) => ({
+    // only 500 latest posts
+  const paths = data.ids.slice(-500).map((id) => ({
     params: { pid: id.toString() },
   }));
 
