@@ -25,7 +25,6 @@ type AuthorService struct {
 }
 
 func NewCacheAuthorService(rdb *RDB, dbService analogdb.AuthorService) *AuthorService {
-
 	cache := rdb.NewCache(authorsInstance, authorsLocalSize, authorsTTL)
 
 	return &AuthorService{
@@ -36,7 +35,6 @@ func NewCacheAuthorService(rdb *RDB, dbService analogdb.AuthorService) *AuthorSe
 }
 
 func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
-
 	s.rdb.logger.Debug().Ctx(ctx).Ctx(ctx).Str("instance", s.cache.instance).Msg("Starting find authors with cache")
 	defer func() {
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cache.instance).Msg("Finished find authors with cache")
@@ -61,7 +59,6 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 	// add to cache
 	// do this async so response is returned quicker
 	go func() {
-
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cache.instance).Msg("Adding authors to cache")
 
 		// create a new context; orignal one will be canceled when request is closed

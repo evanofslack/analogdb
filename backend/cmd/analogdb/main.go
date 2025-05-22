@@ -21,7 +21,6 @@ import (
 const defaultConfigPath = "config.yml"
 
 func main() {
-
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -34,14 +33,14 @@ func main() {
 	// generate the config
 	cfg, err := config.New(cfgPath)
 	if err != nil {
-		err = fmt.Errorf("Failed to parse app config: %w", err)
+		err = fmt.Errorf("parse app config: %w", err)
 		fatal(nil, err)
 	}
 
 	// create logger instance
 	logger, err := logger.New(cfg.Log.Level, cfg.App.Env, cfg.App.Name)
 	if err != nil {
-		err = fmt.Errorf("Failed to create logger: %w", err)
+		err = fmt.Errorf("create logger: %w", err)
 		fatal(nil, err)
 	}
 	logger.Info().Str("version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
@@ -63,13 +62,13 @@ func main() {
 	tracingLogger := logger.WithSubsystem("tracer")
 	tracer, err := tracer.New(tracingLogger, cfg)
 	if err != nil {
-		err = fmt.Errorf("Failed to initialize otlp tracing: %w", err)
+		err = fmt.Errorf("initialize otlp tracing: %w", err)
 		fatal(logger, err)
 	}
 
 	if cfg.Tracing.Enabled {
 		if err := tracer.StartExporter(); err != nil {
-			err = fmt.Errorf("Failed to start otel exporter: %w", err)
+			err = fmt.Errorf("start otel exporter: %w", err)
 			fatal(logger, err)
 		}
 	}
@@ -78,7 +77,7 @@ func main() {
 	metricsLogger := logger.WithSubsystem("metrics")
 	metrics, err := metrics.New(metricsLogger)
 	if err != nil {
-		err = fmt.Errorf("Failed to initialize prometheus metrics: %w", err)
+		err = fmt.Errorf("initialize prometheus metrics: %w", err)
 		fatal(logger, err)
 	}
 
@@ -90,7 +89,7 @@ func main() {
 	dbLogger := logger.WithSubsystem("database")
 	db := postgres.NewDB(cfg.DB.URL, dbLogger, cfg.Tracing.Enabled)
 	if err := db.Open(); err != nil {
-		err = fmt.Errorf("Failed to startup database: %w", err)
+		err = fmt.Errorf("startup database: %w", err)
 		fatal(logger, err)
 	}
 
@@ -98,12 +97,12 @@ func main() {
 	dbVecLogger := logger.WithSubsystem("vector-database")
 	dbVec := weaviate.NewDB(cfg.VectorDB.Host, cfg.VectorDB.Scheme, dbVecLogger, tracer)
 	if err := dbVec.Open(); err != nil {
-		err = fmt.Errorf("Failed to startup vector database: %w", err)
+		err = fmt.Errorf("startup vector database: %w", err)
 		fatal(logger, err)
 	}
 	// run weaviate migrations if needed
 	if err := dbVec.Migrate(ctx); err != nil {
-		err = fmt.Errorf("Failed to migrate vector database: %w", err)
+		err = fmt.Errorf("migrate vector database: %w", err)
 		fatal(logger, err)
 	}
 
@@ -113,11 +112,11 @@ func main() {
 		redisLogger := logger.WithSubsystem("redis")
 		rdb, err = redis.NewRDB(cfg.Redis.URL, redisLogger, metrics, cfg.Tracing.Enabled)
 		if err != nil {
-			err = fmt.Errorf("Failed to startup redis: %w", err)
+			err = fmt.Errorf("startup redis: %w", err)
 			fatal(logger, err)
 		}
 		if err := rdb.Open(); err != nil {
-			err = fmt.Errorf("Failed to connect to redis: %w", err)
+			err = fmt.Errorf("connect to redis: %w", err)
 			fatal(logger, err)
 		}
 	}
@@ -162,7 +161,7 @@ func main() {
 	server.SimilarityService = similarityService
 
 	if err := server.Run(); err != nil {
-		err = fmt.Errorf("Failed to start http server: %w", err)
+		err = fmt.Errorf("start http server: %w", err)
 		fatal(logger, err)
 	}
 
@@ -171,27 +170,27 @@ func main() {
 	logger.Info().Msg("Got shutdown signal, starting graceful shutdown")
 
 	if err := server.Close(); err != nil {
-		err = fmt.Errorf("Failed to shutdown http server: %w", err)
+		err = fmt.Errorf("shutdown http server: %w", err)
 		fatal(logger, err)
 	}
 
 	if err := db.Close(); err != nil {
-		err = fmt.Errorf("Failed to shutdown DB: %w", err)
+		err = fmt.Errorf("shutdown DB: %w", err)
 		fatal(logger, err)
 	}
 
 	if err := dbVec.Close(); err != nil {
-		err = fmt.Errorf("Failed to shutdown vector DB: %w", err)
+		err = fmt.Errorf("shutdown vector DB: %w", err)
 		fatal(logger, err)
 	}
 
 	if err := rdb.Close(); err != nil {
-		err = fmt.Errorf("Failed to shutdown redis: %w", err)
+		err = fmt.Errorf("shutdown redis: %w", err)
 		fatal(logger, err)
 	}
 
 	if err := metrics.Close(); err != nil {
-		err = fmt.Errorf("Failed to shutdown metrics server: %w", err)
+		err = fmt.Errorf("shutdown metrics server: %w", err)
 		fatal(logger, err)
 	}
 }
@@ -200,9 +199,8 @@ func fatal(logger *logger.Logger, err error) {
 	if logger != nil {
 		logger.Error().Err(err).Msg("Fatal error, exiting")
 	} else {
-		err := fmt.Errorf("Fatal error, exiting; error=%w", err)
+		err := fmt.Errorf("fatal error, exiting; er=%w", err)
 		fmt.Fprintln(os.Stderr, err)
 	}
 	os.Exit(1)
-
 }

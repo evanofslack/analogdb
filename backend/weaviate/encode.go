@@ -13,7 +13,6 @@ import (
 )
 
 func (ss SimilarityService) EncodePost(ctx context.Context, id int) error {
-
 	ss.db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting encode post")
 
 	ctx, span := ss.db.tracer.Tracer.Start(ctx, "vector:encode_post")
@@ -38,7 +37,6 @@ func (ss SimilarityService) EncodePost(ctx context.Context, id int) error {
 }
 
 func (db *DB) downloadPostImage(ctx context.Context, post *analogdb.Post) (string, error) {
-
 	db.logger.Debug().Ctx(ctx).Msg("Starting download post")
 
 	ctx, span := db.tracer.Tracer.Start(ctx, "vector:download_post_image")
@@ -79,7 +77,6 @@ func (db *DB) downloadPostImage(ctx context.Context, post *analogdb.Post) (strin
 }
 
 func (db *DB) postToPictureObject(ctx context.Context, post *analogdb.Post) (*models.Object, error) {
-
 	db.logger.Debug().Ctx(ctx).Msg("Starting convert post to picture object")
 
 	image, err := db.downloadPostImage(ctx, post)
@@ -92,7 +89,6 @@ func (db *DB) postToPictureObject(ctx context.Context, post *analogdb.Post) (*mo
 }
 
 func (db *DB) uploadObject(ctx context.Context, obj *models.Object) error {
-
 	db.logger.Debug().Ctx(ctx).Msg("Starting upload object")
 
 	ctx, span := db.startTrace(ctx, "vector:upload_object")

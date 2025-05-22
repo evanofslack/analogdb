@@ -93,7 +93,7 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	if err != nil {
 		return nil, err
 	} else if len(posts) == 0 {
-		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "Post not found"}
+		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "post not found"}
 	}
 	return posts[0], nil
 }
@@ -131,7 +131,6 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 	}
 	defer tx.Rollback()
 	ids, err := s.db.allPostIDs(ctx, tx)
-
 	if err != nil {
 		return nil, err
 	}
@@ -152,8 +151,7 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 
 	var id int64
 
-	query :=
-		`
+	query := `
 	INSERT INTO pictures
 	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
@@ -162,7 +160,6 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	`
 
 	stmt, err := tx.PrepareContext(ctx, query)
-
 	if err != nil {
 		db.logger.Error().Ctx(ctx).Err(err).Int64("postID", id).Msg("Failed to insert post")
 		return nil, err
@@ -192,7 +189,6 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.highUrl,
 		create.highWidth,
 		create.highHeight).Scan(&id)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", id).Msg("Failed to insert post")
 		return nil, err
@@ -205,7 +201,6 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 
 // insertKeywords inserts a post's keywords into the DB
 func (db *DB) insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword, postID int64) error {
-
 	db.logger.Debug().Ctx(ctx).Int64("postID", postID).Msg("Starting insert keywords")
 
 	first := 1
@@ -215,8 +210,7 @@ func (db *DB) insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogd
 	vals := []any{}
 	inserts := []string{}
 
-	query :=
-		`
+	query := `
 	INSERT INTO keywords
 	(word, weight, post_id)
 	VALUES `
@@ -231,7 +225,6 @@ func (db *DB) insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogd
 
 	query += strings.Join(inserts, ",")
 	stmt, err := tx.PrepareContext(ctx, query)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", postID).Msg("Failed to insert keywords")
 		return err
@@ -240,7 +233,6 @@ func (db *DB) insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogd
 	defer stmt.Close()
 
 	_, err = stmt.ExecContext(ctx, vals...)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", postID).Msg("Failed to insert keywords")
 		return err
@@ -253,11 +245,9 @@ func (db *DB) insertKeywords(ctx context.Context, tx *sql.Tx, keywords []analogd
 
 // deleteKeywords deletes all keywords for a given post
 func (db *DB) deleteKeywords(ctx context.Context, tx *sql.Tx, postID int64) error {
-
 	db.logger.Debug().Ctx(ctx).Int64("postID", postID).Msg("Starting delete keywords")
 
-	query :=
-		"DELETE FROM keywords WHERE post_id = $1"
+	query := "DELETE FROM keywords WHERE post_id = $1"
 
 	rows, err := tx.QueryContext(ctx, query, postID)
 	defer rows.Close()
@@ -272,7 +262,6 @@ func (db *DB) deleteKeywords(ctx context.Context, tx *sql.Tx, postID int64) erro
 
 // insertKeywords inserts a post's keywords into the DB
 func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Color, postID int64) error {
-
 	db.logger.Debug().Ctx(ctx).Int64("postID", postID).Msg("Starting insert colors")
 
 	first := 1
@@ -284,8 +273,7 @@ func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Co
 	vals := []any{}
 	inserts := []string{}
 
-	query :=
-		`
+	query := `
 	INSERT INTO colors
 	(hex, css, html, percent, post_id)
 	VALUES `
@@ -302,7 +290,6 @@ func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Co
 
 	query += strings.Join(inserts, ",")
 	stmt, err := tx.PrepareContext(ctx, query)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", postID).Msg("Failed to insert colors")
 		return err
@@ -311,7 +298,6 @@ func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Co
 	defer stmt.Close()
 
 	_, err = stmt.ExecContext(ctx, vals...)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", postID).Msg("Failed to insert colors")
 		return err
@@ -324,11 +310,9 @@ func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Co
 
 // deleteKeywords deletes all keywords for a given post
 func (db *DB) deleteColors(ctx context.Context, tx *sql.Tx, postID int64) error {
-
 	db.logger.Debug().Ctx(ctx).Int64("postID", postID).Msg("Starting delete colors")
 
-	query :=
-		"DELETE FROM colors WHERE post_id = $1"
+	query := "DELETE FROM colors WHERE post_id = $1"
 
 	rows, err := tx.QueryContext(ctx, query, postID)
 	defer rows.Close()
@@ -342,7 +326,6 @@ func (db *DB) deleteColors(ctx context.Context, tx *sql.Tx, postID int64) error 
 }
 
 func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*analogdb.Post, error) {
-
 	db.logger.Debug().Ctx(ctx).Msg("Starting create post")
 
 	id, err := db.insertPost(ctx, tx, post)
@@ -487,7 +470,6 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	`, colorJoin, colorWhere, keywordJoin, keywordWhere, postWhere) + order + limit
 
 	rows, err := tx.QueryContext(ctx, query, args...)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed to find posts")
 		return nil, 0, err
@@ -528,7 +510,6 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 }
 
 func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
-
 	db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting patch post")
 
 	hasPatchFields := false
@@ -584,7 +565,6 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 }
 
 func (db *DB) updateKeywords(ctx context.Context, tx *sql.Tx, keywords []analogdb.Keyword, id int) error {
-
 	db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting update keywords")
 
 	// first delete all keywords associated with post
@@ -610,7 +590,6 @@ func (db *DB) updateKeywords(ctx context.Context, tx *sql.Tx, keywords []analogd
 }
 
 func (db *DB) updateColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Color, id int) error {
-
 	db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting update colors")
 
 	// first delete all colors associated with post
@@ -635,7 +614,6 @@ func (db *DB) updateColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Co
 }
 
 func (db *DB) updatePostGeneral(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
-
 	db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting update post")
 
 	set, args, err := patchToSet(patch)
@@ -647,8 +625,7 @@ func (db *DB) updatePostGeneral(ctx context.Context, tx *sql.Tx, patch *analogdb
 	args = append(args, id)
 	idPos := len(args)
 
-	query :=
-		"UPDATE pictures " + set + fmt.Sprintf(" WHERE id =  $%d", idPos)
+	query := "UPDATE pictures " + set + fmt.Sprintf(" WHERE id =  $%d", idPos)
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -662,18 +639,15 @@ func (db *DB) updatePostGeneral(ctx context.Context, tx *sql.Tx, patch *analogdb
 }
 
 func (db *DB) insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
-
 	db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting post update times")
 
-	query :=
-		`
+	query := `
 		INSERT INTO post_updates
 	(post_id, score_update_time, nsfw_update_time, greyscale_update_time, sprocket_update_time, colors_update_time, keywords_update_time)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 
 	stmt, err := tx.PrepareContext(ctx, query)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int("postID", id).Msg("Failed to post update times")
 		return err
@@ -689,7 +663,6 @@ func (db *DB) insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *anal
 		} else {
 			*values = append(*values, sql.NullInt64{})
 		}
-
 	}
 
 	// we have to include post_id
@@ -718,11 +691,9 @@ func (db *DB) insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *anal
 	db.logger.Info().Ctx(ctx).Int("postID", id).Msg("Finished post update times")
 
 	return nil
-
 }
 
 func (db *DB) deletePost(ctx context.Context, tx *sql.Tx, id int) error {
-
 	db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting delete post")
 
 	query := `
@@ -757,7 +728,6 @@ func (db *DB) deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 }
 
 func (db *DB) allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
-
 	db.logger.Debug().Ctx(ctx).Msg("Starting get all post IDs")
 
 	query := `
@@ -817,7 +787,6 @@ func formatLimit(filter *analogdb.PostFilter) string {
 }
 
 func filterToWhereColor(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
-
 	index := startIndex
 	base := "1=1"
 	where, args := []string{base}, []any{}
@@ -873,7 +842,6 @@ func filterToWhereColor(filter *analogdb.PostFilter, startIndex int) (string, []
 }
 
 func filterToWhereKeyword(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
-
 	index := startIndex
 	base := "1=1"
 	where, args := []string{base}, []any{}
@@ -917,7 +885,6 @@ func filterToWhereKeyword(filter *analogdb.PostFilter, startIndex int) (string, 
 
 // filterToWhere converts a PostFilter to an SQL WHERE statement
 func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
-
 	index := startIndex
 	where, args := []string{"1=1"}, []any{}
 
@@ -1040,7 +1007,6 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 
 // Converts a patch to an SQL set statement
 func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
-
 	index := 1
 	set, args := []string{}, []any{}
 
@@ -1068,7 +1034,7 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 
 	// no update fields provided
 	if len(set) == 0 {
-		return "", args, fmt.Errorf("No updated fields were provided in patch")
+		return "", args, fmt.Errorf("no updated fields provided in patch")
 	}
 
 	return `SET ` + strings.Join(set, ", "), args, nil
@@ -1076,7 +1042,7 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 
 func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	if len(p.Images) != 4 {
-		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Unable to create post, expected 4 images (low, medium, high, raw)"}
+		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 4 images (low, medium, high, raw)"}
 	}
 	low := p.Images[0]
 	med := p.Images[1]
@@ -1084,7 +1050,7 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	raw := p.Images[3]
 
 	if len(p.Colors) != 5 {
-		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Unable to create post, expected 5 colors"}
+		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 5 colors"}
 	}
 
 	// we don't actually use these when creating the post here
@@ -1125,11 +1091,9 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		weights:    weights,
 	}
 	return post, nil
-
 }
 
 func rawPostToPost(p rawPost) (*analogdb.Post, error) {
-
 	// grab the images from raw
 	lowImage := analogdb.Image{Label: "low", Url: p.lowUrl, Width: p.lowWidth, Height: p.lowHeight}
 	medImage := analogdb.Image{Label: "medium", Url: p.medUrl, Width: p.medWidth, Height: p.medHeight}
@@ -1139,7 +1103,7 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 
 	// grab the colors
 	var hexes, csses, htmls, percents []string
-	var colors = []analogdb.Color{}
+	colors := []analogdb.Color{}
 
 	// check for null
 	if p.hexes.Valid {
@@ -1154,11 +1118,10 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	if p.percents.Valid {
 		// remove '{}' from postgres array then split on commas
 		percents = strings.Split(strings.Trim(p.percents.String, "{}"), ",")
-
 	}
 
 	// iterate over shortest slice. should all be same length though
-	var iter = hexes
+	iter := hexes
 	if len(csses) < len(iter) {
 		iter = csses
 	}
@@ -1179,7 +1142,7 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 
 	// grab the keywords
 	var words, weights []string
-	var keywords = []analogdb.Keyword{}
+	keywords := []analogdb.Keyword{}
 
 	// check for null
 	if p.words.Valid {
@@ -1188,7 +1151,6 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	if p.weights.Valid {
 		// remove '{}' from postgres array then split on commas
 		weights = strings.Split(strings.Trim(p.weights.String, "{}"), ",")
-
 	}
 
 	// iterate over keywords or percents, whichever is smaller
@@ -1206,7 +1168,8 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 		keywords = append(keywords, analogdb.Keyword{Word: words[i], Weight: weight})
 	}
 
-	post := &analogdb.Post{Id: p.id,
+	post := &analogdb.Post{
+		Id: p.id,
 		DisplayPost: analogdb.DisplayPost{
 			Title:     p.title,
 			Author:    p.author,
@@ -1218,7 +1181,9 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 			Sprocket:  p.sprocket,
 			Images:    images,
 			Colors:    colors,
-			Keywords:  keywords}}
+			Keywords:  keywords,
+		},
+	}
 	return post, nil
 }
 

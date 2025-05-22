@@ -16,9 +16,9 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"go.opentelemetry.io/otel/trace/noop"
 )
 
 const (
@@ -35,15 +35,14 @@ type Tracer struct {
 }
 
 func New(logger *logger.Logger, config *config.Config) (*Tracer, error) {
-
 	logger.Debug().Msg("Creating new otel tracer")
 
-    provider := noop.NewTracerProvider()
-    t := provider.Tracer("")
+	provider := noop.NewTracerProvider()
+	t := provider.Tracer("")
 	tracer := &Tracer{
 		logger: logger,
 		config: config,
-        Tracer: t,
+		Tracer: t,
 	}
 
 	// Always propagate trace context
@@ -57,7 +56,6 @@ func New(logger *logger.Logger, config *config.Config) (*Tracer, error) {
 }
 
 func (tracer *Tracer) StartExporter() error {
-
 	tracer.logger.Debug().Msg("Starting up tracing exporter")
 
 	endpoint := tracer.config.Tracing.Endpoint
@@ -74,13 +72,13 @@ func (tracer *Tracer) StartExporter() error {
 	// dial the grpc endpoint where traces are exported
 	conn, err := grpc.DialContext(ctx, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		return fmt.Errorf("Failed to dial GRPC endpoint for OTLP exporter, err=%w", err)
+		return fmt.Errorf("dial GRPC endpoint for OTLP exporter, err=%w", err)
 	}
 
 	tracer.logger.Debug().Msg("Creating new OTLP exporter")
 	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
 	if err != nil {
-		return fmt.Errorf("Failed to create tracegrpc, err=%w", err)
+		return fmt.Errorf("create tracegrpc, err=%w", err)
 	}
 
 	service := tracer.config.App.Name
@@ -95,7 +93,7 @@ func (tracer *Tracer) StartExporter() error {
 		),
 	)
 	if err != nil {
-		return fmt.Errorf("Failed to created tracing resource, err=%w", err)
+		return fmt.Errorf("create tracing resource, err=%w", err)
 	}
 
 	// create new tracing provider, this links the resource and batcher and is shared globally
@@ -116,7 +114,6 @@ func (tracer *Tracer) StartExporter() error {
 	tracer.logger.Info().Str("endpoint", endpoint).Msg("Started tracing exporter")
 
 	return nil
-
 }
 
 func (tracer *Tracer) Close() error {

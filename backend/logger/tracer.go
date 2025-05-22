@@ -16,7 +16,6 @@ func newTracerHook(serviceName string) *tracingHook {
 }
 
 func (t tracingHook) Run(e *zerolog.Event, level zerolog.Level, message string) {
-
 	// grab the context from the logger.
 	// the logger caller pass in its current context.
 	ctx := e.GetCtx()

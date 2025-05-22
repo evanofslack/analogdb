@@ -19,7 +19,6 @@ func NewScrapeService(db *DB) *ScrapeService {
 }
 
 func (s *ScrapeService) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error) {
-
 	s.db.logger.Debug().Ctx(ctx).Msg("Starting get keyword updated post ids")
 	defer s.db.logger.Debug().Ctx(ctx).Msg("Finished keyword updated post ids")
 
@@ -29,7 +28,6 @@ func (s *ScrapeService) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error
 	}
 	defer tx.Rollback()
 	ids, err := keywordUpdatedPostIDs(ctx, tx)
-
 	if err != nil {
 		return nil, err
 	}

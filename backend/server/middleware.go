@@ -14,7 +14,6 @@ const (
 )
 
 func (s *Server) mountMiddleware() {
-
 	// add recoverer first
 	s.router.Use(middleware.Recoverer)
 

@@ -7,7 +7,6 @@ import (
 )
 
 func (s *Server) mountStatsHandlers() {
-
 	s.router.Get("/debug/statsviz/ws", statsviz.Ws)
 	s.router.Get("/debug/statsviz", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/debug/statsviz/", 301)

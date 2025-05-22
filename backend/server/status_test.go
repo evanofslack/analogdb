@@ -41,5 +41,4 @@ func TestNotHealthyAfterClose(t *testing.T) {
 	if want, got := http.StatusServiceUnavailable, w.Code; got != want {
 		t.Errorf("want status %d, got %d", want, got)
 	}
-
 }

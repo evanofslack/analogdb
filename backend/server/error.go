@@ -23,7 +23,6 @@ func errorStatusCode(code string) int {
 }
 
 func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
-
 	ctx := r.Context()
 
 	code, message := analogdb.ErrorCode(err), analogdb.ErrorMessage(err)

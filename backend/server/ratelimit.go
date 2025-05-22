@@ -8,7 +8,6 @@ import (
 )
 
 func (server *Server) addRatelimiter() {
-
 	if !server.config.App.RateLimitEnabled {
 		return
 	}
@@ -28,7 +27,6 @@ func (server *Server) addRatelimiter() {
 
 // apply rate limit only if user is not authenticated
 func (server *Server) applyRateLimit(r *http.Request) bool {
-
 	rl_username := server.config.Auth.RateLimitUsername
 	rl_password := server.config.Auth.RateLimitPassword
 
@@ -37,5 +35,4 @@ func (server *Server) applyRateLimit(r *http.Request) bool {
 		return false
 	}
 	return true
-
 }

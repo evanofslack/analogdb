@@ -63,7 +63,6 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 }
 
 func (s *Server) Run() error {
-
 	s.logger.Info().Msg(fmt.Sprintf("Serving http server at address %s", s.server.Addr))
 
 	go s.server.ListenAndServe()
@@ -71,7 +70,6 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Close() error {
-
 	s.logger.Debug().Msg("Starting http server close")
 	defer s.logger.Info().Msg("Closed http server")
 

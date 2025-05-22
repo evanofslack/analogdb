@@ -41,7 +41,6 @@ type PostService struct {
 }
 
 func NewCachePostService(rdb *RDB, dbService analogdb.PostService) *PostService {
-
 	postCache := rdb.NewCache(postInstance, postLocalSize, postTTL)
 	postsCache := rdb.NewCache(postsInstance, postsLocalSize, postsTTL)
 
@@ -58,7 +57,6 @@ func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost)
 }
 
 func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
-
 	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postsCache.instance).Msg("Starting find posts with cache")
 	defer s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postsCache.instance).Msg("Finished find posts with cache")
 
@@ -97,7 +95,6 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	// add posts to cache
 	// do this async so response is returned quicker
 	go func() {
-
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postsCache.instance).Msg("Adding posts and posts counts to cache")
 
 		// create a new context; orignal one will be canceled when request is closed
@@ -124,7 +121,6 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 }
 
 func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post, error) {
-
 	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postCache.instance).Int("postID", id).Msg("Starting find post by id with cache")
 	defer func() {
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postCache.instance).Int("postID", id).Msg("Finished find post by id with cache")
@@ -150,7 +146,6 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	// add post to cache
 	// do this async so response is returned quicker
 	go func() {
-
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postCache.instance).Int("postID", id).Msg("Adding post to cache")
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
@@ -168,7 +163,6 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 }
 
 func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, id int) error {
-
 	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postCache.instance).Int("postID", id).Msg("Starting patch post with cache")
 	defer func() {
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postCache.instance).Int("postID", id).Msg("Finished patch post with cache")
@@ -181,7 +175,6 @@ func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, 
 }
 
 func (s *PostService) DeletePost(ctx context.Context, id int) error {
-
 	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postCache.instance).Int("postID", id).Msg("Starting delete post with cache")
 	defer func() {
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postCache.instance).Int("postID", id).Msg("Finished delete post with cache")
@@ -200,7 +193,6 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 }
 
 func (s *PostService) removePostFromCache(ctx context.Context, id int) {
-
 	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.postCache.instance).Int("postID", id).Msg("Removing post from cache")
 
 	postKey := fmt.Sprint(id)

@@ -23,8 +23,7 @@ func (s *Server) mountKeywordHandlers() {
 }
 
 func (s *Server) getSummary(w http.ResponseWriter, r *http.Request) {
-
-	var limit = defaultLimit
+	limit := defaultLimit
 	var err error
 
 	if strLimit := r.URL.Query().Get("page_size"); strLimit != "" {

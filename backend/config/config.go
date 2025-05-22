@@ -70,13 +70,13 @@ func New(path string) (*Config, error) {
 	cfg := &Config{}
 
 	if err := cleanenv.ReadConfig(path, cfg); err != nil {
-		return nil, fmt.Errorf("error loading config: %w", err)
+		return nil, fmt.Errorf("load config: %w", err)
 	}
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("Could not load .env file")
 	}
 	if err := cleanenv.ReadEnv(cfg); err != nil {
-		return nil, fmt.Errorf("Error loading env: %w", err)
+		return nil, fmt.Errorf("load env: %w", err)
 	}
 	return cfg, nil
 }

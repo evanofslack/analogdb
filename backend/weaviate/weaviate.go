@@ -39,15 +39,14 @@ func NewDB(host string, scheme string, logger *logger.Logger, tracer *tracer.Tra
 }
 
 func (db *DB) Open() error {
-
 	db.logger.Debug().Msg("Starting vector DB open")
 
 	// validate host and scheme are set
 	if db.host == "" {
-		return fmt.Errorf("Vector DB host must be set")
+		return fmt.Errorf("vector DB host must be set")
 	}
 	if db.scheme == "" {
-		return fmt.Errorf("Vector DB scheme must be set")
+		return fmt.Errorf("vector DB scheme must be set")
 	}
 
 	cfg := weaviate.Config{
@@ -59,7 +58,7 @@ func (db *DB) Open() error {
 	var err error
 	db.db, err = weaviate.NewClient(cfg)
 	if err != nil {
-		err = fmt.Errorf("Failed to create new vector DB client: %w", err)
+		err = fmt.Errorf("create new vector DB client: %w", err)
 		db.logger.Error().Err(err).Msg("Failed to open vector DB")
 		return err
 	}
@@ -69,18 +68,17 @@ func (db *DB) Open() error {
 }
 
 func (db *DB) Migrate(ctx context.Context) error {
-
 	db.logger.Debug().Msg("Starting vector DB migration")
 
 	schema, err := db.getSchema(ctx)
 	if err != nil {
-		err = fmt.Errorf("Failed to get weaviate schema: %w", err)
+		err = fmt.Errorf("get weaviate schema: %w", err)
 		return err
 	}
 	// if no classes, create schemas
 	if len(schema.Classes) == 0 {
 		if err := db.createSchemas(ctx); err != nil {
-			err = fmt.Errorf("Failed to get create schema: %w", err)
+			err = fmt.Errorf("get create schema: %w", err)
 			return err
 		}
 	}
@@ -97,7 +95,6 @@ func (db *DB) Close() error {
 
 // start a trace targeting the weaviate server
 func (db *DB) startTrace(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
-
 	dbSystem := attribute.String("db.system", "weaviate")
 	dbName := attribute.String("db.name", "pictures")
 	serverAddress := attribute.String("server.address", db.host)
@@ -108,5 +105,4 @@ func (db *DB) startTrace(ctx context.Context, spanName string, opts ...trace.Spa
 	opts = append(opts, attributes, spanKind)
 
 	return db.tracer.Tracer.Start(ctx, spanName, opts...)
-
 }

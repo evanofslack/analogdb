@@ -16,7 +16,6 @@ type Logger struct {
 }
 
 func New(level, env, app string) (*Logger, error) {
-
 	switch level {
 	case "debug":
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
@@ -91,7 +90,6 @@ func (l Logger) WithSlackNotifier(url string) *Logger {
 }
 
 func (l Logger) WithTracer(serviceName string) *Logger {
-
 	tracer := newTracerHook(serviceName)
 	tracerLogger := l.Hook(tracer)
 	tracerLogger.Info().Msg("Added tracer to logger")

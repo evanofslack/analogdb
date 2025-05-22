@@ -19,7 +19,6 @@ func NewAuthorService(db *DB) *AuthorService {
 }
 
 func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
-
 	s.db.logger.Debug().Ctx(ctx).Msg("Starting find authors")
 	defer s.db.logger.Debug().Ctx(ctx).Msg("Finished find authors")
 
@@ -29,7 +28,6 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 	}
 	defer tx.Rollback()
 	authors, err := findAuthors(ctx, tx)
-
 	if err != nil {
 		return nil, err
 	}

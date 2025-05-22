@@ -131,7 +131,6 @@ func (dim *Dimension) String() string {
 		max = fmt.Sprintf("max=%.2f", *dim.Max)
 	}
 	return fmt.Sprintf("%s, %s", min, max)
-
 }
 
 // PostFilter are options used for querying posts
@@ -216,7 +215,6 @@ func (filter *PostFilter) SetSeed() {
 }
 
 func (filter *PostFilter) SetMinColorPercent() {
-
 	// If we have no colors, should have no percent
 	if filter.Colors == nil {
 		filter.ColorPercents = nil
@@ -248,7 +246,6 @@ func (filter *PostFilter) SetMinColorPercent() {
 }
 
 func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
-
 	filter := &PostFilter{
 		Limit:         limit,
 		Sort:          sort,

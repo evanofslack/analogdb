@@ -490,7 +490,6 @@ func TestPatchPost(t *testing.T) {
 		if og, mod := ogPost.Score, modifiedPost.Score; og == mod {
 			t.Errorf("Updated post should have different score than original post, og %d, new %d", og, mod)
 		}
-
 	})
 	t.Run("Nonexisting Post", func(t *testing.T) {
 		s, db := mustOpen(t)

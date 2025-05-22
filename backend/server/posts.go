@@ -97,7 +97,6 @@ func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
-
 	resp := SimilarPostsResponse{}
 
 	similarityFilter, err := parseToSimilarityFilter(r)
@@ -135,12 +134,11 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
-
 	var err error
 
 	var id string
 	if id = chi.URLParam(r, "id"); id == "" {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Must provide id as parameter"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "must provide id as parameter"}
 		s.writeError(w, r, err)
 		return
 	}
@@ -172,7 +170,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing post from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse post from request body"}
 		s.writeError(w, r, err)
 		return
 	}
@@ -208,10 +206,9 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
-
 	var patchPost analogdb.PatchPost
 	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing patch from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse patch from request body"}
 		s.writeError(w, r, err)
 		return
 	}
@@ -264,7 +261,6 @@ func (s *Server) makePostResponse(r *http.Request, filter *analogdb.PostFilter) 
 
 // setMeta computes the metadata from a query
 func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Meta, error) {
-
 	meta := Meta{}
 
 	// totalPosts
@@ -286,7 +282,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		}
 	}
 
-	//pageID
+	// pageID
 	if sort := filter.Sort; sort != nil {
 		sortVal := *sort
 		if sortVal == analogdb.SortTime || sortVal == analogdb.SortRandom {
@@ -298,7 +294,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		}
 	}
 
-	//pageUrl
+	// pageUrl
 	if sort := filter.Sort; sort != nil {
 		path := postsPath
 		numParams := 0
@@ -378,7 +374,6 @@ func stringToInt(query string) (int, error) {
 
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
-
 	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	values := r.URL.Query()
@@ -556,7 +551,6 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 // parse URL for query parameters and
 // convert to PostSimilarityFilter (query vector db)
 func parseToSimilarityFilter(r *http.Request) (*analogdb.PostSimilarityFilter, error) {
-
 	filter := &analogdb.PostSimilarityFilter{Limit: &defaultSimilarityLimit}
 
 	// there must be a post id
