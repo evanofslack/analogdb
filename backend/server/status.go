@@ -14,7 +14,6 @@ const (
 )
 
 func (s *Server) mountStatusHandlers() {
-
 	s.router.Route(pingRoute, func(r chi.Router) { r.Get("/", s.ping) })
 	s.router.Route(healthRoute, func(r chi.Router) { r.Get("/", s.healthz) })
 	s.router.Route(readyRoute, func(r chi.Router) { r.Get("/", s.readyz) })

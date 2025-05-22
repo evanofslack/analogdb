@@ -40,7 +40,6 @@ func newSlackNotifier(url string) *SlackHook {
 }
 
 func (slackhook *SlackHook) shouldNotify(message string) bool {
-
 	var notification notification
 	var found bool
 
@@ -67,7 +66,6 @@ func (slackhook *SlackHook) shouldNotify(message string) bool {
 }
 
 func (slackhook *SlackHook) Run(e *zerolog.Event, level zerolog.Level, message string) {
-
 	// if the level is less than our notify threshold, don't notify
 	if level <= zerolog.WarnLevel {
 		return
@@ -88,7 +86,6 @@ func (slackhook *SlackHook) Run(e *zerolog.Event, level zerolog.Level, message s
 }
 
 func (slackhook *SlackHook) notify(message string) {
-
 	analogdbLink := slack.Attachment{}
 	analogdbLink.AddAction(slack.Action{Type: "button", Text: "check analogdb.com", Url: "https://analogdb.com", Style: "primary"})
 	payload := slack.Payload{
@@ -100,5 +97,4 @@ func (slackhook *SlackHook) notify(message string) {
 	if len(err) > 0 {
 		fmt.Printf("Failed to send error message to slack webhook: %s", err)
 	}
-
 }

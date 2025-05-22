@@ -55,7 +55,6 @@ type cacheCollector struct {
 }
 
 func newCacheCollector() *cacheCollector {
-
 	fqNameHits := prometheus.BuildFQName(metrics.AnalogdbNamespace, metrics.CacheSubsystem, "hits")
 	fqNameMisses := prometheus.BuildFQName(metrics.AnalogdbNamespace, metrics.CacheSubsystem, "misses")
 	fqNameErrors := prometheus.BuildFQName(metrics.AnalogdbNamespace, metrics.CacheSubsystem, "errors")
@@ -79,7 +78,6 @@ func (collector *cacheCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (collector *cacheCollector) Collect(ch chan<- prometheus.Metric) {
-
 	// get stats for each cache we have registered
 	for _, cache := range collector.caches {
 

@@ -29,7 +29,6 @@ type Metrics struct {
 }
 
 func New(logger *logger.Logger) (*Metrics, error) {
-
 	logger.Debug().Msg("Created new prometheus registry")
 
 	registry := prometheus.NewRegistry()
@@ -58,7 +57,6 @@ func (m *Metrics) Serve(port string) {
 }
 
 func (m *Metrics) Close() error {
-
 	m.logger.Debug().Msg("Starting prometheus metrics server close")
 	defer m.logger.Info().Msg("Closed prometheus metrics server")
 

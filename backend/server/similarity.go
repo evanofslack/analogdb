@@ -29,7 +29,6 @@ type encodePostsResponse struct {
 }
 
 func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
-
 	var request encodePostsRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing ids or batch_size from request body"}

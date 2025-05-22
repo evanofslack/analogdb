@@ -30,7 +30,6 @@ type RDB struct {
 
 // create a new redis database
 func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics, tracingEnabled bool) (*RDB, error) {
-
 	logger.Debug().Msg("Initializing cache instance")
 
 	opt, err := redis.ParseURL(url)
@@ -84,7 +83,6 @@ func (rdb *RDB) Open() error {
 }
 
 func (rdb *RDB) Close() error {
-
 	rdb.logger.Debug().Msg("Starting redis server close")
 	defer rdb.logger.Info().Msg("Closed redis server")
 
@@ -106,7 +104,6 @@ type Cache struct {
 
 // create a new cache backed by redis
 func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
-
 	rdb.logger.Debug().Str("instance", instance).Msg("Initializing new cache")
 
 	inner := cache.New(&cache.Options{
@@ -134,12 +131,10 @@ func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
 }
 
 func (cache *Cache) get(ctx context.Context, key string, item interface{}) error {
-
 	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Getting item from cache")
 
 	// do the lookup on the inner cache
 	err := cache.cache.Get(ctx, key, item)
-
 	// we got an error
 	if err != nil {
 
@@ -168,7 +163,6 @@ func (cache *Cache) get(ctx context.Context, key string, item interface{}) error
 }
 
 func (cache *Cache) set(ctx context.Context, item *cache.Item) error {
-
 	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Setting item in cache")
 
 	err := cache.cache.Set(item)
@@ -181,7 +175,6 @@ func (cache *Cache) set(ctx context.Context, item *cache.Item) error {
 }
 
 func (cache *Cache) delete(ctx context.Context, key string) error {
-
 	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Deleting item from cache")
 
 	err := cache.cache.Delete(ctx, key)

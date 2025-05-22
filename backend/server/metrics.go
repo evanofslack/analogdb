@@ -22,7 +22,6 @@ type httpStats struct {
 }
 
 func newHttpStats() *httpStats {
-
 	requestsTotal := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metrics.AnalogdbNamespace,
@@ -82,7 +81,6 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 
 func (server *Server) collectStats(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		start := time.Now()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 

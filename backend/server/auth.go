@@ -13,7 +13,6 @@ const authKey contextKey = "authorized"
 
 func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		username := s.config.Auth.Username
 		password := s.config.Auth.Password
 		authenticated := s.passBasicAuth(username, password, r)

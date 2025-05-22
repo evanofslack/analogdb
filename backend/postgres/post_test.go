@@ -31,7 +31,6 @@ var (
 
 func TestFindPosts(t *testing.T) {
 	t.Run("Default", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -46,7 +45,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("Limit", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -61,7 +59,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("NoNSFW", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -77,7 +74,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("OnlyNSFW", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -93,7 +89,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("NoBW", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -109,7 +104,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("OnlyBW", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -125,7 +119,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("NoSprocket", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -141,7 +134,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("OnlySprocket", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -157,7 +149,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("ByAuthor", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -172,7 +163,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("ByAuthorAddPrefix", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -188,7 +178,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("SearchTitleOne", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -204,7 +193,6 @@ func TestFindPosts(t *testing.T) {
 	})
 
 	t.Run("SearchTitleMultiple", func(t *testing.T) {
-
 		db := mustOpen(t)
 		defer mustClose(t, db)
 		ctx, tx := setupTx(t, db)
@@ -251,7 +239,6 @@ func TestLatestPost(t *testing.T) {
 				t.Fatalf("posts not sorted newest to oldest with keyset")
 			}
 		}
-
 	})
 }
 
@@ -330,7 +317,6 @@ func TestRandomPost(t *testing.T) {
 				t.Fatal("random posts must not repeat")
 			}
 		}
-
 	})
 }
 
@@ -464,7 +450,6 @@ func TestCreateAndDeletePost(t *testing.T) {
 				t.Fatal("expected analogdb error message")
 			}
 		}
-
 	})
 }
 

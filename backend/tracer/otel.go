@@ -16,9 +16,9 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.7.0"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"go.opentelemetry.io/otel/trace/noop"
 )
 
 const (
@@ -35,15 +35,14 @@ type Tracer struct {
 }
 
 func New(logger *logger.Logger, config *config.Config) (*Tracer, error) {
-
 	logger.Debug().Msg("Creating new otel tracer")
 
-    provider := noop.NewTracerProvider()
-    t := provider.Tracer("")
+	provider := noop.NewTracerProvider()
+	t := provider.Tracer("")
 	tracer := &Tracer{
 		logger: logger,
 		config: config,
-        Tracer: t,
+		Tracer: t,
 	}
 
 	// Always propagate trace context
@@ -57,7 +56,6 @@ func New(logger *logger.Logger, config *config.Config) (*Tracer, error) {
 }
 
 func (tracer *Tracer) StartExporter() error {
-
 	tracer.logger.Debug().Msg("Starting up tracing exporter")
 
 	endpoint := tracer.config.Tracing.Endpoint
@@ -116,7 +114,6 @@ func (tracer *Tracer) StartExporter() error {
 	tracer.logger.Info().Str("endpoint", endpoint).Msg("Started tracing exporter")
 
 	return nil
-
 }
 
 func (tracer *Tracer) Close() error {

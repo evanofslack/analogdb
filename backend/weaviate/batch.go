@@ -14,7 +14,6 @@ import (
 )
 
 func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error {
-
 	batches := batchBy(ids, batchSize)
 	for _, batch := range batches {
 		filter := analogdb.PostFilter{IDs: &batch}
@@ -32,7 +31,6 @@ func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, bat
 }
 
 func (db *DB) batchUploadObjects(ctx context.Context, objects []*models.Object) error {
-
 	db.logger.Debug().Ctx(ctx).Msg("Starting batch upload to vector DB")
 
 	batcher := db.db.Batch().ObjectsBatcher()

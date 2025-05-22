@@ -10,7 +10,6 @@ import (
 
 func (server *Server) logRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 		start := time.Now()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 		ctx := r.Context()
@@ -64,6 +63,5 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 				}).
 				Msg("Request query params")
 		}()
-
 	})
 }

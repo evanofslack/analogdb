@@ -21,7 +21,6 @@ import (
 const defaultConfigPath = "config.yml"
 
 func main() {
-
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -204,5 +203,4 @@ func fatal(logger *logger.Logger, err error) {
 		fmt.Fprintln(os.Stderr, err)
 	}
 	os.Exit(1)
-
 }

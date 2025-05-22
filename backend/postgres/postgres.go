@@ -22,7 +22,6 @@ type DB struct {
 }
 
 func NewDB(dsn string, logger *logger.Logger, tracingEnabled bool) *DB {
-
 	logger.Debug().Msg("Initializing DB instance")
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -41,7 +40,6 @@ func NewDB(dsn string, logger *logger.Logger, tracingEnabled bool) *DB {
 }
 
 func (db *DB) Open() error {
-
 	db.logger.Debug().Msg("Opening DB instance")
 
 	if db.dsn == "" {
@@ -73,7 +71,6 @@ func (db *DB) Open() error {
 }
 
 func (db *DB) Close() error {
-
 	db.logger.Debug().Msg("Starting to close DB connection")
 
 	db.cancel()

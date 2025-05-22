@@ -27,7 +27,6 @@ func (db *DB) getSchema(ctx context.Context) (*schema.Dump, error) {
 }
 
 func (db *DB) createPictureSchema(ctx context.Context) error {
-
 	db.logger.Debug().Ctx(ctx).Msg("Starting to create picture schema in vector DB")
 
 	classObj := &models.Class{

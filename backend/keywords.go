@@ -2,7 +2,6 @@ package analogdb
 
 import "context"
 
-
 // Keyword represents a single word/tag for a post
 type Keyword struct {
 	Word   string  `json:"word"`

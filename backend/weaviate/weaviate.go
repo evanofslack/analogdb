@@ -39,7 +39,6 @@ func NewDB(host string, scheme string, logger *logger.Logger, tracer *tracer.Tra
 }
 
 func (db *DB) Open() error {
-
 	db.logger.Debug().Msg("Starting vector DB open")
 
 	// validate host and scheme are set
@@ -69,7 +68,6 @@ func (db *DB) Open() error {
 }
 
 func (db *DB) Migrate(ctx context.Context) error {
-
 	db.logger.Debug().Msg("Starting vector DB migration")
 
 	schema, err := db.getSchema(ctx)
@@ -97,7 +95,6 @@ func (db *DB) Close() error {
 
 // start a trace targeting the weaviate server
 func (db *DB) startTrace(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
-
 	dbSystem := attribute.String("db.system", "weaviate")
 	dbName := attribute.String("db.name", "pictures")
 	serverAddress := attribute.String("server.address", db.host)
@@ -108,5 +105,4 @@ func (db *DB) startTrace(ctx context.Context, spanName string, opts ...trace.Spa
 	opts = append(opts, attributes, spanKind)
 
 	return db.tracer.Tracer.Start(ctx, spanName, opts...)
-
 }

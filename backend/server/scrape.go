@@ -22,7 +22,6 @@ func (s *Server) mountScrapeHandlers() {
 }
 
 func (s *Server) getKeywordUpdatedPosts(w http.ResponseWriter, r *http.Request) {
-
 	ids, err := s.ScrapeService.KeywordUpdatedPostIDs(r.Context())
 	if err != nil {
 		s.writeError(w, r, err)

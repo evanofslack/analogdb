@@ -35,7 +35,6 @@ type SimilarityService struct {
 }
 
 func NewCacheSimilarityService(rdb *RDB, dbService analogdb.SimilarityService) *SimilarityService {
-
 	// stores similar posts
 	similarCache := rdb.NewCache(similarInstance, similarLocalSize, similarTTL)
 
@@ -66,7 +65,6 @@ func (s *SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, bat
 }
 
 func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analogdb.PostSimilarityFilter) ([]*analogdb.Post, error) {
-
 	if filter.ID == nil {
 		return nil, fmt.Errorf("postID cannot be nil")
 	}
@@ -111,7 +109,6 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 	// add similar posts to cache
 	// do this async so response is returned quicker
 	go func() {
-
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.similarCache.instance).Msg("Adding similar posts to cache")
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
@@ -128,7 +125,6 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 	// update id's hashes in cache
 	// do this async so response is returned quicker
 	go func() {
-
 		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.idKeysCache.instance).Msg("Adding id hashes to cache")
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
@@ -176,7 +172,6 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 }
 
 func (s *SimilarityService) DeletePost(ctx context.Context, id int) error {
-
 	s.rdb.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting delete vector post with cache")
 	defer func() {
 		s.rdb.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Finished delete vector post with cache")

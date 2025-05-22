@@ -33,7 +33,6 @@ func (ss SimilarityService) DeletePost(ctx context.Context, postID int) error {
 }
 
 func (ss SimilarityService) FindSimilarPosts(ctx context.Context, similarityFilter *analogdb.PostSimilarityFilter) ([]*analogdb.Post, error) {
-
 	ctx, span := ss.db.tracer.Tracer.Start(ctx, "vector:find_similar_posts")
 	defer span.End()
 
@@ -52,7 +51,6 @@ func (ss SimilarityService) FindSimilarPosts(ctx context.Context, similarityFilt
 }
 
 func (db *DB) deletePost(ctx context.Context, postID int) error {
-
 	db.logger.Debug().Ctx(ctx).Int("postID", postID).Msg("Starting delete post from vector DB")
 
 	ctx, span := db.startTrace(ctx, "vector:delete_post", trace.WithAttributes(attribute.Int("postID", postID)))
@@ -102,7 +100,6 @@ func (db *DB) deletePost(ctx context.Context, postID int) error {
 		WithID(pics[0].uuid).
 		WithConsistencyLevel(replication.ConsistencyLevel.ALL). // default QUORUM
 		Do(ctx)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to delete post from vector DB")
 		span.SetStatus(codes.Error, "Delete picture failed")
@@ -123,7 +120,6 @@ type pictureResponse struct {
 }
 
 func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimilarityFilter) ([]int, error) {
-
 	var ids []int
 
 	if filter.ID == nil {
@@ -158,7 +154,6 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 		WithLimit(1).
 		WithWhere(where).
 		Do(ctx)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to find post in vector DB")
 		span.SetStatus(codes.Error, "Get embedding by postID failed")
@@ -202,7 +197,6 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 		WithWhere(where).
 		WithNearObject(nearObject).
 		Do(ctx)
-
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int("postID", postID).Msg("Failed to find near embeddings in vector DB")
 		span.SetStatus(codes.Error, "Failed to find similar embeddings in vector DB")
@@ -235,7 +229,6 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 }
 
 func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder, error) {
-
 	statements := []*filters.WhereBuilder{}
 
 	if nsfw := filter.Nsfw; nsfw != nil {
@@ -277,11 +270,9 @@ func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder
 		WithOperator(filters.And).
 		WithOperands(statements)
 	return where, nil
-
 }
 
 func unmarshallPicturesResp(result *models.GraphQLResponse) ([]pictureResponse, error) {
-
 	var picturesResponse []pictureResponse
 
 	data := result.Data["Get"].(map[string]interface{})
