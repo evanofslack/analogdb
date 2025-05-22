@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"go.opentelemetry.io/otel/trace/noop"
 )
 
 const (
@@ -37,9 +38,12 @@ func New(logger *logger.Logger, config *config.Config) (*Tracer, error) {
 
 	logger.Debug().Msg("Creating new otel tracer")
 
+    provider := noop.NewTracerProvider()
+    t := provider.Tracer("")
 	tracer := &Tracer{
 		logger: logger,
 		config: config,
+        Tracer: t,
 	}
 
 	// Always propagate trace context
