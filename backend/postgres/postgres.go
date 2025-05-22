@@ -43,7 +43,7 @@ func (db *DB) Open() error {
 	db.logger.Debug().Msg("Opening DB instance")
 
 	if db.dsn == "" {
-		return fmt.Errorf("DB data source name must be set")
+		return fmt.Errorf("data source name name must be set for DB")
 	}
 
 	var err error
@@ -61,7 +61,7 @@ func (db *DB) Open() error {
 	}
 
 	if db.db, err = sql.Open(driver, db.dsn); err != nil {
-		err = fmt.Errorf("Failed to open connection to DB: %w", err)
+		err = fmt.Errorf("open connection to DB: %w", err)
 		return err
 	}
 

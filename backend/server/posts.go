@@ -138,7 +138,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 
 	var id string
 	if id = chi.URLParam(r, "id"); id == "" {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Must provide id as parameter"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "must provide id as parameter"}
 		s.writeError(w, r, err)
 		return
 	}
@@ -170,7 +170,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing post from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse post from request body"}
 		s.writeError(w, r, err)
 		return
 	}
@@ -208,7 +208,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	var patchPost analogdb.PatchPost
 	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing patch from request body"}
+		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse patch from request body"}
 		s.writeError(w, r, err)
 		return
 	}

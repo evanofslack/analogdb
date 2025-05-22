@@ -93,7 +93,7 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	if err != nil {
 		return nil, err
 	} else if len(posts) == 0 {
-		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "Post not found"}
+		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "post not found"}
 	}
 	return posts[0], nil
 }
@@ -1034,7 +1034,7 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 
 	// no update fields provided
 	if len(set) == 0 {
-		return "", args, fmt.Errorf("No updated fields were provided in patch")
+		return "", args, fmt.Errorf("no updated fields provided in patch")
 	}
 
 	return `SET ` + strings.Join(set, ", "), args, nil
@@ -1042,7 +1042,7 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 
 func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	if len(p.Images) != 4 {
-		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Unable to create post, expected 4 images (low, medium, high, raw)"}
+		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 4 images (low, medium, high, raw)"}
 	}
 	low := p.Images[0]
 	med := p.Images[1]
@@ -1050,7 +1050,7 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	raw := p.Images[3]
 
 	if len(p.Colors) != 5 {
-		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "Unable to create post, expected 5 colors"}
+		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 5 colors"}
 	}
 
 	// we don't actually use these when creating the post here

@@ -27,7 +27,7 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 	if !s.healthy {
-		err := &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "Service not available"}
+		err := &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "service not available"}
 		s.writeError(w, r, err)
 	}
 	if err := encodeResponse(w, r, http.StatusOK, "message: healthy"); err != nil {

@@ -72,13 +72,13 @@ func (tracer *Tracer) StartExporter() error {
 	// dial the grpc endpoint where traces are exported
 	conn, err := grpc.DialContext(ctx, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
-		return fmt.Errorf("Failed to dial GRPC endpoint for OTLP exporter, err=%w", err)
+		return fmt.Errorf("dial GRPC endpoint for OTLP exporter, err=%w", err)
 	}
 
 	tracer.logger.Debug().Msg("Creating new OTLP exporter")
 	exporter, err := otlptracegrpc.New(ctx, otlptracegrpc.WithGRPCConn(conn))
 	if err != nil {
-		return fmt.Errorf("Failed to create tracegrpc, err=%w", err)
+		return fmt.Errorf("create tracegrpc, err=%w", err)
 	}
 
 	service := tracer.config.App.Name
@@ -93,7 +93,7 @@ func (tracer *Tracer) StartExporter() error {
 		),
 	)
 	if err != nil {
-		return fmt.Errorf("Failed to created tracing resource, err=%w", err)
+		return fmt.Errorf("create tracing resource, err=%w", err)
 	}
 
 	// create new tracing provider, this links the resource and batcher and is shared globally

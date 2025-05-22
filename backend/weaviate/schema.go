@@ -76,7 +76,7 @@ func (db *DB) createPictureSchema(ctx context.Context) error {
 
 	err := db.db.Schema().ClassCreator().WithClass(classObj).Do(context.Background())
 	if err != nil {
-		err = fmt.Errorf("Failed to create picture schema, %w", err)
+		err = fmt.Errorf("create picture schema, %w", err)
 		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed to create picture schema in vector DB")
 		return err
 	}

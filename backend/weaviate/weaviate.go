@@ -43,10 +43,10 @@ func (db *DB) Open() error {
 
 	// validate host and scheme are set
 	if db.host == "" {
-		return fmt.Errorf("Vector DB host must be set")
+		return fmt.Errorf("vector DB host must be set")
 	}
 	if db.scheme == "" {
-		return fmt.Errorf("Vector DB scheme must be set")
+		return fmt.Errorf("vector DB scheme must be set")
 	}
 
 	cfg := weaviate.Config{
@@ -58,7 +58,7 @@ func (db *DB) Open() error {
 	var err error
 	db.db, err = weaviate.NewClient(cfg)
 	if err != nil {
-		err = fmt.Errorf("Failed to create new vector DB client: %w", err)
+		err = fmt.Errorf("create new vector DB client: %w", err)
 		db.logger.Error().Err(err).Msg("Failed to open vector DB")
 		return err
 	}
@@ -72,13 +72,13 @@ func (db *DB) Migrate(ctx context.Context) error {
 
 	schema, err := db.getSchema(ctx)
 	if err != nil {
-		err = fmt.Errorf("Failed to get weaviate schema: %w", err)
+		err = fmt.Errorf("get weaviate schema: %w", err)
 		return err
 	}
 	// if no classes, create schemas
 	if len(schema.Classes) == 0 {
 		if err := db.createSchemas(ctx); err != nil {
-			err = fmt.Errorf("Failed to get create schema: %w", err)
+			err = fmt.Errorf("get create schema: %w", err)
 			return err
 		}
 	}
