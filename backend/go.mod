@@ -1,8 +1,6 @@
 module github.com/evanofslack/analogdb
 
-go 1.23.0
-
-toolchain go1.24.3
+go 1.24.3
 
 require (
 	github.com/arl/statsviz v0.5.0
