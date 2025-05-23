@@ -4,10 +4,10 @@ from typing import Dict, List, Optional, Tuple
 import extcolors
 import requests
 from PIL import ImageChops
-from PIL.Image import ANTIALIAS, Image, new, open
+from PIL.Image import LANCZOS, Image, new, open
 from scipy.spatial import KDTree
-from webcolors import (CSS3_HEX_TO_NAMES, HTML4_HEX_TO_NAMES, hex_to_rgb,
-                       rgb_to_hex)
+
+import webcolors
 
 from api import retry
 from constants import COLOR_LIMIT, COLOR_TOLERANCE, LOW_RES
@@ -102,7 +102,7 @@ def resize_image(
     if not size:  # raw image, don't resize
         return image, image.width, image.height
     img_resized = image.copy()
-    img_resized.thumbnail(size, ANTIALIAS)
+    img_resized.thumbnail(size, LANCZOS)
     w = img_resized.width
     h = img_resized.height
     return img_resized, w, h
@@ -140,12 +140,12 @@ def remove_border(image: Image) -> Image:
 def rgb_to_css(rgb: Tuple[int, int, int]) -> str:
     # use KDTree to find closest CSS name for RGB color
 
-    names = []
+    names = webcolors.names(spec=webcolors.CSS3)
     rgb_values = []
 
-    for hex, name in CSS3_HEX_TO_NAMES.items():
-        names.append(name)
-        rgb_values.append(hex_to_rgb(hex))
+    for name in names:
+        hex = webcolors.name_to_hex(name, spec=webcolors.CSS3)
+        rgb_values.append(webcolors.hex_to_rgb(hex))
 
     kdt_db = KDTree(rgb_values)
     _, index = kdt_db.query(rgb)
@@ -156,12 +156,12 @@ def rgb_to_css(rgb: Tuple[int, int, int]) -> str:
 def rgb_to_html(rgb: Tuple[int, int, int]) -> str:
     # use KDTree to find closest HTML name for RGB color
 
-    names = []
+    names = webcolors.names(spec=webcolors.HTML4)
     rgb_values = []
 
-    for hex, name in HTML4_HEX_TO_NAMES.items():
-        names.append(name)
-        rgb_values.append(hex_to_rgb(hex))
+    for name in names:
+        hex = webcolors.name_to_hex(name, spec=webcolors.HTML4)
+        rgb_values.append(webcolors.hex_to_rgb(hex))
 
     kdt_db = KDTree(rgb_values)
     _, index = kdt_db.query(rgb)
@@ -170,7 +170,6 @@ def rgb_to_html(rgb: Tuple[int, int, int]) -> str:
 
 
 def override_color_names(color: Color) -> Color:
-
     # don't override these colors
     if color.html in {"navy", "purple"}:
         return color
@@ -208,9 +207,8 @@ def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
 
     extracted: List[Color] = []
     for rgb, pixels in colors:
-
         # convert color to hex
-        hex = rgb_to_hex(rgb)
+        hex = webcolors.rgb_to_hex(rgb)
 
         # get closest matching css color
         css = rgb_to_css(rgb)
@@ -234,7 +232,6 @@ def extract_colors(image: Image, count: int = COLOR_LIMIT) -> List[Color]:
 
 
 def test_extract_colors():
-
     url = "https://d3i73ktnzbi69i.cloudfront.net/9c995e5b-9307-4f51-a58b-170e41e5fef3.jpeg"
     im = request_image(url)
 
