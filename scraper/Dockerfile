@@ -1,15 +1,23 @@
-FROM python:3.10
+FROM python:3.13-slim
 
-RUN apt-get -y update && apt-get install -y python3 python3-pip && pip3 install pipenv
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir /app
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+RUN pip install pipenv
+
 WORKDIR /app
-ADD ./Pipfile /app/Pipfile
-ADD ./Pipfile.lock /app/Pipfile.lock
 
-RUN pipenv install
-RUN pipenv run python3 -m spacy download en_core_web_lg
+COPY Pipfile Pipfile.lock ./
 
-ADD . /app/
+RUN pipenv install --system --deploy
+RUN python -m spacy download en_core_web_lg
 
-ENTRYPOINT ["pipenv", "run", "python", "main.py"]
+COPY . .
+
+RUN chown -R appuser:appuser /app
+USER appuser
+
+ENTRYPOINT ["python", "main.py"]
