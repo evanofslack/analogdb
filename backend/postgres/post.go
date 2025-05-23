@@ -964,40 +964,46 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 		index += 1
 	}
 
-	if minWidth := filter.Width.Min; minWidth != nil {
-		where = append(where, fmt.Sprintf("p.width >= $%d", index))
-		args = append(args, *minWidth)
-		index += 1
+	if w := filter.Width; w != nil {
+		if minWidth := w.Min; minWidth != nil {
+			where = append(where, fmt.Sprintf("p.width >= $%d", index))
+			args = append(args, *minWidth)
+			index += 1
+		}
+
+		if maxWidth := w.Max; maxWidth != nil {
+			where = append(where, fmt.Sprintf("p.width <= $%d", index))
+			args = append(args, *maxWidth)
+			index += 1
+		}
 	}
 
-	if maxWidth := filter.Width.Max; maxWidth != nil {
-		where = append(where, fmt.Sprintf("p.width <= $%d", index))
-		args = append(args, *maxWidth)
-		index += 1
+	if h := filter.Height; h != nil {
+		if minHeight := h.Min; minHeight != nil {
+			where = append(where, fmt.Sprintf("p.height >= $%d", index))
+			args = append(args, *minHeight)
+			index += 1
+		}
+
+		if maxHeight := h.Max; maxHeight != nil {
+			where = append(where, fmt.Sprintf("p.height <= $%d", index))
+			args = append(args, *maxHeight)
+			index += 1
+		}
 	}
 
-	if minHeight := filter.Height.Min; minHeight != nil {
-		where = append(where, fmt.Sprintf("p.height >= $%d", index))
-		args = append(args, *minHeight)
-		index += 1
-	}
+	if ar := filter.AspectRatio; ar != nil {
+		if minRatio := ar.Min; minRatio != nil {
+			where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal >= $%d::decimal", index))
+			args = append(args, *minRatio)
+			index += 1
+		}
 
-	if maxHeight := filter.Height.Max; maxHeight != nil {
-		where = append(where, fmt.Sprintf("p.height <= $%d", index))
-		args = append(args, *maxHeight)
-		index += 1
-	}
-
-	if minRatio := filter.AspectRatio.Min; minRatio != nil {
-		where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal >= $%d::decimal", index))
-		args = append(args, *minRatio)
-		index += 1
-	}
-
-	if maxRatio := filter.AspectRatio.Max; maxRatio != nil {
-		where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal <= $%d::decimal", index))
-		args = append(args, *maxRatio)
-		index += 1
+		if maxRatio := ar.Max; maxRatio != nil {
+			where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal <= $%d::decimal", index))
+			args = append(args, *maxRatio)
+			index += 1
+		}
 	}
 
 	whereQuery := strings.Join(where, " AND ")

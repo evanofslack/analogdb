@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -118,14 +118,13 @@ func downloadAndEncodePost(post *analogdb.Post, wg *sync.WaitGroup, encodes chan
 	}
 	defer resp.Body.Close()
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		failed <- id
 	}
 	encoded := base64.StdEncoding.EncodeToString(data)
 	encodes <- encoded
 	posts <- post
-	return
 }
 
 func postsToPictureObjects(posts []*analogdb.Post) []*models.Object {
