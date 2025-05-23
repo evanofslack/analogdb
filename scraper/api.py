@@ -8,11 +8,11 @@ from loguru import logger
 from requests.auth import HTTPBasicAuth
 
 from configuration import init_config
-from models import (AnalogDisplayPost, AnalogKeyword, AnalogPost, Color,
-                    PatchPost)
+from models import AnalogDisplayPost, AnalogKeyword, AnalogPost, Color, PatchPost
 
 config = init_config()
 base_url = config.app.api_base_url
+
 
 # decorator to retry operations
 def retry(delay=1, times=5):
@@ -42,7 +42,6 @@ def retry(delay=1, times=5):
 
 
 def get_latest_posts(count: int) -> List[AnalogDisplayPost]:
-
     # max page size is 200
     url = f"{base_url}/posts?sort=latest&page_size={count}"
     analog_posts: List[AnalogDisplayPost] = []
@@ -88,12 +87,17 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
         auth=HTTPBasicAuth(username=username, password=password),
     )
     code = resp.status_code
-    msg = json.loads(resp.text)
-    if code == 201:
-        logger.info(f"created post (title: {post.title} | status: {code} | msg: {msg})")
+    msg = "empty response"
+    if resp.text:
+        try:
+            msg = json.loads(resp.text)
+        except json.JSONDecodeError:
+            msg = f"invalid json: {resp.text}"
+    if 200 <= code < 300:
+        logger.info(f"create post (title: {post.title} | status: {code} | msg: {msg})")
     else:
         logger.error(
-            f"failed to create post (title: {post.title} | status: {code} | msg: {msg})"
+            f"fail create post (title: {post.title} | status: {code} | msg: {msg})"
         )
 
 
@@ -135,7 +139,6 @@ def get_all_post_ids() -> List[int]:
 
 
 def get_keyword_updated_post_ids(username: str, password: str) -> List[int]:
-
     path = "scrape/keywords/updated"
 
     url = f"{base_url}/{path}"
@@ -177,9 +180,7 @@ def encode_images(ids: List[int], batch_size: int, username: str, password: str)
 
 
 def json_to_post(data: dict) -> AnalogDisplayPost:
-
     try:
-
         images = data["images"]
         colors = data["colors"]
 
@@ -262,7 +263,6 @@ def post_to_json_images(post: AnalogPost) -> List[dict]:
 
 
 def keywords_to_json(keywords: List[AnalogKeyword]) -> List[dict]:
-
     json_keywords: List[dict] = []
     for kw in keywords:
         json_keywords.append({"word": kw.word, "weight": kw.weight})
