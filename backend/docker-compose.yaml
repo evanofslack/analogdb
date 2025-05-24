@@ -1,15 +1,5 @@
 version: "3.7"
 
-networks:
-  default:
-    external: true
-    name: analogdb
-
-volumes:
-  # postgres:
-  weaviate:
-  # redis:
-
 services:
   analogdb:
     container_name: analogdb
@@ -39,9 +29,15 @@ services:
       REDIS_URL: ${REDIS_URL}
       VECTOR_DATABASE_HOST: ${WEAVIATE_HOST}
       VECTOR_DATABASE_SCHEME: ${WEAVIATE_SCHEME}
+      KAFKA_ENABLED: ${KAFKA_ENABLED}
+      KAFKA_TOPIC: ${KAFKA_TOPIC}
+      KAFKA_BROKERS: ${KAFKA_BROKERS}
     depends_on:
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
+
 
   postgres:
     container_name: postgres
@@ -75,6 +71,42 @@ services:
     # volumes:
     # - redis:/bitnami/redis/data
 
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    ports:
+      - 9092:9092
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+      KAFKA_LISTENERS: "CONTROLLER://kafka:29093,PLAINTEXT://kafka:29092,PLAINTEXT_HOST://0.0.0.0:9092"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:29093"
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data/kraft-combined-logs"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # KRaft specific settings
+      CLUSTER_ID: "${KAFKA_CLUSTER_ID}"
+    volumes:
+      - kafka:/var/lib/kafka/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "kafka-topics --bootstrap-server localhost:9092 --list || exit 1",
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
   weaviate:
     image: semitechnologies/weaviate:1.18.3
     container_name: weaviate
@@ -87,7 +119,7 @@ services:
       - http
     ports:
       - 8081:8080
-      - 9092:2112
+      - 2112:2112
     restart: unless-stopped
     environment:
       IMAGE_INFERENCE_API: "http://i2v-neural:8080"
@@ -116,3 +148,14 @@ services:
     restart: unless-stopped
     environment:
       ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA}
+
+volumes:
+  # postgres:
+  weaviate:
+  # redis:
+  kafka:
+
+networks:
+  default:
+    external: true
+    name: analogdb
