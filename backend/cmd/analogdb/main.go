@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/evanofslack/analogdb/config"
+	"github.com/evanofslack/analogdb/events"
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
 	"github.com/evanofslack/analogdb/postgres"
@@ -121,6 +123,21 @@ func main() {
 		}
 	}
 
+	// open connection to kafka if enabled
+	var eventService analogdb.EventService
+	if cfg.Kafka.Enabled {
+		kafkaLogger := logger.WithSubsystem("kafka")
+		topic := cfg.Kafka.Topic
+		brokers := strings.Split(cfg.Kafka.Brokers, ",")
+		eventService, err = events.New(kafkaLogger, topic, brokers)
+		if err != nil {
+			err = fmt.Errorf("startup kafka: %w", err)
+			fatal(logger, err)
+		}
+	} else {
+		eventService = events.NewNoop(logger)
+	}
+
 	// initialize http server
 	httpLogger := logger.WithSubsystem("http")
 	server := server.New(cfg.HTTP.Port, httpLogger, metrics, cfg)
@@ -159,6 +176,7 @@ func main() {
 	server.ScrapeService = scrapeService
 	server.KeywordService = keywordService
 	server.SimilarityService = similarityService
+	server.EventService = eventService
 
 	if err := server.Run(); err != nil {
 		err = fmt.Errorf("start http server: %w", err)

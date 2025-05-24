@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/traceid"
 	"github.com/riandyrn/otelchi"
 )
 
@@ -26,6 +27,9 @@ func (s *Server) mountMiddleware() {
 		s.router.Use(otelchi.Middleware("http", otelchi.WithChiRoutes(s.router)))
 		s.logger.Info().Msg("Added tracing middleware")
 	}
+
+	// Extract traceid
+	s.router.Use(traceid.Middleware)
 
 	// log all requests
 	s.router.Use(s.logRequests)
