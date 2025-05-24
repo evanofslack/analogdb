@@ -17,6 +17,7 @@ type Config struct {
 	Auth     `yaml:"auth"`
 	Metrics  `yaml:"metrics"`
 	Tracing  `yaml:"tracing"`
+	Kafka    `yaml:"kafka"`
 }
 
 type App struct {
@@ -64,6 +65,12 @@ type Metrics struct {
 type Tracing struct {
 	Enabled  bool   `yaml:"enabled" env:"TRACING_ENABLED"`
 	Endpoint string `yaml:"endpoint" env:"TRACING_ENDPOINT"`
+}
+
+type Kafka struct {
+	Enabled bool   `yaml:"enabled" env:"KAFKA_ENABLED"`
+	Topic   string `yaml:"topic" env:"KAFKA_TOPIC"`
+	Brokers string `yaml:"brokers" env:"KAFKA_BROKERS"`
 }
 
 func New(path string) (*Config, error) {

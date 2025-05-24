@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/evanofslack/analogdb"
@@ -17,13 +18,14 @@ import (
 const shutdownTimeout = 5 * time.Second
 
 type Server struct {
-	server  *http.Server
-	router  *chi.Mux
-	healthy bool
-	logger  *logger.Logger
-	metrics *metrics.Metrics
-	config  *config.Config
-	stats   *httpStats
+	server   *http.Server
+	router   *chi.Mux
+	healthy  bool
+	logger   *logger.Logger
+	metrics  *metrics.Metrics
+	config   *config.Config
+	stats    *httpStats
+	hostname string
 
 	PostService       analogdb.PostService
 	ReadyService      analogdb.ReadyService
@@ -31,15 +33,23 @@ type Server struct {
 	ScrapeService     analogdb.ScrapeService
 	KeywordService    analogdb.KeywordService
 	SimilarityService analogdb.SimilarityService
+	EventService      analogdb.EventService
 }
 
 func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *config.Config) *Server {
 	s := &Server{
-		server:  &http.Server{},
-		router:  chi.NewRouter(),
-		logger:  logger,
-		metrics: metrics,
-		config:  config,
+		server:   &http.Server{},
+		router:   chi.NewRouter(),
+		logger:   logger,
+		metrics:  metrics,
+		config:   config,
+		hostname: "localhost",
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+	    s.logger.Warn().Err(err).Msg("get hostname")
+		s.hostname = hostname
 	}
 
 	s.server.Handler = s.router
