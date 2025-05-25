@@ -2,25 +2,21 @@ package com.evanofslack.analogdb.analytics.config
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import java.net.URI
+import javax.sql.DataSource
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import java.net.URI
-import javax.sql.DataSource
 
 @Configuration
 class ClickHouseConfig {
-    @Value("\${clickhouse.url}")
-    lateinit var url: String
+    @Value("\${clickhouse.url}") lateinit var url: String
 
-    @Value("\${clickhouse.table}")
-    lateinit var table: String
+    @Value("\${clickhouse.table}") lateinit var table: String
 
-    @Value("\${clickhouse.batchSize}")
-    var batchSize: Int = 1000
+    @Value("\${clickhouse.batchSize}") var batchSize: Int = 1000
 
-    @Value("\${clickhouse.flushIntervalMs}")
-    var flushIntervalMs: Long = 10000
+    @Value("\${clickhouse.flushIntervalMs}") var flushIntervalMs: Long = 10000
 
     // Extract database from URL
     val database: String
@@ -31,13 +27,13 @@ class ClickHouseConfig {
 
     @Bean
     fun dataSource(): DataSource {
+        println("DEBUG: Attempting to connect to: $url")
         val config = HikariConfig()
         config.jdbcUrl = url
         config.driverClassName = "com.clickhouse.jdbc.ClickHouseDriver"
         config.connectionTestQuery = "SELECT 1"
         config.maximumPoolSize = 10
-        
+
         return HikariDataSource(config)
     }
 }
-
