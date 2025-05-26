@@ -51,7 +51,7 @@ export default function InfiniteGallery(props) {
                         dataLength={posts.length}
                         next={fetchMore}
                         hasMore={hasMore}
-                        loader={loader}
+                        loader={loader()}
                         endMessage={
                             <h3 className={styles.end}>
                                 thats all folks, go take some pictures...
