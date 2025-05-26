@@ -20,7 +20,7 @@ export default function WebNav() {
             <div className={styles.headerContainer}>
                 <Link
                     href="/"
-                    className={router.pathname == "/" ? styles.linkOn : styles.linkOff}
+                    className={pathname == "/" ? styles.linkOn : styles.linkOff}
                 >
                     GALLERY
                 </Link>
