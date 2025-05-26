@@ -235,7 +235,7 @@ export default function Gallery(props) {
                             <Button
                                 variant="outline"
                                 color="gray"
-                                leftIcon={
+                                leftSection={
                                     <IconArrowAutofitWidth
                                         size={onlyIcon ? 22 : 18}
                                         stroke={1.6}
@@ -252,7 +252,7 @@ export default function Gallery(props) {
                                         "&:hover": {
                                             backgroundColor: "#fbfbfc",
                                         },
-                                        leftIcon: {
+                                        leftSection: {
                                             marginRight: 5,
                                         },
                                     },
@@ -366,7 +366,7 @@ export default function Gallery(props) {
                             <Button
                                 variant="outline"
                                 color="gray"
-                                leftIcon={
+                                leftSection={
                                     <IconPalette size={onlyIcon ? 22 : 18} stroke={1.5} />
                                 }
                                 styles={() => ({
@@ -380,7 +380,7 @@ export default function Gallery(props) {
                                         "&:hover": {
                                             backgroundColor: "#fbfbfc",
                                         },
-                                        leftIcon: {
+                                        leftSection: {
                                             marginRight: 5,
                                         },
                                     },
@@ -661,7 +661,7 @@ export default function Gallery(props) {
                             <Button
                                 variant="outline"
                                 color="gray"
-                                leftIcon={
+                                leftSection={
                                     <IconArrowsSort size={onlyIcon ? 22 : 18} stroke={1.5} />
                                 }
                                 styles={() => ({
@@ -675,7 +675,7 @@ export default function Gallery(props) {
                                         "&:hover": {
                                             backgroundColor: "#fbfbfc",
                                         },
-                                        leftIcon: {
+                                        leftSection: {
                                             marginRight: 5,
                                         },
                                     },
@@ -719,7 +719,7 @@ export default function Gallery(props) {
                             <Button
                                 variant="outline"
                                 color="gray"
-                                leftIcon={
+                                leftSection={
                                     <IconAdjustmentsHorizontal
                                         size={onlyIcon ? 22 : 18}
                                         stroke={1.5}
@@ -736,7 +736,7 @@ export default function Gallery(props) {
                                         "&:hover": {
                                             backgroundColor: "#fbfbfc",
                                         },
-                                        leftIcon: {
+                                        leftSection: {
                                             marginRight: 5,
                                         },
                                     },
