@@ -19,7 +19,7 @@ export async function generateStaticParams() {
 
 // Generate metadata based on post
 export async function generateMetadata({ params }) {
-    const { pid } = params;
+    const pid = await params.pid;
 
     try {
         const response = await authorized_fetch(`/post/${pid}`, "GET");
@@ -66,8 +66,10 @@ async function getPostData(pid) {
 }
 
 export default async function Post({ params }) {
-    const { pid } = params;
+    const { pid } = await params;
     const { post, similar } = await getPostData(pid);
 
     return <ImagePage post={post} similar={similar} />;
 }
+
+export const dynamic = 'force-dynamic';
