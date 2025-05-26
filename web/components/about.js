@@ -1,3 +1,4 @@
+'use client';
 import styles from "./about.module.css";
 import Image from "next/legacy/image";
 import Link from "next/link";
@@ -7,18 +8,18 @@ import { Prism } from "@mantine/prism";
 import { IconPolaroid, IconUsers } from "@tabler/icons";
 
 export default function About(props) {
-  const breakpoints = useBreakpoint();
-  let isMobile = false;
-  if (breakpoints["sm"]) {
-    isMobile = true;
-  }
+    const breakpoints = useBreakpoint();
+    let isMobile = false;
+    if (breakpoints["sm"]) {
+        isMobile = true;
+    }
 
-  let numPosts = props.data.numPosts;
-  let numAuthors = props.data.numAuthors;
+    let numPosts = props.data.numPosts;
+    let numAuthors = props.data.numAuthors;
 
-  const apiQuery = "curl https://api.analogdb.com/posts";
+    const apiQuery = "curl https://api.analogdb.com/posts";
 
-  const apiResponse = `
+    const apiResponse = `
 "meta":{
   "total_posts":3637,
   "page_size":20,
@@ -66,133 +67,133 @@ export default function About(props) {
   ...
 ]`;
 
-  return (
-    <main>
-      <div className={styles.container}>
-        <div className={styles.sectionOne}>
-          <div className={styles.subSection}>
-            <div className={styles.title}>Film for all</div>
-            <p className={styles.subtitle}>
-              AnalogDB is a curated database featuring thousands of film
-              photographs. And it is always growing, with new pictures added
-              every day.
-            </p>
-            <Link href="/" legacyBehavior>
-              <a className={styles.link}>view latest</a>
-            </Link>
-          </div>
-          {!isMobile && (
-            <div className={styles.stats}>
-              <div className={styles.statRow}>
-                <IconPolaroid
-                  size={40}
-                  color="#cacaca"
-                  stroke={1.1}
-                  className={styles.statIcon}
-                />
-                <div className={styles.statCol}>
-                  <p className={styles.statNum}>{numPosts.toLocaleString()}</p>
-                  <p className={styles.statTitle}>photos</p>
-                </div>
-              </div>
+    return (
+        <main>
+            <div className={styles.container}>
+                <div className={styles.sectionOne}>
+                    <div className={styles.subSection}>
+                        <div className={styles.title}>Film for all</div>
+                        <p className={styles.subtitle}>
+                            AnalogDB is a curated database featuring thousands of film
+                            photographs. And it is always growing, with new pictures added
+                            every day.
+                        </p>
+                        <Link href="/" legacyBehavior>
+                            <a className={styles.link}>view latest</a>
+                        </Link>
+                    </div>
+                    {!isMobile && (
+                        <div className={styles.stats}>
+                            <div className={styles.statRow}>
+                                <IconPolaroid
+                                    size={40}
+                                    color="#cacaca"
+                                    stroke={1.1}
+                                    className={styles.statIcon}
+                                />
+                                <div className={styles.statCol}>
+                                    <p className={styles.statNum}>{numPosts.toLocaleString()}</p>
+                                    <p className={styles.statTitle}>photos</p>
+                                </div>
+                            </div>
 
-              <div className={styles.statRow}>
-                <IconUsers
-                  size={36}
-                  color="#cacaca"
-                  stroke={1.5}
-                  className={styles.statIcon}
-                />
-                <div className={styles.statCol}>
-                  <p className={styles.statNum}>{numAuthors.toLocaleString()}</p>
-                  <p className={styles.statTitle}>photographers</p>
+                            <div className={styles.statRow}>
+                                <IconUsers
+                                    size={36}
+                                    color="#cacaca"
+                                    stroke={1.5}
+                                    className={styles.statIcon}
+                                />
+                                <div className={styles.statCol}>
+                                    <p className={styles.statNum}>{numAuthors.toLocaleString()}</p>
+                                    <p className={styles.statTitle}>photographers</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
-              </div>
-            </div>
-          )}
-        </div>
 
-        <div className={styles.sectionTwoBg}>
-          <div className={styles.sectionTwo}>
-            <div>
-              {!isMobile && (
-                <div className={styles.apiDemoContainer}>
-                  <div className={styles.apiDemo}>
-                    <Prism
-                      language="javascript"
-                      styles={() => ({
-                        code: {
-                          fontSize: "0.75rem",
-                          maxWidth: "40vw",
-                        },
-                      })}
-                    >
-                      {apiQuery}
-                    </Prism>
-                  </div>
-                  <div className={styles.apiDemo}>
-                    <Prism
-                      withLineNumbers
-                      language="javascript"
-                      styles={() => ({
-                        code: {
-                          fontSize: "0.75rem",
-                          maxHeight: "70vh",
-                          maxWidth: "40vw",
-                        },
-                      })}
-                    >
-                      {apiResponse}
-                    </Prism>
-                  </div>
+                <div className={styles.sectionTwoBg}>
+                    <div className={styles.sectionTwo}>
+                        <div>
+                            {!isMobile && (
+                                <div className={styles.apiDemoContainer}>
+                                    <div className={styles.apiDemo}>
+                                        <Prism
+                                            language="javascript"
+                                            styles={() => ({
+                                                code: {
+                                                    fontSize: "0.75rem",
+                                                    maxWidth: "40vw",
+                                                },
+                                            })}
+                                        >
+                                            {apiQuery}
+                                        </Prism>
+                                    </div>
+                                    <div className={styles.apiDemo}>
+                                        <Prism
+                                            withLineNumbers
+                                            language="javascript"
+                                            styles={() => ({
+                                                code: {
+                                                    fontSize: "0.75rem",
+                                                    maxHeight: "70vh",
+                                                    maxWidth: "40vw",
+                                                },
+                                            })}
+                                        >
+                                            {apiResponse}
+                                        </Prism>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div>
+                            <div className={styles.title}>Accesible API</div>
+                            <p className={styles.subtitle}>
+                                The entire collection of film is exposed through a simple and
+                                modern JSON API. Embeddeding beautiful film photos in your
+                                projects has never been easier.
+                            </p>
+                            <Link href="/docs" legacyBehavior>
+                                <a className={styles.link}>read the docs</a>
+                            </Link>
+                        </div>
+                    </div>
                 </div>
-              )}
-            </div>
-            <div>
-              <div className={styles.title}>Accesible API</div>
-              <p className={styles.subtitle}>
-                The entire collection of film is exposed through a simple and
-                modern JSON API. Embeddeding beautiful film photos in your
-                projects has never been easier.
-              </p>
-              <Link href="/docs" legacyBehavior>
-                <a className={styles.link}>read the docs</a>
-              </Link>
-            </div>
-          </div>
-        </div>
 
-        <div className={styles.sectionThreeBg}>
-          <div className={styles.sectionThree}>
-            <div>
-              <div className={styles.title}>Open-source</div>
-              <p className={styles.subtitle}>
-                All code made publically avaliable on Github with flexible
-                licensing. Analogdb is an open community where all contributions
-                are welcome!
-              </p>
-              <a
-                className={styles.link}
-                href="https://github.com/evanofslack/analogdb"
-              >
-                view source
-              </a>
+                <div className={styles.sectionThreeBg}>
+                    <div className={styles.sectionThree}>
+                        <div>
+                            <div className={styles.title}>Open-source</div>
+                            <p className={styles.subtitle}>
+                                All code made publically avaliable on Github with flexible
+                                licensing. Analogdb is an open community where all contributions
+                                are welcome!
+                            </p>
+                            <a
+                                className={styles.link}
+                                href="https://github.com/evanofslack/analogdb"
+                            >
+                                view source
+                            </a>
+                        </div>
+                        {!isMobile && (
+                            <div className={styles.imageThree}>
+                                <Image
+                                    src={"/github_logo.png"}
+                                    alt={`example AnalogDB API call`}
+                                    width="3840"
+                                    height="2160"
+                                    quality={100}
+                                />
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
-            {!isMobile && (
-              <div className={styles.imageThree}>
-                <Image
-                  src={"/github_logo.png"}
-                  alt={`example AnalogDB API call`}
-                  width="3840"
-                  height="2160"
-                  quality={100}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <Footer />
-    </main>
-  );
+            <Footer />
+        </main>
+    );
 }
