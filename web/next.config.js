@@ -13,6 +13,11 @@ module.exports = {
   experimental: {
     scrollRestoration: true,
     instrumentationHook: true,
+    serverActions: true,
+    optimizePackageImports: [
+      "@mantine/core",
+      "@mantine/nprogress"
+    ]
   },
   env: {
     AUTH_USERNAME: process.env.AUTH_USERNAME,
