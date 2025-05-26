@@ -1,0 +1,14 @@
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 70vh;
+}
+
+.error {
+  font-weight: 400;
+}
