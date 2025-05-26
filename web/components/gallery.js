@@ -7,7 +7,7 @@ import ScrollTop from "../components/scrollTop";
 import { useState, useEffect } from "react";
 import { useBreakpoint } from "../providers/breakpoint.js";
 import useKeyPress from "../hooks/useKeyPress";
-import { useQueryState, queryTypes } from "next-usequerystate";
+import { useQueryState } from "nuqs";
 import {
     IconArrowAutofitWidth,
     IconSearch,
@@ -127,22 +127,10 @@ const defaultText = "";
 
 export default function Gallery(props) {
     // querystate
-    const [sort, setSort] = useQueryState(
-        "sort",
-        queryTypes.string.withDefault(defaultSort)
-    );
-    const [nsfw, setNsfw] = useQueryState(
-        "nsfw",
-        queryTypes.string.withDefault(defaultNsfw)
-    );
-    const [bw, setBw] = useQueryState(
-        "bw",
-        queryTypes.string.withDefault(defaultBw)
-    );
-    const [sprocket, setSprocket] = useQueryState(
-        "sprocket",
-        queryTypes.string.withDefault(defaultSprocket)
-    );
+    const [sort, setSort] = useQueryState('sort', { history: 'push' });
+    const [nsfw, setNsfw] = useQueryState('nsfw', { history: 'push' });
+    const [bw, setBw] = useQueryState('bw', { history: 'push' });
+    const [sprocket, setSprocket] = useQueryState('sprocket', { history: 'push' });
 
     // handle setting sizes
     let widthMinLimit = 600;
@@ -161,10 +149,7 @@ export default function Gallery(props) {
     const [ratioMax, setRatioMax] = useState(ratioMaxLimit);
 
     // handle setting colors
-    const [color, setColor] = useQueryState(
-        "color",
-        queryTypes.string.withDefault(defaultColor)
-    );
+    const [color, setColor] = useQueryState('color', { history: 'push' });
 
     const handleColorClick = (event) => {
         let clickedColor = event.target.id;
@@ -178,11 +163,9 @@ export default function Gallery(props) {
     // handle setting keywords.
     // hold input text in temp variable and
     // only set query state on updateRequest.
-    const [textTemp, setTextTemp] = useState("");
-    const [text, setText] = useQueryState(
-        "text",
-        queryTypes.string.withDefault(defaultText)
-    );
+    // but temp value must come from query state, so direct routes set it.
+    const [text, setText] = useQueryState('text', { history: 'push' });
+    const [textTemp, setTextTemp] = useState(text || ""); // Initialize with URL value
 
     const [response, setResponse] = useState(props.data);
 
@@ -194,12 +177,12 @@ export default function Gallery(props) {
         }
 
         let request = filterQueryParams(
-            sort,
-            nsfw,
-            bw,
-            sprocket,
-            text,
-            color,
+            sort || defaultSort,
+            nsfw || defaultNsfw,
+            bw || defaultBw,
+            sprocket || defaultSprocket,
+            text || defaultText,
+            color || defaultColor,
             [widthMin, widthMax],
             [heightMin, heightMax],
             [ratioMin, ratioMax]
