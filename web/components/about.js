@@ -78,8 +78,8 @@ export default function About(props) {
                             photographs. And it is always growing, with new pictures added
                             every day.
                         </p>
-                        <Link href="/" legacyBehavior>
-                            <a className={styles.link}>view latest</a>
+                        <Link href="/" className={styles.link}>
+                            view latest
                         </Link>
                     </div>
                     {!isMobile && (

@@ -18,10 +18,10 @@ export default function Keywords({ keywords, maxKeywords = 15 }) {
             {keywords
                 .slice(0, maxKeywords)
                 .map((item) => (
-                    <div className={styles.keyword} key={item.id}>
+                    <div className={styles.keyword} key={item.word}>
                         <button
                             onClick={() => handleKeywordClick(item.word)}
-                            className={styles.keywordButton} // You'll need to add this style
+                            className={styles.keywordButton}
                             type="button"
                         >
                             {item.word}
