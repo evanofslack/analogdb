@@ -4,7 +4,7 @@ import Image from "next/legacy/image";
 import Link from "next/link";
 import Footer from "./footer";
 import { useBreakpoint } from "../providers/breakpoint.js";
-import { Prism } from "@mantine/prism";
+import { CodeHighlight } from '@mantine/code-highlight';
 import { IconPolaroid, IconUsers } from "@tabler/icons";
 
 export default function About(props) {
@@ -119,32 +119,29 @@ export default function About(props) {
                             {!isMobile && (
                                 <div className={styles.apiDemoContainer}>
                                     <div className={styles.apiDemo}>
-                                        <Prism
+                                        <CodeHighlight
+                                            code={apiQuery}
                                             language="javascript"
-                                            styles={() => ({
+                                            styles={{
                                                 code: {
                                                     fontSize: "0.75rem",
                                                     maxWidth: "40vw",
                                                 },
-                                            })}
-                                        >
-                                            {apiQuery}
-                                        </Prism>
+                                            }}
+                                        />
                                     </div>
                                     <div className={styles.apiDemo}>
-                                        <Prism
-                                            withLineNumbers
+                                        <CodeHighlight
+                                            code={apiResponse}
                                             language="javascript"
-                                            styles={() => ({
+                                            styles={{
                                                 code: {
                                                     fontSize: "0.75rem",
                                                     maxHeight: "70vh",
                                                     maxWidth: "40vw",
                                                 },
-                                            })}
-                                        >
-                                            {apiResponse}
-                                        </Prism>
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             )}

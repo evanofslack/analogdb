@@ -2,7 +2,7 @@
 import styles from "./documentation.module.css";
 import Footer from "./footer";
 import Link from "next/link";
-import { Prism } from "@mantine/prism";
+import { CodeHighlight } from '@mantine/code-highlight';
 import { Table, Code, Divider } from "@mantine/core";
 import { useBreakpoint } from "../providers/breakpoint.js";
 
@@ -277,18 +277,17 @@ export default function Documentation() {
                     </Table>
                     {!isMobile && (
                         <div className={styles.codeblock}>
-                            <Prism
+                            <CodeHighlight
+                                code="curl https://api.analogdb.com/posts?page_size=10&page_id=774"
+                                language="bash"
                                 copyLabel="copy example"
                                 copiedLabel="copied"
-                                language="yaml"
-                                styles={() => ({
+                                styles={{
                                     code: {
                                         fontSize: "0.75rem",
                                     },
-                                })}
-                            >
-                                curl https://api.analogdb.com/posts?page_size=10&page_id=774
-                            </Prism>
+                                }}
+                            />
                         </div>
                     )}
                     <div className={styles.divider}>
@@ -369,18 +368,18 @@ export default function Documentation() {
                     </Table>
                     {!isMobile && (
                         <div className={styles.codeblock}>
-                            <Prism
+
+                            <CodeHighlight
+                                code="curl https://api.analogdb.com/posts?sort=top&page_size=50"
+                                language="bash"
                                 copyLabel="copy example"
                                 copiedLabel="copied"
-                                language="yaml"
-                                styles={() => ({
+                                styles={{
                                     code: {
                                         fontSize: "0.75rem",
                                     },
-                                })}
-                            >
-                                curl https://api.analogdb.com/posts?sort=top&page_size=50
-                            </Prism>
+                                }}
+                            />
                         </div>
                     )}
                     <p>
@@ -404,19 +403,17 @@ export default function Documentation() {
                     </Table>
                     {!isMobile && (
                         <div className={styles.codeblock}>
-                            <Prism
+                            <CodeHighlight
+                                code="curl https://api.analogdb.com/posts?grayscale=true&sprocket=true&nsfw=false"
+                                language="bash"
                                 copyLabel="copy example"
                                 copiedLabel="copied"
-                                language="yaml"
-                                styles={() => ({
+                                styles={{
                                     code: {
                                         fontSize: "0.75rem",
                                     },
-                                })}
-                            >
-                                curl
-                                https://api.analogdb.com/posts?grayscale=true&sprocket=true&nsfw=false
-                            </Prism>
+                                }}
+                            />
                         </div>
                     )}
                     <h2 className={styles.h2}> /post/:id </h2>
@@ -426,18 +423,17 @@ export default function Documentation() {
                     </p>
                     {!isMobile && (
                         <div className={styles.codeblock}>
-                            <Prism
+                            <CodeHighlight
+                                code="curl https://api.analogdb.com/post/1924"
+                                language="bash"
                                 copyLabel="copy example"
                                 copiedLabel="copied"
-                                language="yaml"
-                                styles={() => ({
+                                styles={{
                                     code: {
                                         fontSize: "0.75rem",
                                     },
-                                })}
-                            >
-                                curl https://api.analogdb.com/post/1924
-                            </Prism>
+                                }}
+                            />
                         </div>
                     )}
                     <div className={styles.divider}>
