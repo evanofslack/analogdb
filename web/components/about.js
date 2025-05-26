@@ -156,8 +156,8 @@ export default function About(props) {
                                 modern JSON API. Embeddeding beautiful film photos in your
                                 projects has never been easier.
                             </p>
-                            <Link href="/docs" legacyBehavior>
-                                <a className={styles.link}>read the docs</a>
+                            <Link href="/docs" className={styles.link}>
+                                read the docs
                             </Link>
                         </div>
                     </div>
