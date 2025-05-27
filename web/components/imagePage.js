@@ -47,18 +47,21 @@ export default function ImagePage(props) {
                     />
                 </div>
                 <div className={styles.footerIcons}>
-                    <Tooltip label="download" withArrow className="px-2">
-                        <ActionIcon
-                            onClick={() => downloadImage(post.images[3].url, post.id)}
-                        >
-                            <AiOutlineDownload size="24px" />
-                        </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="fullscreen" withArrow className="px-2">
-                        <ActionIcon component="a" href={post.images[3].url}>
-                            <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
-                        </ActionIcon>
-                    </Tooltip>
+                    <ActionIcon.Group>
+                        <Tooltip label="download" withArrow className="px-2">
+                            <ActionIcon
+                                variant="outline" color="gray"
+                                onClick={() => downloadImage(post.images[3].url, post.id)}
+                            >
+                                <AiOutlineDownload size="24px" />
+                            </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="fullscreen" withArrow className="px-2">
+                            <ActionIcon variant="subtle" color="gray" component="a" href={post.images[3].url}>
+                                <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
+                            </ActionIcon>
+                        </Tooltip>
+                    </ActionIcon.Group>
                 </div>
             </div>
             <ImageTag post={post} similar={similar} />

@@ -14,7 +14,7 @@ import {
     IconArrowsSort,
     IconAdjustmentsHorizontal,
     IconPalette,
-} from "@tabler/icons";
+} from "@tabler/icons-react";
 
 import {
     TextInput,
@@ -791,7 +791,8 @@ export default function Gallery(props) {
                     <TextInput
                         value={textTemp}
                         onChange={(event) => setTextTemp(event.currentTarget.value)}
-                        icon={<IconSearch size={18} />}
+                        leftSection=<IconSearch size={18} />
+                        leftSectionPointerEvents="none"
                         placeholder={textPlaceholder()}
                     />
                 </div>

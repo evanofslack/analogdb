@@ -5,7 +5,7 @@ import Link from "next/link";
 import Footer from "./footer";
 import { useBreakpoint } from "../providers/breakpoint.js";
 import { CodeHighlight } from '@mantine/code-highlight';
-import { IconPolaroid, IconUsers } from "@tabler/icons";
+import { IconPolaroid, IconUsers } from "@tabler/icons-react";
 
 export default function About(props) {
     const breakpoints = useBreakpoint();
@@ -181,8 +181,8 @@ export default function About(props) {
                                 <Image
                                     src={"/github_logo.png"}
                                     alt={`example AnalogDB API call`}
-                                    width="3840"
-                                    height="2160"
+                                    width="384"
+                                    height="216"
                                     quality={100}
                                 />
                             </div>
