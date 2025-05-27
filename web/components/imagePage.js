@@ -50,7 +50,7 @@ export default function ImagePage(props) {
                     <ActionIcon.Group>
                         <Tooltip label="download" withArrow className="px-2">
                             <ActionIcon
-                                variant="outline" color="gray"
+                                variant="subtle" color="gray"
                                 onClick={() => downloadImage(post.images[3].url, post.id)}
                             >
                                 <AiOutlineDownload size="24px" />
