@@ -6,12 +6,6 @@ import Footer from "../components/footer";
 import styles from "./imagePage.module.css";
 import { AiOutlineDownload, AiOutlineArrowsAlt } from "react-icons/ai";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import {
-    startNavigationProgress,
-    completeNavigationProgress,
-    NavigationProgress,
-} from "@mantine/nprogress";
-import { useEffect } from "react";
 
 async function downloadImage(targetImage, name) {
     const image = await fetch(targetImage);
@@ -26,10 +20,6 @@ async function downloadImage(targetImage, name) {
 }
 
 export default function ImagePage(props) {
-    useEffect(() => {
-        startNavigationProgress();
-    }, []);
-
     let post = props.post;
     let similar = props.similar;
     let image = post.images[2];
@@ -37,7 +27,6 @@ export default function ImagePage(props) {
 
     return (
         <div>
-            <NavigationProgress autoReset={true} />
             <div className={styles.fullscreen}>
                 <div className={styles.headerIcons}>
                     <Link href={`/`} passHref={true}>
@@ -53,7 +42,6 @@ export default function ImagePage(props) {
                         alt={`image ${post.id} by ${post.author}`}
                         sizes="100vw"
                         quality={100}
-                        onLoadingComplete={completeNavigationProgress}
                         placeholder="blur"
                         blurDataURL={placeholder.url}
                     />

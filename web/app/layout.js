@@ -4,7 +4,6 @@ import '@mantine/code-highlight/styles.css';
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 import { BreakpointProvider } from "../providers/breakpoint";
-import { NavigationProgress } from "@mantine/nprogress";
 import { CodeHighlightProvider } from '../components/CodeHighlightProvider';
 
 export const metadata = {
@@ -31,7 +30,6 @@ export default function RootLayout({ children }) {
                 <MantineProvider>
                     <CodeHighlightProvider>
                         <NuqsAdapter>
-                            <NavigationProgress />
                             <BreakpointProvider queries={queries}>
                                 {children}
                             </BreakpointProvider>
