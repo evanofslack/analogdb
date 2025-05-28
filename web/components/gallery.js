@@ -127,29 +127,29 @@ const defaultText = "";
 
 export default function Gallery(props) {
     // querystate
-    const [sort, setSort] = useQueryState('sort', { history: 'push' });
-    const [nsfw, setNsfw] = useQueryState('nsfw', { history: 'push' });
-    const [bw, setBw] = useQueryState('bw', { history: 'push' });
-    const [sprocket, setSprocket] = useQueryState('sprocket', { history: 'push' });
+    const [sort, setSort] = useQueryState('sort', { history: 'push', defaultValue: defaultSort });
+    const [nsfw, setNsfw] = useQueryState('nsfw', { history: 'push', defaultValue: defaultNsfw });
+    const [bw, setBw] = useQueryState('bw', { history: 'push', defaultValue: defaultBw });
+    const [sprocket, setSprocket] = useQueryState('sprocket', { history: 'push', defaultValue: defaultSprocket });
 
     // handle setting sizes
     let widthMinLimit = 600;
     let widthMaxLimit = 15000;
-    const [widthMin, setWidthMin] = useState(widthMinLimit);
-    const [widthMax, setWidthMax] = useState(widthMaxLimit);
+    const [widthMin, setWidthMin] = useQueryState('widthMin', { defaultValue: widthMinLimit });
+    const [widthMax, setWidthMax] = useQueryState('widthMax', { defaultValue: widthMaxLimit });
 
     let heightMinLimit = 400;
     let heightMaxLimit = 12000;
-    const [heightMin, setHeightMin] = useState(heightMinLimit);
-    const [heightMax, setHeightMax] = useState(heightMaxLimit);
+    const [heightMin, setHeightMin] = useQueryState('heightMin', { defaultValue: heightMinLimit });
+    const [heightMax, setHeightMax] = useQueryState('heightMax', { defaultValue: heightMaxLimit });
 
     let ratioMinLimit = 0.3;
     let ratioMaxLimit = 4.8;
-    const [ratioMin, setRatioMin] = useState(ratioMinLimit);
-    const [ratioMax, setRatioMax] = useState(ratioMaxLimit);
+    const [ratioMin, setRatioMin] = useQueryState('ratioMin', { defaultValue: ratioMinLimit });
+    const [ratioMax, setRatioMax] = useQueryState('ratioMax', { defaultValue: ratioMaxLimit });
 
     // handle setting colors
-    const [color, setColor] = useQueryState('color', { history: 'push' });
+    const [color, setColor] = useQueryState('color', { defaultValue: "" });
 
     const handleColorClick = (event) => {
         let clickedColor = event.target.id;
@@ -164,10 +164,11 @@ export default function Gallery(props) {
     // hold input text in temp variable and
     // only set query state on updateRequest.
     // but temp value must come from query state, so direct routes set it.
-    const [text, setText] = useQueryState('text', { history: 'push' });
+    const [text, setText] = useQueryState('text', { defaultValue: "" });
     const [textTemp, setTextTemp] = useState(text || ""); // Initialize with URL value
 
     const [response, setResponse] = useState(props.data);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const updateRequest = async () => {
         if (textTemp == defaultText) {
@@ -208,6 +209,26 @@ export default function Gallery(props) {
     };
 
     useEffect(() => {
+        // Skip API call on initial load if using default values
+        if (isInitialLoad) {
+            const isUsingDefaults = (
+                (sort || defaultSort) === defaultSort &&
+                (nsfw || defaultNsfw) === defaultNsfw &&
+                (bw || defaultBw) === defaultBw &&
+                (sprocket || defaultSprocket) === defaultSprocket &&
+                (text || defaultText) === defaultText &&
+                (color || defaultColor) === defaultColor
+                // ... check other default values
+            );
+
+            if (isUsingDefaults) {
+                setIsInitialLoad(false);
+                // Don't make API call, use props.data
+                return;
+            }
+        }
+
+        setIsInitialLoad(false);
         updateRequest();
     }, [
         sort,
