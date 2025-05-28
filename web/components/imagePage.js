@@ -8,15 +8,18 @@ import { AiOutlineDownload, AiOutlineArrowsAlt } from "react-icons/ai";
 import { ActionIcon, Tooltip } from "@mantine/core";
 
 async function downloadImage(targetImage, name) {
-    const image = await fetch(targetImage);
-    const imageBlob = await image.blob();
-    const imageURL = URL.createObjectURL(imageBlob);
-    const link = document.createElement("a");
-    link.href = imageURL;
-    link.download = `analogdb-${name}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+        const downloadUrl = `/api/download?url=${encodeURIComponent(targetImage)}&filename=analogdb-${name}.jpg`;
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = `analogdb-${name}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (error) {
+        console.error('Download failed:', error);
+        // Show user-friendly error message
+    }
 }
 
 export default function ImagePage(props) {
