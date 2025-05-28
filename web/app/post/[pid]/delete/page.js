@@ -1,6 +1,8 @@
-import { baseURL } from "../../../constants.js";
+'use client';
+
+import { baseURL } from "../../../../constants.js";
 import { useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 async function deletePost(pid) {
   const url = `${baseURL}/post/${pid}`;
@@ -14,13 +16,19 @@ async function deletePost(pid) {
   console.log(response);
 }
 
-export default function DeletePost() {
+export default function DeletePage({ params }) {
   const router = useRouter();
-  const { pid } = router.query;
+  const { pid } = params;
 
   useEffect(() => {
-    if (pid != "") {
+    if (pid) {
       deletePost(pid);
+      // Navigate back to homepage after deletion
+      setTimeout(() => {
+        router.push('/');
+      }, 1000);
     }
-  }, [pid]);
+  }, [pid, router]);
+  
+  return <div>Deleting post...</div>;
 }

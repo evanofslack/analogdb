@@ -1,53 +1,34 @@
-import { HttpInstrumentation } from "@opentelemetry/instrumentation-http";
-import {
-  CompositePropagator,
-  W3CTraceContextPropagator,
-} from "@opentelemetry/core";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-grpc";
-import { registerInstrumentations } from "@opentelemetry/instrumentation";
-import {
-  detectResourcesSync,
-  envDetector,
-  Resource,
-} from "@opentelemetry/resources";
-import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
-import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
-import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
-import { otelURL, serviceName } from "./constants.js";
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+import { resourceFromAttributes } from '@opentelemetry/resources';
+import { NodeSDK } from '@opentelemetry/sdk-node'
+import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-node'
+import { ATTR_SERVICE_NAME } from '@opentelemetry/semantic-conventions'
 
-export function register() {
-  registerInstrumentations({
-    instrumentations: [new HttpInstrumentation()],
-  });
 
-  const resource = Resource.default()
-    .merge(
-      new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
-      })
-    )
-    .merge(detectResourcesSync({ detectors: [envDetector] }));
-  const provider = new NodeTracerProvider({ resource });
+const resource = resourceFromAttributes({
+    [ATTR_SERVICE_NAME]: 'api-service',
+});
 
-  const exporter = new OTLPTraceExporter({
-    url: otelURL,
-  });
+const spanProcessor = new SimpleSpanProcessor(new OTLPTraceExporter({
+    url: process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || 'http://otel-collector:4318',
+}))
 
-  console.log("exporting OTEL traces to endpoint: " + otelURL);
+const sdk = new NodeSDK({
+    resource: resource,
+    spanProcessor: spanProcessor,
+})
 
-  let processor = new BatchSpanProcessor(exporter);
+console.log('OpenTelemetry initializing...')
+console.log(`Service: ${process.env.OTEL_SERVICE_NAME || 'nextjs-app'}`)
+console.log(`Endpoint: ${process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || 'http://localhost:4318/v1/traces'}`)
 
-  const propagator = new CompositePropagator({
-    propagators: [new W3CTraceContextPropagator()],
-  });
+sdk.start()
 
-  provider.addSpanProcessor(processor);
+console.log('OpenTelemetry started successfully')
 
-  provider.register({ propagator });
-
-  process.on("SIGTERM", () => {
-    provider.shutdown();
-  });
-}
-
-register();
+process.on('SIGTERM', () => {
+    sdk.shutdown()
+        .then(() => console.log('OpenTelemetry terminated'))
+        .catch((error) => console.log('Error terminating OpenTelemetry', error))
+        .finally(() => process.exit(0))
+})

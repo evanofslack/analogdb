@@ -1,0 +1,47 @@
+.containerKeywords {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  /* justify-content: space-around; */
+  align-items: center;
+  height: 100%;
+  margin-top: 2rem;
+  max-width: 25rem;
+  /* max-width: 80vw; */
+}
+
+.keyword {
+  max-width: 20rem;
+  margin-left: 0.2rem;
+  margin-right: 0.2rem;
+  border: solid;
+  border-color: lightgray;
+  border-width: 1.5px;
+  border-radius: 9px;
+  color: #636363;
+  margin-top: 0.4rem;
+  margin-bottom: 0.4rem;
+  padding-left: 0.6rem;
+  padding-right: 0.6rem;
+  padding-top: 0.1rem;
+  padding-bottom: 0.15rem;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  background-color: #f7f7f7;
+}
+.keyword:hover {
+  color: #f5f5f5;
+  background-color: #636363;
+  border-color: #636363;
+}
+
+.keywordButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+}
