@@ -19,7 +19,7 @@ export async function generateStaticParams() {
 
 // Generate metadata based on post
 export async function generateMetadata({ params }) {
-    const pid = await params.pid;
+    const { pid } = await params;
 
     try {
         const response = await authorized_fetch(`/post/${pid}`, "GET");
