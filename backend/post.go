@@ -294,7 +294,7 @@ func (filter *PostFilter) SetMinColorPercent() {
 	filter.ColorPercents = &percents
 }
 
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
+func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
 	filter := &PostFilter{
 		Limit:         limit,
 		Sort:          sort,
@@ -306,6 +306,13 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 		IDs:           ids,
 		Title:         title,
 		Author:        author,
+		CameraMake:    cameraMake,
+		CameraModel:   cameraModel,
+		FilmMake:      filmMake,
+		FilmType:      filmType,
+		FilmSpeed:     filmSpeed,
+		FocalLength:   focalLength,
+		Aperture:      aperture,
 		Colors:        colors,
 		ColorPercents: colorPercents,
 		Keywords:      keywords,
@@ -322,7 +329,7 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 // NewPostFilterWithIDs is a convenience function
 // to create a post filter with only IDs set.
 func NewPostFilterWithIDs(ids []int) *PostFilter {
-	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil)
+	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 // PostSimilarityFilter are options used for querying similar posts
