@@ -1,4 +1,4 @@
-FROM node:18-alpine3.18 as base
+FROM node:20-alpine as base
 
 # 1. Install dependencies only when needed
 FROM base AS deps
@@ -10,9 +10,9 @@ WORKDIR /app
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
 RUN \
-  if [ -f package-lock.json ]; then npm ci; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+    if [ -f package-lock.json ]; then npm ci; \
+    else echo "Lockfile not found." && exit 1; \
+    fi
 
 # 2. Rebuild the source code only when needed
 FROM base AS builder
@@ -28,7 +28,7 @@ ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN yarn build
+RUN npm run build
 
 # 3. Production image, copy all the files and run next
 FROM base AS runner
@@ -59,3 +59,5 @@ EXPOSE 3000
 ENV PORT 3000
 
 CMD ["node", "server.js"]
+
+# CMD ["node", ".next/standalone/server.js"]
