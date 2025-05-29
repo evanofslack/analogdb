@@ -1,17 +1,22 @@
 package server
 
 import (
-	"os"
+	"context"
 	"testing"
 
 	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
-	"github.com/evanofslack/analogdb/postgres"
 	"github.com/joho/godotenv"
 )
 
-func mustOpen(t *testing.T) (*Server, *postgres.DB) {
+type mockReady struct{}
+
+func (mr *mockReady) Readyz(ctx context.Context) error {
+	return nil
+}
+
+func mustOpen(t *testing.T) *Server {
 	t.Helper()
 
 	if err := godotenv.Load("../.env"); err != nil {
@@ -30,33 +35,18 @@ func mustOpen(t *testing.T) (*Server, *postgres.DB) {
 
 	config := &config.Config{}
 
-	// httpserver test currently require DB, can be mocked out instead
-	dsn := os.Getenv("POSTGRES_DATABASE_URL")
-
-	db := postgres.NewDB(dsn, logger, false)
-	if err := db.Open(); err != nil {
-		t.Fatal(err)
-	}
-
-	ps := postgres.NewPostService(db)
-	rs := postgres.NewReadyService(db)
-	as := postgres.NewAuthorService(db)
-
 	s := New("8080", logger, metrics, config)
-	s.PostService = ps
-	s.ReadyService = rs
-	s.AuthorService = as
 	if err := s.Run(); err != nil {
 		t.Fatal(err)
 	}
-	return s, db
+
+	s.ReadyService = &mockReady{}
+
+	return s
 }
 
-func mustClose(t *testing.T, s *Server, db *postgres.DB) {
+func mustClose(t *testing.T, s *Server) {
 	t.Helper()
-	if err := db.Close(); err != nil {
-		t.Fatal(err)
-	}
 	if err := s.Close(); err != nil {
 		t.Fatal(err)
 	}
