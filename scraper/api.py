@@ -8,7 +8,14 @@ from loguru import logger
 from requests.auth import HTTPBasicAuth
 
 from configuration import init_config
-from models import AnalogDisplayPost, AnalogKeyword, AnalogPost, Color, PatchPost
+from models import (
+    AnalogDisplayPost,
+    AnalogKeyword,
+    AnalogPost,
+    Color,
+    PatchPost,
+    PhotoMetadata,
+)
 
 config = init_config()
 base_url = config.app.api_base_url
@@ -230,6 +237,20 @@ def post_to_json(post: AnalogPost):
         "colors": colors,
         "keywords": keywords,
     }
+    if post.camera_make is not None:
+        body["camera_make"] = post.camera_make
+    if post.camera_model is not None:
+        body["camera_model"] = post.camera_model
+    if post.film_make is not None:
+        body["film_make"] = post.film_make
+    if post.film_type is not None:
+        body["film_type"] = post.film_type
+    if post.film_speed is not None:
+        body["film_speed"] = post.film_speed
+    if post.focal_length is not None:
+        body["focal_length"] = post.focal_length
+    if post.aperture is not None:
+        body["aperture"] = post.aperture
     return body
 
 
@@ -293,6 +314,21 @@ def patch_to_json(patch: PatchPost):
         body["colors"] = colors_to_json(colors=patch.colors)
     if patch.keywords is not None:
         body["keywords"] = keywords_to_json(keywords=patch.keywords)
+    if patch.metadata is not None:
+        if patch.metadata.camera_make is not None:
+            body["camera_make"] = patch.metadata.camera_make
+        if patch.metadata.camera_model is not None:
+            body["camera_model"] = patch.metadata.camera_model
+        if patch.metadata.film_make is not None:
+            body["film_make"] = patch.metadata.film_make
+        if patch.metadata.film_type is not None:
+            body["film_type"] = patch.metadata.film_type
+        if patch.metadata.film_speed is not None:
+            body["film_speed"] = patch.metadata.film_speed
+        if patch.metadata.focal_length is not None:
+            body["focal_length"] = patch.metadata.focal_length
+        if patch.metadata.aperture is not None:
+            body["aperture"] = patch.metadata.aperture
     return body
 
 
@@ -303,6 +339,7 @@ def new_patch(
     sprocket: Optional[bool] = None,
     colors: Optional[List[Color]] = None,
     keywords: Optional[List[AnalogKeyword]] = None,
+    metadata: Optional[PhotoMetadata] = None,
 ) -> PatchPost:
     patch = PatchPost(
         score=score,
@@ -311,5 +348,6 @@ def new_patch(
         sprocket=sprocket,
         colors=colors,
         keywords=keywords,
+        metadata=metadata,
     )
     return patch

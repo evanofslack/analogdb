@@ -11,7 +11,7 @@ from image_process import is_grayscale, request_image
 from models import RedditPost
 
 
-def handle_gallery(s: praw.reddit.Submission) -> str:
+def handle_gallery(s: praw.reddit.Submission) -> Optional[str]:
     """
     Return the first image of a gallery
 
@@ -24,7 +24,7 @@ def handle_gallery(s: praw.reddit.Submission) -> str:
             return source["u"]
 
 
-def get_url(s: praw.reddit.Submission) -> str:
+def get_url(s: praw.reddit.Submission) -> Optional[str]:
     if hasattr(s, "is_gallery"):
         if s.is_gallery:
             return handle_gallery(s)
@@ -86,7 +86,6 @@ def get_posts(
     subreddit: str,
     latest_permalinks: List[str],
 ) -> List[RedditPost]:
-
     # get posts that are not self-posts
     submissions: List[praw.reddit.Submission] = [
         s for s in reddit.subreddit(subreddit).hot(limit=num_posts) if not s.is_self
@@ -95,17 +94,19 @@ def get_posts(
 
     posts: List[RedditPost] = []
     for s in submissions:
-
         # check if duplicate post
         permalink = f"{REDDIT_URL}{s.permalink}"
         if permalink in latest_permalinks:
             continue
 
         url = get_url(s)
-        content_type = get_content_type(url)
+        if url is None:
+            logger.warning(f"cannot process empty url ({url})")
+            continue
 
+        content_type = get_content_type(url)
         if content_type not in VALID_CONTENT:
-            logger.warning(f"cannot process {url} with type {content_type}")
+            logger.warning(f"cannot process {url} with content type {content_type}")
             continue
 
         image = request_image(url)
