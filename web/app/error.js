@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import styles from '../styles/Error.module.css';
-import Header from '../components/header';
-import Footer from '../components/footer';
+import styles from "../styles/Error.module.css";
+import Header from "../components/header";
+import Footer from "../components/footer";
 
 export default function Error({ error, reset }) {
   return (
@@ -12,7 +12,6 @@ export default function Error({ error, reset }) {
         <h3 className={styles.error}>
           sorry, something is broken on our end [500]
         </h3>
-        <button onClick={() => reset()}>Try again</button>
       </div>
       <Footer />
     </div>
