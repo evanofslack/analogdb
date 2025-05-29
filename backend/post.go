@@ -32,45 +32,66 @@ type Color struct {
 // This includes info from the original reddit post
 // as well as attributes about the image
 type CreatePost struct {
-	Title     string    `json:"title"`
-	Author    string    `json:"author"`
-	Permalink string    `json:"permalink"`
-	Score     int       `json:"upvotes"`
-	Nsfw      bool      `json:"nsfw"`
-	Grayscale bool      `json:"grayscale"`
-	Time      int       `json:"unix_time"`
-	Sprocket  bool      `json:"sprocket"`
-	Images    []Image   `json:"images"`
-	Colors    []Color   `json:"colors"`
-	Keywords  []Keyword `json:"keywords"`
+	Title       string    `json:"title"`
+	Author      string    `json:"author"`
+	Permalink   string    `json:"permalink"`
+	Score       int       `json:"upvotes"`
+	Nsfw        bool      `json:"nsfw"`
+	Grayscale   bool      `json:"grayscale"`
+	Time        int       `json:"unix_time"`
+	Sprocket    bool      `json:"sprocket"`
+	CameraMake  *string   `json:"camera_make,omitempty"`
+	CameraModel *string   `json:"camera_model,omitempty"`
+	FilmMake    *string   `json:"film_make,omitempty"`
+	FilmType    *string   `json:"film_type,omitempty"`
+	FilmSpeed   *int64    `json:"film_speed,omitempty"`
+	FocalLength *int64    `json:"focal_length,omitempty"`
+	Aperture    *string   `json:"aperture,omitempty"`
+	Images      []Image   `json:"images"`
+	Colors      []Color   `json:"colors"`
+	Keywords    []Keyword `json:"keywords"`
 }
 
 // DisplayPost is the model for displaying a post.
 // Renames some of the json keys.
 type DisplayPost struct {
-	Title     string    `json:"title"`
-	Author    string    `json:"author"`
-	Permalink string    `json:"permalink"`
-	Score     int       `json:"score"`
-	Nsfw      bool      `json:"nsfw"`
-	Grayscale bool      `json:"grayscale"`
-	Time      int       `json:"timestamp"`
-	Sprocket  bool      `json:"sprocket"`
-	Images    []Image   `json:"images"`
-	Colors    []Color   `json:"colors"`
-	Keywords  []Keyword `json:"keywords,omitempty"`
+	Title       string    `json:"title"`
+	Author      string    `json:"author"`
+	Permalink   string    `json:"permalink"`
+	Score       int       `json:"score"`
+	Nsfw        bool      `json:"nsfw"`
+	Grayscale   bool      `json:"grayscale"`
+	Time        int       `json:"timestamp"`
+	Sprocket    bool      `json:"sprocket"`
+	CameraMake  *string   `json:"camera_make,omitempty"`
+	CameraModel *string   `json:"camera_model,omitempty"`
+	FilmMake    *string   `json:"film_make,omitempty"`
+	FilmType    *string   `json:"film_type,omitempty"`
+	FilmSpeed   *int64    `json:"film_speed,omitempty"`
+	FocalLength *int64    `json:"focal_length,omitempty"`
+	Aperture    *string   `json:"aperture,omitempty"`
+	Images      []Image   `json:"images"`
+	Colors      []Color   `json:"colors"`
+	Keywords    []Keyword `json:"keywords,omitempty"`
 }
 
 // PatchPost is the model for patching a post.
 // Intentionally only allow certain fields to be updated.
 // Uses pointers and omit empty to allow partial unmarshalling
 type PatchPost struct {
-	Score     *int       `json:"upvotes,omitempty"`
-	Nsfw      *bool      `json:"nsfw,omitempty"`
-	Grayscale *bool      `json:"grayscale,omitempty"`
-	Sprocket  *bool      `json:"sprocket,omitempty"`
-	Colors    *[]Color   `json:"colors,omitempty"`
-	Keywords  *[]Keyword `json:"keywords,omitempty"`
+	Score       *int       `json:"upvotes,omitempty"`
+	Nsfw        *bool      `json:"nsfw,omitempty"`
+	Grayscale   *bool      `json:"grayscale,omitempty"`
+	Sprocket    *bool      `json:"sprocket,omitempty"`
+	CameraMake  *string    `json:"camera_make,omitempty"`
+	CameraModel *string    `json:"camera_model,omitempty"`
+	FilmMake    *string    `json:"film_make,omitempty"`
+	FilmType    *string    `json:"film_type,omitempty"`
+	FilmSpeed   *int       `json:"film_speed,omitempty"`
+	FocalLength *int       `json:"focal_length,omitempty"`
+	Aperture    *string    `json:"aperture,omitempty"`
+	Colors      *[]Color   `json:"colors,omitempty"`
+	Keywords    *[]Keyword `json:"keywords,omitempty"`
 }
 
 // Post is the model of a returned post
@@ -145,6 +166,13 @@ type PostFilter struct {
 	IDs           *[]int
 	Title         *string
 	Author        *string
+	CameraMake    *string
+	CameraModel   *string
+	FilmMake      *string
+	FilmType      *string
+	FilmSpeed     *int
+	FocalLength   *int
+	Aperture      *string
 	Colors        *[]string
 	ColorPercents *[]float64
 	Keywords      *[]string
@@ -184,6 +212,27 @@ func (filter *PostFilter) String() string {
 	}
 	if filter.Author != nil {
 		out = append(out, fmt.Sprintf("author: %s", *filter.Author))
+	}
+	if filter.CameraMake != nil {
+		out = append(out, fmt.Sprintf("camera_make: %s", *filter.CameraMake))
+	}
+	if filter.CameraModel != nil {
+		out = append(out, fmt.Sprintf("camera_model: %s", *filter.CameraModel))
+	}
+	if filter.FilmMake != nil {
+		out = append(out, fmt.Sprintf("film_make: %s", *filter.FilmMake))
+	}
+	if filter.FilmType != nil {
+		out = append(out, fmt.Sprintf("film_type: %s", *filter.FilmType))
+	}
+	if filter.FilmSpeed != nil {
+		out = append(out, fmt.Sprintf("film_speed: %d", *filter.FilmSpeed))
+	}
+	if filter.FocalLength != nil {
+		out = append(out, fmt.Sprintf("focal_length: %d", *filter.FocalLength))
+	}
+	if filter.Aperture != nil {
+		out = append(out, fmt.Sprintf("aperture: %s", *filter.Aperture))
 	}
 	if filter.Colors != nil {
 		out = append(out, fmt.Sprintf("colors: %v", *filter.Colors))

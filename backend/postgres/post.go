@@ -17,32 +17,39 @@ var _ analogdb.PostService = (*PostService)(nil)
 
 // rawPostCreate corresponds to the columns as a post is inserted in DB
 type rawCreatePost struct {
-	url        string
-	title      string
-	author     string
-	permalink  string
-	score      int
-	nsfw       bool
-	grayscale  bool
-	time       int
-	width      int
-	height     int
-	sprocket   bool
-	lowUrl     string
-	lowWidth   int
-	lowHeight  int
-	medUrl     string
-	medWidth   int
-	medHeight  int
-	highUrl    string
-	highWidth  int
-	highHeight int
-	hexes      NullString
-	csses      NullString
-	htmls      NullString
-	percents   NullString
-	words      NullString
-	weights    NullString
+	url         string
+	title       string
+	author      string
+	permalink   string
+	score       int
+	nsfw        bool
+	grayscale   bool
+	time        int
+	width       int
+	height      int
+	sprocket    bool
+	lowUrl      string
+	lowWidth    int
+	lowHeight   int
+	medUrl      string
+	medWidth    int
+	medHeight   int
+	highUrl     string
+	highWidth   int
+	highHeight  int
+	cameraMake  NullString
+	cameraModel NullString
+	filmMake    NullString
+	filmType    NullString
+	filmSpeed   NullInt
+	focalLength NullInt
+	aperture    NullString
+	hexes       NullString
+	csses       NullString
+	htmls       NullString
+	percents    NullString
+	words       NullString
+	weights     NullString
 }
 
 // rawPost corresponds to the columns as a post is selected from the DB
@@ -153,8 +160,9 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 
 	query := `
 	INSERT INTO pictures
-	(url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+
+    (url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight, camera_make, camera_model, film_make, film_type, film_speed, focal_length, aperture)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
 	ON CONFLICT (permalink) DO NOTHING
 	RETURNING id
 	`
@@ -188,7 +196,14 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.medHeight,
 		create.highUrl,
 		create.highWidth,
-		create.highHeight).Scan(&id)
+		create.highHeight,
+		create.cameraMake,
+		create.cameraModel,
+		create.filmMake,
+		create.filmType,
+		create.filmSpeed,
+		create.focalLength,
+		create.aperture).Scan(&id)
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", id).Msg("Failed to insert post")
 		return nil, err
@@ -358,17 +373,24 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 
 	// convert the CreatePost to a DisplayPost for return.
 	displayPost := analogdb.DisplayPost{
-		Title:     post.Title,
-		Author:    post.Author,
-		Permalink: post.Permalink,
-		Score:     post.Score,
-		Nsfw:      post.Nsfw,
-		Grayscale: post.Grayscale,
-		Time:      post.Time,
-		Sprocket:  post.Sprocket,
-		Images:    post.Images,
-		Colors:    post.Colors,
-		Keywords:  post.Keywords,
+		Title:       post.Title,
+		Author:      post.Author,
+		Permalink:   post.Permalink,
+		Score:       post.Score,
+		Nsfw:        post.Nsfw,
+		Grayscale:   post.Grayscale,
+		Time:        post.Time,
+		Sprocket:    post.Sprocket,
+		CameraMake:  post.CameraMake,
+		CameraModel: post.CameraModel,
+		FilmMake:    post.FilmMake,
+		FilmType:    post.FilmType,
+		FilmSpeed:   post.FilmSpeed,
+		FocalLength: post.FocalLength,
+		Aperture:    post.Aperture,
+		Images:      post.Images,
+		Colors:      post.Colors,
+		Keywords:    post.Keywords,
 	}
 
 	createdPost := &analogdb.Post{
@@ -414,6 +436,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 
 	order := filterToOrder(filter)
 	limit := formatLimit(filter)
+
 	query := fmt.Sprintf(`
 			SELECT
 				p.id,
@@ -437,6 +460,13 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 				p.highUrl,
 				p.highWidth,
 				p.highHeight,
+				p.camera_make,
+                p.camera_model,
+                p.film_make,
+                p.film_type,
+                p.film_speed,
+                p.focal_length,
+                p.aperture,
 				c.hexes,
 				c.csses,
 				c.htmls,
@@ -515,7 +545,17 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 	hasPatchFields := false
 
 	// if the patch includes general updates for the post
-	if patch.Nsfw != nil || patch.Sprocket != nil || patch.Grayscale != nil || patch.Score != nil {
+	if patch.Nsfw != nil ||
+		patch.Sprocket != nil ||
+		patch.Grayscale != nil ||
+		patch.Score != nil ||
+		patch.CameraMake != nil ||
+		patch.CameraModel != nil ||
+		patch.FilmMake != nil ||
+		patch.FilmType != nil ||
+		patch.FilmSpeed != nil ||
+		patch.FocalLength != nil ||
+		patch.Aperture != nil {
 		hasPatchFields = true
 		if err := db.updatePostGeneral(ctx, tx, patch, id); err != nil {
 			db.logger.Error().Err(err).Ctx(ctx).Int("postID", id).Msg("Failed to patch post")
@@ -893,11 +933,11 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 		case analogdb.SortTime:
 			where = append(where, fmt.Sprintf("p.time < $%d", index))
 			args = append(args, *keyset)
-			index += 1
+			index++
 		case analogdb.SortScore:
 			where = append(where, fmt.Sprintf("p.score < $%d", index))
 			args = append(args, *keyset)
-			index += 1
+			index++
 		case analogdb.SortRandom:
 			if seed := filter.Seed; seed != nil {
 				where = append(where, fmt.Sprintf("MOD(p.time, $%d) > $%d", index, index+1))
@@ -910,19 +950,19 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 	if nsfw := filter.Nsfw; nsfw != nil {
 		where = append(where, fmt.Sprintf("p.nsfw = $%d", index))
 		args = append(args, *nsfw)
-		index += 1
+		index++
 	}
 
 	if grayscale := filter.Grayscale; grayscale != nil {
 		where = append(where, fmt.Sprintf("p.greyscale = $%d", index))
 		args = append(args, *grayscale)
-		index += 1
+		index++
 	}
 
 	if sprocket := filter.Sprocket; sprocket != nil {
 		where = append(where, fmt.Sprintf("p.sprocket = $%d", index))
 		args = append(args, *sprocket)
-		index += 1
+		index++
 	}
 
 	if ids := filter.IDs; ids != nil {
@@ -941,14 +981,14 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 			idsFormat = "{" + strings.Join(idsString, ",") + "}"
 		}
 		args = append(args, idsFormat)
-		index += 1
+		index++
 	}
 
 	// match partial text in post title with ILIKE
 	if title := filter.Title; title != nil {
 		where = append(where, fmt.Sprintf("p.title ILIKE $%d", index))
 		args = append(args, "%"+*title+"%")
-		index += 1
+		index++
 	}
 
 	// if query does not prefix author with 'u/' we need to add it
@@ -961,20 +1001,20 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 		}
 		where = append(where, fmt.Sprintf("p.author = $%d", index))
 		args = append(args, matchAuthor)
-		index += 1
+		index++
 	}
 
 	if w := filter.Width; w != nil {
 		if minWidth := w.Min; minWidth != nil {
 			where = append(where, fmt.Sprintf("p.width >= $%d", index))
 			args = append(args, *minWidth)
-			index += 1
+			index++
 		}
 
 		if maxWidth := w.Max; maxWidth != nil {
 			where = append(where, fmt.Sprintf("p.width <= $%d", index))
 			args = append(args, *maxWidth)
-			index += 1
+			index++
 		}
 	}
 
@@ -982,13 +1022,13 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 		if minHeight := h.Min; minHeight != nil {
 			where = append(where, fmt.Sprintf("p.height >= $%d", index))
 			args = append(args, *minHeight)
-			index += 1
+			index++
 		}
 
 		if maxHeight := h.Max; maxHeight != nil {
 			where = append(where, fmt.Sprintf("p.height <= $%d", index))
 			args = append(args, *maxHeight)
-			index += 1
+			index++
 		}
 	}
 
@@ -996,18 +1036,59 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 		if minRatio := ar.Min; minRatio != nil {
 			where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal >= $%d::decimal", index))
 			args = append(args, *minRatio)
-			index += 1
+			index++
 		}
 
 		if maxRatio := ar.Max; maxRatio != nil {
 			where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal <= $%d::decimal", index))
 			args = append(args, *maxRatio)
-			index += 1
+			index++
 		}
 	}
 
-	whereQuery := strings.Join(where, " AND ")
+	if cm := filter.CameraMake; cm != nil {
+		where = append(where, fmt.Sprintf("p.camera_make = $%d", index))
+		args = append(args, *cm)
+		index++
+	}
 
+	if cmd := filter.CameraModel; cmd != nil {
+		where = append(where, fmt.Sprintf("p.camera_model = $%d", index))
+		args = append(args, *cmd)
+		index++
+	}
+
+	if fm := filter.FilmMake; fm != nil {
+		where = append(where, fmt.Sprintf("p.film_make = $%d", index))
+		args = append(args, *fm)
+		index++
+	}
+
+	if ft := filter.FilmType; ft != nil {
+		where = append(where, fmt.Sprintf("p.film_type = $%d", index))
+		args = append(args, *ft)
+		index++
+	}
+
+	if fs := filter.FilmSpeed; fs != nil {
+		where = append(where, fmt.Sprintf("p.film_speed = $%d", index))
+		args = append(args, *fs)
+		index++
+	}
+
+	if fl := filter.FocalLength; fl != nil {
+		where = append(where, fmt.Sprintf("p.focal_length = $%d", index))
+		args = append(args, *fl)
+		index++
+	}
+
+	if a := filter.Aperture; a != nil {
+		where = append(where, fmt.Sprintf("p.aperture = $%d", index))
+		args = append(args, *a)
+		index++
+	}
+
+	whereQuery := strings.Join(where, " AND ")
 	return whereQuery, args, index
 }
 
@@ -1019,23 +1100,65 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 	if score := patch.Score; score != nil {
 		set = append(set, fmt.Sprintf("score = $%d", index))
 		args = append(args, *score)
-		index += 1
+		index++
 	}
 
 	if nsfw := patch.Nsfw; nsfw != nil {
 		set = append(set, fmt.Sprintf("nsfw = $%d", index))
 		args = append(args, *nsfw)
-		index += 1
+		index++
 	}
 	if grayscale := patch.Grayscale; grayscale != nil {
 		set = append(set, fmt.Sprintf("greyscale = $%d", index))
 		args = append(args, *grayscale)
-		index += 1
+		index++
 	}
 	if sprocket := patch.Sprocket; sprocket != nil {
 		set = append(set, fmt.Sprintf("sprocket = $%d", index))
 		args = append(args, *sprocket)
-		index += 1
+		index++
+	}
+
+	if cm := patch.CameraMake; cm != nil {
+		set = append(set, fmt.Sprintf("camera_make = $%d", index))
+		args = append(args, *cm)
+		index++
+	}
+
+	if cmd := patch.CameraModel; cmd != nil {
+		set = append(set, fmt.Sprintf("camera_model = $%d", index))
+		args = append(args, *cmd)
+		index++
+	}
+
+	if fm := patch.FilmMake; fm != nil {
+		set = append(set, fmt.Sprintf("film_make = $%d", index))
+		args = append(args, *fm)
+		index++
+	}
+
+	if ft := patch.FilmType; ft != nil {
+		set = append(set, fmt.Sprintf("film_type = $%d", index))
+		args = append(args, *ft)
+		index++
+	}
+
+	if fs := patch.FilmSpeed; fs != nil {
+		set = append(set, fmt.Sprintf("film_speed = $%d", index))
+		args = append(args, *fs)
+		index++
+	}
+
+	if fl := patch.FocalLength; fl != nil {
+		set = append(set, fmt.Sprintf("focal_length = $%d", index))
+		args = append(args, *fl)
+		index++
+	}
+
+	if a := patch.Aperture; a != nil {
+		set = append(set, fmt.Sprintf("aperture = $%d", index))
+		args = append(args, *a)
+		index++
 	}
 
 	// no update fields provided
@@ -1069,32 +1192,39 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	weights := NullString{}
 
 	post := &rawCreatePost{
-		url:        raw.Url,
-		title:      p.Title,
-		author:     p.Author,
-		permalink:  p.Permalink,
-		score:      p.Score,
-		nsfw:       p.Nsfw,
-		grayscale:  p.Grayscale,
-		time:       p.Time,
-		width:      raw.Width,
-		height:     raw.Height,
-		sprocket:   p.Sprocket,
-		lowUrl:     low.Url,
-		lowWidth:   low.Width,
-		lowHeight:  low.Height,
-		medUrl:     med.Url,
-		medWidth:   med.Width,
-		medHeight:  med.Height,
-		highUrl:    high.Url,
-		highWidth:  high.Width,
-		highHeight: high.Height,
-		hexes:      hexes,
-		csses:      csses,
-		htmls:      htmls,
-		percents:   percents,
-		words:      words,
-		weights:    weights,
+		url:         raw.Url,
+		title:       p.Title,
+		author:      p.Author,
+		permalink:   p.Permalink,
+		score:       p.Score,
+		nsfw:        p.Nsfw,
+		grayscale:   p.Grayscale,
+		time:        p.Time,
+		width:       raw.Width,
+		height:      raw.Height,
+		sprocket:    p.Sprocket,
+		lowUrl:      low.Url,
+		lowWidth:    low.Width,
+		lowHeight:   low.Height,
+		medUrl:      med.Url,
+		medWidth:    med.Width,
+		medHeight:   med.Height,
+		highUrl:     high.Url,
+		highWidth:   high.Width,
+		highHeight:  high.Height,
+		cameraMake:  NewNullStringFromPtr(p.CameraMake),
+		cameraModel: NewNullStringFromPtr(p.CameraModel),
+		filmMake:    NewNullStringFromPtr(p.FilmMake),
+		filmType:    NewNullStringFromPtr(p.FilmType),
+		filmSpeed:   NewNullIntFromPtr(p.FilmSpeed),
+		focalLength: NewNullIntFromPtr(p.FocalLength),
+		aperture:    NewNullStringFromPtr(p.Aperture),
+		hexes:       hexes,
+		csses:       csses,
+		htmls:       htmls,
+		percents:    percents,
+		words:       words,
+		weights:     weights,
 	}
 	return post, nil
 }
@@ -1177,17 +1307,24 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	post := &analogdb.Post{
 		Id: p.id,
 		DisplayPost: analogdb.DisplayPost{
-			Title:     p.title,
-			Author:    p.author,
-			Permalink: p.permalink,
-			Score:     p.score,
-			Nsfw:      p.nsfw,
-			Grayscale: p.grayscale,
-			Time:      p.time,
-			Sprocket:  p.sprocket,
-			Images:    images,
-			Colors:    colors,
-			Keywords:  keywords,
+			Title:       p.title,
+			Author:      p.author,
+			Permalink:   p.permalink,
+			Score:       p.score,
+			Nsfw:        p.nsfw,
+			Grayscale:   p.grayscale,
+			Time:        p.time,
+			Sprocket:    p.sprocket,
+			CameraMake:  p.cameraMake.ToPtr(),
+			CameraModel: p.cameraModel.ToPtr(),
+			FilmMake:    p.filmMake.ToPtr(),
+			FilmType:    p.filmType.ToPtr(),
+			FilmSpeed:   p.filmSpeed.ToPtr(),
+			FocalLength: p.focalLength.ToPtr(),
+			Aperture:    p.aperture.ToPtr(),
+			Images:      images,
+			Colors:      colors,
+			Keywords:    keywords,
 		},
 	}
 	return post, nil
@@ -1218,6 +1355,13 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		&p.rawCreatePost.highUrl,
 		&p.rawCreatePost.highWidth,
 		&p.rawCreatePost.highHeight,
+		&p.rawCreatePost.cameraMake,
+		&p.rawCreatePost.cameraModel,
+		&p.rawCreatePost.filmMake,
+		&p.rawCreatePost.filmType,
+		&p.rawCreatePost.filmSpeed,
+		&p.rawCreatePost.focalLength,
+		&p.rawCreatePost.aperture,
 		&p.rawCreatePost.hexes,
 		&p.rawCreatePost.csses,
 		&p.rawCreatePost.htmls,
