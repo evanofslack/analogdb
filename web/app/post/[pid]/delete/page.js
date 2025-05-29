@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { baseURL } from "../../../../constants.js";
 import { useEffect } from "react";
@@ -25,10 +25,10 @@ export default function DeletePage({ params }) {
       deletePost(pid);
       // Navigate back to homepage after deletion
       setTimeout(() => {
-        router.push('/');
+        router.push("/");
       }, 1000);
     }
   }, [pid, router]);
-  
+
   return <div>Deleting post...</div>;
 }

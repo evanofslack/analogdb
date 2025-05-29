@@ -1,4 +1,4 @@
-.PHONY: dev up upd down build log
+.PHONY: dev up upd down build log format
 
 dev:
 	npm run dev
@@ -17,3 +17,7 @@ build :
 
 log:
 	docker-compose logs --follow
+
+format:
+	npx prettier --write .
+
