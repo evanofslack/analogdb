@@ -1,0 +1,12 @@
+BEGIN;
+
+ALTER TABLE pictures
+ADD COLUMN camera_make VARCHAR(255),
+ADD COLUMN camera_model VARCHAR(255),
+ADD COLUMN film_make VARCHAR(255),
+ADD COLUMN film_type VARCHAR(255),
+ADD COLUMN film_speed INTEGER,
+ADD COLUMN focal_length INTEGER,
+ADD COLUMN aperture VARCHAR(20);
+
+COMMIT;
