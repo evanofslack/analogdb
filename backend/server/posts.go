@@ -32,6 +32,10 @@ type DeleteResponse struct {
 	Message string `json:"message"`
 }
 
+type PatchResponse struct {
+	Message string `json:"message"`
+}
+
 type CreateResponse struct {
 	Message string        `json:"message"`
 	Post    analogdb.Post `json:"post"`
@@ -216,7 +220,7 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
 			if err := s.PostService.PatchPost(r.Context(), &patchPost, identify); err == nil {
-				success := DeleteResponse{Message: "success, post patched"}
+				success := PatchResponse{Message: "success, post patched"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
 					s.writeError(w, r, err)
 				}
@@ -325,6 +329,51 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		if author := filter.Author; author != nil {
 			path += fmt.Sprintf("%sauthor=%s", paramJoiner(&numParams), *author)
 		}
+		if cm := filter.CameraMake; cm != nil {
+			path += fmt.Sprintf("%scamera_make=%s", paramJoiner(&numParams), *cm)
+		}
+		if cm := filter.CameraModel; cm != nil {
+			path += fmt.Sprintf("%scamera_model=%s", paramJoiner(&numParams), *cm)
+		}
+		if fm := filter.FilmMake; fm != nil {
+			path += fmt.Sprintf("%sfilm_make=%s", paramJoiner(&numParams), *fm)
+		}
+		if ft := filter.FilmType; ft != nil {
+			path += fmt.Sprintf("%sfilm_type=%s", paramJoiner(&numParams), *ft)
+		}
+		if fs := filter.FilmSpeed; fs != nil {
+			path += fmt.Sprintf("%sfilm_speed=%d", paramJoiner(&numParams), *fs)
+		}
+		if fl := filter.FocalLength; fl != nil {
+			path += fmt.Sprintf("%sfocal_length=%d", paramJoiner(&numParams), *fl)
+		}
+		if a := filter.Aperture; a != nil {
+			path += fmt.Sprintf("%saperture=%s", paramJoiner(&numParams), *a)
+		}
+		if w := filter.Width; w != nil {
+			if min := w.Min; min != nil {
+				path += fmt.Sprintf("%swidth_min=%.2f", paramJoiner(&numParams), *min)
+			}
+			if max := w.Max; max != nil {
+				path += fmt.Sprintf("%swidth_max=%.2f", paramJoiner(&numParams), *max)
+			}
+		}
+		if h := filter.Height; h != nil {
+			if min := h.Min; min != nil {
+				path += fmt.Sprintf("%sheight_min=%.2f", paramJoiner(&numParams), *min)
+			}
+			if max := h.Max; max != nil {
+				path += fmt.Sprintf("%sheight_max=%.2f", paramJoiner(&numParams), *max)
+			}
+		}
+		if r := filter.AspectRatio; r != nil {
+			if min := r.Min; min != nil {
+				path += fmt.Sprintf("%sratio_min=%.2f", paramJoiner(&numParams), *min)
+			}
+			if max := r.Max; max != nil {
+				path += fmt.Sprintf("%sratio_max=%.2f", paramJoiner(&numParams), *max)
+			}
+		}
 		if colors := filter.Colors; colors != nil {
 			for _, color := range *colors {
 				path += fmt.Sprintf("%scolor=%s", paramJoiner(&numParams), color)
@@ -342,7 +391,6 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		}
 		meta.PageURL = path
 	}
-
 	return meta, nil
 }
 
@@ -374,7 +422,7 @@ func stringToInt(query string) (int, error) {
 
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
-	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	values := r.URL.Query()
 
@@ -466,6 +514,42 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		filter.Author = &author
 	}
 
+	if cm := values.Get("camera_make"); cm != "" {
+		filter.CameraMake = &cm
+	}
+
+	if cm := values.Get("camera_model"); cm != "" {
+		filter.CameraModel = &cm
+	}
+
+	if fm := values.Get("film_make"); fm != "" {
+		filter.FilmMake = &fm
+	}
+
+	if ft := values.Get("film_type"); ft != "" {
+		filter.FilmType = &ft
+	}
+
+	if fs := values.Get("film_speed"); fs != "" {
+		if fsi, err := strconv.Atoi(fs); err != nil {
+			return nil, err
+		} else {
+			filter.FilmSpeed = &fsi
+		}
+	}
+
+	if fl := values.Get("focal_length"); fl != "" {
+		if fli, err := strconv.Atoi(fl); err != nil {
+			return nil, err
+		} else {
+			filter.FocalLength = &fli
+		}
+	}
+
+	if a := values.Get("aperture"); a != "" {
+		filter.Aperture = &a
+	}
+
 	if colorPercent, ok := values["min_color"]; ok {
 		percents := []float64{}
 		for _, p := range colorPercent {
@@ -482,10 +566,6 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	if colors, ok := values["color"]; ok {
 		filter.Colors = &colors
 		filter.SetMinColorPercent()
-	}
-
-	if keywords, ok := values["keyword"]; ok {
-		filter.Keywords = &keywords
 	}
 
 	if keywords, ok := values["keyword"]; ok {
