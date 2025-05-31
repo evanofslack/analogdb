@@ -25,7 +25,7 @@ func (db *DB) migrate() error {
 		return fmt.Errorf("read migrations directory, err=%w", err)
 	}
 	db.logger.Debug().Int("count", len(migrationsEntries)).Msg("Migration files found in embedded filesystem")
-	for i, entry := range migrationsEntries {
+	for _, entry := range migrationsEntries {
 		db.logger.Debug().
 			Str("name", entry.Name()).
 			Msg("Migration file")
