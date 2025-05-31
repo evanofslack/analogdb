@@ -197,13 +197,13 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.highUrl,
 		create.highWidth,
 		create.highHeight,
-		create.cameraMake,
-		create.cameraModel,
-		create.filmMake,
-		create.filmType,
-		create.filmSpeed,
-		create.focalLength,
-		create.aperture).Scan(&id)
+		create.cameraMake.ToSQLNullString(),
+		create.cameraModel.ToSQLNullString(),
+		create.filmMake.ToSQLNullString(),
+		create.filmType.ToSQLNullString(),
+		create.filmSpeed.ToSQLNullInt64(),
+		create.focalLength.ToSQLNullInt64(),
+		create.aperture.ToSQLNullString()).Scan(&id)
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Int64("postID", id).Msg("Failed to insert post")
 		return nil, err

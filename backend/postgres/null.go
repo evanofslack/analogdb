@@ -48,6 +48,10 @@ func (ns NullString) ToPtr() *string {
 	return &ns.String
 }
 
+func (ns NullString) ToSQLNullString() sql.NullString {
+	return sql.NullString(ns)
+}
+
 // NullInt is an alias for sql.NullInt64 data type
 type NullInt sql.NullInt64
 
@@ -87,4 +91,8 @@ func (ni NullInt) ToPtr() *int64 {
 		return nil
 	}
 	return &ni.Int64
+}
+
+func (ni NullInt) ToSQLNullInt64() sql.NullInt64 {
+	return sql.NullInt64(ni)
 }
