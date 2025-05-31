@@ -29,7 +29,9 @@ type App struct {
 }
 
 type DB struct {
-	URL string `yaml:"url" env:"DATABASE_URL"`
+	URL              string `yaml:"url" env:"DATABASE_URL"`
+	MigrationEnabled bool   `yaml:"migration_enabled" env:"MIGRATION_ENABLED"`
+	MigrationPath    string `yaml:"migration_path" env:"MIGRATION_PATH"`
 }
 
 type Redis struct {

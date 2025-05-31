@@ -6,6 +6,7 @@ app:
   rate_limit_enabled: true
 database:
   url: ""
+  migration_enabled: false
 redis:
   url: ""
 vector_database:

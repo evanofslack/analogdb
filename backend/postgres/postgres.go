@@ -12,34 +12,36 @@ import (
 )
 
 type DB struct {
-	db             *sql.DB
-	dsn            string
-	ctx            context.Context
-	cancel         func()
-	logger         *logger.Logger
-	tracingEnabled bool
+	db               *sql.DB
+	dsn              string
+	ctx              context.Context
+	cancel           func()
+	logger           *logger.Logger
+	migrationEnabled bool
+	migrationPath    string
+	tracingEnabled   bool
 }
 
-func NewDB(dsn string, logger *logger.Logger, tracingEnabled bool) *DB {
-	logger.Debug().Msg("Initializing DB instance")
-
+func NewDB(dsn string, logger *logger.Logger, migrationEnabled bool, migrationPath string, tracingEnabled bool) *DB {
+	logger.Debug().Str("migration_path", migrationPath).Bool("migration_enabled", migrationEnabled).Msg("Initializing DB instance")
 	ctx, cancel := context.WithCancel(context.Background())
 
 	db := &DB{
-		dsn:            dsn,
-		ctx:            ctx,
-		cancel:         cancel,
-		logger:         logger,
-		tracingEnabled: tracingEnabled,
+		dsn:              dsn,
+		ctx:              ctx,
+		cancel:           cancel,
+		logger:           logger,
+		migrationEnabled: migrationEnabled,
+		migrationPath:    migrationPath,
+		tracingEnabled:   tracingEnabled,
 	}
-
 	db.logger.Info().Msg("Initialized DB instance")
-
 	return db
 }
 
 func (db *DB) Open() error {
 	db.logger.Debug().Msg("Opening DB instance")
+	defer db.logger.Info().Bool("migration_enabled", db.migrationEnabled).Msg("Opened DB instance")
 
 	if db.dsn == "" {
 		return fmt.Errorf("data source name name must be set for DB")
@@ -64,8 +66,19 @@ func (db *DB) Open() error {
 		return err
 	}
 
-	db.logger.Info().Msg("Opened new DB instance")
-
+	if db.migrationEnabled {
+		// If migration path provided, use it
+		if db.migrationPath != "" {
+			if err := db.migrateFromPath(db.migrationPath); err != nil {
+				return err
+			}
+		} else {
+			// Otherwise use default embedded migrations
+			if err := db.migrate(); err != nil {
+				return err
+			}
+		}
+	}
 	return db.db.PingContext(db.ctx)
 }
 
