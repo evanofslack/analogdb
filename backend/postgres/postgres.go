@@ -23,7 +23,7 @@ type DB struct {
 }
 
 func NewDB(dsn string, logger *logger.Logger, migrationEnabled bool, migrationPath string, tracingEnabled bool) *DB {
-	logger.Debug().Str("migration_path", migrationPath).Bool("migration_enabled", migrationEnabled).Msg("Initializing DB instance")
+	logger.Debug().Str("migration_path", migrationPath).Bool("migration_enabled", migrationEnabled).Str("dsn", dsn).Msg("Initializing DB instance")
 	ctx, cancel := context.WithCancel(context.Background())
 
 	db := &DB{
