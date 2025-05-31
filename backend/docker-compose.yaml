@@ -30,7 +30,7 @@ services:
       REDIS_URL: ${REDIS_URL}
       VECTOR_DATABASE_HOST: ${WEAVIATE_HOST}
       VECTOR_DATABASE_SCHEME: ${WEAVIATE_SCHEME}
-      KAFKA_ENABLED: ${KAFKA_ENABLED}
+      KAFKA_ENABLED: ${ANALOGDB_KAFKA_ENABLED}
       KAFKA_TOPIC: ${KAFKA_TOPIC}
       KAFKA_BROKERS: ${KAFKA_BROKERS}
     depends_on:
@@ -55,8 +55,8 @@ services:
         max-size: 10m
         max-file: "3"
     volumes:
-      # - postgres:/var/lib/postgresql/data
-      - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
+      - postgres:/var/lib/postgresql/data
+      # - ./postgres/populate.sql:/docker-entrypoint-initdb.d/populate.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -151,7 +151,7 @@ services:
       ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA}
 
 volumes:
-  # postgres:
+  postgres:
   weaviate:
   # redis:
   kafka:
