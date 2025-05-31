@@ -89,7 +89,7 @@ func main() {
 
 	// open connection to postgres
 	dbLogger := logger.WithSubsystem("database")
-	db := postgres.NewDB(cfg.DB.URL, dbLogger, cfg.Tracing.Enabled)
+	db := postgres.NewDB(cfg.DB.URL, dbLogger, cfg.DB.MigrationEnabled, cfg.DB.MigrationPath, cfg.Tracing.Enabled)
 	if err := db.Open(); err != nil {
 		err = fmt.Errorf("startup database: %w", err)
 		fatal(logger, err)

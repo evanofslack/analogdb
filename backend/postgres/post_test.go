@@ -2,576 +2,324 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
 	"github.com/evanofslack/analogdb"
 )
 
-const (
-	// number of posts matching each query from test DB
-	totalPosts     = 4864
-	totalNsfw      = 276
-	totalGrayscale = 932
-	totalSprocket  = 204
-	totalPortra    = 1463
-)
-
-var (
-	// reusable general filters
-	limit       = 20
-	limitFilter = &analogdb.PostFilter{Limit: &limit}
-	nilFilter   = &analogdb.PostFilter{}
-
-	// sample post
-	postID     = 2066
-	postTitle  = "Up on Melancholy Hill [Canon TLB / 28-55mm 3.5 / Portra 400]"
-	postAuthor = "u/sunnyintheoffice"
-)
-
-func TestFindPosts(t *testing.T) {
-	t.Run("Default", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		if posts, count, err := db.findPosts(ctx, tx, nilFilter); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), totalPosts; got != want {
-			t.Fatalf("length of posts %v, want %v", got, want)
-		} else if got, want := count, totalPosts; got != want {
-			t.Fatalf("total count %v, want %v", got, want)
-		}
-	})
-
-	t.Run("Limit", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		if posts, count, err := db.findPosts(ctx, tx, limitFilter); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), limit; got != want {
-			t.Fatalf("length of posts %v, want %v", got, want)
-		} else if got, want := count, totalPosts; got != want {
-			t.Fatalf("total count %v, want %v", got, want)
-		}
-	})
-
-	t.Run("NoNSFW", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		nsfw := false
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), totalPosts-totalNsfw; got != want {
-			t.Fatalf("length of posts %v, want %v", got, want)
-		} else if got, want := count, totalPosts-totalNsfw; got != want {
-			t.Fatalf("total count %v, want %v", got, want)
-		}
-	})
-
-	t.Run("OnlyNSFW", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		nsfw := true
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Nsfw: &nsfw}); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), totalNsfw; got != want {
-			t.Fatalf("length of posts %v, want %v", got, want)
-		} else if got, want := count, totalNsfw; got != want {
-			t.Fatalf("total count %v, want %v", got, want)
-		}
-	})
-
-	t.Run("NoBW", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		grayscale := false
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), totalPosts-totalGrayscale; got != want {
-			t.Fatalf("length of posts %v, want %v", got, want)
-		} else if got, want := count, totalPosts-totalGrayscale; got != want {
-			t.Fatalf("total count %v, want %v", got, want)
-		}
-	})
-
-	t.Run("OnlyBW", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		grayscale := true
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Grayscale: &grayscale}); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), totalGrayscale; got != want {
-			t.Fatalf("length of posts %v, want %v", got, want)
-		} else if got, want := count, totalGrayscale; got != want {
-			t.Fatalf("total count %v, want %v", got, want)
-		}
-	})
-
-	t.Run("NoSprocket", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		sprocket := false
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), totalPosts-totalSprocket; got != want {
-			t.Fatalf("length of posts %v, want %v", got, want)
-		} else if got, want := count, totalPosts-totalSprocket; got != want {
-			t.Fatalf("total count %v, want %v", got, want)
-		}
-	})
-
-	t.Run("OnlySprocket", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		sprocket := true
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Sprocket: &sprocket}); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), totalSprocket; got != want {
-			t.Fatalf("length of posts %v, want %v", got, want)
-		} else if got, want := count, totalSprocket; got != want {
-			t.Fatalf("total count %v, want %v", got, want)
-		}
-	})
-
-	t.Run("ByAuthor", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Author: &postAuthor}); err != nil {
-			t.Fatal(err)
-		} else if len(posts) != 1 || count != 1 {
-			t.Fatal("must be one matching post")
-		} else if got, want := posts[0].Title, postTitle; got != want {
-			t.Fatalf("Post title does not match, got %v, want %v", got, want)
-		}
-	})
-
-	t.Run("ByAuthorAddPrefix", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		noPrefixAuthor := postAuthor[2:]
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Author: &noPrefixAuthor}); err != nil {
-			t.Fatal(err)
-		} else if len(posts) != 1 || count != 1 {
-			t.Fatal("must be one matching post")
-		} else if got, want := posts[0].Title, postTitle; got != want {
-			t.Fatalf("Post title does not match, got %v, want %v", got, want)
-		}
-	})
-
-	t.Run("SearchTitleOne", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		keyword := postTitle
-		if posts, count, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
-			t.Fatal(err)
-		} else if len(posts) != 1 || count != 1 {
-			t.Fatal("must be one matching post")
-		} else if got, want := posts[0].Title, postTitle; got != want {
-			t.Fatalf("Post title does not match, got %v, want %v", got, want)
-		}
-	})
-
-	t.Run("SearchTitleMultiple", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ctx, tx := setupTx(t, db)
-
-		keyword := "Portra"
-		if posts, _, err := db.findPosts(ctx, tx, &analogdb.PostFilter{Title: &keyword}); err != nil {
-			t.Fatal(err)
-		} else if got, want := len(posts), totalPortra; got != want {
-			t.Fatalf("number of matching titles not equal, got %v, want %v", got, want)
-		}
-	})
-}
-
-func TestLatestPost(t *testing.T) {
-	t.Run("PostSequential", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		sort := analogdb.SortTime
-		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
-
-		posts, _, err := ps.FindPosts(context.Background(), filter)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		newest := posts[0].Time
-		oldest := posts[limit-1].Time
-		for _, p := range posts {
-			if p.Time > newest {
-				t.Fatalf("posts not sorted newest to oldest")
-			}
-		}
-
-		filter.Keyset = &oldest
-		posts, _, err = ps.FindPosts(context.Background(), filter)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		for _, p := range posts {
-			if p.Time > oldest {
-				t.Fatalf("posts not sorted newest to oldest with keyset")
-			}
-		}
-	})
-}
-
-func TestTopPost(t *testing.T) {
-	t.Run("PostTop", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		sort := analogdb.SortScore
-		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
-
-		posts, _, err := ps.FindPosts(context.Background(), filter)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		top := posts[0].Score
-		bottom := posts[limit-1].Score
-
-		for _, p := range posts {
-			if p.Score > top {
-				t.Fatalf("posts not sorted most to least votes")
-			}
-		}
-		filter.Keyset = &bottom
-		posts, _, err = ps.FindPosts(context.Background(), filter)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		for _, p := range posts {
-			if p.Score > bottom {
-				t.Fatalf("posts not sorted most to least votes with keyset")
-			}
-		}
-	})
-}
-
-func TestRandomPost(t *testing.T) {
-	t.Run("PostRandom", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		sort := analogdb.SortRandom
-		filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort}
-
-		if seed := filter.Seed; seed != nil {
-			t.Fatal("unset seed must be nil")
-		}
-
-		posts, _, err := ps.FindPosts(context.Background(), filter)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		seen := make(map[int]bool)
-		for _, p := range posts {
-			seen[p.Id] = true
-		}
-
-		if seed := filter.Seed; seed == nil {
-			t.Fatal("assigned seed must not be nil")
-		}
-
-		filter.Keyset = &posts[limit-1].Time
-
-		posts, _, err = ps.FindPosts(context.Background(), filter)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		for _, p := range posts {
-			if seen[p.Id] == true {
-				t.Fatal("random posts must not repeat")
-			}
-		}
-	})
-}
-
-func TestFindPost(t *testing.T) {
-	t.Run("ErrNoPost", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		if _, err := ps.FindPostByID(context.Background(), 69); err == nil {
-			t.Fatal("error should be returned when no matching post is found")
-		}
-	})
-
-	t.Run("ByID", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		post, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got, want := post.Title, postTitle; got != want {
-			t.Fatalf("Post title does not match, got %v, want %v", got, want)
-		}
-	})
-}
-
-func TestCreateAndDeletePost(t *testing.T) {
-	t.Run("valid post", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		testImage := analogdb.Image{
-			Label:  "test",
-			Url:    "test.com",
-			Width:  0,
-			Height: 0,
-		}
-		fourImages := []analogdb.Image{testImage, testImage, testImage, testImage}
-
-		testColor := analogdb.Color{
-			Hex:     "#000000",
-			Css:     "Black",
-			Percent: 0.2500000,
-		}
-		fiveColors := []analogdb.Color{testColor, testColor, testColor, testColor, testColor}
-
-		keyword := analogdb.Keyword{Word: "keyword", Weight: 0.1}
-		keywords := []analogdb.Keyword{keyword, keyword, keyword}
-
-		testTitle := "test title"
-
-		createPost := analogdb.CreatePost{
-			Title:     testTitle,
-			Author:    "test author",
-			Permalink: "test.permalink.com",
-			Score:     0,
-			Nsfw:      false,
-			Grayscale: false,
-			Time:      0,
-			Sprocket:  false,
-			Images:    fourImages,
-			Colors:    fiveColors,
-			Keywords:  keywords,
-		}
-
-		ctx := context.Background()
-
-		created, err := ps.CreatePost(ctx, &createPost)
-		if err != nil {
-			t.Fatalf("valid post should be created, error: %s", err)
-		}
-
-		if created.Title != testTitle {
-			t.Fatalf("created post has invalid title, got %v, want %v", created.Title, testTitle)
-		}
-
-		if err := ps.DeletePost(ctx, created.Id); err != nil {
-			t.Fatalf("unable to delete post created to test create post, error: %s", err)
-		}
-	})
-
-	t.Run("3 images is an invalid post", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		testImage := analogdb.Image{
-			Label:  "test",
-			Url:    "test.com",
-			Width:  0,
-			Height: 0,
-		}
-		var threeImages []analogdb.Image
-
-		threeImages = append(threeImages, testImage, testImage, testImage)
-
-		testColor := analogdb.Color{
-			Hex:     "#000000",
-			Css:     "Black",
-			Percent: 0.2500000,
-		}
-		fiveColors := []analogdb.Color{testColor, testColor, testColor, testColor, testColor}
-
-		testTitle := "test title"
-
-		createPost := analogdb.CreatePost{
-			Title:     testTitle,
-			Author:    "test author",
-			Permalink: "test.permalink.com",
-			Score:     0,
-			Nsfw:      false,
-			Grayscale: false,
-			Time:      0,
-			Sprocket:  false,
-			Images:    threeImages,
-			Colors:    fiveColors,
-		}
-
-		ctx := context.Background()
-
-		_, err := ps.CreatePost(ctx, &createPost)
-		if err == nil {
-			t.Fatal("invalid post should not be created")
-		}
-		if err != nil {
-			if err.Error() != "analogdb error: code: unprocessable message: Unable to create post, expected 4 images (low, medium, high, raw)" {
-				t.Fatal("expected analogdb error message")
-			}
-		}
-	})
-}
-
-func TestAllPostIDs(t *testing.T) {
-	t.Run("Number of IDs", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		ids, err := ps.AllPostIDs(context.Background())
-		if err != nil {
-			t.Fatal(err)
-		}
-		numIDs := len(ids)
-		if numIDs != totalPosts {
-			t.Fatalf("wrong number of total post IDs, wanted %d, got %d", totalPosts, numIDs)
-		}
-	})
-	t.Run("IDs are correct", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		ids, err := ps.AllPostIDs(context.Background())
-		if err != nil {
-			t.Fatal(err)
-		}
-		if ids[0] != 1 || ids[1] != 2 || ids[2] != 3 {
-			t.Fatalf("wrong values of post IDs, wanted %d, %d, %d, got %d, %d, %d", 1, 2, 3, ids[0], ids[1], ids[2])
-		}
-	})
-}
-
-func TestPatchPost(t *testing.T) {
-	t.Run("ErrNoFields", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		patch := analogdb.PatchPost{}
-
-		if err := ps.PatchPost(context.Background(), &patch, postID); err == nil {
-			t.Fatal("error should be returned when no patch fields are provided")
-		}
-	})
-
-	t.Run("UpdateKeywords", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		og, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		keyword := analogdb.Keyword{Word: "keyword", Weight: 0.1}
-		keywords := []analogdb.Keyword{keyword, keyword, keyword}
-		patch := analogdb.PatchPost{
-			Keywords: &keywords,
-		}
-		err = ps.PatchPost(context.Background(), &patch, postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		updated, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if len(og.Keywords) == len(updated.Keywords) {
-			t.Fatalf("updated keywords should have different length than original, original: %d, updated: %d", len(og.Keywords), len(updated.Keywords))
-		}
-
-		// remove added keywords for idempotency
-		keywords = []analogdb.Keyword{}
-		patch = analogdb.PatchPost{
-			Keywords: &keywords,
-		}
-		err = ps.PatchPost(context.Background(), &patch, postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-	})
-
-	t.Run("UpdateScore", func(t *testing.T) {
-		db := mustOpen(t)
-		defer mustClose(t, db)
-		ps := NewPostService(db)
-
-		og, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		newScore := og.Score + 1
-		patch := analogdb.PatchPost{
-			Score: &newScore,
-		}
-		err = ps.PatchPost(context.Background(), &patch, postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		updated, err := ps.FindPostByID(context.Background(), postID)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if og.Score == updated.Score {
-			t.Fatalf("updated post should have different score than original post, original: %d, updated: %d", og.Score, updated.Score)
-		}
-	})
-}
-
-func setupTx(t *testing.T, db *DB) (context.Context, *sql.Tx) {
-	t.Helper()
+func TestPostService_CreatePost(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewPostService(db)
 	ctx := context.Background()
-	tx, err := db.db.BeginTx(ctx, nil)
+
+	t.Run("successful creation", func(t *testing.T) {
+		createPost := &analogdb.CreatePost{
+			Title:     "Test Post",
+			Author:    "u/testuser",
+			Permalink: "test_post_unique",
+			Score:     100,
+			Nsfw:      false,
+			Grayscale: false,
+			Time:      1642000000,
+			Sprocket:  false,
+			Images: []analogdb.Image{
+				{Label: "low", Url: "http://example.com/low.jpg", Width: 200, Height: 300},
+				{Label: "medium", Url: "http://example.com/med.jpg", Width: 600, Height: 900},
+				{Label: "high", Url: "http://example.com/high.jpg", Width: 1200, Height: 1800},
+				{Label: "raw", Url: "http://example.com/raw.jpg", Width: 2400, Height: 3600},
+			},
+			Colors: []analogdb.Color{
+				{Hex: "#FF0000", Css: "rgb(255,0,0)", Html: "red", Percent: 0.5},
+				{Hex: "#00FF00", Css: "rgb(0,255,0)", Html: "green", Percent: 0.3},
+				{Hex: "#0000FF", Css: "rgb(0,0,255)", Html: "blue", Percent: 0.15},
+				{Hex: "#FFFF00", Css: "rgb(255,255,0)", Html: "yellow", Percent: 0.04},
+				{Hex: "#FF00FF", Css: "rgb(255,0,255)", Html: "magenta", Percent: 0.01},
+			},
+			Keywords: []analogdb.Keyword{
+				{Word: "test", Weight: 0.9},
+				{Word: "sample", Weight: 0.8},
+			},
+		}
+
+		post, err := service.CreatePost(ctx, createPost)
+		if err != nil {
+			t.Fatalf("CreatePost failed: %v", err)
+		}
+
+		if post.Id == 0 {
+			t.Error("Expected post ID to be set")
+		}
+		if post.Title != createPost.Title {
+			t.Errorf("Expected title %q, got %q", createPost.Title, post.Title)
+		}
+		if post.Author != createPost.Author {
+			t.Errorf("Expected author %q, got %q", createPost.Author, post.Author)
+		}
+		if len(post.Colors) != 5 {
+			t.Errorf("Expected 5 colors, got %d", len(post.Colors))
+		}
+		if len(post.Keywords) != 2 {
+			t.Errorf("Expected 2 keywords, got %d", len(post.Keywords))
+		}
+	})
+
+	t.Run("creation with insufficient images", func(t *testing.T) {
+		createPost := &analogdb.CreatePost{
+			Title:     "Test Post",
+			Author:    "u/testuser",
+			Permalink: "test_post_unique_2",
+			Images:    []analogdb.Image{{Label: "low", Url: "test.jpg"}}, // Only 1 image
+			Colors:    make([]analogdb.Color, 5),
+		}
+
+		_, err := service.CreatePost(ctx, createPost)
+		if err == nil {
+			t.Error("Expected error for insufficient images")
+		}
+	})
+
+	t.Run("creation with insufficient colors", func(t *testing.T) {
+		createPost := &analogdb.CreatePost{
+			Title:     "Test Post",
+			Author:    "u/testuser",
+			Permalink: "test_post_unique_3",
+			Images:    make([]analogdb.Image, 4),
+			Colors:    []analogdb.Color{{Hex: "#FF0000"}}, // Only 1 color
+		}
+
+		_, err := service.CreatePost(ctx, createPost)
+		if err == nil {
+			t.Error("Expected error for insufficient colors")
+		}
+	})
+}
+
+func TestPostService_FindPostByID(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewPostService(db)
+	ctx := context.Background()
+
+	t.Run("find existing post", func(t *testing.T) {
+		post, err := service.FindPostByID(ctx, 1)
+		if err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+
+		if post.Id != 1 {
+			t.Errorf("Expected ID 1, got %d", post.Id)
+		}
+		if post.Title != "Sunset Photography" {
+			t.Errorf("Expected title 'Sunset Photography', got %q", post.Title)
+		}
+		// Check that author prefix is stripped
+		if post.Author != "photographer1" {
+			t.Errorf("Expected author 'photographer1', got %q", post.Author)
+		}
+	})
+
+	t.Run("find non-existent post", func(t *testing.T) {
+		_, err := service.FindPostByID(ctx, 9999)
+		if err == nil {
+			t.Error("Expected error for non-existent post")
+		}
+
+		analogErr, ok := err.(*analogdb.Error)
+		if !ok {
+			t.Errorf("Expected analogdb.Error, got %T", err)
+		} else if analogErr.Code != analogdb.ERRNOTFOUND {
+			t.Errorf("Expected ERRNOTFOUND, got %s", analogErr.Code)
+		}
+	})
+}
+
+func TestPostService_FindPosts(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewPostService(db)
+	ctx := context.Background()
+
+	t.Run("find all posts", func(t *testing.T) {
+		filter := &analogdb.PostFilter{}
+		posts, count, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+
+		if len(posts) == 0 {
+			t.Error("Expected to find posts")
+		}
+		if count == 0 {
+			t.Error("Expected count > 0")
+		}
+	})
+
+	t.Run("find posts with limit", func(t *testing.T) {
+		limit := 1
+		filter := &analogdb.PostFilter{Limit: &limit}
+		posts, count, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+
+		if len(posts) != 1 {
+			t.Errorf("Expected 1 post, got %d", len(posts))
+		}
+		if count == 0 {
+			t.Error("Expected total count > 0")
+		}
+	})
+
+	t.Run("find posts by author", func(t *testing.T) {
+		author := "photographer1"
+		filter := &analogdb.PostFilter{Author: &author}
+		posts, _, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+
+		if len(posts) == 0 {
+			t.Error("Expected to find posts by author")
+		}
+		for _, post := range posts {
+			if post.Author != author {
+				t.Errorf("Expected author %q, got %q", author, post.Author)
+			}
+		}
+	})
+
+	t.Run("find posts by nsfw flag", func(t *testing.T) {
+		nsfw := false
+		filter := &analogdb.PostFilter{Nsfw: &nsfw}
+		posts, _, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+
+		for _, post := range posts {
+			if post.Nsfw != nsfw {
+				t.Errorf("Expected nsfw %v, got %v", nsfw, post.Nsfw)
+			}
+		}
+	})
+}
+
+func TestPostService_PatchPost(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewPostService(db)
+	ctx := context.Background()
+
+	t.Run("patch post score", func(t *testing.T) {
+		newScore := 999
+		patch := &analogdb.PatchPost{Score: &newScore}
+
+		err := service.PatchPost(ctx, patch, 1)
+		if err != nil {
+			t.Fatalf("PatchPost failed: %v", err)
+		}
+
+		// Verify the change
+		post, err := service.FindPostByID(ctx, 1)
+		if err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if post.Score != newScore {
+			t.Errorf("Expected score %d, got %d", newScore, post.Score)
+		}
+	})
+
+	t.Run("patch post with new keywords", func(t *testing.T) {
+		newKeywords := []analogdb.Keyword{
+			{Word: "updated", Weight: 0.9},
+			{Word: "keyword", Weight: 0.8},
+		}
+		patch := &analogdb.PatchPost{Keywords: &newKeywords}
+
+		err := service.PatchPost(ctx, patch, 1)
+		if err != nil {
+			t.Fatalf("PatchPost failed: %v", err)
+		}
+
+		// Verify the change
+		post, err := service.FindPostByID(ctx, 1)
+		if err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if len(post.Keywords) != 2 {
+			t.Errorf("Expected 2 keywords, got %d", len(post.Keywords))
+		}
+	})
+
+	t.Run("patch with no fields", func(t *testing.T) {
+		patch := &analogdb.PatchPost{} // Empty patch
+
+		err := service.PatchPost(ctx, patch, 1)
+		if err == nil {
+			t.Error("Expected error for empty patch")
+		}
+	})
+}
+
+func TestPostService_DeletePost(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewPostService(db)
+	ctx := context.Background()
+
+	t.Run("delete existing post", func(t *testing.T) {
+		// First verify the post exists
+		_, err := service.FindPostByID(ctx, 1)
+		if err != nil {
+			t.Fatalf("Post should exist before deletion: %v", err)
+		}
+
+		err = service.DeletePost(ctx, 1)
+		if err != nil {
+			t.Fatalf("DeletePost failed: %v", err)
+		}
+
+		// Verify the post is gone
+		_, err = service.FindPostByID(ctx, 1)
+		if err == nil {
+			t.Error("Post should not exist after deletion")
+		}
+	})
+
+	t.Run("delete non-existent post", func(t *testing.T) {
+		err := service.DeletePost(ctx, 9999)
+		if err == nil {
+			t.Error("Expected error when deleting non-existent post")
+		}
+	})
+}
+
+func TestPostService_AllPostIDs(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewPostService(db)
+	ctx := context.Background()
+
+	ids, err := service.AllPostIDs(ctx)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatalf("AllPostIDs failed: %v", err)
 	}
-	return ctx, tx
+
+	if len(ids) == 0 {
+		t.Error("Expected to find post IDs")
+	}
+
+	// Verify IDs are sorted
+	for i := 1; i < len(ids); i++ {
+		if ids[i-1] >= ids[i] {
+			t.Error("Expected IDs to be sorted in ascending order")
+		}
+	}
 }

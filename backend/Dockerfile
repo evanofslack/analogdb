@@ -1,8 +1,9 @@
-FROM golang:1.24-alpine as builder
+FROM golang:1.24-alpine AS builder
 RUN mkdir /build
 ADD . /build/
 WORKDIR /build
 RUN go build cmd/analogdb/main.go
+# RUN go build -o main ./cmd/analogdb
 
 FROM alpine
 RUN adduser -S -D -H -h /app appuser

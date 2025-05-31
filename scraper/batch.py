@@ -2,17 +2,33 @@ import datetime
 import time
 from typing import List, Optional, Set
 
+from cameras import extract_metadata
 import praw
 import requests
 from loguru import logger
 
-from api import (encode_images, get_all_post_ids, get_keyword_updated_post_ids,
-                 json_to_post, new_patch, patch_to_analogdb)
-from comment import (get_comments, post_keywords, read_comments_from_json,
-                     write_comments_to_json, write_keywords_to_disk)
+from api import (
+    encode_images,
+    get_all_post_ids,
+    get_keyword_updated_post_ids,
+    json_to_post,
+    new_patch,
+    patch_to_analogdb,
+)
+from comment import (
+    get_comments,
+    post_keywords,
+    read_comments_from_json,
+    write_comments_to_json,
+    write_keywords_to_disk,
+)
 from configuration import init_config
-from constants import (ALL_KEYWORDS_FILEPATH, KEYWORD_UPDATE_CUTOFF_DAYS,
-                       READ_COMMENTS_FROM_DISK, WRITE_KEYWORDS_TO_DISK)
+from constants import (
+    ALL_KEYWORDS_FILEPATH,
+    KEYWORD_UPDATE_CUTOFF_DAYS,
+    READ_COMMENTS_FROM_DISK,
+    WRITE_KEYWORDS_TO_DISK,
+)
 from image_process import extract_colors, request_image
 from models import AnalogDisplayPost, Dependencies
 from s3_upload import upload_comments_to_s3
@@ -130,6 +146,30 @@ def update_posts_colors(deps: Dependencies, count: int):
         )
 
 
+def _update_post_photo_metadata(
+    reddit: praw.Reddit, post: AnalogDisplayPost, username: str, password: str
+):
+    title = post.title
+    # extract metadata
+    metadata = extract_metadata(title=title)
+
+    # update post in analogdb
+    patch = new_patch(metadata=metadata)
+    patch_to_analogdb(patch, id=post.id, username=username, password=password)
+    logger.info(f"post with ID: {post.id} has camera metadata updated to {metadata}")
+
+
+def update_posts_photo_metadata(deps: Dependencies, count: int):
+    posts = reversed(unlimited_posts(count=count))
+    for post in posts:
+        _update_post_photo_metadata(
+            reddit=deps.reddit_client,
+            post=post,
+            username=deps.auth.username,
+            password=deps.auth.password,
+        )
+
+
 def _download_post_comments(reddit: praw.Reddit, post: AnalogDisplayPost):
     try:
         write_comments_to_json(reddit=reddit, post=post)
@@ -156,7 +196,6 @@ def _update_post_keywords(
     limit: Optional[int] = None,
     blacklist: Optional[Set[str]] = None,
 ):
-
     if READ_COMMENTS_FROM_DISK:
         filepath = f"comments/{post.id}.json"
         comments = read_comments_from_json(filepath=filepath)
@@ -191,7 +230,6 @@ def _update_post_keywords(
 
 
 def update_posts_keywords(deps: Dependencies, count: int, limit: Optional[int] = None):
-
     logger.debug("start update post keywords")
 
     posts = unlimited_posts(count=count)
