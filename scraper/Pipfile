@@ -17,10 +17,12 @@ scipy = "*"
 webcolors = "*"
 spacy = "*"
 pytextrank = "*"
+openai = "*"
 
 [dev-packages]
 black = "*"
 scikit-learn = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.13"
