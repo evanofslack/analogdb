@@ -1,10 +1,3 @@
-version: "3.8"
-
-networks:
-  default:
-    external: true
-    name: analogdb
-
 services:
   analogdb-scraper:
     container_name: analogdb-scraper
@@ -23,3 +16,11 @@ services:
       APP_ENV: ${ANALOGDB_APP_ENV}
       LOG_LEVEL: ${ANALOGDB_LOG_LEVEL}
       SLACK_WEBHOOK_URL: ${ANALOGDB_SLACK_WEBHOOK_URL}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_BASE_URL: ${OPENROUTER_BASE_URL}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL}
+
+networks:
+  default:
+    external: true
+    name: analogdb

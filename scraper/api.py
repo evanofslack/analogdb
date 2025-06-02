@@ -110,6 +110,9 @@ def upload_to_analogdb(post: AnalogPost, username: str, password: str):
 
 @retry(delay=1, times=5)
 def patch_to_analogdb(patch: PatchPost, id: int, username: str, password: str):
+    if patch.is_empty():
+        logger.debug(f"patch is empty, id={id}")
+        return
     dict_patch = patch_to_json(patch)
     json_patch = json.dumps(dict_patch)
     url = f"{base_url}/post/{id}"

@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import List, Optional, Set
 
 import boto3
 import praw
+import openai
 from PIL.Image import Image
 
 
@@ -93,6 +94,9 @@ class PhotoMetadata:
     focal_length: Optional[int] = None
     aperture: Optional[str] = None
 
+    def is_empty(self) -> bool:
+        return all(getattr(self, field.name) is None for field in fields(self))
+
 
 @dataclass
 class PatchPost:
@@ -103,6 +107,9 @@ class PatchPost:
     colors: Optional[List[Color]]
     keywords: Optional[List[AnalogKeyword]]
     metadata: Optional[PhotoMetadata]
+
+    def is_empty(self) -> bool:
+        return all(getattr(self, field.name) is None for field in fields(self))
 
 
 @dataclass
@@ -203,6 +210,12 @@ class RedditCreds:
 
 
 @dataclass
+class OpenAICreds:
+    key: str
+    url: str
+
+
+@dataclass
 class AuthCreds:
     username: str
     password: str
@@ -218,12 +231,14 @@ class App:
     log_level: str
     env: str
     api_base_url: str
+    openai_model: str
 
 
 @dataclass
 class Config:
     aws: AwsCreds
     reddit: RedditCreds
+    openai: OpenAICreds
     auth: AuthCreds
     slack: SlackWebhook
     app: App
@@ -231,7 +246,9 @@ class Config:
 
 @dataclass
 class Dependencies:
+    cfg: Config
     s3_client: boto3.session.Session
     reddit_client: praw.Reddit
     auth: AuthCreds
+    openai: openai.OpenAI
     blacklist: Set[str]
