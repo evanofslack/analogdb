@@ -17,6 +17,7 @@ scipy = "*"
 webcolors = "*"
 spacy = "*"
 pytextrank = "*"
+openai = "*"
 
 [dev-packages]
 black = "*"

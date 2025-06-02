@@ -5,8 +5,13 @@ import schedule
 from loguru import logger
 
 from api import get_latest_links, upload_to_analogdb
-from batch import update_posts_colors, update_posts_keywords, update_posts_scores
-from cameras import extract_metadata
+from batch import (
+    update_posts_colors,
+    update_posts_keywords,
+    update_posts_scores,
+    update_posts_photo_metadata,
+)
+from cameras import validate_metadata
 from comment import get_comments, post_keywords
 from configuration import dependencies_from_config, init_config
 from constants import (
@@ -18,6 +23,7 @@ from constants import (
     SPROCKET_POSTS,
     SPROCKET_SUB,
 )
+from llm import extract_metadata
 from log import init_logger
 from models import Dependencies, new_analog_post
 from s3_upload import upload_images_to_s3
@@ -31,6 +37,7 @@ def scrape_posts(
     subreddit: str,
     num_posts: int,
 ):
+    openai_client = deps.openai
     reddit_client = deps.reddit_client
     s3_client = deps.s3_client
     auth = deps.auth
@@ -54,8 +61,11 @@ def scrape_posts(
         # upload images to s3
         cf_images = upload_images_to_s3(post=post, s3=s3_client)
 
-        # extract camera/film metadata
-        metadata = extract_metadata(title=post.title)
+        # extract and validate camera/film metadata
+        metadata = extract_metadata(
+            title=post.title, client=openai_client, model=deps.cfg.app.openai_model
+        )
+        metadata = validate_metadata(metadata, post.title)
 
         # extract colors
         colors = extract_colors(image=post.image)
@@ -115,6 +125,11 @@ def update_colors(deps: Dependencies):
     update_posts_colors(deps=deps, count=7000)
 
 
+@logger.catch(message="caught error while updating post camera metadata")
+def update_metadata(deps: Dependencies):
+    update_posts_photo_metadata(deps=deps, count=50)
+
+
 def run_schedule(deps: Dependencies):
     # scrape posts
     schedule.every().day.do(scrape_bw, deps=deps)
@@ -134,10 +149,13 @@ def run_schedule(deps: Dependencies):
 
 def main():
     init_logger()
-    config = init_config()
-    deps = dependencies_from_config(config=config)
+    cfg = init_config()
+    deps = dependencies_from_config(cfg)
 
-    run_schedule(deps=deps)
+    # TODO: temporary batch
+    update_metadata(deps=deps)
+
+    # run_schedule(deps=deps)
 
 
 if __name__ == "__main__":

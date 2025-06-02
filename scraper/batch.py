@@ -2,7 +2,6 @@ import datetime
 import time
 from typing import List, Optional, Set
 
-from cameras import extract_metadata
 import praw
 import requests
 from loguru import logger
@@ -22,6 +21,7 @@ from comment import (
     write_comments_to_json,
     write_keywords_to_disk,
 )
+from cameras import validate_metadata
 from configuration import init_config
 from constants import (
     ALL_KEYWORDS_FILEPATH,
@@ -30,6 +30,7 @@ from constants import (
     WRITE_KEYWORDS_TO_DISK,
 )
 from image_process import extract_colors, request_image
+from llm import extract_metadata
 from models import AnalogDisplayPost, Dependencies
 from s3_upload import upload_comments_to_s3
 
@@ -147,23 +148,32 @@ def update_posts_colors(deps: Dependencies, count: int):
 
 
 def _update_post_photo_metadata(
-    reddit: praw.Reddit, post: AnalogDisplayPost, username: str, password: str
+    deps: Dependencies, post: AnalogDisplayPost, username: str, password: str
 ):
     title = post.title
     # extract metadata
-    metadata = extract_metadata(title=title)
+    metadata = extract_metadata(
+        title=title, client=deps.openai, model=deps.cfg.app.openai_model
+    )
+    logger.debug(f"metadata before: {metadata}")
+    metadata = validate_metadata(metadata, post.title)
+    logger.debug(f"metadata after: {metadata}")
+
+    if metadata.is_empty():
+        logger.debug(f"empty metadata for post, id={post.id}, title={title}")
+        return
 
     # update post in analogdb
     patch = new_patch(metadata=metadata)
     patch_to_analogdb(patch, id=post.id, username=username, password=password)
-    logger.info(f"post with ID: {post.id} has camera metadata updated to {metadata}")
+    logger.info(f"post camera metadata updated, id={post.id}, metadata={metadata}")
 
 
 def update_posts_photo_metadata(deps: Dependencies, count: int):
     posts = reversed(unlimited_posts(count=count))
     for post in posts:
         _update_post_photo_metadata(
-            reddit=deps.reddit_client,
+            deps=deps,
             post=post,
             username=deps.auth.username,
             password=deps.auth.password,
