@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/evanofslack/analogdb"
 )
@@ -203,6 +204,38 @@ func TestPostService_FindPosts(t *testing.T) {
 		for _, post := range posts {
 			if post.Nsfw != nsfw {
 				t.Errorf("Expected nsfw %v, got %v", nsfw, post.Nsfw)
+			}
+		}
+	})
+
+	t.Run("find posts by start time", func(t *testing.T) {
+		start := 1640995210
+		startUnix := time.Unix(int64(start), 0)
+		filter := &analogdb.PostFilter{TimeStart: &startUnix}
+		posts, _, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+
+		for _, post := range posts {
+			if post.Time < start {
+				t.Errorf("Expected start < %v, got %v", start, post.Time)
+			}
+		}
+	})
+
+	t.Run("find posts by end time", func(t *testing.T) {
+		end := 1640995210
+		endUnix := time.Unix(int64(end), 0)
+		filter := &analogdb.PostFilter{TimeEnd: &endUnix}
+		posts, _, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+
+		for _, post := range posts {
+			if post.Time > end {
+				t.Errorf("Expected end > %v, got %v", end, post.Time)
 			}
 		}
 	})

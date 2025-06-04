@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
@@ -422,7 +423,7 @@ func stringToInt(query string) (int, error) {
 
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
-	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	values := r.URL.Query()
 
@@ -512,6 +513,24 @@ func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
 
 	if author := values.Get("author"); author != "" {
 		filter.Author = &author
+	}
+
+	if start := values.Get("time_start"); start != "" {
+		startInt, err := strconv.ParseInt(start, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		startTime := time.Unix(startInt, 0)
+		filter.TimeStart = &startTime
+	}
+
+	if end := values.Get("time_end"); end != "" {
+		endInt, err := strconv.ParseInt(end, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		endTime := time.Unix(endInt, 0)
+		filter.TimeEnd = &endTime
 	}
 
 	if cm := values.Get("camera_make"); cm != "" {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"strings"
+	"time"
 )
 
 const defaultMinColorPercent = 0.0
@@ -166,6 +167,8 @@ type PostFilter struct {
 	IDs           *[]int
 	Title         *string
 	Author        *string
+	TimeStart     *time.Time
+	TimeEnd       *time.Time
 	CameraMake    *string
 	CameraModel   *string
 	FilmMake      *string
@@ -212,6 +215,12 @@ func (filter *PostFilter) String() string {
 	}
 	if filter.Author != nil {
 		out = append(out, fmt.Sprintf("author: %s", *filter.Author))
+	}
+	if filter.TimeStart != nil {
+		out = append(out, fmt.Sprintf("time_start: %s", *filter.TimeStart))
+	}
+	if filter.TimeEnd != nil {
+		out = append(out, fmt.Sprintf("time_end: %s", *filter.TimeEnd))
 	}
 	if filter.CameraMake != nil {
 		out = append(out, fmt.Sprintf("camera_make: %s", *filter.CameraMake))
@@ -294,7 +303,7 @@ func (filter *PostFilter) SetMinColorPercent() {
 	filter.ColorPercents = &percents
 }
 
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
+func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, timeStart, timeEnd *time.Time, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
 	filter := &PostFilter{
 		Limit:         limit,
 		Sort:          sort,
@@ -306,6 +315,8 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 		IDs:           ids,
 		Title:         title,
 		Author:        author,
+		TimeStart:     timeStart,
+		TimeEnd:       timeEnd,
 		CameraMake:    cameraMake,
 		CameraModel:   cameraModel,
 		FilmMake:      filmMake,
@@ -329,7 +340,7 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 // NewPostFilterWithIDs is a convenience function
 // to create a post filter with only IDs set.
 func NewPostFilterWithIDs(ids []int) *PostFilter {
-	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 // PostSimilarityFilter are options used for querying similar posts

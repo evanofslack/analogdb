@@ -1004,6 +1004,21 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 		index++
 	}
 
+	// inclusive start_time and exclusive end_time
+	// start_time <= post.time < end_time
+	if start := filter.TimeStart; start != nil {
+		where = append(where, fmt.Sprintf("p.time >= $%d", index))
+        startInt := int(start.Unix())
+		args = append(args, startInt)
+		index++
+	}
+	if end := filter.TimeEnd; end != nil {
+		where = append(where, fmt.Sprintf("p.time < $%d", index))
+        endInt := int(end.Unix())
+		args = append(args, endInt)
+		index++
+	}
+
 	if w := filter.Width; w != nil {
 		if minWidth := w.Min; minWidth != nil {
 			where = append(where, fmt.Sprintf("p.width >= $%d", index))
