@@ -1,0 +1,19 @@
+[project]
+name = "scrape"
+version = "0.1.0"
+description = "analogdb dagster scrape pipeline"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "dagster>=1.10.18",
+    "dagster-webserver>=1.10.18",
+    "requests>=2.32.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["analogdb"]
