@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Dict, Tuple
+from typing import Optional, Tuple
 from models import PhotoMetadata
 
 camera_makes = [

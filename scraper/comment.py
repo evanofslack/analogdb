@@ -50,7 +50,6 @@ def get_comments(reddit: praw.Reddit, url: str) -> List[RedditComment]:
 
 
 def write_comments_to_json(reddit: praw.Reddit, post: AnalogDisplayPost):
-
     filepath = f"comments/{post.id}.json"
 
     if os.path.exists(filepath):
@@ -136,7 +135,6 @@ def rank_keywords(keywords: List[str], weight: int):
 
 
 def write_keywords_to_disk(keywords: List[AnalogKeyword], filepath: str):
-
     if not os.path.exists(os.path.dirname(filepath)):
         os.makedirs(os.path.dirname(filepath))
 
@@ -147,7 +145,6 @@ def write_keywords_to_disk(keywords: List[AnalogKeyword], filepath: str):
 def counter_to_keywords(
     counter: Counter, limit: Optional[int] = None
 ) -> List[AnalogKeyword]:
-
     keywords: List[AnalogKeyword] = []
 
     total = counter.total()
@@ -216,7 +213,6 @@ def post_keywords_from_disk(
     limit: Optional[int] = None,
     blacklist: Optional[Set[str]] = None,
 ) -> List[AnalogKeyword]:
-
     title = post.title
     filepath = f"comments/{post.id}.json"
     comments = read_comments_from_json(filepath=filepath)
