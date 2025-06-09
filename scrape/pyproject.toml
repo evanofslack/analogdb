@@ -9,6 +9,7 @@ dependencies = [
     "dagster-webserver>=1.10.18",
     "extcolors>=1.0.0",
     "numpy>=2.2.6",
+    "openai>=1.84.0",
     "pillow>=11.2.1",
     "praw>=7.8.1",
     "requests>=2.32.3",
