@@ -1,12 +1,13 @@
 from typing import List, Optional
 
 import praw
+from praw.models import Comment
 import requests
 from PIL.Image import Image
 
 from constants import BW_SUB, REDDIT_URL, SPROCKET_SUB, VALID_CONTENT
 from image import ImageProcessor
-from models import RedditPost, ScrapeResult, ScrapeError
+from models import RedditPost, ScrapeResult, ScrapeError, RedditComment
 
 
 class RedditScrapingError(Exception):
@@ -43,6 +44,40 @@ class RedditScraper:
 
         result = ScrapeResult(posts=posts, errors=errors)
         return result
+
+    def scrape_comments(self, url: str) -> List[RedditComment]:
+        submission = self.reddit.submission(url=url)
+        comments: List[RedditComment] = []
+
+        # follow all comment trees
+        submission.comments.replace_more(limit=None)
+
+        # iterate over posts comments and convert to native type
+        for c in submission.comments.list():
+            try:
+                if c is None:
+                    continue
+
+                if c is not Comment:
+                    continue
+                # deleted account's comments have text but no author
+                if c.author.name is None:
+                    author = "deleted"
+                else:
+                    author = c.author.name
+
+                comment = RedditComment(
+                    body=c.body,
+                    score=c.score,
+                    author=f"u/{author}",
+                    time=int(c.created_utc),
+                    permalink=f"{REDDIT_URL}{c.permalink}",
+                )
+                comments.append(comment)
+            except Exception:
+                continue
+
+        return comments
 
     def _get_submissions(
         self, subreddit: str, num_posts: int, sort: str
