@@ -73,8 +73,11 @@ class Client:
         analog_posts = []
         page_id = None
 
+        num = DEFAULT_PAGE_SIZE * 5
+        if num > count:
+            num = count
         while len(analog_posts) < count:
-            posts = self.get_posts(DEFAULT_PAGE_SIZE * 5, filter, page_id)
+            posts = self.get_posts(num, filter, page_id)
             for p in posts.posts:
                 if len(analog_posts) >= count:
                     break
