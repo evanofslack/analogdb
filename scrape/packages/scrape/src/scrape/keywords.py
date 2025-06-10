@@ -3,7 +3,7 @@ import string
 import math
 from collections import Counter
 from typing import List, Optional, Set
-from models import RedditComment, Keyword
+from .models import RedditComment, Keyword
 
 
 class KeywordExtractor:

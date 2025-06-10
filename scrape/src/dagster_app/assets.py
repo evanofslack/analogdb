@@ -1,7 +1,7 @@
 import dagster as dg
 from analogdb.models import Post
 from typing import List
-from resources import AnalogDBResource
+from .resources import AnalogDBResource
 
 
 @dg.asset

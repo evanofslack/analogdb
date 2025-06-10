@@ -1,6 +1,9 @@
 import dagster as dg
-from resources import AnalogDBResource
-from assets import posts
+from .resources import AnalogDBResource
+from .assets import posts
+from dotenv import load_dotenv
+
+load_dotenv()
 
 defs = dg.Definitions(
     assets=[posts],
@@ -12,5 +15,3 @@ defs = dg.Definitions(
         )
     },
 )
-
-defs = dg.Definitions(assets=[posts])

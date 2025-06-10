@@ -9,8 +9,8 @@ from PIL import Image, ImageChops
 from retry import retry
 from scipy.spatial import KDTree
 
-from constants import COLOR_LIMIT, COLOR_TOLERANCE, LOW_RES
-from models import Color
+from .constants import COLOR_LIMIT, COLOR_TOLERANCE, LOW_RES
+from .models import Color
 
 
 class ImageProcessor:

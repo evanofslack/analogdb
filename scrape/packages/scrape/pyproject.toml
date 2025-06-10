@@ -1,0 +1,26 @@
+[project]
+name = "scrape"
+version = "0.1.0"
+description = "Web scraping utilities"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "extcolors>=1.0.0",
+    "numpy>=2.2.6",
+    "openai>=1.84.0",
+    "pillow>=11.2.1",
+    "praw>=7.8.1",
+    "requests>=2.32.3",
+    "scipy>=1.15.3",
+    "spacy>=3.8.7",
+    "webcolors>=24.11.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

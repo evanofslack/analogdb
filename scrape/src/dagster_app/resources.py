@@ -1,6 +1,8 @@
+import praw
 from dagster import ConfigurableResource
 from analogdb.client import Client
-from analogdb.scraping import Reddit
+from scrape.reddit import RedditScraper
+from scrape.image import ImageProcessor
 from typing import Optional
 
 
@@ -16,5 +18,8 @@ class AnalogDBResource(ConfigurableResource):
 
 
 class RedditResource(ConfigurableResource):
-    def get_client(self) -> Client:
-        return Client()
+    def get_client(self) -> RedditScraper:
+        image_processor = ImageProcessor()
+        reddit = praw.Reddit()
+        scraper = RedditScraper(reddit, image_processor)
+        return scraper

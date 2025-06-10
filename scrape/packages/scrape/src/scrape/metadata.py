@@ -1,8 +1,8 @@
 import re
 import json
 from typing import Optional, Tuple, List, Dict
-from models import PhotoMetadata
 from openai import OpenAI
+from .models import PhotoMetadata
 
 
 class MetadataExtractor:

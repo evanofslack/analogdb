@@ -5,9 +5,9 @@ from praw.models import Comment
 import requests
 from PIL.Image import Image
 
-from constants import BW_SUB, REDDIT_URL, SPROCKET_SUB, VALID_CONTENT
-from image import ImageProcessor
-from models import RedditPost, ScrapeResult, ScrapeError, RedditComment
+from .constants import BW_SUB, REDDIT_URL, SPROCKET_SUB, VALID_CONTENT
+from .image import ImageProcessor
+from .models import RedditPost, ScrapeResult, ScrapeError, RedditComment
 
 
 class RedditScrapingError(Exception):
