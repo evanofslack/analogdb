@@ -39,3 +39,4 @@ Thumbs.db
 tmp*/
 .dagster/
 dagster_home/
+dagster_storage/
