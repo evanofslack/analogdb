@@ -71,6 +71,13 @@ class Keyword:
 
 
 @dataclass
+class S3Image:
+    url: str
+    width: int
+    height: int
+
+
+@dataclass
 class UploadPost:
     url: str
     title: str
@@ -78,7 +85,7 @@ class UploadPost:
     permalink: str
     score: int
     nsfw: bool
-    greyscale: bool
+    grayscale: bool
     time: int
     width: int
     height: int
