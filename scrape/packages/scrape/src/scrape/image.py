@@ -14,7 +14,8 @@ import .constants as const
 from .models import Color, S3Image, RedditPost
 
 class S3(Protocol):
-    def upload_file(self, data: bytes, key: str) -> str:
+
+    def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> str:
         """Upload file data and return the public URL."""
         ...
 

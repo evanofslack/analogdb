@@ -1,5 +1,6 @@
 import praw
 from dagster import ConfigurableResource
+from dagster_aws.s3 import S3Resource
 from analogdb.client import Client
 from scrape.metadata import MetadataExtractor
 from scrape.reddit import RedditScraper
@@ -36,6 +37,11 @@ class RedditResource(ConfigurableResource):
         return scraper
 
 
+class ImageProcessorResource(ConfigurableResource):
+    def client(self) -> ImageProcessor:
+        return ImageProcessor()
+
+
 class MetadataResource(ConfigurableResource):
     openai_url: str = ""
     openai_key: str = ""
@@ -48,3 +54,14 @@ class MetadataResource(ConfigurableResource):
         )
         extractor = MetadataExtractor(ai, self.openai_model)
         return extractor
+
+
+class StorageResource(ConfigurableResource):
+    s3_resource: S3Resource
+
+    # def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> str:
+    def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> str:
+        self.s3_resource.get_client().put_object(
+            Bucket=bucket, Key=key, Body=body, ContentType=content_type
+        )
+        return f"https://{self.bucket}.s3.amazonaws.com/{key}"
