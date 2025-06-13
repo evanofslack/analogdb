@@ -7,10 +7,10 @@ from .models import RedditComment, Keyword
 
 
 class KeywordExtractor:
-    """Analyzes Reddit posts and comments to extract and rank keywords based on engagement scores."""
+    """Analyzes reddit title and comments to extract and rank keywords based"""
 
     def __init__(self):
-        self.nlp = spacy.load("en_core_web_lg")
+        self._nlp = spacy.load("en_core_web_lg")
         self._union_blacklist = {
             "http",
             "www",
@@ -52,11 +52,11 @@ class KeywordExtractor:
         Extract keywords from text using NLP processing.
         """
         keywords = []
-        doc = self.nlp(text.lower())
+        doc = self._nlp(text.lower())
 
         for token in doc:
             # Skip stop words
-            if token.text in self.nlp.Defaults.stop_words:
+            if token.text in self._nlp.Defaults.stop_words:
                 continue
             # Skip single characters
             if len(token.text) < 2:
