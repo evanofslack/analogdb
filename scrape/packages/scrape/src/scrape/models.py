@@ -111,3 +111,52 @@ class UploadPost:
 
     keywords: List[Keyword]
     colors: List[Color]
+
+
+def create_upload_post(
+    post: RedditPost,
+    metadata: PhotoMetadata,
+    images: List[S3Image],
+    keywords: List[Keyword],
+    colors: List[Color],
+) -> UploadPost | None:
+    if len(images) < 4:
+        return None
+
+    low_img = images[0]
+    med_img = images[1]
+    high_img = images[2]
+    raw_img = images[3]
+
+    up = UploadPost(
+        url=raw_img.url,
+        title=post.title,
+        author=post.author,
+        permalink=post.permalink,
+        score=post.score,
+        nsfw=post.nsfw,
+        grayscale=post.grayscale,
+        time=post.time,
+        width=raw_img.width,
+        height=raw_img.height,
+        sprocket=post.sprocket,
+        low_url=low_img.url,
+        low_width=low_img.width,
+        low_height=low_img.height,
+        med_url=med_img.url,
+        med_width=med_img.width,
+        med_height=med_img.height,
+        high_url=high_img.url,
+        high_width=high_img.width,
+        high_height=high_img.height,
+        camera_make=metadata.camera_make,
+        camera_model=metadata.camera_model,
+        film_make=metadata.film_make,
+        film_type=metadata.film_type,
+        film_speed=metadata.film_speed,
+        focal_length=metadata.focal_length,
+        aperture=metadata.aperture,
+        keywords=keywords,
+        colors=colors,
+    )
+    return up
