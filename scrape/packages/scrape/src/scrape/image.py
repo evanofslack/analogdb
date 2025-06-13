@@ -10,11 +10,20 @@ from retry import retry
 import uuid
 from scipy.spatial import KDTree
 
-import .constants as const
+from .constants import (
+    LOW_RES,
+    MEDIUM_RES,
+    HIGH_RES,
+    RAW_RES,
+    COLOR_LIMIT,
+    COLOR_TOLERANCE,
+    AWS_BUCKET_PHOTOS,
+    CLOUDFRONT_URL,
+)
 from .models import Color, S3Image, RedditPost
 
-class S3(Protocol):
 
+class S3(Protocol):
     def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> str:
         """Upload file data and return the public URL."""
         ...
@@ -97,11 +106,11 @@ class ImageProcessor:
     }
 
     _content_suffix = {
-            "image/png": "png",
-            "image/jpeg": "jpeg",
-            "image/jpg": "jpg",
-            "image/gif": "gif",
-        }
+        "image/png": "png",
+        "image/jpeg": "jpeg",
+        "image/jpg": "jpg",
+        "image/gif": "gif",
+    }
 
     def __init__(self):
         self._css_names = list(webcolors.names(spec=webcolors.CSS3))
@@ -118,12 +127,19 @@ class ImageProcessor:
 
     def upload_s3(self, post: RedditPost, s3: S3) -> List[S3Image]:
         s3_images: List[S3Image] = []
-        resolutions: list[tuple[int, int] | None ] = [const.LOW_RES, const.MEDIUM_RES, const.HIGH_RES, const.RAW_RES]
+        resolutions: list[tuple[int, int] | None] = [
+            LOW_RES,
+            MEDIUM_RES,
+            HIGH_RES,
+            RAW_RES,
+        ]
         for res in resolutions:
             image, width, height = self.resize_image(image=post.image, size=res)
             filename = self._create_filename(content_type=post.content_type)
 
-            url = self._upload_image(s3=s3, image=image, filename=filename, content_type=post.content_type)
+            url = self._upload_image(
+                s3=s3, image=image, filename=filename, content_type=post.content_type
+            )
 
             s3_image = S3Image(url=url, width=width, height=height)
             s3_images.append(s3_image)
@@ -154,7 +170,7 @@ class ImageProcessor:
         return image_bytes
 
     def extract_colors(
-        self, image: Image.Image, count: int = const.COLOR_LIMIT
+        self, image: Image.Image, count: int = COLOR_LIMIT
     ) -> List[Color]:
         prepared_image = self._prepare_image_for_analysis(image)
         raw_colors = self._extract_raw_colors(prepared_image, count)
@@ -168,14 +184,14 @@ class ImageProcessor:
         return image.crop(bbox) if bbox else image
 
     def _prepare_image_for_analysis(self, image: Image.Image) -> Image.Image:
-        resized, _, _ = self.resize_image(image, const.LOW_RES)
+        resized, _, _ = self.resize_image(image, LOW_RES)
         return self._remove_border(resized)
 
     def _extract_raw_colors(
         self, image: Image.Image, count: int
     ) -> List[Tuple[Tuple[int, int, int], int]]:
         colors, _ = extcolors.extract_from_image(
-            img=image, tolerance=const.COLOR_TOLERANCE, limit=count
+            img=image, tolerance=COLOR_TOLERANCE, limit=count
         )
         return colors
 
@@ -203,20 +219,18 @@ class ImageProcessor:
         filename = f"{id}.{suffix}"
         return filename
 
-    def _upload_image(self, s3: S3, image: Image, filename: str, content_type: str) -> str:
-        bucket = const.AWS_BUCKET_PHOTOS
+    def _upload_image(
+        self, s3: S3, image: Image, filename: str, content_type: str
+    ) -> str:
+        bucket = AWS_BUCKET_PHOTOS
         img_bytes = self.image_to_bytes(image=image, content_type=content_type)
 
         try:
-            s3.upload_fileobj(
-                img_bytes, bucket, filename, ExtraArgs={"ContentType": content_type}
-            )
+            s3.put_object(bucket, filename, img_bytes, content_type)
         except Exception as e:
-            logger.error(f"failed to upload {filename} to {bucket} with error: {e}")
             raise e
 
         url = f"{CLOUDFRONT_URL}/{filename}"
-        logger.info(f"uploaded to {bucket} ({url})")
         return url
 
     def _rgb_to_css(self, rgb: Tuple[int, int, int]) -> str:
@@ -252,5 +266,3 @@ class ImageProcessor:
             hex_color = webcolors.name_to_hex(name, spec=webcolors.HTML4)
             rgb_values.append(webcolors.hex_to_rgb(hex_color))
         return KDTree(rgb_values)
-
-
