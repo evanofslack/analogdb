@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Dict, Generic, TypeVar, Set, List
 from enum import Enum
 from scrape.models import Color, PhotoMetadata, RedditPost, UploadPost, S3Image, Keyword
+from dagster import make_python_type_usable_as_dagster_type, DagsterType
 
 T = TypeVar("T")
 
@@ -69,9 +70,18 @@ class Result(Generic[T]):
         )
 
 
+ResultDagsterType = DagsterType.from_builtin_enum(Result)
+
 RedditPosts = Result[RedditPost]
 TitleMetadatas = Result[PhotoMetadata]
 S3Images = Result[List[S3Image]]
 Colors = Result[List[Color]]
 Keywords = Result[List[Keyword]]
 FinalPosts = Result[UploadPost]
+
+make_python_type_usable_as_dagster_type(RedditPosts, ResultDagsterType)
+make_python_type_usable_as_dagster_type(TitleMetadatas, ResultDagsterType)
+make_python_type_usable_as_dagster_type(S3Images, ResultDagsterType)
+make_python_type_usable_as_dagster_type(Colors, ResultDagsterType)
+make_python_type_usable_as_dagster_type(Keywords, ResultDagsterType)
+make_python_type_usable_as_dagster_type(FinalPosts, ResultDagsterType)

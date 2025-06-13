@@ -18,6 +18,7 @@ from .resources import (
     StorageResource,
 )
 from .result import (
+    Result,
     Colors,
     Keywords,
     RedditPosts,
@@ -46,7 +47,7 @@ def analogdb_permalinks(analogdb: AnalogDBResource) -> List[str]:
     return links
 
 
-@dg.asset
+@dg.asset(outs={"reddit_posts": dg.Out(dagster_type=Result)})
 def reddit_posts(reddit: RedditResource, analogdb_permalinks: List[str]) -> RedditPosts:
     api_result = reddit.client().scrape_posts("analog", 100, analogdb_permalinks, "hot")
     for err in api_result.errors:
