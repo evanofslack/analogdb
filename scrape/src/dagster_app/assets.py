@@ -1,15 +1,31 @@
 import dagster as dg
+import json
 from analogdb.models import Post
-from scrape.models import RedditPost, UploadPost
+from dataclasses import asdict
+from scrape.models import (
+    RedditPost,
+    UploadPost,
+    create_upload_post,
+)
 from typing import List
 from .resources import (
     AnalogDBResource,
     ImageProcessorResource,
+    KeywordBlacklistResource,
+    KeywordExtractorResource,
     MetadataResource,
     RedditResource,
     StorageResource,
 )
-from .result import RedditPosts, Status, TitleMetadatas, S3Images
+from .result import (
+    Colors,
+    Keywords,
+    RedditPosts,
+    Status,
+    TitleMetadatas,
+    S3Images,
+    FinalPosts,
+)
 
 
 @dg.asset
@@ -99,58 +115,119 @@ def s3_images(
 
 
 @dg.asset
-def combine(
-    reddit_posts: RedditPosts, title_metadatas: TitleMetadatas, s3_images: S3Images
-) -> UploadPosts:
-    return
+def colors(
+    processor: ImageProcessorResource,
+    reddit_posts: List[RedditPost],
+) -> Colors:
+    data = {}
+    status = {}
+
+    for p in reddit_posts:
+        colors = processor.client().extract_colors(p.image)
+        id = p.permalink
+        data[id] = colors
+        status[id] = Status.SUCCESS
+
+    result = Colors(data=data, status=status)
+
+    dg.get_dagster_logger().info(
+        f"Extract colors for {result.successful_count()} posts"
+    )
+
+    return result
 
 
 @dg.asset
-def upload_posts(analogdb: AnalogDBResource, hydrated_posts: List[UploadPost]):
-    for p in hydrated_posts:
+def keywords(
+    extractor: KeywordExtractorResource,
+    scraper: RedditResource,
+    reddit_posts: List[RedditPost],
+    blacklist: KeywordBlacklistResource,
+) -> Keywords:
+    data = {}
+    status = {}
+
+    for p in reddit_posts:
+        comments = scraper.client().scrape_comments(p.permalink)
+        keywords = extractor.client().post_keywords(
+            p.title, p.score, comments, extractor.max_keywords, blacklist.blacklist
+        )
+        id = p.permalink
+        data[id] = keywords
+        status[id] = Status.SUCCESS
+
+    result = Keywords(data=data, status=status)
+
+    dg.get_dagster_logger().info(
+        f"Extracte keywords for {result.successful_count()} posts"
+    )
+
+    return result
+
+
+@dg.asset
+def combine(
+    reddit_posts: RedditPosts,
+    title_metadatas: TitleMetadatas,
+    s3_images: S3Images,
+    colors: Colors,
+    keywords: Keywords,
+) -> FinalPosts:
+    ids = (
+        reddit_posts.successful_ids()
+        & title_metadatas.successful_ids()
+        & s3_images.successful_ids()
+    )
+
+    dg.get_dagster_logger().info(f"Creating final posts for {len(ids)} posts")
+
+    data = {}
+    status = {}
+    errors = {}
+
+    for id in ids:
+        try:
+            final = create_upload_post(
+                post=reddit_posts.data[id],
+                metadata=title_metadatas.data[id],
+                images=s3_images.data[id],
+                keywords=keywords.data[id],
+                colors=colors.data[id],
+            )
+
+            data[id] = final
+            status[id] = Status.SUCCESS
+
+        except Exception as e:
+            dg.get_dagster_logger().error(f"Failed to create final post for {id}: {e}")
+            status[id] = Status.FAILED
+            errors[id] = str(e)
+
+    result = FinalPosts(data=data, status=status, errors=errors)
+    dg.get_dagster_logger().info(f"Created {result.successful_count()} final posts")
+
+    return result
+
+
+@dg.asset
+def upload_posts(analogdb: AnalogDBResource, final_posts: List[UploadPost]):
+    for p in final_posts:
         analogdb.upload(p)
-    dg.get_dagster_logger().info(f"Uploaded {len(hydrated_posts)} posts")
+    dg.get_dagster_logger().info(f"Uploaded {len(final_posts)} posts")
 
 
-# def create_upload_post(
-#     reddit: RedditPost, metadata: PhotoMetadata, keywords: List[str]
-# ) -> UploadPost:
-#     # up := UploadPost(url=reddit.permalink, title=reddit.title, author=reddit.author, permalink=reddit.permalink, score=reddit.score, nsfw=reddit.nsfw, grayscale=reddit.grayscale, time=reddit.time, width=reddit.width, height=reddit.height, sprocket=reddit.sprocket, low_url=)
-#
-#     low_img = images[0]
-#     med_img = images[1]
-#     high_img = images[2]
-#     raw_img = images[3]
-#
-#     up = UploadPost(
-#         url=raw_img.url,
-#         title=post.title,
-#         author=post.author,
-#         permalink=post.permalink,
-#         score=post.score,
-#         nsfw=post.nsfw,
-#         grayscale=post.greyscale,
-#         time=post.time,
-#         width=raw_img.width,
-#         height=raw_img.height,
-#         sprocket=post.sprocket,
-#         low_url=low_img.url,
-#         low_width=low_img.width,
-#         low_height=low_img.height,
-#         med_url=med_img.url,
-#         med_width=med_img.width,
-#         med_height=med_img.height,
-#         high_url=high_img.url,
-#         high_width=high_img.width,
-#         high_height=high_img.height,
-#         camera_make=metadata.camera_make,
-#         camera_model=metadata.camera_model,
-#         film_make=metadata.film_make,
-#         film_type=metadata.film_type,
-#         film_speed=metadata.film_speed,
-#         focal_length=metadata.focal_length,
-#         aperture=metadata.aperture,
-#         keywords=keywords,
-#         colors=colors,
-#     )
-#     return up
+@dg.asset
+def debug_posts(final_posts: List[UploadPost]) -> None:
+    """Debug asset to inspect posts instead of uploading"""
+    logger = dg.get_dagster_logger()
+
+    logger.info(f"Would upload {len(final_posts)} posts")
+
+    for i, p in enumerate(final_posts):
+        logger.info(f"Post {i+1}: {p.title} by {p.author} with score {p.score}")
+
+    posts_dict = [asdict(p) for p in final_posts]
+    with open("debug_posts.json", "w") as f:
+        json.dump(posts_dict, f, indent=2)
+
+    logger.info("Saved all posts to debug_posts.json")

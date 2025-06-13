@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, Generic, TypeVar, Set, List
 from enum import Enum
-from scrape.models import PhotoMetadata, RedditPost, UploadPost, S3Image
+from scrape.models import Color, PhotoMetadata, RedditPost, UploadPost, S3Image, Keyword
 
 T = TypeVar("T")
 
@@ -28,6 +28,14 @@ class Result(Generic[T]):
             item_id: item
             for item_id, item in self.data.items()
             if self.status.get(item_id) == Status.SUCCESS
+        }
+
+    def successful_ids(self) -> Set[str]:
+        """Get IDs of successfully processed items."""
+        return {
+            item_id
+            for item_id, status in self.status.items()
+            if status == Status.SUCCESS
         }
 
     def successful_count(self) -> int:
@@ -64,4 +72,6 @@ class Result(Generic[T]):
 RedditPosts = Result[RedditPost]
 TitleMetadatas = Result[PhotoMetadata]
 S3Images = Result[List[S3Image]]
+Colors = Result[List[Color]]
+Keywords = Result[List[Keyword]]
 FinalPosts = Result[UploadPost]

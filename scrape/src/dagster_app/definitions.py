@@ -1,13 +1,45 @@
-from analogdb.models import Meta
 import dagster as dg
-from .resources import AnalogDBResource, MetadataResource, RedditResource
-from .assets import analogdb_permalinks, analogdb_posts, reddit_posts
+
+from dagster_app.constants import BLACKLIST_PATH, KEYWORD_LIMIT
+from .resources import (
+    AnalogDBResource,
+    ImageProcessorResource,
+    KeywordBlacklistResource,
+    KeywordExtractorResource,
+    MetadataResource,
+    RedditResource,
+    StorageResource,
+)
+from .assets import (
+    analogdb_permalinks,
+    analogdb_posts,
+    colors,
+    combine,
+    debug_posts,
+    keywords,
+    reddit_posts,
+    s3_images,
+    title_metadata,
+    upload_posts,
+)
 from dotenv import load_dotenv
+from dagster_aws.s3 import S3Resource
 
 load_dotenv()
 
 defs = dg.Definitions(
-    assets=[analogdb_posts, analogdb_permalinks, reddit_posts],
+    assets=[
+        analogdb_posts,
+        analogdb_permalinks,
+        reddit_posts,
+        title_metadata,
+        s3_images,
+        colors,
+        keywords,
+        combine,
+        upload_posts,
+        debug_posts,
+    ],
     resources={
         "analogdb": AnalogDBResource(
             base_url=dg.EnvVar("ANALOGDB_ENDPOINT"),
@@ -19,10 +51,20 @@ defs = dg.Definitions(
             client_secret=dg.EnvVar("REDDIT_CLIENT_SECRET"),
             user_agent=dg.EnvVar("REDDIT_USER_AGENT"),
         ),
+        "image_processor": ImageProcessorResource(),
         "metadata": MetadataResource(
             openai_url=dg.EnvVar("OPENROUTER_BASE_URL"),
             openai_key=dg.EnvVar("OPENROUTER_API_KEY"),
             openai_model=dg.EnvVar("OPENROUTER_MODEL"),
         ),
+        "storage": StorageResource(
+            s3_resource=S3Resource(
+                aws_access_key_id=dg.EnvVar("AWS_ACCESS_KEY_ID"),
+                aws_secret_access_key=dg.EnvVar("AWS_SECRET_ACCESS_KEY"),
+                region_name=dg.EnvVar("AWS_REGION"),
+            )
+        ),
+        "keyword_extractor": KeywordExtractorResource(max_keywords=KEYWORD_LIMIT),
+        "keyword_blacklist": KeywordBlacklistResource(file_path=BLACKLIST_PATH),
     },
 )
