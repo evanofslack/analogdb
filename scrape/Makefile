@@ -14,3 +14,6 @@ run :
 source :
 	source .venv/bin/activate
 
+.PHONY: spacy
+spacy :
+	uv run -- spacy download en_core_web_lg
