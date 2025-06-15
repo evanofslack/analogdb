@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Dict, Generic, TypeVar, Set, List
+from typing import Dict, Generic, TypeVar, Set, Type, List
 from enum import Enum
-from scrape.models import Color, PhotoMetadata, RedditPost, UploadPost, S3Image, Keyword
-from dagster import make_python_type_usable_as_dagster_type, DagsterType
+from dagster import (
+    make_python_type_usable_as_dagster_type,
+    DagsterType,
+    TypeCheck,
+)
 
 T = TypeVar("T")
 
@@ -70,18 +73,57 @@ class Result(Generic[T]):
         )
 
 
-ResultDagsterType = DagsterType.from_builtin_enum(Result)
+def create_result_type_check(expected_inner_type: Type | None = None):
+    """Factory function to create type check functions for specific Result types"""
 
-RedditPosts = Result[RedditPost]
-TitleMetadatas = Result[PhotoMetadata]
-S3Images = Result[List[S3Image]]
-Colors = Result[List[Color]]
-Keywords = Result[List[Keyword]]
-FinalPosts = Result[UploadPost]
+    def type_check_fn(context, value):
+        if not isinstance(value, Result):
+            return TypeCheck(
+                success=False,
+                description=f"Expected Result, got {type(value).__name__}",
+            )
 
-make_python_type_usable_as_dagster_type(RedditPosts, ResultDagsterType)
-make_python_type_usable_as_dagster_type(TitleMetadatas, ResultDagsterType)
-make_python_type_usable_as_dagster_type(S3Images, ResultDagsterType)
-make_python_type_usable_as_dagster_type(Colors, ResultDagsterType)
-make_python_type_usable_as_dagster_type(Keywords, ResultDagsterType)
-make_python_type_usable_as_dagster_type(FinalPosts, ResultDagsterType)
+        if not isinstance(value.data, dict):
+            return TypeCheck(
+                success=False, description="Result.data must be a dictionary"
+            )
+
+        if not isinstance(value.status, dict):
+            return TypeCheck(
+                success=False, description="Result.status must be a dictionary"
+            )
+
+        if not isinstance(value.errors, dict):
+            return TypeCheck(
+                success=False, description="Result.errors must be a dictionary"
+            )
+
+        for status_val in value.status.values():
+            if not isinstance(status_val, Status):
+                return TypeCheck(
+                    success=False,
+                    description=f"All status values must be Status enum, found {type(status_val)}",
+                )
+
+        # validate inner type if specified
+        if expected_inner_type and value.data:
+            sample_value = next(iter(value.data.values()))
+            if not isinstance(sample_value, expected_inner_type):
+                return TypeCheck(
+                    success=False,
+                    description=f"Expected inner type {expected_inner_type.__name__}, got {type(sample_value).__name__}",
+                )
+
+        return TypeCheck(success=True)
+
+    return type_check_fn
+
+
+ResultDagsterType = DagsterType(
+    type_check_fn=create_result_type_check(),
+    name="Result",
+    description="Generic result container",
+    typing_type=Result,
+)
+
+make_python_type_usable_as_dagster_type(Result, ResultDagsterType)

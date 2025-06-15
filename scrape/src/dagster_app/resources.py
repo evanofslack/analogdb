@@ -2,7 +2,7 @@ import praw
 from dagster import ConfigurableResource
 from dagster_aws.s3 import S3Resource
 from analogdb.client import Client
-from scrape.keywords import KeywordExtractor
+from scrape.keywords import KeywordExtractor, KeywordBlacklist
 from scrape.metadata import MetadataExtractor
 from scrape.reddit import RedditScraper
 from scrape.image import ImageProcessor
@@ -66,14 +66,11 @@ class StorageResource(ConfigurableResource):
         self.s3_resource.get_client().put_object(
             Bucket=bucket, Key=key, Body=body, ContentType=content_type
         )
-        return f"https://{self.bucket}.s3.amazonaws.com/{key}"
+        return f"https://{bucket}.s3.amazonaws.com/{key}"
 
 
 class KeywordExtractorResource(ConfigurableResource):
     max_keywords: int
-
-    def __init__(self, max_keywords: int):
-        self.max_keywords = max_keywords
 
     def client(self) -> KeywordExtractor:
         return KeywordExtractor()
@@ -82,16 +79,5 @@ class KeywordExtractorResource(ConfigurableResource):
 class KeywordBlacklistResource(ConfigurableResource):
     file_path: str
 
-    def __init__(self, file_path: str):
-        self._file_path = file_path
-        self.blacklist = self._load_blacklist()
-
-    def _load_blacklist(self) -> Set[str] | None:
-        file_path = Path(self._file_path)
-
-        if not file_path.exists():
-            return None
-
-        with open(file_path, "r", encoding="utf-8") as f:
-            words = [line.strip() for line in f.readlines()]
-            return set(word for word in words if word)
+    def client(self) -> KeywordBlacklist:
+        return KeywordBlacklist(self.file_path)
