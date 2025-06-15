@@ -1,9 +1,25 @@
 import spacy
 import string
 import math
+from pathlib import Path
 from collections import Counter
 from typing import List, Optional, Set
+from functools import cached_property
 from .models import RedditComment, Keyword
+
+
+class KeywordBlacklist:
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+
+    @cached_property
+    def blacklist(self) -> Set[str] | None:
+        file_path = Path(self.file_path)
+        if not file_path.exists():
+            return None
+        with open(file_path, "r", encoding="utf-8") as f:
+            words = [line.strip() for line in f.readlines()]
+            return set(word for word in words if word)
 
 
 class KeywordExtractor:
