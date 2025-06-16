@@ -1,14 +1,15 @@
+from pathlib import Path
+from typing import Optional, Set
+
 import praw
+from analogdb.client import Client
 from dagster import ConfigurableResource
 from dagster_aws.s3 import S3Resource
-from analogdb.client import Client
-from scrape.keywords import KeywordExtractor, KeywordBlacklist
+from openai import OpenAI
+from scrape.image import ImageProcessor
+from scrape.keywords import KeywordBlacklist, KeywordExtractor
 from scrape.metadata import MetadataExtractor
 from scrape.reddit import RedditScraper
-from scrape.image import ImageProcessor
-from typing import Optional, Set
-from openai import OpenAI
-from pathlib import Path
 
 
 class AnalogDBResource(ConfigurableResource):

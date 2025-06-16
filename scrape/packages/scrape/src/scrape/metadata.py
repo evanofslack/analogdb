@@ -1,7 +1,9 @@
-import re
 import json
-from typing import Optional, Tuple, List, Dict
+import re
+from typing import Dict, List, Optional, Tuple
+
 from openai import OpenAI
+
 from .models import PhotoMetadata
 
 

@@ -1,10 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Dict, Generic, TypeVar, Set, Type, List
 from enum import Enum
+from typing import Dict, Generic, List, Set, Type, TypeVar
+
 from dagster import (
-    make_python_type_usable_as_dagster_type,
     DagsterType,
     TypeCheck,
+    make_python_type_usable_as_dagster_type,
 )
 
 T = TypeVar("T")

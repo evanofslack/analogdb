@@ -32,6 +32,9 @@ scrape = { workspace = true }
 [tool.dagster]
 module_name = "dagster_app.definitions"
 
+[tool.ruff.lint]
+select = ["I"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

@@ -1,11 +1,13 @@
-import spacy
-import string
 import math
-from pathlib import Path
+import string
 from collections import Counter
-from typing import List, Optional, Set
 from functools import cached_property
-from .models import RedditComment, Keyword
+from pathlib import Path
+from typing import List, Optional, Set
+
+import spacy
+
+from .models import Keyword, RedditComment
 
 
 class KeywordBlacklist:

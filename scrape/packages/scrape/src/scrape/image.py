@@ -1,5 +1,6 @@
+import uuid
 from io import BytesIO
-from typing import Dict, List, Optional, Tuple, Protocol
+from typing import Dict, List, Optional, Protocol, Tuple
 
 import extcolors
 import numpy as np
@@ -7,20 +8,19 @@ import requests
 import webcolors
 from PIL import Image, ImageChops
 from retry import retry
-import uuid
 from scipy.spatial import KDTree
 
 from .constants import (
-    LOW_RES,
-    MEDIUM_RES,
-    HIGH_RES,
-    RAW_RES,
-    COLOR_LIMIT,
-    COLOR_TOLERANCE,
     AWS_BUCKET_PHOTOS,
     CLOUDFRONT_URL,
+    COLOR_LIMIT,
+    COLOR_TOLERANCE,
+    HIGH_RES,
+    LOW_RES,
+    MEDIUM_RES,
+    RAW_RES,
 )
-from .models import Color, S3Image, RedditPost
+from .models import Color, RedditPost, S3Image
 
 
 class S3(Protocol):
