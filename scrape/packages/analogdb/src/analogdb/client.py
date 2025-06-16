@@ -1,10 +1,12 @@
-import requests
+import functools
 import json
 import time
-import functools
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
+
+import requests
 from requests.auth import HTTPBasicAuth
-from .models import Post, Posts, Image, Meta, PostsFilter, PostPatch
+
+from .models import Image, Meta, Post, PostPatch, Posts, PostsFilter
 
 DEFAULT_PAGE_SIZE = 20
 DEFAULT_SORT = "latest"
@@ -101,13 +103,13 @@ class Client:
         return response
 
     @retry(delay=1, times=5)
-    def patch_post(self, post_id: int, patch: PostPatch) -> Optional[requests.Response]:
+    def patch_post(self, patch: PostPatch) -> Optional[requests.Response]:
         if patch.is_empty():
             return None
 
         json_patch = json.dumps(patch.to_json())
         response = self.session.patch(
-            f"{self.base_url}/post/{post_id}", data=json_patch, auth=self.auth
+            f"{self.base_url}/post/{patch.id}", data=json_patch, auth=self.auth
         )
         response.raise_for_status()
         return response

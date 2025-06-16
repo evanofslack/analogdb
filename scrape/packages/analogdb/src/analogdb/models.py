@@ -1,5 +1,5 @@
 from dataclasses import dataclass, fields
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -92,6 +92,7 @@ class PostsFilter:
 
 @dataclass
 class PostPatch:
+    id: int
     score: Optional[int]
     nsfw: Optional[bool]
     greyscale: Optional[bool]
@@ -133,6 +134,19 @@ class PostPatch:
             if self.metadata.aperture is not None:
                 body["aperture"] = self.metadata.aperture
         return body
+
+
+def create_post_patch(
+    id: int,
+    score: Optional[int] = None,
+    nsfw: Optional[bool] = None,
+    greyscale: Optional[bool] = None,
+    sprocket: Optional[bool] = None,
+    colors: Optional[List[Color]] = None,
+    keywords: Optional[List[Keyword]] = None,
+    metadata: Optional[PhotoMetadata] = None,
+):
+    return PostPatch(id, score, nsfw, greyscale, sprocket, colors, keywords, metadata)
 
 
 @dataclass
