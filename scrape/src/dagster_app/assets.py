@@ -1,8 +1,9 @@
-import dagster as dg
-from dagster import In, Out
 import json
-from analogdb.models import Post
 from dataclasses import asdict
+from typing import List
+
+import dagster as dg
+from analogdb.models import Post, PostPatch, create_post_patch
 from scrape.models import (
     Color,
     Keyword,
@@ -12,7 +13,7 @@ from scrape.models import (
     UploadPost,
     create_upload_post,
 )
-from typing import List
+
 from .resources import (
     AnalogDBResource,
     ImageProcessorResource,
@@ -22,7 +23,7 @@ from .resources import (
     RedditResource,
     StorageResource,
 )
-from .result import Result, Status, ResultDagsterType
+from .result import Result, ResultDagsterType, Status
 
 
 @dg.asset
@@ -47,21 +48,45 @@ def analogdb_permalinks(analogdb: AnalogDBResource) -> List[str]:
 def reddit_posts(
     reddit: RedditResource, analogdb_permalinks: List[str]
 ) -> Result[RedditPost]:
-    api_result = reddit.client().scrape_posts("analog", 7, analogdb_permalinks, "hot")
-    for err in api_result.errors:
+    result_analog = reddit.client().scrape_posts(
+        "analog", 15, analogdb_permalinks, "top"
+    )
+    dg.get_dagster_logger().info(
+        f"Scraped {len(result_analog.posts)} posts from r/analog"
+    )
+
+    result_analog_bw = reddit.client().scrape_posts(
+        "analog_bw", 2, analogdb_permalinks, "top"
+    )
+    dg.get_dagster_logger().info(
+        f"Scraped {len(result_analog.posts)} posts from r/analog_bw"
+    )
+
+    result_sprocket = reddit.client().scrape_posts(
+        "SprocketShots", 2, analogdb_permalinks, "top"
+    )
+    dg.get_dagster_logger().info(
+        f"Scraped {len(result_analog.posts)} posts from r/sprocketshots"
+    )
+
+    posts = result_analog.posts + result_analog_bw.posts + result_sprocket.posts
+    errors = result_analog.errors + result_analog_bw.errors + result_sprocket.errors
+    for err in errors:
         dg.get_dagster_logger().warn(f"Scrape reddit post, {err}")
 
     data = {}
     status = {}
 
-    for post in api_result.posts:
-        post_id = post.permalink
-        data[post_id] = post
-        status[post_id] = Status.SUCCESS
+    for p in posts:
+        id = p.permalink
+        data[id] = p
+        status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
 
-    dg.get_dagster_logger().info(f"Scraped {result.successful_count()} posts")
+    dg.get_dagster_logger().info(
+        f"Scraped {result.successful_count()} successful posts"
+    )
 
     return result
 
@@ -219,6 +244,32 @@ def upload_posts(analogdb: AnalogDBResource, final_posts) -> None:
     for _, p in final_posts.successful().items():
         analogdb.upload(p)
     dg.get_dagster_logger().info(f"Uploaded {len(final_posts)} posts")
+
+
+@dg.asset
+def updated_posts_scores(
+    analogdb_posts: List[Post], reddit: RedditResource
+) -> List[PostPatch]:
+    r = reddit.client()
+    patches: List[PostPatch] = []
+    for p in analogdb_posts:
+        score = r.updated_score(p.permalink, p.score)
+        if score is None:
+            continue
+        patch = create_post_patch(id=p.id, score=score)
+        patches.append(patch)
+    dg.get_dagster_logger().info(f"Got {len(patches)} updated post scores")
+    return patches
+
+
+@dg.asset
+def patch_posts_scores(
+    updated_posts_scores: List[PostPatch], analogdb: AnalogDBResource
+) -> None:
+    adb = analogdb.client()
+    for p in updated_posts_scores:
+        adb.patch_post(p)
+    dg.get_dagster_logger().info(f"Patched {len(updated_posts_scores)} post scores")
 
 
 @dg.asset

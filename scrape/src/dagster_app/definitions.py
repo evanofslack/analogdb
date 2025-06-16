@@ -1,6 +1,24 @@
 import dagster as dg
+from dagster_aws.s3 import S3Resource
+from dotenv import load_dotenv
 
 from dagster_app.constants import BLACKLIST_PATH, KEYWORD_LIMIT
+
+from .assets import (
+    analogdb_permalinks,
+    analogdb_posts,
+    colors,
+    debug_posts,
+    final_posts,
+    keywords,
+    patch_posts_scores,
+    reddit_posts,
+    s3_images,
+    title_metadatas,
+    updated_posts_scores,
+    upload_posts,
+)
+from .jobs import scrape_job
 from .resources import (
     AnalogDBResource,
     ImageProcessorResource,
@@ -10,20 +28,7 @@ from .resources import (
     RedditResource,
     StorageResource,
 )
-from .assets import (
-    analogdb_permalinks,
-    analogdb_posts,
-    colors,
-    final_posts,
-    debug_posts,
-    keywords,
-    reddit_posts,
-    s3_images,
-    title_metadatas,
-    upload_posts,
-)
-from dotenv import load_dotenv
-from dagster_aws.s3 import S3Resource
+from .schedules import scrape_analog_schedule
 
 load_dotenv()
 
@@ -39,6 +44,8 @@ defs = dg.Definitions(
         final_posts,
         upload_posts,
         debug_posts,
+        updated_posts_scores,
+        patch_posts_scores,
     ],
     resources={
         "analogdb": AnalogDBResource(
@@ -67,4 +74,6 @@ defs = dg.Definitions(
         "keyword_extractor": KeywordExtractorResource(max_keywords=KEYWORD_LIMIT),
         "keyword_blacklist": KeywordBlacklistResource(file_path=BLACKLIST_PATH),
     },
+    jobs=[scrape_job],
+    schedules=[scrape_analog_schedule],
 )
