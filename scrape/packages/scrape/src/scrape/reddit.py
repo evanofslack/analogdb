@@ -1,13 +1,13 @@
 from typing import List, Optional
 
 import praw
-from praw.models import Comment
 import requests
 from PIL.Image import Image
+from praw.models import Comment
 
 from .constants import BW_SUB, REDDIT_URL, SPROCKET_SUB, VALID_CONTENT
 from .image import ImageProcessor
-from .models import RedditPost, ScrapeResult, ScrapeError, RedditComment
+from .models import RedditComment, RedditPost, ScrapeError, ScrapeResult
 
 
 class RedditScrapingError(Exception):
@@ -79,6 +79,17 @@ class RedditScraper:
 
         return comments
 
+    def updated_score(self, url: str, score: int) -> int | None:
+        try:
+            submission = self.reddit.submission(url=url)
+            new_score = submission.score
+        except Exception:
+            return None
+
+        # only update the score if the new score is higher than original
+        if new_score > score:
+            return new_score
+
     def _get_submissions(
         self, subreddit: str, num_posts: int, sort: str
     ) -> List[praw.reddit.Submission]:
@@ -87,7 +98,7 @@ class RedditScraper:
         if sort == "new":
             submissions = subreddit_obj.new(limit=num_posts)
         elif sort == "top":
-            submissions = subreddit_obj.top(limit=num_posts)
+            submissions = subreddit_obj.top(limit=num_posts, time_filter="day")
         else:
             submissions = subreddit_obj.hot(limit=num_posts)
 
