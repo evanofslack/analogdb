@@ -1,4 +1,5 @@
 import math
+import json
 import string
 from collections import Counter
 from functools import cached_property
@@ -7,7 +8,9 @@ from typing import List, Optional, Set
 
 import spacy
 
+from .constants import AWS_BUCKET_COMMENTS
 from .models import Keyword, RedditComment
+from .s3 import S3
 
 
 class KeywordBlacklist:
@@ -62,6 +65,12 @@ class KeywordExtractor:
 
         keywords = self._counter_to_keywords(counter=combined, limit=limit)
         return keywords
+
+    def upload_s3(self, id: int, comments: List[RedditComment], s3: S3) -> None:
+        bucket = AWS_BUCKET_COMMENTS
+        body = json.dumps([comment.__dict__ for comment in comments]).encode("UTF-8")
+        filename = f"{id}.json"
+        s3.put_object(bucket, filename, body, "json")
 
     def _extract_keywords(
         self, text: str, blacklist: Optional[Set[str]] = None
