@@ -21,12 +21,7 @@ from .constants import (
     RAW_RES,
 )
 from .models import Color, RedditPost, S3Image
-
-
-class S3(Protocol):
-    def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> str:
-        """Upload file data and return the public URL."""
-        ...
+from .s3 import S3
 
 
 class ImageProcessor:
@@ -162,12 +157,11 @@ class ImageProcessor:
         img_resized.thumbnail(size, Image.Resampling.LANCZOS)
         return img_resized, img_resized.width, img_resized.height
 
-    def image_to_bytes(self, image: Image.Image, content_type: str) -> BytesIO:
+    def image_to_bytes(self, image: Image.Image, content_type: str) -> bytes:
         image_bytes = BytesIO()
         format_name = content_type.removeprefix("image/")
         image.save(image_bytes, format_name)
-        image_bytes.seek(0)
-        return image_bytes
+        return image_bytes.getvalue()
 
     def extract_colors(
         self, image: Image.Image, count: int = COLOR_LIMIT
@@ -220,7 +214,7 @@ class ImageProcessor:
         return filename
 
     def _upload_image(
-        self, s3: S3, image: Image, filename: str, content_type: str
+        self, s3: S3, image: Image.Image, filename: str, content_type: str
     ) -> str:
         bucket = AWS_BUCKET_PHOTOS
         img_bytes = self.image_to_bytes(image=image, content_type=content_type)
