@@ -11,14 +11,18 @@ from .assets import (
     debug_posts,
     final_posts,
     keywords,
-    patch_posts_scores,
+    patch_post_keywords,
+    patch_post_scores,
+    reddit_comments_to_s3,
     reddit_posts,
     s3_images,
     title_metadatas,
-    updated_posts_scores,
+    updated_post_keywords,
+    updated_post_scores,
+    updated_reddit_comments,
     upload_posts,
 )
-from .jobs import scrape_job
+from .jobs import patch_keywords_job, patch_scores_job, scrape_job
 from .resources import (
     AnalogDBResource,
     ImageProcessorResource,
@@ -44,8 +48,12 @@ defs = dg.Definitions(
         final_posts,
         upload_posts,
         debug_posts,
-        updated_posts_scores,
-        patch_posts_scores,
+        updated_post_scores,
+        patch_post_scores,
+        updated_reddit_comments,
+        reddit_comments_to_s3,
+        updated_post_keywords,
+        patch_post_keywords,
     ],
     resources={
         "analogdb": AnalogDBResource(
@@ -74,6 +82,6 @@ defs = dg.Definitions(
         "keyword_extractor": KeywordExtractorResource(max_keywords=KEYWORD_LIMIT),
         "keyword_blacklist": KeywordBlacklistResource(file_path=BLACKLIST_PATH),
     },
-    jobs=[scrape_job],
+    jobs=[scrape_job, patch_scores_job, patch_keywords_job],
     schedules=[scrape_analog_schedule],
 )

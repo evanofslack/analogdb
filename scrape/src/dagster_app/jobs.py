@@ -6,11 +6,15 @@ from .assets import (
     colors,
     final_posts,
     keywords,
-    patch_posts_scores,
+    patch_post_keywords,
+    patch_post_scores,
+    reddit_comments_to_s3,
     reddit_posts,
     s3_images,
     title_metadatas,
-    updated_posts_scores,
+    updated_post_keywords,
+    updated_post_scores,
+    updated_reddit_comments,
     upload_posts,
 )
 
@@ -32,7 +36,18 @@ patch_scores_job = dg.define_asset_job(
     name="update_post_scores",
     selection=[
         analogdb_posts,
-        updated_posts_scores,
-        patch_posts_scores,
+        updated_post_scores,
+        patch_post_scores,
+    ],
+)
+
+patch_keywords_job = dg.define_asset_job(
+    name="update_post_keywords",
+    selection=[
+        analogdb_posts,
+        updated_reddit_comments,
+        reddit_comments_to_s3,
+        updated_post_keywords,
+        patch_post_keywords,
     ],
 )

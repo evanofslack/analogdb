@@ -1,16 +1,16 @@
 import json
 from dataclasses import asdict
-from typing import List
+from typing import List, Tuple
 
+import analogdb.models as adb
 import dagster as dg
-from analogdb.models import Post, PostPatch, create_post_patch
 from scrape.models import (
     Color,
     Keyword,
     PhotoMetadata,
+    RedditComment,
     RedditPost,
     S3Image,
-    UploadPost,
     create_upload_post,
 )
 
@@ -27,7 +27,7 @@ from .result import Result, ResultDagsterType, Status
 
 
 @dg.asset
-def analogdb_posts(analogdb: AnalogDBResource) -> List[Post]:
+def analogdb_posts(analogdb: AnalogDBResource) -> List[adb.Post]:
     posts = analogdb.client().get_posts_all(count=100)
 
     dg.get_dagster_logger().info(f"Fetched {len(posts)} posts")
@@ -172,15 +172,18 @@ def keywords(
 ) -> Result[Keyword]:
     data = {}
     status = {}
+    r = reddit.client()
+    kw = keyword_extractor.client()
+    blacklist = keyword_blacklist.client().blacklist
 
     for id, p in reddit_posts.successful().items():
-        comments = reddit.client().scrape_comments(p.permalink)
-        keywords = keyword_extractor.client().post_keywords(
+        comments = r.scrape_comments(p.permalink)
+        keywords = kw.post_keywords(
             p.title,
             p.score,
             comments,
             keyword_extractor.max_keywords,
-            keyword_blacklist.client().blacklist,
+            blacklist,
         )
         id = p.permalink
         data[id] = keywords
@@ -247,29 +250,96 @@ def upload_posts(analogdb: AnalogDBResource, final_posts) -> None:
 
 
 @dg.asset
-def updated_posts_scores(
-    analogdb_posts: List[Post], reddit: RedditResource
-) -> List[PostPatch]:
+def updated_post_scores(
+    analogdb_posts: List[adb.Post], reddit: RedditResource
+) -> List[adb.PostPatch]:
     r = reddit.client()
-    patches: List[PostPatch] = []
+    patches: List[adb.PostPatch] = []
     for p in analogdb_posts:
         score = r.updated_score(p.permalink, p.score)
         if score is None:
             continue
-        patch = create_post_patch(id=p.id, score=score)
+        patch = adb.create_post_patch(id=p.id, score=score)
         patches.append(patch)
     dg.get_dagster_logger().info(f"Got {len(patches)} updated post scores")
     return patches
 
 
 @dg.asset
-def patch_posts_scores(
-    updated_posts_scores: List[PostPatch], analogdb: AnalogDBResource
+def patch_post_scores(
+    updated_post_scores: List[adb.PostPatch], analogdb: AnalogDBResource
 ) -> None:
     adb = analogdb.client()
-    for p in updated_posts_scores:
+    for p in updated_post_scores:
         adb.patch_post(p)
-    dg.get_dagster_logger().info(f"Patched {len(updated_posts_scores)} post scores")
+    dg.get_dagster_logger().info(f"Patched {len(updated_post_scores)} post scores")
+
+
+@dg.asset
+def updated_reddit_comments(
+    analogdb_posts: List[adb.Post],
+    reddit: RedditResource,
+) -> List[Tuple[adb.Post, List[RedditComment]]]:
+    r = reddit.client()
+
+    post_comments: List[Tuple[adb.Post, List[RedditComment]]] = []
+    for p in analogdb_posts:
+        c = r.scrape_comments(p.permalink)
+        post_comments.append((p, c))
+    dg.get_dagster_logger().info(f"Got {len(post_comments)} updated reddit comments")
+    return post_comments
+
+
+@dg.asset
+def reddit_comments_to_s3(
+    updated_reddit_comments: List[Tuple[adb.Post, List[RedditComment]]],
+    keyword_extractor: KeywordExtractorResource,
+    storage: StorageResource,
+) -> None:
+    extractor = keyword_extractor.client()
+
+    for p, c in updated_reddit_comments:
+        extractor.upload_s3(p.id, c, storage)
+    dg.get_dagster_logger().info(
+        f"Upload {len(updated_reddit_comments)} post comments to s3"
+    )
+
+
+@dg.asset
+def updated_post_keywords(
+    updated_reddit_comments: List[Tuple[adb.Post, List[RedditComment]]],
+    keyword_extractor: KeywordExtractorResource,
+    keyword_blacklist: KeywordBlacklistResource,
+) -> List[adb.PostPatch]:
+    kw = keyword_extractor.client()
+    blacklist = keyword_blacklist.client().blacklist
+
+    patches: List[adb.PostPatch] = []
+    for p, c in updated_reddit_comments:
+        adb_kws: List[adb.Keyword] = []
+        keywords = kw.post_keywords(
+            p.title,
+            p.score,
+            c,
+            keyword_extractor.max_keywords,
+            blacklist,
+        )
+        for k in keywords:
+            adb_kws.append(adb.Keyword(k.word, k.weight))
+        patch = adb.create_post_patch(id=p.id, keywords=adb_kws)
+        patches.append(patch)
+    dg.get_dagster_logger().info(f"Got {len(patches)} updated post scores")
+    return patches
+
+
+@dg.asset
+def patch_post_keywords(
+    updated_post_keywords: List[adb.PostPatch], analogdb: AnalogDBResource
+) -> None:
+    adb = analogdb.client()
+    for p in updated_post_keywords:
+        adb.patch_post(p)
+    dg.get_dagster_logger().info(f"Patched {len(updated_post_keywords)} post keywords")
 
 
 @dg.asset
