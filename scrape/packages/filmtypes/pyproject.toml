@@ -1,0 +1,19 @@
+[project]
+name = "filmtypes"
+version = "0.1.0"
+description = "Filmtypes scraping"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "beautifulsoup4>=4.13.4",
+    "requests>=2.32.3",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
