@@ -11,9 +11,10 @@ from scrape.models import (
     RedditComment,
     RedditPost,
     S3Image,
-    create_upload_post,
+    new_post_create,
 )
 
+from .convert import convert_create
 from .resources import (
     AnalogDBResource,
     ImageProcessorResource,
@@ -59,14 +60,14 @@ def reddit_posts(
         "analog_bw", 2, analogdb_permalinks, "top"
     )
     dg.get_dagster_logger().info(
-        f"Scraped {len(result_analog.posts)} posts from r/analog_bw"
+        f"Scraped {len(result_analog_bw.posts)} posts from r/analog_bw"
     )
 
     result_sprocket = reddit.client().scrape_posts(
         "SprocketShots", 2, analogdb_permalinks, "top"
     )
     dg.get_dagster_logger().info(
-        f"Scraped {len(result_analog.posts)} posts from r/sprocketshots"
+        f"Scraped {len(result_sprocket.posts)} posts from r/sprocketshots"
     )
 
     posts = result_analog.posts + result_analog_bw.posts + result_sprocket.posts
@@ -220,7 +221,7 @@ def final_posts(
 
     for id in ids:
         try:
-            final = create_upload_post(
+            final = new_post_create(
                 post=reddit_posts.data[id],
                 metadata=title_metadatas.data[id],
                 images=s3_images.data[id],
@@ -244,9 +245,10 @@ def final_posts(
 
 @dg.asset
 def upload_posts(analogdb: AnalogDBResource, final_posts) -> None:
+    adb = analogdb.client()
     for _, p in final_posts.successful().items():
-        analogdb.upload(p)
-    dg.get_dagster_logger().info(f"Uploaded {len(final_posts)} posts")
+        adb.upload_post(convert_create(p))
+    dg.get_dagster_logger().info(f"Uploaded {final_posts.successful_count()} posts")
 
 
 @dg.asset
