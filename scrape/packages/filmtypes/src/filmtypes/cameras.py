@@ -16,7 +16,6 @@ class CameraData:
     slug: str
     make: str
     type: str
-    manufacturer_country: Optional[str] = None
     description: Optional[str] = None
 
 
@@ -76,37 +75,24 @@ class CameraScraper:
 
     def extract_json(self, json: Dict[str, Any]) -> Optional[CameraData]:
         if not json or "@graph" not in json:
+            print("no graph")
             return None
 
-        types = json.get("@type", [])
-        if not isinstance(types, list):
-            types = [types] if types else []
+        for item in json["@graph"]:
+            if item.get("@type") and "Product" in item["@type"]:
+                name = item.get("name", "")
+                brand = item.get("brand", "")
+                url = item.get("url", "")
+                description = item.get("description")
+                slug = self.slug(brand, name)
 
-        if "Product" not in types or not json.get("name"):
-            return None
-
-        name = json.get("name", "")
-        brand = json.get("brand", "")
-        url = json.get("url", "")
-        description = json.get("description")
-
-        slug = self.slug(name, brand)
-
-        manufacturer_country = None
-        manufacturer = json.get("manufacturer", {})
-        if isinstance(manufacturer, dict):
-            address = manufacturer.get("address", {})
-            if isinstance(address, dict):
-                manufacturer_country = address.get("addressCountry")
-
-        return CameraData(
-            type=name,
-            make=brand,
-            url=url,
-            slug=slug,
-            description=description,
-            manufacturer_country=manufacturer_country,
-        )
+                return CameraData(
+                    type=name,
+                    make=brand,
+                    url=url,
+                    slug=slug,
+                    description=description,
+                )
 
     def slug(self, camera_make: str, camera_type: str) -> str:
         return (
@@ -131,6 +117,11 @@ class CameraScraper:
                 pass
 
     def normalize(self, camera: CameraData) -> CameraData:
+        camera.make = camera.make.lower()
+        camera.type = camera.type.lower()
+        camera.type = camera.type.lstrip(camera.make).strip()
+        camera.slug = self.slug(camera.make, camera.type)
+
         return camera
 
     def scrape_all(self, limit: Optional[int] = None) -> List[CameraData]:
@@ -172,7 +163,7 @@ class CameraScraper:
 def main():
     scraper = CameraScraper()
 
-    cameras = scraper.scrape_all(limit=100)
+    cameras = scraper.scrape_all()
     if cameras:
         print(f"\nSuccessfully scraped {len(cameras)} films")
         scraper.save_data(cameras)

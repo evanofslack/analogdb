@@ -70,11 +70,11 @@ class FilmScraper:
         print(f"Found {len(links)} film links")
         return links
 
-    def extract_json(self, json_ld: dict) -> dict:
-        if not json_ld or "@graph" not in json_ld:
+    def extract_json(self, json: dict) -> dict:
+        if not json or "@graph" not in json:
             return {}
 
-        for item in json_ld["@graph"]:
+        for item in json["@graph"]:
             if item.get("@type") and "Product" in item["@type"]:
                 data = {
                     "manufacturer": item.get("brand"),
@@ -305,7 +305,7 @@ class FilmScraper:
 def main():
     scraper = FilmScraper()
 
-    films = scraper.scrape_all(limit=100)
+    films = scraper.scrape_all()
     if films:
         print(f"\nSuccessfully scraped {len(films)} films")
         dedupe = scraper.deduplicate(films)
