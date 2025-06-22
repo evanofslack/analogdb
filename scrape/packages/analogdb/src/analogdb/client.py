@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from requests.auth import HTTPBasicAuth
 
-from .models import Image, Meta, Post, PostPatch, Posts, PostsFilter
+from .models import Image, Meta, Post, PostCreate, PostPatch, Posts, PostsFilter
 
 DEFAULT_PAGE_SIZE = 20
 DEFAULT_SORT = "latest"
@@ -95,8 +95,9 @@ class Client:
         posts = self.get_posts_all(count)
         return [post.permalink for post in posts]
 
-    def upload_post(self, post_data: Dict[str, Any]) -> requests.Response:
-        json_post = json.dumps(post_data)
+    @retry(delay=1, times=5)
+    def upload_post(self, post: PostCreate) -> requests.Response:
+        json_post = json.dumps(post.to_json())
         response = self.session.put(
             f"{self.base_url}/post", data=json_post, auth=self.auth
         )

@@ -9,6 +9,14 @@ class Image:
     width: int
     height: int
 
+    def to_json(self) -> Dict:
+        return {
+            "url": self.url,
+            "resolution": self.resolution,
+            "width": self.width,
+            "height": self.height,
+        }
+
 
 @dataclass
 class Color:
@@ -151,27 +159,14 @@ def create_post_patch(
 
 @dataclass
 class PostCreate:
-    url: str
     title: str
     author: str
     permalink: str
     score: int
     nsfw: bool
-    greyscale: bool
+    grayscale: bool
     time: int
-    width: int
-    height: int
     sprocket: bool
-
-    low_url: str
-    low_width: int
-    low_height: int
-    med_url: str
-    med_width: int
-    med_height: int
-    high_url: str
-    high_width: int
-    high_height: int
 
     camera_make: Optional[str]
     camera_model: Optional[str]
@@ -181,5 +176,39 @@ class PostCreate:
     focal_length: Optional[int]
     aperture: Optional[str]
 
+    images: List[Image]
     keywords: List[Keyword]
     colors: List[Color]
+
+    def to_json(self) -> Dict:
+        body = {}
+
+        body["title"] = self.title
+        body["author"] = self.author
+        body["permalink"] = self.permalink
+        body["nsfw"] = self.nsfw
+        body["grayscale"] = self.grayscale
+        body["unix_time"] = self.time
+        body["sprocket"] = self.sprocket
+        body["upvotes"] = self.score
+
+        if self.camera_make is not None:
+            body["camera_make"] = self.camera_make
+        if self.camera_model is not None:
+            body["camera_model"] = self.camera_model
+        if self.film_make is not None:
+            body["film_make"] = self.film_make
+        if self.film_type is not None:
+            body["film_type"] = self.film_type
+        if self.film_speed is not None:
+            body["film_speed"] = self.film_speed
+        if self.focal_length is not None:
+            body["focal_length"] = self.focal_length
+        if self.aperture is not None:
+            body["aperture"] = self.aperture
+
+        body["images"] = [img.to_json() for img in self.images]
+        body["keywords"] = [keyword.to_json() for keyword in self.keywords]
+        body["colors"] = [color.to_json() for color in self.colors]
+
+        return body
