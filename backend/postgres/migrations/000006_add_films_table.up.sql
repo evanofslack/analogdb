@@ -1,5 +1,3 @@
-BEGIN;
-
 CREATE TABLE films (
     id SERIAL PRIMARY KEY,
     film_make VARCHAR(255),
@@ -9,11 +7,9 @@ CREATE TABLE films (
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE ( film_make, film_type, film_speed)
+    UNIQUE (film_make, film_type, film_speed)
 );
 
 CREATE INDEX idx_films_type ON films (film_type);
 
 CREATE INDEX idx_films_make ON films (film_make);
-
-COMMIT;

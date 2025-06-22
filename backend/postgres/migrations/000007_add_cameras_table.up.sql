@@ -1,5 +1,3 @@
-BEGIN;
-
 CREATE TABLE cameras (
     id SERIAL PRIMARY KEY,
     camera_make VARCHAR(255) NOT NULL,
@@ -13,5 +11,3 @@ CREATE TABLE cameras (
 CREATE INDEX idx_cameras_type ON cameras (camera_type);
 
 CREATE INDEX idx_cameras_make ON cameras (camera_make);
-
-COMMIT;
