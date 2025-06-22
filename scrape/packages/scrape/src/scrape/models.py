@@ -72,14 +72,14 @@ class Keyword:
 
 @dataclass
 class S3Image:
+    resolution: str
     url: str
     width: int
     height: int
 
 
 @dataclass
-class UploadPost:
-    url: str
+class CreatePost:
     title: str
     author: str
     permalink: str
@@ -87,19 +87,7 @@ class UploadPost:
     nsfw: bool
     grayscale: bool
     time: int
-    width: int
-    height: int
     sprocket: bool
-
-    low_url: str
-    low_width: int
-    low_height: int
-    med_url: str
-    med_width: int
-    med_height: int
-    high_url: str
-    high_width: int
-    high_height: int
 
     camera_make: Optional[str]
     camera_model: Optional[str]
@@ -109,27 +97,22 @@ class UploadPost:
     focal_length: Optional[int]
     aperture: Optional[str]
 
+    images: List[S3Image]
     keywords: List[Keyword]
     colors: List[Color]
 
 
-def create_upload_post(
+def new_post_create(
     post: RedditPost,
     metadata: PhotoMetadata,
     images: List[S3Image],
     keywords: List[Keyword],
     colors: List[Color],
-) -> UploadPost | None:
+) -> CreatePost | None:
     if len(images) < 4:
         return None
 
-    low_img = images[0]
-    med_img = images[1]
-    high_img = images[2]
-    raw_img = images[3]
-
-    up = UploadPost(
-        url=raw_img.url,
+    cp = CreatePost(
         title=post.title,
         author=post.author,
         permalink=post.permalink,
@@ -137,18 +120,7 @@ def create_upload_post(
         nsfw=post.nsfw,
         grayscale=post.grayscale,
         time=post.time,
-        width=raw_img.width,
-        height=raw_img.height,
         sprocket=post.sprocket,
-        low_url=low_img.url,
-        low_width=low_img.width,
-        low_height=low_img.height,
-        med_url=med_img.url,
-        med_width=med_img.width,
-        med_height=med_img.height,
-        high_url=high_img.url,
-        high_width=high_img.width,
-        high_height=high_img.height,
         camera_make=metadata.camera_make,
         camera_model=metadata.camera_model,
         film_make=metadata.film_make,
@@ -156,7 +128,8 @@ def create_upload_post(
         film_speed=metadata.film_speed,
         focal_length=metadata.focal_length,
         aperture=metadata.aperture,
+        images=images,
         keywords=keywords,
         colors=colors,
     )
-    return up
+    return cp

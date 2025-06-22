@@ -122,21 +122,27 @@ class ImageProcessor:
 
     def upload_s3(self, post: RedditPost, s3: S3) -> List[S3Image]:
         s3_images: List[S3Image] = []
-        resolutions: list[tuple[int, int] | None] = [
+        dimensions: list[tuple[int, int] | None] = [
             LOW_RES,
             MEDIUM_RES,
             HIGH_RES,
             RAW_RES,
         ]
-        for res in resolutions:
-            image, width, height = self.resize_image(image=post.image, size=res)
+        resolutions: list[str] = [
+            "low",
+            "medium",
+            "high",
+            "raw",
+        ]
+        for dim, res in zip(dimensions, resolutions):
+            image, width, height = self.resize_image(image=post.image, size=dim)
             filename = self._create_filename(content_type=post.content_type)
 
             url = self._upload_image(
                 s3=s3, image=image, filename=filename, content_type=post.content_type
             )
 
-            s3_image = S3Image(url=url, width=width, height=height)
+            s3_image = S3Image(resolution=res, url=url, width=width, height=height)
             s3_images.append(s3_image)
 
         return s3_images
