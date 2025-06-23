@@ -7,7 +7,7 @@ import (
 
 // Camera represents the source info for a camera
 type Camera struct {
-	Id          int    `json:"id"`
+	Id          int       `json:"id"`
 	Make        string    `json:"make"`
 	Model       string    `json:"model"`
 	Description string    `json:"description"`
@@ -16,5 +16,6 @@ type Camera struct {
 }
 
 type CameraService interface {
-	Cameras(ctx context.Context) ([]*Camera, error)
+	AllCameras(ctx context.Context) ([]*Camera, error)
+	CreateCamera(ctx context.Context, film *Camera) (*Camera, error)
 }

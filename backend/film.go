@@ -7,7 +7,7 @@ import (
 
 // Film represents the source info for a film
 type Film struct {
-	Id          int    `json:"id"`
+	Id          int       `json:"id"`
 	Make        string    `json:"make"`
 	Type        string    `json:"type"`
 	Speed       int       `json:"speed"`
@@ -18,5 +18,6 @@ type Film struct {
 }
 
 type FilmService interface {
-	Films(ctx context.Context) ([]*Film, error)
+	AllFilms(ctx context.Context) ([]*Film, error)
+	CreateFilm(ctx context.Context, film *Film) (*Film, error)
 }

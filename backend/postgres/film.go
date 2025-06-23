@@ -15,13 +15,66 @@ func NewFilmService(db *DB) *FilmService {
 	return &FilmService{db: db}
 }
 
-func (s *FilmService) Films(ctx context.Context) ([]*analogdb.Film, error) {
+func (s *FilmService) AllFilms(ctx context.Context) ([]*analogdb.Film, error) {
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 	return s.db.findFilms(ctx, tx)
+}
+
+func (s *FilmService) CreateFilm(ctx context.Context, film *analogdb.Film) (*analogdb.Film, error) {
+	tx, err := s.db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	created, err := s.db.createFilm(ctx, tx, film)
+	if err != nil {
+		return nil, err
+	}
+	return created, nil
+}
+
+func (db *DB) createFilm(ctx context.Context, tx *sql.Tx, film *analogdb.Film) (*analogdb.Film, error) {
+	var id int64
+
+	query := `
+	INSERT INTO films
+        (film_make, film_type, film_speed, color_type, description)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (film_make, film_type, film_speed) DO NOTHING
+        RETURNING id
+	`
+
+	stmt, err := tx.PrepareContext(ctx, query)
+	if err != nil {
+		db.logger.Error().Ctx(ctx).Err(err).Int64("film_id", id).Msg("Insert film")
+		return nil, err
+	}
+	defer stmt.Close()
+
+	err = stmt.QueryRowContext(
+		ctx,
+		film.Make,
+		film.Type,
+		film.Speed,
+		film.ColorType,
+		film.Description).Scan(&id)
+	if err != nil {
+		db.logger.Error().Err(err).Ctx(ctx).Int64("film_id", id).Msg("Insert film")
+		return nil, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	db.logger.Info().Ctx(ctx).Int64("film_id", id).Msg("Finished inserting film")
+	film.Id = int(id)
+
+	return film, nil
 }
 
 // findFilms is the general function responsible for handling all film queries
@@ -54,7 +107,7 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx) ([]*analogdb.Film, erro
 
 	films := make([]*analogdb.Film, 0)
 	for rows.Next() {
-	    var f analogdb.Film
+		var f analogdb.Film
 		if err := rows.Scan(
 			&f.Id,
 			&f.Make,

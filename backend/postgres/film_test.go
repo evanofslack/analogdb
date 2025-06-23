@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"context"
 	"testing"
+
+	"github.com/evanofslack/analogdb"
 )
 
-func TestFilmService(t *testing.T) {
+func TestFilmService_AllFilms(t *testing.T) {
 	db, cleanup := mustOpenWithSeed(t)
 	defer cleanup()
 
@@ -14,7 +16,7 @@ func TestFilmService(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("find all films", func(t *testing.T) {
-		films, err := service.Films(ctx)
+		films, err := service.AllFilms(ctx)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -26,7 +28,7 @@ func TestFilmService(t *testing.T) {
 	})
 
 	t.Run("verify film ordering", func(t *testing.T) {
-		films, err := service.Films(ctx)
+		films, err := service.AllFilms(ctx)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -52,7 +54,7 @@ func TestFilmService(t *testing.T) {
 	})
 
 	t.Run("verify film struct fields", func(t *testing.T) {
-		films, err := service.Films(ctx)
+		films, err := service.AllFilms(ctx)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -83,7 +85,7 @@ func TestFilmService(t *testing.T) {
 	})
 
 	t.Run("no duplicate films", func(t *testing.T) {
-		films, err := service.Films(ctx)
+		films, err := service.AllFilms(ctx)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -95,6 +97,94 @@ func TestFilmService(t *testing.T) {
 				t.Errorf("Duplicate film found: key=%s make=%s type=%s speed=%d (total_films=%d)", key, film.Make, film.Type, film.Speed, len(films))
 			}
 			seen[key] = true
+		}
+	})
+}
+
+func TestFilmService_CreateFilm(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewFilmService(db)
+	ctx := context.Background()
+
+	t.Run("create new film", func(t *testing.T) {
+		film := &analogdb.Film{
+			Make:        "ilford",
+			Type:        "hp5",
+			Speed:       400,
+			ColorType:   "bw",
+			Description: "High speed black and white film",
+		}
+
+		created, err := service.CreateFilm(ctx, film)
+		if err != nil {
+			t.Fatalf("CreateFilm failed: %v", err)
+		}
+
+		if created.Id <= 0 {
+			t.Errorf("Expected positive ID, got %d", created.Id)
+		}
+		if created.Make != film.Make {
+			t.Errorf("Expected Make %q, got %q", film.Make, created.Make)
+		}
+		if created.Type != film.Type {
+			t.Errorf("Expected Type %q, got %q", film.Type, created.Type)
+		}
+		if created.Speed != film.Speed {
+			t.Errorf("Expected Speed %d, got %d", film.Speed, created.Speed)
+		}
+		if created.ColorType != film.ColorType {
+			t.Errorf("Expected ColorType %q, got %q", film.ColorType, created.ColorType)
+		}
+		if created.Description != film.Description {
+			t.Errorf("Expected Description %q, got %q", film.Description, created.Description)
+		}
+	})
+
+	t.Run("create film increases count", func(t *testing.T) {
+		initialFilms, err := service.AllFilms(ctx)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+		initialCount := len(initialFilms)
+
+		film := &analogdb.Film{
+			Make:        "rollei",
+			Type:        "infrared",
+			Speed:       400,
+			ColorType:   "bw",
+			Description: "Infrared sensitive film",
+		}
+
+		_, err = service.CreateFilm(ctx, film)
+		if err != nil {
+			t.Fatalf("CreateFilm failed: %v", err)
+		}
+
+		filmsAfterCreate, err := service.AllFilms(ctx)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedCount := initialCount + 1
+		if len(filmsAfterCreate) != expectedCount {
+			t.Errorf("Expected %d films after creation, got %d", expectedCount, len(filmsAfterCreate))
+		}
+	})
+
+	t.Run("create duplicate film with conflict", func(t *testing.T) {
+		film := &analogdb.Film{
+			Make:        "kodak",
+			Type:        "tri-x",
+			Speed:       400,
+			ColorType:   "bw",
+			Description: "Duplicate film",
+		}
+
+		_, err := service.CreateFilm(ctx, film)
+		if err == nil {
+			t.Error("Expected error when creating duplicate film, got nil")
 		}
 	})
 }
