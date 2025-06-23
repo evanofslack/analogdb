@@ -534,8 +534,6 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 		return nil, 0, err
 	}
 
-	db.logger.Info().Ctx(ctx).Msg("Finished finding posts")
-
 	return posts, count, nil
 }
 

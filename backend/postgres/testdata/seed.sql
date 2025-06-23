@@ -126,10 +126,20 @@ INSERT INTO colors (hex, css, html, percent, post_id) VALUES
 
 -- Insert test post updates
 INSERT INTO post_updates (
-    post_id, score_update_time, nsfw_update_time, greyscale_update_time, 
+    post_id, score_update_time, nsfw_update_time, greyscale_update_time,
     sprocket_update_time, colors_update_time, keywords_update_time
 ) VALUES
-(1, 1641254400, NULL, NULL, NULL, 1641254400, 1641254400),
+(1, 1641254400, null, null, null, 1641254400, 1641254400),
 (2, 1641340800, 1641340800, 1641340800, 1641340800, 1641340800, 1641340800),
-(3, 1641427200, 1641427200, NULL, NULL, 1641427200, 1641427200);
+(3, 1641427200, 1641427200, null, null, 1641427200, 1641427200);
 
+INSERT INTO films (film_make, film_type, film_speed, color_type, description) VALUES
+('fuji', 'acros', 100, 'bw', 'Fine grain black and white'),
+('kodak', 'portra', 400, 'color', 'Professional color negative'),
+('kodak', 'tri-x', 400, 'bw', 'Classic black and white');
+
+
+INSERT INTO cameras (camera_make, camera_model, description) VALUES
+('canon', 'ae-1', 'Classic 35mm SLR camera'),
+('leica', 'm6', 'Premium rangefinder camera'),
+('nikon', 'fm2', 'Mechanical SLR with electronic shutter');
