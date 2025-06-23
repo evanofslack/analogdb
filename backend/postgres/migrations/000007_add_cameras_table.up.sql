@@ -2,9 +2,9 @@ CREATE TABLE cameras (
     id SERIAL PRIMARY KEY,
     camera_make VARCHAR(255) NOT NULL,
     camera_model VARCHAR(255) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    description TEXT NOT NULL,
+    created TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     UNIQUE (camera_make, camera_model)
 );
 
