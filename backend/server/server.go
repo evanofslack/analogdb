@@ -28,6 +28,8 @@ type Server struct {
 	hostname string
 
 	PostService       analogdb.PostService
+	FilmService       analogdb.FilmService
+	CameraService     analogdb.CameraService
 	ReadyService      analogdb.ReadyService
 	AuthorService     analogdb.AuthorService
 	ScrapeService     analogdb.ScrapeService
@@ -48,7 +50,7 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 
 	hostname, err := os.Hostname()
 	if err != nil {
-	    s.logger.Warn().Err(err).Msg("get hostname")
+		s.logger.Warn().Err(err).Msg("get hostname")
 		s.hostname = hostname
 	}
 
@@ -60,6 +62,8 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 
 	s.mountMiddleware()
 	s.mountPostHandlers()
+	s.mountFilmHandlers()
+	s.mountCameraHandlers()
 	s.mountAuthorHandlers()
 	s.mountSimilarityHandlers()
 	s.mountScrapeHandlers()

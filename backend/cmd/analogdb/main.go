@@ -144,6 +144,8 @@ func main() {
 
 	// need to clean up this dependency injection
 	var postService analogdb.PostService
+	var filmService analogdb.FilmService
+	var cameraService analogdb.CameraService
 	var authorService analogdb.AuthorService
 	var readyService analogdb.ReadyService
 	var scrapeService analogdb.ScrapeService
@@ -152,6 +154,8 @@ func main() {
 
 	// create service implementations
 	postService = postgres.NewPostService(db)
+	filmService = postgres.NewFilmService(db)
+	cameraService = postgres.NewCameraService(db)
 	authorService = postgres.NewAuthorService(db)
 	readyService = postgres.NewReadyService(db)
 	scrapeService = postgres.NewScrapeService(db)
@@ -171,6 +175,8 @@ func main() {
 	}
 
 	server.PostService = postService
+	server.FilmService = filmService
+	server.CameraService = cameraService
 	server.AuthorService = authorService
 	server.ReadyService = readyService
 	server.ScrapeService = scrapeService

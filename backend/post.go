@@ -13,7 +13,7 @@ const defaultMinColorPercent = 0.0
 // seeds for random post order
 var primes = []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 107, 113, 131, 137, 149, 167, 173, 179, 191, 197, 227, 233, 239, 251, 257, 263}
 
-// Image represents the source info for an image.
+// Image represents the source info for an image
 type Image struct {
 	Label  string `json:"resolution"`
 	Url    string `json:"url"`
@@ -31,7 +31,7 @@ type Color struct {
 
 // CreatePost is the model for creating a post.
 // This includes info from the original reddit post
-// as well as attributes about the image
+// as well as attributes about the image.
 type CreatePost struct {
 	Title       string    `json:"title"`
 	Author      string    `json:"author"`
