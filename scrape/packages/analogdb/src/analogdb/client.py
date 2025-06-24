@@ -6,7 +6,17 @@ from typing import Any, Dict, List, Optional
 import requests
 from requests.auth import HTTPBasicAuth
 
-from .models import Image, Meta, Post, PostCreate, PostPatch, Posts, PostsFilter
+from .models import (
+    CameraCreate,
+    FilmCreate,
+    Image,
+    Meta,
+    Post,
+    PostCreate,
+    PostPatch,
+    Posts,
+    PostsFilter,
+)
 
 DEFAULT_PAGE_SIZE = 20
 DEFAULT_SORT = "latest"
@@ -137,6 +147,22 @@ class Client:
 
         data = response.json()
         return data["ids"]
+
+    @retry(delay=1, times=5)
+    def upload_film(self, film: FilmCreate) -> requests.Response:
+        json_film = json.dumps(film.to_json())
+        response = self.session.put(
+            f"{self.base_url}/films", data=json_film, auth=self.auth
+        )
+        return response
+
+    @retry(delay=1, times=5)
+    def upload_camera(self, camera: CameraCreate) -> requests.Response:
+        json_camera = json.dumps(camera.to_json())
+        response = self.session.put(
+            f"{self.base_url}/cameras", data=json_camera, auth=self.auth
+        )
+        return response
 
     def encode_images(self, ids: List[int], batch_size: int) -> requests.Response:
         data = {"ids": ids, "batch_size": batch_size}
