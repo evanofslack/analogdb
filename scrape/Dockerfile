@@ -16,7 +16,7 @@ COPY packages/ packages/
 
 COPY src/ src/
 
-RUN uv sync --frozen
+RUN uv venv && uv sync --frozen
 
 COPY dagster.yaml ./
 
