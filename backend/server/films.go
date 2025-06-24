@@ -22,15 +22,10 @@ const (
 )
 
 func (s *Server) mountFilmHandlers() {
-	s.router.Route(camerasPath, func(r chi.Router) {
+	s.router.Route(filmsPath, func(r chi.Router) {
 		r.Get("/", s.getFilms)
-	})
-	s.router.Route(postPath, func(r chi.Router) {
 		r.With(s.auth).Put("/", s.createFilm)
 		r.With(s.auth).Post("/", s.createFilm)
-	})
-	s.router.Route(idsPath, func(r chi.Router) {
-		r.Get("/", s.allPostIDs)
 	})
 }
 

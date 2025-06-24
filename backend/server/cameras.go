@@ -24,13 +24,8 @@ const (
 func (s *Server) mountCameraHandlers() {
 	s.router.Route(camerasPath, func(r chi.Router) {
 		r.Get("/", s.getCameras)
-	})
-	s.router.Route(postPath, func(r chi.Router) {
 		r.With(s.auth).Put("/", s.createCamera)
 		r.With(s.auth).Post("/", s.createCamera)
-	})
-	s.router.Route(idsPath, func(r chi.Router) {
-		r.Get("/", s.allPostIDs)
 	})
 }
 
@@ -53,7 +48,7 @@ func (s *Server) makeCameraResponse(r *http.Request) (CamerasResponse, error) {
 		return resp, err
 	}
 	for _, c := range cameras {
-		resp.cameras = append(resp.cameras, *c)
+		resp.Cameras = append(resp.Cameras, *c)
 	}
 	return resp, nil
 }
