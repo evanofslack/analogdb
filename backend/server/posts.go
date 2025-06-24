@@ -37,7 +37,7 @@ type PatchResponse struct {
 	Message string `json:"message"`
 }
 
-type CreateResponse struct {
+type CreatePostResponse struct {
 	Message string        `json:"message"`
 	Post    analogdb.Post `json:"post"`
 }
@@ -201,7 +201,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	createdResponse := CreateResponse{
+	createdResponse := CreatePostResponse{
 		Message: "Success, post created",
 		Post:    *created,
 	}
