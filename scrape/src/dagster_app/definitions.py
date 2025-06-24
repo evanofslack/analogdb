@@ -2,7 +2,12 @@ import dagster as dg
 from dagster_aws.s3 import S3Resource
 from dotenv import load_dotenv
 
-from dagster_app.constants import BLACKLIST_PATH, KEYWORD_LIMIT
+from dagster_app.constants import (
+    BLACKLIST_PATH,
+    CAMERAS_PATH,
+    FILMS_PATH,
+    KEYWORD_LIMIT,
+)
 
 from .assets import (
     analogdb_permalinks,
@@ -25,6 +30,8 @@ from .assets import (
 from .jobs import patch_keywords_job, patch_scores_job, scrape_job
 from .resources import (
     AnalogDBResource,
+    CamerasJsonResource,
+    FilmsJsonResource,
     ImageProcessorResource,
     KeywordBlacklistResource,
     KeywordExtractorResource,
@@ -81,6 +88,8 @@ defs = dg.Definitions(
         ),
         "keyword_extractor": KeywordExtractorResource(max_keywords=KEYWORD_LIMIT),
         "keyword_blacklist": KeywordBlacklistResource(file_path=BLACKLIST_PATH),
+        "films_json": FilmsJsonResource(file_path=FILMS_PATH),
+        "cameras_json": CamerasJsonResource(file_path=CAMERAS_PATH),
     },
     jobs=[scrape_job, patch_scores_job, patch_keywords_job],
     schedules=[scrape_analog_schedule],

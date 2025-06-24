@@ -1,6 +1,6 @@
-from pathlib import Path
-from typing import Optional, Set
+from typing import Any, Dict, List, Optional
 
+import json
 import praw
 from analogdb.client import Client
 from dagster import ConfigurableResource
@@ -82,3 +82,19 @@ class KeywordBlacklistResource(ConfigurableResource):
 
     def client(self) -> KeywordBlacklist:
         return KeywordBlacklist(self.file_path)
+
+
+class FilmsJsonResource(ConfigurableResource):
+    file_path: str
+
+    def client(self) -> List[Dict[str, Any]]:
+        with open(self.file_path, "r") as f:
+            return json.load(f)
+
+
+class CamerasJsonResource(ConfigurableResource):
+    file_path: str
+
+    def client(self) -> List[Dict[str, Any]]:
+        with open(self.file_path, "r") as f:
+            return json.load(f)
