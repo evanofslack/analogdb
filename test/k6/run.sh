@@ -1,4 +1,4 @@
-#!/usr/bin/env zsh
+#!/usr/bin/env sh
 
 # This script simply executes a provided JavaScript test using
 # the local environment established with the `docker-compose`.
@@ -16,8 +16,5 @@ fi
 SCRIPT_NAME=$1
 TAG_NAME="$(basename -s .js $SCRIPT_NAME)-$(date +%s)"
 
-# start prom and grafana
-docker-compose up -d prometheus grafana
-
 # start the k6 load
-docker-compose run --rm -T k6 run -<$SCRIPT_NAME --tag testid=$TAG_NAME -o experimental-prometheus-rw
+docker compose run --rm -T k6 run -<$SCRIPT_NAME --tag testid=$TAG_NAME -o experimental-prometheus-rw
