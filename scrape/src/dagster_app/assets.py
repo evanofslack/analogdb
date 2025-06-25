@@ -1,7 +1,6 @@
 import json
 from dataclasses import asdict
 from typing import List, Tuple
-import requests
 
 import analogdb.models as adb
 import dagster as dg
