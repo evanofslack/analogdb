@@ -20,12 +20,6 @@ run_coordinator:
   module: dagster._core.run_coordinator
   class: DefaultRunCoordinator
 
-compute_logs:
-  module: dagster._core.storage.logs
-  class: LocalComputeLogManager
-  config:
-    base_dir: /app/dagster_storage/compute_logs
-
 telemetry:
   enabled: false
 
