@@ -1,6 +1,7 @@
 import json
 from dataclasses import asdict
 from typing import List, Tuple
+import requests
 
 import analogdb.models as adb
 import dagster as dg
@@ -17,6 +18,8 @@ from scrape.models import (
 from .convert import convert_create
 from .resources import (
     AnalogDBResource,
+    CamerasJsonResource,
+    FilmsJsonResource,
     ImageProcessorResource,
     KeywordBlacklistResource,
     KeywordExtractorResource,
@@ -359,3 +362,53 @@ def debug_posts(final_posts) -> None:
         json.dump(posts_dict, f, indent=2)
 
     logger.info("Saved all posts to debug_posts.json")
+
+
+@dg.asset
+def upload_films(films_json: FilmsJsonResource, analogdb: AnalogDBResource) -> None:
+    analog = analogdb.client()
+    success = 0
+    for f in films_json.client():
+        film = adb.FilmCreate(
+            type=f["type"],
+            make=f["make"],
+            speed=f["speed"],
+            color_type=f["color_type"],
+            description=f["description"],
+        )
+
+        response = analog.upload_film(film)
+        if response.status_code in [200, 201]:
+            dg.get_dagster_logger().debug(
+                f"Uploaded film: {film.make} {film.type} {film.speed}"
+            )
+            success += 1
+        else:
+            dg.get_dagster_logger().warn(f"Fail upload film: {film}")
+
+    dg.get_dagster_logger().info(f"Uploaded {success} films")
+
+
+@dg.asset
+def upload_cameras(
+    cameras_json: CamerasJsonResource, analogdb: AnalogDBResource
+) -> None:
+    analog = analogdb.client()
+    success = 0
+    for f in cameras_json.client():
+        camera = adb.CameraCreate(
+            make=f["make"],
+            model=f["model"],
+            description=f["description"],
+        )
+
+        response = analog.upload_camera(camera)
+        if response.status_code in [200, 201]:
+            dg.get_dagster_logger().debug(
+                f"Uploaded camera: {camera.make} {camera.model}"
+            )
+            success += 1
+        else:
+            dg.get_dagster_logger().warn(f"Fail upload camera: {camera}")
+
+    dg.get_dagster_logger().info(f"Uploaded {success} camera")

@@ -25,6 +25,8 @@ from .assets import (
     updated_post_keywords,
     updated_post_scores,
     updated_reddit_comments,
+    upload_cameras,
+    upload_films,
     upload_posts,
 )
 from .jobs import patch_keywords_job, patch_scores_job, scrape_job
@@ -61,6 +63,8 @@ defs = dg.Definitions(
         reddit_comments_to_s3,
         updated_post_keywords,
         patch_post_keywords,
+        upload_films,
+        upload_cameras,
     ],
     resources={
         "analogdb": AnalogDBResource(
