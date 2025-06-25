@@ -10,8 +10,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - dagster_postgres_data:/var/lib/postgresql/data
-    # ports:
-    #   - "${POSTGRES_PORT:-5432}:5432"
 
   dagster_webserver:
     build: .
@@ -26,7 +24,6 @@ services:
       DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
       DAGSTER_POSTGRES_PORT: 5432
     volumes:
-      - ./data:/app/data
       - dagster_storage:/app/dagster_storage
     ports:
       - "${DAGSTER_PORT:-3000}:3000"
@@ -51,7 +48,6 @@ services:
       DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
       DAGSTER_POSTGRES_PORT: 5432
     volumes:
-      - ./data:/app/data
       - dagster_storage:/app/dagster_storage
     depends_on:
       - dagster_postgres
