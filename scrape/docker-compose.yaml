@@ -10,8 +10,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - dagster_postgres_data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
 
   dagster_webserver:
     build: .
@@ -19,13 +17,13 @@ services:
     env_file:
       - .env
     environment:
+      DAGSTER_HOME: /app
       DAGSTER_POSTGRES_USER: ${POSTGRES_USER}
       DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       DAGSTER_POSTGRES_HOST: dagster_postgres
       DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
       DAGSTER_POSTGRES_PORT: 5432
     volumes:
-      - .:/app
       - dagster_storage:/app/dagster_storage
     ports:
       - "${DAGSTER_PORT:-3000}:3000"
@@ -34,7 +32,7 @@ services:
     command: >
       sh -c "
         uv run dagster instance migrate &&
-        uv run dagster dev --host 0.0.0.0 --port 3000
+        uv run dagster-webserver --host 0.0.0.0 --port 3000
       "
 
   dagster_daemon:
@@ -43,16 +41,17 @@ services:
     env_file:
       - .env
     environment:
+      DAGSTER_HOME: /app
       DAGSTER_POSTGRES_USER: ${POSTGRES_USER}
       DAGSTER_POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       DAGSTER_POSTGRES_HOST: dagster_postgres
       DAGSTER_POSTGRES_DB: ${POSTGRES_DB}
       DAGSTER_POSTGRES_PORT: 5432
     volumes:
-      - .:/app
       - dagster_storage:/app/dagster_storage
     depends_on:
       - dagster_postgres
+      - dagster_webserver
     command: uv run dagster-daemon run
 
 volumes:

@@ -1,0 +1,12 @@
+dagster_home/
+dagster_storage/
+data/
+docker-compose.yaml
+Dockerfile
+README.md
+Makefile
+.git/
+.env
+__pycache__/
+*.pyc
+.venv/

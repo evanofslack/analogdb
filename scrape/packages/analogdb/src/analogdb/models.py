@@ -212,3 +212,37 @@ class PostCreate:
         body["colors"] = [color.to_json() for color in self.colors]
 
         return body
+
+
+@dataclass
+class FilmCreate:
+    type: str
+    make: str
+    speed: int
+    color_type: str
+    description: str
+
+    def to_json(self) -> Dict:
+        body = {
+            "type": self.type,
+            "make": self.make,
+            "speed": self.speed,
+            "color_type": self.color_type,
+            "description": self.description,
+        }
+        return body
+
+
+@dataclass
+class CameraCreate:
+    make: str
+    model: str
+    description: str
+
+    def to_json(self) -> Dict:
+        body = {
+            "make": self.make,
+            "model": self.model,
+            "description": self.description,
+        }
+        return body

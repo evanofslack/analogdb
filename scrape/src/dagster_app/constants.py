@@ -12,7 +12,9 @@ ANALOG_POSTS = 10  # only scrapes 8 since 2 pinned self posts
 BW_POSTS = 2  # only scrapes 2 since 1 pinned self post
 SPROCKET_POSTS = 1
 
-BLACKLIST_PATH = "keyword_blacklist.txt"
+BLACKLIST_PATH = "data/keyword_blacklist.txt"
+FILMS_PATH = "data/films.json"
+CAMERAS_PATH = "data/cameras.json"
 
 # maximum number of keywords to store in DB
 KEYWORD_LIMIT = 50
