@@ -7,7 +7,9 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 from .models import (
+    Camera,
     CameraCreate,
+    Film,
     FilmCreate,
     Image,
     Meta,
@@ -148,6 +150,24 @@ class Client:
         data = response.json()
         return data["ids"]
 
+    def get_films(
+        self,
+    ) -> List[Film]:
+        url = f"{self.base_url}/films"
+        response = self.session.get(url)
+        response.raise_for_status()
+        data = response.json()
+        return [self._parse_film(film_data) for film_data in data["films"]]
+
+    def get_cameras(
+        self,
+    ) -> List[Camera]:
+        url = f"{self.base_url}/cameras"
+        response = self.session.get(url)
+        response.raise_for_status()
+        data = response.json()
+        return [self._parse_camera(camera_data) for camera_data in data["cameras"]]
+
     @retry(delay=1, times=5)
     def upload_film(self, film: FilmCreate) -> requests.Response:
         json_film = json.dumps(film.to_json())
@@ -192,6 +212,24 @@ class Client:
             grayscale=data["grayscale"],
             sprocket=data["sprocket"],
             images=images,
+        )
+
+    def _parse_film(self, data: Dict[str, Any]) -> Film:
+        return Film(
+            id=data["id"],
+            type=data["type"],
+            make=data["make"],
+            speed=data["speed"],
+            color_type=data["color_type"],
+            description=data["description"],
+        )
+
+    def _parse_camera(self, data: Dict[str, Any]) -> Camera:
+        return Camera(
+            id=data["id"],
+            make=data["make"],
+            model=data["model"],
+            description=data["description"],
         )
 
     def _filter_to_params(self, filter: Optional[PostsFilter]) -> Dict[str, int | str]:

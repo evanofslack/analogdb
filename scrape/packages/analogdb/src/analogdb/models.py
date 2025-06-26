@@ -215,6 +215,16 @@ class PostCreate:
 
 
 @dataclass
+class Film:
+    id: int
+    type: str
+    make: str
+    speed: int
+    color_type: str
+    description: str
+
+
+@dataclass
 class FilmCreate:
     type: str
     make: str
@@ -231,6 +241,14 @@ class FilmCreate:
             "description": self.description,
         }
         return body
+
+
+@dataclass
+class Camera:
+    id: str
+    make: str
+    model: str
+    description: str
 
 
 @dataclass
