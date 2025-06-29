@@ -1,6 +1,7 @@
 import json
+import time
 from dataclasses import asdict
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import analogdb.models as adb
 import dagster as dg
@@ -28,10 +29,40 @@ from .resources import (
 )
 from .result import Result, ResultDagsterType, Status
 
+daily_partitions = dg.TimeWindowPartitionsDefinition(
+    start="2018-01-01-00:00",
+    cron_schedule="0 0 * * *",
+    fmt="%Y-%m-%d",
+)
+
+
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
+def analogdb_posts(
+    context: dg.AssetExecutionContext, analogdb: AnalogDBResource
+) -> List[adb.Post]:
+    window = context.partition_time_window
+
+    # Convert to unix seconds
+    time_start = int(window.start.timestamp())
+    time_end = int(window.end.timestamp())
+
+    filter = adb.create_posts_filter(time_start=time_start, time_end=time_end)
+
+    posts = analogdb.client().get_posts_all(
+        count=analogdb.batch_posts_count, filter=filter
+    )
+
+    context.log.info(
+        f"Fetched {len(posts)} posts for partition {context.partition_key} ({window.start} to {window.end})"
+    )
+
+    return posts
+
 
 @dg.asset
-def analogdb_posts(analogdb: AnalogDBResource) -> List[adb.Post]:
-    posts = analogdb.client().get_posts_all(count=100)
+def analogdb_posts_raw(analogdb: AnalogDBResource) -> List[adb.Post]:
+    count = analogdb.batch_posts_count
+    posts = analogdb.client().get_posts_all(count=count)
 
     dg.get_dagster_logger().info(f"Fetched {len(posts)} posts")
 
@@ -58,7 +89,8 @@ def analogdb_cameras(analogdb: AnalogDBResource) -> List[adb.Camera]:
 
 @dg.asset
 def analogdb_permalinks(analogdb: AnalogDBResource) -> List[str]:
-    links = analogdb.client().get_latest_links(count=100)
+    count = analogdb.permalink_posts_count
+    links = analogdb.client().get_latest_links(count=count)
 
     dg.get_dagster_logger().info(f"Fetched {len(links)} post permalinks")
 
@@ -282,7 +314,7 @@ def upload_posts(analogdb: AnalogDBResource, final_posts) -> None:
     dg.get_dagster_logger().info(f"Uploaded {final_posts.successful_count()} posts")
 
 
-@dg.asset
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def updated_post_scores(
     analogdb_posts: List[adb.Post], reddit: RedditResource
 ) -> List[adb.PostPatch]:
@@ -294,22 +326,33 @@ def updated_post_scores(
             continue
         patch = adb.create_post_patch(id=p.id, score=score)
         patches.append(patch)
-    dg.get_dagster_logger().info(f"Got {len(patches)} updated post scores")
+    dg.get_dagster_logger().info(f"Created {len(patches)} updated post scores")
     return patches
 
 
-@dg.asset
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def patch_post_scores(
-    updated_post_scores: List[adb.PostPatch], analogdb: AnalogDBResource
+    context: dg.AssetExecutionContext,
+    updated_post_scores: List[adb.PostPatch],
+    analogdb: AnalogDBResource,
 ) -> None:
+    if not updated_post_scores:
+        dg.get_dagster_logger().info(
+            f"No updated post scores to process for partition {context.partition_key}"
+        )
+
     adb = analogdb.client()
     for p in updated_post_scores:
         adb.patch_post(p)
-    dg.get_dagster_logger().info(f"Patched {len(updated_post_scores)} post scores")
+
+    dg.get_dagster_logger().info(
+        f"Patched {len(updated_post_scores)} post scores for partition {context.partition_key}"
+    )
 
 
-@dg.asset
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def updated_post_title_metadatas(
+    context: dg.AssetExecutionContext,
     analogdb_posts: List[adb.Post],
     metadata: MetadataResource,
     analogdb_films: List[adb.Film],
@@ -317,7 +360,14 @@ def updated_post_title_metadatas(
 ) -> List[adb.PostPatch]:
     patches: List[adb.PostPatch] = []
 
+    if not analogdb_posts:
+        dg.get_dagster_logger().info(
+            f"No posts to process for partition {context.partition_key}"
+        )
+        return patches
+
     titles = [p.title for p in analogdb_posts]
+
     metadatas, _ = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
     if len(analogdb_posts) != len(metadatas):
         dg.get_dagster_logger().error(
@@ -338,62 +388,96 @@ def updated_post_title_metadatas(
         patch = adb.create_post_patch(id=p.id, metadata=meta)
         patches.append(patch)
 
-    dg.get_dagster_logger().info(f"Got {len(patches)} updated post title metadatas")
+    dg.get_dagster_logger().info(f"Created {len(patches)} updated post title metadatas")
     return patches
 
 
-@dg.asset
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def patch_post_title_metadatas(
-    updated_post_title_metadatas: List[adb.PostPatch], analogdb: AnalogDBResource
+    context: dg.AssetExecutionContext,
+    updated_post_title_metadatas: List[adb.PostPatch],
+    analogdb: AnalogDBResource,
 ) -> None:
+    if not updated_post_title_metadatas:
+        context.log.info(f"No patches to apply for partition {context.partition_key}")
+        return
+
     adb = analogdb.client()
     for p in updated_post_title_metadatas:
-        adb.patch_post(p)
+        try:
+            adb.patch_post(p)
+        except Exception as e:
+            context.log.error(f"Failed to patch post {p.id}: {e}")
+        time.sleep(0.2)
+
     dg.get_dagster_logger().info(
-        f"Patched {len(updated_post_title_metadatas)} post title metadatas"
+        f"Patched {len(updated_post_title_metadatas)} post title metadatas for partition {context.partition_key}"
     )
 
 
-@dg.asset
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def updated_reddit_comments(
+    context: dg.AssetExecutionContext,
     analogdb_posts: List[adb.Post],
     reddit: RedditResource,
 ) -> List[Tuple[adb.Post, List[RedditComment]]]:
-    r = reddit.client()
-
     post_comments: List[Tuple[adb.Post, List[RedditComment]]] = []
+    if not analogdb_posts:
+        context.log.info(
+            f"No reddit comments to get for partition {context.partition_key}"
+        )
+        return post_comments
+
+    r = reddit.client()
     for p in analogdb_posts:
         c = r.scrape_comments(p.permalink)
         post_comments.append((p, c))
-    dg.get_dagster_logger().info(f"Got {len(post_comments)} updated reddit comments")
+    dg.get_dagster_logger().info(
+        f"Created {len(post_comments)} updated reddit comments for partition {context.partition_key}"
+    )
     return post_comments
 
 
-@dg.asset
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def reddit_comments_to_s3(
+    context: dg.AssetExecutionContext,
     updated_reddit_comments: List[Tuple[adb.Post, List[RedditComment]]],
     keyword_extractor: KeywordExtractorResource,
     storage: StorageResource,
 ) -> None:
+    if not updated_reddit_comments:
+        context.log.info(
+            f"No reddit comments to s3 for partition {context.partition_key}"
+        )
+        return
+
     extractor = keyword_extractor.client()
 
     for p, c in updated_reddit_comments:
         extractor.upload_s3(p.id, c, storage)
+
     dg.get_dagster_logger().info(
-        f"Upload {len(updated_reddit_comments)} post comments to s3"
+        f"Upload {len(updated_reddit_comments)} reddit comments to s3 for partition {context.partition_key}"
     )
 
 
-@dg.asset
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def updated_post_keywords(
+    context: dg.AssetExecutionContext,
     updated_reddit_comments: List[Tuple[adb.Post, List[RedditComment]]],
     keyword_extractor: KeywordExtractorResource,
     keyword_blacklist: KeywordBlacklistResource,
 ) -> List[adb.PostPatch]:
+    patches: List[adb.PostPatch] = []
+    if not updated_reddit_comments:
+        context.log.info(
+            f"No updated post keywords for partition {context.partition_key}"
+        )
+        return patches
+
     kw = keyword_extractor.client()
     blacklist = keyword_blacklist.client().blacklist
 
-    patches: List[adb.PostPatch] = []
     for p, c in updated_reddit_comments:
         adb_kws: List[adb.Keyword] = []
         keywords = kw.post_keywords(
@@ -407,18 +491,32 @@ def updated_post_keywords(
             adb_kws.append(adb.Keyword(k.word, k.weight))
         patch = adb.create_post_patch(id=p.id, keywords=adb_kws)
         patches.append(patch)
-    dg.get_dagster_logger().info(f"Got {len(patches)} updated post scores")
+
+    dg.get_dagster_logger().info(
+        f"Got {len(patches)} updated post keywords for partition {context.partition_key}"
+    )
     return patches
 
 
-@dg.asset
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def patch_post_keywords(
-    updated_post_keywords: List[adb.PostPatch], analogdb: AnalogDBResource
+    context: dg.AssetExecutionContext,
+    updated_post_keywords: List[adb.PostPatch],
+    analogdb: AnalogDBResource,
 ) -> None:
+    if not updated_post_keywords:
+        context.log.info(
+            f"No patch post keywords for partition {context.partition_key}"
+        )
+        return
+
     adb = analogdb.client()
     for p in updated_post_keywords:
         adb.patch_post(p)
     dg.get_dagster_logger().info(f"Patched {len(updated_post_keywords)} post keywords")
+    dg.get_dagster_logger().info(
+        f"Patched {len(updated_post_keywords)} post keywords for partition {context.partition_key}"
+    )
 
 
 @dg.asset

@@ -98,12 +98,23 @@ class PostsFilter:
     time_end: Optional[int]
 
 
+def create_posts_filter(
+    count: Optional[int] = None,
+    nsfw: Optional[bool] = None,
+    grayscale: Optional[bool] = None,
+    sprocket: Optional[bool] = None,
+    time_start: Optional[int] = None,
+    time_end: Optional[int] = None,
+):
+    return PostsFilter(count, nsfw, grayscale, sprocket, time_start, time_end)
+
+
 @dataclass
 class PostPatch:
     id: int
     score: Optional[int]
     nsfw: Optional[bool]
-    greyscale: Optional[bool]
+    grayscale: Optional[bool]
     sprocket: Optional[bool]
     colors: Optional[List[Color]]
     keywords: Optional[List[Keyword]]
@@ -118,8 +129,8 @@ class PostPatch:
             body["upvotes"] = self.score
         if self.nsfw is not None:
             body["nsfw"] = self.nsfw
-        if self.greyscale is not None:
-            body["grayscale"] = self.greyscale
+        if self.grayscale is not None:
+            body["grayscale"] = self.grayscale
         if self.sprocket is not None:
             body["sprocket"] = self.sprocket
         if self.colors is not None:
@@ -148,13 +159,13 @@ def create_post_patch(
     id: int,
     score: Optional[int] = None,
     nsfw: Optional[bool] = None,
-    greyscale: Optional[bool] = None,
+    grayscale: Optional[bool] = None,
     sprocket: Optional[bool] = None,
     colors: Optional[List[Color]] = None,
     keywords: Optional[List[Keyword]] = None,
     metadata: Optional[PhotoMetadata] = None,
 ):
-    return PostPatch(id, score, nsfw, greyscale, sprocket, colors, keywords, metadata)
+    return PostPatch(id, score, nsfw, grayscale, sprocket, colors, keywords, metadata)
 
 
 @dataclass

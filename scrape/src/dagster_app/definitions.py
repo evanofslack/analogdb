@@ -79,6 +79,7 @@ defs = dg.Definitions(
             base_url=dg.EnvVar("ANALOGDB_ENDPOINT"),
             username=dg.EnvVar("ANALOGDB_USERNAME"),
             password=dg.EnvVar("ANALOGDB_PASSWORD"),
+            batch_posts_count=int(dg.EnvVar("ANALOGDB_BATCH_POSTS_COUNT")),
         ),
         "reddit": RedditResource(
             client_id=dg.EnvVar("REDDIT_CLIENT_ID"),
