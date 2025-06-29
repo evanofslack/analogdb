@@ -309,6 +309,52 @@ def patch_post_scores(
 
 
 @dg.asset
+def updated_post_title_metadatas(
+    analogdb_posts: List[adb.Post],
+    metadata: MetadataResource,
+    analogdb_films: List[adb.Film],
+    analogdb_cameras: List[adb.Camera],
+) -> List[adb.PostPatch]:
+    patches: List[adb.PostPatch] = []
+
+    titles = [p.title for p in analogdb_posts]
+    metadatas, _ = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
+    if len(analogdb_posts) != len(metadatas):
+        dg.get_dagster_logger().error(
+            f"Unequal count of posts and extracted metadata, {len(analogdb_posts)} != {len(metadatas)}"
+        )
+        return patches
+
+    for p, m in zip(analogdb_posts, metadatas):
+        meta = adb.PhotoMetadata(
+            m.camera_make,
+            m.camera_model,
+            m.film_make,
+            m.film_type,
+            m.film_speed,
+            m.focal_length,
+            m.aperture,
+        )
+        patch = adb.create_post_patch(id=p.id, metadata=meta)
+        patches.append(patch)
+
+    dg.get_dagster_logger().info(f"Got {len(patches)} updated post title metadatas")
+    return patches
+
+
+@dg.asset
+def patch_post_title_metadatas(
+    updated_post_title_metadatas: List[adb.PostPatch], analogdb: AnalogDBResource
+) -> None:
+    adb = analogdb.client()
+    for p in updated_post_title_metadatas:
+        adb.patch_post(p)
+    dg.get_dagster_logger().info(
+        f"Patched {len(updated_post_title_metadatas)} post title metadatas"
+    )
+
+
+@dg.asset
 def updated_reddit_comments(
     analogdb_posts: List[adb.Post],
     reddit: RedditResource,
