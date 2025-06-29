@@ -228,7 +228,6 @@ class Film:
             "type": self.type,
             "make": self.make,
             "speed": self.speed,
-            "color_type": self.color_type,
         }
         return body
 
