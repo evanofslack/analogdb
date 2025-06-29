@@ -2,90 +2,13 @@ import json
 import re
 from typing import Dict, List, Optional, Tuple
 
+from analogdb.models import Camera, Film
 from openai import OpenAI
 
 from .models import PhotoMetadata
 
 
 class MetadataExtractor:
-    CAMERAS: List[str] = [
-        "hasselblad",
-        "mamiya",
-        "pentax",
-        "canon",
-        "nikon",
-        "leica",
-        "contax",
-        "olympus",
-        "minolta",
-        "fuji",
-        "fujifilm",
-        "yashica",
-        "bronica",
-        "rollei",
-        "zeiss",
-        "zenza",
-    ]
-
-    FILMS: Dict[str, str] = {
-        "cms": "adox",
-        "scala": "adox",
-        "silvermax": "adox",
-        "apx": "agfa",
-        "vista plus": "agfa",
-        "vistaplus": "agfa",
-        "800tungsten": "cinestill",
-        "800t": "cinestill",
-        "50daylight": "cinestill",
-        "50d": "cinestill",
-        "400dynamic": "cinestill",
-        "400d": "cinestill",
-        "delta": "ilford",
-        "fp4": "ilford",
-        "hp5": "ilford",
-        "pan f": "ilford",
-        "pan": "ilford",
-        "sfx": "ilford",
-        "xp2": "ilford",
-        "class": "fomopan",
-        "creative": "fomopan",
-        "action": "fomopan",
-        "c200": "fuji",
-        "neopan": "fuji",
-        "acros": "fuji",
-        "provia": "fuji",
-        "superia x-tra": "fuji",
-        "superia premium": "fuji",
-        "superia": "fuji",
-        "velvia": "fuji",
-        "pro400h": "fuji",
-        "fujicolor": "fuji",
-        "colorplus": "kodak",
-        "kodacolor": "kodak",
-        "ektachrome": "kodak",
-        "ektar": "kodak",
-        "gold": "kodak",
-        "porta": "kodak",
-        "proimage": "kodak",
-        "t-max": "kodak",
-        "tri-x": "kodak",
-        "ultramax": "kodak",
-        "purple": "lomography",
-        "turquoise": "lomography",
-        "metropolis": "lomography",
-        "cn": "lomography",
-        "earl grey": "lomography",
-        "lady grey": "lomography",
-        "lomochrome": "lomography",
-        "lomo": "lomography",
-    }
-
-    GENERIC_FILM_TYPES_LOMO: List[str] = ["purple", "turquoise", "metropolis"]
-    GENERIC_FILM_TYPES: List[str] = ["gold", "pan", "class", "creative", "action"]
-
-    FILM_TYPES = set(FILMS.keys())
-    FILM_MAKES = set(FILMS.values())
-
     VALID_FILM_SPEEDS = {
         25,
         50,
@@ -107,10 +30,9 @@ class MetadataExtractor:
 
     PROMT = """
 system prompt:
-You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy.
+You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, and then a list of post titles to extract metadata from.
 
 Extract the following information and return as array of JSON:
-
 {{
   "camera_make": "camera brand name",
   "camera_model": "camera model name", 
@@ -121,32 +43,55 @@ Extract the following information and return as array of JSON:
   "aperture": "f/X.X"
 }}
 
-Rules:
+Extraction rules:
 - If multiple values exist, use only the first one
-- camera_make: Brand only (e.g., "Hasselblad", "Canon", "Nikon", "Mamiya")
-- camera_model: Model after make (e.g., "500cm", "AE-1", "F4", "RB67 Pro-S")
-- film_make: Manufacturer (e.g., "Kodak", "Fuji", "Ilford")
-- film_type: Specific film (e.g., "Portra", "Ektachrome", "HP5")
+- camera_make: Brand only (e.g., "Hasselblad", "Canon", "Nikon", "Mamiya"). Match valid camera list json.
+- camera_model: Model after make (e.g., "500cm", "AE-1", "F4", "RB67 Pro-S"). Match valid camera list json.
+- film_make: Manufacturer (e.g., "Kodak", "Fuji", "Ilford"). Match valid film list json.
+- film_type: Specific film (e.g., "Portra", "Ektachrome", "HP5"). Match valid film list json.
 - film_speed: ISO as integer (e.g., 400, 800). For push/pull like "400@800", use base speed (400)
 - focal_length: Lens focal length in mm as integer (e.g., 50, 85). For ranges like "20-35mm", use first number (20)
 - aperture: F-stop as "f/X.X" format (e.g., "f/2.8", "f/4")
 - Use null for missing data
+
+Validation rules:
+- Exact matching first: Always prioritize exact matches from the valid lists
+- Fuzzy matching: If no exact match, use these strategies:
+- Handle common abbreviations: "AE1" → "AE-1", "RB67" → "RB67 Pro-S"
+- Ignore case differences: "portra" → "Portra"
+- Handle missing/extra spaces: "Tri X" → "Tri-X"
+- Accept partial model names if unambiguous: "500c" → "500cm" (only if one match exists)
+- Handle common typos: "Hasselblad" variations, "Mamiya" vs "Mamya"
+- Cross-reference completion: Use valid lists to fill missing information
+- If camera model found but not make, match from valid camera list
+- If film type found but not make, match from valid film list
+
 """
 
     def __init__(self, openai: OpenAI, llm_model: str):
         self.openai = openai
         self.llm_model = llm_model
 
-    def extract(self, titles: List[str]) -> List[PhotoMetadata]:
-        prompt = self._create_prompt(titles)
+    def extract(
+        self, titles: List[str], films: List[Film], cameras: List[Camera]
+    ) -> Tuple[List[PhotoMetadata], str]:
+        prompt = self._create_prompt(titles, films, cameras)
         posts_raw = self._query_metadata_llm(prompt)
         posts = []
         for post, title in zip(posts_raw, titles):
-            posts.append(self._validate_metadata(post, title))
-        return posts
+            posts.append(self._validate_metadata(post, title, films, cameras))
+        return posts, prompt
 
-    def _create_prompt(self, titles: List[str]) -> str:
+    def _create_prompt(
+        self, titles: List[str], films: List[Film], cameras: List[Camera]
+    ) -> str:
         prompt = self.PROMT
+        prompt += "\n valid cameras:"
+        for camera in cameras:
+            prompt += str(camera.to_json_minimal())
+        prompt += "\n valid films:"
+        for film in films:
+            prompt += str(film.to_json_minimal())
         for i, title in enumerate(titles):
             prompt += "\n" + f"title #{i}: {title}"
         return prompt
@@ -195,82 +140,93 @@ Rules:
         except (json.JSONDecodeError, TypeError, KeyError):
             return [PhotoMetadata()]
 
-    def _validate_metadata(self, metadata: PhotoMetadata, title: str) -> PhotoMetadata:
-        cleaned = PhotoMetadata()
+    def _validate_metadata(
+        self,
+        metadata: PhotoMetadata,
+        title: str,
+        films: List[Film],
+        cameras: List[Camera],
+    ) -> PhotoMetadata:
+        clean = PhotoMetadata()
         title = title.lower()
 
-        # Camera, model
-        cleaned.camera_make = self._validate_camera_make(metadata.camera_make)
-        cleaned.camera_model = self._validate_camera_model(metadata.camera_model)
+        clean.camera_make = self._validate_camera_make(metadata.camera_make, cameras)
+        clean.camera_model = self._validate_camera_model(metadata.camera_model, cameras)
+        # lookup make from model
+        if clean.camera_model is not None and clean.camera_make is None:
+            for camera in cameras:
+                if camera.model.lower().strip() == clean.camera_model:
+                    clean.camera_make = camera.make
 
-        # Film
-        cleaned.film_make, cleaned.film_type = self._validate_film_info(
-            metadata.film_make, metadata.film_type, title
+        clean.film_make, clean.film_type = self._validate_film_info(
+            metadata.film_make, metadata.film_type, films
         )
 
-        # Numbers
-        cleaned.film_speed = self._validate_film_speed(metadata.film_speed)
-        cleaned.focal_length = self._validate_focal_length(metadata.focal_length)
-        cleaned.aperture = self._validate_aperture(metadata.aperture)
+        clean.film_speed = self._validate_film_speed(metadata.film_speed)
+        clean.focal_length = self._validate_focal_length(metadata.focal_length)
+        clean.aperture = self._validate_aperture(metadata.aperture)
 
-        return cleaned
+        return clean
 
-    def _validate_camera_make(self, make: Optional[str]) -> Optional[str]:
+    def _validate_camera_make(
+        self, make: Optional[str], cameras: List[Camera]
+    ) -> Optional[str]:
         if not make:
             return None
 
-        return make.lower().strip()
+        clean_make = make.lower().strip()
+        makes = {camera.make.lower().strip() for camera in cameras}
+        if clean_make in makes:
+            return clean_make
+        return None
 
-    def _validate_camera_model(self, model: Optional[str]) -> Optional[str]:
-        """Basic validation and cleaning of camera model."""
+    def _validate_camera_model(
+        self, model: Optional[str], cameras: List[Camera]
+    ) -> Optional[str]:
         if not model:
             return None
 
-        cleaned_model = model.lower().strip()
-
-        cleaned_model = re.sub(r"\s+", " ", cleaned_model)  # Normalize spaces
-        cleaned_model = re.sub(
-            r"[|\[\],/]+$", "", cleaned_model
+        clean_model = model.lower().strip()
+        clean_model = re.sub(r"\s+", " ", clean_model)  # Normalize spaces
+        clean_model = re.sub(
+            r"[|\[\],/]+$", "", clean_model
         ).strip()  # Remove trailing separators
 
-        # Reject if too short or all digits
-        if len(cleaned_model) <= 1 or cleaned_model.isdigit():
-            return None
+        models = {camera.model.lower().strip() for camera in cameras}
+        if clean_model in models:
+            return clean_model
 
-        # Reject if too long (probably garbage)
-        if len(cleaned_model) > 60:
-            return None
-
-        return cleaned_model
+        return None
 
     def _validate_film_info(
-        self, film_make: Optional[str], film_type: Optional[str], title: str = ""
+        self,
+        film_make: Optional[str],
+        film_type: Optional[str],
+        films: List[Film],
     ) -> Tuple[Optional[str], Optional[str]]:
         """Validate film make and type consistency."""
         if not film_type and not film_make:
             return None, None
+
+        makes = {film.make.lower().strip() for film in films}
+        types = {film.type.lower().strip() for film in films}
 
         if film_make:
             film_make = film_make.lower().strip()
         if film_type:
             film_type = film_type.lower().strip()
 
-        # If we have a film type, validate it
-        if film_type:
-            if film_type in self.FILM_TYPES:
-                expected_make = self.FILMS[film_type]
+        if film_make and film_make not in makes:
+            film_make = None
 
-                # Handle generic film types that need make validation
-                if film_type in self.GENERIC_FILM_TYPES_LOMO:
-                    if title and "lomo" not in title:
-                        return None, None
+        if film_type and film_type not in types:
+            film_type = None
 
-                if film_type in self.GENERIC_FILM_TYPES:
-                    if title and expected_make not in title:
-                        return None, None
-
-                # Return the expected make for this film type
-                return expected_make, film_type
+        # lookup make from type
+        if film_type and film_make is None:
+            for film in films:
+                if film.type == film_type:
+                    film_make = film.make
 
         return film_make, film_type
 

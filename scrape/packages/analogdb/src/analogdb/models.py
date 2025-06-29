@@ -223,6 +223,15 @@ class Film:
     color_type: str
     description: str
 
+    def to_json_minimal(self) -> Dict:
+        body = {
+            "type": self.type,
+            "make": self.make,
+            "speed": self.speed,
+            "color_type": self.color_type,
+        }
+        return body
+
 
 @dataclass
 class FilmCreate:
@@ -249,6 +258,13 @@ class Camera:
     make: str
     model: str
     description: str
+
+    def to_json_minimal(self) -> Dict:
+        body = {
+            "make": self.make,
+            "model": self.model,
+        }
+        return body
 
 
 @dataclass
