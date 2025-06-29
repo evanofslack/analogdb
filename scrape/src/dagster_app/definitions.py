@@ -10,6 +10,8 @@ from dagster_app.constants import (
 )
 
 from .assets import (
+    analogdb_cameras,
+    analogdb_films,
     analogdb_permalinks,
     analogdb_posts,
     colors,
@@ -47,6 +49,8 @@ load_dotenv()
 
 defs = dg.Definitions(
     assets=[
+        analogdb_cameras,
+        analogdb_films,
         analogdb_posts,
         analogdb_permalinks,
         reddit_posts,

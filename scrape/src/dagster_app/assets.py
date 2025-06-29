@@ -39,6 +39,24 @@ def analogdb_posts(analogdb: AnalogDBResource) -> List[adb.Post]:
 
 
 @dg.asset
+def analogdb_films(analogdb: AnalogDBResource) -> List[adb.Film]:
+    films = analogdb.client().get_films()
+
+    dg.get_dagster_logger().info(f"Fetched {len(films)} films")
+
+    return films
+
+
+@dg.asset
+def analogdb_cameras(analogdb: AnalogDBResource) -> List[adb.Camera]:
+    cameras = analogdb.client().get_cameras()
+
+    dg.get_dagster_logger().info(f"Fetched {len(cameras)} cameras")
+
+    return cameras
+
+
+@dg.asset
 def analogdb_permalinks(analogdb: AnalogDBResource) -> List[str]:
     links = analogdb.client().get_latest_links(count=100)
 
@@ -98,9 +116,20 @@ def reddit_posts(
 def title_metadatas(
     metadata: MetadataResource,
     reddit_posts,
+    analogdb_films: List[adb.Film],
+    analogdb_cameras: List[adb.Camera],
 ) -> Result[PhotoMetadata]:
     posts = [p for _, p in reddit_posts.successful().items()]
-    metadatas = metadata.client().extract([p.title for p in posts])
+    titles = [p.title for p in posts]
+    metadatas, prompt = metadata.client().extract(
+        titles, analogdb_films, analogdb_cameras
+    )
+
+    dg.get_dagster_logger().debug(f"Extract title metadata with prompt:\n{prompt}")
+    for t, m in zip(titles, metadatas):
+        dg.get_dagster_logger().debug(
+            f"Extracted metadata from title, title: {t}, metadata: {m}"
+        )
 
     data = {}
     status = {}
