@@ -163,6 +163,12 @@ Validation rules:
         )
 
         clean.film_speed = self._validate_film_speed(metadata.film_speed)
+        # lookup speed from film type
+        if clean.film_type is not None and clean.film_speed is None:
+            for film in films:
+                if film.type.lower().strip() == clean.film_type:
+                    clean.film_speed = film.speed
+
         clean.focal_length = self._validate_focal_length(metadata.focal_length)
         clean.aperture = self._validate_aperture(metadata.aperture)
 
