@@ -45,7 +45,11 @@ from .resources import (
     RedditResource,
     StorageResource,
 )
-from .schedules import scrape_analog_schedule
+from .schedules import (
+    scrape_analog_schedule,
+    update_post_keywords_schedule,
+    update_post_scores_schedule,
+)
 
 load_dotenv()
 
@@ -79,7 +83,7 @@ defs = dg.Definitions(
             base_url=dg.EnvVar("ANALOGDB_ENDPOINT"),
             username=dg.EnvVar("ANALOGDB_USERNAME"),
             password=dg.EnvVar("ANALOGDB_PASSWORD"),
-            batch_posts_count=int(dg.EnvVar("ANALOGDB_BATCH_POSTS_COUNT")),
+            batch_posts_count=dg.EnvVar.int("ANALOGDB_BATCH_POSTS_COUNT"),
         ),
         "reddit": RedditResource(
             client_id=dg.EnvVar("REDDIT_CLIENT_ID"),
@@ -105,5 +109,9 @@ defs = dg.Definitions(
         "cameras_json": CamerasJsonResource(file_path=CAMERAS_PATH),
     },
     jobs=[scrape_job, patch_scores_job, patch_keywords_job],
-    schedules=[scrape_analog_schedule],
+    schedules=[
+        scrape_analog_schedule,
+        update_post_keywords_schedule,
+        update_post_scores_schedule,
+    ],
 )
