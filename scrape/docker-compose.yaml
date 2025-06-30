@@ -25,6 +25,8 @@ services:
       DAGSTER_POSTGRES_PORT: 5432
     volumes:
       - dagster_storage:/app/dagster_storage
+      - ./config/dagster.yaml:/app/dagster.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - "${DAGSTER_PORT:-3000}:3000"
     depends_on:
@@ -49,6 +51,8 @@ services:
       DAGSTER_POSTGRES_PORT: 5432
     volumes:
       - dagster_storage:/app/dagster_storage
+      - ./config/dagster.yaml:/app/dagster.yaml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       - dagster_postgres
       - dagster_webserver
