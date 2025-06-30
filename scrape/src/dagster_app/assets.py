@@ -74,7 +74,7 @@ def analogdb_cameras(
     return cameras
 
 
-@dg.asset
+@dg.asset(group_name="analogdb")
 def analogdb_permalinks(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource
 ) -> List[str]:
