@@ -1,7 +1,7 @@
 import json
 import time
 from dataclasses import asdict
-from typing import Any, List, Tuple
+from typing import List, Tuple
 
 import analogdb.models as adb
 import dagster as dg
@@ -41,13 +41,10 @@ def analogdb_posts(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource
 ) -> List[adb.Post]:
     window = context.partition_time_window
-
-    # Convert to unix seconds
     time_start = int(window.start.timestamp())
     time_end = int(window.end.timestamp())
 
     filter = adb.create_posts_filter(time_start=time_start, time_end=time_end)
-
     posts = analogdb.client().get_posts_all(
         count=analogdb.batch_posts_count, filter=filter
     )
@@ -59,93 +56,75 @@ def analogdb_posts(
     return posts
 
 
-@dg.asset
-def analogdb_posts_raw(analogdb: AnalogDBResource) -> List[adb.Post]:
-    count = analogdb.batch_posts_count
-    posts = analogdb.client().get_posts_all(count=count)
-
-    dg.get_dagster_logger().info(f"Fetched {len(posts)} posts")
-
-    return posts
-
-
-@dg.asset
-def analogdb_films(analogdb: AnalogDBResource) -> List[adb.Film]:
+@dg.asset(group_name="analogdb")
+def analogdb_films(
+    context: dg.AssetExecutionContext, analogdb: AnalogDBResource
+) -> List[adb.Film]:
     films = analogdb.client().get_films()
-
-    dg.get_dagster_logger().info(f"Fetched {len(films)} films")
-
+    context.log.info(f"Fetched {len(films)} films")
     return films
 
 
-@dg.asset
-def analogdb_cameras(analogdb: AnalogDBResource) -> List[adb.Camera]:
+@dg.asset(group_name="analogdb")
+def analogdb_cameras(
+    context: dg.AssetExecutionContext, analogdb: AnalogDBResource
+) -> List[adb.Camera]:
     cameras = analogdb.client().get_cameras()
-
-    dg.get_dagster_logger().info(f"Fetched {len(cameras)} cameras")
-
+    context.log.info(f"Fetched {len(cameras)} cameras")
     return cameras
 
 
 @dg.asset
-def analogdb_permalinks(analogdb: AnalogDBResource) -> List[str]:
+def analogdb_permalinks(
+    context: dg.AssetExecutionContext, analogdb: AnalogDBResource
+) -> List[str]:
     count = analogdb.permalink_posts_count
     links = analogdb.client().get_latest_links(count=count)
-
-    dg.get_dagster_logger().info(f"Fetched {len(links)} post permalinks")
-
+    context.log.info(f"Fetched {len(links)} post permalinks")
     return links
 
 
-@dg.asset(dagster_type=ResultDagsterType)
+@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
 def reddit_posts(
-    reddit: RedditResource, analogdb_permalinks: List[str]
+    context: dg.AssetExecutionContext,
+    reddit: RedditResource,
+    analogdb_permalinks: List[str],
 ) -> Result[RedditPost]:
     result_analog = reddit.client().scrape_posts(
         "analog", 15, analogdb_permalinks, "top"
     )
-    dg.get_dagster_logger().info(
-        f"Scraped {len(result_analog.posts)} posts from r/analog"
-    )
+    context.log.info(f"Scraped {len(result_analog.posts)} posts from r/analog")
 
     result_analog_bw = reddit.client().scrape_posts(
         "analog_bw", 2, analogdb_permalinks, "top"
     )
-    dg.get_dagster_logger().info(
-        f"Scraped {len(result_analog_bw.posts)} posts from r/analog_bw"
-    )
+    context.log.info(f"Scraped {len(result_analog_bw.posts)} posts from r/analog_bw")
 
     result_sprocket = reddit.client().scrape_posts(
         "SprocketShots", 2, analogdb_permalinks, "top"
     )
-    dg.get_dagster_logger().info(
-        f"Scraped {len(result_sprocket.posts)} posts from r/sprocketshots"
-    )
+    context.log.info(f"Scraped {len(result_sprocket.posts)} posts from r/sprocketshots")
 
     posts = result_analog.posts + result_analog_bw.posts + result_sprocket.posts
     errors = result_analog.errors + result_analog_bw.errors + result_sprocket.errors
     for err in errors:
-        dg.get_dagster_logger().warn(f"Scrape reddit post, {err}")
+        context.log.warn(f"Scrape reddit post, {err}")
 
     data = {}
     status = {}
-
     for p in posts:
         id = p.permalink
         data[id] = p
         status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
-
-    dg.get_dagster_logger().info(
-        f"Scraped {result.successful_count()} successful posts"
-    )
-
+    context.log.info(f"Scraped {result.successful_count()} successful posts")
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType)
+@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
 def title_metadatas(
+    context: dg.AssetExecutionContext,
     metadata: MetadataResource,
     reddit_posts,
     analogdb_films: List[adb.Film],
@@ -157,38 +136,31 @@ def title_metadatas(
         titles, analogdb_films, analogdb_cameras
     )
 
-    dg.get_dagster_logger().debug(f"Extract title metadata with prompt:\n{prompt}")
+    context.log.debug(f"Extract title metadata with prompt:\n{prompt}")
     for t, m in zip(titles, metadatas):
-        dg.get_dagster_logger().debug(
-            f"Extracted metadata from title, title: {t}, metadata: {m}"
-        )
+        context.log.debug(f"Extracted metadata from title, title: {t}, metadata: {m}")
 
     data = {}
     status = {}
-
     for m, p in zip(metadatas, posts):
         id = p.permalink
         data[id] = m
         status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
-
-    dg.get_dagster_logger().info(
-        f"Extract title metadata from {result.successful_count()} posts"
-    )
-
+    context.log.info(f"Extract title metadata from {result.successful_count()} posts")
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType)
+@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
 def s3_images(
+    context: dg.AssetExecutionContext,
     image_processor: ImageProcessorResource,
     storage: StorageResource,
     reddit_posts,
 ) -> Result[List[S3Image]]:
     data = {}
     status = {}
-
     for _, p in reddit_posts.successful().items():
         images = image_processor.client().upload_s3(p, storage)
         id = p.permalink
@@ -196,22 +168,18 @@ def s3_images(
         status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
-
-    dg.get_dagster_logger().info(
-        f"Upload s3 images for {result.successful_count()} posts"
-    )
-
+    context.log.info(f"Upload s3 images for {result.successful_count()} posts")
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType)
+@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
 def colors(
+    context: dg.AssetExecutionContext,
     image_processor: ImageProcessorResource,
     reddit_posts,
 ) -> Result[Color]:
     data = {}
     status = {}
-
     for _, p in reddit_posts.successful().items():
         colors = image_processor.client().extract_colors(p.image)
         id = p.permalink
@@ -219,16 +187,13 @@ def colors(
         status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
-
-    dg.get_dagster_logger().info(
-        f"Extract colors for {result.successful_count()} posts"
-    )
-
+    context.log.info(f"Extract colors for {result.successful_count()} posts")
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType)
+@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
 def keywords(
+    context: dg.AssetExecutionContext,
     keyword_extractor: KeywordExtractorResource,
     reddit: RedditResource,
     reddit_posts,
@@ -254,16 +219,13 @@ def keywords(
         status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
-
-    dg.get_dagster_logger().info(
-        f"Extracted keywords for {result.successful_count()} posts"
-    )
-
+    context.log.info(f"Extracted keywords for {result.successful_count()} posts")
     return result
 
 
-@dg.asset()
+@dg.asset(group_name="scrape")
 def final_posts(
+    context: dg.AssetExecutionContext,
     reddit_posts,
     title_metadatas,
     s3_images,
@@ -276,7 +238,7 @@ def final_posts(
         & s3_images.successful_ids()
     )
 
-    dg.get_dagster_logger().info(f"Creating final posts for {len(ids)} posts")
+    context.log.info(f"Creating final posts for {len(ids)} posts")
 
     data = {}
     status = {}
@@ -296,27 +258,30 @@ def final_posts(
             status[id] = Status.SUCCESS
 
         except Exception as e:
-            dg.get_dagster_logger().error(f"Failed to create final post for {id}: {e}")
+            context.log.error(f"Failed to create final post for {id}: {e}")
             status[id] = Status.FAILED
             errors[id] = str(e)
 
     result = Result(data=data, status=status, errors=errors)
-    dg.get_dagster_logger().info(f"Created {result.successful_count()} final posts")
-
+    context.log.info(f"Created {result.successful_count()} final posts")
     return result
 
 
-@dg.asset
-def upload_posts(analogdb: AnalogDBResource, final_posts) -> None:
+@dg.asset(group_name="scrape")
+def upload_posts(
+    context: dg.AssetExecutionContext, analogdb: AnalogDBResource, final_posts
+) -> None:
     adb = analogdb.client()
     for _, p in final_posts.successful().items():
         adb.upload_post(convert_create(p))
-    dg.get_dagster_logger().info(f"Uploaded {final_posts.successful_count()} posts")
+    context.log.info(f"Uploaded {final_posts.successful_count()} posts")
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def updated_post_scores(
-    analogdb_posts: List[adb.Post], reddit: RedditResource
+    context: dg.AssetExecutionContext,
+    analogdb_posts: List[adb.Post],
+    reddit: RedditResource,
 ) -> List[adb.PostPatch]:
     r = reddit.client()
     patches: List[adb.PostPatch] = []
@@ -326,7 +291,7 @@ def updated_post_scores(
             continue
         patch = adb.create_post_patch(id=p.id, score=score)
         patches.append(patch)
-    dg.get_dagster_logger().info(f"Created {len(patches)} updated post scores")
+    context.log.info(f"Created {len(patches)} updated post scores")
     return patches
 
 
@@ -337,15 +302,14 @@ def patch_post_scores(
     analogdb: AnalogDBResource,
 ) -> None:
     if not updated_post_scores:
-        dg.get_dagster_logger().info(
+        context.log.info(
             f"No updated post scores to process for partition {context.partition_key}"
         )
 
     adb = analogdb.client()
     for p in updated_post_scores:
         adb.patch_post(p)
-
-    dg.get_dagster_logger().info(
+    context.log.info(
         f"Patched {len(updated_post_scores)} post scores for partition {context.partition_key}"
     )
 
@@ -361,16 +325,13 @@ def updated_post_title_metadatas(
     patches: List[adb.PostPatch] = []
 
     if not analogdb_posts:
-        dg.get_dagster_logger().info(
-            f"No posts to process for partition {context.partition_key}"
-        )
+        context.log.info(f"No posts to process for partition {context.partition_key}")
         return patches
 
     titles = [p.title for p in analogdb_posts]
-
     metadatas, _ = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
     if len(analogdb_posts) != len(metadatas):
-        dg.get_dagster_logger().error(
+        context.log.error(
             f"Unequal count of posts and extracted metadata, {len(analogdb_posts)} != {len(metadatas)}"
         )
         return patches
@@ -388,7 +349,7 @@ def updated_post_title_metadatas(
         patch = adb.create_post_patch(id=p.id, metadata=meta)
         patches.append(patch)
 
-    dg.get_dagster_logger().info(f"Created {len(patches)} updated post title metadatas")
+    context.log.info(f"Created {len(patches)} updated post title metadatas")
     return patches
 
 
@@ -404,13 +365,10 @@ def patch_post_title_metadatas(
 
     adb = analogdb.client()
     for p in updated_post_title_metadatas:
-        try:
-            adb.patch_post(p)
-        except Exception as e:
-            context.log.error(f"Failed to patch post {p.id}: {e}")
+        adb.patch_post(p)
         time.sleep(0.2)
 
-    dg.get_dagster_logger().info(
+    context.log.info(
         f"Patched {len(updated_post_title_metadatas)} post title metadatas for partition {context.partition_key}"
     )
 
@@ -432,7 +390,7 @@ def updated_reddit_comments(
     for p in analogdb_posts:
         c = r.scrape_comments(p.permalink)
         post_comments.append((p, c))
-    dg.get_dagster_logger().info(
+    context.log.info(
         f"Created {len(post_comments)} updated reddit comments for partition {context.partition_key}"
     )
     return post_comments
@@ -456,7 +414,7 @@ def reddit_comments_to_s3(
     for p, c in updated_reddit_comments:
         extractor.upload_s3(p.id, c, storage)
 
-    dg.get_dagster_logger().info(
+    context.log.info(
         f"Upload {len(updated_reddit_comments)} reddit comments to s3 for partition {context.partition_key}"
     )
 
@@ -492,7 +450,7 @@ def updated_post_keywords(
         patch = adb.create_post_patch(id=p.id, keywords=adb_kws)
         patches.append(patch)
 
-    dg.get_dagster_logger().info(
+    context.log.info(
         f"Got {len(patches)} updated post keywords for partition {context.partition_key}"
     )
     return patches
@@ -513,16 +471,16 @@ def patch_post_keywords(
     adb = analogdb.client()
     for p in updated_post_keywords:
         adb.patch_post(p)
-    dg.get_dagster_logger().info(f"Patched {len(updated_post_keywords)} post keywords")
-    dg.get_dagster_logger().info(
+    context.log.info(f"Patched {len(updated_post_keywords)} post keywords")
+    context.log.info(
         f"Patched {len(updated_post_keywords)} post keywords for partition {context.partition_key}"
     )
 
 
-@dg.asset
-def debug_posts(final_posts) -> None:
+@dg.asset(group_name="scrape")
+def debug_posts(context: dg.AssetExecutionContext, final_posts) -> None:
     """Debug asset to inspect posts instead of uploading"""
-    logger = dg.get_dagster_logger()
+    logger = context.log
 
     logger.info(f"Would upload {final_posts.successful_count()} posts")
 
@@ -536,8 +494,12 @@ def debug_posts(final_posts) -> None:
     logger.info("Saved all posts to debug_posts.json")
 
 
-@dg.asset
-def upload_films(films_json: FilmsJsonResource, analogdb: AnalogDBResource) -> None:
+@dg.asset(group_name="scrape")
+def upload_films(
+    context: dg.AssetExecutionContext,
+    films_json: FilmsJsonResource,
+    analogdb: AnalogDBResource,
+) -> None:
     analog = analogdb.client()
     success = 0
     for f in films_json.client():
@@ -551,19 +513,19 @@ def upload_films(films_json: FilmsJsonResource, analogdb: AnalogDBResource) -> N
 
         response = analog.upload_film(film)
         if response.status_code in [200, 201]:
-            dg.get_dagster_logger().debug(
-                f"Uploaded film: {film.make} {film.type} {film.speed}"
-            )
+            context.log.debug(f"Uploaded film: {film.make} {film.type} {film.speed}")
             success += 1
         else:
-            dg.get_dagster_logger().warn(f"Fail upload film: {film}")
+            context.log.warn(f"Fail upload film: {film}")
 
-    dg.get_dagster_logger().info(f"Uploaded {success} films")
+    context.log.info(f"Uploaded {success} films")
 
 
-@dg.asset
+@dg.asset(group_name="scrape")
 def upload_cameras(
-    cameras_json: CamerasJsonResource, analogdb: AnalogDBResource
+    context: dg.AssetExecutionContext,
+    cameras_json: CamerasJsonResource,
+    analogdb: AnalogDBResource,
 ) -> None:
     analog = analogdb.client()
     success = 0
@@ -576,11 +538,9 @@ def upload_cameras(
 
         response = analog.upload_camera(camera)
         if response.status_code in [200, 201]:
-            dg.get_dagster_logger().debug(
-                f"Uploaded camera: {camera.make} {camera.model}"
-            )
+            context.log.debug(f"Uploaded camera: {camera.make} {camera.model}")
             success += 1
         else:
-            dg.get_dagster_logger().warn(f"Fail upload camera: {camera}")
+            context.log.warn(f"Fail upload camera: {camera}")
 
-    dg.get_dagster_logger().info(f"Uploaded {success} camera")
+    context.log.info(f"Uploaded {success} camera")
