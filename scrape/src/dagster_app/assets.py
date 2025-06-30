@@ -131,14 +131,12 @@ def title_metadatas(
     analogdb_cameras: List[adb.Camera],
 ) -> Result[PhotoMetadata]:
     posts = [p for _, p in reddit_posts.successful().items()]
-    titles = [p.title for p in posts]
-    metadatas, prompt = metadata.client().extract(
-        titles, analogdb_films, analogdb_cameras
-    )
+    titles = [f"title: {p.title} description: {p.selftext}" for p in posts]
+    metadatas, _ = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
 
-    context.log.debug(f"Extract title metadata with prompt:\n{prompt}")
+    # context.log.debug(f"Extract title metadata with prompt:\n{prompt}")
     for t, m in zip(titles, metadatas):
-        context.log.debug(f"Extracted metadata from title, title: {t}, metadata: {m}")
+        context.log.debug(f"Extracted title metadata from {t}, metadata: {m}")
 
     data = {}
     status = {}
@@ -148,7 +146,7 @@ def title_metadatas(
         status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
-    context.log.info(f"Extract title metadata from {result.successful_count()} posts")
+    context.log.info(f"Extracted title metadata from {result.successful_count()} posts")
     return result
 
 
@@ -168,7 +166,7 @@ def s3_images(
         status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
-    context.log.info(f"Upload s3 images for {result.successful_count()} posts")
+    context.log.info(f"Uploaded s3 images for {result.successful_count()} posts")
     return result
 
 
@@ -187,7 +185,7 @@ def colors(
         status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status)
-    context.log.info(f"Extract colors for {result.successful_count()} posts")
+    context.log.info(f"Extracted colors for {result.successful_count()} posts")
     return result
 
 
@@ -237,7 +235,6 @@ def final_posts(
         & title_metadatas.successful_ids()
         & s3_images.successful_ids()
     )
-
     context.log.info(f"Creating final posts for {len(ids)} posts")
 
     data = {}
@@ -334,7 +331,7 @@ def updated_post_title_metadatas(
         context.log.error(
             f"Unequal count of posts and extracted metadata, {len(analogdb_posts)} != {len(metadatas)}"
         )
-        return patches
+        raise Exception("Unequal count of posts and extracted metadata")
 
     for p, m in zip(analogdb_posts, metadatas):
         meta = adb.PhotoMetadata(
@@ -415,7 +412,7 @@ def reddit_comments_to_s3(
         extractor.upload_s3(p.id, c, storage)
 
     context.log.info(
-        f"Upload {len(updated_reddit_comments)} reddit comments to s3 for partition {context.partition_key}"
+        f"Uploaded {len(updated_reddit_comments)} reddit comments to s3 for partition {context.partition_key}"
     )
 
 
@@ -451,7 +448,7 @@ def updated_post_keywords(
         patches.append(patch)
 
     context.log.info(
-        f"Got {len(patches)} updated post keywords for partition {context.partition_key}"
+        f"Created {len(patches)} updated post keywords for partition {context.partition_key}"
     )
     return patches
 
