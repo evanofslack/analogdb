@@ -11,6 +11,7 @@ class RedditPost:
     height: int
     content_type: str
     title: str
+    selftext: Optional[str]
     author: str
     permalink: str
     score: int

@@ -93,14 +93,14 @@ class RedditScraper:
     def _get_submissions(
         self, subreddit: str, num_posts: int, sort: str
     ) -> List[praw.reddit.Submission]:
-        subreddit_obj = self.reddit.subreddit(subreddit)
+        sub = self.reddit.subreddit(subreddit)
 
         if sort == "new":
-            submissions = subreddit_obj.new(limit=num_posts)
+            submissions = sub.new(limit=num_posts)
         elif sort == "top":
-            submissions = subreddit_obj.top(limit=num_posts, time_filter="day")
+            submissions = sub.top(limit=num_posts, time_filter="day")
         else:
-            submissions = subreddit_obj.hot(limit=num_posts)
+            submissions = sub.hot(limit=num_posts)
 
         return [s for s in submissions if not s.is_self]
 
@@ -130,6 +130,7 @@ class RedditScraper:
             height=image.height,
             content_type=content_type,
             title=submission.title,
+            selftext=submission.selftext,
             author=f"u/{submission.author.name}",
             permalink=permalink,
             score=submission.score,
