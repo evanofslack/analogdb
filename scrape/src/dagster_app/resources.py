@@ -1,6 +1,6 @@
+import json
 from typing import Any, Dict, List, Optional
 
-import json
 import praw
 from analogdb.client import Client
 from dagster import ConfigurableResource
@@ -16,10 +16,14 @@ class AnalogDBResource(ConfigurableResource):
     base_url: str = "https://api.analogdb.com"
     username: Optional[str] = None
     password: Optional[str] = None
+    batch_posts_count: int = 100
+    permalink_posts_count: int = 100
 
     def client(self) -> Client:
         return Client(
-            base_url=self.base_url, username=self.username, password=self.password
+            base_url=self.base_url,
+            username=self.username,
+            password=self.password,
         )
 
 

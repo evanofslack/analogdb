@@ -1,5 +1,5 @@
-import math
 import json
+import math
 import string
 from collections import Counter
 from functools import cached_property

@@ -91,15 +91,18 @@ class Client:
         if num > count:
             num = count
         while len(analog_posts) < count:
-            posts = self.get_posts(num, filter, page_id)
-            for p in posts.posts:
+            resp = self.get_posts(num, filter, page_id)
+            for p in resp.posts:
                 if len(analog_posts) >= count:
                     break
                 analog_posts.append(p)
 
-            if not posts.meta:
+            if not resp.meta:
                 break
-            page_id = posts.meta.next_page_id
+            # no more pages
+            if resp.meta.next_page_url == "":
+                break
+            page_id = resp.meta.next_page_id
 
         return analog_posts
 
@@ -196,8 +199,16 @@ class Client:
 
     def _parse_posts_response(self, data: Dict[str, Any]) -> Posts:
         posts = [self._parse_post(post_data) for post_data in data["posts"]]
-        meta = Meta(**data["meta"])
+        meta = self._parse_meta(data["meta"])
         return Posts(posts=posts, meta=meta)
+
+    def _parse_meta(self, data: Dict[str, Any]) -> Meta:
+        return Meta(
+            total_posts=data["total_posts"],
+            page_size=data["page_size"],
+            next_page_id=data["next_page_id"],
+            next_page_url=data["next_page_url"],
+        )
 
     def _parse_post(self, data: Dict[str, Any]) -> Post:
         images = [Image(**img) for img in data["images"]]
@@ -246,6 +257,10 @@ class Client:
             params["grayscale"] = grayscale
         if (sprocket := filter.sprocket) is not None:
             params["sprocket"] = sprocket
+        if (start := filter.time_start) is not None:
+            params["time_start"] = start
+        if (end := filter.time_end) is not None:
+            params["time_end"] = end
 
         return params
 
