@@ -36,7 +36,7 @@ daily_partitions = dg.TimeWindowPartitionsDefinition(
 )
 
 
-@dg.asset(partitions_def=daily_partitions, group_name="backfill")
+@dg.asset(partitions_def=daily_partitions, group_name="analogdb")
 def analogdb_posts(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource
 ) -> List[adb.Post]:
@@ -74,7 +74,7 @@ def analogdb_cameras(
     return cameras
 
 
-@dg.asset
+@dg.asset(group_name="analogdb")
 def analogdb_permalinks(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource
 ) -> List[str]:
