@@ -20,8 +20,6 @@ COPY data/ data/
 
 RUN uv venv && uv sync --frozen
 
-COPY dagster.yaml ./
-
 EXPOSE 3000
 
 CMD ["uv", "run", "dagster", "dev", "--host", "0.0.0.0", "--port", "3000"]

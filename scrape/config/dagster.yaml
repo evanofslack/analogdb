@@ -1,0 +1,53 @@
+storage:
+  postgres:
+    postgres_db:
+      username:
+        env: DAGSTER_POSTGRES_USER
+      password:
+        env: DAGSTER_POSTGRES_PASSWORD
+      hostname:
+        env: DAGSTER_POSTGRES_HOST
+      db_name:
+        env: DAGSTER_POSTGRES_DB
+      port:
+        env: DAGSTER_POSTGRES_PORT
+
+run_launcher:
+  module: dagster_docker
+  class: DockerRunLauncher
+  config:
+    image: "evanofslack/analogdb-dagster:latest"
+    container_kwargs:
+      auto_remove: true
+      mem_limit: "2g"
+      cpus: "1.0"
+    env_vars:
+      - DAGSTER_HOME=/app
+      - DAGSTER_POSTGRES_USER
+      - DAGSTER_POSTGRES_PASSWORD
+      - DAGSTER_POSTGRES_HOST
+      - DAGSTER_POSTGRES_DB
+      - DAGSTER_POSTGRES_PORT
+      - ANALOGDB_API_URL
+      - ANALOGDB_API_KEY
+      - ANALOGDB_BATCH_POSTS_COUNT
+      - REDDIT_CLIENT_ID
+      - REDDIT_CLIENT_SECRET
+      - REDDIT_CLIENT_SECRET_KEY
+      - REDDIT_USER_AGENT
+
+run_coordinator:
+  module: dagster._core.run_coordinator
+  class: QueuedRunCoordinator
+  config:
+    max_concurrent_runs: 10
+    tag_concurrency_limits:
+      - key: "dagster/backfill"
+        value: ".*"
+        limit: 5
+      - key: "dagster/asset_group"
+        value: "backfill"
+        limit: 5
+
+telemetry:
+  enabled: false
