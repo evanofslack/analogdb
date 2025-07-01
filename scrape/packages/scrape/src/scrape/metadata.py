@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from analogdb.models import Camera, Film
 from openai import OpenAI
@@ -10,15 +10,24 @@ from .models import PhotoMetadata
 
 class MetadataExtractor:
     VALID_FILM_SPEEDS = {
+        1,
+        2,
+        3,
+        6,
+        12,
+        20,
         25,
         50,
         64,
+        80,
         100,
         125,
         160,
         200,
+        250,
         320,
         400,
+        500,
         800,
         1000,
         1600,
@@ -30,7 +39,7 @@ class MetadataExtractor:
 
     PROMT = """
 system prompt:
-You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, and then a list of post titles to extract metadata from.
+You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, valid film speed list, and then a list of post titles to extract metadata from.
 
 Extract the following information and return as array of JSON:
 {{
@@ -92,6 +101,7 @@ Validation rules:
         prompt += "\n valid films:"
         for film in films:
             prompt += str(film.to_json_minimal())
+        prompt += f"\n valid film speeds: {self.VALID_FILM_SPEEDS}"
         for i, title in enumerate(titles):
             prompt += "\n" + f"title #{i}: {title}"
         return prompt
@@ -248,9 +258,6 @@ Validation rules:
                 return None
 
         if speed in self.VALID_FILM_SPEEDS:
-            return speed
-
-        if 25 <= speed <= 6400:
             return speed
 
         return None
