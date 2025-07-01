@@ -20,7 +20,6 @@ run_launcher:
     container_kwargs:
       auto_remove: true
       mem_limit: "2g"
-      cpus: "1.0"
     env_vars:
       - DAGSTER_HOME=/app
       - DAGSTER_POSTGRES_USER
@@ -28,13 +27,22 @@ run_launcher:
       - DAGSTER_POSTGRES_HOST
       - DAGSTER_POSTGRES_DB
       - DAGSTER_POSTGRES_PORT
-      - ANALOGDB_API_URL
-      - ANALOGDB_API_KEY
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_REGION
+      - ANALOGDB_USERNAME
+      - ANALOGDB_PASSWORD
+      - ANALOGDB_SLACK_WEBHOOK_URL
+      - ANALOGDB_ENDPOINT
+      - ANALOGDB_LOG_LEVEL
+      - ANALOGDB_APP_ENV
       - ANALOGDB_BATCH_POSTS_COUNT
       - REDDIT_CLIENT_ID
       - REDDIT_CLIENT_SECRET
-      - REDDIT_CLIENT_SECRET_KEY
       - REDDIT_USER_AGENT
+      - OPENROUTER_API_KEY
+      - OPENROUTER_BASE_URL
+      - OPENROUTER_MODEL
 
 run_coordinator:
   module: dagster._core.run_coordinator
