@@ -207,7 +207,7 @@
     "make": "film photography project",
     "speed": 200,
     "color_type": "bw",
-    "description": "X2 Eastman Double-X from Film Photography Project is a medium-speed panchromatic negative film used in motion pictures. Comparable to Eastman Double-X 5222 film, acclaimed movies like The Lighthouse, Paper Moon, Casino Royale, and Raging Bull have relied on this beautiful black and white film. Suitable for outdoors and indoor photography, this film offers a subtle tone scale with greater depth of field without increased illumination. Film is supplied in a DX-coded cassette for standard black and white processing."
+    "description": "Eastman Double-X from Film Photography Project is a medium-speed panchromatic negative film used in motion pictures. Comparable to Eastman Double-X 5222 film, acclaimed movies like The Lighthouse, Paper Moon, Casino Royale, and Raging Bull have relied on this beautiful black and white film. Suitable for outdoors and indoor photography, this film offers a subtle tone scale with greater depth of field without increased illumination. Film is supplied in a DX-coded cassette for standard black and white processing."
   },
   {
     "type": "low iso b&w",
@@ -235,7 +235,7 @@
     "make": "film photography project",
     "speed": 100,
     "color_type": "bw",
-    "description": "This Wolfman 120 Black and White Negative Film from Film Photography Project is a panchromatic film with medium to low grain and a wide tonal range, reminiscent of 16mm black and white movie film. This versatile and fun film is designed for general use in a wide variety of shooting conditions and has a nominal sensitivity of ISO 100/21° when developed in standard black and white chemistry."
+    "description": "Wolfman 120 Black and White Negative Film from Film Photography Project is a panchromatic film with medium to low grain and a wide tonal range, reminiscent of 16mm black and white movie film. This versatile and fun film is designed for general use in a wide variety of shooting conditions and has a nominal sensitivity of ISO 100/21° when developed in standard black and white chemistry."
   },
   {
     "type": "wolfman 35",
@@ -672,7 +672,7 @@
     "description": "Kodak Aerochrome is a legendary infrared color film that produces stunning false-color images, turning foliage into vibrant reds and pinks while rendering skies and water in deep blues. Originally developed for military and aerial reconnaissance, Aerochrome has found new life in artistic and experimental photography. "
   },
   {
-    "type": "aerocolor iv",
+    "type": "aerocolor",
     "make": "kodak",
     "speed": 100,
     "color_type": "color",
@@ -886,63 +886,84 @@
     "make": "lomography",
     "speed": 100,
     "color_type": "color",
-    "description": "Lomography 100 Color Negative Film is a medium-speed daylight-balanced film offering a vivid color palette and rich saturation. Its nominal sensitivity of ISO 100/21° contributes to a fine grain structure and high sharpness, which is ideal for printing and scanning applications."
+    "description": "Lomography Color Negative 100 is a low ISO film that offers fine grain and good detail. It renders colors with a natural and somewhat muted palette, which is great for portrait photography and subdued landscapes. Being a slow film, it performs best in good lighting conditions and tends to offer a somewhat vintage, relaxed feel to the images."
   },
   {
-    "type": "berlin kino 400",
+    "type": "400",
+    "make": "lomography",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Lomography Color Negative 100 is a low ISO film that offers fine grain and good detail. It renders colors with a natural and somewhat muted palette, which is great for portrait photography and subdued landscapes. Being a slow film, it performs best in good lighting conditions and tends to offer a somewhat vintage, relaxed feel to the images."
+  },
+  {
+    "type": "800",
+    "make": "lomography",
+    "speed": 800,
+    "color_type": "color",
+    "description": "Lomography Color Negative 800 is a high-speed film that is known for delivering vibrant colors with a noticeable emphasis on red tones. Its ISO 800 sensitivity makes it suitable for low-light conditions while maintaining a relatively fine grain structure. This film is appreciated for its flexibility and it's a go-to choice for night-time street photography and capturing movement in low light."
+  },
+  {
+    "type": "berlin kino",
     "make": "lomography",
     "speed": 400,
     "color_type": "bw",
     "description": "Lomography Berlin Kino 400 is a panchromatic black and white negative film inspired by and designed to emulate the aesthetics of the New German Cinema movement. It's a high speed, ISO 400 film with high silver content to produce a rich tonal scale with impressive contrast and a wide exposure latitude to suit exposing at EI 3200 and push processing. Additionally, borrowing from its cinema heritage, this film is also suitable for reversal processing in order to produce black and white positive transparencies."
   },
   {
-    "type": "cn 100",
-    "make": "lomography",
-    "speed": 100,
-    "color_type": "color",
-    "description": "Lomography CN 100 is a low ISO film that offers fine grain and good detail. It renders colors with a natural and somewhat muted palette, which is great for portrait photography and subdued landscapes. Being a slow film, it performs best in good lighting conditions and tends to offer a somewhat vintage, relaxed feel to the images."
-  },
-  {
-    "type": "cn 400",
-    "make": "lomography",
-    "speed": 400,
-    "color_type": "color",
-    "description": "Lomography CN 400 is a versatile film with a moderate grain structure. It offers a slightly vibrant yet natural color reproduction, suitable for a wide range of photographic situations. This film adapts well to different lighting conditions, making it a good choice for everyday shooting, street photography, and more."
-  },
-  {
-    "type": "cn 800",
-    "make": "lomography",
-    "speed": 800,
-    "color_type": "color",
-    "description": "Lomography CN 800 is a high-speed film that is known for delivering vibrant colors with a noticeable emphasis on red tones. Its ISO 800 sensitivity makes it suitable for low-light conditions while maintaining a relatively fine grain structure. This film is appreciated for its flexibility and it's a go-to choice for night-time street photography and capturing movement in low light."
-  },
-  {
-    "type": "earl grey 100",
+    "type": "earl grey",
     "make": "lomography",
     "speed": 100,
     "color_type": "bw",
     "description": "A classically-inspired black and white negative film, Lomography's Earl Grey 100 is a medium-speed film with a nominal sensitivity of ISO 100/21°, fine grain, and high sharpness. It is characterized by is wide tonal range and ability to render deep blacks and stark whites, with a multitude of gray tones between."
   },
   {
-    "type": "lady grey 400",
+    "type": "lady grey",
     "make": "lomography",
     "speed": 400,
     "color_type": "bw",
     "description": "Lomography's Lady Grey 400 is a high-speed black and white negative film featuring a smooth grain structure, high sharpness, and nominal sensitivity of ISO 400/27° to benefit working in a variety of conditions and with moving subjects. It is further characterized by a broad tonal range, which produces deep blacks, bright whites, and nuanced gray middle tones."
   },
   {
-    "type": "lomochrome purple xr 100-400",
+    "type": "lomochrome color '92",
+    "make": "lomography",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Lomography Potsdam Kino 100 is a retro general purpose color film. The grain and the hues are reminiscent of consumer film available in the 1990s."
+  },
+  {
+    "type": "lomochrome metropolis",
+    "make": "lomography",
+    "speed": 100,
+    "color_type": "color",
+    "description": "LomoChrome Metropolis is a unique color negative film. It features experimental punchy contrasts and muted tones with intense pops of color with fine grain."
+  },
+  {
+    "type": "lomochrome purple xr",
     "make": "lomography",
     "speed": 400,
     "color_type": "color",
     "description": "LomoChrome Purple XR 100-400 from Lomography is a surreal and unique film delivering colors that are reminiscent of infrared film. This creative color film intentionally renders false colors, where blue becomes green, green becomes purple, yellow becomes pink, and reds remain neutral for especially unique effects when photographing people. The film's nominal sensitivity is ISO 400, but it responds well to overexposure by up to two stops, which can be used to control color changes with greens taking on a bright purple hue when shot at EI 100. Additionally, this 2019 version of LomoChrome Purple XR 100-400 also delivers finer grain and higher sharpness for greater versatility."
   },
   {
-    "type": "potsdam kino 100",
+    "type": "lomochrome turquoise",
+    "make": "lomography",
+    "speed": 100,
+    "color_type": "color",
+    "description": "LomoChrome Metropolis is a unique color negative film. It features experimental and tantalizing turquoise tones with fine grain."
+  },
+  {
+    "type": "potsdam kino",
     "make": "lomography",
     "speed": 100,
     "color_type": "bw",
     "description": "Lomography Potsdam Kino 100 is a panchromatic black and white negative film inspired by and designed to emulate the aesthetics of the New German Cinema movement. It's a medium speed, ISO 100 film with high silver content to produce a rich tonal scale with impressive contrast, fine grain, and high sharpness. Additionally, borrowing from its cinema heritage, this film is also suitable for reversal processing in order to produce black and white positive transparencies."
+  },
+  {
+    "type": "redscale xr",
+    "make": "lomography",
+    "speed": 100,
+    "color_type": "bw",
+    "description": "Lomography Redscale CR bathes your photos in glowing shades of red, orange, yellow and even cool blue. Experiment with the extended ISO range to render different results."
   },
   {
     "type": "400 #2",
