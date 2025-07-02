@@ -28,7 +28,7 @@ services:
       - ./config/dagster.yaml:/app/dagster.yaml:ro
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - "${DAGSTER_PORT:-3000}:3000"
+      - "3000:3000"
     depends_on:
       - dagster_postgres
     command: >
