@@ -8,6 +8,7 @@ from dagster_app.constants import (
     FILMS_PATH,
     KEYWORD_LIMIT,
 )
+from dagster_app.iomanager import io_manager
 
 from .assets import (
     analogdb_cameras,
@@ -107,6 +108,7 @@ defs = dg.Definitions(
         "keyword_blacklist": KeywordBlacklistResource(file_path=BLACKLIST_PATH),
         "films_json": FilmsJsonResource(file_path=FILMS_PATH),
         "cameras_json": CamerasJsonResource(file_path=CAMERAS_PATH),
+        "io_manager": io_manager(),
     },
     jobs=[scrape_job, patch_scores_job, patch_keywords_job],
     schedules=[
