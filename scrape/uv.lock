@@ -322,6 +322,7 @@ dependencies = [
     { name = "dagster" },
     { name = "dagster-aws" },
     { name = "dagster-docker" },
+    { name = "dagster-obstore" },
     { name = "dagster-postgres" },
     { name = "dagster-webserver" },
     { name = "pip" },
@@ -342,6 +343,7 @@ requires-dist = [
     { name = "dagster", specifier = ">=1.5.0" },
     { name = "dagster-aws", specifier = ">=0.26.19" },
     { name = "dagster-docker", specifier = ">=0.26.19" },
+    { name = "dagster-obstore", specifier = ">=0.2.3" },
     { name = "dagster-postgres", specifier = ">=0.26.19" },
     { name = "dagster-webserver", specifier = ">=1.5.0" },
     { name = "pip", specifier = ">=25.1.1" },
@@ -399,6 +401,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/be/37/3e99d6e50e38fe90df80bec14556cdaa9fe9ce48a9911be255b199b4c080/dagster_graphql-1.10.19.tar.gz", hash = "sha256:bd6698c790b85164bad909dc895287f01bbd8428604c1b06d0580e5e6a599eb3", size = 154601 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/ae/daf45b7fe7a9bfd0ed8af97b2703e821ee949bf4bc430a495d26c837cacc/dagster_graphql-1.10.19-py3-none-any.whl", hash = "sha256:c5976c36bbe1239b7e56d3ca924510d49df07e2fd1d4236faf6250d912460266", size = 202146 },
+]
+
+[[package]]
+name = "dagster-obstore"
+version = "0.2.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "dagster" },
+    { name = "obstore" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5b/21/82eb4e0db3e531196882ac0aad2aae431955638b799925d54bdc6f74cd54/dagster_obstore-0.2.3.tar.gz", hash = "sha256:e89d18842e9177e024581dbec629a45da27187b85df33e46e43623783b719b48", size = 98643 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f0/24/9f9a4a7f8ffe44652d11bd33a5114d78d097e2e4a1250716a4e793c9f62c/dagster_obstore-0.2.3-py3-none-any.whl", hash = "sha256:c2b467f1c8a99f15ed353e6bde3ef9c24f3baf1404a3eb69bcf71eee8a454f2b", size = 14313 },
 ]
 
 [[package]]
@@ -992,6 +1007,26 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0e/1e/7a9d98c886d4c39a2b4d3a7c026bffcf8fbcaf518782132d12a301cfc47a/numpy-2.3.0-cp313-cp313t-win32.whl", hash = "sha256:48a2e8eaf76364c32a1feaa60d6925eaf32ed7a040183b807e02674305beef61", size = 6438632 },
     { url = "https://files.pythonhosted.org/packages/fe/ab/66fc909931d5eb230107d016861824f335ae2c0533f422e654e5ff556784/numpy-2.3.0-cp313-cp313t-win_amd64.whl", hash = "sha256:ba17f93a94e503551f154de210e4d50c5e3ee20f7e7a1b5f6ce3f22d419b93bb", size = 12868491 },
     { url = "https://files.pythonhosted.org/packages/ee/e8/2c8a1c9e34d6f6d600c83d5ce5b71646c32a13f34ca5c518cc060639841c/numpy-2.3.0-cp313-cp313t-win_arm64.whl", hash = "sha256:f14e016d9409680959691c109be98c436c6249eaf7f118b424679793607b5944", size = 9935345 },
+]
+
+[[package]]
+name = "obstore"
+version = "0.7.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/c2/3f1f764fc7d2d17d932095ab5e96524df4634ee5b0b34713ebd4d5b09ff6/obstore-0.7.0-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:c2743e1471e86f3184d6f536793e61c02b8210b0e1022f30285e6f5bf70af1c5", size = 3659829 },
+    { url = "https://files.pythonhosted.org/packages/62/f2/0d7f126ed5bb02fc2872515c3964327c3c7c37ca42b23795207c2d088c45/obstore-0.7.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:a66c3ee0fe1f510612061a0f1a894857456e8c31154e5cf71f0252abf3cbdc89", size = 3385007 },
+    { url = "https://files.pythonhosted.org/packages/e1/a1/e0d96d3c33c4495f3b85c286b80e70c656dc464805ba74142695ca959f72/obstore-0.7.0-cp313-cp313-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:80646e080297e296a5f378cdb14ee0cc3766a3db2c25870381f93ad7367fa12e", size = 3551944 },
+    { url = "https://files.pythonhosted.org/packages/73/db/c071556de119b5c4f44ff9f816a980828cdadc3afd0b61a947324320d68f/obstore-0.7.0-cp313-cp313-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:613a3d8fa19732c2da599db9d51e75a4b3b06ac77cabd0bc6041e65baa3c1182", size = 3699853 },
+    { url = "https://files.pythonhosted.org/packages/95/08/028d3151ede642a6ecf19878fb2b4bcf59cd494398b11d4d4e7d3560e112/obstore-0.7.0-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:ebf27156ab7d4abb9f63f6e2d94a92c84c9c2c157e26990212b3832cba3ed0c8", size = 3969874 },
+    { url = "https://files.pythonhosted.org/packages/24/e8/44ccf2dd42be8d3ada6060ccca6e05b2905a757b9c2dd405e94c207fe6a5/obstore-0.7.0-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:752d2fc896614b8dd673d8d4b9922e669af9ec7805d200404f5af5b4ed61378b", size = 4025566 },
+    { url = "https://files.pythonhosted.org/packages/12/22/7a1cca373582922b18ca102b76aee0bcacd7e073f116b48aa03d476e1929/obstore-0.7.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c220499d12b367ee153b6f42e5d55ffa4fb7cec655238d948b01099b5844bbe6", size = 3793718 },
+    { url = "https://files.pythonhosted.org/packages/5c/e0/134baf004465e8832ab5198836df74bcd57c33778466cd331df1442656a1/obstore-0.7.0-cp313-cp313-manylinux_2_24_aarch64.whl", hash = "sha256:bc34133499d72257f64c2d462d54ea469102d2f00b333948b158d1f59d321025", size = 3570357 },
+    { url = "https://files.pythonhosted.org/packages/8a/a4/e6d64f4fdee0fec3f933d9a3e3183c4883bcc8d6c127a03c86ce2e2971d4/obstore-0.7.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:5fd0de655419cd505a7c7d6512706220c5fb434ea449999027fcc0ad0ba1946b", size = 3736614 },
+    { url = "https://files.pythonhosted.org/packages/4b/a5/c6f45847d5b4ae1b441eaab9f5656d2baad4b8b8cacb72f5f79e89109c4e/obstore-0.7.0-cp313-cp313-musllinux_1_2_armv7l.whl", hash = "sha256:f1fb0df678dbf0ae4e049660ebdb4b1551ec1ed66a98390675aa1e221b64cb18", size = 3776072 },
+    { url = "https://files.pythonhosted.org/packages/f6/bf/a40d1571755d6dc0abc44d910cd3c3ba11939a612c8ef84a074e60b3a454/obstore-0.7.0-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:1c1a8b31d820147b88f347ffec22fc44ea3b26abb21a9bd1b2e08290a5efb60a", size = 3779078 },
+    { url = "https://files.pythonhosted.org/packages/3a/27/53f8e759cf0b2361c8d4194eaff206538e8f928539d2e4554d68f783209b/obstore-0.7.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:e8976a46fa857b1446b958a0293319eca25cb19f4d68bda4a8a66e4bf21fc4a4", size = 3966303 },
+    { url = "https://files.pythonhosted.org/packages/84/8a/f3750ba6f69ee741e67a6b14d47676cc95c684cee028f8c96115aa2c1100/obstore-0.7.0-cp313-cp313-win_amd64.whl", hash = "sha256:d2cfd49f846b19dffe73242dc0edc3bd8ca47af126af328ae7cbf9cb27c29d4e", size = 4043452 },
 ]
 
 [[package]]

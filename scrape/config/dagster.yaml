@@ -32,6 +32,7 @@ run_launcher:
       - DAGSTER_S3_ACCESS_KEY
       - DAGSTER_S3_SECRET_KEY
       - DAGSTER_S3_BUCKET
+      - DAGSTER_S3_LOG_BUCKET
       - DAGSTER_S3_PREFIX
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
@@ -63,6 +64,24 @@ run_coordinator:
         value: "backfill"
         limit: 5
 
+loggers:
+  console:
+    config:
+      log_level: DEBUG
+
+compute_logs:
+  module: dagster_obstore.s3.compute_log_manager
+  class: S3ComputeLogManager
+  config:
+    bucket:
+      env: DAGSTER_S3_LOG_BUCKET
+    access_key_id:
+      env: DAGSTER_S3_ACCESS_KEY
+    secret_access_key:
+      env: DAGSTER_S3_SECRET_KEY
+    endpoint:
+      env: DAGSTER_S3_ENDPOINT_URL
+    local_dir: "/tmp/dagster-logs"
+
 telemetry:
   enabled: false
-
