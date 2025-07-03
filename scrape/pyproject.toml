@@ -12,6 +12,7 @@ dependencies = [
     "pip>=25.1.1",
     "dagster-postgres>=0.26.19",
     "dagster-docker>=0.26.19",
+    "dagster-obstore>=0.2.3",
 ]
 
 [tool.uv.workspace]
