@@ -343,6 +343,9 @@ def updated_post_title_metadatas(
             m.focal_length,
             m.aperture,
         )
+        context.log.debug(
+            f"Created patch for post title metadata, title={p.title}, metadata={meta}"
+        )
         patch = adb.create_post_patch(id=p.id, metadata=meta)
         patches.append(patch)
 
