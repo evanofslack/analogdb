@@ -39,7 +39,7 @@ class MetadataExtractor:
 
     PROMT = """
 system prompt:
-You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, valid film speed list, and then a list of post titles to extract metadata from.
+You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space, commas, /, or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, valid film speed list, and then a list of post titles to extract metadata from.
 
 Extract the following information and return as array of JSON:
 {{
@@ -66,14 +66,17 @@ Extraction rules:
 Validation rules:
 - Exact matching first: Always prioritize exact matches from the valid lists
 - Fuzzy matching: If no exact match, use these strategies:
-- Handle common abbreviations: "AE1" → "AE-1", "RB67" → "RB67 Pro-S"
+- Handle common abbreviations: "AE1" → "AE-1", "RB67" → "RB67 Pro-S", "Lomo" -> "Lomography"
 - Ignore case differences: "portra" → "Portra"
 - Handle missing/extra spaces: "Tri X" → "Tri-X"
 - Accept partial model names if unambiguous: "500c" → "500cm" (only if one match exists)
 - Handle common typos: "Hasselblad" variations, "Mamiya" vs "Mamya"
+- Handle assumed or unspecified makes: "Gold" -> "Kodak Gold"
 - Cross-reference completion: Use valid lists to fill missing information
 - If camera model found but not make, match from valid camera list
 - If film type found but not make, match from valid film list
+- If camera make found but camera model not matched, ok to just set camera make
+- If film make found but film type not matched, ok to just set film make
 
 """
 
@@ -162,22 +165,28 @@ Validation rules:
 
         clean.camera_make = self._validate_camera_make(metadata.camera_make, cameras)
         clean.camera_model = self._validate_camera_model(metadata.camera_model, cameras)
-        # lookup make from model
+        # lookup make from model (only if exact make match)
         if clean.camera_model is not None and clean.camera_make is None:
-            for camera in cameras:
-                if camera.model.lower().strip() == clean.camera_model:
-                    clean.camera_make = camera.make
+            matching_cameras = [
+                camera
+                for camera in cameras
+                if camera.model.lower().strip() == clean.camera_model
+            ]
+            if len(matching_cameras) == 1:
+                clean.camera_make = matching_cameras[0].make
 
         clean.film_make, clean.film_type = self._validate_film_info(
             metadata.film_make, metadata.film_type, films
         )
 
         clean.film_speed = self._validate_film_speed(metadata.film_speed)
-        # lookup speed from film type
+        # lookup speed from film type (only if exact type match)
         if clean.film_type is not None and clean.film_speed is None:
-            for film in films:
-                if film.type.lower().strip() == clean.film_type:
-                    clean.film_speed = film.speed
+            matching_films = [
+                film for film in films if film.type.lower().strip() == clean.film_type
+            ]
+            if len(matching_films) == 1:
+                clean.film_speed = matching_films[0].speed
 
         clean.focal_length = self._validate_focal_length(metadata.focal_length)
         clean.aperture = self._validate_aperture(metadata.aperture)

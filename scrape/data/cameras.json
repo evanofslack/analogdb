@@ -1,6 +1,16 @@
 [
   {
     "make": "bronica",
+    "model": "etr",
+    "description": "The Bronica ETR is a medium format rangefinder released in 1976. It is known for its leaf shutter based camera system. The ETR lens system has a Seiko manufactured electronic shutter with speed of 8 sec. to 1/500 sec. Since it's a leaf shutter based camera, flash sync is available at all speeds. Changeable holders make the system more flexible compared to the original M645"
+  },
+  {
+    "make": "bronica",
+    "model": "etrs",
+    "description": "The Bronica ETRS is an improved version of the ETR. The main improvement is the interchangeable viewfinder system. The newer AE II and III finders are not fully compatible with the older ETR cameras, because there is a new electronic connector pin. The shutter button lock has been redesigned. It has three settings, unlocked, shutter release button lock but drive and cable release unlocked, and all locked. The neck strap mount has been changed to a design with an eyelet while the previous one was a spring catch style mount used on the Bronica 6x6's"
+  },
+  {
+    "make": "bronica",
     "model": "rf645",
     "description": "The Bronica RF645 is a medium format rangefinder camera that was introduced in 2000. It is known for its compact and lightweight design, making it a popular choice among photographers who want a portable medium format camera. The RF645 features a fixed lens with a focal length of 65mm, which is equivalent to a 35mm lens on a full-frame camera. It has a built-in light meter for easy exposure control and offers both manual and aperture priority modes. The camera uses 120 and 220 roll film, allowing for 15 or 30 exposures respectively. It has a bright and clear viewfinder with a rangefinder focusing system, making it easy to achieve accurate focus. The RF645 is a reliable and versatile camera that is well-suited for street photography, travel, and landscape photography."
   },
@@ -13,6 +23,11 @@
     "make": "canon",
     "model": "a-1",
     "description": "The Canon A-1 is a popular 35mm SLR film camera that was introduced by Canon in 1978. It is part of Canon's A-series of cameras and is known for its advanced features and versatility. The A-1 features a fully automatic program mode, as well as aperture priority, shutter priority, and manual exposure modes, giving photographers a wide range of creative control. It has a durable and well-built body, with a comfortable grip and intuitive controls. The A-1 also has a bright and clear viewfinder, allowing for easy framing and focusing. It uses Canon's FD lens mount, which offers a wide selection of high-quality lenses to choose from. Overall, the Canon A-1 is a reliable and capable camera that is suitable for both beginners and experienced photographers."
+  },
+  {
+    "make": "canon",
+    "model": "ae-1",
+    "description": "The Canon AE-1 is a 35mm SLR film camera that was introduced by Canon in 1976. Its name refers to the fact that it's an electronic camera using the aperture for automatic exposure (shutter speed priority). It uses an electronically controlled, electromagnet horizontal cloth focal plane shutter, with a speed range of 2 to 1/1000 second plus Bulb and flash X-sync of 1/60 second. The AE-1 was the vanguard of the landmark Canon amateur level A-series SLRs and led Canon's foray into the emerging electronically controlled SLR market. Most are silver, with black grip and chrome trim, but some are black with silver and trim. The AE-1 is a reliable and easy to use camera that is suitable for both beginners and experienced photographers."
   },
   {
     "make": "canon",
@@ -31,6 +46,16 @@
   },
   {
     "make": "canon",
+    "model": "eos 1",
+    "description": "The Canon EOS 1 is a professional 35mm film SLR camera that was introduced by Canon in 1989. It was the company's first professional-level EOS camera. The EOS-1 had a single centrally mounted autofocus point, plus basic weather sealing. The camera has a fixed eye-level pentaprism viewfinder has 100-percent vertical and horizontal coverage."
+  },
+  {
+    "make": "canon",
+    "model": "eos 1n",
+    "description": "The Canon EOS 1N is a professional 35mm film SLR camera that was introduced by Canon in 1994. It is the successor to the EOS 1 and offers improved autofocus performance and advanced features. The EOS-1N was a revision of the EOS-1, with five autofocus points spread across the frame rather than a single centrally mounted autofocus point, plus more effective weather sealing, a wider exposure range, and numerous other improvements. The camera featured polycarbonate external construction with weather-resistant seals around buttons, dials, and its Canon EF lens mount."
+  },
+  {
+    "make": "canon",
     "model": "eos 1v",
     "description": "The Canon EOS 1V is a professional 35mm film SLR camera that was introduced by Canon in 2000. It is the successor to the EOS 1N and offers improved autofocus performance and advanced features. The camera features a durable and weather-sealed magnesium alloy body, making it suitable for use in various shooting conditions. It has a 45-point autofocus system with 41 cross-type sensors, allowing for fast and accurate focusing. The EOS 1V also has a maximum shutter speed of 1/8000s and a continuous shooting speed of up to 10 frames per second, making it ideal for capturing fast-moving subjects. It has a built-in motor drive for advancing film and offers multiple exposure modes, including aperture priority, shutter priority, and manual mode. The camera is compatible with Canon EF lenses, providing a wide range of options for different shooting situations. Overall, the Canon EOS 1V is a reliable and versatile camera that is favored by professional photographers for its exceptional performance and durability."
   },
@@ -38,6 +63,11 @@
     "make": "canon",
     "model": "eos 3",
     "description": "The Canon EOS 3 is a professional-level 35mm film SLR camera that was introduced by Canon in 1998. It is part of the popular EOS series and is known for its advanced features and excellent performance. The camera features a durable and ergonomic design, with a comfortable grip and intuitive controls. It has a built-in motor drive and can shoot at a fast continuous shooting speed of up to 4.5 frames per second. The EOS 3 also boasts a highly accurate 45-point autofocus system, which ensures sharp and precise focus in various shooting conditions. It has a wide ISO range of 6 to 6400, allowing for versatile shooting in different lighting situations. The camera also offers multiple exposure modes, including aperture priority, shutter priority, and manual mode, giving photographers full control over their creative vision. With its robust construction and advanced features, the Canon EOS 3 is a reliable and versatile camera for professional photographers."
+  },
+  {
+    "make": "canon",
+    "model": "eos 300",
+    "description": "The Canon EOS 300 is a consumer-level 35mm single-lens reflex camera introduced by Canon in 1999. The autofocus capabilities of this camera were identical to Canon's much more expensive Elan 7 with six single-line CMOS sensors surrounding a central cross-type sensor. Upon its release, the Canon EOS 300 had the fastest autofocus and most advanced autoexposure in its class."
   },
   {
     "make": "canon",
@@ -61,17 +91,12 @@
   },
   {
     "make": "canon",
-    "model": "et g-iii ql17",
-    "description": "The Canonet G-III QL17 is a classic 35mm rangefinder camera produced by Canon in the 1970s. It features a fast and sharp 40mm f/1.7 lens, which makes it great for low-light photography and achieving a shallow depth of field. The camera has a built-in light meter that provides accurate exposure readings, and the Quick Load (QL) system allows for easy film loading. The rangefinder focusing system ensures precise focusing, and the shutter speed range of 1/4 to 1/500 second allows for versatile shooting in different lighting conditions. The Canonet G-III QL17 is known for its solid build quality and compact size, making it a popular choice among street photographers and film enthusiasts."
-  },
-  {
-    "make": "canon",
-    "model": "et ql17 giii",
+    "model": "canonet ql17 giii",
     "description": "The Canonet QL17 GIII is a compact rangefinder camera that was produced by Canon in the 1970s. It features a fixed 40mm f/1.7 lens, which is known for its sharpness and low-light capabilities. The camera has a built-in light meter that provides accurate exposure readings, and it offers both manual and automatic exposure modes. The QL17 GIII also has a quick-loading system, which allows for easy film loading and ensures smooth operation. With its compact size and reliable performance, the Canonet QL17 GIII is a popular choice among street photographers and enthusiasts."
   },
   {
     "make": "canon",
-    "model": "et ql19",
+    "model": "canonet ql19",
     "description": "The Canonet QL19 is a compact rangefinder camera produced by Canon in the 1960s. It features a fixed 45mm f/1.9 lens, which is known for its sharpness and low-light capabilities. The camera has a built-in light meter that provides accurate exposure readings, making it easy to capture well-exposed images. The QL in its name stands for Quick Loading, as it uses a unique film loading system that allows for fast and convenient film changes. The Canonet QL19 is a reliable and versatile camera that is perfect for both beginners and experienced photographers."
   },
   {
@@ -141,6 +166,11 @@
   },
   {
     "make": "contax",
+    "model": "rts",
+    "description": "The Contax RTS is a professional-level 35mm SLR film camera that was introduced by Contax in 1975. It is part of the renowned Contax RTS series and was produced by Yashica under licence from Zeiss. The first RTS (short for Real Time System) was designed by Prof. Dr. Katsuiko Sugaya, styled by the Porsche Design studio, and manufactured by Yashica as Top Secret Project 130."
+  },
+  {
+    "make": "contax",
     "model": "rts ii",
     "description": "The Contax RTS II is a professional-level 35mm SLR film camera that was introduced by Contax in 1982. It is part of the renowned Contax RTS series and is highly regarded for its robust build quality and advanced features. The camera features a metal chassis and a durable titanium top cover, making it sturdy and reliable for professional use. It has a bright viewfinder with a split-image focusing screen and a built-in light meter for accurate exposure control. The RTS II offers full manual control as well as aperture-priority and program modes. It has a vertical metal shutter with a maximum speed of 1/2000th of a second and a flash sync speed of 1/125th of a second. The camera is compatible with a wide range of high-quality Carl Zeiss lenses, which are known for their exceptional optical performance. Overall, the Contax RTS II is a versatile and dependable camera that is highly sought after by both professional photographers and enthusiasts."
   },
@@ -193,6 +223,16 @@
     "make": "fujifilm",
     "model": "gw690ii",
     "description": "The Fuji GW690II is a medium format film camera known for its exceptional image quality and large negative size. It features a fixed 90mm f/3.5 lens, which is equivalent to a 35mm lens on a full-frame camera. The camera has a built-in light meter for accurate exposure control, and a manual focus system for precise focusing. It has a simple and robust design, with a metal body and a large bright viewfinder. The GW690II uses 120 roll film, allowing for 8 exposures per roll. It is a popular choice among professional photographers and enthusiasts who appreciate the high-quality results and the unique look that medium format film provides."
+  },
+  {
+    "make": "fujifilm",
+    "model": "instax mini 90",
+    "description": "Fujifilm INSTAX Mini 90 Classic Instant Camera is a compact camera that produces credit card-sized prints. It features a retractable 60mm lens  that focuses up to 11.8 away, automatic exposure , and a  built-in flash for low-light conditions. The camera has an optical viewfinder with a target spot and digital controls, offering  6 shooting modes  and brightness control. It also has a  rechargeable battery  and displays the number of exposures remaining. This instant camera is ideal for capturing life's memories in a classic way, with its compact design and easy-to-use features making it perfect for scrapbooking or displaying on the refrigerator."
+  },
+  {
+    "make": "fujifilm",
+    "model": "instax mini 99",
+    "description": "Fujifilm INSTAX mini 99 Instant Camera lets users unleash their artistic flair and create unique images for a true analog experience. Enhance your images using six available Color Effect settings, or use the 'normal' setting to render things as they are. There are also five shooting modes, including Normal, Indoor, Sports, Double Exposure, and Bulb, each of which helps to further optimize the camera for a particular shot and scene. If you feel a particular scene would benefit from additional highlight or shadow detail, you'll be able to choose from five levels of adjustable brightness. Or, leave the brightness set to 'normal' to keep things how they are. After you've taken a shot, images are printed on 2 x 3 INSTAX MINI instant film, which is sold separately."
   },
   {
     "make": "graflex",
@@ -311,6 +351,11 @@
   },
   {
     "make": "leica",
+    "model": "mp",
+    "description": "The Leica MP is a 35mm rangefinder camera that was introduced by Leica in 2003. It is an all-mechanical rangefinder focusing camera that follows in a long line of cameras since the Leica M3 was introduced in 1954. The camera uses the Leica M-mount, which accepts all Leica bayonet-mount lenses (21 mm through 135 mm) made since 1954. The 'MP' designation stands for mechanical perfection. Unlike the preceding Leica M7, the camera has adopted many retro design features from the earlier M3. These include a M3 type metal film advance lever, knob film rewind design and M3 type frameline adjust lever. The basic classic design remains unchanged and the design for loading film from the bottom has been retained. The camera comes in black paint or silver chrome finishes."
+  },
+  {
+    "make": "leica",
     "model": "r6.2",
     "description": "The Leica R6.2 is a 35mm SLR film camera that was introduced by Leica in 1992 as an upgraded version of the original R6. It is a manual focus camera that offers a robust and reliable build quality, making it a popular choice among professional photographers. The R6.2 features a bright viewfinder with a 0.72x magnification, allowing for accurate composition and focusing. It has a shutter speed range from 1s to 1/2000s, with a flash sync speed of 1/100s. The camera supports both manual and aperture-priority exposure modes, giving photographers full control over their shots. With its durable construction and precise mechanics, the Leica R6.2 is a reliable tool for capturing high-quality images."
   },
@@ -396,6 +441,16 @@
   },
   {
     "make": "minolta",
+    "model": "hi-matic af",
+    "description": "The Minolta Hi-Matic AF was introduced in 1979. It was a step towards the modern standard compact camera for film, not yet with automatic film transport, automatic film speed setting and display. But it already offered active infrared autofocus combined with automatic exposure with speed/aperture-settings between f2.8 + 1/8 sec. to f17 + 1/430 sec. This exposure program is replaced by automatic aperture setting when the flash is switched on. Four LEDs in the bright-frame finder show the distance set by the AF. The CdS exposure measuring window is within the filter thread. The camera has a mechanical self-timer. It needs two AA batteries."
+  },
+  {
+    "make": "minolta",
+    "model": "hi-matic af2",
+    "description": "The Minolta Hi-Matic AF2 was the first viewfinder camera for 35mm film with active infrared autofocus when it was launched in 1981 as successor of the Hi-Matic AF. It was one of the last of Minolta's long-lasting Hi-Matic series of quality viewfinder and rangefinder cameras with automatic exposure. In addition to its autofocus the camera has a buzzer which indicates too small object distance or low light. The built-in flash needs two AA-batteries. The camera has the same kind of lens as most other 1970s Hi-Matics, a four-element construction with focal length 38mm. It has also the typical CdS-meter window inside the filter-thread in the front of the lens barrel. Even the film speed selector around the lens is typical 1970s Hi-Matic design, as well as film advance lever and rewind knurl. "
+  },
+  {
+    "make": "minolta",
     "model": "maxxum 7000",
     "description": "The Minolta Maxxum 7000, also known as the Minolta α-7000, is a groundbreaking 35mm autofocus SLR camera that was introduced in 1985. It was the first camera to feature both integrated autofocus and motorized film advance, setting a new standard for SLR cameras. The Maxxum 7000 has a sleek and compact design, with a comfortable grip and intuitive controls. It features a TTL phase detection autofocus system, which allows for fast and accurate focusing. The camera also has a built-in motor drive, enabling continuous shooting at up to 2 frames per second. The Maxxum 7000 offers a wide range of exposure modes, including program, aperture priority, shutter priority, and manual. It has a versatile metering system that combines center-weighted and spot metering for accurate exposure in various lighting conditions. The camera is compatible with a wide range of Minolta A-mount lenses, giving photographers plenty of options for different types of photography. Overall, the Minolta Maxxum 7000 is a reliable and innovative camera that revolutionized the world of autofocus SLRs."
   },
@@ -421,6 +476,16 @@
   },
   {
     "make": "minolta",
+    "model": "vectis s-1",
+    "description": "The Minolta S-1 was designed to be splashproof by using a porro mirror optical viewfinder, rather than the typical SLR pentaprism. The camera features a compact design, owing to the use of mirrors instead of prisms in the viewfinder. It is equipped with three basic autoexposure modes (Program, Aperture-priority, Shutter-priority) and Manual exposure modes. The standard metering pattern is a 14-segment honeycomb pattern covering the central part of the frame, but the camera can be switched to spot metering mode. The S-1 supports mid-roll changes."
+  },
+  {
+    "make": "minolta",
+    "model": "vectis s-100",
+    "description": "Like the S-1, the Minolta S-100 is weather resistant to light rain and snowy conditions. Compared to the S-1, the S-100 is equipped with a simpler exposure meter (two-segment, no spot metering option) and shutter (fastest speed reduced to 1⁄1000 s and flash synchronization speed slowed to 1⁄90 s). In addition, the optical viewfinder has slightly less coverage of the final frame area. It offers the same exposure modes (PASM) and subject-specific program exposure modes, and also uses a central autofocus sensor. The camera features a compact design, owing to the use of mirrors instead of prisms in the viewfinder."
+  },
+  {
+    "make": "minolta",
     "model": "x-370s",
     "description": "The Minolta X-370s is a 35mm SLR film camera that was introduced by Minolta in 1981. It is a manual focus camera with aperture-priority and manual exposure modes. The X-370s features a built-in light meter that provides accurate exposure readings for a wide range of lighting conditions. It has a metal chassis and a durable construction, making it a reliable camera for both amateurs and professionals. The camera has a vertical-travel, metal-blade focal plane shutter with speeds ranging from 1 to 1/1000 seconds, as well as a bulb mode for long exposures. It has a bright viewfinder with a split-image focusing screen and a microprism collar, making it easy to achieve precise focus. The X-370s is compatible with a wide range of Minolta MD mount lenses, allowing photographers to explore different focal lengths and creative possibilities. Overall, the Minolta X-370s is a versatile and dependable camera that offers excellent image quality and control."
   },
@@ -438,6 +503,11 @@
     "make": "minolta",
     "model": "xd11",
     "description": "The Minolta XD11 is a classic 35mm film SLR camera produced by Minolta from 1977 to 1984. It is known for its robust build quality and advanced features, making it a popular choice among professional photographers. The XD11 features a durable metal body with a comfortable grip, providing a solid feel in the hands. It has a bright and clear viewfinder, which offers a 0.86x magnification and shows a wide range of exposure information. The camera boasts a reliable through-the-lens (TTL) metering system, which uses a silicon photocell to measure the light and provide accurate exposure readings. It offers both aperture-priority and manual exposure modes, allowing photographers to have full control over their images. The XD11 also features a vertical metal shutter with a maximum speed of 1/1000th of a second, ensuring sharp and blur-free images even in fast-paced shooting situations. Overall, the Minolta XD11 is a highly capable and reliable camera that delivers excellent image quality and performance."
+  },
+  {
+    "make": "minolta",
+    "model": "xd5",
+    "description": "The Minolta XD5, is a 35mm single-lens reflex (SLR) film camera that was introduced by Minolta in 1975. It is the little brother to the xd7. The XD-5 was stripped of a couple of minor features (aperture readout, film transport check) but retains most of the functionality, most importantly the electronically-controlled Seiko shutter and the innovative multimode adaptive metering. This camera gives the choice between aperature priority and shutter speed priority by providing both."
   },
   {
     "make": "minolta",
@@ -486,8 +556,13 @@
   },
   {
     "make": "nikon",
+    "model": "f6",
+    "description": "The Nikon F6 is a professional 35mm film SLR camera that was introduced in 2004. It is the successor to the popular Nikon F5. It contains all the top of the line features for automatic focus, tracking and metering.Proimage 100 It can accept any Nikon F-mount lens with full metering functionality, excluding non-AI. At the time it was discontinued, the F6 was the last remaining film SLR still in production. "
+  },
+  {
+    "make": "nikon",
     "model": "f80",
-    "description": "The Nikon F80 is a 35mm SLR film camera that was introduced by Nikon in 2000. It is a lightweight and compact camera that offers a range of advanced features and functions. The F80 features a durable metal body with ergonomic design, making it comfortable to hold and use. It has a built-in motor drive for film advance and rewind, allowing for quick and easy operation. The camera offers a wide range of shooting modes, including program, aperture priority, shutter priority, and manual. It also has a built-in flash with various modes, as well as a hot shoe for external flash units. The F80 has a reliable autofocus system with multiple focus points, ensuring sharp and accurate focus. It is compatible with a wide range of Nikon F-mount lenses, giving photographers a versatile choice of optics. Overall, the Nikon F80 is a reliable and user-friendly camera that is suitable for both beginners and experienced photographers."
+    "description": "The Nikon F80, also known as the Nikon N80 is some markets, is a 35mm SLR film camera that was introduced by Nikon in 2000. It is a lightweight and compact camera that offers a range of advanced features and functions. The F80 features a durable metal body with ergonomic design, making it comfortable to hold and use. It has a built-in motor drive for film advance and rewind, allowing for quick and easy operation. The camera offers a wide range of shooting modes, including program, aperture priority, shutter priority, and manual. It also has a built-in flash with various modes, as well as a hot shoe for external flash units. The F80 has a reliable autofocus system with multiple focus points, ensuring sharp and accurate focus. It is compatible with a wide range of Nikon F-mount lenses, giving photographers a versatile choice of optics. Overall, the Nikon F80 is a reliable and user-friendly camera that is suitable for both beginners and experienced photographers."
   },
   {
     "make": "nikon",
@@ -616,6 +691,11 @@
   },
   {
     "make": "pentax",
+    "model": "17",
+    "description": "The Pentax 17 is a half-frame camera, capturing two 17mm x 24mm pictures within in a single 35mm-format (36mm x 24mm) film frame. It produces vertical-format pictures with similar ratios to those captured by smartphones, and with the distinctive image quality created only by a film camera. The design of the Pentax 17 was inspired by the Pentax brand’s heritage, incorporating manual operations unique to film photography — a selectable zone-focus system, manual film winding, manual film advance lever, and exposure compensation and ISO sensitivity adjustments, each with their own dials. It’s the ideal camera not only for film camera enthusiasts who have enjoyed film photography for years, but also for photographers who are excited about trying film photography for the first time."
+  },
+  {
+    "make": "pentax",
     "model": "645",
     "description": "The Pentax 645 is a medium format film camera that was first introduced in 1984. It is part of the Pentax 645 system, which includes a range of lenses and accessories. The camera features a 6x4.5 cm format, which is larger than the standard 35mm format, resulting in higher resolution and image quality. It has a sturdy and ergonomic design, with a built-in motor drive for advanced functionality. The Pentax 645 offers a variety of exposure modes, including aperture priority, shutter priority, and manual mode, giving photographers full control over their images. It also has a TTL metering system for accurate exposure measurement. With its interchangeable lenses and versatile features, the Pentax 645 is a popular choice among professional photographers and enthusiasts who want to explore the world of medium format photography."
   },
@@ -631,6 +711,11 @@
   },
   {
     "make": "pentax",
+    "model": "espio 70",
+    "description": "The Espio 70 is a full automatic auto focus camera for 35mm film by Pentax introduced in 1993. The lens is a 35 to 70mm f/4.3-8. Various exposure modes include auto, daylight sync, flash-off, slow sync, backlight, bulb and bulb sync. There are various self-timer modes, including a two shot and a tele-wide mode. DX coded film is strongly recommended as non-coded film defaults to ISO 25. It takes one CR123A battery and can last approx 15 rolls (24ex, half flash)."
+  },
+  {
+    "make": "pentax",
     "model": "k1000",
     "description": "The Pentax K1000 is a classic 35mm film SLR camera that was introduced in 1976. It is known for its simplicity, durability, and affordability, making it a popular choice for students and beginner photographers. The K1000 features a fully mechanical design, meaning it does not rely on batteries to operate, except for the light meter. It has a manual focus system and a built-in light meter that provides accurate exposure readings. The camera has a robust metal body and a pentaprism viewfinder, which offers a bright and clear view of the scene. It is compatible with a wide range of Pentax K-mount lenses, allowing photographers to explore various focal lengths and creative possibilities. The K1000 is a reliable and versatile camera that has stood the test of time, making it a favorite among film enthusiasts and collectors."
   },
@@ -638,6 +723,16 @@
     "make": "pentax",
     "model": "k2",
     "description": "The Pentax K2 is a 35mm SLR film camera that was introduced by Pentax in 1975. It is the successor to the popular Pentax KX and offers several improvements over its predecessor. The K2 features a robust and durable construction with a metal body and a comfortable grip. It has a bright viewfinder with a large and clear view of the scene. The camera offers a wide range of manual controls, including shutter speed, aperture, and exposure compensation, allowing photographers to have full control over their images. The K2 also features a built-in light meter that provides accurate exposure readings. It has a vertical-travel, metal-blade focal plane shutter with speeds ranging from 1/1000 to 8 seconds, as well as a bulb mode for long exposures. The camera is compatible with Pentax K-mount lenses, which offer a wide selection of focal lengths and apertures. Overall, the Pentax K2 is a reliable and versatile camera that is well-suited for both amateur and professional photographers."
+  },
+  {
+    "make": "pentax",
+    "model": "kx",
+    "description": "The Pentax KX is a 35mm SLR film camera that was introduced by Pentax in 1975. It is the successor to the popular Pentax Spotmatic. It was one of the first Pentax K-mount SLRs. With this new series of cameras, Pentax replaced the screwmount lens type with a bayonet mount system. The KX has a Pentax-made all-mechanical focal plane shutter of rubberized cloth. Since it's mechanical and not electronic, all shutter speeds are still available whether or not the camera has batteries. However, the shutter provides electronic flash sync only up to 1/60 sec. Overall, the Pentax KX is a reliable and versatile camera that is well-suited for both beginner and professional photographers."
+  },
+  {
+    "make": "pentax",
+    "model": "lx",
+    "description": "The Pentax LX is a classic 35mm film SLR camera that was introduced in 1980 to commemorate the 60th anniversary of Asahi Optical Co. (hence the Roman numerals LX). It was the top-of-the-line professional camera in the Pentax manual focus range, with manual and aperture priority automatic exposure modes and an advanced light metering system. The LX uses the K mount, which is the Pentax proprietary bayonet lens mount, and has a large body of accessories. The camera has an uncommon frame counter, being able to keep track of the frame number in either direction, whether advancing or rewinding the film. This feature aids in taking random-access multiple exposures anywhere along the film strip."
   },
   {
     "make": "pentax",
@@ -651,8 +746,8 @@
   },
   {
     "make": "pentax",
-    "model": "mx",
-    "description": "The Pentax MX is a classic 35mm film SLR camera that was introduced in 1976. It is known for its compact size, robust build quality, and exceptional image quality. The MX features a fully mechanical shutter with speeds from 1s to 1/1000s, as well as a bulb mode for long exposures. It has a bright and clear viewfinder with a 0.97x magnification, making it easy to compose your shots. The MX offers full manual control, allowing photographers to have complete creative control over their images. It also has a built-in light meter for accurate exposure readings. The camera has a wide range of compatible lenses, making it a versatile choice for various types of photography. Overall, the Pentax MX is a reliable and highly regarded camera that is loved by both professional and amateur photographers."
+    "model": "mz-s",
+    "description": "The Pentax MZ-S is a 35mm single-lens reflex camera from Pentax of Japan. The MZ-S design re-thought most aspects of Pentax's camera interface and appearance including simpler operation, small size and light weight without sacrificing the sophisticated features required to be competitive. The camera featured an autofocus system based on six linear CCD sensors, on-film data recording and an MTF autoexposure mode which chooses the aperture for maximum sharpness."
   },
   {
     "make": "pentax",
@@ -750,9 +845,19 @@
     "description": "The Rollei SLE35E is a compact and lightweight 35mm film camera that was introduced by Rollei in the 1970s. It features a sleek and modern design, with a metal body and a built-in light meter. The camera is equipped with a high-quality 40mm f/2.8 Tessar lens, known for its sharpness and clarity. It offers both automatic and manual exposure modes, allowing photographers to have full control over their shots. The SLE35E also has a range of shutter speeds from 1/8 to 1/500 second, as well as a bulb mode for long exposures. This camera is perfect for street photography, travel, and everyday shooting."
   },
   {
+    "make": "samsung",
+    "model": "ecx 1",
+    "description": "The Samsing ECX 1 is a compact auto focus point and shoot 35mm film camera designed by Porsche Design and introduced by Samsung in 1994. It features a 38 to 140mm zoom lens at f/3.8 to f/10.5 with 11 elements in 9 groups. When zooming the large LCD displays the focal length from 38 to 140mm. It has a double self-timer function that takes another picture 2 seconds after the first shot. It also offers the option to focus manually."
+  },
+  {
     "make": "toyo",
     "model": "view 45c",
     "description": "The Toyo View 45C is a large format view camera designed for professional photographers and serious enthusiasts. It features a sturdy and lightweight construction, making it ideal for outdoor and studio use. The camera offers a wide range of movements, including front and rear tilt, swing, and shift, allowing for precise control over perspective and depth of field. The bellows extension allows for the use of various focal length lenses, from wide-angle to telephoto. The Toyo View 45C is compatible with 4x5 inch sheet film and offers a large, bright ground glass for easy focusing and composition. It also has a built-in spirit level for accurate leveling. With its robust build quality and versatile features, the Toyo View 45C is a reliable and flexible tool for capturing high-quality images."
+  },
+  {
+    "make": "tronic",
+    "model": "af 3590",
+    "description": "The Tronic AF 3590 is a mid-range 35mm film camera. It is a simple to use zoom camera with automatic modes. It was sold by the discounter Lidl in the 2000s when the digital market was coming up. It has a zoom that covers 35-90mm in a small body of a very sober design. It resembles the Nytech AF 3570"
   },
   {
     "make": "voigtländer",
@@ -833,5 +938,15 @@
     "make": "zeiss ikon",
     "model": "zm",
     "description": "The Zeiss Ikon ZM is a high-quality 35mm rangefinder camera that was introduced by Zeiss Ikon in 2004. It is designed for photographers who appreciate the precision and craftsmanship of traditional film cameras. The ZM features a durable metal body with a classic design, reminiscent of the iconic Leica M cameras. It is compatible with Leica M-mount lenses, allowing photographers to take advantage of the excellent optics available in the Leica lens lineup. The camera has a bright and clear viewfinder with a built-in rangefinder for accurate focusing. It offers manual exposure control, allowing photographers to have full creative control over their images. The ZM also has a built-in light meter for convenient exposure metering. Overall, the Zeiss Ikon ZM is a reliable and versatile camera that combines the best of traditional craftsmanship with modern functionality."
+  },
+  {
+    "make": "zeiss ikon",
+    "model": "zm",
+    "description": "The Zeiss Ikon ZM is a high-quality 35mm rangefinder camera that was introduced by Zeiss Ikon in 2004. It is designed for photographers who appreciate the precision and craftsmanship of traditional film cameras. The ZM features a durable metal body with a classic design, reminiscent of the iconic Leica M cameras. It is compatible with Leica M-mount lenses, allowing photographers to take advantage of the excellent optics available in the Leica lens lineup. The camera has a bright and clear viewfinder with a built-in rangefinder for accurate focusing. It offers manual exposure control, allowing photographers to have full creative control over their images. The ZM also has a built-in light meter for convenient exposure metering. Overall, the Zeiss Ikon ZM is a reliable and versatile camera that combines the best of traditional craftsmanship with modern functionality."
+  },
+  {
+    "make": "zorki",
+    "model": "4",
+    "description": "The Zorki 4 is a popular 35mm rangefinder camera that was introduced by Zorki in 1956. It is a fully manual camera, and does not have a lightmeter. An additional lightmeter may be added by the cold shoe. The early bodies have a vulcanite body covering, engraved shutter speeds, and strap lugs. As with other Soviet-era rangefinders, the shutter speed selector rotates when the shutter is released, and should not be changed until after the shutter has been cocked."
   }
 ]
