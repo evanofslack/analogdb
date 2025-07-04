@@ -165,22 +165,28 @@ Validation rules:
 
         clean.camera_make = self._validate_camera_make(metadata.camera_make, cameras)
         clean.camera_model = self._validate_camera_model(metadata.camera_model, cameras)
-        # lookup make from model
+        # lookup make from model (only if exact make match)
         if clean.camera_model is not None and clean.camera_make is None:
-            for camera in cameras:
-                if camera.model.lower().strip() == clean.camera_model:
-                    clean.camera_make = camera.make
+            matching_cameras = [
+                camera
+                for camera in cameras
+                if camera.model.lower().strip() == clean.camera_model
+            ]
+            if len(matching_cameras) == 1:
+                clean.camera_make = matching_cameras[0].make
 
         clean.film_make, clean.film_type = self._validate_film_info(
             metadata.film_make, metadata.film_type, films
         )
 
         clean.film_speed = self._validate_film_speed(metadata.film_speed)
-        # lookup speed from film type
+        # lookup speed from film type (only if exact type match)
         if clean.film_type is not None and clean.film_speed is None:
-            for film in films:
-                if film.type.lower().strip() == clean.film_type:
-                    clean.film_speed = film.speed
+            matching_films = [
+                film for film in films if film.type.lower().strip() == clean.film_type
+            ]
+            if len(matching_films) == 1:
+                clean.film_speed = matching_films[0].speed
 
         clean.focal_length = self._validate_focal_length(metadata.focal_length)
         clean.aperture = self._validate_aperture(metadata.aperture)
