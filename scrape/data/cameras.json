@@ -225,6 +225,16 @@
     "description": "The Fuji GW690II is a medium format film camera known for its exceptional image quality and large negative size. It features a fixed 90mm f/3.5 lens, which is equivalent to a 35mm lens on a full-frame camera. The camera has a built-in light meter for accurate exposure control, and a manual focus system for precise focusing. It has a simple and robust design, with a metal body and a large bright viewfinder. The GW690II uses 120 roll film, allowing for 8 exposures per roll. It is a popular choice among professional photographers and enthusiasts who appreciate the high-quality results and the unique look that medium format film provides."
   },
   {
+    "make": "fujifilm",
+    "model": "instax mini 90",
+    "description": "Fujifilm INSTAX Mini 90 Classic Instant Camera is a compact camera that produces credit card-sized prints. It features a retractable 60mm lens  that focuses up to 11.8 away, automatic exposure , and a  built-in flash for low-light conditions. The camera has an optical viewfinder with a target spot and digital controls, offering  6 shooting modes  and brightness control. It also has a  rechargeable battery  and displays the number of exposures remaining. This instant camera is ideal for capturing life's memories in a classic way, with its compact design and easy-to-use features making it perfect for scrapbooking or displaying on the refrigerator."
+  },
+  {
+    "make": "fujifilm",
+    "model": "instax mini 99",
+    "description": "Fujifilm INSTAX mini 99 Instant Camera lets users unleash their artistic flair and create unique images for a true analog experience. Enhance your images using six available Color Effect settings, or use the 'normal' setting to render things as they are. There are also five shooting modes, including Normal, Indoor, Sports, Double Exposure, and Bulb, each of which helps to further optimize the camera for a particular shot and scene. If you feel a particular scene would benefit from additional highlight or shadow detail, you'll be able to choose from five levels of adjustable brightness. Or, leave the brightness set to 'normal' to keep things how they are. After you've taken a shot, images are printed on 2 x 3 INSTAX MINI instant film, which is sold separately."
+  },
+  {
     "make": "graflex",
     "model": "speed graphic",
     "description": "The Graflex Speed Graphic is a large format camera that was first introduced in 1912. It is a versatile and durable camera that has been widely used by professional photographers for many decades. The Speed Graphic features a focal plane shutter, which allows for a wide range of shutter speeds, from 1/1000th of a second to several seconds. It has a bellows system that allows for adjustments in focus and perspective, making it ideal for architectural and landscape photography. The camera uses sheet film in various sizes, including 4x5 inches and 5x7 inches, and has a ground glass back for composing and focusing the image. The Speed Graphic also has a range of interchangeable lenses, allowing photographers to choose the lens that best suits their needs. It is a heavy and bulky camera, but its robust construction and versatility make it a popular choice among large format photographers."
@@ -546,6 +556,11 @@
   },
   {
     "make": "nikon",
+    "model": "f6",
+    "description": "The Nikon F6 is a professional 35mm film SLR camera that was introduced in 2004. It is the successor to the popular Nikon F5. It contains all the top of the line features for automatic focus, tracking and metering.Proimage 100 It can accept any Nikon F-mount lens with full metering functionality, excluding non-AI. At the time it was discontinued, the F6 was the last remaining film SLR still in production. "
+  },
+  {
+    "make": "nikon",
     "model": "f80",
     "description": "The Nikon F80, also known as the Nikon N80 is some markets, is a 35mm SLR film camera that was introduced by Nikon in 2000. It is a lightweight and compact camera that offers a range of advanced features and functions. The F80 features a durable metal body with ergonomic design, making it comfortable to hold and use. It has a built-in motor drive for film advance and rewind, allowing for quick and easy operation. The camera offers a wide range of shooting modes, including program, aperture priority, shutter priority, and manual. It also has a built-in flash with various modes, as well as a hot shoe for external flash units. The F80 has a reliable autofocus system with multiple focus points, ensuring sharp and accurate focus. It is compatible with a wide range of Nikon F-mount lenses, giving photographers a versatile choice of optics. Overall, the Nikon F80 is a reliable and user-friendly camera that is suitable for both beginners and experienced photographers."
   },
@@ -728,6 +743,11 @@
     "make": "pentax",
     "model": "me super se",
     "description": "The Pentax ME Super SE is a 35mm SLR film camera that was introduced by Pentax in 1984 as a limited edition model. It is a special edition of the popular Pentax ME Super camera, featuring a sleek black body with chrome accents. The ME Super SE offers full manual control as well as aperture priority and program auto exposure modes. It has a built-in light meter that provides accurate exposure readings, and a bright viewfinder for easy composition. The camera is compatible with a wide range of Pentax K-mount lenses, allowing photographers to explore various focal lengths and creative possibilities. With its compact size and lightweight design, the Pentax ME Super SE is a versatile and reliable camera for both beginners and experienced photographers."
+  },
+  {
+    "make": "pentax",
+    "model": "mz-s",
+    "description": "The Pentax MZ-S is a 35mm single-lens reflex camera from Pentax of Japan. The MZ-S design re-thought most aspects of Pentax's camera interface and appearance including simpler operation, small size and light weight without sacrificing the sophisticated features required to be competitive. The camera featured an autofocus system based on six linear CCD sensors, on-film data recording and an MTF autoexposure mode which chooses the aperture for maximum sharpness."
   },
   {
     "make": "pentax",

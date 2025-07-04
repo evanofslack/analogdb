@@ -56,18 +56,39 @@
     "description": "AgfaPhoto Color 400 is a high-quality 135mm color film with 24 exposures, perfect for beginners and experienced photographers alike. Its ISO 400 sensitivity makes it a versatile tool for capturing sharp, detailed images, even in low-light conditions. This color film is compatible with all film cameras."
   },
   {
+    "type": "optima 100",
+    "make": "agfa",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Agfa Optima 100 is a discontined 100 ISO 35mm film. Agfa Optima films provide EYE VISION TECHNOLOGY in all sensitivity classes (ISO 100, 200, 400) for more precise color reproduction. Agfa EYE VISION TECHNOLOGY offers benefits in particular in the case of photos taken under fluorescent light and light from neon tubes and low-energy bulbs. Optima 100 film meets the challenge of this type of illumination without a green tinge. But also certain blue flowers and green textile dyes are reproduced in a more natural way. In addition, films with Agfa EYE VISION TECHNOLOGY are characterized by improvements in gradations of color tone in the red range. This means that pictures exhibit more relief and depth."
+  },
+  {
+    "type": "optima 200",
+    "make": "agfa",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Agfa Optima 200 is a discontined 200 ISO 35mm film. Agfa Optima films provide EYE VISION TECHNOLOGY in all sensitivity classes (ISO 100, 200, 400) for more precise color reproduction. Agfa EYE VISION TECHNOLOGY offers benefits in particular in the case of photos taken under fluorescent light and light from neon tubes and low-energy bulbs. Optima 200 film meets the challenge of this type of illumination without a green tinge. But also certain blue flowers and green textile dyes are reproduced in a more natural way. In addition, films with Agfa EYE VISION TECHNOLOGY are characterized by improvements in gradations of color tone in the red range. This means that pictures exhibit more relief and depth."
+  },
+  {
+    "type": "optima 400",
+    "make": "agfa",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Agfa Optima 400 is a discontined 200 ISO 35mm film. Agfa Optima films provide EYE VISION TECHNOLOGY in all sensitivity classes (ISO 100, 200, 400) for more precise color reproduction. Agfa EYE VISION TECHNOLOGY offers benefits in particular in the case of photos taken under fluorescent light and light from neon tubes and low-energy bulbs. Optima 400 film meets the challenge of this type of illumination without a green tinge. But also certain blue flowers and green textile dyes are reproduced in a more natural way. In addition, films with Agfa EYE VISION TECHNOLOGY are characterized by improvements in gradations of color tone in the red range. This means that pictures exhibit more relief and depth."
+  },
+  {
     "type": "vista plus 200",
     "make": "agfa",
     "speed": 200,
     "color_type": "color",
-    "description": "AGFA Vista Plus 200 is a budget-friendly color negative film well-regarded for delivering vibrant and vivid colors. It has a fine grain structure and moderate contrast, which makes it a great choice for a variety of lighting conditions. It is an excellent film for beginners and enthusiasts alike."
+    "description": "Agfa Vista Plus 200 is a budget-friendly color negative film well-regarded for delivering vibrant and vivid colors. It has a fine grain structure and moderate contrast, which makes it a great choice for a variety of lighting conditions. It is an excellent film for beginners and enthusiasts alike."
   },
   {
     "type": "vista plus 400",
     "make": "agfa",
     "speed": 400,
     "color_type": "color",
-    "description": "AGFA Vista Plus 400 offers a higher ISO than its 200-speed counterpart, providing more flexibility in lower light conditions or for fast-action shooting. Its moderate grain structure and warm color reproduction make it a versatile choice for various photographic applications."
+    "description": "Agfa Vista Plus 400 offers a higher ISO than its 200-speed counterpart, providing more flexibility in lower light conditions or for fast-action shooting. Its moderate grain structure and warm color reproduction make it a versatile choice for various photographic applications."
   },
   {
     "type": "edu ultra 100",
@@ -602,6 +623,20 @@
     "description": "Fujicolor NPS 160 Professional from Fujifilm is a portrait-dedicated daylight-type short (thus the 's') exposure professional color negative film with an ISO speed rating of 160 designed for shutter speeds of 1/8 second or faster. For exposure under daylight or a daylight-type artificial light source, filters are not normally required."
   },
   {
+    "type": "fujicolor press 400",
+    "make": "fujifilm",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Fujicolor Press 400 is a medium-speed discontinued film. It has fine grain, high contrast, moderate saturation, and good exposure latitude. It incorporated the Fine Sigma Technology to attain outstanding fine grain quality and sharpness. Other features made possible by the addition of a fourth color-sensitive layer include excellent gray balance, remarkable fluorescent light suitability, and high color fidelity. Boasting wide exposure latitude, it is able to produce prints with high image depth and fidelity even from underexposed negatives. "
+  },
+  {
+    "type": "fujicolor press 800",
+    "make": "fujifilm",
+    "speed": 800,
+    "color_type": "color",
+    "description": "Fujicolor Press 800 is a high-speed discontinued film. It was the first ISO 800 film to feature a fourth color-sensitive layer. It also incorporated the Fine Sigma Technology to attain outstanding fine grain quality and sharpness. Other features made possible by the addition of a fourth color-sensitive layer include excellent gray balance, remarkable fluorescent light suitability, and high color fidelity. Boasting wide exposure latitude, it is able to produce prints with high image depth and fidelity even from underexposed negatives. "
+  },
+  {
     "type": "fujicolor pro 400h",
     "make": "fujifilm",
     "speed": 400,
@@ -812,6 +847,48 @@
     "description": "Kodak Gold 200 is a popular consumer-grade film known for rendering warm and slightly vintage hues. Its fine grain and moderate contrast make it a versatile choice for a wide variety of lighting situations. It is a popular choice for everyday photography, capturing scenes with a nostalgic and pleasing color palette."
   },
   {
+    "type": "kodachrome 25",
+    "make": "kodak",
+    "speed": 25,
+    "color_type": "color",
+    "description": "Kodak Kodachrome is a legendary slide film known for its vibrant colours and archival quality. It requires the specialised K-14 development process, available at only Kodak-certified labs. Kodak officially ceased production of Kodachrome film in 2009 and shortly after the remaining development labs stopped developing it as well."
+  },
+  {
+    "type": "kodachrome 40",
+    "make": "kodak",
+    "speed": 40,
+    "color_type": "color",
+    "description": "Kodak Kodachrome is a legendary slide film known for its vibrant colours and archival quality. It requires the specialised K-14 development process, available at only Kodak-certified labs. Kodak officially ceased production of Kodachrome film in 2009 and shortly after the remaining development labs stopped developing it as well."
+  },
+  {
+    "type": "kodachrome 64",
+    "make": "kodak",
+    "speed": 64,
+    "color_type": "color",
+    "description": "Kodak Kodachrome is a legendary slide film known for its vibrant colours and archival quality. It requires the specialised K-14 development process, available at only Kodak-certified labs. Kodak officially ceased production of Kodachrome film in 2009 and shortly after the remaining development labs stopped developing it as well."
+  },
+  {
+    "type": "kodachrome 200",
+    "make": "kodak",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Kodak Kodachrome is a legendary slide film known for its vibrant colours and archival quality. It requires the specialised K-14 development process, available at only Kodak-certified labs. Kodak officially ceased production of Kodachrome film in 2009 and shortly after the remaining development labs stopped developing it as well."
+  },
+  {
+    "type": "max 400",
+    "make": "kodak",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Kodak's Max 400 is a high-speed daylight-balanced color negative film offering a wide exposure latitude for greater versatility, as well as a fine grain structure with consistent and accurate colors. Optimized skin tone reproduction makes this film suitable for portraiture while a vibrant overall color palette benefits general and outdoor photography. It has a nominal sensitivity of ISO 400/27° and is well-suited to both scanning and enlarging applications. Suceeded by Ultramax 400."
+  },
+  {
+    "type": "max 800",
+    "make": "kodak",
+    "speed": 800,
+    "color_type": "color",
+    "description": "Kodak's Max 800 is a high-speed daylight-balanced color negative film with bright vibrant colors and natural skin-tones. Since 2008 only sold in Kodak Single Use Cameras. Suceeded by Ultramax 800."
+  },
+  {
     "type": "portra 160",
     "make": "kodak",
     "speed": 160,
@@ -879,7 +956,14 @@
     "make": "kodak",
     "speed": 800,
     "color_type": "color",
-    "description": "Kodak's UltraMax 800 is a high-speed daylight-balanced color negative film with bright vibrant colors and natural skin-tones. Since 2008 only sold in Kodak Single Use Cameras"
+    "description": "Kodak's UltraMax 800 is a high-speed daylight-balanced color negative film with bright vibrant colors and natural skin-tones. Since 2008 only sold in Kodak single use cameras."
+  },
+  {
+    "type": "vision3 50d",
+    "make": "kodak",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Kodak's Vision3 50D is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. It touts the world’s finest film grain to ensure a pristine, clean image that is full of color and detail, especially in high-contrast daylight. It has unrivaled highlight latitude, flexibility in post and proven archival stability."
   },
   {
     "type": "vision3 200t",
@@ -1440,6 +1524,20 @@
     "speed": 500,
     "color_type": "color",
     "description": "Original SILBERSALZ35 500T True Cinefilm. Made with untouched Kodak Vision3 motion picture film like it is used in Hollywood. SILBERSALZ35 is professionally manufactured in metal cartridges and compatible with every 35mm camera out there. 200T has an ISO of 200 and is balanced for Tungsten (3200K). DX-Code is rated at 250 ISO (recommend overexposing film by one stop)."
+  },
+  {
+    "type": "supreme 200",
+    "make": "yes!star",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Yes!Star Supreme 200 is a general-purpose color negative film with an ISO speed rating of 200. It delivers excellent skin color tone, fine grain and great sharpness. Rumored to be Fujifilm 200"
+  },
+  {
+    "type": "supreme 400",
+    "make": "yes!star",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Yes!Star Supreme 400 is a general-purpose color negative film with an ISO speed rating of 400. It delivers excellent skin color tone, fine grain and great sharpness. Rumored to be Fujifilm 400"
   },
   {
     "type": "andromeda 400",
