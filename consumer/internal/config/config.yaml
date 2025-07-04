@@ -1,0 +1,32 @@
+app:
+  name: "analogdb-consumer"
+  version: "1.0.0"
+  env: "development"
+
+kafka:
+  brokers: "localhost:9092"
+  topic: "analytics"
+  consumer_group: "analytics-consumer"
+  batch_size: 100
+  batch_timeout: "5s"
+
+clickhouse:
+  host: "localhost"
+  port: 9000
+  database: "analytics"
+  username: "default"
+  password: ""
+  table: "events"
+
+server:
+  port: 8080
+  read_timeout: "10s"
+  write_timeout: "10s"
+
+log:
+  level: "info"
+  json: false
+
+metrics:
+  enabled: true
+  port: "9090"
