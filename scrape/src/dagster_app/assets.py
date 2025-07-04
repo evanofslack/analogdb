@@ -334,6 +334,8 @@ def updated_post_title_metadatas(
         raise Exception("Unequal count of posts and extracted metadata")
 
     for p, m in zip(analogdb_posts, metadatas):
+        if m.is_empty():
+            continue
         meta = adb.PhotoMetadata(
             m.camera_make,
             m.camera_model,
