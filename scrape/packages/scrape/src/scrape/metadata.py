@@ -179,14 +179,9 @@ Validation rules:
             metadata.film_make, metadata.film_type, films
         )
 
-        clean.film_speed = self._validate_film_speed(metadata.film_speed)
-        # lookup speed from film type (only if exact type match)
-        if clean.film_type is not None and clean.film_speed is None:
-            matching_films = [
-                film for film in films if film.type.lower().strip() == clean.film_type
-            ]
-            if len(matching_films) == 1:
-                clean.film_speed = matching_films[0].speed
+        clean.film_speed = self._validate_film_speed(
+            metadata.film_speed, clean.film_make, clean.film_type, films
+        )
 
         clean.focal_length = self._validate_focal_length(metadata.focal_length)
         clean.aperture = self._validate_aperture(metadata.aperture)
@@ -255,8 +250,26 @@ Validation rules:
 
         return film_make, film_type
 
-    def _validate_film_speed(self, speed: Optional[int]) -> Optional[int]:
+    def _validate_film_speed(
+        self,
+        speed: Optional[int],
+        film_make: Optional[str],
+        film_type: Optional[str],
+        films: List[Film],
+    ) -> Optional[int]:
         """Validate film speed against known values."""
+        # lookup speed from film make/type (only if exact type match)
+        if film_type is not None and film_make is not None:
+            matching_films = [
+                film
+                for film in films
+                if film.type.lower().strip() == film_type
+                and film.make.lower().strip() == film_make
+            ]
+            if len(matching_films) == 1:
+                return matching_films[0].speed
+
+        # Didn't get any speed
         if speed is None:
             return None
 
