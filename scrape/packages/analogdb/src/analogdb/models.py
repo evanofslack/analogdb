@@ -121,7 +121,11 @@ class PostPatch:
     metadata: Optional[PhotoMetadata]
 
     def is_empty(self) -> bool:
-        return all(getattr(self, field.name) is None for field in fields(self))
+        return all(
+            getattr(self, field.name) is None
+            for field in fields(self)
+            if field.name != "id"
+        )
 
     def to_json(self) -> Dict:
         body = {}
