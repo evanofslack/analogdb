@@ -47,7 +47,7 @@ type Server struct {
 
 type Log struct {
 	Level string `yaml:"level" env:"LOG_LEVEL"`
-	JSON  bool   `yaml:"json" env:"LOG_JSON"`
+	Env string `yaml:"env" env:"LOG_ENV"`
 }
 
 type Metrics struct {

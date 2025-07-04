@@ -25,7 +25,7 @@ server:
 
 log:
   level: "info"
-  json: false
+  env: "dev"
 
 metrics:
   enabled: true
