@@ -39,7 +39,7 @@ class MetadataExtractor:
 
     PROMT = """
 system prompt:
-You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, valid film speed list, and then a list of post titles to extract metadata from.
+You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space, commas, /, or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, valid film speed list, and then a list of post titles to extract metadata from.
 
 Extract the following information and return as array of JSON:
 {{
@@ -66,14 +66,17 @@ Extraction rules:
 Validation rules:
 - Exact matching first: Always prioritize exact matches from the valid lists
 - Fuzzy matching: If no exact match, use these strategies:
-- Handle common abbreviations: "AE1" → "AE-1", "RB67" → "RB67 Pro-S"
+- Handle common abbreviations: "AE1" → "AE-1", "RB67" → "RB67 Pro-S", "Lomo" -> "Lomography"
 - Ignore case differences: "portra" → "Portra"
 - Handle missing/extra spaces: "Tri X" → "Tri-X"
 - Accept partial model names if unambiguous: "500c" → "500cm" (only if one match exists)
 - Handle common typos: "Hasselblad" variations, "Mamiya" vs "Mamya"
+- Handle assumed or unspecified makes: "Gold" -> "Kodak Gold"
 - Cross-reference completion: Use valid lists to fill missing information
 - If camera model found but not make, match from valid camera list
 - If film type found but not make, match from valid film list
+- If camera make found but camera model not matched, ok to just set camera make
+- If film make found but film type not matched, ok to just set film make
 
 """
 
