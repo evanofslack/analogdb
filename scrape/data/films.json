@@ -22,17 +22,38 @@
   },
   {
     "type": "apx 100",
-    "make": "agfa",
+    "make": "agfaphoto",
     "speed": 100,
     "color_type": "bw",
-    "description": "AGFA APX 100 is a black and white film that offers fine grain and moderate contrast, ideal for a wide range of photographic applications. It's well-regarded for its ability to reproduce a wide range of tones, capturing detail in both shadows and highlights, making it a versatile choice for various photography styles."
+    "description": "AgfaPhoto APX 100 is a black and white film that offers fine grain and moderate contrast, ideal for a wide range of photographic applications. It's well-regarded for its ability to reproduce a wide range of tones, capturing detail in both shadows and highlights, making it a versatile choice for various photography styles."
   },
   {
     "type": "apx 400",
-    "make": "agfa",
+    "make": "agfaphoto",
     "speed": 400,
     "color_type": "bw",
-    "description": "AGFA APX 400 is a higher-speed counterpart to the APX 100, offering increased sensitivity to light while maintaining a fine grain structure. It’s a versatile film that performs well in various lighting conditions, including lower light scenarios, making it a good choice for everyday photography."
+    "description": "AgfaPhoto APX 400 is a higher-speed counterpart to the APX 100, offering increased sensitivity to light while maintaining a fine grain structure. It’s a versatile film that performs well in various lighting conditions, including lower light scenarios, making it a good choice for everyday photography."
+  },
+  {
+    "type": "aviphot pan 80",
+    "make": "agfaphoto",
+    "speed": 80,
+    "color_type": "bw",
+    "description": "AgfaPhoto Aviphot Pan 80 PE0 is a panchromatic aerial negative high resolution film, coated onto a transparent polyester base providing excellent dimensional stability. The film offers excellent penetration through haze, fog and other atmospheric conditions liable to affect the image quality. Due to the reduced scattering by the atmosphere, images are sharp and well edged."
+  },
+  {
+    "type": "aviphot pan 200",
+    "make": "agfaphoto",
+    "speed": 200,
+    "color_type": "bw",
+    "description": "AgfaPhoto Aviphot Pan 200 PE1 is a panchromatic aerial negative film, coated onto a transparent polyester base providing excellent dimensional stability. With its expanded colour sensitivity into the near infra-red range of the colour spectrum, Aviphot Pan 200 offers excellent penetration through haze, fog and other atmospheric conditions liable to affect the image quality."
+  },
+  {
+    "type": "color 400",
+    "make": "agfaphoto",
+    "speed": 400,
+    "color_type": "color",
+    "description": "AgfaPhoto Color 400 is a high-quality 135mm color film with 24 exposures, perfect for beginners and experienced photographers alike. Its ISO 400 sensitivity makes it a versatile tool for capturing sharp, detailed images, even in low-light conditions. This color film is compatible with all film cameras."
   },
   {
     "type": "vista plus 200",
@@ -77,6 +98,27 @@
     "description": "Characterized by a unique dual emulsion design, Bergger Pancro 400 is a high-speed panchromatic black and white negative film featuring a nominal sensitivity of ISO 400/27° and a wide exposure latitude. By employing both silver bromide and silver iodide emulsion layers, an organic grain structure is provided that results in natural tonal gradations and an overall fine grain quality for high-resolution, well-detailed results in a variety of lighting conditions. It also responds well to over- and under-exposure, and can be rated from EI 100-1600 for acceptable results with adequate processing. The film is coated on an anti-curl 135 µm-thick acetate base and also incorporates an anti-halation layer, which clears during development, for improved overall sharpness and highlight clarity."
   },
   {
+    "type": "200",
+    "make": "candido",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Candido200 Color Film is a versatile film 200 ISO 35mm film. It captures images across a wide range of lighting conditions, making it ideal for daytime shooting adventures. With exceptional contrast and fine detailing, it beautifully handles bright sunsets, early sunrises, and vibrant ocean landscapes. Rumored to be Kodak Vision3 200T stripped of Rem Jet."
+  },
+  {
+    "type": "400",
+    "make": "candido",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Candido400 Color Film is a versatile film 400 ISO 35mm film. It captures images in low light conditions, making it ideal for night shooting adventures. Rumored to be Kodak Vision3 250D stripped of Rem Jet."
+  },
+  {
+    "type": "800",
+    "make": "candido",
+    "speed": 800,
+    "color_type": "color",
+    "description": "Candido800 Color Film is a versatile film 800 ISO 35mm film. It captures images in fast low light conditions, making it ideal for late night shooting adventures. Rumored to be Kodak Vision3 500T stripped of Rem Jet."
+  },
+  {
     "type": "x film 320",
     "make": "catlabs",
     "speed": 320,
@@ -91,11 +133,25 @@
     "description": "CatLABS X Film 80 is a traditional, silver-rich slow-speed black and white negative film characterized by its classic appearance, very fine grain structure, and broad tonal range. Its high silver content lends a uniquely classic look with a moderate contrast profile to suit working in daylight conditions. Its versatility makes it especially suitable for overexposure at up to EI 50 as well as extreme underexposure to EI 800 by push development for working in low-light conditions."
   },
   {
+    "type": "lucky color 200",
+    "make": "china lucky film",
+    "speed": 200,
+    "color_type": "color",
+    "description": "This highly anticipated new C-41 color negative film has been a long time coming. It is produced by Chinese company Lucky Film, which has historically been a major film producer in the region with investment from Kodak. The new film is on the cheaper side, is 200 ISO, and has cyan tint."
+  },
+  {
     "type": "50d",
     "make": "cinestill",
     "speed": 50,
     "color_type": "color",
-    "description": "Producing a cinematic image quality for still photographers, the Cinestill 50Daylight Xpro C-41 Color Negative Film is re-formatted movie stock that has been prepared and packaged for use in still cameras. Utilizing a unique 'Premoval' stage, the traditional anti-halation rem-jet layer has been removed from this film, enabling its development in C-41 chemistry as well as the motion picture standard ECN-2 process. Benefitting from the distinct qualities of a low-speed motion picture stock, this daylight/5500K-balanced film is well-suited for outdoor shooting in bright conditions and exhibits a nominal sensitivity of ISO 50/18°. If exposing under tungsten/3200K-balanced lighting conditions, an 80B filter is recommended along with exposing the film at ISO 12 for normal results. The slow speed of the film offers extensive control over the highlight regions of a scene, maintains accurate, yet dynamic, colors, and is ideal for portraiture and landscape photography. Its high degree of sharpness and fine grain structure is also particularly well-suited for scanning."
+    "description": "Cinestill 50Daylight color negative film is re-formatted movie stock that has been prepared and packaged for use in still cameras. Utilizing a unique 'Premoval' stage, the traditional anti-halation rem-jet layer has been removed from this film, enabling its development in C-41 chemistry as well as the motion picture standard ECN-2 process. Benefitting from the distinct qualities of a low-speed motion picture stock, this daylight/5500K-balanced film is well-suited for outdoor shooting in bright conditions and exhibits a nominal sensitivity of ISO 50/18°. If exposing under tungsten/3200K-balanced lighting conditions, an 80B filter is recommended along with exposing the film at ISO 12 for normal results. The slow speed of the film offers extensive control over the highlight regions of a scene, maintains accurate, yet dynamic, colors, and is ideal for portraiture and landscape photography. Its high degree of sharpness and fine grain structure is also particularly well-suited for scanning."
+  },
+  {
+    "type": "400d",
+    "make": "cinestill",
+    "speed": 400,
+    "color_type": "color",
+    "description": "CineStill 400Dynamic is a fine-grain, daylight-balanced color negative film that delivers a soft color palette with natural saturation and rich, warm skin tones. The film has a wide dynamic range with a base sensitivity of ISO 400, but can be rated from 200 to 800 (without push processing) and pushed up to 3-stops. This makes the film highly versatile, usable both indoors or in the studio, under virtually any lighting conditions."
   },
   {
     "type": "800t",
@@ -110,13 +166,6 @@
     "speed": 250,
     "color_type": "bw",
     "description": "BwXX Double-X is a high-speed classic black and white movie film that has been cut and re-spooled for still photography use by CineStill. Using virtually the same emulsion formula since 1959, this film is characterized by its subtle tonality, relatively low contrast, and high sharpness. Its nominal sensitivity is ISO 250/25° when used under daylight conditions or ISO 200/24° when used in tungsten-lit environments. The film has an acetate base with a scratch-resistant layer and is designed to be used in conjunction with D-96 developer, however can also be used with other standard black and white developers."
-  },
-  {
-    "type": "800t",
-    "make": "cinestill",
-    "speed": 800,
-    "color_type": "color",
-    "description": "Cinestill 800T is a high-speed color negative film known for its cinematic look derived from motion picture film stock. It is tungsten-balanced, making it ideal for nighttime or tungsten light photography. The halation effect, where bright light sources have a soft glow, is a characteristic feature of this film."
   },
   {
     "type": "red rum",
@@ -142,9 +191,9 @@
   {
     "type": "bubblegum 200",
     "make": "dubblefilm",
-    "speed": 400,
+    "speed": 200,
     "color_type": "color",
-    "description": "dubblefilm Bubblegum 400 is an experimental color negative film characterized by its subtle tones and pastel colours. In very bright conditions the effect can be weak which is part of its charm. The 400 speed Bubblegum film uses the incredible Kodak Ultramax as the base layer. The film has a nominal sensitivity of ISO 400/27° and should be processed in C-41 chemistry."
+    "description": "dubblefilm Bubblegum 400 is an experimental color negative film characterized by its subtle tones and pastel colors. In very bright conditions the effect can be weak which is part of its charm. The 400 speed Bubblegum film uses the incredible Kodak Ultramax as the base layer. The film has a nominal sensitivity of ISO 400/27° and should be processed in C-41 chemistry."
   },
   {
     "type": "jelly 200",
@@ -187,6 +236,34 @@
     "speed": 400,
     "color_type": "color",
     "description": "dubblefilm Stereo 400 is an experimental color negative film which starts with a full frame red tint and fades to blue for the final part. The initial part of the film is very intense and becomes more subtle throughout with an amazing transition part in the middle. Stereo 400 uses the incredible Kodak Ultramax as the base layer. The film has a nominal sensitivity of ISO 400/27° and should be processed in C-41 chemistry."
+  },
+  {
+    "type": "orto",
+    "make": "film ferrania",
+    "speed": 50,
+    "color_type": "bw",
+    "description": "Ferrania Orto 35mm is P30's quirky 50 ISO cousin and features the same high silver content, inherently strong contrast, and practically invisible grain - but this time, distinctly ortochromatico. Blue subjects like skies tend to render very bright, whereas reds render very dark, giving a old Hollywood look. Orto is newly manufactured film, not rebranded stock. It is made in the revived Ferrania factory located the grounds of the original company in Cairo Montenotte, Italy."
+  },
+  {
+    "type": "p30",
+    "make": "film ferrania",
+    "speed": 80,
+    "color_type": "bw",
+    "description": "Ferrania P30 35mm is based on iconic movie film look from Italian films in mid-20th century. It is a silver-rich 80 ISO B+W 35mm film that provides high-contrast negatives with deep, rich shadows, punchy, sharp highlights, and almost no visible grain. P30 is newly manufactured film, not rebranded stock. It is proudly made in the revived Ferrania factory located the grounds of the original company in Cairo Montenotte, Italy."
+  },
+  {
+    "type": "p33",
+    "make": "film ferrania",
+    "speed": 160,
+    "color_type": "bw",
+    "description": "Ferrania P33 is a 35mm 160 ISO film, ensuring smoother and more adaptable photographic journey compared to its predecessors. Engineered to tackle the challenges encountered by enthusiasts using P30, P33 maintains distinctive characteristics such as fine grain and well-defined contrast. Catering to professionals while also being welcoming to novice enthusiasts alike, P33 opens up black and white analog photography to a broader audience. P33 represents the culmination of the Ferrania R&D team's mission to offer photography enthusiasts with a product that blends the timeless qualities of analog tradition with cutting-edge technological advancements Ferrania P33 allows all skill levels to explore the boundless possibilities of black and white photography, ensuring improved ease of use in both shooting and development phases. P33 is newly manufactured film, not rebranded stock. It is proudly made in the revived Ferrania factory located the grounds of the original company in Cairo Montenotte, Italy."
+  },
+  {
+    "type": "solaris 100",
+    "make": "film ferrania",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Ferrania Solaris 100 is a unique 35mm 100 ISO color film with a slight hue of yellow. This film produces bright and saturated colors that will make most scenes that you shoot stand out."
   },
   {
     "type": "derev pan 400",
@@ -340,7 +417,7 @@
     "make": "flic film",
     "speed": 400,
     "color_type": "color",
-    "description": "Apollo 18 is a 400 speed colour c-41 process film. This film has 18 regular exposures giving you 36 exposures for your half-frame camera. The slight warm tones give your photos a memory-type feel while giving you a sharp overall image."
+    "description": "Apollo 18 is a 400 speed color c-41 process film. This film has 18 regular exposures giving you 36 exposures for your half-frame camera. The slight warm tones give your photos a memory-type feel while giving you a sharp overall image."
   },
   {
     "type": "atm 400",
@@ -368,7 +445,7 @@
     "make": "flic film",
     "speed": 100,
     "color_type": "color",
-    "description": "Chrome 100 is respooled KODAK Ektachrome 100D color positive film. It is a daylight-balanced color transparency film characterized by its extremely fine grain structure, vibrant color rendering, and overall low contrast profile. The lower contrast values contribute to a wide dynamic range and a neutral tonal scale for greater color accuracy, and a low D-min helps to ensure brighter, whiter whites. It has a medium-speed nominal sensitivity of ISO 100/21° when developed in E-6 process and the smooth grain profile pairs with a micro-structure optimized T-GRAIN emulsion to make it especially well-suited to scanning applications."
+    "description": "Chrome 100 is respooled Kodak Ektachrome 100D color positive film. It is a daylight-balanced color transparency film characterized by its extremely fine grain structure, vibrant color rendering, and overall low contrast profile. The lower contrast values contribute to a wide dynamic range and a neutral tonal scale for greater color accuracy, and a low D-min helps to ensure brighter, whiter whites. It has a medium-speed nominal sensitivity of ISO 100/21° when developed in E-6 process and the smooth grain profile pairs with a micro-structure optimized T-GRAIN emulsion to make it especially well-suited to scanning applications."
   },
   {
     "type": "elektra 100",
@@ -389,7 +466,7 @@
     "make": "flic film",
     "speed": 400,
     "color_type": "color",
-    "description": "Street Savvy film has vibrant colours and accurate skin tones, high dynamic range and latitude which makes shooting this film a worry free experience. Its balance of contrast and color makes it perfect for both beginners and experienced photographers."
+    "description": "Street Savvy film has vibrant colors and accurate skin tones, high dynamic range and latitude which makes shooting this film a worry free experience. Its balance of contrast and color makes it perfect for both beginners and experienced photographers."
   },
   {
     "type": "100 classic",
@@ -455,18 +532,25 @@
     "description": "Foma RETROPAN 320 soft is a panchromatic black and white negative film characterized by its fine grain structure along with good resolution and edge sharpness. Offering a wide tonal range and classic appearance, this film is particularly well-suited for conventional enlarging applications, and its softer, mild contrast values are ideal for still lives, architectural, landscape, and portrait photography. Its nominal sensitivity is ISO 320/26° when processed in standard black and white chemistry or the recommended Retro Special Developer, however its wide exposure latitude permits rating the film at one stop of over (EI 160) or two stops under (EI 1250) with good results."
   },
   {
+    "type": "200",
+    "make": "fujifilm",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Fujifilm 200 is general purpose color film replacing C200. Designed for flexibility and ease of use, Fujifilm 200 works equally well outdoors in daylight or indoors with flash. Rumored to be rebranded Kodak Gold 200."
+  },
+  {
+    "type": "400",
+    "make": "fujifilm",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Fujifilm 400 is a high-speed, daylight-balanced, 35mm color negative film offering a wide exposure latitude for greater versatility as well as a fine grain structure with consistent and accurate colors. With a nominal sensitivity of 400 ISO this versatile stock can serve a multitude of applications under a wide range of lighting conditions. From sun-drenched vacation snaps to a flash-lit night scene, this color film is designed to produce quality prints. Rumored to be rebranded Kodak Ultramax 400"
+  },
+  {
     "type": "astia 100f",
     "make": "fujifilm",
     "speed": 100,
     "color_type": "color",
     "description": "Fuji Astia 100f is professional-quality, medium-speed, daylight-type color reversal film with ultrafine grain, subdued color reproduction and the softest tone reproduction among the 100F films. It is portrait/fashion orientated film with soft tones and lower contrast."
-  },
-  {
-    "type": "c200",
-    "make": "fujifilm",
-    "speed": 200,
-    "color_type": "color",
-    "description": "Fuji C200 is a budget-friendly color negative film that offers fine grain and a wide exposure latitude, providing versatility for photographers. It renders skin tones pleasingly, making it a great choice for portrait photography. It is known for delivering neutral to warm tones with moderate contrast, suitable for a variety of shooting conditions."
   },
   {
     "type": "fujichrome provia 100",
@@ -480,21 +564,42 @@
     "make": "fujifilm",
     "speed": 100,
     "color_type": "color",
-    "description": "Fujichrome Velvia 100 Professional RVP 100 Color Reversal Film from FUJIFILM is a daylight-balanced color transparency film that exhibits incredibly high color saturation reproduction along with a super-fine grain structure to render imagery cleanly and clearly. It has a medium-speed nominal sensitivity of ISO 100/21° when processed in E-6 or CR-56 processes and can effectively be pulled one half stop or pushed one stop with Minimal variations in color balance and gradation. The introduction of new-generation cyan, magenta, and yellow couplers gives this film its uniquely saturated look and also offers anti-fading characteristics for ensured color image storage permanence. High overall contrast and vivid color reproduction make this film ideal for use in a wide range of photographic applications and is especially well-suited for use in scenic and nature photography."
+    "description": "Fujichrome Velvia 100 Professional RVP 100 Color Reversal Film from Fujifilm is a daylight-balanced color transparency film that exhibits incredibly high color saturation reproduction along with a super-fine grain structure to render imagery cleanly and clearly. It has a medium-speed nominal sensitivity of ISO 100/21° when processed in E-6 or CR-56 processes and can effectively be pulled one half stop or pushed one stop with Minimal variations in color balance and gradation. The introduction of new-generation cyan, magenta, and yellow couplers gives this film its uniquely saturated look and also offers anti-fading characteristics for ensured color image storage permanence. High overall contrast and vivid color reproduction make this film ideal for use in a wide range of photographic applications and is especially well-suited for use in scenic and nature photography."
   },
   {
     "type": "fujichrome velvia 50",
     "make": "fujifilm",
     "speed": 50,
     "color_type": "color",
-    "description": "Fujichrome Velvia 50 Professional RVP 50 from FUJIFILM is a daylight-balanced color transparency film characterized by exceptionally high color saturation and vibrancy, as well as a neutral gray balance and extended detail throughout the highlight and shadow regions. It has a slow-speed nominal sensitivity of ISO 50/18° when processed in E-6 or CR-56 processes and can effectively be pulled one half stop or pushed one stop with Minimal variation in color balance and tonal gradation. Additionally, Velvia 50 also exhibits a fine grain structure with high sharpness and resolving power, and is well-suited to a wide variety of shooting applications."
+    "description": "Fujichrome Velvia 50 Professional RVP 50 from Fujifilm is a daylight-balanced color transparency film characterized by exceptionally high color saturation and vibrancy, as well as a neutral gray balance and extended detail throughout the highlight and shadow regions. It has a slow-speed nominal sensitivity of ISO 50/18° when processed in E-6 or CR-56 processes and can effectively be pulled one half stop or pushed one stop with Minimal variation in color balance and tonal gradation. Additionally, Velvia 50 also exhibits a fine grain structure with high sharpness and resolving power, and is well-suited to a wide variety of shooting applications."
   },
   {
-    "type": "fujicolor 200",
+    "type": "fujicolor c200",
     "make": "fujifilm",
     "speed": 200,
     "color_type": "color",
-    "description": "Fujicolor 200 from Fujifilm is a medium speed daylight-balanced color negative film offering a vivid color palette with accurate skin tones and color reproduction in a variety of lighting conditions. It features a nominal sensitivity of ISO 200/24° along with a wide exposure latitude for use in a variety of conditions, even under fluorescent lighting. The fine grain structure and high degree sharpness are well-suited to scanning and enlarging for printing purposes."
+    "description": "Fujicolor c200 from Fujifilm is a medium speed daylight-balanced color negative film offering a vivid color palette with accurate skin tones and color reproduction in a variety of lighting conditions. It features a nominal sensitivity of ISO 200/24° along with a wide exposure latitude for use in a variety of conditions, even under fluorescent lighting. The fine grain structure and high degree sharpness are well-suited to scanning and enlarging for printing purposes."
+  },
+  {
+    "type": "fujicolor npc 160",
+    "make": "fujifilm",
+    "speed": 160,
+    "color_type": "color",
+    "description": "Fujicolor NPC 160 Professional from Fujifilm is a portrait-dedicated daylight-type contrasty (thus the 'c') exposure professional color negative film with an ISO speed rating of 160 designed for shutter speeds of 1/8 second or faster. For exposure under daylight or a daylight-type artificial light source, filters are not normally required."
+  },
+  {
+    "type": "fujicolor npl 160",
+    "make": "fujifilm",
+    "speed": 160,
+    "color_type": "color",
+    "description": "Fujicolor NPL 160 Professional from Fujifilm is a portrait-dedicated daylight-type long (thus the 'l') exposure professional color negative film with an ISO speed rating of 160 designed for shutter speeds of 1/8 second or faster. For exposure under daylight or a daylight-type artificial light source, filters are not normally required."
+  },
+  {
+    "type": "fujicolor nps 160",
+    "make": "fujifilm",
+    "speed": 160,
+    "color_type": "color",
+    "description": "Fujicolor NPS 160 Professional from Fujifilm is a portrait-dedicated daylight-type short (thus the 's') exposure professional color negative film with an ISO speed rating of 160 designed for shutter speeds of 1/8 second or faster. For exposure under daylight or a daylight-type artificial light source, filters are not normally required."
   },
   {
     "type": "fujicolor pro 400h",
@@ -508,7 +613,7 @@
     "make": "fujifilm",
     "speed": 400,
     "color_type": "color",
-    "description": "Fujicolor Superia X-TRA 400 is a high speed daylight-balanced color negative film featuring FUJIFILM's 4th Color Layer technology to produce vibrant, yet naturally appearing colors with smooth skin tones and repeatable results under mixed lighting conditions. A nominal sensitivity of ISO 400/27° is well-suited to use in a variety of conditions, and Super Fine-Sigma Grain Technology yields an unobtrusive, fine grain structure with high sharpness to benefit scanning and printing applications."
+    "description": "Fujicolor Superia X-TRA 400 is a high speed daylight-balanced color negative film featuring Fujifilm's 4th Color Layer technology to produce vibrant, yet naturally appearing colors with smooth skin tones and repeatable results under mixed lighting conditions. A nominal sensitivity of ISO 400/27° is well-suited to use in a variety of conditions, and Super Fine-Sigma Grain Technology yields an unobtrusive, fine grain structure with high sharpness to benefit scanning and printing applications."
   },
   {
     "type": "fujicolor superia x-tra 800",
@@ -550,7 +655,7 @@
     "make": "fujifilm",
     "speed": 100,
     "color_type": "bw",
-    "description": "FUJIFILM Neopan Acros 100 II is an orthopanchromatic black and white negative film characterized by its extremely fine grain structure and wide tonal range. Super Fine-Σ Grain Technology is employed to deliver the distinct tight grain structure and alignment along with high acutance and smooth tonal rendering to suit both scanning and enlarging applications. Its medium-speed ISO 100 nominal sensitivity suits working in a variety of outdoor conditions and enhanced reciprocity characteristics also benefit working with longer exposure times. Additionally, Acros II incorporates P.I.D.C. Technology (Precision Iodine Distribution Control), which provides stable processing results when manually developing the film in small tanks or automatically in larger processors."
+    "description": "Fujifilm Neopan Acros 100 II is an orthopanchromatic black and white negative film characterized by its extremely fine grain structure and wide tonal range. Super Fine-Σ Grain Technology is employed to deliver the distinct tight grain structure and alignment along with high acutance and smooth tonal rendering to suit both scanning and enlarging applications. Its medium-speed ISO 100 nominal sensitivity suits working in a variety of outdoor conditions and enhanced reciprocity characteristics also benefit working with longer exposure times. Additionally, Acros II incorporates P.I.D.C. Technology (Precision Iodine Distribution Control), which provides stable processing results when manually developing the film in small tanks or automatically in larger processors."
   },
   {
     "type": "phoenix 200",
@@ -697,7 +802,7 @@
     "make": "kodak",
     "speed": 100,
     "color_type": "color",
-    "description": "Kodak Professional Ektar 100 is a daylight-balanced color negative film characterized by an ultra-vivid color palette, high saturation, and an extremely fine grain structure. Utilizing the cinematic VISION Film technology, this film's smooth grain profile pairs with a micro-structure optimized T-GRAIN emulsion to make it especially well-suited to scanning applications, and advanced development accelerators offer extended versatility when making enlargements. Ektar has a nominal sensitivity of ISO 100/21°, and advanced cubic emulsions and proprietary DIR couplers render it with high sharpness, fine detail, and a well-defined edge quality. The combination of rich colors, fine grain, and optimized sharpness benefit this film's use for nature, travel, and outdoor photography, as well as fashion, product, and other commercial applications."
+    "description": "Kodak Professional Ektar 100 is a daylight-balanced color negative film characterized by an ultra-vivid color palette, high saturation, and an extremely fine grain structure. Utilizing the cinematic Vision Film technology, this film's smooth grain profile pairs with a micro-structure optimized T-GRAIN emulsion to make it especially well-suited to scanning applications, and advanced development accelerators offer extended versatility when making enlargements. Ektar has a nominal sensitivity of ISO 100/21°, and advanced cubic emulsions and proprietary DIR couplers render it with high sharpness, fine detail, and a well-defined edge quality. The combination of rich colors, fine grain, and optimized sharpness benefit this film's use for nature, travel, and outdoor photography, as well as fashion, product, and other commercial applications."
   },
   {
     "type": "gold 200",
@@ -711,14 +816,14 @@
     "make": "kodak",
     "speed": 160,
     "color_type": "color",
-    "description": "Kodak's Professional Portra 160 is a daylight-balanced color negative film offering a smooth and natural color palette that is balanced with medium saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic VISION Film technology, this film also exhibits a very fine grain structure with high sharpness and fine edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 160/23° and is particularly well-suited to portrait, wedding, and commercial photography, as well as other general applications."
+    "description": "Kodak's Professional Portra 160 is a daylight-balanced color negative film offering a smooth and natural color palette that is balanced with medium saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic Vision Film technology, this film also exhibits a very fine grain structure with high sharpness and fine edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 160/23° and is particularly well-suited to portrait, wedding, and commercial photography, as well as other general applications."
   },
   {
     "type": "portra 400",
     "make": "kodak",
     "speed": 400,
     "color_type": "color",
-    "description": "Kodak's Professional Portra 400 is a high-speed daylight-balanced color negative film offering a smooth and natural color palette that is balanced with vivid saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic VISION Film technology, this film also exhibits a fine grain structure with very high sharpness and edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 400/27° and is particularly well-suited to portrait and wedding photography, as well as nature, travel, and outdoor shooting with moving subjects, or when the lighting cannot be controlled."
+    "description": "Kodak's Professional Portra 400 is a high-speed daylight-balanced color negative film offering a smooth and natural color palette that is balanced with vivid saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic Vision Film technology, this film also exhibits a fine grain structure with very high sharpness and edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 400/27° and is particularly well-suited to portrait and wedding photography, as well as nature, travel, and outdoor shooting with moving subjects, or when the lighting cannot be controlled."
   },
   {
     "type": "portra 800",
@@ -775,6 +880,27 @@
     "speed": 800,
     "color_type": "color",
     "description": "Kodak's UltraMax 800 is a high-speed daylight-balanced color negative film with bright vibrant colors and natural skin-tones. Since 2008 only sold in Kodak Single Use Cameras"
+  },
+  {
+    "type": "vision3 200t",
+    "make": "kodak",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Kodak's Vision3 200T is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. It provides the benefits of two films in one: the image structure of a 100 speed film with the versatility of a 200 speed product. Experience the improved extreme exposure performance and consistent look of the Vision3 Film family. Enjoy the added flexibility and increased creative control you get from capturing the detail in the extremes of exposure."
+  },
+  {
+    "type": "vision3 250d",
+    "make": "kodak",
+    "speed": 250,
+    "color_type": "color",
+    "description": "Kodak's Vision3 250D is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. With reduced grain in shadows, you can push the boundaries of underexposure and still get outstanding results in the extremes of exposure. Move fast on set and pull out the detail in post-production"
+  },
+  {
+    "type": "vision3 500t",
+    "make": "kodak",
+    "speed": 500,
+    "color_type": "color",
+    "description": "Kodak's Vision3 500T is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. To deliver high image-quality in low-light scenes, Vision3 500T Film yields higher signal-to-noise ratios and the extended highlight latitude the film provides gives greater flexibility to pull even more detail out of highlights when lighting extreme situations."
   },
   {
     "type": "alien 200",
@@ -886,14 +1012,14 @@
     "make": "lomography",
     "speed": 100,
     "color_type": "color",
-    "description": "Lomography Color Negative 100 is a low ISO film that offers fine grain and good detail. It renders colors with a natural and somewhat muted palette, which is great for portrait photography and subdued landscapes. Being a slow film, it performs best in good lighting conditions and tends to offer a somewhat vintage, relaxed feel to the images."
+    "description": "Lomography Color Negative 100 is a low-speed film that offers fine grain and good detail. It renders colors with a natural and somewhat muted palette, which is great for portrait photography and subdued landscapes. Being a slow film, it performs best in good lighting conditions and tends to offer a somewhat vintage, relaxed feel to the images."
   },
   {
     "type": "400",
     "make": "lomography",
-    "speed": 100,
+    "speed": 400,
     "color_type": "color",
-    "description": "Lomography Color Negative 100 is a low ISO film that offers fine grain and good detail. It renders colors with a natural and somewhat muted palette, which is great for portrait photography and subdued landscapes. Being a slow film, it performs best in good lighting conditions and tends to offer a somewhat vintage, relaxed feel to the images."
+    "description": "Lomography Color Negative 400 is a medium-speed film that offers fine grain and vibrant hues. Expect dazzling colors and stunning sharpness with Lomography Color Negative films. Choose ISO 400 for fine grain and unbeatable versatility."
   },
   {
     "type": "800",
@@ -914,7 +1040,7 @@
     "make": "lomography",
     "speed": 100,
     "color_type": "bw",
-    "description": "A classically-inspired black and white negative film, Lomography's Earl Grey 100 is a medium-speed film with a nominal sensitivity of ISO 100/21°, fine grain, and high sharpness. It is characterized by is wide tonal range and ability to render deep blacks and stark whites, with a multitude of gray tones between."
+    "description": "Lomography's Earl Grey 100 is a medium-speed film with a nominal sensitivity of ISO 100/21°, fine grain, and high sharpness. It is characterized by is wide tonal range and ability to render deep blacks and stark whites, with a multitude of gray tones between. It is a classically-inspired black and white negative film."
   },
   {
     "type": "lady grey",
@@ -926,21 +1052,21 @@
   {
     "type": "lomochrome color '92",
     "make": "lomography",
-    "speed": 100,
+    "speed": 400,
     "color_type": "color",
-    "description": "Lomography Potsdam Kino 100 is a retro general purpose color film. The grain and the hues are reminiscent of consumer film available in the 1990s."
+    "description": "Lomography's Lomochrome Color '92 is a medium-speed film with rich film grain. This unique color negative emulsion provides a burst of retro charm and classic analogue character in any film shooting scenario. It is characterized by fascinating blue hues, vibrant reds and delicate pastel undertones."
   },
   {
     "type": "lomochrome metropolis",
     "make": "lomography",
     "speed": 100,
     "color_type": "color",
-    "description": "LomoChrome Metropolis is a unique color negative film. It features experimental punchy contrasts and muted tones with intense pops of color with fine grain."
+    "description": "LomoChrome Metropolis 100–400 is a unique color negative film with characteristic grain. It features experimental punchy contrasts and muted tones with intense pops of color with fine grain. It is great for gritty street scenes and punchy portraits."
   },
   {
     "type": "lomochrome purple xr",
     "make": "lomography",
-    "speed": 400,
+    "speed": 100,
     "color_type": "color",
     "description": "LomoChrome Purple XR 100-400 from Lomography is a surreal and unique film delivering colors that are reminiscent of infrared film. This creative color film intentionally renders false colors, where blue becomes green, green becomes purple, yellow becomes pink, and reds remain neutral for especially unique effects when photographing people. The film's nominal sensitivity is ISO 400, but it responds well to overexposure by up to two stops, which can be used to control color changes with greens taking on a bright purple hue when shot at EI 100. Additionally, this 2019 version of LomoChrome Purple XR 100-400 also delivers finer grain and higher sharpness for greater versatility."
   },
@@ -949,7 +1075,7 @@
     "make": "lomography",
     "speed": 100,
     "color_type": "color",
-    "description": "LomoChrome Metropolis is a unique color negative film. It features experimental and tantalizing turquoise tones with fine grain."
+    "description": "LomoChrome Turquoise 100-400 from Lomography is a unique color negative film. The creative film has dominating turquoise tones, leading to an enchanting aesthetic with fine grain."
   },
   {
     "type": "potsdam kino",
@@ -962,8 +1088,50 @@
     "type": "redscale xr",
     "make": "lomography",
     "speed": 100,
+    "color_type": "color",
+    "description": "Lomography Redscale XR bathes your photos in glowing shades of red, orange, yellow and even cool blue. Experiment with the extended ISO range to render different results."
+  },
+  {
+    "type": "opticolour 200",
+    "make": "optik oldschool",
+    "speed": 200,
+    "color_type": "color",
+    "description": "OptiColour 200 is a daylight balanced 200 ISO film. It is a new emulsion, created and coated by InovisCoat in Germany. OptiColour 200 is the Wolfen NC200 emulsion in both 120 and 35mm. This new film features natural colours, good contrast, great greens and reds and awesome skin tones, setting itself apart significantly from the other films of the NC series (NC400/500). The film has an orange base, which makes it easier to handle when scanning in the lab."
+  },
+  {
+    "type": "nc400",
+    "make": "original wolfen",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Original Wolfen NC400 is a 400 ISO, 36 exposure, color photographic film. At the core of the film lies a unique chemical formula based on the wonderful and legendary Agfa stock last used in the BAFTA award winning film ‘Robin Hood: Prince of Thieves’ with the best selling soundtrack provided by the awesome photographer/musician Bryan Adams. Wolfen NC400 is similar to its sister, the NC500, but with less grain and more deliberately vibrant in certain colors. It is uniquely balanced towards greens, desaturated shadows and a more subtle grain."
+  },
+  {
+    "type": "nc500",
+    "make": "original wolfen",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Original Wolfen NC500 is a 400 ISO, 36 exposure, color photographic film. At the core of the film lies a unique chemical formula based on the wonderful and legendary Agfa stock last used in the Oscar winning film ‘Out of Africa’. Famous for their greens, desaturated shadows and enhanced grains, these are all aspects that we are embracing for our new addition. Wolfen NC500 does not imitate current stocks available on the market but is rather an alternative, something with different characteristics and a different palette."
+  },
+  {
+    "type": "np100",
+    "make": "original wolfen",
+    "speed": 100,
     "color_type": "bw",
-    "description": "Lomography Redscale CR bathes your photos in glowing shades of red, orange, yellow and even cool blue. Experiment with the extended ISO range to render different results."
+    "description": "Original Wolfen NP100 is an exceptionally fine grain 100 ISO, 36 exposure, black and white photographic film. Wolfen NP100 differs from Wolfen UN54 in that it has an additional dyed antihalation layer. This layer is positioned between the base material and the emulsion layer and has the task of preventing the formation of a reflection halo. This improves image sharpness."
+  },
+  {
+    "type": "p400",
+    "make": "original wolfen",
+    "speed": 400,
+    "color_type": "bw",
+    "description": "Original Wolfen P400 is a 400 ISO, 36 exposure, black and white photographic film. It is a panchromatic medium-speed film cut from original rolls of motion picture film. It performs in both outdoor and indoor conditions, and featuring a classic emulsion from the golden age of cinema. It has a rich tonal scale with impressive contrast, fine grain, and high sharpness."
+  },
+  {
+    "type": "un54",
+    "make": "original wolfen",
+    "speed": 100,
+    "color_type": "bw",
+    "description": "Wolfen UN54 is a medium speed 100 ISO, 36 exposure, black and white photographic film. Originally used to make monochrome movies, the black and white tones of Wolfen UN54 will capture cinematic scenes in photographic format. Wolfen UN54 is perfect for sunny days and scenes where attention to detail is desired. Featuring a classic fine grain structure and subtle contrast, there is a reason why this is their most famous emulsion."
   },
   {
     "type": "400 #2",
@@ -1005,7 +1173,77 @@
     "make": "psychedelic blues",
     "speed": 400,
     "color_type": "color",
-    "description": "Psychedelic Blues 400 #7 is an experimental color negative film that has been pre-exposed to different colored light sources in order to produce a distinct light-leak look. The effects include multi-colored waves running down the center of the frame. Similar effect as Psych Blues #5/6, but toned-down, yet still very wild, version of that idea. The film has a nominal sensitivity of ISO 400/27° and should be processed in C-41 chemistry"
+    "description": "Psychedelic Blues 400 #7 is an experimental color negative film that has been pre-exposed to different colored light sources in order to produce a distinct light-leak look. The effects include multi-colored waves running down the center of the frame. Similar effect as Psych Blues #5/6, but toned-down, yet still very wild, version of that idea. The film has a nominal sensitivity of ISO 400/27° and should be processed in C-41 chemistry."
+  },
+  {
+    "type": "retocolor amber d100",
+    "make": "reto project",
+    "speed": 100,
+    "color_type": "color",
+    "description": "RETOCOLOR AMBER D100 Film is a 100 ISO 35mm film with 27 exposures. It is a motion picture film that gives distinct colors and looks when used in different lighting conditions. It becomes a cool blue tone when shot in daylight."
+  },
+  {
+    "type": "retocolor amber d400",
+    "make": "reto project",
+    "speed": 400,
+    "color_type": "color",
+    "description": "RETOCOLOR AMBER D400 Film is a 400 ISO 35mm film with 27 exposures. It is a motion picture film that gives distinct colors and looks when used in different lighting conditions. It is excellent for low-light situations and becomes a cool blue tone if shot in daylight"
+  },
+  {
+    "type": "retocolor amber t200",
+    "make": "reto project",
+    "speed": 200,
+    "color_type": "color",
+    "description": "RETOCOLOR AMBER T200 Film is a 200 ISO 35mm film with 27 exposures. It is a motion picture film that gives distinct colors and looks when used in different lighting conditions. It is excellent for low-light situations and becomes a cool blue tone if shot in daylight"
+  },
+  {
+    "type": "retocolor amber t800",
+    "make": "reto project",
+    "speed": 800,
+    "color_type": "color",
+    "description": "RETOCOLOR AMBER T800 Film is a 800 ISO 35mm film with 27 exposures. It is a motion picture film that gives distinct colors and looks when used in different lighting conditions. It is excellent for low-light situations and becomes a cool blue tone if shot in daylight"
+  },
+  {
+    "type": "retocolor aqua 400",
+    "make": "reto project",
+    "speed": 400,
+    "color_type": "color",
+    "description": "RETOCOLOR AQUA 400 Film is a 400 ISO 35mm color negative film with 27 exposures. It produces faded and low contrast colors when used in varied circumstances. Under daylight condition, it creates an icy bluish color tone and additionally add grainy texture to the photos."
+  },
+  {
+    "type": "retocolor glow 400",
+    "make": "reto project",
+    "speed": 400,
+    "color_type": "color",
+    "description": "RETOCOLOR GLOW 400 Film is a 400 ISO 35mm color negative film with 27 exposures. It produces a moderate vintage with a soft warm tint, leading a cinematic urban vibe."
+  },
+  {
+    "type": "retocolor maple 100",
+    "make": "reto project",
+    "speed": 100,
+    "color_type": "color",
+    "description": "RETOCOLOR MAPLE 100 Film is a 100 ISO 35mm color reversal film with 27 exposures. Not only does it offer finer grain that will make your photos look smooth, but it also packs a punch with significant sharpness with every detail comes to life in exceptional clarity. It adds a burst of energy with its rich gradation and vibrant colors to your shots."
+  },
+  {
+    "type": "retocolor mosaic 100",
+    "make": "reto project",
+    "speed": 100,
+    "color_type": "color",
+    "description": "RETOCOLOR MAPLE 100 Film is a 100 ISO 35mm color negative film with 27 exposures. It is fine-grained, offers medium to low contrast, and captivating reds with a touch of cyan tones. Perfect for shooting in bright outdoor lighting, it adds warmth to every frame."
+  },
+  {
+    "type": "retocolor prism 200",
+    "make": "reto project",
+    "speed": 200,
+    "color_type": "color",
+    "description": "RETOCOLOR PRISM 200 Film is an 200 ISO 35mm fine-grained color negative film. With an ISO of 200 and medium contrast, this film delivers vivid and vibrant colors, making it an ideal choice for daylight and outdoor photography enthusiasts."
+  },
+  {
+    "type": "retocolor prism 400",
+    "make": "reto project",
+    "speed": 400,
+    "color_type": "color",
+    "description": "RETOCOLOR PRISM 400 Film is an 400 ISO 35mm fine-grained color negative film. This all-purpose film strikes a balance between medium to high contrast, delivering vivid and vibrant colors in every shot. Ideal for capturing outdoor sceneries, indoor portraits with natural lighting, and when photographing a combination of indoor and outdoor images on a single roll."
   },
   {
     "type": "460nm 200",
@@ -1174,6 +1412,34 @@
     "speed": 100,
     "color_type": "bw",
     "description": "Shanghai Film GP3 100 is a medium-speed panchromatic black and white negative film characterized by a controlled grain structure, making it well-suited for both enlarging and scanning. This film has a nominal sensitivity of ISO 100/21° and its traditional silver-rich emulsion offers rich tonality with deep black and bright white values."
+  },
+  {
+    "type": "50d",
+    "make": "silbersalz35",
+    "speed": 50,
+    "color_type": "color",
+    "description": "Original SILBERSALZ35 50D True Cinefilm. Made with untouched Kodak Vision3 motion picture film like it is used in Hollywood. SILBERSALZ35 is professionally manufactured in metal cartridges and compatible with every 35mm camera out there. 50D has an ISO of 50 and is balanced for Daylight (5500K). DX-Code is rated at 25 ISO (recommend overexposing film by one stop)."
+  },
+  {
+    "type": "200t",
+    "make": "silbersalz35",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Original SILBERSALZ35 200T True Cinefilm. Made with untouched Kodak Vision3 motion picture film like it is used in Hollywood. SILBERSALZ35 is professionally manufactured in metal cartridges and compatible with every 35mm camera out there. 200T has an ISO of 200 and is balanced for Tungsten (3200K). DX-Code is rated at 100 ISO (recommend overexposing film by one stop)."
+  },
+  {
+    "type": "250d",
+    "make": "silbersalz35",
+    "speed": 250,
+    "color_type": "color",
+    "description": "Original SILBERSALZ35 250D True Cinefilm. Made with untouched Kodak Vision3 motion picture film like it is used in Hollywood. SILBERSALZ35 is professionally manufactured in metal cartridges and compatible with every 35mm camera out there. 200T has an ISO of 200 and is balanced for Daylight (5500K). DX-Code is rated at 125 ISO (recommend overexposing film by one stop)."
+  },
+  {
+    "type": "500t",
+    "make": "silbersalz35",
+    "speed": 500,
+    "color_type": "color",
+    "description": "Original SILBERSALZ35 500T True Cinefilm. Made with untouched Kodak Vision3 motion picture film like it is used in Hollywood. SILBERSALZ35 is professionally manufactured in metal cartridges and compatible with every 35mm camera out there. 200T has an ISO of 200 and is balanced for Tungsten (3200K). DX-Code is rated at 250 ISO (recommend overexposing film by one stop)."
   },
   {
     "type": "andromeda 400",
