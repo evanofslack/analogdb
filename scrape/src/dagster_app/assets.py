@@ -334,8 +334,6 @@ def updated_post_title_metadatas(
         raise Exception("Unequal count of posts and extracted metadata")
 
     for p, m in zip(analogdb_posts, metadatas):
-        if m.is_empty():
-            continue
         meta = adb.PhotoMetadata(
             m.camera_make,
             m.camera_model,
@@ -345,6 +343,11 @@ def updated_post_title_metadatas(
             m.focal_length,
             m.aperture,
         )
+        if meta.is_empty() or m.is_empty():
+            context.log.debug(
+                f"Skip create patch for empty post title metadata, title={p.title}, empty={meta.is_empty()}, empty={m.is_empty()}, metadata={meta}"
+            )
+            continue
         context.log.debug(
             f"Created patch for post title metadata, title={p.title}, metadata={meta}"
         )
