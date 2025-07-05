@@ -1,0 +1,74 @@
+version: "3.7"
+
+services:
+  analogdb:
+    container_name: analogdb-consumer
+    build: .
+    ports:
+      - 8089:${SERVER_PORT}
+      # - 8090:${METRICS_PORT}
+    restart: unless-stopped
+    environment:
+      APP_NAME: ${APP_NAME}
+      APP_VERSION: ${APP_VERSION}
+      APP_ENV: ${APP_ENV}
+      KAFKA_BROKERS: ${KAFKA_BROKERS}
+      KAFKA_TOPIC: ${KAFKA_TOPIC}
+      KAFKA_CONSUMER_GROUP: ${KAFKA_CONSUMER_GROUP}
+      KAFKA_BATCH_SIZE: ${KAFKA_BATCH_SIZE}
+      KAFKA_BATCH_TIMEOUT: ${KAFKA_BATCH_TIMEOUT}
+      CLICKHOUSE_HOST: ${CLICKHOUSE_HOST}
+      CLICKHOUSE_PORT: ${CLICKHOUSE_PORT}
+      CLICKHOUSE_DATABASE: ${CLICKHOUSE_DATABASE}
+      CLICKHOUSE_USERNAME: ${CLICKHOUSE_USERNAME}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_TABLE: ${CLICKHOUSE_TABLE}
+      CLICKHOUSE_MIGRATION_ENABLED: ${CLICKHOUSE_MIGRATION_ENABLED}
+      CLICKHOUSE_MIGRATION_PATH: ${CLICKHOUSE_MIGRATION_PATH}
+      SERVER_PORT: ${SERVER_PORT}
+      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_ENV: ${LOG_ENV}
+      METRICS_ENABLED: ${METRICS_ENABLED}
+      METRICS_PORT: ${METRICS_PORT}
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - 8123:8123 # HTTP
+      - 9000:9000 # Native
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USERNAME}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DATABASE}
+      CLICKHOUSE_TABLE: ${CLICKHOUSE_TABLE}
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8123/ping",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - analogdb
+
+volumes:
+  clickhouse:
+
+networks:
+  analogdb:
+    external: true
+    name: analogdb
