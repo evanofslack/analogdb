@@ -17,11 +17,11 @@ clickhouse:
   username: "default"
   password: ""
   table: "events"
+  migration_enabled: true
+  migration_path: "migrations"
 
 server:
   port: 8080
-  read_timeout: "10s"
-  write_timeout: "10s"
 
 log:
   level: "info"
