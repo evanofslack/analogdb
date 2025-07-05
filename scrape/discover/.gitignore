@@ -1,0 +1,6 @@
+batches/
+missing/
+queries/
+*.csv
+*.json
+*.txt
