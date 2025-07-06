@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  analogdb:
+  analogdb-consumer:
     container_name: analogdb-consumer
     build: .
     ports:
@@ -33,6 +33,8 @@ services:
     depends_on:
       clickhouse:
         condition: service_healthy
+    networks:
+      - analogdb
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
