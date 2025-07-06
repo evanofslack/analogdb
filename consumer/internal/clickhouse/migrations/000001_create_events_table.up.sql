@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS events (
+CREATE TABLE IF NOT EXISTS httprequests (
     request_id String,
     remote_ip String,
     url String,
