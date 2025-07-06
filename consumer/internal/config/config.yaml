@@ -4,11 +4,11 @@ app:
   env: "development"
 
 kafka:
-  brokers: "localhost:9092"
+  brokers: ""
   topic: "analytics"
   consumer_group: "analytics-consumer"
   batch_size: 100
-  batch_timeout: "5s"
+  batch_timeout: ""
 
 clickhouse:
   host: "localhost"

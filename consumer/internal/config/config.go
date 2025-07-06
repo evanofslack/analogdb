@@ -21,11 +21,11 @@ type Config struct {
 func New(path string) (*Config, error) {
 	cfg := &Config{}
 
-	if err := cleanenv.ReadConfig(path, cfg); err != nil {
-		return nil, fmt.Errorf("load config: %w", err)
-	}
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("Could not load .env file")
+	}
+	if err := cleanenv.ReadConfig(path, cfg); err != nil {
+		return nil, fmt.Errorf("load config: %w", err)
 	}
 	if err := cleanenv.ReadEnv(cfg); err != nil {
 		return nil, fmt.Errorf("load env: %w", err)
@@ -40,19 +40,19 @@ type App struct {
 }
 
 type Kafka struct {
-	brokers       string `yaml:"brokers" env:"KAFKA_BROKERS"`
+	BrokersRaw       string `yaml:"brokers" env:"KAFKA_BROKERS"`
 	Topic         string `yaml:"topic" env:"KAFKA_TOPIC"`
 	ConsumerGroup string `yaml:"consumer_group" env:"KAFKA_CONSUMER_GROUP"`
 	BatchSize     int    `yaml:"batch_size" env:"KAFKA_BATCH_SIZE"`
-	batchTimeout  string `yaml:"batch_timeout" env:"KAFKA_BATCH_TIMEOUT"`
+	BatchTimeoutRaw  string `yaml:"batch_timeout" env:"KAFKA_BATCH_TIMEOUT"`
 }
 
 func (k *Kafka) Brokers() []string {
-	return strings.Split(k.brokers, ",")
+	return strings.Split(k.BrokersRaw, ",")
 }
 
 func (k *Kafka) BatchTimeout() (time.Duration, error) {
-	return time.ParseDuration(k.batchTimeout)
+	return time.ParseDuration(k.BatchTimeoutRaw)
 }
 
 type ClickHouse struct {

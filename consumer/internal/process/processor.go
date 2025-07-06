@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
@@ -36,12 +37,13 @@ func New(logger *slog.Logger, consumer Consumer, db DB) *Processor {
 
 func (p *Processor) Start(ctx context.Context) error {
 	p.logger.Info("Start processor")
+	defer p.logger.Info("Stop processor")
+
 	const maxRetries = 5
 	retryDelay := time.Second
 	for {
 		select {
 		case <-ctx.Done():
-			p.logger.Info("Stop processor")
 			return ctx.Err()
 		default:
 		}
@@ -51,12 +53,15 @@ func (p *Processor) Start(ctx context.Context) error {
 			if err == nil {
 				break // success
 			}
+			if isTimeoutError(err) {
+				break // timeout, continue
+			}
 			if attempt >= maxRetries {
-				p.logger.Error("max retries exceeded", "error", err)
+				p.logger.Error("Process max retries exceeded", "error", err)
 				break // give up
 			}
 			delay := retryDelay * time.Duration(attempt)
-			p.logger.Warn("batch failed, retrying", "attempt", attempt, "error", err, "delay", delay)
+			p.logger.Warn("Process batch failed, retrying", "attempt", attempt, "error", err, "delay", delay)
 			select {
 			case <-ctx.Done():
 				return err
@@ -68,20 +73,18 @@ func (p *Processor) Start(ctx context.Context) error {
 
 func (p *Processor) processBatch(ctx context.Context) error {
 	start := time.Now()
-
 	events, messages, err := p.consumer.Read(ctx)
 	if err != nil {
 		return fmt.Errorf("read events: %w", err)
 	}
+	p.logger.Debug("Start process batch", "count", len(events))
 
 	if len(events) == 0 {
 		return nil
 	}
 
-	p.logger.Debug("processing batch", "count", len(events))
-
 	if err := p.validateEvents(events); err != nil {
-		p.logger.Error("event validation failed", "error", err)
+		p.logger.Error("Event validation failed", "error", err)
 		return fmt.Errorf("validate events: %w", err)
 	}
 
@@ -94,7 +97,7 @@ func (p *Processor) processBatch(ctx context.Context) error {
 	}
 
 	duration := time.Since(start)
-	p.logger.Debug("Batch processed successfully",
+	p.logger.Debug("Finish process batch",
 		"count", len(events),
 		"duration_ms", duration.Milliseconds(),
 	)
@@ -131,4 +134,11 @@ func (p *Processor) validateEvent(index int, event *v1.Event) error {
 func (p *Processor) Stop() error {
 	p.logger.Info("Stopping processor")
 	return p.consumer.Close()
+}
+
+func isTimeoutError(err error) bool {
+	errStr := strings.ToLower(err.Error())
+	return strings.Contains(errStr, "context deadline exceeded") ||
+		strings.Contains(errStr, "request timed out") ||
+		strings.Contains(errStr, "no messages received")
 }

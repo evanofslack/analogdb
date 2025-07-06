@@ -2,14 +2,11 @@ package clickhouse
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/golang-migrate/migrate/v4"
-	clickhouse_migrate "github.com/golang-migrate/migrate/v4/database/clickhouse"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
 	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
@@ -38,9 +35,9 @@ type Client struct {
 
 func New(logger *slog.Logger, host string, port int, database, username, password, table string, appName, appVersion string, migrationEnabled bool, migrationPath string) (*Client, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
-	dsn := fmt.Sprintf("clickhouse://%s:%s@%s:%d/%s?sslmode=disable", username, password, host, port, database)
-
-	logger.Debug("Start init clickhouse instance", "migration_path", migrationPath, "migration_enabled", migrationEnabled, "addr", addr, "table", table, "dsn", dsn)
+	dsn := fmt.Sprintf("clickhouse://%s:%s@%s:%d/%s", username, password, host, port, database)
+	logger = logger.With("addr", addr, "dsn", dsn, "table", table)
+	logger.Debug("Start init clickhouse instance", "migration_path", migrationPath, "migration_enabled", migrationEnabled)
 
 	client := &Client{
 		logger:           logger,
@@ -55,11 +52,7 @@ func New(logger *slog.Logger, host string, port int, database, username, passwor
 		appName:          appName,
 		appVersion:       appVersion,
 	}
-	if err := client.Health(context.Background()); err != nil {
-		return nil, fmt.Errorf("health check failed: %w", err)
-	}
-
-	logger.Info("Finish init clickhouse instance", "migration_path", migrationPath, "migration_enabled", migrationEnabled, "addr", addr, "table", table)
+	logger.Info("Finish init clickhouse instance", "migration_path", migrationPath, "migration_enabled", migrationEnabled)
 	return client, nil
 }
 
@@ -98,11 +91,15 @@ func (c *Client) Open() error {
 
 	if c.migrationEnabled {
 		// If migration path provided, use it
-		if c.migrationPath == "" {
-			return fmt.Errorf("cannot migrate with no migrations path set")
-		}
-		if err := c.migrateFromPath(c.migrationPath); err != nil {
-			return err
+		if c.migrationPath != "" {
+			if err := c.migrateFromPath(c.migrationPath); err != nil {
+				return err
+			}
+		} else {
+			// Otherwise use default embedded migrations
+			if err := c.migrate(); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -110,11 +107,19 @@ func (c *Client) Open() error {
 }
 
 func (c *Client) Insert(ctx context.Context, events []*v1.Event) error {
+	c.logger.Debug("Start insert events", "count", len(events))
 	if len(events) == 0 {
 		return nil
 	}
 
-	batch, err := c.conn.PrepareBatch(ctx, fmt.Sprintf("INSERT INTO %s", c.table))
+	// Explicitly specify the columns you're inserting
+	insert := fmt.Sprintf(`INSERT INTO %s (
+		request_id, remote_ip, url, path, protocol, scheme, method, 
+		user_agent, response_code, hostname, authorized, start_time, 
+		end_time, request_time_ms, bytes_in, bytes_out
+	)`, c.table)
+
+	batch, err := c.conn.PrepareBatch(ctx, insert)
 	if err != nil {
 		return fmt.Errorf("prepare batch: %w", err)
 	}
@@ -147,52 +152,20 @@ func (c *Client) Insert(ctx context.Context, events []*v1.Event) error {
 		return fmt.Errorf("send batch: %w", err)
 	}
 
-	c.logger.Debug("inserted events", "count", len(events))
+	c.logger.Debug("Finish insert events", "count", len(events))
 	return nil
 }
 
-func (c *Client) Health(ctx context.Context) error {
+func (c *Client) HealthCheck(ctx context.Context) error {
+	if c.conn == nil {
+		return fmt.Errorf("db connection not open")
+	}
 	return c.conn.Ping(ctx)
 }
 
 func (c *Client) Close() error {
+	if c.conn == nil {
+		return fmt.Errorf("db connection not open")
+	}
 	return c.conn.Close()
-}
-
-func (c *Client) HealthCheck(ctx context.Context) error {
-	if err := c.conn.Ping(ctx); err != nil {
-		return fmt.Errorf("clickhouse ping failed: %w", err)
-	}
-	return nil
-}
-
-func (c *Client) migrateFromPath(path string) error {
-	c.logger.Debug("Start run migrations", "path", path, "dsn", c.dsn)
-	db, err := sql.Open("clickhouse", c.dsn)
-	if err != nil {
-		return fmt.Errorf("open db connection: %w", err)
-	}
-	defer db.Close()
-
-	driver, err := clickhouse_migrate.WithInstance(db, &clickhouse_migrate.Config{})
-	if err != nil {
-		return fmt.Errorf("create migrate driver: %w", err)
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		fmt.Sprintf("file://%s", path),
-		"clickhouse",
-		driver,
-	)
-	if err != nil {
-		return fmt.Errorf("create migrate instance: %w", err)
-	}
-
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("run migrations: %w", err)
-	}
-
-	c.logger.Info("Finish run migrations", "path", path, "dsn", c.dsn)
-
-	return nil
 }

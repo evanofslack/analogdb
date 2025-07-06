@@ -63,7 +63,7 @@ func New(logger *slog.Logger, port int, appName, appVersion, appEnv string) *Ser
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	s.logger.Info("starting http server", "addr", s.server.Addr)
+	s.logger.Info("Starting server", "addr", s.server.Addr)
 
 	errChan := make(chan error, 1)
 
@@ -82,17 +82,17 @@ func (s *Server) Start(ctx context.Context) error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.logger.Info("shutting down HTTP server")
+	s.logger.Info("Shutting down server")
 
 	shutdownCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	if err := s.server.Shutdown(shutdownCtx); err != nil {
-		s.logger.Error("server shutdown failed", "error", err)
+		s.logger.Error("Server shutdown", "error", err)
 		return fmt.Errorf("server shutdown: %w", err)
 	}
 
-	s.logger.Info("HTTP server stopped")
+	s.logger.Info("Server stopped")
 	return nil
 }
 

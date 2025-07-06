@@ -2,24 +2,26 @@ package kafka
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/segmentio/kafka-go"
-	"google.golang.org/protobuf/proto"
 
 	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
 )
 
 type Client struct {
+	logger    *slog.Logger
 	reader    *kafka.Reader
 	batchSize int
 	timeout   time.Duration
-	logger    *slog.Logger
 }
 
 func New(logger *slog.Logger, brokers []string, topic, consumerGroup string, batchSize int, timeout time.Duration) *Client {
+	logger = logger.With("brokers", brokers, "consumer_group", consumerGroup, "batch_size", batchSize, "timeout", timeout)
+	logger.Debug("Start create new kafka client")
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:          brokers,
 		Topic:            topic,
@@ -37,11 +39,12 @@ func New(logger *slog.Logger, brokers []string, topic, consumerGroup string, bat
 		}),
 	})
 
+	logger.Info("Finish create new kafka client")
 	return &Client{
+		logger:    logger,
 		reader:    reader,
 		batchSize: batchSize,
 		timeout:   timeout,
-		logger:    logger,
 	}
 }
 
@@ -56,7 +59,7 @@ func (c *Client) Read(ctx context.Context) ([]*v1.Event, []kafka.Message, error)
 		select {
 		case <-timeoutCtx.Done():
 			if len(events) > 0 {
-				c.logger.Debug("batch timeout reached", "count", len(events))
+				c.logger.Debug("Batch timeout reached", "count", len(events))
 				return events, messages, nil
 			}
 			return nil, nil, timeoutCtx.Err()
@@ -66,7 +69,7 @@ func (c *Client) Read(ctx context.Context) ([]*v1.Event, []kafka.Message, error)
 		msg, err := c.reader.FetchMessage(timeoutCtx)
 		if err != nil {
 			if len(events) > 0 {
-				c.logger.Debug("fetch error with partial batch", "error", err, "count", len(events))
+				c.logger.Debug("Fetch error with partial batch", "error", err, "count", len(events))
 				return events, messages, nil
 			}
 			return nil, nil, fmt.Errorf("fetch message: %w", err)
@@ -74,9 +77,9 @@ func (c *Client) Read(ctx context.Context) ([]*v1.Event, []kafka.Message, error)
 
 		event, err := c.deserializeEvent(msg.Value)
 		if err != nil {
-			c.logger.Error("failed to deserialize event", "error", err, "offset", msg.Offset)
+			c.logger.Error("Deserialize event", "error", err, "offset", msg.Offset)
 			if err := c.reader.CommitMessages(ctx, msg); err != nil {
-				c.logger.Error("failed to commit bad message", "error", err)
+				c.logger.Error("Commit bad message", "error", err)
 			}
 			continue
 		}
@@ -85,7 +88,7 @@ func (c *Client) Read(ctx context.Context) ([]*v1.Event, []kafka.Message, error)
 		messages = append(messages, msg)
 	}
 
-	c.logger.Debug("batch read complete", "count", len(events))
+	c.logger.Debug("Batch read complete", "count", len(events))
 	return events, messages, nil
 }
 
@@ -98,7 +101,7 @@ func (c *Client) Commit(ctx context.Context, msgs []kafka.Message) error {
 		return fmt.Errorf("commit messages: %w", err)
 	}
 
-	c.logger.Debug("committed messages", "count", len(msgs))
+	c.logger.Debug("Committed messages", "count", len(msgs))
 	return nil
 }
 
@@ -116,8 +119,8 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 
 func (c *Client) deserializeEvent(data []byte) (*v1.Event, error) {
 	event := &v1.Event{}
-	if err := proto.Unmarshal(data, event); err != nil {
-		return nil, fmt.Errorf("unmarshal proto: %w", err)
+	if err := json.Unmarshal(data, event); err != nil {
+		return nil, fmt.Errorf("unmarshal json: %w", err)
 	}
 	return event, nil
 }

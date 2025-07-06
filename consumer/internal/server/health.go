@@ -11,7 +11,7 @@ import (
 // AddHealthChecker registers a health checker for a named service
 func (s *Server) AddHealthChecker(name string, checker HealthChecker) {
 	s.checkers[name] = checker
-	s.logger.Debug("health checker registered", "service", name)
+	s.logger.Debug("Health check registered", "service", name)
 }
 
 type HealthStatus struct {
@@ -49,7 +49,7 @@ func (s *Server) readinessHandler(w http.ResponseWriter, r *http.Request) {
 		if err := checker.HealthCheck(ctx); err != nil {
 			status.Services[name] = fmt.Sprintf("unhealthy: %v", err)
 			allReady = false
-			s.logger.Warn("service health check failed", "service", name, "error", err)
+			s.logger.Warn("Service health check failed", "service", name, "error", err)
 		} else {
 			status.Services[name] = "healthy"
 		}
@@ -65,6 +65,6 @@ func (s *Server) readinessHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewEncoder(w).Encode(status); err != nil {
-		s.logger.Error("failed to encode readiness response", "error", err)
+		s.logger.Error("Encode readiness response", "error", err)
 	}
 }

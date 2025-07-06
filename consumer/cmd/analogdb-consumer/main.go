@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultConfigPath = "config.yml"
+	defaultConfigPath = "config.yaml"
 )
 
 func main() {
@@ -68,10 +68,14 @@ func main() {
 		err = fmt.Errorf("create clickhouse client, err=%w", err)
 		fatal(logger, err)
 	}
+    if err := ch.Open(); err != nil {
+		err = fmt.Errorf("open clickhouse connection, err=%w", err)
+		fatal(logger, err)
+    }
 
 	batchTimeout, err := cfg.Kafka.BatchTimeout()
 	if err != nil {
-		logger.Error("invalid batch timeout", "error", err)
+		logger.Error("Invalid batch timeout", "error", err)
 		batchTimeout = time.Second * 10
 	}
 
@@ -119,7 +123,7 @@ func main() {
 
 	// wait for shutdown signal
 	<-sigChan
-	logger.Info("shutdown signal received")
+	logger.Info("Shutdown signal received")
 	cancel()
 
 	// wait for all goroutines to finish
@@ -132,7 +136,7 @@ func main() {
 	// wait for shutdown
 	select {
 	case <-done:
-		logger.Info("clean shutdown completed")
+		logger.Info("Clean shutdown completed")
 	case <-time.After(30 * time.Second):
 		err = fmt.Errorf("shutdown timer exceeded")
 		fatal(logger, err)
