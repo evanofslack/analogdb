@@ -11,29 +11,27 @@ scraper :
 	cd scraper && make upd
 
 PROTO_DIR := proto
-GO_OUT_DIR := backend/internal/gen/proto
-KOTLIN_OUT_DIR := analytics/src/main/java
+BACKEND_GO_OUT_DIR := backend/internal/gen/proto
+CONSUMER_GO_OUT_DIR := consumer/internal/gen/proto
 
 .PHONY: proto
-proto: proto-go proto-cp-kotlin
+proto: proto-go
 
 .PHONY: proto-go
-proto-go:
-	@echo "Generating Go proto files..."
+proto-go: proto-backend proto-consumer
+
+.PHONY: proto-backend
+proto-backend:
+	@echo "Generating Go proto files for backend..."
 	protoc -I=$(PROTO_DIR) \
-		--go_out=$(GO_OUT_DIR) --go_opt=paths=source_relative \
-		--go-grpc_out=$(GO_OUT_DIR) --go-grpc_opt=paths=source_relative \
+		--go_out=$(BACKEND_GO_OUT_DIR) --go_opt=paths=source_relative \
+		--go-grpc_out=$(BACKEND_GO_OUT_DIR) --go-grpc_opt=paths=source_relative \
 		$(PROTO_DIR)/analytics/v1/event.proto
 
-.PHONY: proto-kotlin
-proto-kotlin:
-	@echo "Generating Kotlin proto files..."
-	mkdir -p $(KOTLIN_OUT_DIR)
+.PHONY: proto-consumer
+proto-consumer:
+	@echo "Generating Go proto files for consumer..."
 	protoc -I=$(PROTO_DIR) \
-		--java_out=$(KOTLIN_OUT_DIR) \
+		--go_out=$(CONSUMER_GO_OUT_DIR) --go_opt=paths=source_relative \
+		--go-grpc_out=$(CONSUMER_GO_OUT_DIR) --go-grpc_opt=paths=source_relative \
 		$(PROTO_DIR)/analytics/v1/event.proto
-
-.PHONY: proto-cp-kotlin
-proto-cp-kotlin:
-	@echo "Generating Kotlin proto files..."
-	cp -r $(PROTO_DIR) analytics/proto/

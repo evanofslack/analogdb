@@ -1,0 +1,32 @@
+app:
+  name: "analogdb-consumer"
+  version: "1.0.0"
+  env: "development"
+
+kafka:
+  brokers: ""
+  topic: "analytics"
+  consumer_group: "analytics-consumer"
+  batch_size: 100
+  batch_timeout: ""
+
+clickhouse:
+  host: "localhost"
+  port: 9000
+  database: "analytics"
+  username: "default"
+  password: ""
+  table: "events"
+  migration_enabled: true
+  migration_path: "migrations"
+
+server:
+  port: 8080
+
+log:
+  level: "info"
+  env: "dev"
+
+metrics:
+  enabled: true
+  port: "9090"
