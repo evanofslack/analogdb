@@ -85,7 +85,7 @@ func (s *Server) mountPostHandlers() {
 }
 
 func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
-	filter, err := parseToFilter(r)
+	filter, err := parseToPostFilter(r)
 	if err != nil {
 		s.writeError(w, r, err)
 		return
@@ -422,7 +422,7 @@ func stringToInt(query string) (int, error) {
 }
 
 // parse URL for query parameters and convert to PostFilter needed to query db
-func parseToFilter(r *http.Request) (*analogdb.PostFilter, error) {
+func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	values := r.URL.Query()

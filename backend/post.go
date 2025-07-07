@@ -187,10 +187,10 @@ type PostFilter struct {
 func (filter *PostFilter) String() string {
 	out := []string{}
 	if filter.Limit != nil {
-		out = append(out, fmt.Sprintf("limit: %d", filter.Limit))
+		out = append(out, fmt.Sprintf("limit: %d", *filter.Limit))
 	}
 	if filter.Sort != nil {
-		out = append(out, fmt.Sprintf("sort: %s", filter.Sort))
+		out = append(out, fmt.Sprintf("sort: %s", *filter.Sort))
 	}
 	if filter.Keyset != nil {
 		out = append(out, fmt.Sprintf("keyset: %d", *filter.Keyset))
@@ -372,12 +372,6 @@ type Meta struct {
 	NextPageID string `json:"next_page_id"`
 	PageURL    string `json:"next_page_url"`
 	Seed       int    `json:"seed,omitempty"`
-}
-
-// HTTP response
-type Response struct {
-	Meta  Meta   `json:"meta"`
-	Posts []Post `json:"posts"`
 }
 
 type PostService interface {
