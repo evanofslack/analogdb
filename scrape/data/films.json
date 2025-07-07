@@ -978,35 +978,35 @@
     "make": "kodak",
     "speed": 400,
     "color_type": "color",
-    "description": "Kodak's Max 400 is a high-speed daylight-balanced color negative film offering a wide exposure latitude for greater versatility, as well as a fine grain structure with consistent and accurate colors. Optimized skin tone reproduction makes this film suitable for portraiture while a vibrant overall color palette benefits general and outdoor photography. It has a nominal sensitivity of ISO 400/27° and is well-suited to both scanning and enlarging applications. Suceeded by Ultramax 400."
+    "description": "Kodak Max 400 is a high-speed daylight-balanced color negative film offering a wide exposure latitude for greater versatility, as well as a fine grain structure with consistent and accurate colors. Optimized skin tone reproduction makes this film suitable for portraiture while a vibrant overall color palette benefits general and outdoor photography. It has a nominal sensitivity of ISO 400/27° and is well-suited to both scanning and enlarging applications. Suceeded by Ultramax 400."
   },
   {
     "type": "max 800",
     "make": "kodak",
     "speed": 800,
     "color_type": "color",
-    "description": "Kodak's Max 800 is a high-speed daylight-balanced color negative film with bright vibrant colors and natural skin-tones. Since 2008 only sold in Kodak Single Use Cameras. Suceeded by Ultramax 800."
+    "description": "Kodak Max 800 is a high-speed daylight-balanced color negative film with bright vibrant colors and natural skin-tones. Since 2008 only sold in Kodak Single Use Cameras. Suceeded by Ultramax 800."
   },
   {
     "type": "portra 160",
     "make": "kodak",
     "speed": 160,
     "color_type": "color",
-    "description": "Kodak's Professional Portra 160 is a daylight-balanced color negative film offering a smooth and natural color palette that is balanced with medium saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic Vision Film technology, this film also exhibits a very fine grain structure with high sharpness and fine edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 160/23° and is particularly well-suited to portrait, wedding, and commercial photography, as well as other general applications."
+    "description": "Kodak Professional Portra 160 is a daylight-balanced color negative film offering a smooth and natural color palette that is balanced with medium saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic Vision Film technology, this film also exhibits a very fine grain structure with high sharpness and fine edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 160/23° and is particularly well-suited to portrait, wedding, and commercial photography, as well as other general applications."
   },
   {
     "type": "portra 400",
     "make": "kodak",
     "speed": 400,
     "color_type": "color",
-    "description": "Kodak's Professional Portra 400 is a high-speed daylight-balanced color negative film offering a smooth and natural color palette that is balanced with vivid saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic Vision Film technology, this film also exhibits a fine grain structure with very high sharpness and edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 400/27° and is particularly well-suited to portrait and wedding photography, as well as nature, travel, and outdoor shooting with moving subjects, or when the lighting cannot be controlled."
+    "description": "Kodak Professional Portra 400 is a high-speed daylight-balanced color negative film offering a smooth and natural color palette that is balanced with vivid saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic Vision Film technology, this film also exhibits a fine grain structure with very high sharpness and edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 400/27° and is particularly well-suited to portrait and wedding photography, as well as nature, travel, and outdoor shooting with moving subjects, or when the lighting cannot be controlled."
   },
   {
     "type": "portra 800",
     "make": "kodak",
     "speed": 800,
     "color_type": "color",
-    "description": "Kodak's Professional Portra 800 is a high-speed daylight-balanced color negative film optimized for use in difficult lighting conditions. It has a nominal sensitivity of ISO 800/30° along with a notable underexposure latitude for effectively pushing to ISO 1600 with maintained quality and extended highlight and shadow detail. Vivid color saturation and low overall contrast contribute to pleasing skin tones and neutral color accuracy, and a micro-structure optimized T-GRAIN emulsion renders a fine grain structure with high sharpness and edge acutance. Kodak's proprietary advanced development accelerators and antenna dye sensitization also offer enhanced scanning and enlarging performance. Portra 800 is very well-suited to photographing moving subjects and working in low-light conditions while maintaining true color reproduction."
+    "description": "Kodak Professional Portra 800 is a high-speed daylight-balanced color negative film optimized for use in difficult lighting conditions. It has a nominal sensitivity of ISO 800/30° along with a notable underexposure latitude for effectively pushing to ISO 1600 with maintained quality and extended highlight and shadow detail. Vivid color saturation and low overall contrast contribute to pleasing skin tones and neutral color accuracy, and a micro-structure optimized T-GRAIN emulsion renders a fine grain structure with high sharpness and edge acutance. Kodak's proprietary advanced development accelerators and antenna dye sensitization also offer enhanced scanning and enlarging performance. Portra 800 is very well-suited to photographing moving subjects and working in low-light conditions while maintaining true color reproduction."
   },
   {
     "type": "pro image 100",
@@ -1055,42 +1055,42 @@
     "make": "kodak",
     "speed": 400,
     "color_type": "color",
-    "description": "Kodak's UltraMax 400 is a high-speed daylight-balanced color negative film offering a wide exposure latitude for greater versatility, as well as a fine grain structure with consistent and accurate colors. Optimized skin tone reproduction makes this film suitable for portraiture while a vibrant overall color palette benefits general and outdoor photography. It has a nominal sensitivity of ISO 400/27° and is well-suited to both scanning and enlarging applications."
+    "description": "Kodak UltraMax 400 is a high-speed daylight-balanced color negative film offering a wide exposure latitude for greater versatility, as well as a fine grain structure with consistent and accurate colors. Optimized skin tone reproduction makes this film suitable for portraiture while a vibrant overall color palette benefits general and outdoor photography. It has a nominal sensitivity of ISO 400/27° and is well-suited to both scanning and enlarging applications."
   },
   {
     "type": "ultramax 800",
     "make": "kodak",
     "speed": 800,
     "color_type": "color",
-    "description": "Kodak's UltraMax 800 is a high-speed daylight-balanced color negative film with bright vibrant colors and natural skin-tones. Since 2008 only sold in Kodak single use cameras."
+    "description": "Kodak UltraMax 800 is a high-speed daylight-balanced color negative film with bright vibrant colors and natural skin-tones. Since 2008 only sold in Kodak single use cameras."
   },
   {
     "type": "vision3 50d",
     "make": "kodak",
     "speed": 200,
     "color_type": "color",
-    "description": "Kodak's Vision3 50D is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. It touts the world’s finest film grain to ensure a pristine, clean image that is full of color and detail, especially in high-contrast daylight. It has unrivaled highlight latitude, flexibility in post and proven archival stability."
+    "description": "Kodak Vision3 50D is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. It touts the world’s finest film grain to ensure a pristine, clean image that is full of color and detail, especially in high-contrast daylight. It has unrivaled highlight latitude, flexibility in post and proven archival stability."
   },
   {
     "type": "vision3 200t",
     "make": "kodak",
     "speed": 200,
     "color_type": "color",
-    "description": "Kodak's Vision3 200T is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. It provides the benefits of two films in one: the image structure of a 100 speed film with the versatility of a 200 speed product. Experience the improved extreme exposure performance and consistent look of the Vision3 Film family. Enjoy the added flexibility and increased creative control you get from capturing the detail in the extremes of exposure."
+    "description": "Kodak Vision3 200T is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. It provides the benefits of two films in one: the image structure of a 100 speed film with the versatility of a 200 speed product. Experience the improved extreme exposure performance and consistent look of the Vision3 Film family. Enjoy the added flexibility and increased creative control you get from capturing the detail in the extremes of exposure."
   },
   {
     "type": "vision3 250d",
     "make": "kodak",
     "speed": 250,
     "color_type": "color",
-    "description": "Kodak's Vision3 250D is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. With reduced grain in shadows, you can push the boundaries of underexposure and still get outstanding results in the extremes of exposure. Move fast on set and pull out the detail in post-production"
+    "description": "Kodak Vision3 250D is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. With reduced grain in shadows, you can push the boundaries of underexposure and still get outstanding results in the extremes of exposure. Move fast on set and pull out the detail in post-production"
   },
   {
     "type": "vision3 500t",
     "make": "kodak",
     "speed": 500,
     "color_type": "color",
-    "description": "Kodak's Vision3 500T is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. To deliver high image-quality in low-light scenes, Vision3 500T Film yields higher signal-to-noise ratios and the extended highlight latitude the film provides gives greater flexibility to pull even more detail out of highlights when lighting extreme situations."
+    "description": "Kodak Vision3 500T is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. To deliver high image-quality in low-light scenes, Vision3 500T Film yields higher signal-to-noise ratios and the extended highlight latitude the film provides gives greater flexibility to pull even more detail out of highlights when lighting extreme situations."
   },
   {
     "type": "alien 200",
