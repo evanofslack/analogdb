@@ -56,6 +56,27 @@
     "description": "AgfaPhoto Color 400 is a high-quality 135mm color film with 24 exposures, perfect for beginners and experienced photographers alike. Its ISO 400 sensitivity makes it a versatile tool for capturing sharp, detailed images, even in low-light conditions. This color film is compatible with all film cameras."
   },
   {
+    "type": "ct precisa",
+    "make": "agfaphoto",
+    "speed": 100,
+    "color_type": "color",
+    "description": "AgfaPhoto CT Precisa 100 is a daylight-balanced color transparency (slide) film with an ISO rating of 100, suitable for processing in E-6 or AP 44 chemistry. It features fine grain, neutral color balance, and high sharpness, designed for accurate color reproduction under varied lighting conditions including sunlight and shade. The film is available as a 36-exposure roll in the 35mm (135) format."
+  },
+  {
+    "type": "agfacolor optima prestige ii 100",
+    "make": "agfa",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Agfa Agfacolor Optima Prestige II 100 Professional is an ISO 100 color negative film designed for professional use and available in both 35mm and 120 (medium format) sizes. Requiring standard C-41 processing, it was advertised as having high, but natural, color saturation, excellent sharpness and a fine grain. Agfa cited landscape and architectural photography as the field of application for the professional film. Production of this film ended prior to August 2014."
+  },
+  {
+    "type": "agfacolor optima prestige ii 400",
+    "make": "agfa",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Agfa Agfacolor Optima Prestige II 400 Professional is an ISO 400 color negative film designed for professional use and available in both 35mm and 120 (medium format) sizes. Requiring standard C-41 processing, it was noted for rendering strong colors and sharp detail, even in challenging lighting conditions. Production of this film ended prior to August 2014."
+  },
+  {
     "type": "optima 100",
     "make": "agfa",
     "speed": 100,
@@ -112,11 +133,60 @@
     "description": "Arista's EDU Ultra 400 Black and White Negative Film is a traditional panchromatic film that is optimized for use in a range of shooting conditions. It has a fine grain with high sharpness as well as a wide exposure latitude that make is a useful film for most environments. It has a nominal sensitivity of ISO 400/27° when developed in standard black and white chemistry, and responds well to push processing. EDU Ultra is a flexible film type that is ideally suited for use in general photographic applications."
   },
   {
+    "type": "ortho litho 3.0",
+    "make": "arista",
+    "speed": 3,
+    "color_type": "bw",
+    "description": "Arista Ortho Litho 3.0 is a high-contrast, orthochromatic camera film intended for line and halftone pre-press applications, featuring very steep gradation and a wide density range with high Dmax for enhanced UV transmission. The film includes specialized layers to prevent Newton rings and protect against static, dust, and scratches, and can be safely handled under red safelight conditions. For processing, rapid access chemistry is recommended for halftone use, while diluted black-and-white paper developers provide lower contrast results for continuous tone applications. shoot this film at ISO 3 in daylight or ISO 2 indoors. "
+  },
+  {
+    "type": "foto 100",
+    "make": "astrum",
+    "speed": 100,
+    "color_type": "bw",
+    "description": "Astrum Foto 100 is a panchromatic black-and-white negative film with high resolution, coated on a 0.10mm polyester base and featuring a protective layer to prevent scratching. It offers extended spectral sensitivity up to 750nm, reaching into the near-infrared range. The film is characterized by very fine grain, high detail rendering, and low noise when scanned, and can be processed at low contrast."
+  },
+  {
+    "type": "foto 200",
+    "make": "astrum",
+    "speed": 200,
+    "color_type": "bw",
+    "description": "Astrum Foto 200 is a high-resolution, panchromatic black-and-white negative film coated on a 0.10mm polyester base, featuring a protective overcoat to prevent emulsion scratches. It is sensitive to visible and near-infrared light up to 750nm, enabling expanded spectral capture. Its fine grain structure and low contrast processing capabilities produce detailed images with minimal noise during scanning."
+  },
+  {
+    "type": "foto 400",
+    "make": "astrum",
+    "speed": 400,
+    "color_type": "bw",
+    "description": "Astrum Foto 400 is a high-resolution, panchromatic black-and-white negative film coated on a 0.10mm polyester base, featuring a protective overcoat to prevent emulsion scratches. It is sensitive to visible and near-infrared light up to 750nm, enabling expanded spectral capture. Its fine grain structure and low contrast processing capabilities produce detailed images with minimal noise during scanning."
+  },
+  {
     "type": "pancro 400",
     "make": "bergger",
     "speed": 400,
     "color_type": "bw",
     "description": "Characterized by a unique dual emulsion design, Bergger Pancro 400 is a high-speed panchromatic black and white negative film featuring a nominal sensitivity of ISO 400/27° and a wide exposure latitude. By employing both silver bromide and silver iodide emulsion layers, an organic grain structure is provided that results in natural tonal gradations and an overall fine grain quality for high-resolution, well-detailed results in a variety of lighting conditions. It also responds well to over- and under-exposure, and can be rated from EI 100-1600 for acceptable results with adequate processing. The film is coated on an anti-curl 135 µm-thick acetate base and also incorporates an anti-halation layer, which clears during development, for improved overall sharpness and highlight clarity."
+  },
+  {
+    "type": "daydream",
+    "make": "budachrome",
+    "speed": 250,
+    "color_type": "color",
+    "description": "Respooled Kodak Vision3 250D"
+  },
+  {
+    "type": "mono",
+    "make": "budachrome",
+    "speed": 200,
+    "color_type": "bw",
+    "description": "Respooled Kodak Double-X"
+  },
+  {
+    "type": "night shift",
+    "make": "budachrome",
+    "speed": 500,
+    "color_type": "color",
+    "description": "Respooled Kodak Vision3 500T"
   },
   {
     "type": "200",
@@ -186,7 +256,7 @@
     "make": "cinestill",
     "speed": 250,
     "color_type": "bw",
-    "description": "BwXX Double-X is a high-speed classic black and white movie film that has been cut and re-spooled for still photography use by CineStill. Using virtually the same emulsion formula since 1959, this film is characterized by its subtle tonality, relatively low contrast, and high sharpness. Its nominal sensitivity is ISO 250/25° when used under daylight conditions or ISO 200/24° when used in tungsten-lit environments. The film has an acetate base with a scratch-resistant layer and is designed to be used in conjunction with D-96 developer, however can also be used with other standard black and white developers."
+    "description": "BwXX is a high-speed classic black and white movie film that has been cut and re-spooled for still photography use by CineStill. Using virtually the same emulsion formula since 1959, this film is characterized by its subtle tonality, relatively low contrast, and high sharpness. Its nominal sensitivity is ISO 250/25° when used under daylight conditions or ISO 200/24° when used in tungsten-lit environments. The film has an acetate base with a scratch-resistant layer and is designed to be used in conjunction with D-96 developer, however can also be used with other standard black and white developers."
   },
   {
     "type": "red rum",
@@ -341,6 +411,13 @@
     "speed": 100,
     "color_type": "bw",
     "description": "Wolfman 35 Black and White Negative Film from Film Photography Project is a panchromatic film with medium to low grain and a wide tonal range, which is reminiscent of 16mm black and white movie film. This versatile and fun film is designed for general use in a wide variety of shooting conditions and has a nominal sensitivity of ISO 100/21° when developed in standard black and white chemistry. Film is supplied in a non-DX-coded cassette."
+  },
+  {
+    "type": "x-ray",
+    "make": "film photography project",
+    "speed": 200,
+    "color_type": "bw",
+    "description": "X-Ray Film is a black-and-white 35mm film adapted from medical X-ray stock, featuring 36 exposures and designed for still photography cameras. This orthochromatic film is sensitive to blue and green light, rendering reds as darker tones and producing a pronounced grain and diffusion effect due to its lack of an anti-halation layer. It is best shot at ISO 200–400, can be handled under a red photographic safe light for home processing, and requires loading and storage in dim or light-tight conditions to prevent light piping artifacts."
   },
   {
     "type": "a",
@@ -749,6 +826,20 @@
     "description": "Ilford Ortho Plus is a medium speed black and white negative orthochromatic film that is especially well-suited for continuous tone copy or reproduction work, as well as for half-tone, technical, and forensic applications. It has a nominal sensitivity of ISO 80/20° when exposed under daylight conditions, or ISO 40/17° when exposed under tungsten lighting, and can be developed in standard black and white chemistry. Additionally, since the film is only sensitive to blue and green light, it can be handled under red safelight conditions and developed by inspection for precise processing control. Its high-resolution, fine grain structure and long tonal range also make it ideal for producing faithful reproductions of original artworks and documents, as well as for photomicroscopy."
   },
   {
+    "type": "p3",
+    "make": "ilford",
+    "speed": 400,
+    "color_type": "bw",
+    "description": "Ilford P3 is a 400 ISO discontinued black and white surveillance film."
+  },
+  {
+    "type": "p4",
+    "make": "ilford",
+    "speed": 400,
+    "color_type": "bw",
+    "description": "Ilford P4 is a 400 ISO discontinued black and white surveillance film."
+  },
+  {
     "type": "pan 100",
     "make": "ilford",
     "speed": 100,
@@ -816,7 +907,7 @@
     "make": "kodak",
     "speed": 100,
     "color_type": "color",
-    "description": "Kodak Aerocolor IV Negative Film 2460 is a medium-speed, very fine-grain color negative aerial film. This film has a wide exposure latitude and is specifically designed for processing to a color negative only. Since this film does not have integral color masking, direct interpretation can be made from the negative. Objects are recorded in colors complementary to their natural colors"
+    "description": "Kodak Aerocolor IV 2460 is a medium-speed, very fine-grain color negative aerial film. This film has a wide exposure latitude and is specifically designed for processing to a color negative only. Since this film does not have integral color masking, direct interpretation can be made from the negative. Objects are recorded in colors complementary to their natural colors"
   },
   {
     "type": "colorplus 200",
@@ -824,6 +915,14 @@
     "speed": 200,
     "color_type": "color",
     "description": "Kodak ColorPlus 200 is an affordable color negative film offering fine grain and moderate contrast. It renders warm tones and has a natural color rendition, providing pleasing results for a variety of subjects. It's an excellent choice for beginners and those looking for a cost-effective option for daylight shooting."
+  },
+
+  {
+    "type": "double-x",
+    "make": "kodak",
+    "speed": 200,
+    "color_type": "bw",
+    "description": "Kodak Double-X is a black-and-white motion picture film known for its fine tonal range and is optimized for production in low-light environments, both outdoors and in studio settings. It offers high versatility across various lighting conditions, including day exteriors, window-lit interiors, well-lit studios, and limited light situations. The film also features automatic logging of frame indexing numbers for negatives and workprints, improving workflow efficiency."
   },
   {
     "type": "ektachrome e100",
@@ -917,6 +1016,13 @@
     "description": "Kodak Pro Image 100 is a medium-speed color negative film offering high color saturation along with realistic color balance and accurate skin tone rendering, making it well suited for portraiture and social applications. This film has a nominal sensitivity of ISO 100/21°, however, its wide exposure latitude makes it especially suitable for underexposure. Additionally, this unique film is intended for storage at room temperature and also has excellent latent image-keeping characteristics, allowing for longer time periods between exposure and development while maintaining acceptable results."
   },
   {
+    "type": "t400 cn",
+    "make": "kodak",
+    "speed": 400,
+    "color_type": "bw",
+    "description": "Kodak T400 CN is a 400-speed, panchromatic black-and-white film, designed for C-41 processing alongside color negative films. The film features kodak T-GRAIN Emulsions for fine grain and sharpness, and is suitable for a wide range of lighting conditions without the need for filters, although filters can be used to adjust tone and contrast. It is intended for general, commercial, scientific, and journalistic photographic applications, and can be printed on either black-and-white or color negative papers."
+  },
+  {
     "type": "t-max 100",
     "make": "kodak",
     "speed": 100,
@@ -935,7 +1041,7 @@
     "make": "kodak",
     "speed": 3200,
     "color_type": "bw",
-    "description": "Kodak Professional T-Max P3200 is an ultra-high-speed panchromatic black and white negative film characterized by its unique T-GRAIN emulsion, relatively fine grain structure, and high sharpness. It has a nominal sensitivity of ISO 3200/36°, however is categorized as a multi-speed film with a wide exposure latitude from EI 400-25,000 when pushed or pulled. Its versatility and speed benefits shooting handheld in difficult, available lighting conditions and with fast-moving subjects, and its fine grain profile, broad tonal range, and high resolving power benefit scanning and enlarging applications."
+    "description": "Kodak T-Max P3200 is an ultra-high-speed panchromatic black and white negative film characterized by its unique T-GRAIN emulsion, relatively fine grain structure, and high sharpness. It has a nominal sensitivity of ISO 3200/36°, however is categorized as a multi-speed film with a wide exposure latitude from EI 400-25,000 when pushed or pulled. Its versatility and speed benefits shooting handheld in difficult, available lighting conditions and with fast-moving subjects, and its fine grain profile, broad tonal range, and high resolving power benefit scanning and enlarging applications."
   },
   {
     "type": "tri-x 400",
@@ -1176,6 +1282,34 @@
     "description": "Lomography Redscale XR bathes your photos in glowing shades of red, orange, yellow and even cool blue. Experiment with the extended ISO range to render different results."
   },
   {
+    "type": "100d",
+    "make": "marix",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Marix 100D is a Japanese-branded 35mm color negative film made from Kodak Vision3 5203 50D motion picture stock with the carbon (Rem-Jet) layer removed, making it compatible with standard C-41 and CN-16 processing. With an effective ISO of 100 and 36 exposures per roll, this film offers the classic movie film grain and color profile, similar to Cinestill 50D, but is not DX-coded."
+  },
+  {
+    "type": "320t",
+    "make": "marix",
+    "speed": 320,
+    "color_type": "color",
+    "description": "Marix 320T is a color negative film made in Japan, balanced for tungsten (3200K) lighting, designed to capture accurate colors under artificial light. The film supports DX coding for automatic ISO setting in compatible cameras and features a seamless, plug-in spool for safe handling during development. It is processed using the standard C-41 or CN-16 color negative development methods."
+  },
+  {
+    "type": "400d",
+    "make": "marix",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Marix 400D is a color negative 35mm film now featuring DX code support, allowing for improved compatibility with automatic cameras. The film uses a plug-in type spool end rather than taped seams, which ensures safer handling during development. It is processed using the C-41 or CN-16 color negative development process, making it suitable for use in standard photo labs worldwide."
+  },
+  {
+    "type": "800t",
+    "make": "marix",
+    "speed": 800,
+    "color_type": "color",
+    "description": "Marix 800T is a color negative film from Japan, balanced for tungsten light (3200K) and rated at ISO 800, designed to deliver the distinctive look of motion picture film. The 35mm film now includes DX coding for compatibility with automated cameras, and features a plug-in type spool for increased safety during processing. It is compatible with standard C-41 or CN-16 color negative processing."
+  },
+  {
     "type": "opticolour 200",
     "make": "optik oldschool",
     "speed": 200,
@@ -1218,6 +1352,34 @@
     "description": "Wolfen UN54 is a medium speed 100 ISO, 36 exposure, black and white photographic film. Originally used to make monochrome movies, the black and white tones of Wolfen UN54 will capture cinematic scenes in photographic format. Wolfen UN54 is perfect for sunny days and scenes where attention to detail is desired. Featuring a classic fine grain structure and subtle contrast, there is a reason why this is their most famous emulsion."
   },
   {
+    "type": "color 600",
+    "make": "polaroid",
+    "speed": 640,
+    "color_type": "color",
+    "description": "Polaroid Color 600 Film is a color instant film compatible with vintage Polaroid 600 cameras as well as modern Polaroid models including the I-2, Now, Now+, Lab, OneStep 2, and OneStep+. Each pack contains 8 photos on white-framed sheets measuring 107 × 88 mm, with a 79 × 79 mm image area, and includes a built-in battery to power older camera models. The film utilizes Polaroid’s proprietary chemistry to produce images with distinctive colors, textures, and tones."
+  },
+  {
+    "type": "color i-type",
+    "make": "polaroid",
+    "speed": 640,
+    "color_type": "color",
+    "description": "Polaroid Color i-Type film is an instant film pack that produces 8 color photographs per cartridge, each framed in Polaroid's classic white border and featuring a 79mm x 79mm (3.1 x 3.1 inch) image area on a 107mm x 88mm (4.2 x 3.5 inch) sheet. Designed for cameras such as the Polaroid Now, Now+, I-2, and the Polaroid Lab, this film uses distinctive Polaroid color chemistry with an ASA of 640. It is manufactured at the last remaining Polaroid film factory."
+  },
+  {
+    "type": "b&w i-type",
+    "make": "polaroid",
+    "speed": 640,
+    "color_type": "bw",
+    "description": "Polaroid B&W i-Type film is an instant film pack that produces 8 black and white photographs per cartridge, each framed in Polaroid's classic white border and featuring a 79mm x 79mm (3.1 x 3.1 inch) image area on a 107mm x 88mm (4.2 x 3.5 inch) sheet. Designed for cameras such as the Polaroid Now, Now+, I-2, and the Polaroid Lab, this film uses distinctive Polaroid chemistry with an ASA of 640. It is manufactured at the last remaining Polaroid film factory."
+  },
+  {
+    "type": "luminar 100",
+    "make": "popho",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Popho Luminar 100 is an ISO 100, daylight-balanced color negative film for 35mm cameras, machine-respooled from Kodak Aerocolor IV 2460 aerial photography film. It offers medium saturation, wide dynamic range, and fine grain, and is supplied in a 36-exposure recyclable plastic cassette for standard C-41 processing. This film, now discontinued with current stock expiring 09/2025, is notable for its warm tones and enhanced red sensitivity, and is not available in medium or large formats."
+  },
+  {
     "type": "400 #2",
     "make": "psychedelic blues",
     "speed": 400,
@@ -1258,6 +1420,34 @@
     "speed": 400,
     "color_type": "color",
     "description": "Psychedelic Blues 400 #7 is an experimental color negative film that has been pre-exposed to different colored light sources in order to produce a distinct light-leak look. The effects include multi-colored waves running down the center of the frame. Similar effect as Psych Blues #5/6, but toned-down, yet still very wild, version of that idea. The film has a nominal sensitivity of ISO 400/27° and should be processed in C-41 chemistry."
+  },
+  {
+    "type": "200t",
+    "make": "reflx labs",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Reflx Lab 200T Tungsten is a 35mm color negative film designed for still photography, made from fresh Kodak 5213 motion picture stock with the Rem-Jet backing removed for standard C-41 processing. The film is tungsten balanced (3200K), ISO 200 (DX coded), and provides 36 exposures per roll, offering fine grain and low noise performance. Rumored to be Kodak Vision3 200T with Rem-Jet layer removed"
+  },
+  {
+    "type": "400d",
+    "make": "reflx labs",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Reflx Lab 400 Daylight is a 35mm color negative film with 36 exposures and an ISO of 400, designed for daylight-balanced shooting, especially outdoors. It is manufactured from fresh 5207 motion picture film with the Rem-Jet layer removed, making it suitable for standard C-41 processing. The film is DX coded for easy use in compatible cameras. Rumored to be Kodak Vision3 250D with Rem-Jet layer removed"
+  },
+  {
+    "type": "800t",
+    "make": "reflx labs",
+    "speed": 800,
+    "color_type": "color",
+    "description": "Reflx Lab 800 is a 35mm color negative film made from fresh Kodak Vision3 5219 motion picture stock with the Rem-Jet layer removed for compatibility with standard C-41 processing. The film is tungsten balanced, making it suitable for indoor or nighttime photography, and it is rated at ISO 800 (DX coded). It is known for producing a distinctive halation effect due to the absence of the Rem-Jet layer. Rumored to be Kodak Vision3 500T with Rem-Jet layer removed"
+  },
+  {
+    "type": "pro100",
+    "make": "reflx labs",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Reflx Lab Pro100 Color Negative Film is a 35mm, ISO 100, daylight-balanced film respooled from Kodak Aerocolor IV 2460 photographic stock, offering fine grain and low noise with medium saturation and contrast. This film is designed for 36 exposures per roll and is intended for C-41 processing, though it may also be cross-processed in E6 chemistry to produce slide film. It is suitable for outdoor, daylight photography."
   },
   {
     "type": "retocolor amber d100",
@@ -1489,6 +1679,13 @@
     "speed": 200,
     "color_type": "bw",
     "description": "Rollei/Agfa's Superpan 200 is a medium-speed panchromatic black and white negative film based on Agfa's AVI PAN aerial film, and exhibits a nominal sensitivity of ISO 200/24°. It has extended sensitivity near the infrared range, up to 750nm, and well-controlled contrast in order to cut through haze, fog, and other atmospheric conditions. Its very fine grain structure also contributes to high overall sharpness and this film is particularly well-suited to technical, industrial, and aerial photography applications. Additionally, its wide exposure latitude enables rating the film at EI 125 with consistent results and controlled tonal values."
+  },
+  {
+    "type": "santacolor 100",
+    "make": "santafilm",
+    "speed": 100,
+    "color_type": "color",
+    "description": "SantaColor 100 is a fine-grain, color negative film designed for the C41 process and introduced via a successful 2021 crowdfunding campaign. Known for its punchy reds, lush greens, and moderate saturation between Kodak Portra and Ektar 100, it supports flexible exposure options and can be pushed to 800 ISO with minimal loss in quality. SantaColor 100 is compatible with both C41 and RA4 processes (the latter with color filtration). Rumored to be respooled Kodak Aerocolor IV 2460."
   },
   {
     "type": "gp3 100",
