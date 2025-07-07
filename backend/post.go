@@ -184,6 +184,44 @@ type PostFilter struct {
 	AspectRatio   *Dimension
 }
 
+func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, timeStart, timeEnd *time.Time, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
+	filter := &PostFilter{
+		Limit:         limit,
+		Sort:          sort,
+		Keyset:        keyset,
+		Nsfw:          nsfw,
+		Grayscale:     grayscale,
+		Sprocket:      sprocket,
+		Seed:          seed,
+		IDs:           ids,
+		Title:         title,
+		Author:        author,
+		TimeStart:     timeStart,
+		TimeEnd:       timeEnd,
+		CameraMake:    cameraMake,
+		CameraModel:   cameraModel,
+		FilmMake:      filmMake,
+		FilmType:      filmType,
+		FilmSpeed:     filmSpeed,
+		FocalLength:   focalLength,
+		Aperture:      aperture,
+		Colors:        colors,
+		ColorPercents: colorPercents,
+		Keywords:      keywords,
+		Width:         &Dimension{},
+		Height:        &Dimension{},
+		AspectRatio:   &Dimension{},
+	}
+	filter.SetMinColorPercent()
+	return filter
+}
+
+// NewPostFilterWithIDs is a convenience function
+// to create a post filter with only IDs set.
+func NewPostFilterWithIDs(ids []int) *PostFilter {
+	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+}
+
 func (filter *PostFilter) String() string {
 	out := []string{}
 	if filter.Limit != nil {
@@ -301,46 +339,6 @@ func (filter *PostFilter) SetMinColorPercent() {
 
 	// finally, set modified back as pointer
 	filter.ColorPercents = &percents
-}
-
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, timeStart, timeEnd *time.Time, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
-	filter := &PostFilter{
-		Limit:         limit,
-		Sort:          sort,
-		Keyset:        keyset,
-		Nsfw:          nsfw,
-		Grayscale:     grayscale,
-		Sprocket:      sprocket,
-		Seed:          seed,
-		IDs:           ids,
-		Title:         title,
-		Author:        author,
-		TimeStart:     timeStart,
-		TimeEnd:       timeEnd,
-		CameraMake:    cameraMake,
-		CameraModel:   cameraModel,
-		FilmMake:      filmMake,
-		FilmType:      filmType,
-		FilmSpeed:     filmSpeed,
-		FocalLength:   focalLength,
-		Aperture:      aperture,
-		Colors:        colors,
-		ColorPercents: colorPercents,
-		Keywords:      keywords,
-		Width:         &Dimension{},
-		Height:        &Dimension{},
-		AspectRatio:   &Dimension{},
-	}
-
-	filter.SetMinColorPercent()
-
-	return filter
-}
-
-// NewPostFilterWithIDs is a convenience function
-// to create a post filter with only IDs set.
-func NewPostFilterWithIDs(ids []int) *PostFilter {
-	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 // PostSimilarityFilter are options used for querying similar posts
