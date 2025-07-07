@@ -15,6 +15,7 @@ import (
 	"github.com/evanofslack/analogdb-consumer/internal/config"
 	"github.com/evanofslack/analogdb-consumer/internal/kafka"
 	"github.com/evanofslack/analogdb-consumer/internal/logging"
+	"github.com/evanofslack/analogdb-consumer/internal/metrics"
 	"github.com/evanofslack/analogdb-consumer/internal/process"
 	"github.com/evanofslack/analogdb-consumer/internal/server"
 )
@@ -50,8 +51,11 @@ func main() {
 		"env", cfg.App.Env,
 	)
 
+	metrics := metrics.New(logger.With("subsystem", "metrics"))
+
 	ch, err := clickhouse.New(
 		logger.With("subsystem", "clickhouse"),
+		metrics,
 		cfg.ClickHouse.Host,
 		cfg.ClickHouse.Port,
 		cfg.ClickHouse.Database,
@@ -68,10 +72,10 @@ func main() {
 		err = fmt.Errorf("create clickhouse client, err=%w", err)
 		fatal(logger, err)
 	}
-    if err := ch.Open(); err != nil {
+	if err := ch.Open(); err != nil {
 		err = fmt.Errorf("open clickhouse connection, err=%w", err)
 		fatal(logger, err)
-    }
+	}
 
 	batchTimeout, err := cfg.Kafka.BatchTimeout()
 	if err != nil {
@@ -81,6 +85,7 @@ func main() {
 
 	consumer := kafka.New(
 		logger.With("subsystem", "kafka"),
+		metrics,
 		cfg.Kafka.Brokers(),
 		cfg.Kafka.Topic,
 		cfg.Kafka.ConsumerGroup,
@@ -120,6 +125,20 @@ func main() {
 			fatal(logger, err)
 		}
 	}()
+
+	// start metrics server
+	if cfg.Metrics.Enabled {
+		wg.Add(1)
+		go func() {
+			defer metrics.Close(ctx)
+			defer wg.Done()
+			err := metrics.Serve(ctx, cfg.Metrics.Port)
+			if err != nil && err != context.Canceled {
+				err = fmt.Errorf("start processor, err=%w", err)
+				fatal(logger, err)
+			}
+		}()
+	}
 
 	// wait for shutdown signal
 	<-sigChan
