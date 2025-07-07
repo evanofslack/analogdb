@@ -10,6 +10,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 
 	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
+	"github.com/evanofslack/analogdb-consumer/internal/metrics"
 )
 
 type DB interface {
@@ -20,6 +21,7 @@ type DB interface {
 
 type Client struct {
 	logger           *slog.Logger
+	metrics          *metrics.Metrics
 	conn             clickhouse.Conn
 	addr             string
 	dsn              string
@@ -33,7 +35,7 @@ type Client struct {
 	appVersion       string
 }
 
-func New(logger *slog.Logger, host string, port int, database, username, password, table string, appName, appVersion string, migrationEnabled bool, migrationPath string) (*Client, error) {
+func New(logger *slog.Logger, metrics *metrics.Metrics, host string, port int, database, username, password, table string, appName, appVersion string, migrationEnabled bool, migrationPath string) (*Client, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	dsn := fmt.Sprintf("clickhouse://%s:%s@%s:%d/%s", username, password, host, port, database)
 	logger = logger.With("addr", addr, "dsn", dsn, "table", table)
@@ -107,10 +109,13 @@ func (c *Client) Open() error {
 }
 
 func (c *Client) Insert(ctx context.Context, events []*v1.Event) error {
-	c.logger.Debug("Start insert events", "count", len(events))
 	if len(events) == 0 {
 		return nil
 	}
+
+	start := time.Now()
+	defer c.metrics.ObserveClickHouseInsertDuration(c.table, time.Since(start))
+	c.logger.Debug("Start insert events", "count", len(events))
 
 	// Explicitly specify the columns you're inserting
 	insert := fmt.Sprintf(`INSERT INTO %s (
@@ -149,9 +154,11 @@ func (c *Client) Insert(ctx context.Context, events []*v1.Event) error {
 	}
 
 	if err := batch.Send(); err != nil {
-		return fmt.Errorf("send batch: %w", err)
+		c.metrics.IncrementClickHouseInserts(len(events), c.table, err)
+		return fmt.Errorf("insert batch of events: %w", err)
 	}
 
+	c.metrics.IncrementClickHouseInserts(len(events), c.table, nil)
 	c.logger.Debug("Finish insert events", "count", len(events))
 	return nil
 }

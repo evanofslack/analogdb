@@ -10,16 +10,20 @@ import (
 	"github.com/segmentio/kafka-go"
 
 	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
+	"github.com/evanofslack/analogdb-consumer/internal/metrics"
 )
 
 type Client struct {
-	logger    *slog.Logger
-	reader    *kafka.Reader
-	batchSize int
-	timeout   time.Duration
+	logger        *slog.Logger
+	metrics       *metrics.Metrics
+	reader        *kafka.Reader
+	consumerGroup string
+	topic         string
+	batchSize     int
+	timeout       time.Duration
 }
 
-func New(logger *slog.Logger, brokers []string, topic, consumerGroup string, batchSize int, timeout time.Duration) *Client {
+func New(logger *slog.Logger, metrics *metrics.Metrics, brokers []string, topic, consumerGroup string, batchSize int, timeout time.Duration) *Client {
 	logger = logger.With("brokers", brokers, "consumer_group", consumerGroup, "batch_size", batchSize, "timeout", timeout)
 	logger.Debug("Start create new kafka client")
 	reader := kafka.NewReader(kafka.ReaderConfig{
@@ -41,10 +45,13 @@ func New(logger *slog.Logger, brokers []string, topic, consumerGroup string, bat
 
 	logger.Info("Finish create new kafka client")
 	return &Client{
-		logger:    logger,
-		reader:    reader,
-		batchSize: batchSize,
-		timeout:   timeout,
+		logger:        logger,
+		metrics:       metrics,
+		reader:        reader,
+		consumerGroup: consumerGroup,
+		topic:         topic,
+		batchSize:     batchSize,
+		timeout:       timeout,
 	}
 }
 
@@ -68,12 +75,14 @@ func (c *Client) Read(ctx context.Context) ([]*v1.Event, []kafka.Message, error)
 
 		msg, err := c.reader.FetchMessage(timeoutCtx)
 		if err != nil {
+			c.metrics.IncrementEventsRead(1, c.consumerGroup, c.topic, err)
 			if len(events) > 0 {
 				c.logger.Debug("Fetch error with partial batch", "error", err, "count", len(events))
 				return events, messages, nil
 			}
 			return nil, nil, fmt.Errorf("fetch message: %w", err)
 		}
+		c.metrics.IncrementEventsRead(1, c.consumerGroup, c.topic, nil)
 
 		event, err := c.deserializeEvent(msg.Value)
 		if err != nil {
@@ -98,9 +107,11 @@ func (c *Client) Commit(ctx context.Context, msgs []kafka.Message) error {
 	}
 
 	if err := c.reader.CommitMessages(ctx, msgs...); err != nil {
+		c.metrics.IncrementEventsCommitted(1, c.consumerGroup, c.topic, err)
 		return fmt.Errorf("commit messages: %w", err)
 	}
 
+	c.metrics.IncrementEventsCommitted(1, c.consumerGroup, c.topic, nil)
 	c.logger.Debug("Committed messages", "count", len(msgs))
 	return nil
 }
