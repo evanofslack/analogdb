@@ -195,14 +195,14 @@ ORDER BY film_make, film_type, film_speed;
 		makeMap[make].Types = append(makeMap[make].Types, filmTypeEntry)
 	}
 
-	films := make([]*analogdb.Film, 0, len(makeMap))
-	for _, film := range makeMap {
-		films = append(films, film)
-	}
-
 	if err = tx.Commit(); err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Msg("Find films")
 		return nil, err
+	}
+
+	films := make([]*analogdb.Film, 0, len(makeMap))
+	for _, film := range makeMap {
+		films = append(films, film)
 	}
 
 	// Exclude films with no posts?
@@ -212,7 +212,6 @@ ORDER BY film_make, film_type, film_speed;
 			films = filterFilmZeroCounts(films)
 		}
 	}
-
 	return films, nil
 }
 

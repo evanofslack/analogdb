@@ -142,7 +142,6 @@ ORDER BY camera_make, camera_model;
 	// Map to group camera models by make
 	makeMap := make(map[string]*analogdb.Camera)
 
-	cameras := make([]*analogdb.Camera, 0)
 	for rows.Next() {
 		var id, postCount, totalPostCount int
 		var make, model, description string
@@ -188,6 +187,11 @@ ORDER BY camera_make, camera_model;
 		return nil, err
 	}
 
+	cameras := make([]*analogdb.Camera, 0, len(makeMap))
+	for _, camera := range makeMap {
+		cameras = append(cameras, camera)
+	}
+
 	// Exclude cameras with no posts?
 	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
 		// Only makes sense if we actually included post count.
@@ -195,7 +199,6 @@ ORDER BY camera_make, camera_model;
 			cameras = filterCameraZeroCounts(cameras)
 		}
 	}
-
 	return cameras, nil
 }
 

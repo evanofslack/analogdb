@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/evanofslack/analogdb"
@@ -16,19 +16,31 @@ func TestFilmService_AllFilms(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("find all films", func(t *testing.T) {
-		films, err := service.AllFilms(ctx)
+		filter := analogdb.NewFilmFilter(nil, nil)
+		films, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
 
-		expectedCount := 3
-		if len(films) != expectedCount {
-			t.Errorf("Expected %d films, got %d", expectedCount, len(films))
+		expectedFilms := 2
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+		expectedFilmTypes := 3
+		filmTypes := 0
+		for _, film := range films {
+			for range film.Types {
+				filmTypes += 1
+			}
+		}
+		if filmTypes != expectedFilmTypes {
+			t.Errorf("Expected %d film types, got %d", expectedFilmTypes, filmTypes)
 		}
 	})
 
 	t.Run("verify film ordering", func(t *testing.T) {
-		films, err := service.AllFilms(ctx)
+		filter := analogdb.NewFilmFilter(nil, nil)
+		films, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -44,59 +56,71 @@ func TestFilmService_AllFilms(t *testing.T) {
 			if current.Make > next.Make {
 				t.Errorf("Films not ordered by make: %q > %q", current.Make, next.Make)
 			} else if current.Make == next.Make {
-				if current.Type > next.Type {
-					t.Errorf("Films not ordered by type: %q > %q", current.Type, next.Type)
-				} else if current.Type == next.Type && current.Speed > next.Speed {
-					t.Errorf("Films not ordered by speed: %d > %d", current.Speed, next.Speed)
+				for i := 0; i < len(current.Types)-1; i++ {
+					currentType := current.Types[i]
+					nextType := current.Types[i+1]
+					if currentType.Type > nextType.Type {
+						t.Errorf("Films not ordered by type: %q > %q", currentType.Type, nextType.Type)
+					} else if currentType.Type == nextType.Type && currentType.Speed > nextType.Speed {
+						t.Errorf("Films not ordered by speed: %d > %d", currentType.Speed, nextType.Speed)
+					}
 				}
 			}
 		}
 	})
 
 	t.Run("verify film struct fields", func(t *testing.T) {
-		films, err := service.AllFilms(ctx)
+		filter := analogdb.NewFilmFilter(nil, nil)
+		films, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
 
 		for i, film := range films {
-			if film.Id <= 0 {
-				t.Errorf("Film at index %d has invalid ID: %d", i, film.Id)
-			}
 			if film.Make == "" {
 				t.Errorf("Film at index %d has empty Make", i)
 			}
-			if film.Type == "" {
-				t.Errorf("Film at index %d has empty Type", i)
-			}
-			if film.Speed <= 0 {
-				t.Errorf("Film at index %d has invalid Speed: %d", i, film.Speed)
-			}
-			if film.ColorType == "" {
-				t.Errorf("Film at index %d has empty ColorType", i)
-			}
-			if film.Created.IsZero() {
-				t.Errorf("Film at index %d has zero Created timestamp", i)
-			}
-			if film.Updated.IsZero() {
-				t.Errorf("Film at index %d has zero Updated timestamp", i)
+			for i, filmType := range film.Types {
+				if filmType.Id <= 0 {
+					t.Errorf("Film at index %d has invalid ID: %d", i, filmType.Id)
+				}
+				if filmType.Type == "" {
+					t.Errorf("Film at index %d has empty Type", i)
+				}
+				if filmType.Speed <= 0 {
+					t.Errorf("Film at index %d has invalid Speed: %d", i, filmType.Speed)
+				}
+				if filmType.ColorType == "" {
+					t.Errorf("Film at index %d has empty ColorType", i)
+				}
+				if filmType.Created.IsZero() {
+					t.Errorf("Film at index %d has zero Created timestamp", i)
+				}
+				if filmType.Updated.IsZero() {
+					t.Errorf("Film at index %d has zero Updated timestamp", i)
+				}
+
 			}
 		}
 	})
 
 	t.Run("no duplicate films", func(t *testing.T) {
-		films, err := service.AllFilms(ctx)
+		filter := analogdb.NewFilmFilter(nil, nil)
+		films, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
 
 		seen := make(map[string]bool)
 		for _, film := range films {
-			key := fmt.Sprintf("%s-%s-%d", film.Make, film.Type, film.Speed)
-			if seen[key] {
-				t.Errorf("Duplicate film found: key=%s make=%s type=%s speed=%d (total_films=%d)", key, film.Make, film.Type, film.Speed, len(films))
+			for _, filmType := range film.Types {
+				key := fmt.Sprintf("%s-%s-%d", film.Make, filmType.Type, filmType.Speed)
+				if seen[key] {
+					t.Errorf("Duplicate film found: key=%s make=%s type=%s speed=%d (total_films=%d)", key, film.Make, filmType.Type, filmType.Speed, len(films))
+				}
+				seen[key] = true
+
 			}
-			seen[key] = true
 		}
 	})
 }
@@ -109,7 +133,7 @@ func TestFilmService_CreateFilm(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("create new film", func(t *testing.T) {
-		film := &analogdb.Film{
+		film := &analogdb.CreateFilm{
 			Make:        "ilford",
 			Type:        "hp5",
 			Speed:       400,
@@ -143,13 +167,14 @@ func TestFilmService_CreateFilm(t *testing.T) {
 	})
 
 	t.Run("create film increases count", func(t *testing.T) {
-		initialFilms, err := service.AllFilms(ctx)
+		filter := analogdb.NewFilmFilter(nil, nil)
+		initialFilms, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
 		initialCount := len(initialFilms)
 
-		film := &analogdb.Film{
+		film := &analogdb.CreateFilm{
 			Make:        "rollei",
 			Type:        "infrared",
 			Speed:       400,
@@ -162,7 +187,7 @@ func TestFilmService_CreateFilm(t *testing.T) {
 			t.Fatalf("CreateFilm failed: %v", err)
 		}
 
-		filmsAfterCreate, err := service.AllFilms(ctx)
+		filmsAfterCreate, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -174,7 +199,7 @@ func TestFilmService_CreateFilm(t *testing.T) {
 	})
 
 	t.Run("create duplicate film with conflict", func(t *testing.T) {
-		film := &analogdb.Film{
+		film := &analogdb.CreateFilm{
 			Make:        "kodak",
 			Type:        "tri-x",
 			Speed:       400,
