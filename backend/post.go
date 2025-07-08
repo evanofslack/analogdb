@@ -184,13 +184,51 @@ type PostFilter struct {
 	AspectRatio   *Dimension
 }
 
+func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, timeStart, timeEnd *time.Time, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
+	filter := &PostFilter{
+		Limit:         limit,
+		Sort:          sort,
+		Keyset:        keyset,
+		Nsfw:          nsfw,
+		Grayscale:     grayscale,
+		Sprocket:      sprocket,
+		Seed:          seed,
+		IDs:           ids,
+		Title:         title,
+		Author:        author,
+		TimeStart:     timeStart,
+		TimeEnd:       timeEnd,
+		CameraMake:    cameraMake,
+		CameraModel:   cameraModel,
+		FilmMake:      filmMake,
+		FilmType:      filmType,
+		FilmSpeed:     filmSpeed,
+		FocalLength:   focalLength,
+		Aperture:      aperture,
+		Colors:        colors,
+		ColorPercents: colorPercents,
+		Keywords:      keywords,
+		Width:         &Dimension{},
+		Height:        &Dimension{},
+		AspectRatio:   &Dimension{},
+	}
+	filter.SetMinColorPercent()
+	return filter
+}
+
+// NewPostFilterWithIDs is a convenience function
+// to create a post filter with only IDs set.
+func NewPostFilterWithIDs(ids []int) *PostFilter {
+	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+}
+
 func (filter *PostFilter) String() string {
 	out := []string{}
 	if filter.Limit != nil {
-		out = append(out, fmt.Sprintf("limit: %d", filter.Limit))
+		out = append(out, fmt.Sprintf("limit: %d", *filter.Limit))
 	}
 	if filter.Sort != nil {
-		out = append(out, fmt.Sprintf("sort: %s", filter.Sort))
+		out = append(out, fmt.Sprintf("sort: %s", *filter.Sort))
 	}
 	if filter.Keyset != nil {
 		out = append(out, fmt.Sprintf("keyset: %d", *filter.Keyset))
@@ -303,46 +341,6 @@ func (filter *PostFilter) SetMinColorPercent() {
 	filter.ColorPercents = &percents
 }
 
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, timeStart, timeEnd *time.Time, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
-	filter := &PostFilter{
-		Limit:         limit,
-		Sort:          sort,
-		Keyset:        keyset,
-		Nsfw:          nsfw,
-		Grayscale:     grayscale,
-		Sprocket:      sprocket,
-		Seed:          seed,
-		IDs:           ids,
-		Title:         title,
-		Author:        author,
-		TimeStart:     timeStart,
-		TimeEnd:       timeEnd,
-		CameraMake:    cameraMake,
-		CameraModel:   cameraModel,
-		FilmMake:      filmMake,
-		FilmType:      filmType,
-		FilmSpeed:     filmSpeed,
-		FocalLength:   focalLength,
-		Aperture:      aperture,
-		Colors:        colors,
-		ColorPercents: colorPercents,
-		Keywords:      keywords,
-		Width:         &Dimension{},
-		Height:        &Dimension{},
-		AspectRatio:   &Dimension{},
-	}
-
-	filter.SetMinColorPercent()
-
-	return filter
-}
-
-// NewPostFilterWithIDs is a convenience function
-// to create a post filter with only IDs set.
-func NewPostFilterWithIDs(ids []int) *PostFilter {
-	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-}
-
 // PostSimilarityFilter are options used for querying similar posts
 type PostSimilarityFilter struct {
 	Limit      *int
@@ -372,12 +370,6 @@ type Meta struct {
 	NextPageID string `json:"next_page_id"`
 	PageURL    string `json:"next_page_url"`
 	Seed       int    `json:"seed,omitempty"`
-}
-
-// HTTP response
-type Response struct {
-	Meta  Meta   `json:"meta"`
-	Posts []Post `json:"posts"`
 }
 
 type PostService interface {

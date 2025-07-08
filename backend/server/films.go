@@ -13,8 +13,8 @@ type FilmsResponse struct {
 }
 
 type CreateFilmResponse struct {
-	Message string        `json:"message"`
-	Film    analogdb.Film `json:"film"`
+	Message string              `json:"message"`
+	Film    analogdb.CreateFilm `json:"film"`
 }
 
 const (
@@ -30,7 +30,12 @@ func (s *Server) mountFilmHandlers() {
 }
 
 func (s *Server) getFilms(w http.ResponseWriter, r *http.Request) {
-	resp, err := s.makeFilmResponse(r)
+	filter, err := parseToFilmFilter(r)
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	resp, err := s.makeFilmResponse(r, filter)
 	if err != nil {
 		s.writeError(w, r, err)
 		return
@@ -41,8 +46,8 @@ func (s *Server) getFilms(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) makeFilmResponse(r *http.Request) (FilmsResponse, error) {
-	films, err := s.FilmService.AllFilms(r.Context())
+func (s *Server) makeFilmResponse(r *http.Request, filter *analogdb.FilmFilter) (FilmsResponse, error) {
+	films, err := s.FilmService.AllFilms(r.Context(), filter)
 	resp := FilmsResponse{}
 	if err != nil {
 		return resp, err
@@ -54,7 +59,7 @@ func (s *Server) makeFilmResponse(r *http.Request) (FilmsResponse, error) {
 }
 
 func (s *Server) createFilm(w http.ResponseWriter, r *http.Request) {
-	var createFilm analogdb.Film
+	var createFilm analogdb.CreateFilm
 	if err := json.NewDecoder(r.Body).Decode(&createFilm); err != nil {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse film from request body"}
 		s.writeError(w, r, err)
@@ -74,4 +79,27 @@ func (s *Server) createFilm(w http.ResponseWriter, r *http.Request) {
 	if err := encodeResponse(w, r, http.StatusCreated, createdResponse); err != nil {
 		s.writeError(w, r, err)
 	}
+}
+
+// parse URL for query parameters and convert to FilmFilter
+func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
+	filter := &analogdb.FilmFilter{}
+
+	if includeCounts := r.URL.Query().Get("include_counts"); includeCounts != "" {
+		if val, err := stringToBool(includeCounts); err != nil {
+			return nil, err
+		} else {
+			filter.IncludeCounts = &val
+		}
+	}
+
+	if excludeZero := r.URL.Query().Get("exclude_zero_counts"); excludeZero != "" {
+		if val, err := stringToBool(excludeZero); err != nil {
+			return nil, err
+		} else {
+			filter.IncludeCounts = &val
+		}
+	}
+
+	return filter, nil
 }

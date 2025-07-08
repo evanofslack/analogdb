@@ -16,19 +16,31 @@ func TestCameraService_AllCameras(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("find all cameras", func(t *testing.T) {
-		cameras, err := service.AllCameras(ctx)
+		filter := analogdb.NewCameraFilter(nil, nil)
+		cameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
 		}
 
-		expectedCount := 3
-		if len(cameras) != expectedCount {
-			t.Errorf("Expected %d cameras, got %d", expectedCount, len(cameras))
+		expectedCameras := 3
+		if len(cameras) != expectedCameras {
+			t.Errorf("Expected %d cameras, got %d", expectedCameras, len(cameras))
+		}
+		expectedCameraModels := 3
+		cameraModels := 0
+		for _, camera := range cameras {
+			for range camera.Models {
+				cameraModels += 1
+			}
+		}
+		if cameraModels != expectedCameraModels {
+			t.Errorf("Expected %d camera models, got %d", expectedCameraModels, cameraModels)
 		}
 	})
 
 	t.Run("verify camera ordering", func(t *testing.T) {
-		cameras, err := service.AllCameras(ctx)
+		filter := analogdb.NewCameraFilter(nil, nil)
+		cameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
 		}
@@ -43,50 +55,62 @@ func TestCameraService_AllCameras(t *testing.T) {
 
 			if current.Make > next.Make {
 				t.Errorf("Cameras not ordered by make: %q > %q", current.Make, next.Make)
-			} else if current.Make == next.Make && current.Model > next.Model {
-				t.Errorf("Cameras not ordered by model: %q > %q", current.Model, next.Model)
+			} else if current.Make == next.Make {
+				for i := 0; i < len(current.Models)-1; i++ {
+					currentModel := current.Models[i]
+					nextModel := current.Models[i+1]
+					if currentModel.Model > nextModel.Model {
+						t.Errorf("Cameras not ordered by model: %q > %q", currentModel.Model, nextModel.Model)
+					}
+				}
 			}
 		}
 	})
 
 	t.Run("verify camera struct fields", func(t *testing.T) {
-		cameras, err := service.AllCameras(ctx)
+		filter := analogdb.NewCameraFilter(nil, nil)
+		cameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
 		}
 
 		for i, camera := range cameras {
-			if camera.Id <= 0 {
-				t.Errorf("Camera at index %d has invalid ID: %d", i, camera.Id)
-			}
 			if camera.Make == "" {
 				t.Errorf("Camera at index %d has empty Make", i)
 			}
-			if camera.Model == "" {
-				t.Errorf("Camera at index %d has empty Model", i)
-			}
-			if camera.Created.IsZero() {
-				t.Errorf("Camera at index %d has zero Created timestamp", i)
-			}
-			if camera.Updated.IsZero() {
-				t.Errorf("Camera at index %d has zero Updated timestamp", i)
+			for j, model := range camera.Models {
+				if model.Id <= 0 {
+					t.Errorf("Camera at index %d has invalid ID: %d", j, model.Id)
+				}
+				if model.Model == "" {
+					t.Errorf("Camera at index %d has empty Model", j)
+				}
+				if model.Created.IsZero() {
+					t.Errorf("Camera at index %d has zero Created timestamp", j)
+				}
+				if model.Updated.IsZero() {
+					t.Errorf("Camera at index %d has zero Updated timestamp", j)
+				}
 			}
 		}
 	})
 
 	t.Run("no duplicate cameras", func(t *testing.T) {
-		cameras, err := service.AllCameras(ctx)
+		filter := analogdb.NewCameraFilter(nil, nil)
+		cameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
 		}
 
 		seen := make(map[string]bool)
 		for _, camera := range cameras {
-			key := fmt.Sprintf("%s-%s", camera.Make, camera.Model)
-			if seen[key] {
-				t.Errorf("Duplicate camera found: key=%s make=%s model=%s (total_cameras=%d)", key, camera.Make, camera.Model, len(cameras))
+			for _, model := range camera.Models {
+				key := fmt.Sprintf("%s-%s", camera.Make, model.Model)
+				if seen[key] {
+					t.Errorf("Duplicate camera found: key=%s make=%s model=%s (total_cameras=%d)", key, camera.Make, model.Model, len(cameras))
+				}
+				seen[key] = true
 			}
-			seen[key] = true
 		}
 	})
 }
@@ -99,7 +123,7 @@ func TestCameraService_CreateCamera(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("create new camera", func(t *testing.T) {
-		camera := &analogdb.Camera{
+		camera := &analogdb.CreateCamera{
 			Make:        "pentax",
 			Model:       "k1000",
 			Description: "Student camera with manual controls",
@@ -125,13 +149,14 @@ func TestCameraService_CreateCamera(t *testing.T) {
 	})
 
 	t.Run("create camera increases count", func(t *testing.T) {
-		initialCameras, err := service.AllCameras(ctx)
+		filter := analogdb.NewCameraFilter(nil, nil)
+		initialCameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
 		}
 		initialCount := len(initialCameras)
 
-		camera := &analogdb.Camera{
+		camera := &analogdb.CreateCamera{
 			Make:        "olympus",
 			Model:       "om-1",
 			Description: "Compact professional SLR",
@@ -142,7 +167,7 @@ func TestCameraService_CreateCamera(t *testing.T) {
 			t.Fatalf("CreateCamera failed: %v", err)
 		}
 
-		camerasAfterCreate, err := service.AllCameras(ctx)
+		camerasAfterCreate, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
 		}
@@ -154,7 +179,7 @@ func TestCameraService_CreateCamera(t *testing.T) {
 	})
 
 	t.Run("create duplicate camera with conflict", func(t *testing.T) {
-		camera := &analogdb.Camera{
+		camera := &analogdb.CreateCamera{
 			Make:        "canon",
 			Model:       "ae-1",
 			Description: "Duplicate camera",

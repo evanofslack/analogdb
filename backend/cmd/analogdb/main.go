@@ -165,6 +165,8 @@ func main() {
 	if cfg.App.CacheEnabled {
 		postService = redis.NewCachePostService(rdb, postService)
 		authorService = redis.NewCacheAuthorService(rdb, authorService)
+		filmService = redis.NewCacheFilmService(rdb, filmService)
+		cameraService = redis.NewCacheCameraService(rdb, cameraService)
 	}
 
 	similarityService = weaviate.NewSimilarityService(dbVec, postService)

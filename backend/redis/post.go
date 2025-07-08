@@ -102,19 +102,23 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 		defer cancel()
 
 		// add posts to cache
-		s.postsCache.set(ctx, &cache.Item{
+		if err := s.postsCache.set(ctx, &cache.Item{
 			Ctx:   ctx,
 			Key:   postsHash,
 			Value: &posts,
 			TTL:   postsTTL,
-		})
+		}); err != nil {
+			s.rdb.logger.Warn().Ctx(ctx).Err(err).Str("instance", s.postsCache.instance).Msg("Add posts to cache")
+		}
 		// add posts count to cache
-		s.postsCache.set(ctx, &cache.Item{
+		if err := s.postsCache.set(ctx, &cache.Item{
 			Ctx:   ctx,
 			Key:   postsCountHash,
 			Value: &count,
 			TTL:   postsTTL,
-		})
+		}); err != nil {
+			s.rdb.logger.Warn().Ctx(ctx).Err(err).Str("instance", s.postCache.instance).Msg("Add posts count to cache")
+		}
 	}()
 
 	return posts, count, nil
@@ -152,12 +156,14 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 		defer cancel()
 
 		// add to cache
-		s.postCache.set(ctx, &cache.Item{
+		if err := s.postCache.set(ctx, &cache.Item{
 			Ctx:   ctx,
 			Key:   postKey,
 			Value: &post,
 			TTL:   postTTL,
-		})
+		}); err != nil {
+			s.rdb.logger.Warn().Ctx(ctx).Err(err).Str("instance", s.postCache.instance).Msg("Add post to cache")
+		}
 	}()
 	return post, nil
 }
@@ -200,5 +206,7 @@ func (s *PostService) removePostFromCache(ctx context.Context, id int) {
 	// create a new context
 	ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 	defer cancel()
-	s.postCache.delete(ctx, postKey)
+	if err := s.postCache.delete(ctx, postKey); err != nil {
+		s.rdb.logger.Warn().Ctx(ctx).Err(err).Str("instance", s.postCache.instance).Msg("Delete post from cache")
+	}
 }
