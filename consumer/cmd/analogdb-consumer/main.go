@@ -51,7 +51,10 @@ func main() {
 		"env", cfg.App.Env,
 	)
 
-	metrics := metrics.New(logger.With("subsystem", "metrics"))
+	metrics, err := metrics.New(logger.With("subsystem", "metrics"))
+	if err != nil {
+		fatal(logger, err)
+	}
 
 	ch, err := clickhouse.New(
 		logger.With("subsystem", "clickhouse"),
