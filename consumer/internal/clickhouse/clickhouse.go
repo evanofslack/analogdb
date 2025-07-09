@@ -43,6 +43,7 @@ func New(logger *slog.Logger, metrics *metrics.Metrics, host string, port int, d
 
 	client := &Client{
 		logger:           logger,
+		metrics:          metrics,
 		addr:             addr,
 		dsn:              dsn,
 		database:         database,
