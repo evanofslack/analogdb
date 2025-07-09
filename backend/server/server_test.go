@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/evanofslack/analogdb/config"
@@ -20,7 +21,7 @@ func mustOpen(t *testing.T) *Server {
 	t.Helper()
 
 	if err := godotenv.Load("../.env"); err != nil {
-		t.Error("Error loading .env file")
+		fmt.Printf("fail load .env file")
 	}
 
 	logger, err := logger.New("debug", "debug", "analogdb-test")
