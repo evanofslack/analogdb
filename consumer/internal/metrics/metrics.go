@@ -27,7 +27,7 @@ type Metrics struct {
 
 func New(logger *slog.Logger) (*Metrics, error) {
 	reg := prometheus.NewRegistry()
-	prefixReg := prometheus.WrapRegistererWithPrefix("analogdb_consumer", reg)
+	prefixReg := prometheus.WrapRegistererWithPrefix("analogdb_consumer_", reg)
 	m := &Metrics{
 		logger:     logger,
 		registry:   reg,
