@@ -1,5 +1,5 @@
 import HomePage from "./home-page";
-import { authorized_fetch } from "../fetch.js";
+import { authorized_fetch } from "@lib/fetch";
 import { Suspense } from "react";
 
 export const metadata = {

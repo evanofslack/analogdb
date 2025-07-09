@@ -38,3 +38,18 @@
   justify-content: flex-end;
   width: 70vw;
 }
+
+.adminSection {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #b91c1c;
+  margin: 0 0 0.75rem 0;
+}

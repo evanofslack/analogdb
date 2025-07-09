@@ -1,7 +1,7 @@
-import { authorized_fetch } from "../../fetch.js";
-import About from "../../components/about";
-import Header from "../../components/header";
-import styles from "../../components/gallery.module.css";
+import { authorized_fetch } from "@lib/fetch";
+import About from "@components/about";
+import Header from "@components/header";
+import styles from "@components/gallery.module.css";
 
 export const metadata = {
   title: "AnalogDB",

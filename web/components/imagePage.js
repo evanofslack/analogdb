@@ -1,11 +1,36 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import ImageTag from "../components/imageTag";
-import Footer from "../components/footer";
+import ImageTag from "@components/imageTag";
+import Footer from "@components/footer";
 import styles from "./imagePage.module.css";
-import { AiOutlineDownload, AiOutlineArrowsAlt } from "react-icons/ai";
+import {
+  AiOutlineDownload,
+  AiOutlineArrowsAlt,
+  AiOutlineDelete,
+} from "react-icons/ai";
 import { ActionIcon, Tooltip } from "@mantine/core";
+
+async function handleDelete(postId) {
+  if (!confirm("Are you sure you want to delete this post?")) return;
+
+  const route = `/api/post/${postId}`;
+  try {
+    const response = await fetch(route, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (response.ok) {
+      window.location.href = "/";
+    } else {
+      alert("Failed to delete post");
+    }
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    alert("Error deleting post");
+  }
+}
 
 async function downloadImage(targetImage, name) {
   try {
@@ -25,6 +50,7 @@ async function downloadImage(targetImage, name) {
 export default function ImagePage(props) {
   let post = props.post;
   let similar = props.similar;
+  let isAdmin = props.isAdmin;
   let image = post.images[2];
   let placeholder = post.images[0];
 
@@ -70,6 +96,18 @@ export default function ImagePage(props) {
                 <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
               </ActionIcon>
             </Tooltip>
+            {/* Show delete button only to admin */}
+            {isAdmin && (
+              <Tooltip label="delete" withArrow className="px-2">
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => handleDelete(post.id)}
+                >
+                  <AiOutlineDelete size="24px"></AiOutlineDelete>
+                </ActionIcon>
+              </Tooltip>
+            )}
           </ActionIcon.Group>
         </div>
       </div>

@@ -26,8 +26,7 @@ import {
   Tooltip,
   NumberInput,
 } from "@mantine/core";
-
-import { baseURL } from "../constants.js";
+import { baseURL } from "@lib/constants.js";
 
 async function makeRequest(queryParams) {
   const route = "/posts" + queryParams;
