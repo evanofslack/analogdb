@@ -25,7 +25,7 @@ type Metrics struct {
 	clickhouseInsertDuration *prometheus.HistogramVec
 }
 
-func New(logger *slog.Logger) *Metrics {
+func New(logger *slog.Logger) (*Metrics, error) {
 	reg := prometheus.NewRegistry()
 	prefixReg := prometheus.WrapRegistererWithPrefix("analogdb_consumer", reg)
 	m := &Metrics{
@@ -63,12 +63,20 @@ func New(logger *slog.Logger) *Metrics {
 		),
 	}
 
-	m.registry.MustRegister(m.eventsRead)
-	m.registry.MustRegister(m.eventsCommitted)
-	m.registry.MustRegister(m.clickhouseInserts)
-	m.registry.MustRegister(m.clickhouseInsertDuration)
+	if err := m.registerer.Register(m.eventsRead); err != nil {
+		return nil, err
+	}
+	if err := m.registerer.Register(m.eventsCommitted); err != nil {
+		return nil, err
+	}
+	if err := m.registerer.Register(m.clickhouseInserts); err != nil {
+		return nil, err
+	}
+	if err := m.registerer.Register(m.clickhouseInsertDuration); err != nil {
+		return nil, err
+	}
 
-	return m
+	return m, nil
 }
 
 func (m *Metrics) IncrementEventsRead(count int, consumerGroup, topic string, err error) {
