@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useBreakpoint } from "../providers/breakpoint.js";
 
-export default function WebNav() {
+export default function WebNav(props) {
+  let isAdmin = props.isAdmin;
+
   const pathname = usePathname();
   const breakpoints = useBreakpoint();
 
@@ -36,6 +38,14 @@ export default function WebNav() {
         >
           API
         </Link>
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={pathname == "/admin" ? styles.linkOn : styles.linkOff}
+          >
+            ADMIN
+          </Link>
+        )}
       </div>
     </nav>
   );

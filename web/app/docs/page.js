@@ -1,16 +1,18 @@
 import Documentation from "../../components/documentation";
 import Header from "../../components/header";
 import styles from "../../components/gallery.module.css";
+import { checkAdminAuth } from "@lib/auth";
 
 export const metadata = {
   title: "AnalogDB",
   description: "Film photography database",
 };
 
-export default function Docs() {
+export default async function Docs() {
+  const isAdmin = await checkAdminAuth();
   return (
     <div className={styles.container}>
-      <Header />
+      <Header isAdmin={isAdmin} />
       <Documentation />
     </div>
   );

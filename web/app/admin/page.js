@@ -9,5 +9,5 @@ export default async function AdminPage({ searchParams }) {
     return <LoginForm error={await searchParams?.error} />;
   }
 
-  return <AdminPanel />;
+  return <AdminPanel isAdmin={isAdmin} />;
 }

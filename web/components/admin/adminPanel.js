@@ -1,54 +1,46 @@
 import { logoutAction } from "@lib/auth";
-import styles from "./adminPanel.module.css";
+import { Container, Title, Text, Button, Group } from "@mantine/core";
+import { IconLogout } from "@tabler/icons-react";
 import Header from "@components/header";
 import Footer from "@components/footer";
+import styles from "./adminPanel.module.css";
 
-export default function AdminPanel() {
+export default function AdminPanel(props) {
+  let isAdmin = props.isAdmin;
   return (
     <div className={styles.main}>
-      <Header />
-      <div className={styles.container}>
+      <Header isAdmin={isAdmin} />
+      <Container size="xl" className={styles.container}>
         <div className={styles.wrapper}>
-          <div className={styles.header}>
-            <h1 className={styles.title}>Admin Panel</h1>
+          <Group justify="space-between" align="center" mb="xl">
+            <Title order={1} c="gray.9">
+              Admin Panel
+            </Title>
 
             <form action={logoutAction}>
-              <button type="submit" className={styles.logoutButton}>
+              <Button
+                type="submit"
+                color="red"
+                variant="outline"
+                leftSection={<IconLogout size={16} />}
+              >
                 Logout
-              </button>
+              </Button>
             </form>
-          </div>
+          </Group>
 
-          <div className={styles.content}>
-            <div className={styles.card}>
-              <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>Welcome to Admin Dashboard</h3>
-                <p className={styles.cardDescription}>
-                  You are logged in as an administrator.
-                </p>
-              </div>
-
-              <div className={styles.cardContent}>
-                <div className={styles.grid}>
-                  <div className={styles.gridItem}>
-                    <h4 className={styles.itemTitle}>Posts Management</h4>
-                    <p className={styles.itemDescription}>
-                      You can now see delete buttons on all posts.
-                    </p>
-                  </div>
-
-                  <div className={styles.gridItem}>
-                    <h4 className={styles.itemTitle}>Site Administration</h4>
-                    <p className={styles.itemDescription}>
-                      Access to administrative features.
-                    </p>
-                  </div>
-                </div>
-              </div>
+          <div className={styles.contentCard}>
+            <div className={styles.cardHeader}>
+              <Title order={3} mb="xs">
+                Welcome to Admin Dashboard
+              </Title>
+              <Text size="sm" c="dimmed">
+                You are logged in as an administrator.
+              </Text>
             </div>
           </div>
         </div>
-      </div>
+      </Container>
       <Footer />
     </div>
   );

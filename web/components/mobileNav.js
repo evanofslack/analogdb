@@ -8,7 +8,8 @@ import { BiCheck } from "react-icons/bi";
 import { GrClose } from "react-icons/gr";
 import { FiGithub } from "react-icons/fi";
 
-export default function MobileNav() {
+export default function MobileNav(props) {
+  let isAdmin = props.isAdmin;
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen((value) => !value);
@@ -48,7 +49,23 @@ export default function MobileNav() {
                   </div>
                 </div>
               </Link>
+              {isAdmin && (
+                <Link href="/admin" className={styles.link}>
+                  <div className={styles.icon}>
+                    <div className={styles.check}>
+                      <h1 className={styles.iconText}>ADMIN</h1>
+                      {pathname === "/admin" && <BiCheck size="2rem" />}
+                    </div>
+                  </div>
+                </Link>
+              )}
             </nav>
+            <div className={styles.footer}>
+              <p> &copy; 2022 analogdb </p>
+              <a href="https://github.com/evanofslack/analogdb">
+                <FiGithub size="1.2rem" />
+              </a>
+            </div>
             <div className={styles.footer}>
               <p> &copy; 2022 analogdb </p>
               <a href="https://github.com/evanofslack/analogdb">

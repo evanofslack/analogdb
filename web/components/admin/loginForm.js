@@ -13,10 +13,12 @@ import Header from "@components/header";
 import Footer from "@components/footer";
 import styles from "./loginForm.module.css";
 
-export default function LoginForm({ error }) {
+export default function LoginForm(props) {
+  let error = props.error;
+  let isAdmin = props.isAdmin;
   return (
     <div className={styles.main}>
-      <Header />
+      <Header isAdmin={isAdmin} />
       <div className={styles.container}>
         <Paper
           className={styles.formWrapper}
