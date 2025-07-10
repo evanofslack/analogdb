@@ -26,8 +26,6 @@ type Server struct {
 	config   *config.Config
 	stats    *httpStats
 	hostname string
-	username string
-	password string
 
 	PostService       analogdb.PostService
 	FilmService       analogdb.FilmService
@@ -48,12 +46,14 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 		metrics:  metrics,
 		config:   config,
 		hostname: "localhost",
-		username: config.Auth.Username,
-		password: config.Auth.Password,
 	}
 
-	if s.username == "" && s.password == "" {
+	if s.config.Auth.Username == "" && s.config.Auth.Password == "" {
 		s.logger.Error().Msg("Config auth username and password not set!")
+	}
+
+	if s.config.Auth.RateLimitUsername == "" && s.config.Auth.RateLimitPassword == "" {
+		s.logger.Error().Msg("Config ratelimit auth username and password not set!")
 	}
 
 	hostname, err := os.Hostname()
