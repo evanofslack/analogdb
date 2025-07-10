@@ -1,57 +1,72 @@
 import { loginAction } from "@lib/auth";
-import styles from "./loginForm.module.css";
+import {
+  TextInput,
+  PasswordInput,
+  Button,
+  Paper,
+  Title,
+  Alert,
+  Stack,
+} from "@mantine/core";
+import { IconAlertCircle } from "@tabler/icons-react";
 import Header from "@components/header";
 import Footer from "@components/footer";
+import styles from "./loginForm.module.css";
 
 export default function LoginForm({ error }) {
   return (
     <div className={styles.main}>
       <Header />
       <div className={styles.container}>
-        <div className={styles.formWrapper}>
+        <Paper
+          className={styles.formWrapper}
+          shadow="sm"
+          radius="md"
+          withBorder
+        >
           <div className={styles.header}>
-            <h2 className={styles.title}>Admin Login</h2>
+            <Title order={2} className={styles.title}>
+              Admin Login
+            </Title>
           </div>
 
-          <form className={styles.form} action={loginAction}>
-            <div className={styles.inputGroup}>
-              <label htmlFor="username" className={styles.label}>
-                Username
-              </label>
-              <input
+          <form action={loginAction}>
+            <Stack gap="lg">
+              <TextInput
                 id="username"
                 name="username"
-                type="username"
-                required
-                className={styles.input}
+                label="Username"
                 placeholder="admin username"
+                required
+                size="sm"
               />
-            </div>
-            <div className={styles.inputGroup}>
-              <label htmlFor="password" className={styles.label}>
-                Password
-              </label>
-              <input
+
+              <PasswordInput
                 id="password"
                 name="password"
-                type="password"
-                required
-                className={styles.input}
+                label="Password"
                 placeholder="admin password"
+                required
+                size="sm"
               />
-            </div>
 
-            {error === "invalid" && (
-              <div className={styles.error}>Invalid username or password</div>
-            )}
+              {error === "invalid" && (
+                <Alert
+                  variant="outline"
+                  color="red"
+                  title="Error"
+                  icon={<IconAlertCircle size={16} />}
+                >
+                  Invalid username or password
+                </Alert>
+              )}
 
-            <div className={styles.buttonGroup}>
-              <button type="submit" className={styles.submitButton}>
+              <Button type="submit" fullWidth variant="filled" size="sm">
                 Sign In
-              </button>
-            </div>
+              </Button>
+            </Stack>
           </form>
-        </div>
+        </Paper>
       </div>
       <Footer />
     </div>
