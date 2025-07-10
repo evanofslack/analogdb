@@ -1,0 +1,29 @@
+.main {
+  padding-bottom: 4rem;
+  width: 100%;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.container {
+  min-height: 70vh;
+  padding: 1rem;
+  background-color: #ffffff;
+}
+
+.wrapper {
+  padding: 2rem 0;
+}
+
+.contentCard {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0.5px 3px rgba(0, 0, 0, 0.2);
+  border: 0px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.cardHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}

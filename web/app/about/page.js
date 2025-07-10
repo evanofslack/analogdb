@@ -1,7 +1,8 @@
-import { authorized_fetch } from "../../fetch.js";
-import About from "../../components/about";
-import Header from "../../components/header";
-import styles from "../../components/gallery.module.css";
+import { authorized_fetch } from "@lib/fetch";
+import { checkAdminAuth } from "@lib/auth";
+import About from "@components/about";
+import Header from "@components/header";
+import styles from "@components/gallery.module.css";
 
 export const metadata = {
   title: "AnalogDB",
@@ -26,10 +27,11 @@ async function getData() {
 
 export default async function AboutPage() {
   const data = await getData();
+  const isAdmin = await checkAdminAuth();
 
   return (
     <div className={styles.container}>
-      <Header />
+      <Header isAdmin={isAdmin} />
       <About data={data} />
     </div>
   );

@@ -1,6 +1,7 @@
 import HomePage from "./home-page";
-import { authorized_fetch } from "../fetch.js";
+import { authorized_fetch } from "@lib/fetch";
 import { Suspense } from "react";
+import { checkAdminAuth } from "@lib/auth";
 
 export const metadata = {
   title: "AnalogDB",
@@ -22,9 +23,10 @@ async function getData() {
 
 export default async function Page() {
   const data = await getData();
+  const isAdmin = await checkAdminAuth();
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <HomePage data={data} />
+      <HomePage data={data} isAdmin={isAdmin} />
     </Suspense>
   );
 }

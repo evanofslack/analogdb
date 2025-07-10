@@ -1,6 +1,5 @@
 "use client";
-
-import Gallery from "../components/gallery";
+import Gallery from "@components/gallery";
 import { BreakpointProvider } from "../providers/breakpoint";
 
 const queries = {
@@ -11,10 +10,10 @@ const queries = {
   xl: "(max-width: 2048px)",
 };
 
-export default function HomePage({ data }) {
+export default function HomePage({ data, isAdmin }) {
   return (
     <BreakpointProvider queries={queries}>
-      <Gallery data={data} />
+      <Gallery data={data} isAdmin={isAdmin} />
     </BreakpointProvider>
   );
 }

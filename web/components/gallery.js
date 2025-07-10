@@ -26,8 +26,7 @@ import {
   Tooltip,
   NumberInput,
 } from "@mantine/core";
-
-import { baseURL } from "../constants.js";
+import { baseURL } from "@lib/constants.js";
 
 async function makeRequest(queryParams) {
   const route = "/posts" + queryParams;
@@ -126,6 +125,9 @@ const defaultColor = "";
 const defaultText = "";
 
 export default function Gallery(props) {
+  let isAdmin = props.isAdmin;
+  let data = props.data;
+
   // querystate
   const [sort, setSort] = useQueryState("sort", {
     history: "push",
@@ -204,7 +206,7 @@ export default function Gallery(props) {
     return onlyIcon ? "films, cameras..." : "films, cameras, places...";
   };
 
-  const [response, setResponse] = useState(props.data);
+  const [response, setResponse] = useState(data);
   const isInitialLoad = useRef(true);
 
   const updateRequest = useCallback(async () => {
@@ -282,7 +284,7 @@ export default function Gallery(props) {
 
   return (
     <div className={styles.main}>
-      <Header />
+      <Header isAdmin={isAdmin} />
       <div className={styles.margin}>
         <div className={styles.query}>
           <Menu shadow="md" width={170}>

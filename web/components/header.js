@@ -5,7 +5,8 @@ import MobileNav from "./mobileNav";
 import Link from "next/link";
 import { useBreakpoint } from "../providers/breakpoint.js";
 
-export default function Header() {
+export default function Header(props) {
+  let isAdmin = props.isAdmin;
   const breakpoints = useBreakpoint();
 
   let useMobile = false;
@@ -18,8 +19,8 @@ export default function Header() {
         <Link href="/">AnalogDB</Link>
         <p className={styles.description}>the collection of film photography</p>
       </h1>
-      {useMobile && <MobileNav />}
-      {!useMobile && <WebNav />}
+      {useMobile && <MobileNav isAdmin={isAdmin} />}
+      {!useMobile && <WebNav isAdmin={isAdmin} />}
     </main>
   );
 }

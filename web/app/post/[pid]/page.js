@@ -1,6 +1,7 @@
-import { authorized_fetch } from "../../../fetch.js";
-import ImagePage from "../../../components/imagePage";
+import { authorized_fetch } from "@lib/fetch";
+import ImagePage from "@components/imagePage";
 import { notFound } from "next/navigation";
+import { checkAdminAuth } from "@lib/auth";
 
 export async function generateStaticParams() {
   if (process.env.NODE_ENV === "development") {
@@ -68,8 +69,9 @@ async function getPostData(pid) {
 export default async function Post({ params }) {
   const { pid } = await params;
   const { post, similar } = await getPostData(pid);
+  const isAdmin = await checkAdminAuth();
 
-  return <ImagePage post={post} similar={similar} />;
+  return <ImagePage post={post} similar={similar} isAdmin={isAdmin} />;
 }
 
 export const dynamic = "force-dynamic";

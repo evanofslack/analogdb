@@ -2,12 +2,12 @@
   background-color: #eaeaea;
   background-color: #ffffff;
   padding-top: 1.1rem;
-  padding-bottom: 0.25rem;
+  padding-bottom: 1rem;
   padding-left: 2.5rem;
   padding-right: 3.5rem;
   font-size: 0.83rem;
-  margin-bottom: -4rem;
-  flex: 1;
+  /*margin-bottom: -4rem;*/
+  /*flex: 1;*/
   display: flex;
   flex-direction: row;
   justify-content: space-between;
