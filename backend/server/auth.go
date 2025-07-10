@@ -13,9 +13,7 @@ const authKey contextKey = "authorized"
 
 func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username := s.config.Auth.Username
-		password := s.config.Auth.Password
-		authenticated := s.passBasicAuth(username, password, r)
+		authenticated := s.passBasicAuth(r)
 
 		if authenticated {
 			ctx := context.WithValue(r.Context(), authKey, true)
@@ -27,16 +25,22 @@ func (s *Server) auth(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) passBasicAuth(username, password string, r *http.Request) bool {
+func (s *Server) passBasicAuth(r *http.Request) bool {
 	username, password, ok := r.BasicAuth()
 	if !ok {
 		return false
 	}
 
+	if s.username == "" && s.password == "" {
+		s.logger.Warn().Msg("Config auth username and password not set, not authenticating")
+		return false
+	}
+
+	// Hash for consistent timing
 	usernameHash := sha256.Sum256([]byte(username))
 	passwordHash := sha256.Sum256([]byte(password))
-	expectedUsernameHash := sha256.Sum256([]byte(username))
-	expectedPasswordHash := sha256.Sum256([]byte(password))
+	expectedUsernameHash := sha256.Sum256([]byte(s.username))
+	expectedPasswordHash := sha256.Sum256([]byte(s.password))
 
 	usernameMatch := (subtle.ConstantTimeCompare(usernameHash[:], expectedUsernameHash[:]) == 1)
 	passwordMatch := (subtle.ConstantTimeCompare(passwordHash[:], expectedPasswordHash[:]) == 1)
