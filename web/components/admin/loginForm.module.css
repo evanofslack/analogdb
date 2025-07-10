@@ -1,18 +1,27 @@
-.container {
+.main {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+.container {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f9fafb;
-  padding: 1rem;
+  /*padding: 1rem;*/
+  margin-bottom: 5rem;
 }
 
 .formWrapper {
   max-width: 400px;
   width: 100%;
-  background: white;
+  background: #fbfbfb;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   padding: 2rem;
 }
 
