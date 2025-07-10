@@ -48,6 +48,14 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 		hostname: "localhost",
 	}
 
+	if s.config.Auth.Username == "" && s.config.Auth.Password == "" {
+		s.logger.Error().Msg("Config auth username and password not set!")
+	}
+
+	if s.config.Auth.RateLimitUsername == "" && s.config.Auth.RateLimitPassword == "" {
+		s.logger.Error().Msg("Config ratelimit auth username and password not set!")
+	}
+
 	hostname, err := os.Hostname()
 	if err != nil {
 		s.logger.Warn().Err(err).Msg("get hostname")
