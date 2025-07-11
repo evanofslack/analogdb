@@ -45,7 +45,11 @@ func (db *DB) createFilm(ctx context.Context, tx *sql.Tx, film *analogdb.CreateF
 	INSERT INTO films
         (film_make, film_type, film_speed, color_type, description)
         VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (film_make, film_type, film_speed) DO NOTHING
+        ON CONFLICT (film_make, film_type, film_speed) 
+        DO UPDATE SET 
+            color_type = EXCLUDED.color_type,
+            description = EXCLUDED.description,
+            updated = CURRENT_TIMESTAMP
         RETURNING id
 	`
 

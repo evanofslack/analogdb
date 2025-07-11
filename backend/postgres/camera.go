@@ -45,7 +45,10 @@ func (db *DB) createCamera(ctx context.Context, tx *sql.Tx, camera *analogdb.Cre
 	INSERT INTO cameras
         (camera_make, camera_model, description)
         VALUES ($1, $2, $3)
-        ON CONFLICT (camera_make, camera_model) DO NOTHING
+        ON CONFLICT (camera_make, camera_model) 
+        DO UPDATE SET 
+            description = EXCLUDED.description,
+            updated = CURRENT_TIMESTAMP
         RETURNING id
 	`
 
