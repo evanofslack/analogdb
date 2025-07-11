@@ -25,13 +25,18 @@ func (server *Server) addRatelimiter() {
 	server.logger.Info().Msg("Added rate limiting middleware")
 }
 
-// apply rate limit only if user is not authenticated
+// apply rate limit if user is not authenticated
 func (server *Server) applyRateLimit(r *http.Request) bool {
 	rl_username := server.config.Auth.RateLimitUsername
 	rl_password := server.config.Auth.RateLimitPassword
+	is_rl := server.passBasicAuth(rl_username, rl_password, r)
 
-	authenticated := server.passBasicAuth(rl_username, rl_password, r)
-	if authenticated {
+	auth_username := server.config.Auth.Username
+	auth_password := server.config.Auth.Password
+	is_auth := server.passBasicAuth(auth_username, auth_password, r)
+
+	// If either user/pw combo is provided, do not ratelimit
+	if is_rl || is_auth {
 		return false
 	}
 	return true
