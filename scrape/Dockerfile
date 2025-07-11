@@ -29,6 +29,8 @@ COPY data/ data/
 
 RUN uv venv && uv sync --frozen
 
+RUN uv run python -m spacy download en_core_web_lg
+
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 3000
