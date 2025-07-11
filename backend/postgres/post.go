@@ -800,11 +800,11 @@ func (db *DB) allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 func filterToOrder(filter *analogdb.PostFilter) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
-		case analogdb.SortTime:
+		case analogdb.PostSortTime:
 			return " ORDER BY p.time DESC"
-		case analogdb.SortScore:
+		case analogdb.PostSortScore:
 			return " ORDER BY p.score DESC"
-		case analogdb.SortRandom:
+		case analogdb.PostSortRandom:
 			if filter.Seed == nil {
 				filter.SetSeed()
 			}
@@ -928,15 +928,15 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 
 	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
 		switch *sort {
-		case analogdb.SortTime:
+		case analogdb.PostSortTime:
 			where = append(where, fmt.Sprintf("p.time < $%d", index))
 			args = append(args, *keyset)
 			index++
-		case analogdb.SortScore:
+		case analogdb.PostSortScore:
 			where = append(where, fmt.Sprintf("p.score < $%d", index))
 			args = append(args, *keyset)
 			index++
-		case analogdb.SortRandom:
+		case analogdb.PostSortRandom:
 			if seed := filter.Seed; seed != nil {
 				where = append(where, fmt.Sprintf("MOD(p.time, $%d) > $%d", index, index+1))
 				args = append(args, *seed, *keyset%*seed)

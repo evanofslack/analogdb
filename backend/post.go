@@ -105,19 +105,19 @@ type Post struct {
 type PostSort int
 
 const (
-	SortUnknown PostSort = iota
-	SortTime
-	SortScore
-	SortRandom
+	PostSortUnknown PostSort = iota
+	PostSortTime
+	PostSortScore
+	PostSortRandom
 )
 
 func (s PostSort) String() string {
 	switch s {
-	case SortTime:
+	case PostSortTime:
 		return "time"
-	case SortScore:
+	case PostSortScore:
 		return "score"
-	case SortRandom:
+	case PostSortRandom:
 		return "random"
 	default:
 		return "unknown"
@@ -127,13 +127,13 @@ func (s PostSort) String() string {
 func PostSortFromString(s string) PostSort {
 	switch strings.ToLower(s) {
 	case "time":
-		return SortTime
+		return PostSortTime
 	case "score":
-		return SortScore
+		return PostSortScore
 	case "random":
-		return SortRandom
+		return PostSortRandom
 	default:
-		return SortUnknown
+		return PostSortUnknown
 	}
 }
 

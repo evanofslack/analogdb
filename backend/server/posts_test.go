@@ -99,9 +99,9 @@ func TestSetMeta(t *testing.T) {
 	limit20 := 20
 	limit2 := 2
 	limit1 := 1
-	sortTime := analogdb.SortTime
-	sortScore := analogdb.SortScore
-	sortRandom := analogdb.SortRandom
+	sortTime := analogdb.PostSortTime
+	sortScore := analogdb.PostSortScore
+	sortRandom := analogdb.PostSortRandom
 	seed42 := 42
 
 	tests := []struct {

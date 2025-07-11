@@ -17,15 +17,8 @@ type CreateCamera struct {
 	Updated     time.Time `json:"updated"`
 }
 
-// Camera represents a camera with its make, models and total count
-type Camera struct {
-	Make      string        `json:"make"`
-	Models    []CameraModel `json:"camera_models"`
-	PostCount int           `json:"post_count"`
-}
-
 // CameraModel represents a specific camera model with post count
-type CameraModel struct {
+type Camera struct {
 	Id          int       `json:"id"`
 	Make        string    `json:"make"`
 	Model       string    `json:"model"`
@@ -35,25 +28,76 @@ type CameraModel struct {
 	PostCount   int       `json:"post_count"`
 }
 
+type CameraSort int
+
+const (
+	CameraSortUnknown CameraSort = iota
+	CameraSortAlphabetically
+	CameraSortCounts
+)
+
+func (s CameraSort) String() string {
+	switch s {
+	case CameraSortAlphabetically:
+		return "alphabetically"
+	case CameraSortCounts:
+		return "counts"
+	default:
+		return "unknown"
+	}
+}
+
+func CameraSortFromString(s string) CameraSort {
+	switch strings.ToLower(s) {
+	case "alphabetically":
+		return CameraSortAlphabetically
+	case "counts":
+		return CameraSortCounts
+	default:
+		return CameraSortUnknown
+	}
+}
+
 // CameraFilter are options used for querying films
 type CameraFilter struct {
+	Limit             *int
+	Sort              *CameraSort
+	IDs               *[]int
+	Make              *string
+	Model             *string
 	IncludeCounts     *bool
 	ExcludeZeroCounts *bool
 }
 
 func (filter *CameraFilter) String() string {
 	out := []string{}
-	if filter.IncludeCounts != nil {
-		out = append(out, fmt.Sprintf("include_counts: %t", *filter.IncludeCounts))
+	if limit := filter.Limit; limit != nil {
+		out = append(out, fmt.Sprintf("limit: %d", *limit))
 	}
-	if filter.ExcludeZeroCounts != nil {
-		out = append(out, fmt.Sprintf("exclude_zero_counts: %t", *filter.ExcludeZeroCounts))
+	if sort := filter.Sort; sort != nil {
+		out = append(out, fmt.Sprintf("sort: %q", *sort))
+	}
+	if ids := filter.IDs; ids != nil {
+		out = append(out, fmt.Sprintf("ids: %v", *ids))
+	}
+	if make := filter.Make; make != nil {
+		out = append(out, fmt.Sprintf("make: %s", *make))
+	}
+	if includeCounts := filter.IncludeCounts; includeCounts != nil {
+		out = append(out, fmt.Sprintf("include_counts: %t", *includeCounts))
+	}
+	if excludeZeros := filter.ExcludeZeroCounts; excludeZeros != nil {
+		out = append(out, fmt.Sprintf("exclude_zero_counts: %t", *excludeZeros))
 	}
 	return strings.Join(out, ", ")
 }
 
-func NewCameraFilter(includeCounts *bool, excludeZeroCounts *bool) *CameraFilter {
+func NewCameraFilter(limit *int, sort *CameraSort, ids *[]int, make *string, ty *string, speed *int, colortype *string, includeCounts *bool, excludeZeroCounts *bool) *CameraFilter {
 	return &CameraFilter{
+		Limit:             limit,
+		Sort:              sort,
+		IDs:               ids,
+		Make:              make,
 		IncludeCounts:     includeCounts,
 		ExcludeZeroCounts: excludeZeroCounts,
 	}
