@@ -138,9 +138,9 @@ class PostPatch:
         if self.sprocket is not None:
             body["sprocket"] = self.sprocket
         if self.colors is not None:
-            body["colors"] = [c.to_json for c in self.colors]
+            body["colors"] = [c.to_json() for c in self.colors]
         if self.keywords is not None:
-            body["keywords"] = [kw.to_json for kw in self.keywords]
+            body["keywords"] = [kw.to_json() for kw in self.keywords]
         if self.metadata is not None:
             if self.metadata.camera_make is not None:
                 body["camera_make"] = self.metadata.camera_make
