@@ -818,9 +818,35 @@
   },
   {
     "make": "nikonos",
-    "model": "v",
-    "description": "The Nikonos V is a rugged and versatile underwater film camera designed for professional and amateur photographers. It was introduced in 1984 as the successor to the Nikonos IV-A. The camera is waterproof up to a depth of 50 meters, making it perfect for scuba diving and underwater photography. It features a built-in light meter and manual exposure control, allowing photographers to adjust the settings according to the underwater lighting conditions. The Nikonos V uses interchangeable lenses, providing a wide range of options for capturing different subjects and perspectives. It also has a reliable mechanical shutter and a sturdy construction to withstand the harsh underwater environment. With its exceptional image quality and durability, the Nikonos V remains a popular choice among underwater photographers."
+    "model": "i",
+    "description": "The Nikonos I, introduced in 1963, was the world’s first commercially successful amphibious 35mm film camera, developed from the French Calypso. It featured a watertight die-cast body using O-ring seals, making it water-resistant down to 50 meters, and suitable for both underwater and all-weather land use. The camera used a proprietary Nikonos bayonet lens mount and was paired with specially designed optics, including a 35mm f/2.5 lens usable in air and underwater, and an underwater-specific 28mm f/3.5 lens. The shutter offered speeds from Bulb up to 1/500 second, with a combined lever for film advance and shutter cocking. Compact and relatively lightweight at about 700g with lens, it was far more convenient than previous housing-based designs and quickly gained popularity with divers, researchers, and professionals working in harsh environments. The Nikonos I set the standard for future amphibious cameras and was produced until 1968."
   },
+  {
+    "make": "nikonos",
+    "model": "ii",
+    "description": "The Nikonos II, released in 1968, was an improved version of the original. Major changes included a switch from a rewind knob to a retractable crank for easier and quicker film rewinding, as well as the introduction of a hinged, pop-up film pressure plate for more convenient film loading. The camera retained the basic watertight, O-ring-sealed design and depth rating to 50 meters, as well as the same lens mount and shutter configuration as the Nikonos I. The viewfinder, shutter speeds, and overall internal layout were mostly unchanged, though the body shape was slightly streamlined. The addition of the “II” logotype next to the viewfinder marked this version. It weighed about 655g with lens, and offered improved handling, making it popular among both amateur and professional underwater photographers."
+  },
+  {
+    "make": "nikonos",
+    "model": "iii",
+    "description": "The Nikonos III, released in 1975, saw several significant operational enhancements. It introduced a film advance sprocket, which standardized the frame spacing throughout a film roll, and moved the frame counter to the top of the body for easier visibility. The viewfinder was upgraded to an illuminating window-type bright frame, offering a clearer, brighter viewing experience and providing additional frame lines for the optional 80mm lens. The hinged pressure plate was further improved, and key controls like the film advance lever, rewind crank, and shutter release button were made larger for easier use with gloved hands. The external appearance, while keeping the spindle shape, became closer to a box-form to accommodate these upgrades. The Nikonos III maintained the 50m depth rating, the Nikonos bayonet lens mount, and a robust, all-weather construction favored by scientific and recreational users alike."
+  },
+  {
+    "make": "nikonos",
+    "model": "iv-a",
+    "description": "The Nikonos IV-A, introduced in 1980, represented Nikon's first complete redesign of the line, departing from the original Calypso blueprint. Notably, it featured aperture-priority automatic exposure (AE) with through-the-lens (TTL) center-weighted metering, thanks to a reflector in front of the shutter and a silicon photo diode sensor. The electronically controlled shutter offered automatic speeds from 1/30 to 1/1000 sec, with a backup mechanical speed of 1/90 sec and Bulb mode for battery failure contingencies. The camera introduced a hinged, buckle-type camera back for easier film loading, as well as a conventional shutter release button and improved user ergonomics, bringing its operation closer to that of land-based cameras. The IV-A supported dedicated underwater flash systems with TTL compatibility, maintained a 50m depth rating, and weighed about 900g with standard lens. It made underwater photography more accessible through automation and user-friendly controls."
+  },
+  {
+    "make": "nikonos",
+    "model": "v",
+    "description": "The Nikonos V, launched in 1984, further advanced the series' automation and versatility by adding a manual exposure mode alongside aperture-priority AE. This model featured TTL metered, electronically controlled shutter speeds from 1/30 to 1/1000 sec in auto mode, and manual shutter speeds up to 1/1000 sec, plus a mechanical 1/90 sec speed and Bulb setting. TTL flash metering was introduced for compatible Speedlight models, improving underwater flash photography with automatic exposure control. The camera featured a robust, ergonomically enhanced body available in orange or green, with a hinged camera back and improved sealing against the elements. The Nikonos V retained compatibility with all previous Nikonos lenses, supported ISO films from 25 to 1600, and maintained the 50m depth rating. Its combination of reliability, automation, and compatibility made it the definitive model of the Nikonos series, serving underwater and harsh environment photographers for nearly two decades."
+  },
+  {
+    "make": "nikonos",
+    "model": "rs af",
+    "description": "The Nikonos RS AF, released by Nikon in 1992, was the world’s first underwater autofocus single-lens reflex (SLR) camera, marking a significant advancement in underwater photography technology. Built to operate at depths up to 100 meters, the RS AF featured TTL autofocus via Nikon’s AM200 autofocus module, matrix metering for exposure, and both aperture-priority automatic exposure and fully manual modes—capabilities similar to contemporary land-based SLRs. The camera used a proprietary R-UW lens mount and was supported by a dedicated line of underwater-corrected autofocus lenses, including macro, wide-angle, zoom, and fisheye options. Additional features included motorized film advance and rewind, a high eye-point viewfinder optimized for use with dive masks, and compatibility with the SB-104 Speedlight designed for balanced TTL flash exposure underwater. The body and accessories were styled by famed designer Giorgetto Giugiaro and emphasized ergonomic, simplified operation suitable for demanding underwater environments. While technologically advanced, the RS AF was costly and complex to manufacture, resulting in limited production from 1992 until its discontinuation in 1996."
+  },
+
   {
     "make": "olympus",
     "model": "35 rc",
@@ -1178,6 +1204,31 @@
     "make": "tronic",
     "model": "af 3590",
     "description": "The Tronic AF 3590 is a mid-range 35mm film camera. It is a simple to use zoom camera with automatic modes. It was sold by the discounter Lidl in the 2000s when the digital market was coming up. It has a zoom that covers 35-90mm in a small body of a very sober design. It resembles the Nytech AF 3570"
+  },
+  {
+    "make": "vivitar",
+    "model": "220/sl",
+    "description": "The Vivitar 220/SL is a 35mm SLR camera using the M42 lens mount, manufactured by Cosina for Vivitar and marketed primarily in the 1970s. Built on a simple and reliable platform, it features a vertical-travel Copal Square metal shutter with speeds from Bulb to 1/1000 second. The camera is equipped with through-the-lens (TTL) metering via dual CdS cells, requiring a now-obsolete 1.35V mercury battery, and supports film speeds (ASA/ISO) from 25 to 1600. Standard features include an exposure counter, film plane indicator, X and M sync terminals, and a microprism focusing aid in the viewfinder. The 220/SL was available in both black and silver finishes, with minor variations in film advance levers, and has a film load indicator near the rewind crank. Unlike the higher-end 250/SL, the 220/SL lacks a battery check and shutter release lock."
+  },
+  {
+    "make": "vivitar",
+    "model": "35cs",
+    "description": "The Vivitar 35ES is a compact 35mm rangefinder camera introduced by Vivitar in 1978 and manufactured in Japan, based on Cosina's design. It features a fixed 40mm f/1.7 lens with six elements in four groups, notable for its fast maximum aperture and optical sharpness. The camera operates in shutter-priority automatic mode, with shutter speeds from 1/8 to 1/500 second plus Bulb, set via a leaf shutter. Exposure is measured through a CdS cell above the lens, supporting an exposure value (EV) range of 4.5 to 17, and film speeds from ISO 25 to 800. Focusing is manual, utilizing a superimposed rectangle rangefinder patch, and film is advanced with a single-stroke lever. The 35ES also includes a built-in X-sync for flash at all speeds, a 10-second mechanical self-timer, and operates on a 1.35V mercury battery (PX 675)."
+  },
+  {
+    "make": "vivitar",
+    "model": "v3800n",
+    "description": "The Vivitar V3800N is a manual-focus 35mm single-lens reflex (SLR) camera using the Pentax K mount, first introduced by Vivitar in 2001 and remaining available in various markets into at least 2017. Manufactured by Phenix and also marketed as the Phenix DC303N, the camera offers several advanced manual features, including multiple-exposure and depth-of-field preview buttons, as well as a PC connector for off-camera flash capability. It features a vertical-travel, electronic metal focal plane shutter with speeds ranging from 1/2000 second to 1 second plus Bulb mode, and a flash X-sync speed of 1/125 second accessible via both hot shoe and PC socket. The TTL, center-weighted light metering is based on an SPD cell, with ISO range from 25 to 3200. The camera uses a pentaprism viewfinder (0.91x magnification) with LED exposure indicators and a horizontal split-image focusing screen with micro-prism collar. It is powered by two 1.55V LR44 or SR44 batteries, and was available in two color variants: all black, or black with a grey top plate; similar designs were also sold as the Promaster 2500PK Super and Hikari 2002."
+  },
+  {
+    "make": "vivitar",
+    "model": "xv-5",
+    "description": "The Vivitar XV-5 is a 35mm single-lens reflex (SLR) camera introduced in 1981, notable for its use of the K mount lens system. It was manufactured by Chinon, as indicated by the unique design features like the 3-LED light meter position and self-timer lever, differentiating it from most other Vivitar SLRs, typically made by Cosina. The XV-5 offers a flash sync speed of 1/60 second and a maximum shutter speed of 1/1000 second. Its exposure meter, powered by two LR44 or SR44 batteries, displays over/correct/under exposure via LEDs located just outside the viewfinder eyepiece, within the user's peripheral vision. The camera typically came supplied with a 50mm f/1.9 lens bearing Chinon's distinctive aperture markings. A closely related model, the Vivitar XV-11, shares nearly all specifications, with the primary visual difference being the shape of its self-timer lever."
+  },
+  {
+    "make": "vivitar",
+    "model": "xc-3",
+    "description": "The Vivitar XC-3 is a 35mm single-lens reflex (SLR) camera featuring an M42 screw lens mount and manufactured by Cosina for Vivitar. Based on the Cosina CSM, it offers TTL (through-the-lens) center-weighted metering, with an LED display in the viewfinder to indicate exposure status. The camera uses an electronically controlled, horizontal-travel focal plane shutter with speeds from 1/1000 to 4 seconds, a mechanical backup at 1/50 sec, and a Bulb mode for long exposures. Metering is activated by a half-press of the shutter, which also stops down the lens, while an electronic self-timer provides a 10-second delay with a blinking LED countdown. The XC-3 requires two 1.5V silver-oxide batteries for most electronic functions; without batteries, only the mechanical shutter speed (M, 1/50 sec) is available. It is compatible with the Vivitar XC-A external automatic exposure unit, allowing aperture priority operation, and includes a flash hot shoe and X-sync PC connector."
   },
   {
     "make": "voigtländer",
