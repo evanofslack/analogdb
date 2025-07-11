@@ -208,8 +208,8 @@ func TestFilmService_CreateFilm(t *testing.T) {
 		}
 
 		_, err := service.CreateFilm(ctx, film)
-		if err == nil {
-			t.Error("Expected error when creating duplicate film, got nil")
+		if err != nil {
+			t.Error("Expected no error when creating duplicate film, just updated fields")
 		}
 	})
 }

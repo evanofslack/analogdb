@@ -186,8 +186,8 @@ func TestCameraService_CreateCamera(t *testing.T) {
 		}
 
 		_, err := service.CreateCamera(ctx, camera)
-		if err == nil {
-			t.Error("Expected error when creating duplicate camera, got nil")
+		if err != nil {
+			t.Error("Expect no error when creating duplicate camera, just updated fields")
 		}
 	})
 }
