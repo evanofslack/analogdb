@@ -93,7 +93,7 @@ func (filter *FilmFilter) String() string {
 		out = append(out, fmt.Sprintf("type: %s", *ty))
 	}
 	if speed := filter.Speed; speed != nil {
-		out = append(out, fmt.Sprintf("speed: %s", *speed))
+		out = append(out, fmt.Sprintf("speed: %d", *speed))
 	}
 	if color := filter.ColorType; color != nil {
 		out = append(out, fmt.Sprintf("color_type: %s", *color))
