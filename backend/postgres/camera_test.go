@@ -16,7 +16,7 @@ func TestCameraService_AllCameras(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("find all cameras", func(t *testing.T) {
-		filter := analogdb.NewCameraFilter(nil, nil)
+		filter := analogdb.NewCameraFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		cameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
@@ -29,7 +29,7 @@ func TestCameraService_AllCameras(t *testing.T) {
 	})
 
 	t.Run("verify camera ordering", func(t *testing.T) {
-		filter := analogdb.NewCameraFilter(nil, nil)
+		filter := analogdb.NewCameraFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		cameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
@@ -54,7 +54,7 @@ func TestCameraService_AllCameras(t *testing.T) {
 	})
 
 	t.Run("verify camera struct fields", func(t *testing.T) {
-		filter := analogdb.NewCameraFilter(nil, nil)
+		filter := analogdb.NewCameraFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		cameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
@@ -80,7 +80,7 @@ func TestCameraService_AllCameras(t *testing.T) {
 	})
 
 	t.Run("no duplicate cameras", func(t *testing.T) {
-		filter := analogdb.NewCameraFilter(nil, nil)
+		filter := analogdb.NewCameraFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		cameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)
@@ -131,7 +131,7 @@ func TestCameraService_CreateCamera(t *testing.T) {
 	})
 
 	t.Run("create camera increases count", func(t *testing.T) {
-		filter := analogdb.NewCameraFilter(nil, nil)
+		filter := analogdb.NewCameraFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		initialCameras, err := service.AllCameras(ctx, filter)
 		if err != nil {
 			t.Fatalf("Cameras failed: %v", err)

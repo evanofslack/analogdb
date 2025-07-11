@@ -16,7 +16,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("find all films", func(t *testing.T) {
-		filter := analogdb.NewFilmFilter(nil, nil)
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		films, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
@@ -29,7 +29,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 	})
 
 	t.Run("verify film ordering", func(t *testing.T) {
-		filter := analogdb.NewFilmFilter(nil, nil)
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		films, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
@@ -56,7 +56,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 	})
 
 	t.Run("verify film struct fields", func(t *testing.T) {
-		filter := analogdb.NewFilmFilter(nil, nil)
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		films, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
@@ -88,7 +88,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 	})
 
 	t.Run("no duplicate films", func(t *testing.T) {
-		filter := analogdb.NewFilmFilter(nil, nil)
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		films, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
@@ -147,7 +147,7 @@ func TestFilmService_CreateFilm(t *testing.T) {
 	})
 
 	t.Run("create film increases count", func(t *testing.T) {
-		filter := analogdb.NewFilmFilter(nil, nil)
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		initialFilms, err := service.AllFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
