@@ -516,12 +516,14 @@ def upload_films(
             description=f["description"],
         )
 
-        response = analog.upload_film(film)
-        if response.status_code in [200, 201]:
+        resp = analog.upload_film(film)
+        if resp.status_code in [200, 201]:
             context.log.debug(f"Uploaded film: {film.make} {film.type} {film.speed}")
             success += 1
         else:
-            context.log.warn(f"Fail upload film: {film}")
+            context.log.warn(
+                f"Fail upload film: {film}, body={resp.body}, status={resp.status}"
+            )
 
     context.log.info(f"Uploaded {success} films")
 
@@ -541,11 +543,13 @@ def upload_cameras(
             description=f["description"],
         )
 
-        response = analog.upload_camera(camera)
-        if response.status_code in [200, 201]:
+        resp = analog.upload_camera(camera)
+        if resp.status_code in [200, 201]:
             context.log.debug(f"Uploaded camera: {camera.make} {camera.model}")
             success += 1
         else:
-            context.log.warn(f"Fail upload camera: {camera}")
+            context.log.warn(
+                f"Fail upload camera: {camera}, body={resp.body}, status={resp.status}"
+            )
 
-    context.log.info(f"Uploaded {success} camera")
+    context.log.info(f"Uploaded {success} cameras")
