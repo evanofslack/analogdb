@@ -19,16 +19,9 @@ type CreateFilm struct {
 	Updated     time.Time `json:"updated"`
 }
 
-// Film represents a film with its make, types and total count
+// Film represents a specific film type with post count
 type Film struct {
-	Make      string     `json:"make"`
-	Types     []FilmType `json:"film_types"`
-	PostCount int        `json:"post_count"`
-}
-
-// FilmType represents a specific film type with post count
-type FilmType struct {
-	Id          int    `json:"id"`
+	Id          int       `json:"id"`
 	Make        string    `json:"make"`
 	Type        string    `json:"type"`
 	Speed       int       `json:"speed"`
@@ -39,25 +32,90 @@ type FilmType struct {
 	PostCount   int       `json:"post_count"`
 }
 
+type FilmSort int
+
+const (
+	FilmSortUnknown FilmSort = iota
+	FilmSortAlphabetically
+	FilmSortCounts
+)
+
+func (s FilmSort) String() string {
+	switch s {
+	case FilmSortAlphabetically:
+		return "alphabetically"
+	case FilmSortCounts:
+		return "counts"
+	default:
+		return "unknown"
+	}
+}
+
+func FilmSortFromString(s string) FilmSort {
+	switch strings.ToLower(s) {
+	case "alphabetically":
+		return FilmSortAlphabetically
+	case "counts":
+		return FilmSortCounts
+	default:
+		return FilmSortUnknown
+	}
+}
+
 // FilmFilter are options used for querying films
 type FilmFilter struct {
+	Limit             *int
+	Sort              *FilmSort
+	IDs               *[]int
+	Make              *string
+	Type              *string
+	Speed             *int
+	ColorType         *string
 	IncludeCounts     *bool
 	ExcludeZeroCounts *bool
 }
 
 func (filter *FilmFilter) String() string {
 	out := []string{}
-	if filter.IncludeCounts != nil {
-		out = append(out, fmt.Sprintf("include_counts: %t", *filter.IncludeCounts))
+	if limit := filter.Limit; limit != nil {
+		out = append(out, fmt.Sprintf("limit: %d", *limit))
 	}
-	if filter.ExcludeZeroCounts != nil {
-		out = append(out, fmt.Sprintf("exclude_zero_counts: %t", *filter.ExcludeZeroCounts))
+	if sort := filter.Sort; sort != nil {
+		out = append(out, fmt.Sprintf("sort: %q", *sort))
+	}
+	if ids := filter.IDs; ids != nil {
+		out = append(out, fmt.Sprintf("ids: %v", *ids))
+	}
+	if make := filter.Make; make != nil {
+		out = append(out, fmt.Sprintf("make: %s", *make))
+	}
+	if ty := filter.Type; ty != nil {
+		out = append(out, fmt.Sprintf("type: %s", *ty))
+	}
+	if speed := filter.Speed; speed != nil {
+		out = append(out, fmt.Sprintf("speed: %s", *speed))
+	}
+	if color := filter.ColorType; color != nil {
+		out = append(out, fmt.Sprintf("color_type: %s", *color))
+	}
+	if includeCounts := filter.IncludeCounts; includeCounts != nil {
+		out = append(out, fmt.Sprintf("include_counts: %t", *includeCounts))
+	}
+	if excludeZeros := filter.ExcludeZeroCounts; excludeZeros != nil {
+		out = append(out, fmt.Sprintf("exclude_zero_counts: %t", *excludeZeros))
 	}
 	return strings.Join(out, ", ")
 }
 
-func NewFilmFilter(includeCounts *bool, excludeZeroCounts *bool) *FilmFilter {
+func NewFilmFilter(limit *int, sort *FilmSort, ids *[]int, make *string, ty *string, speed *int, colortype *string, includeCounts *bool, excludeZeroCounts *bool) *FilmFilter {
 	return &FilmFilter{
+		Limit:             limit,
+		Sort:              sort,
+		IDs:               ids,
+		Make:              make,
+		Type:              ty,
+		Speed:             speed,
+		ColorType:         colortype,
 		IncludeCounts:     includeCounts,
 		ExcludeZeroCounts: excludeZeroCounts,
 	}

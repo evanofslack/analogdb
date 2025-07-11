@@ -22,19 +22,9 @@ func TestFilmService_AllFilms(t *testing.T) {
 			t.Fatalf("Films failed: %v", err)
 		}
 
-		expectedFilms := 2
+		expectedFilms := 3
 		if len(films) != expectedFilms {
 			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
-		}
-		expectedFilmTypes := 3
-		filmTypes := 0
-		for _, film := range films {
-			for range film.Types {
-				filmTypes += 1
-			}
-		}
-		if filmTypes != expectedFilmTypes {
-			t.Errorf("Expected %d film types, got %d", expectedFilmTypes, filmTypes)
 		}
 	})
 
@@ -56,14 +46,10 @@ func TestFilmService_AllFilms(t *testing.T) {
 			if current.Make > next.Make {
 				t.Errorf("Films not ordered by make: %q > %q", current.Make, next.Make)
 			} else if current.Make == next.Make {
-				for i := 0; i < len(current.Types)-1; i++ {
-					currentType := current.Types[i]
-					nextType := current.Types[i+1]
-					if currentType.Type > nextType.Type {
-						t.Errorf("Films not ordered by type: %q > %q", currentType.Type, nextType.Type)
-					} else if currentType.Type == nextType.Type && currentType.Speed > nextType.Speed {
-						t.Errorf("Films not ordered by speed: %d > %d", currentType.Speed, nextType.Speed)
-					}
+				if current.Type > next.Type {
+					t.Errorf("Films not ordered by type: %q > %q", current.Type, next.Type)
+				} else if current.Type == next.Type && current.Speed > next.Speed {
+					t.Errorf("Films not ordered by speed: %d > %d", current.Speed, next.Speed)
 				}
 			}
 		}
@@ -80,26 +66,23 @@ func TestFilmService_AllFilms(t *testing.T) {
 			if film.Make == "" {
 				t.Errorf("Film at index %d has empty Make", i)
 			}
-			for i, filmType := range film.Types {
-				if filmType.Id <= 0 {
-					t.Errorf("Film at index %d has invalid ID: %d", i, filmType.Id)
-				}
-				if filmType.Type == "" {
-					t.Errorf("Film at index %d has empty Type", i)
-				}
-				if filmType.Speed <= 0 {
-					t.Errorf("Film at index %d has invalid Speed: %d", i, filmType.Speed)
-				}
-				if filmType.ColorType == "" {
-					t.Errorf("Film at index %d has empty ColorType", i)
-				}
-				if filmType.Created.IsZero() {
-					t.Errorf("Film at index %d has zero Created timestamp", i)
-				}
-				if filmType.Updated.IsZero() {
-					t.Errorf("Film at index %d has zero Updated timestamp", i)
-				}
-
+			if film.Id <= 0 {
+				t.Errorf("Film at index %d has invalid ID: %d", i, film.Id)
+			}
+			if film.Type == "" {
+				t.Errorf("Film at index %d has empty Type", i)
+			}
+			if film.Speed <= 0 {
+				t.Errorf("Film at index %d has invalid Speed: %d", i, film.Speed)
+			}
+			if film.ColorType == "" {
+				t.Errorf("Film at index %d has empty ColorType", i)
+			}
+			if film.Created.IsZero() {
+				t.Errorf("Film at index %d has zero Created timestamp", i)
+			}
+			if film.Updated.IsZero() {
+				t.Errorf("Film at index %d has zero Updated timestamp", i)
 			}
 		}
 	})
@@ -113,14 +96,11 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 		seen := make(map[string]bool)
 		for _, film := range films {
-			for _, filmType := range film.Types {
-				key := fmt.Sprintf("%s-%s-%d", film.Make, filmType.Type, filmType.Speed)
-				if seen[key] {
-					t.Errorf("Duplicate film found: key=%s make=%s type=%s speed=%d (total_films=%d)", key, film.Make, filmType.Type, filmType.Speed, len(films))
-				}
-				seen[key] = true
-
+			key := fmt.Sprintf("%s-%s-%d", film.Make, film.Type, film.Speed)
+			if seen[key] {
+				t.Errorf("Duplicate film found: key=%s make=%s type=%s speed=%d (total_films=%d)", key, film.Make, film.Type, film.Speed, len(films))
 			}
+			seen[key] = true
 		}
 	})
 }

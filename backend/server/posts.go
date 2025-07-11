@@ -59,7 +59,7 @@ var defaultSimilarityLimit = 12
 var maxSimilarityLimit = 50
 
 // default to sorting by time descending (latest)
-var defaultSort = analogdb.SortTime
+var defaultSort = analogdb.PostSortTime
 
 const (
 	postsPath = "/posts"
@@ -272,7 +272,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 	meta.TotalPosts = count
 
 	// add seed if sort order is random
-	if sort := filter.Sort; *sort == analogdb.SortRandom {
+	if sort := filter.Sort; *sort == analogdb.PostSortRandom {
 		if seed := filter.Seed; seed != nil {
 			meta.Seed = *seed
 		}
@@ -290,9 +290,9 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 	// pageID
 	if sort := filter.Sort; sort != nil {
 		sortVal := *sort
-		if sortVal == analogdb.SortTime || sortVal == analogdb.SortRandom {
+		if sortVal == analogdb.PostSortTime || sortVal == analogdb.PostSortRandom {
 			meta.PageID = posts[len(posts)-1].Time
-		} else if sortVal == analogdb.SortScore {
+		} else if sortVal == analogdb.PostSortScore {
 			meta.PageID = posts[len(posts)-1].Score
 		} else {
 			return Meta{}, fmt.Errorf("invalid sort parameter: %s", sortVal.String())
@@ -304,11 +304,11 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		path := postsPath
 		numParams := 0
 		switch *sort {
-		case analogdb.SortTime:
+		case analogdb.PostSortTime:
 			path += fmt.Sprintf("%ssort=latest", paramJoiner(&numParams))
-		case analogdb.SortScore:
+		case analogdb.PostSortScore:
 			path += fmt.Sprintf("%ssort=top", paramJoiner(&numParams))
-		case analogdb.SortRandom:
+		case analogdb.PostSortRandom:
 			path += fmt.Sprintf("%ssort=random", paramJoiner(&numParams))
 		}
 		if limit := filter.Limit; limit != nil {
@@ -431,13 +431,13 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		if sort == "latest" || sort == "top" || sort == "random" {
 			switch sort {
 			case "latest":
-				time := analogdb.SortTime
+				time := analogdb.PostSortTime
 				filter.Sort = &time
 			case "top":
-				top := analogdb.SortScore
+				top := analogdb.PostSortScore
 				filter.Sort = &top
 			case "random":
-				random := analogdb.SortRandom
+				random := analogdb.PostSortRandom
 				filter.Sort = &random
 			}
 		} else {
