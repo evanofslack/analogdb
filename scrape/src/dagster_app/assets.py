@@ -507,6 +507,8 @@ def upload_films(
 ) -> None:
     analog = analogdb.client()
     success = 0
+    max_retries = 5
+
     for f in films_json.client():
         film = adb.FilmCreate(
             type=f["type"],
@@ -516,14 +518,22 @@ def upload_films(
             description=f["description"],
         )
 
-        resp = analog.upload_film(film)
-        if resp.status_code in [200, 201]:
-            context.log.debug(f"Uploaded film: {film.make} {film.type} {film.speed}")
-            success += 1
-        else:
-            context.log.warn(
-                f"Fail upload film: {film}, body={resp.text}, status={resp.status}"
-            )
+        for attempt in range(max_retries):
+            resp = analog.upload_film(film)
+            if resp.status_code in [200, 201]:
+                context.log.debug(
+                    f"Uploaded film, make={film.make}, type={film.type}, speed={film.speed}"
+                )
+                success += 1
+                break
+            elif attempt == max_retries - 1:
+                context.log.warn(
+                    f"Fail upload film, attempt={attempt+1}, max_retries={max_retries}, make={film.make}, type={film.type}, speed={film.speed}, body={resp.text}, status={resp.status_code}"
+                )
+            else:
+                context.log.debug(
+                    f"Retry upload film, attempt={attempt+1}, max_retries={max_retries}, make={film.make}, type={film.type}, speed={film.speed}, body={resp.text}, status={resp.status_code}"
+                )
 
     context.log.info(f"Uploaded {success} films")
 
@@ -536,6 +546,8 @@ def upload_cameras(
 ) -> None:
     analog = analogdb.client()
     success = 0
+    max_retries = 5
+
     for f in cameras_json.client():
         camera = adb.CameraCreate(
             make=f["make"],
@@ -543,13 +555,21 @@ def upload_cameras(
             description=f["description"],
         )
 
-        resp = analog.upload_camera(camera)
-        if resp.status_code in [200, 201]:
-            context.log.debug(f"Uploaded camera: {camera.make} {camera.model}")
-            success += 1
-        else:
-            context.log.warn(
-                f"Fail upload camera: {camera}, body={resp.text}, status={resp.status}"
-            )
+        for attempt in range(max_retries):
+            resp = analog.upload_camera(camera)
+            if resp.status_code in [200, 201]:
+                context.log.debug(
+                    f"Uploaded camera, make={camera.make}, model={camera.model}"
+                )
+                success += 1
+                break
+            elif attempt == max_retries - 1:
+                context.log.warn(
+                    f"Fail upload camera attempt={attempt+1}, max_retries={max_retries}, make={camera.make}, model={camera.model}, body={resp.text}, status={resp.status_code}"
+                )
+            else:
+                context.log.debug(
+                    f"Retry upload camera, attempt={attempt+1}, max_retries={max_retries}, make={camera.make}, model={camera.model}, body={resp.text}, status={resp.status_code}"
+                )
 
     context.log.info(f"Uploaded {success} cameras")
