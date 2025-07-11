@@ -1,4 +1,4 @@
-name: test-all
+name: test-scrape
 
 on:
   push:
