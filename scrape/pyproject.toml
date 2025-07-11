@@ -24,6 +24,7 @@ members = [
 [tool.uv]
 dev-dependencies = [
     "pytest>=8.4.0",
+    "pytest-cov>=4.0.0",
     "black>=23.0.0",
     "ruff>=0.1.0",
 ]
