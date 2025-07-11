@@ -160,16 +160,22 @@ class Client:
         response = self.session.get(url)
         response.raise_for_status()
         data = response.json()
+        films = []
+        for make in data["films"]:
+            for model in make["film_types"]:
+                films.append(self._parse_film(model))
         return [self._parse_film(film_data) for film_data in data["films"]]
 
-    def get_cameras(
-        self,
-    ) -> List[Camera]:
+    def get_cameras(self) -> List[Camera]:
         url = f"{self.base_url}/cameras"
         response = self.session.get(url)
         response.raise_for_status()
         data = response.json()
-        return [self._parse_camera(camera_data) for camera_data in data["cameras"]]
+        cameras = []
+        for make in data["cameras"]:
+            for model in make["camera_models"]:
+                cameras.append(self._parse_camera(model))
+        return cameras
 
     @retry(delay=1, times=5)
     def upload_film(self, film: FilmCreate) -> requests.Response:
@@ -235,9 +241,9 @@ class Client:
             description=data["description"],
         )
 
-    def _parse_camera(self, data: Dict[str, Any]) -> Camera:
+    def _parse_camera(self, data: Dict) -> Camera:
         return Camera(
-            id=data["id"],
+            id=str(data["id"]),
             make=data["make"],
             model=data["model"],
             description=data["description"],
