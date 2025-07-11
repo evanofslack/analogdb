@@ -130,6 +130,7 @@ class Client:
         response.raise_for_status()
         return response
 
+    @retry(delay=1, times=5)
     def delete_post(self, post_id: int) -> requests.Response:
         response = self.session.delete(
             f"{self.base_url}/post/{post_id}", auth=self.auth
@@ -144,6 +145,7 @@ class Client:
         data = response.json()
         return [int(id) for id in data["ids"]]
 
+    @retry(delay=1, times=5)
     def get_keyword_updated_post_ids(self) -> List[int]:
         response = self.session.get(
             f"{self.base_url}/scrape/keywords/updated", auth=self.auth
@@ -153,6 +155,7 @@ class Client:
         data = response.json()
         return data["ids"]
 
+    @retry(delay=1, times=5)
     def get_films(
         self,
     ) -> List[Film]:
@@ -166,6 +169,7 @@ class Client:
                 films.append(self._parse_film(model))
         return [self._parse_film(film_data) for film_data in data["films"]]
 
+    @retry(delay=1, times=5)
     def get_cameras(self) -> List[Camera]:
         url = f"{self.base_url}/cameras"
         response = self.session.get(url)

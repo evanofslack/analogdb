@@ -522,7 +522,7 @@ def upload_films(
             success += 1
         else:
             context.log.warn(
-                f"Fail upload film: {film}, body={resp.body}, status={resp.status}"
+                f"Fail upload film: {film}, body={resp.text}, status={resp.status}"
             )
 
     context.log.info(f"Uploaded {success} films")
@@ -549,7 +549,7 @@ def upload_cameras(
             success += 1
         else:
             context.log.warn(
-                f"Fail upload camera: {camera}, body={resp.body}, status={resp.status}"
+                f"Fail upload camera: {camera}, body={resp.text}, status={resp.status}"
             )
 
     context.log.info(f"Uploaded {success} cameras")
