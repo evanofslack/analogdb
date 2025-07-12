@@ -219,6 +219,7 @@ class Client:
             title=data["title"],
             author=data["author"],
             permalink=data["permalink"],
+            description=data.get("description"),  # may be none
             score=data["score"],
             timestamp=data["timestamp"],
             nsfw=data["nsfw"],
