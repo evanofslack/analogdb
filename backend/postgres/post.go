@@ -21,7 +21,7 @@ type rawCreatePost struct {
 	title       string
 	author      string
 	permalink   string
-	description string
+	description NullString
 	score       int
 	nsfw        bool
 	grayscale   bool
@@ -182,7 +182,7 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.title,
 		create.author,
 		create.permalink,
-		create.description,
+		create.description.ToSQLNullString(),
 		create.score,
 		create.nsfw,
 		create.grayscale,
@@ -1217,7 +1217,7 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		title:       p.Title,
 		author:      p.Author,
 		permalink:   p.Permalink,
-		description: p.Description,
+		description: NewNullStringFromPtr(p.Description),
 		score:       p.Score,
 		nsfw:        p.Nsfw,
 		grayscale:   p.Grayscale,
@@ -1332,7 +1332,7 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 			Title:       p.title,
 			Author:      p.author,
 			Permalink:   p.permalink,
-			Description: p.description,
+			Description: p.description.ToPtr(),
 			Score:       p.score,
 			Nsfw:        p.nsfw,
 			Grayscale:   p.grayscale,

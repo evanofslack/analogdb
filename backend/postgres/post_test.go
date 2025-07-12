@@ -16,11 +16,12 @@ func TestPostService_CreatePost(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("successful creation", func(t *testing.T) {
+		desc := "here is description"
 		createPost := &analogdb.CreatePost{
 			Title:       "Test Post",
 			Author:      "u/testuser",
 			Permalink:   "test_post_unique",
-			Description: "here is a description",
+			Description: &desc,
 			Score:       100,
 			Nsfw:        false,
 			Grayscale:   false,
@@ -56,8 +57,8 @@ func TestPostService_CreatePost(t *testing.T) {
 		if post.Title != createPost.Title {
 			t.Errorf("Expected title %q, got %q", createPost.Title, post.Title)
 		}
-		if post.Description != createPost.Description {
-			t.Errorf("Expected description %q, got %q", createPost.Description, post.Description)
+		if post.Description != nil && *post.Description != *createPost.Description {
+			t.Errorf("Expected description %q, got %q", *createPost.Description, *post.Description)
 		}
 		if post.Author != createPost.Author {
 			t.Errorf("Expected author %q, got %q", createPost.Author, post.Author)
@@ -207,7 +208,7 @@ func TestPostService_FindPosts(t *testing.T) {
 
 		for _, post := range posts {
 			if post.Nsfw != nsfw {
-				t.Errorf("Expected nsfw %v, got %v", nsfw, post.Nsfw)
+				t.Errorf("Expected nsfw %t, got %t", nsfw, post.Nsfw)
 			}
 		}
 	})
@@ -285,8 +286,8 @@ func TestPostService_PatchPost(t *testing.T) {
 		if err != nil {
 			t.Fatalf("FindPostByID failed: %v", err)
 		}
-		if post.Description != newDesc {
-			t.Errorf("Expected desc %q, got %q", newDesc, post.Description)
+		if post.Description != nil && *post.Description != newDesc {
+			t.Errorf("Expected desc %q, got %q", newDesc, *post.Description)
 		}
 	})
 
