@@ -200,7 +200,7 @@ class Client:
         return response
 
     def _parse_posts_response(self, data: Dict[str, Any]) -> Posts:
-        posts = [self._parse_post(post_data) for post_data in data.get("posts", [])]
+        posts = [self._parse_post(post_data) for post_data in data.get("posts") or []]
         meta = self._parse_meta(data["meta"])
         return Posts(posts=posts, meta=meta)
 
