@@ -90,6 +90,15 @@ class RedditScraper:
         if new_score > score:
             return new_score
 
+    def updated_selftext(self, url: str) -> str | None:
+        try:
+            submission = self.reddit.submission(url=url)
+            text = submission.selftext
+        except Exception:
+            return None
+
+        return text
+
     def _get_submissions(
         self, subreddit: str, num_posts: int, sort: str
     ) -> List[praw.reddit.Submission]:

@@ -84,6 +84,7 @@ class CreatePost:
     title: str
     author: str
     permalink: str
+    description: Optional[str]
     score: int
     nsfw: bool
     grayscale: bool
@@ -117,6 +118,7 @@ def new_post_create(
         title=post.title,
         author=post.author,
         permalink=post.permalink,
+        description=post.selftext,
         score=post.score,
         nsfw=post.nsfw,
         grayscale=post.grayscale,
