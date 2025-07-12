@@ -2,7 +2,7 @@
 
 -- Insert test pictures
 INSERT INTO pictures (
-    url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket,
+    url, title, author, permalink, description, score, nsfw, greyscale, time, width, height, sprocket,
     lowurl, lowwidth, lowheight, medurl, medwidth, medheight, highurl, highwidth, highheight,
     camera_make, camera_model, film_make, film_type, film_speed, focal_length, aperture
 ) VALUES 
@@ -10,7 +10,8 @@ INSERT INTO pictures (
     'https://example.com/raw1.jpg',
     'Sunset Photography',
     'u/photographer1',
-    'sunset_photo_123',
+    'reddit.com/sunset_photo_123',
+    'description of a sunset',
     150,
     false,
     false,
@@ -39,7 +40,8 @@ INSERT INTO pictures (
     'https://example.com/raw2.jpg',
     'Street Scene',
     'u/streetphotographer',
-    'street_scene_456',
+    'reddit.com/street_scene_456',
+    '',
     85,
     false,
     true,
@@ -68,7 +70,8 @@ INSERT INTO pictures (
     'https://example.com/raw3.jpg',
     'Portrait Study',
     'u/portraitist',
-    'portrait_study_789',
+    'reddit.com/portrait_study_789',
+    'portrait studies are my favorite',
     220,
     true,
     false,
