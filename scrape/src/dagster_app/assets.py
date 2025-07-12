@@ -132,6 +132,11 @@ def title_metadatas(
 ) -> Result[PhotoMetadata]:
     posts = [p for _, p in reddit_posts.successful().items()]
     titles = [f"title: {p.title} description: {p.selftext}" for p in posts]
+    titles = [
+        f"title: {p.title}"
+        + (f" description: {p.selftext}" if p.selftext is not None else "")
+        for p in posts
+    ]
     metadatas, _ = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
 
     # context.log.debug(f"Extract title metadata with prompt:\n{prompt}")
@@ -362,7 +367,11 @@ def updated_post_title_metadatas(
         context.log.info(f"No posts to process for partition {context.partition_key}")
         return patches
 
-    titles = [p.title for p in analogdb_posts]
+    titles = [
+        f"title: {p.title}"
+        + (f" description: {p.description}" if p.description is not None else "")
+        for p in analogdb_posts
+    ]
     metadatas, _ = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
     if len(analogdb_posts) != len(metadatas):
         context.log.error(
