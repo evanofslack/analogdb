@@ -7,6 +7,7 @@ class TestPostPatch:
         patch = PostPatch(
             id=1,
             score=None,
+            descripton=None,
             nsfw=None,
             grayscale=None,
             sprocket=None,
@@ -21,6 +22,7 @@ class TestPostPatch:
         patch = PostPatch(
             id=1,
             score=85,
+            descripton=None,
             nsfw=None,
             grayscale=None,
             sprocket=None,
@@ -35,6 +37,7 @@ class TestPostPatch:
         patch = PostPatch(
             id=1,
             score=90,
+            descripton=None,
             nsfw=True,
             grayscale=None,
             sprocket=None,
