@@ -17,14 +17,15 @@ func TestPostService_CreatePost(t *testing.T) {
 
 	t.Run("successful creation", func(t *testing.T) {
 		createPost := &analogdb.CreatePost{
-			Title:     "Test Post",
-			Author:    "u/testuser",
-			Permalink: "test_post_unique",
-			Score:     100,
-			Nsfw:      false,
-			Grayscale: false,
-			Time:      1642000000,
-			Sprocket:  false,
+			Title:       "Test Post",
+			Author:      "u/testuser",
+			Permalink:   "test_post_unique",
+			Description: "here is a description",
+			Score:       100,
+			Nsfw:        false,
+			Grayscale:   false,
+			Time:        1642000000,
+			Sprocket:    false,
 			Images: []analogdb.Image{
 				{Label: "low", Url: "http://example.com/low.jpg", Width: 200, Height: 300},
 				{Label: "medium", Url: "http://example.com/med.jpg", Width: 600, Height: 900},
@@ -54,6 +55,9 @@ func TestPostService_CreatePost(t *testing.T) {
 		}
 		if post.Title != createPost.Title {
 			t.Errorf("Expected title %q, got %q", createPost.Title, post.Title)
+		}
+		if post.Description != createPost.Description {
+			t.Errorf("Expected description %q, got %q", createPost.Description, post.Description)
 		}
 		if post.Author != createPost.Author {
 			t.Errorf("Expected author %q, got %q", createPost.Author, post.Author)
@@ -264,6 +268,25 @@ func TestPostService_PatchPost(t *testing.T) {
 		}
 		if post.Score != newScore {
 			t.Errorf("Expected score %d, got %d", newScore, post.Score)
+		}
+	})
+
+	t.Run("patch post description", func(t *testing.T) {
+		newDesc := "new description"
+		patch := &analogdb.PatchPost{Description: &newDesc}
+
+		err := service.PatchPost(ctx, patch, 1)
+		if err != nil {
+			t.Fatalf("PatchPost failed: %v", err)
+		}
+
+		// Verify the change
+		post, err := service.FindPostByID(ctx, 1)
+		if err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if post.Description != newDesc {
+			t.Errorf("Expected desc %q, got %q", newDesc, post.Description)
 		}
 	})
 
