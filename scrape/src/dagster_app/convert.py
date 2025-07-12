@@ -7,6 +7,7 @@ def convert_create(p: scrape.CreatePost) -> analog.PostCreate:
         p.title,
         p.author,
         p.permalink,
+        p.description,
         p.score,
         p.nsfw,
         p.grayscale,

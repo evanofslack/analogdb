@@ -19,6 +19,7 @@ from .assets import (
     debug_posts,
     final_posts,
     keywords,
+    patch_post_descriptions,
     patch_post_keywords,
     patch_post_scores,
     patch_post_title_metadatas,
@@ -26,6 +27,7 @@ from .assets import (
     reddit_posts,
     s3_images,
     title_metadatas,
+    updated_post_descriptions,
     updated_post_keywords,
     updated_post_scores,
     updated_post_title_metadatas,
@@ -34,7 +36,13 @@ from .assets import (
     upload_films,
     upload_posts,
 )
-from .jobs import patch_keywords_job, patch_scores_job, scrape_job
+from .jobs import (
+    patch_descriptions_job,
+    patch_keywords_job,
+    patch_post_title_metadatas_job,
+    patch_scores_job,
+    scrape_job,
+)
 from .resources import (
     AnalogDBResource,
     CamerasJsonResource,
@@ -64,6 +72,7 @@ defs = dg.Definitions(
         debug_posts,
         final_posts,
         keywords,
+        patch_post_descriptions,
         patch_post_keywords,
         patch_post_scores,
         patch_post_title_metadatas,
@@ -71,6 +80,7 @@ defs = dg.Definitions(
         reddit_posts,
         s3_images,
         title_metadatas,
+        updated_post_descriptions,
         updated_post_keywords,
         updated_post_scores,
         updated_post_title_metadatas,
@@ -110,7 +120,13 @@ defs = dg.Definitions(
         "cameras_json": CamerasJsonResource(file_path=CAMERAS_PATH),
         "io_manager": io_manager(),
     },
-    jobs=[scrape_job, patch_scores_job, patch_keywords_job],
+    jobs=[
+        scrape_job,
+        patch_descriptions_job,
+        patch_post_title_metadatas_job,
+        patch_scores_job,
+        patch_keywords_job,
+    ],
     schedules=[
         scrape_analog_schedule,
         update_post_keywords_schedule,

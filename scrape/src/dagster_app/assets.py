@@ -312,6 +312,43 @@ def patch_post_scores(
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
+def updated_post_descriptions(
+    context: dg.AssetExecutionContext,
+    analogdb_posts: List[adb.Post],
+    reddit: RedditResource,
+) -> List[adb.PostPatch]:
+    r = reddit.client()
+    patches: List[adb.PostPatch] = []
+    for p in analogdb_posts:
+        desc = r.updated_selftext(p.permalink)
+        if desc is None or desc == "":
+            continue
+        patch = adb.create_post_patch(id=p.id, description=desc)
+        patches.append(patch)
+    context.log.info(f"Created {len(patches)} updated post descriptions")
+    return patches
+
+
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
+def patch_post_descriptions(
+    context: dg.AssetExecutionContext,
+    updated_post_descriptions: List[adb.PostPatch],
+    analogdb: AnalogDBResource,
+) -> None:
+    if not updated_post_descriptions:
+        context.log.info(
+            f"No updated post descriptions to process for partition {context.partition_key}"
+        )
+
+    adb = analogdb.client()
+    for p in updated_post_descriptions:
+        adb.patch_post(p)
+    context.log.info(
+        f"Patched {len(updated_post_descriptions)} post descriptions for partition {context.partition_key}"
+    )
+
+
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def updated_post_title_metadatas(
     context: dg.AssetExecutionContext,
     analogdb_posts: List[adb.Post],
