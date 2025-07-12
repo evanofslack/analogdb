@@ -122,6 +122,6 @@ func NewFilmFilter(limit *int, sort *FilmSort, ids *[]int, make *string, ty *str
 }
 
 type FilmService interface {
-	AllFilms(ctx context.Context, filter *FilmFilter) ([]*Film, error)
+	FindFilms(ctx context.Context, filter *FilmFilter) ([]*Film, error)
 	CreateFilm(ctx context.Context, film *CreateFilm) (*CreateFilm, error)
 }

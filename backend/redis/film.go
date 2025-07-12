@@ -43,7 +43,7 @@ func (s *FilmService) CreateFilm(ctx context.Context, film *analogdb.CreateFilm)
 	return s.dbService.CreateFilm(ctx, film)
 }
 
-func (s *FilmService) AllFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
+func (s *FilmService) FindFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
 	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.filmCache.instance).Msg("Starting all films with cache")
 	defer s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.filmCache.instance).Msg("Finished all films with cache")
 
@@ -53,7 +53,7 @@ func (s *FilmService) AllFilms(ctx context.Context, filter *analogdb.FilmFilter)
 		s.rdb.logger.Error().Err(err).Ctx(ctx).Str("instance", s.filmCache.instance).Msg("Fail to hash film filter")
 
 		// if we failed, fallback to db
-		return s.dbService.AllFilms(ctx, filter)
+		return s.dbService.FindFilms(ctx, filter)
 	}
 
 	filmsHash := fmt.Sprint(hash)
@@ -69,7 +69,7 @@ func (s *FilmService) AllFilms(ctx context.Context, filter *analogdb.FilmFilter)
 	}
 
 	// fallback to db
-	films, err = s.dbService.AllFilms(ctx, filter)
+	films, err = s.dbService.FindFilms(ctx, filter)
 	if err != nil {
 		return nil, err
 	}

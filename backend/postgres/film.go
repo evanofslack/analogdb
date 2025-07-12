@@ -3,6 +3,9 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/evanofslack/analogdb"
@@ -16,7 +19,7 @@ func NewFilmService(db *DB) *FilmService {
 	return &FilmService{db: db}
 }
 
-func (s *FilmService) AllFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
+func (s *FilmService) FindFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -84,25 +87,39 @@ func (db *DB) createFilm(ctx context.Context, tx *sql.Tx, film *analogdb.CreateF
 
 // findFilms is the general function responsible for handling all film queries.
 func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
-	db.logger.Debug().Ctx(ctx).Msg("Starting find films")
-	defer db.logger.Debug().Ctx(ctx).Msg("Finished find films")
+	filterFmt := "nil"
+	if filter != nil {
+		filterFmt = filter.String()
+	}
 
-	query := `
+	db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Starting find films")
+	defer db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Finished find films")
+
+	var args []any
+	var where string
+	index := 1
+	where, args, index = filterToWhereFilm(filter, index)
+
+	order := filterToOrderFilms(filter)
+	limit := formatLimitFilms(filter)
+
+	query := fmt.Sprintf(`
 		SELECT 
-			id,
-			film_make,
-			film_type,
-			film_speed,
-			color_type,
-			description,
-			created,
-			updated,
+			f.id,
+			f.film_make,
+			f.film_type,
+			f.film_speed,
+			f.color_type,
+			f.description,
+			f.created,
+			f.updated,
 			0 as post_count
-		FROM films
-		ORDER BY film_make, film_type, film_speed`
+		FROM films f
+	    WHERE %s
+	    `, where) + order + limit
 
 	if counts := filter.IncludeCounts; counts != nil && *counts {
-		query = `
+		query = fmt.Sprintf(`
 			SELECT 
 				f.id,
 				f.film_make,
@@ -114,12 +131,13 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 				f.updated,
 				COUNT(p.id) as post_count
 			FROM films f
+		    WHERE %s
 			LEFT JOIN pictures p ON f.film_make = p.film_make AND f.film_type = p.film_type
 			GROUP BY f.id, f.film_make, f.film_type, f.film_speed, f.color_type, f.description, f.created, f.updated
-			ORDER BY f.film_make, f.film_type, f.film_speed`
+	`, where) + order + limit
 	}
 
-	rows, err := tx.QueryContext(ctx, query)
+	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Msg("Find films")
 		return nil, err
@@ -157,21 +175,80 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 		db.logger.Error().Err(err).Ctx(ctx).Msg("Find films")
 		return nil, err
 	}
-
-	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
-		if counts := filter.IncludeCounts; counts != nil && *counts {
-			films = filterFilmZeroCounts(films)
-		}
-	}
 	return films, nil
 }
 
-func filterFilmZeroCounts(films []*analogdb.Film) []*analogdb.Film {
-	filtered := make([]*analogdb.Film, 0)
-	for _, film := range films {
-		if film.PostCount > 0 {
-			filtered = append(filtered, film)
+func filterToWhereFilm(filter *analogdb.FilmFilter, startIndex int) (string, []any, int) {
+	index := startIndex
+	where, args := []string{"1=1"}, []any{}
+
+	if make := filter.Make; make != nil {
+		where = append(where, fmt.Sprintf("film_make = $%d", index))
+		args = append(args, *make)
+		index++
+	}
+	if ty := filter.Type; ty != nil {
+		where = append(where, fmt.Sprintf("film_type = $%d", index))
+		args = append(args, *ty)
+		index++
+	}
+	if sp := filter.Speed; sp != nil {
+		where = append(where, fmt.Sprintf("film_speed = $%d", index))
+		args = append(args, *sp)
+		index++
+	}
+	if color := filter.ColorType; color != nil {
+		where = append(where, fmt.Sprintf("color_type = $%d", index))
+		args = append(args, *color)
+		index++
+	}
+	if ids := filter.IDs; ids != nil {
+		where = append(where, fmt.Sprintf("id = ANY($%d::int[])", index))
+		// turn the slice of ids into a string i.e. "(1,2,3)"
+		var idsFormat string
+		if len(*ids) == 1 {
+			// single id can't have a comma
+			id := (*ids)[0]
+			idsFormat = fmt.Sprintf("{%s}", strconv.Itoa(id))
+		} else {
+			idsString := []string{}
+			for _, i := range *ids {
+				idsString = append(idsString, strconv.Itoa(i))
+			}
+			idsFormat = "{" + strings.Join(idsString, ",") + "}"
+		}
+		args = append(args, idsFormat)
+		index++
+	}
+	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
+		if includeCounts := filter.IncludeCounts; includeCounts != nil && *includeCounts {
+			where = append(where, "post_count > 0")
 		}
 	}
-	return filtered
+
+	whereQuery := strings.Join(where, " AND ")
+	return whereQuery, args, index
+}
+
+// filterToOrderFilms converts film filter into an SQL "ORDER BY" statement
+func filterToOrderFilms(filter *analogdb.FilmFilter) string {
+	if sort := filter.Sort; sort != nil {
+		switch *sort {
+		case analogdb.FilmSortAlphabetically:
+			return " ORDER BY f.film_make, f.film_type, f.film_speed DESC"
+		case analogdb.FilmSortCounts:
+			return " ORDER BY post_count DESC"
+		}
+	}
+	return ""
+}
+
+// formatLimitFilms turns the limit into an SQL limit statement
+func formatLimitFilms(filter *analogdb.FilmFilter) string {
+	if limit := filter.Limit; limit != nil {
+		if *limit > 0 {
+			return fmt.Sprintf(` LIMIT %d`, *limit)
+		}
+	}
+	return ""
 }

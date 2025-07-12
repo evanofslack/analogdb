@@ -47,7 +47,7 @@ func (s *Server) getFilms(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) makeFilmResponse(r *http.Request, filter *analogdb.FilmFilter) (FilmsResponse, error) {
-	films, err := s.FilmService.AllFilms(r.Context(), filter)
+	films, err := s.FilmService.FindFilms(r.Context(), filter)
 	resp := FilmsResponse{}
 	if err != nil {
 		return resp, err

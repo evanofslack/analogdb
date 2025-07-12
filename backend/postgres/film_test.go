@@ -8,7 +8,7 @@ import (
 	"github.com/evanofslack/analogdb"
 )
 
-func TestFilmService_AllFilms(t *testing.T) {
+func TestFilmService_FindFilms(t *testing.T) {
 	db, cleanup := mustOpenWithSeed(t)
 	defer cleanup()
 
@@ -17,7 +17,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 	t.Run("find all films", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		films, err := service.AllFilms(ctx, filter)
+		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -30,7 +30,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 	t.Run("verify film ordering", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		films, err := service.AllFilms(ctx, filter)
+		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -57,7 +57,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 	t.Run("verify film struct fields", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		films, err := service.AllFilms(ctx, filter)
+		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -89,7 +89,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 	t.Run("no duplicate films", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		films, err := service.AllFilms(ctx, filter)
+		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -148,7 +148,7 @@ func TestFilmService_CreateFilm(t *testing.T) {
 
 	t.Run("create film increases count", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		initialFilms, err := service.AllFilms(ctx, filter)
+		initialFilms, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -167,7 +167,7 @@ func TestFilmService_CreateFilm(t *testing.T) {
 			t.Fatalf("CreateFilm failed: %v", err)
 		}
 
-		filmsAfterCreate, err := service.AllFilms(ctx, filter)
+		filmsAfterCreate, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
