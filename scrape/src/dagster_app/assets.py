@@ -41,18 +41,16 @@ def analogdb_posts(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource
 ) -> List[adb.Post]:
     window = context.partition_time_window
-    time_start = int(window.start.timestamp())
-    time_end = int(window.end.timestamp())
+    start = int(window.start.timestamp())
+    end = int(window.end.timestamp())
 
-    filter = adb.create_posts_filter(time_start=time_start, time_end=time_end)
+    filter = adb.create_posts_filter(time_start=start, time_end=end)
     posts = analogdb.client().get_posts_all(
         count=analogdb.batch_posts_count, filter=filter
     )
-
     context.log.info(
         f"Fetched {len(posts)} posts for partition {context.partition_key} ({window.start} to {window.end})"
     )
-
     return posts
 
 
@@ -344,6 +342,7 @@ def patch_post_descriptions(
         context.log.info(
             f"No updated post descriptions to process for partition {context.partition_key}"
         )
+        return
 
     adb = analogdb.client()
     for p in updated_post_descriptions:
