@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
+import glob
 import json
 import os
-import glob
 from collections import defaultdict
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 
 def load_json_file(filepath: str) -> Dict[str, Any]:
