@@ -1,4 +1,4 @@
-from .models import PostPatch, PhotoMetadata
+from .models import PhotoMetadata, PostPatch
 
 
 class TestPostPatch:

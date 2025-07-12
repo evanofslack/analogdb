@@ -74,6 +74,7 @@ class Post:
     title: str
     author: str
     permalink: str
+    description: Optional[str]
     score: int
     timestamp: int
     nsfw: bool
@@ -113,6 +114,7 @@ def create_posts_filter(
 class PostPatch:
     id: int
     score: Optional[int]
+    descripton: Optional[str]
     nsfw: Optional[bool]
     grayscale: Optional[bool]
     sprocket: Optional[bool]
@@ -131,6 +133,8 @@ class PostPatch:
         body = {}
         if self.score is not None:
             body["upvotes"] = self.score
+        if self.descripton is not None:
+            body["description"] = self.descripton
         if self.nsfw is not None:
             body["nsfw"] = self.nsfw
         if self.grayscale is not None:
@@ -162,6 +166,7 @@ class PostPatch:
 def create_post_patch(
     id: int,
     score: Optional[int] = None,
+    description: Optional[str] = None,
     nsfw: Optional[bool] = None,
     grayscale: Optional[bool] = None,
     sprocket: Optional[bool] = None,
@@ -169,7 +174,9 @@ def create_post_patch(
     keywords: Optional[List[Keyword]] = None,
     metadata: Optional[PhotoMetadata] = None,
 ):
-    return PostPatch(id, score, nsfw, grayscale, sprocket, colors, keywords, metadata)
+    return PostPatch(
+        id, score, description, nsfw, grayscale, sprocket, colors, keywords, metadata
+    )
 
 
 @dataclass
@@ -177,6 +184,7 @@ class PostCreate:
     title: str
     author: str
     permalink: str
+    description: Optional[str]
     score: int
     nsfw: bool
     grayscale: bool
@@ -206,6 +214,8 @@ class PostCreate:
         body["unix_time"] = self.time
         body["sprocket"] = self.sprocket
         body["upvotes"] = self.score
+        if self.description is not None:
+            body["description"] = self.description
 
         if self.camera_make is not None:
             body["camera_make"] = self.camera_make
