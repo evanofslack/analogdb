@@ -36,6 +36,7 @@ type CreatePost struct {
 	Title       string    `json:"title"`
 	Author      string    `json:"author"`
 	Permalink   string    `json:"permalink"`
+	Description string    `json:"description,omitempty"`
 	Score       int       `json:"upvotes"`
 	Nsfw        bool      `json:"nsfw"`
 	Grayscale   bool      `json:"grayscale"`
@@ -59,6 +60,7 @@ type DisplayPost struct {
 	Title       string    `json:"title"`
 	Author      string    `json:"author"`
 	Permalink   string    `json:"permalink"`
+	Description string    `json:"description,omitempty"`
 	Score       int       `json:"score"`
 	Nsfw        bool      `json:"nsfw"`
 	Grayscale   bool      `json:"grayscale"`
@@ -81,6 +83,7 @@ type DisplayPost struct {
 // Uses pointers and omit empty to allow partial unmarshalling
 type PatchPost struct {
 	Score       *int       `json:"upvotes,omitempty"`
+	Description *string     `json:"description,omitempty"`
 	Nsfw        *bool      `json:"nsfw,omitempty"`
 	Grayscale   *bool      `json:"grayscale,omitempty"`
 	Sprocket    *bool      `json:"sprocket,omitempty"`

@@ -21,6 +21,7 @@ type rawCreatePost struct {
 	title       string
 	author      string
 	permalink   string
+	description string
 	score       int
 	nsfw        bool
 	grayscale   bool
@@ -161,8 +162,8 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	query := `
 	INSERT INTO pictures
 
-    (url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight, camera_make, camera_model, film_make, film_type, film_speed, focal_length, aperture)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
+    (url, title, author, permalink, description, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight, camera_make, camera_model, film_make, film_type, film_speed, focal_length, aperture)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
 	ON CONFLICT (permalink) DO NOTHING
 	RETURNING id
 	`
@@ -181,6 +182,7 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.title,
 		create.author,
 		create.permalink,
+		create.description,
 		create.score,
 		create.nsfw,
 		create.grayscale,
@@ -208,9 +210,7 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		db.logger.Error().Err(err).Ctx(ctx).Int64("post_id", id).Msg("Failed to insert post")
 		return nil, err
 	}
-
 	db.logger.Info().Ctx(ctx).Int64("post_id", id).Msg("Finished inserting post")
-
 	return &id, nil
 }
 
@@ -376,6 +376,7 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		Title:       post.Title,
 		Author:      post.Author,
 		Permalink:   post.Permalink,
+		Description: post.Description,
 		Score:       post.Score,
 		Nsfw:        post.Nsfw,
 		Grayscale:   post.Grayscale,
@@ -444,6 +445,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 				p.title,
 				p.author,
 				p.permalink,
+		        p.description,
 				p.score,
 				p.nsfw,
 				p.greyscale,
@@ -546,6 +548,7 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 	if patch.Nsfw != nil ||
 		patch.Sprocket != nil ||
 		patch.Grayscale != nil ||
+		patch.Description != nil ||
 		patch.Score != nil ||
 		patch.CameraMake != nil ||
 		patch.CameraModel != nil ||
@@ -1006,13 +1009,13 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 	// start_time <= post.time < end_time
 	if start := filter.TimeStart; start != nil {
 		where = append(where, fmt.Sprintf("p.time >= $%d", index))
-        startInt := int(start.Unix())
+		startInt := int(start.Unix())
 		args = append(args, startInt)
 		index++
 	}
 	if end := filter.TimeEnd; end != nil {
 		where = append(where, fmt.Sprintf("p.time < $%d", index))
-        endInt := int(end.Unix())
+		endInt := int(end.Unix())
 		args = append(args, endInt)
 		index++
 	}
@@ -1115,6 +1118,11 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 		args = append(args, *score)
 		index++
 	}
+	if desc := patch.Description; desc != nil {
+		set = append(set, fmt.Sprintf("description = $%d", index))
+		args = append(args, *desc)
+		index++
+	}
 
 	if nsfw := patch.Nsfw; nsfw != nil {
 		set = append(set, fmt.Sprintf("nsfw = $%d", index))
@@ -1209,6 +1217,7 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		title:       p.Title,
 		author:      p.Author,
 		permalink:   p.Permalink,
+		description: p.Description,
 		score:       p.Score,
 		nsfw:        p.Nsfw,
 		grayscale:   p.Grayscale,
@@ -1323,6 +1332,7 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 			Title:       p.title,
 			Author:      p.author,
 			Permalink:   p.permalink,
+			Description: p.description,
 			Score:       p.score,
 			Nsfw:        p.nsfw,
 			Grayscale:   p.grayscale,
@@ -1352,6 +1362,7 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		&p.rawCreatePost.title,
 		&p.rawCreatePost.author,
 		&p.rawCreatePost.permalink,
+		&p.rawCreatePost.description,
 		&p.rawCreatePost.score,
 		&p.rawCreatePost.nsfw,
 		&p.rawCreatePost.grayscale,
