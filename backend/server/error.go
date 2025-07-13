@@ -37,6 +37,7 @@ func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
 	}
 }
 
+// ErrorResponse represents the standard error response format
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Error string `json:"error" example:"not found"`
 }

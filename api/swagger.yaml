@@ -1,0 +1,232 @@
+basePath: /v1
+definitions:
+  analogdb.CreateFilm:
+    properties:
+      color_type:
+        example: color
+        type: string
+      created:
+        example: "2025-07-11T12:00:00Z"
+        type: string
+      description:
+        example: Kodak Portra 400 is professional color negative film with fine grain
+        type: string
+      id:
+        example: 1
+        type: integer
+      make:
+        example: kodak
+        type: string
+      speed:
+        example: 400
+        type: integer
+      type:
+        example: portra 400
+        type: string
+      updated:
+        example: "2025-07-11T12:00:00Z"
+        type: string
+    type: object
+  analogdb.Error:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  analogdb.Film:
+    properties:
+      color_type:
+        type: string
+      created:
+        example: "2025-07-11T12:00:00Z"
+        type: string
+      description:
+        example: Kodak Portra 400 is professional color negative film with fine grain
+        type: string
+      id:
+        example: 1
+        type: integer
+      make:
+        example: kodak
+        type: string
+      post_count:
+        example: 25
+        type: integer
+      speed:
+        example: 400
+        type: integer
+      type:
+        example: portra 400
+        type: string
+      updated:
+        example: "2025-07-11T12:00:00Z"
+        type: string
+    type: object
+  server.CreateFilmResponse:
+    properties:
+      film:
+        $ref: '#/definitions/analogdb.CreateFilm'
+      message:
+        type: string
+    type: object
+  server.FilmsResponse:
+    properties:
+      films:
+        items:
+          $ref: '#/definitions/analogdb.Film'
+        type: array
+    type: object
+host: api.analogdb.com
+info:
+  contact: {}
+  description: API for analogdb film database
+  title: AnalogDB API
+  version: "1.0"
+paths:
+  /films:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve films with optional query parameters for filtering and
+        sorting
+      parameters:
+      - description: Sort order
+        enum:
+        - alphabetical
+        - counts
+        in: query
+        name: sort
+        type: string
+      - description: Number of results to return
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by film make
+        in: query
+        name: make
+        type: string
+      - description: Filter by film type
+        in: query
+        name: type
+        type: string
+      - description: Filter by film speed
+        in: query
+        name: speed
+        type: integer
+      - description: Filter by color type
+        in: query
+        name: colortype
+        type: string
+      - description: Filter by specific film ID
+        in: query
+        name: id
+        type: integer
+      - description: Include count data
+        in: query
+        name: include_counts
+        type: boolean
+      - description: Exclude zero counts
+        in: query
+        name: exclude_zero_counts
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.FilmsResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get films with optional filtering
+      tags:
+      - films
+    post:
+      consumes:
+      - application/json
+      description: Create a new film entry (requires authentication)
+      parameters:
+      - description: Film data to create
+        in: body
+        name: film
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateFilm'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateFilmResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new film
+      tags:
+      - films
+    put:
+      consumes:
+      - application/json
+      description: Create a new film entry (requires authentication)
+      parameters:
+      - description: Film data to create
+        in: body
+        name: film
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateFilm'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateFilmResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new film
+      tags:
+      - films
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

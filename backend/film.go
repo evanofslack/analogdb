@@ -9,27 +9,27 @@ import (
 
 // CreateFilm is model for creating a film in database
 type CreateFilm struct {
-	Id          int       `json:"id"`
-	Make        string    `json:"make"`
-	Type        string    `json:"type"`
-	Speed       int       `json:"speed"`
-	ColorType   string    `json:"color_type"`
-	Description string    `json:"description"`
-	Created     time.Time `json:"created"`
-	Updated     time.Time `json:"updated"`
+	Id          int       `json:"id" example:"1" swaggerignore:"true"`
+	Make        string    `json:"make" example:"kodak"`
+	Type        string    `json:"type" example:"portra 400"`
+	Speed       int       `json:"speed" example:"400"`
+	ColorType   string    `json:"color_type" example:"color"`
+	Description string    `json:"description" example:"Kodak Portra 400 is professional color negative film with fine grain"`
+	Created     time.Time `json:"created" example:"2025-07-11T12:00:00Z" swaggerignore:"true"`
+	Updated     time.Time `json:"updated" example:"2025-07-11T12:00:00Z" swaggerignore:"true"`
 }
 
 // Film represents a specific film type with post count
 type Film struct {
-	Id          int       `json:"id"`
-	Make        string    `json:"make"`
-	Type        string    `json:"type"`
-	Speed       int       `json:"speed"`
-	ColorType   string    `json:"color_type"`
-	Description string    `json:"description"`
-	Created     time.Time `json:"created"`
-	Updated     time.Time `json:"updated"`
-	PostCount   int       `json:"post_count"`
+	Id          int       `json:"id" example:"1"`
+	Make        string    `json:"make" example:"kodak"`
+	Type        string    `json:"type" example:"portra 400"`
+	Speed       int       `json:"speed" example:"400"`
+	ColorType   string    `json:"color_type" exawple:"color"`
+	Description string    `json:"description" example:"Kodak Portra 400 is professional color negative film with fine grain"`
+	Created     time.Time `json:"created" example:"2025-07-11T12:00:00Z"`
+	Updated     time.Time `json:"updated" example:"2025-07-11T12:00:00Z"`
+	PostCount   int       `json:"post_count" example:"25"`
 }
 
 type FilmSort int
@@ -88,7 +88,6 @@ func NewFilmFilter(limit *int, sort *FilmSort, ids *[]int, make *string, ty *str
 		ExcludeZeroCounts: excludeZeroCounts,
 	}
 }
-
 
 func (filter *FilmFilter) String() string {
 	out := []string{}

@@ -1,0 +1,347 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API for analogdb film database",
+        "title": "AnalogDB API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "api.analogdb.com",
+    "basePath": "/v1",
+    "paths": {
+        "/films": {
+            "get": {
+                "description": "Retrieve films with optional query parameters for filtering and sorting",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "films"
+                ],
+                "summary": "Get films with optional filtering",
+                "parameters": [
+                    {
+                        "enum": [
+                            "alphabetical",
+                            "counts"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of results to return",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by film make",
+                        "name": "make",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by film type",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by film speed",
+                        "name": "speed",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by color type",
+                        "name": "colortype",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by specific film ID",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include count data",
+                        "name": "include_counts",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Exclude zero counts",
+                        "name": "exclude_zero_counts",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.FilmsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Create a new film entry (requires authentication)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "films"
+                ],
+                "summary": "Create a new film",
+                "parameters": [
+                    {
+                        "description": "Film data to create",
+                        "name": "film",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.CreateFilm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/server.CreateFilmResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable entity",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Create a new film entry (requires authentication)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "films"
+                ],
+                "summary": "Create a new film",
+                "parameters": [
+                    {
+                        "description": "Film data to create",
+                        "name": "film",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.CreateFilm"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/server.CreateFilmResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable entity",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "analogdb.CreateFilm": {
+            "type": "object",
+            "properties": {
+                "color_type": {
+                    "type": "string",
+                    "example": "color"
+                },
+                "created": {
+                    "type": "string",
+                    "example": "2025-07-11T12:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Kodak Portra 400 is professional color negative film with fine grain"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "make": {
+                    "type": "string",
+                    "example": "kodak"
+                },
+                "speed": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "type": {
+                    "type": "string",
+                    "example": "portra 400"
+                },
+                "updated": {
+                    "type": "string",
+                    "example": "2025-07-11T12:00:00Z"
+                }
+            }
+        },
+        "analogdb.Error": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "analogdb.Film": {
+            "type": "object",
+            "properties": {
+                "color_type": {
+                    "type": "string"
+                },
+                "created": {
+                    "type": "string",
+                    "example": "2025-07-11T12:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Kodak Portra 400 is professional color negative film with fine grain"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "make": {
+                    "type": "string",
+                    "example": "kodak"
+                },
+                "post_count": {
+                    "type": "integer",
+                    "example": 25
+                },
+                "speed": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "type": {
+                    "type": "string",
+                    "example": "portra 400"
+                },
+                "updated": {
+                    "type": "string",
+                    "example": "2025-07-11T12:00:00Z"
+                }
+            }
+        },
+        "server.CreateFilmResponse": {
+            "type": "object",
+            "properties": {
+                "film": {
+                    "$ref": "#/definitions/analogdb.CreateFilm"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.FilmsResponse": {
+            "type": "object",
+            "properties": {
+                "films": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.Film"
+                    }
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        }
+    }
+}

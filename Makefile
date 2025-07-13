@@ -35,3 +35,13 @@ proto-consumer:
 		--go_out=$(CONSUMER_GO_OUT_DIR) --go_opt=paths=source_relative \
 		--go-grpc_out=$(CONSUMER_GO_OUT_DIR) --go-grpc_opt=paths=source_relative \
 		$(PROTO_DIR)/analytics/v1/event.proto
+
+.PHONY: swagger
+swagger:
+	@echo "Generating Swagger documentation..."
+	cd backend && swag init --dir ./ --generalInfo ./server/server.go --output ./docs
+	@echo "Copying Swagger spec files to top-level api directory..."
+	mkdir -p api
+	cp backend/docs/swagger.json api/
+	cp backend/docs/swagger.yaml api/
+	@echo "Swagger documentation generated and copied to api/"

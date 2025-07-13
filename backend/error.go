@@ -13,9 +13,10 @@ const (
 	ERRUNAUTHORIZED  = "unauthorized"
 )
 
+// Error represents an API error with code and message
 type Error struct {
-	Code    string
-	Message string
+	Code    string `json:"code" example:"not_found"`
+	Message string `json:"message" example:"not found"`
 }
 
 func (e *Error) Error() string {
