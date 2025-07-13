@@ -24,8 +24,8 @@ func TestParseToCameraFilter(t *testing.T) {
 			},
 		},
 		{
-			name:        "sort alphabetically",
-			url:         "/cameras?sort=alphabetically",
+			name:        "sort alphabetical",
+			url:         "/cameras?sort=alphabetical",
 			expectError: false,
 			checkFilter: func(f *analogdb.CameraFilter) bool {
 				return f.Sort != nil && *f.Sort == analogdb.CameraSortAlphabetical

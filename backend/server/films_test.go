@@ -24,8 +24,8 @@ func TestParseToFilmFilter(t *testing.T) {
 			},
 		},
 		{
-			name:        "sort alphabetically",
-			url:         "/films?sort=alphabetically",
+			name:        "sort alphabetical",
+			url:         "/films?sort=alphabetical",
 			expectError: false,
 			checkFilter: func(f *analogdb.FilmFilter) bool {
 				return f.Sort != nil && *f.Sort == analogdb.FilmSortAlphabetical
