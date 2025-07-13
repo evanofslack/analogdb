@@ -69,16 +69,14 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	s.stats.register(s.metrics.Registry)
 
 	s.mountMiddleware()
-	s.mountPostHandlers()
-	s.mountFilmHandlers()
-	s.mountCameraHandlers()
-	s.mountAuthorHandlers()
-	s.mountSimilarityHandlers()
-	s.mountScrapeHandlers()
-	s.mountKeywordHandlers()
+
+	// Mount only at base root
 	s.mountStaticHandlers()
 	s.mountStatusHandlers()
 	s.mountStatsHandlers()
+
+	// Mount collection resources
+	s.mountResourceHandlers()
 
 	s.healthy = true
 	return s
@@ -89,6 +87,32 @@ func (s *Server) Run() error {
 
 	go s.server.ListenAndServe()
 	return nil
+}
+
+// Mount all resources at both base and v1 paths.
+// Once deprecation date, can drop mount at base and just keep v1.
+func (s *Server) mountResourceHandlers() {
+	v1 := chi.NewRouter()
+	s.mountPostHandlers(v1)
+	s.mountFilmHandlers(v1)
+	s.mountCameraHandlers(v1)
+	s.mountAuthorHandlers(v1)
+	s.mountSimilarityHandlers(v1)
+	s.mountScrapeHandlers(v1)
+	s.mountKeywordHandlers(v1)
+	s.router.Mount("/v1", v1)
+
+	// Mount legacy routes with deprecation
+	s.router.Group(func(r chi.Router) {
+		r.Use(s.deprecationMiddleware)
+		s.mountPostHandlers(r)
+		s.mountFilmHandlers(r)
+		s.mountCameraHandlers(r)
+		s.mountAuthorHandlers(r)
+		s.mountSimilarityHandlers(r)
+		s.mountScrapeHandlers(r)
+		s.mountKeywordHandlers(r)
+	})
 }
 
 func (s *Server) Close() error {

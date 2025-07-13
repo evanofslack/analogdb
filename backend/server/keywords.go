@@ -16,8 +16,8 @@ type KeywordsResponse struct {
 	Keywords []analogdb.KeywordSummary `json:"keywords"`
 }
 
-func (s *Server) mountKeywordHandlers() {
-	s.router.Route(keywordsPath, func(r chi.Router) {
+func (s *Server) mountKeywordHandlers(r chi.Router) {
+	r.Route(keywordsPath, func(r chi.Router) {
 		r.Get("/summary", s.getSummary)
 	})
 }

@@ -28,7 +28,7 @@ func (s *Server) mountMiddleware() {
 		s.logger.Info().Msg("Added tracing middleware")
 	}
 
-	// Extract traceid
+	// extract traceid
 	s.router.Use(traceid.Middleware)
 
 	// log all requests

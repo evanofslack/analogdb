@@ -12,8 +12,8 @@ type AuthorsResponse struct {
 
 const authorsPath = "/authors"
 
-func (s *Server) mountAuthorHandlers() {
-	s.router.Route(authorsPath, func(r chi.Router) {
+func (s *Server) mountAuthorHandlers(r chi.Router) {
+	r.Route(authorsPath, func(r chi.Router) {
 		r.Get("/", s.getAuthors)
 	})
 }

@@ -15,8 +15,8 @@ const (
 	keywordsUpdatedPath = scrapePath + "/keywords/updated"
 )
 
-func (s *Server) mountScrapeHandlers() {
-	s.router.Route(keywordsUpdatedPath, func(r chi.Router) {
+func (s *Server) mountScrapeHandlers(r chi.Router) {
+	r.Route(keywordsUpdatedPath, func(r chi.Router) {
 		r.With(s.auth).Get("/", s.getKeywordUpdatedPosts)
 	})
 }
