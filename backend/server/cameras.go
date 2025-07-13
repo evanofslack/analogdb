@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
@@ -16,6 +18,9 @@ type CreateCameraResponse struct {
 	Message string                `json:"message"`
 	Camera  analogdb.CreateCamera `json:"camera"`
 }
+
+// default to sorting alphabetically
+var defaultCamerasSort = analogdb.CameraSortAlphabetically
 
 const (
 	camerasPath = "/cameras"
@@ -47,7 +52,7 @@ func (s *Server) getCameras(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) makeCameraResponse(r *http.Request, filter *analogdb.CameraFilter) (CamerasResponse, error) {
-	cameras, err := s.CameraService.AllCameras(r.Context(), filter)
+	cameras, err := s.CameraService.FindCameras(r.Context(), filter)
 	resp := CamerasResponse{}
 	if err != nil {
 		return resp, err
@@ -83,7 +88,48 @@ func (s *Server) createCamera(w http.ResponseWriter, r *http.Request) {
 
 // parse URL for query parameters and convert to FilmFilter
 func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
-	filter := &analogdb.CameraFilter{}
+	filter := analogdb.NewCameraFilter(nil, &defaultCamerasSort, nil, nil, nil, nil, nil, nil, nil)
+
+	values := r.URL.Query()
+
+	if sort := values.Get("sort"); sort != "" {
+		if sort == "alphabetically" || sort == "counts" {
+			switch sort {
+			case "alphabetically":
+				alpha := analogdb.CameraSortAlphabetically
+				filter.Sort = &alpha
+			case "counts":
+				counts := analogdb.CameraSortCounts
+				filter.Sort = &counts
+			}
+		} else {
+			return nil, fmt.Errorf("invalid sort parameter %s, valid options are 'alphabetically', or 'counts'", sort)
+		}
+	}
+
+	if limit := values.Get("page_size"); limit != "" {
+		if intLimit, err := stringToInt(limit); err != nil {
+			return nil, err
+		} else {
+			filter.Limit = &intLimit
+		}
+	}
+
+	if make := values.Get("make"); make != "" {
+		filter.Make = &make
+	}
+
+	if model := values.Get("model"); model != "" {
+		filter.Model = &model
+	}
+
+	if id := values.Get("id"); id != "" {
+		if identify, err := strconv.Atoi(id); err != nil {
+			return nil, err
+		} else {
+			filter.IDs = &[]int{identify}
+		}
+	}
 
 	if includeCounts := r.URL.Query().Get("include_counts"); includeCounts != "" {
 		if val, err := stringToBool(includeCounts); err != nil {
