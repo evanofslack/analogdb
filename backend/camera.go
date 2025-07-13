@@ -69,6 +69,18 @@ type CameraFilter struct {
 	ExcludeZeroCounts *bool
 }
 
+func NewCameraFilter(limit *int, sort *CameraSort, ids *[]int, make *string, model *string, speed *int, colortype *string, includeCounts *bool, excludeZeroCounts *bool) *CameraFilter {
+	return &CameraFilter{
+		Limit:             limit,
+		Sort:              sort,
+		IDs:               ids,
+		Make:              make,
+		Model:             model,
+		IncludeCounts:     includeCounts,
+		ExcludeZeroCounts: excludeZeroCounts,
+	}
+}
+
 func (filter *CameraFilter) String() string {
 	out := []string{}
 	if limit := filter.Limit; limit != nil {
@@ -83,6 +95,9 @@ func (filter *CameraFilter) String() string {
 	if make := filter.Make; make != nil {
 		out = append(out, fmt.Sprintf("make: %s", *make))
 	}
+	if model := filter.Model; model != nil {
+		out = append(out, fmt.Sprintf("model: %s", *model))
+	}
 	if includeCounts := filter.IncludeCounts; includeCounts != nil {
 		out = append(out, fmt.Sprintf("include_counts: %t", *includeCounts))
 	}
@@ -92,18 +107,7 @@ func (filter *CameraFilter) String() string {
 	return strings.Join(out, ", ")
 }
 
-func NewCameraFilter(limit *int, sort *CameraSort, ids *[]int, make *string, ty *string, speed *int, colortype *string, includeCounts *bool, excludeZeroCounts *bool) *CameraFilter {
-	return &CameraFilter{
-		Limit:             limit,
-		Sort:              sort,
-		IDs:               ids,
-		Make:              make,
-		IncludeCounts:     includeCounts,
-		ExcludeZeroCounts: excludeZeroCounts,
-	}
-}
-
 type CameraService interface {
-	AllCameras(ctx context.Context, filter *CameraFilter) ([]*Camera, error)
+	FindCameras(ctx context.Context, filter *CameraFilter) ([]*Camera, error)
 	CreateCamera(ctx context.Context, film *CreateCamera) (*CreateCamera, error)
 }
