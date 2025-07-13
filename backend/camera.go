@@ -9,23 +9,23 @@ import (
 
 // CreateCamera is model for creating a camera in database
 type CreateCamera struct {
-	Id          int       `json:"id"`
-	Make        string    `json:"make"`
-	Model       string    `json:"model"`
-	Description string    `json:"description"`
-	Created     time.Time `json:"created"`
-	Updated     time.Time `json:"updated"`
+	Id          int       `json:"id" example:"1" swaggerignore:"true"`
+	Make        string    `json:"make" example:"nikon"`
+	Model       string    `json:"model" example:"fm2"`
+	Description string    `json:"description" example:"Nikon FM2 is a dependable SLR camera"`
+	Created     time.Time `json:"created" example:"2025-07-11T12:00:00Z" swaggerignore:"true"`
+	Updated     time.Time `json:"updated" example:"2025-07-11T12:00:00Z" swaggerignore:"true"`
 }
 
 // CameraModel represents a specific camera model with post count
 type Camera struct {
-	Id          int       `json:"id"`
-	Make        string    `json:"make"`
-	Model       string    `json:"model"`
-	Description string    `json:"description"`
-	Created     time.Time `json:"created"`
-	Updated     time.Time `json:"updated"`
-	PostCount   int       `json:"post_count"`
+	Id          int       `json:"id" example:"1"`
+	Make        string    `json:"make" example:"nikon"`
+	Model       string    `json:"model" example:"fm2"`
+	Description string    `json:"description" example:"Nikon FM2 is a dependable SLR camera"`
+	Created     time.Time `json:"created" example:"2025-07-11T12:00:00Z"`
+	Updated     time.Time `json:"updated" example:"2025-07-11T12:00:00Z"`
+	PostCount   int       `json:"post_count" example:"50"`
 }
 
 type CameraSort int

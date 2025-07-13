@@ -9,6 +9,211 @@
     "host": "api.analogdb.com",
     "basePath": "/v1",
     "paths": {
+        "/cameras": {
+            "get": {
+                "description": "Retrieve cameras with optional query parameters for filtering and sorting",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cameras"
+                ],
+                "summary": "Get cameras with optional filtering",
+                "parameters": [
+                    {
+                        "enum": [
+                            "alphabetical",
+                            "counts"
+                        ],
+                        "type": "string",
+                        "description": "Sort order",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of results to return",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by camera make",
+                        "name": "make",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by camera model",
+                        "name": "model",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by specific camera ID",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include count data",
+                        "name": "include_counts",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Exclude zero counts",
+                        "name": "exclude_zero_counts",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.CamerasResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Create a new camera entry (requires authentication)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cameras"
+                ],
+                "summary": "Create a new camera",
+                "parameters": [
+                    {
+                        "description": "camera data to create",
+                        "name": "camera",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.CreateCamera"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/server.CreateCameraResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable entity",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Create a new camera entry (requires authentication)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "cameras"
+                ],
+                "summary": "Create a new camera",
+                "parameters": [
+                    {
+                        "description": "camera data to create",
+                        "name": "camera",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.CreateCamera"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/server.CreateCameraResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable entity",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/films": {
             "get": {
                 "description": "Retrieve films with optional query parameters for filtering and sorting",
@@ -228,6 +433,56 @@
         }
     },
     "definitions": {
+        "analogdb.Camera": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "string",
+                    "example": "2025-07-11T12:00:00Z"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "Nikon FM2 is a dependable SLR camera"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "make": {
+                    "type": "string",
+                    "example": "nikon"
+                },
+                "model": {
+                    "type": "string",
+                    "example": "fm2"
+                },
+                "post_count": {
+                    "type": "integer",
+                    "example": 50
+                },
+                "updated": {
+                    "type": "string",
+                    "example": "2025-07-11T12:00:00Z"
+                }
+            }
+        },
+        "analogdb.CreateCamera": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Nikon FM2 is a dependable SLR camera"
+                },
+                "make": {
+                    "type": "string",
+                    "example": "nikon"
+                },
+                "model": {
+                    "type": "string",
+                    "example": "fm2"
+                }
+            }
+        },
         "analogdb.CreateFilm": {
             "type": "object",
             "properties": {
@@ -235,17 +490,9 @@
                     "type": "string",
                     "example": "color"
                 },
-                "created": {
-                    "type": "string",
-                    "example": "2025-07-11T12:00:00Z"
-                },
                 "description": {
                     "type": "string",
                     "example": "Kodak Portra 400 is professional color negative film with fine grain"
-                },
-                "id": {
-                    "type": "integer",
-                    "example": 1
                 },
                 "make": {
                     "type": "string",
@@ -258,10 +505,6 @@
                 "type": {
                     "type": "string",
                     "example": "portra 400"
-                },
-                "updated": {
-                    "type": "string",
-                    "example": "2025-07-11T12:00:00Z"
                 }
             }
         },
@@ -269,10 +512,12 @@
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "not_found"
                 },
                 "message": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "not found"
                 }
             }
         },
@@ -316,6 +561,29 @@
                 }
             }
         },
+        "server.CamerasResponse": {
+            "type": "object",
+            "properties": {
+                "cameras": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.Camera"
+                    }
+                }
+            }
+        },
+        "server.CreateCameraResponse": {
+            "type": "object",
+            "properties": {
+                "camera": {
+                    "$ref": "#/definitions/analogdb.CreateCamera"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Success, camera created"
+                }
+            }
+        },
         "server.CreateFilmResponse": {
             "type": "object",
             "properties": {
@@ -323,7 +591,8 @@
                     "$ref": "#/definitions/analogdb.CreateFilm"
                 },
                 "message": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Success, film created"
                 }
             }
         },

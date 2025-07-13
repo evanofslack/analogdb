@@ -1,19 +1,49 @@
 basePath: /v1
 definitions:
+  analogdb.Camera:
+    properties:
+      created:
+        example: "2025-07-11T12:00:00Z"
+        type: string
+      description:
+        example: Nikon FM2 is a dependable SLR camera
+        type: string
+      id:
+        example: 1
+        type: integer
+      make:
+        example: nikon
+        type: string
+      model:
+        example: fm2
+        type: string
+      post_count:
+        example: 50
+        type: integer
+      updated:
+        example: "2025-07-11T12:00:00Z"
+        type: string
+    type: object
+  analogdb.CreateCamera:
+    properties:
+      description:
+        example: Nikon FM2 is a dependable SLR camera
+        type: string
+      make:
+        example: nikon
+        type: string
+      model:
+        example: fm2
+        type: string
+    type: object
   analogdb.CreateFilm:
     properties:
       color_type:
         example: color
         type: string
-      created:
-        example: "2025-07-11T12:00:00Z"
-        type: string
       description:
         example: Kodak Portra 400 is professional color negative film with fine grain
         type: string
-      id:
-        example: 1
-        type: integer
       make:
         example: kodak
         type: string
@@ -23,15 +53,14 @@ definitions:
       type:
         example: portra 400
         type: string
-      updated:
-        example: "2025-07-11T12:00:00Z"
-        type: string
     type: object
   analogdb.Error:
     properties:
       code:
+        example: not_found
         type: string
       message:
+        example: not found
         type: string
     type: object
   analogdb.Film:
@@ -63,11 +92,27 @@ definitions:
         example: "2025-07-11T12:00:00Z"
         type: string
     type: object
+  server.CamerasResponse:
+    properties:
+      cameras:
+        items:
+          $ref: '#/definitions/analogdb.Camera'
+        type: array
+    type: object
+  server.CreateCameraResponse:
+    properties:
+      camera:
+        $ref: '#/definitions/analogdb.CreateCamera'
+      message:
+        example: Success, camera created
+        type: string
+    type: object
   server.CreateFilmResponse:
     properties:
       film:
         $ref: '#/definitions/analogdb.CreateFilm'
       message:
+        example: Success, film created
         type: string
     type: object
   server.FilmsResponse:
@@ -84,6 +129,140 @@ info:
   title: AnalogDB API
   version: "1.0"
 paths:
+  /cameras:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve cameras with optional query parameters for filtering and
+        sorting
+      parameters:
+      - description: Sort order
+        enum:
+        - alphabetical
+        - counts
+        in: query
+        name: sort
+        type: string
+      - description: Number of results to return
+        in: query
+        name: page_size
+        type: integer
+      - description: Filter by camera make
+        in: query
+        name: make
+        type: string
+      - description: Filter by camera model
+        in: query
+        name: model
+        type: string
+      - description: Filter by specific camera ID
+        in: query
+        name: id
+        type: integer
+      - description: Include count data
+        in: query
+        name: include_counts
+        type: boolean
+      - description: Exclude zero counts
+        in: query
+        name: exclude_zero_counts
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.CamerasResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get cameras with optional filtering
+      tags:
+      - cameras
+    post:
+      consumes:
+      - application/json
+      description: Create a new camera entry (requires authentication)
+      parameters:
+      - description: camera data to create
+        in: body
+        name: camera
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateCamera'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateCameraResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new camera
+      tags:
+      - cameras
+    put:
+      consumes:
+      - application/json
+      description: Create a new camera entry (requires authentication)
+      parameters:
+      - description: camera data to create
+        in: body
+        name: camera
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateCamera'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateCameraResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new camera
+      tags:
+      - cameras
   /films:
     get:
       consumes:
