@@ -100,8 +100,8 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 	index := 1
 	where, args, index = filterToWhereFilm(filter, index)
 
-	order := filterToOrderFilms(filter)
-	limit := formatLimitFilms(filter)
+	order := filterToOrderFilm(filter)
+	limit := formatLimitFilm(filter)
 
 	query := fmt.Sprintf(`
 		SELECT 
@@ -229,18 +229,16 @@ func filterToWhereFilm(filter *analogdb.FilmFilter, startIndex int) (string, []a
 
 func filterToHavingFilm(filter *analogdb.FilmFilter) string {
 	having := []string{"1=1"}
-
 	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
 		if includeCounts := filter.IncludeCounts; includeCounts != nil && *includeCounts {
 			having = append(having, "COUNT(p.id) > 0")
 		}
 	}
-
 	return strings.Join(having, " AND ")
 }
 
-// filterToOrderFilms converts film filter into an SQL "ORDER BY" statement
-func filterToOrderFilms(filter *analogdb.FilmFilter) string {
+// filterToOrderFilm converts film filter into an SQL "ORDER BY" statement
+func filterToOrderFilm(filter *analogdb.FilmFilter) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
 		case analogdb.FilmSortAlphabetically:
@@ -252,8 +250,8 @@ func filterToOrderFilms(filter *analogdb.FilmFilter) string {
 	return ""
 }
 
-// formatLimitFilms turns the limit into an SQL limit statement
-func formatLimitFilms(filter *analogdb.FilmFilter) string {
+// formatLimitFilm turns the limit into an SQL limit statement
+func formatLimitFilm(filter *analogdb.FilmFilter) string {
 	if limit := filter.Limit; limit != nil {
 		if *limit > 0 {
 			return fmt.Sprintf(` LIMIT %d`, *limit)
