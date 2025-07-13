@@ -19,7 +19,7 @@ type CreateCameraResponse struct {
 	Camera  analogdb.CreateCamera `json:"camera"`
 }
 
-// default to sorting alphabetically
+// default to sorting alphabetical
 var defaultCamerasSort = analogdb.CameraSortAlphabetical
 
 const (
@@ -93,9 +93,9 @@ func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
 	values := r.URL.Query()
 
 	if sort := values.Get("sort"); sort != "" {
-		if sort == "alphabetically" || sort == "counts" {
+		if sort == "alphabetical" || sort == "counts" {
 			switch sort {
-			case "alphabetically":
+			case "alphabetical":
 				alpha := analogdb.CameraSortAlphabetical
 				filter.Sort = &alpha
 			case "counts":
@@ -103,7 +103,7 @@ func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
 				filter.Sort = &counts
 			}
 		} else {
-			return nil, fmt.Errorf("invalid sort parameter %s, valid options are 'alphabetically', or 'counts'", sort)
+			return nil, fmt.Errorf("invalid sort parameter %s, valid options are 'alphabetical', or 'counts'", sort)
 		}
 	}
 
