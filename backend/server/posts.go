@@ -47,10 +47,10 @@ type IDsResponse struct {
 }
 
 // default limit on number of posts returned
-var defaultLimit = 20
+var defaultPostsLimit = 20
 
 // max limit of posts returned
-var maxLimit = 200
+var maxPostsLimit = 200
 
 // default limit on number of similar posts returned
 var defaultSimilarityLimit = 12
@@ -59,7 +59,7 @@ var defaultSimilarityLimit = 12
 var maxSimilarityLimit = 50
 
 // default to sorting by time descending (latest)
-var defaultSort = analogdb.PostSortTime
+var defaultPostsSort = analogdb.PostSortTime
 
 const (
 	postsPath = "/posts"
@@ -423,7 +423,7 @@ func stringToInt(query string) (int, error) {
 
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
-	filter := analogdb.NewPostFilter(&defaultLimit, &defaultSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilter(&defaultPostsLimit, &defaultPostsSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	values := r.URL.Query()
 
@@ -450,10 +450,10 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			return nil, err
 		} else {
 			// ensure limit is less than configured max
-			if intLimit <= maxLimit {
+			if intLimit <= maxPostsLimit {
 				filter.Limit = &intLimit
 			} else {
-				filter.Limit = &maxLimit
+				filter.Limit = &maxPostsLimit
 			}
 		}
 	}

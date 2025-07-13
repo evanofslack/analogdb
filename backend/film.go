@@ -75,6 +75,21 @@ type FilmFilter struct {
 	ExcludeZeroCounts *bool
 }
 
+func NewFilmFilter(limit *int, sort *FilmSort, ids *[]int, make *string, ty *string, speed *int, colortype *string, includeCounts *bool, excludeZeroCounts *bool) *FilmFilter {
+	return &FilmFilter{
+		Limit:             limit,
+		Sort:              sort,
+		IDs:               ids,
+		Make:              make,
+		Type:              ty,
+		Speed:             speed,
+		ColorType:         colortype,
+		IncludeCounts:     includeCounts,
+		ExcludeZeroCounts: excludeZeroCounts,
+	}
+}
+
+
 func (filter *FilmFilter) String() string {
 	out := []string{}
 	if limit := filter.Limit; limit != nil {
@@ -107,21 +122,7 @@ func (filter *FilmFilter) String() string {
 	return strings.Join(out, ", ")
 }
 
-func NewFilmFilter(limit *int, sort *FilmSort, ids *[]int, make *string, ty *string, speed *int, colortype *string, includeCounts *bool, excludeZeroCounts *bool) *FilmFilter {
-	return &FilmFilter{
-		Limit:             limit,
-		Sort:              sort,
-		IDs:               ids,
-		Make:              make,
-		Type:              ty,
-		Speed:             speed,
-		ColorType:         colortype,
-		IncludeCounts:     includeCounts,
-		ExcludeZeroCounts: excludeZeroCounts,
-	}
-}
-
 type FilmService interface {
-	AllFilms(ctx context.Context, filter *FilmFilter) ([]*Film, error)
+	FindFilms(ctx context.Context, filter *FilmFilter) ([]*Film, error)
 	CreateFilm(ctx context.Context, film *CreateFilm) (*CreateFilm, error)
 }

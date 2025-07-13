@@ -8,7 +8,7 @@ import (
 	"github.com/evanofslack/analogdb"
 )
 
-func TestFilmService_AllFilms(t *testing.T) {
+func TestFilmService_FindFilms(t *testing.T) {
 	db, cleanup := mustOpenWithSeed(t)
 	defer cleanup()
 
@@ -17,7 +17,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 	t.Run("find all films", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		films, err := service.AllFilms(ctx, filter)
+		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -30,7 +30,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 	t.Run("verify film ordering", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		films, err := service.AllFilms(ctx, filter)
+		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -57,7 +57,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 	t.Run("verify film struct fields", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		films, err := service.AllFilms(ctx, filter)
+		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -89,7 +89,7 @@ func TestFilmService_AllFilms(t *testing.T) {
 
 	t.Run("no duplicate films", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		films, err := service.AllFilms(ctx, filter)
+		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -101,6 +101,323 @@ func TestFilmService_AllFilms(t *testing.T) {
 				t.Errorf("Duplicate film found: key=%s make=%s type=%s speed=%d (total_films=%d)", key, film.Make, film.Type, film.Speed, len(films))
 			}
 			seen[key] = true
+		}
+	})
+
+	t.Run("filter by make", func(t *testing.T) {
+		make := "kodak"
+		filter := analogdb.NewFilmFilter(nil, nil, nil, &make, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 2
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+
+		for _, film := range films {
+			if film.Make != "kodak" {
+				t.Errorf("Expected make 'kodak', got %q", film.Make)
+			}
+		}
+	})
+
+	t.Run("filter by type", func(t *testing.T) {
+		filmType := "portra"
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, &filmType, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 1
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+
+		if films[0].Type != "portra" {
+			t.Errorf("Expected type 'portra', got %q", films[0].Type)
+		}
+	})
+
+	t.Run("filter by speed", func(t *testing.T) {
+		speed := 400
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, &speed, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 2
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+
+		for _, film := range films {
+			if film.Speed != 400 {
+				t.Errorf("Expected speed 400, got %d", film.Speed)
+			}
+		}
+	})
+
+	t.Run("filter by color type", func(t *testing.T) {
+		colorType := "bw"
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, &colorType, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 2
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+
+		for _, film := range films {
+			if film.ColorType != "bw" {
+				t.Errorf("Expected color type 'bw', got %q", film.ColorType)
+			}
+		}
+	})
+
+	t.Run("filter by multiple criteria", func(t *testing.T) {
+		make := "kodak"
+		speed := 400
+		filter := analogdb.NewFilmFilter(nil, nil, nil, &make, nil, &speed, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 2
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+
+		film := films[0]
+		if film.Make != "kodak" {
+			t.Errorf("Expected make 'kodak', got %q", film.Make)
+		}
+		if film.Speed != 400 {
+			t.Errorf("Expected speed 400, got %d", film.Speed)
+		}
+	})
+
+	t.Run("filter by IDs", func(t *testing.T) {
+		allFilms, err := service.FindFilms(ctx, analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil))
+		if err != nil {
+			t.Fatalf("Failed to get all films: %v", err)
+		}
+
+		if len(allFilms) < 2 {
+			t.Skip("Need at least 2 films to test ID filtering")
+		}
+
+		ids := []int{allFilms[0].Id, allFilms[1].Id}
+		filter := analogdb.NewFilmFilter(nil, nil, &ids, nil, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 2
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+
+		foundIds := make(map[int]bool)
+		for _, film := range films {
+			foundIds[film.Id] = true
+		}
+
+		for _, expectedId := range ids {
+			if !foundIds[expectedId] {
+				t.Errorf("Expected to find film with ID %d", expectedId)
+			}
+		}
+	})
+
+	t.Run("filter by single ID", func(t *testing.T) {
+		allFilms, err := service.FindFilms(ctx, analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil))
+		if err != nil {
+			t.Fatalf("Failed to get all films: %v", err)
+		}
+
+		if len(allFilms) < 1 {
+			t.Skip("Need at least 1 film to test single ID filtering")
+		}
+
+		ids := []int{allFilms[0].Id}
+		filter := analogdb.NewFilmFilter(nil, nil, &ids, nil, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 1
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+
+		if films[0].Id != allFilms[0].Id {
+			t.Errorf("Expected film ID %d, got %d", allFilms[0].Id, films[0].Id)
+		}
+	})
+
+	t.Run("limit results", func(t *testing.T) {
+		limit := 2
+		filter := analogdb.NewFilmFilter(&limit, nil, nil, nil, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		if len(films) != limit {
+			t.Errorf("Expected %d films, got %d", limit, len(films))
+		}
+	})
+
+	t.Run("sort alphabetically", func(t *testing.T) {
+		sort := analogdb.FilmSortAlphabetically
+		filter := analogdb.NewFilmFilter(nil, &sort, nil, nil, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		if len(films) < 2 {
+			t.Skip("Need at least 2 films to test sorting")
+		}
+
+		for i := 0; i < len(films)-1; i++ {
+			current := films[i]
+			next := films[i+1]
+
+			if current.Make > next.Make {
+				t.Errorf("Films not sorted by make: %q > %q", current.Make, next.Make)
+			} else if current.Make == next.Make {
+				if current.Type > next.Type {
+					t.Errorf("Films not sorted by type: %q > %q", current.Type, next.Type)
+				} else if current.Type == next.Type && current.Speed < next.Speed {
+					t.Errorf("Films not sorted by speed descending: %d < %d", current.Speed, next.Speed)
+				}
+			}
+		}
+	})
+
+	t.Run("include post counts", func(t *testing.T) {
+		includeCounts := true
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, &includeCounts, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		for _, film := range films {
+			if film.PostCount < 0 {
+				t.Errorf("Expected non-negative post count, got %d", film.PostCount)
+			}
+		}
+	})
+
+	t.Run("sort by counts", func(t *testing.T) {
+		includeCounts := true
+		sort := analogdb.FilmSortCounts
+		filter := analogdb.NewFilmFilter(nil, &sort, nil, nil, nil, nil, nil, &includeCounts, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		if len(films) < 2 {
+			t.Skip("Need at least 2 films to test count sorting")
+		}
+
+		for i := 0; i < len(films)-1; i++ {
+			current := films[i]
+			next := films[i+1]
+
+			if current.PostCount < next.PostCount {
+				t.Errorf("Films not sorted by post count descending: %d < %d", current.PostCount, next.PostCount)
+			}
+		}
+	})
+
+	t.Run("exclude zero counts", func(t *testing.T) {
+		includeCounts := true
+		excludeZero := true
+		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, &includeCounts, &excludeZero)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		for _, film := range films {
+			if film.PostCount <= 0 {
+				t.Errorf("Expected post count > 0, got %d", film.PostCount)
+			}
+		}
+	})
+
+	t.Run("no results found", func(t *testing.T) {
+		make := "nonexistent"
+		filter := analogdb.NewFilmFilter(nil, nil, nil, &make, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		if len(films) != 0 {
+			t.Errorf("Expected 0 films, got %d", len(films))
+		}
+	})
+
+	t.Run("empty IDs filter", func(t *testing.T) {
+		ids := []int{}
+		filter := analogdb.NewFilmFilter(nil, nil, &ids, nil, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		if len(films) != 0 {
+			t.Errorf("Expected 0 films for empty IDs, got %d", len(films))
+		}
+	})
+
+	t.Run("zero limit", func(t *testing.T) {
+		limit := 0
+		filter := analogdb.NewFilmFilter(&limit, nil, nil, nil, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 3
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films (limit 0 should be ignored), got %d", expectedFilms, len(films))
+		}
+	})
+
+	t.Run("combined filters and sorting", func(t *testing.T) {
+		make := "kodak"
+		sort := analogdb.FilmSortAlphabetically
+		limit := 1
+		filter := analogdb.NewFilmFilter(&limit, &sort, nil, &make, nil, nil, nil, nil, nil)
+		films, err := service.FindFilms(ctx, filter)
+		if err != nil {
+			t.Fatalf("Films failed: %v", err)
+		}
+
+		expectedFilms := 1
+		if len(films) != expectedFilms {
+			t.Errorf("Expected %d films, got %d", expectedFilms, len(films))
+		}
+
+		if films[0].Make != "kodak" {
+			t.Errorf("Expected make 'kodak', got %q", films[0].Make)
 		}
 	})
 }
@@ -148,7 +465,7 @@ func TestFilmService_CreateFilm(t *testing.T) {
 
 	t.Run("create film increases count", func(t *testing.T) {
 		filter := analogdb.NewFilmFilter(nil, nil, nil, nil, nil, nil, nil, nil, nil)
-		initialFilms, err := service.AllFilms(ctx, filter)
+		initialFilms, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}
@@ -167,7 +484,7 @@ func TestFilmService_CreateFilm(t *testing.T) {
 			t.Fatalf("CreateFilm failed: %v", err)
 		}
 
-		filmsAfterCreate, err := service.AllFilms(ctx, filter)
+		filmsAfterCreate, err := service.FindFilms(ctx, filter)
 		if err != nil {
 			t.Fatalf("Films failed: %v", err)
 		}

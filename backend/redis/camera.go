@@ -44,7 +44,7 @@ func (s *CameraService) CreateCamera(ctx context.Context, camera *analogdb.Creat
 	return s.dbService.CreateCamera(ctx, camera)
 }
 
-func (s *CameraService) AllCameras(ctx context.Context, filter *analogdb.CameraFilter) ([]*analogdb.Camera, error) {
+func (s *CameraService) FindCameras(ctx context.Context, filter *analogdb.CameraFilter) ([]*analogdb.Camera, error) {
 	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cameraCache.instance).Msg("Starting all cameras with cache")
 	defer s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cameraCache.instance).Msg("Finished all cameras with cache")
 
@@ -54,7 +54,7 @@ func (s *CameraService) AllCameras(ctx context.Context, filter *analogdb.CameraF
 		s.rdb.logger.Error().Err(err).Ctx(ctx).Str("instance", s.cameraCache.instance).Msg("Fail to hash camera filter")
 
 		// if we failed, fallback to db
-		return s.dbService.AllCameras(ctx, filter)
+		return s.dbService.FindCameras(ctx, filter)
 	}
 
 	camerasHash := fmt.Sprint(hash)
@@ -70,7 +70,7 @@ func (s *CameraService) AllCameras(ctx context.Context, filter *analogdb.CameraF
 	}
 
 	// fallback to db
-	cameras, err = s.dbService.AllCameras(ctx, filter)
+	cameras, err = s.dbService.FindCameras(ctx, filter)
 	if err != nil {
 		return nil, err
 	}

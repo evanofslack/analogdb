@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
@@ -16,6 +18,9 @@ type CreateFilmResponse struct {
 	Message string              `json:"message"`
 	Film    analogdb.CreateFilm `json:"film"`
 }
+
+// default to sorting alphabetically
+var defaultFilmsSort = analogdb.FilmSortAlphabetically
 
 const (
 	filmsPath = "/films"
@@ -47,7 +52,7 @@ func (s *Server) getFilms(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) makeFilmResponse(r *http.Request, filter *analogdb.FilmFilter) (FilmsResponse, error) {
-	films, err := s.FilmService.AllFilms(r.Context(), filter)
+	films, err := s.FilmService.FindFilms(r.Context(), filter)
 	resp := FilmsResponse{}
 	if err != nil {
 		return resp, err
@@ -83,9 +88,62 @@ func (s *Server) createFilm(w http.ResponseWriter, r *http.Request) {
 
 // parse URL for query parameters and convert to FilmFilter
 func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
-	filter := &analogdb.FilmFilter{}
+	filter := analogdb.NewFilmFilter(nil, &defaultFilmsSort, nil, nil, nil, nil, nil, nil, nil)
 
-	if includeCounts := r.URL.Query().Get("include_counts"); includeCounts != "" {
+	values := r.URL.Query()
+
+	if sort := values.Get("sort"); sort != "" {
+		if sort == "alphabetically" || sort == "counts" {
+			switch sort {
+			case "alphabetically":
+				alpha := analogdb.FilmSortAlphabetically
+				filter.Sort = &alpha
+			case "counts":
+				counts := analogdb.FilmSortCounts
+				filter.Sort = &counts
+			}
+		} else {
+			return nil, fmt.Errorf("invalid sort parameter %s, valid options are 'alphabetically', or 'counts'", sort)
+		}
+	}
+
+	if limit := values.Get("page_size"); limit != "" {
+		if intLimit, err := stringToInt(limit); err != nil {
+			return nil, err
+		} else {
+			filter.Limit = &intLimit
+		}
+	}
+
+	if make := values.Get("make"); make != "" {
+		filter.Make = &make
+	}
+
+	if ty := values.Get("type"); ty != "" {
+		filter.Type = &ty
+	}
+
+	if speed := values.Get("speed"); speed != "" {
+		if intSpeed, err := stringToInt(speed); err != nil {
+			return nil, err
+		} else {
+			filter.Speed = &intSpeed
+		}
+	}
+
+	if color := values.Get("colortype"); color != "" {
+		filter.ColorType = &color
+	}
+
+	if id := values.Get("id"); id != "" {
+		if identify, err := strconv.Atoi(id); err != nil {
+			return nil, err
+		} else {
+			filter.IDs = &[]int{identify}
+		}
+	}
+
+	if includeCounts := values.Get("include_counts"); includeCounts != "" {
 		if val, err := stringToBool(includeCounts); err != nil {
 			return nil, err
 		} else {
@@ -93,7 +151,7 @@ func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
 		}
 	}
 
-	if excludeZero := r.URL.Query().Get("exclude_zero_counts"); excludeZero != "" {
+	if excludeZero := values.Get("exclude_zero_counts"); excludeZero != "" {
 		if val, err := stringToBool(excludeZero); err != nil {
 			return nil, err
 		} else {
