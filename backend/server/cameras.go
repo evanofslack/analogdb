@@ -26,8 +26,8 @@ const (
 	camerasPath = "/cameras"
 )
 
-func (s *Server) mountCameraHandlers() {
-	s.router.Route(camerasPath, func(r chi.Router) {
+func (s *Server) mountCameraHandlers(r chi.Router) {
+	r.Route(camerasPath, func(r chi.Router) {
 		r.Get("/", s.getCameras)
 		r.With(s.auth).Put("/", s.createCamera)
 		r.With(s.auth).Post("/", s.createCamera)

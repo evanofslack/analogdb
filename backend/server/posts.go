@@ -67,11 +67,11 @@ const (
 	idsPath   = "/ids"
 )
 
-func (s *Server) mountPostHandlers() {
-	s.router.Route(postsPath, func(r chi.Router) {
+func (s *Server) mountPostHandlers(r chi.Router) {
+	r.Route(postsPath, func(r chi.Router) {
 		r.Get("/", s.getPosts)
 	})
-	s.router.Route(postPath, func(r chi.Router) {
+	r.Route(postPath, func(r chi.Router) {
 		r.Get("/{id}", s.findPost)
 		r.Get("/{id}/similar", s.getSimilarPosts)
 		r.With(s.auth).Delete("/{id}", s.deletePost)
@@ -79,7 +79,7 @@ func (s *Server) mountPostHandlers() {
 		r.With(s.auth).Put("/", s.createPost)
 		r.With(s.auth).Post("/", s.createPost)
 	})
-	s.router.Route(idsPath, func(r chi.Router) {
+	r.Route(idsPath, func(r chi.Router) {
 		r.Get("/", s.allPostIDs)
 	})
 }

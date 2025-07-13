@@ -26,8 +26,8 @@ const (
 	filmsPath = "/films"
 )
 
-func (s *Server) mountFilmHandlers() {
-	s.router.Route(filmsPath, func(r chi.Router) {
+func (s *Server) mountFilmHandlers(r chi.Router) {
+	r.Route(filmsPath, func(r chi.Router) {
 		r.Get("/", s.getFilms)
 		r.With(s.auth).Put("/", s.createFilm)
 		r.With(s.auth).Post("/", s.createFilm)
