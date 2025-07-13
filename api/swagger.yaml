@@ -24,6 +24,21 @@ definitions:
         example: "2025-07-11T12:00:00Z"
         type: string
     type: object
+  analogdb.Color:
+    properties:
+      css:
+        example: dimgray
+        type: string
+      hex:
+        example: '#837d5c'
+        type: string
+      html:
+        example: gray
+        type: string
+      percent:
+        example: 0.55
+        type: number
+    type: object
   analogdb.CreateCamera:
     properties:
       description:
@@ -53,6 +68,69 @@ definitions:
       type:
         example: portra 400
         type: string
+    type: object
+  analogdb.CreatePost:
+    properties:
+      aperture:
+        example: f/2.0
+        type: string
+      author:
+        example: thecameraman
+        type: string
+      camera_make:
+        example: nikon
+        type: string
+      camera_model:
+        example: fm2
+        type: string
+      colors:
+        items:
+          $ref: '#/definitions/analogdb.Color'
+        type: array
+      description:
+        example: My favorite camera and film combo on 35mm at f/2.0
+        type: string
+      film_make:
+        example: kodak
+        type: string
+      film_speed:
+        example: 400
+        type: integer
+      film_type:
+        example: color
+        type: string
+      focal_length:
+        example: 35
+        type: integer
+      grayscale:
+        example: false
+        type: boolean
+      images:
+        items:
+          $ref: '#/definitions/analogdb.Image'
+        type: array
+      keywords:
+        items:
+          $ref: '#/definitions/analogdb.Keyword'
+        type: array
+      nsfw:
+        example: false
+        type: boolean
+      permalink:
+        example: https://www.reddit.com/r/analog/comments/1/post
+        type: string
+      sprocket:
+        example: false
+        type: boolean
+      title:
+        example: A day at the fields [Nikon FM2 | Portra 400]
+        type: string
+      unix_time:
+        example: 1752354541
+        type: integer
+      upvotes:
+        example: 1000
+        type: integer
     type: object
   analogdb.Error:
     properties:
@@ -92,6 +170,143 @@ definitions:
         example: "2025-07-11T12:00:00Z"
         type: string
     type: object
+  analogdb.Image:
+    properties:
+      height:
+        example: 7600
+        type: integer
+      resolution:
+        example: high
+        type: string
+      url:
+        example: https://cloudfront.net/1.jpeg
+        type: string
+      width:
+        example: 4800
+        type: integer
+    type: object
+  analogdb.Keyword:
+    properties:
+      weight:
+        example: 0.43
+        type: number
+      word:
+        example: baseball
+        type: string
+    type: object
+  analogdb.PatchPost:
+    properties:
+      aperture:
+        example: f/2.4
+        type: string
+      camera_make:
+        example: canon
+        type: string
+      camera_model:
+        example: ae-1
+        type: string
+      colors:
+        items:
+          $ref: '#/definitions/analogdb.Color'
+        type: array
+      description:
+        example: New description
+        type: string
+      film_make:
+        example: kodak
+        type: string
+      film_speed:
+        example: 200
+        type: integer
+      film_type:
+        example: gold 200
+        type: string
+      focal_length:
+        example: 50
+        type: integer
+      grayscale:
+        example: false
+        type: boolean
+      keywords:
+        items:
+          $ref: '#/definitions/analogdb.Keyword'
+        type: array
+      nsfw:
+        example: true
+        type: boolean
+      sprocket:
+        example: true
+        type: boolean
+      upvotes:
+        example: 1010
+        type: integer
+    type: object
+  analogdb.Post:
+    properties:
+      aperture:
+        example: f/2.0
+        type: string
+      author:
+        example: thecameraman
+        type: string
+      camera_make:
+        example: nikon
+        type: string
+      camera_model:
+        example: fm2
+        type: string
+      colors:
+        items:
+          $ref: '#/definitions/analogdb.Color'
+        type: array
+      description:
+        example: My favorite camera and film combo on 35mm at f/2.0
+        type: string
+      film_make:
+        example: kodak
+        type: string
+      film_speed:
+        example: 400
+        type: integer
+      film_type:
+        example: color
+        type: string
+      focal_length:
+        example: 35
+        type: integer
+      grayscale:
+        example: false
+        type: boolean
+      id:
+        example: 1
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/analogdb.Image'
+        type: array
+      keywords:
+        items:
+          $ref: '#/definitions/analogdb.Keyword'
+        type: array
+      nsfw:
+        example: false
+        type: boolean
+      permalink:
+        example: https://www.reddit.com/r/analog/comments/1/post
+        type: string
+      sprocket:
+        example: false
+        type: boolean
+      title:
+        example: A day at the fields [Nikon FM2 | Portra 400]
+        type: string
+      unix_time:
+        example: 1752354541
+        type: integer
+      upvotes:
+        example: 1000
+        type: integer
+    type: object
   server.CamerasResponse:
     properties:
       cameras:
@@ -115,12 +330,95 @@ definitions:
         example: Success, film created
         type: string
     type: object
+  server.CreatePostResponse:
+    properties:
+      message:
+        example: Success, post created
+        type: string
+      post:
+        $ref: '#/definitions/analogdb.Post'
+    type: object
+  server.DeleteResponse:
+    properties:
+      message:
+        example: Success, post deleted
+        type: string
+    type: object
   server.FilmsResponse:
     properties:
       films:
         items:
           $ref: '#/definitions/analogdb.Film'
         type: array
+    type: object
+  server.IDsResponse:
+    properties:
+      ids:
+        example:
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        items:
+          type: integer
+        type: array
+    type: object
+  server.Meta:
+    properties:
+      next_page_id:
+        example: 1752244116
+        type: integer
+      next_page_url:
+        example: /posts?sort=latest&page_size=20&page_id=1752244116
+        type: string
+      page_size:
+        example: 20
+        type: integer
+      seed:
+        example: 37
+        type: integer
+      total_posts:
+        example: 200
+        type: integer
+    type: object
+  server.PatchResponse:
+    properties:
+      message:
+        example: Success, post patched
+        type: string
+    type: object
+  server.PostResponse:
+    properties:
+      meta:
+        $ref: '#/definitions/server.Meta'
+      posts:
+        items:
+          $ref: '#/definitions/analogdb.Post'
+        type: array
+    type: object
+  server.SimilarPostsResponse:
+    properties:
+      posts:
+        items:
+          $ref: '#/definitions/analogdb.Post'
+        type: array
+    type: object
+  server.encodePostsRequest:
+    properties:
+      batch_size:
+        example: 20
+        type: integer
+      ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  server.encodePostsResponse:
+    properties:
+      message:
+        example: successfully encoded 5 posts
+        type: string
     type: object
 host: api.analogdb.com
 info:
@@ -263,6 +561,47 @@ paths:
       summary: Create a new camera
       tags:
       - cameras
+  /encode:
+    put:
+      consumes:
+      - application/json
+      description: Encode posts to generate embeddings for similarity search. Supports
+        both single post and batch encoding (requires authentication)
+      parameters:
+      - description: Post IDs and batch size for encoding
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/server.encodePostsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.encodePostsResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Encode posts for similarity matching
+      tags:
+      - similarity
   /films:
     get:
       consumes:
@@ -405,6 +744,297 @@ paths:
       summary: Create a new film
       tags:
       - films
+  /posts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve posts with optional query parameters for filtering by
+        camera, film, keywords, etc. Supports pagination
+      parameters:
+      - default: 20
+        description: Number of posts per page
+        in: query
+        name: page_size
+        type: integer
+      - description: Page offset for pagination
+        in: query
+        name: page_id
+        type: integer
+      - default: time
+        description: Sort order
+        enum:
+        - time
+        - score
+        - random
+        in: query
+        name: sort
+        type: string
+      - description: Filter by camera make
+        in: query
+        name: camera_make
+        type: string
+      - description: Filter by camera model
+        in: query
+        name: camera_model
+        type: string
+      - description: Filter by film make
+        in: query
+        name: film_make
+        type: string
+      - description: Filter by film type
+        in: query
+        name: film_type
+        type: string
+      - description: Filter by film speed
+        in: query
+        name: film_speed
+        type: integer
+      - description: Filter by focal length
+        in: query
+        name: focal_length
+        type: integer
+      - description: Filter by aperture
+        in: query
+        name: aperture
+        type: string
+      - description: Filter by author
+        in: query
+        name: author
+        type: string
+      - description: Include NSFW posts
+        in: query
+        name: nsfw
+        type: boolean
+      - description: Filter by grayscale posts
+        in: query
+        name: grayscale
+        type: boolean
+      - description: Filter by sprocket posts
+        in: query
+        name: sprocket
+        type: boolean
+      - description: Filter by keywords (comma-separated)
+        in: query
+        name: keywords
+        type: string
+      - description: Random seed for consistent random sorting
+        in: query
+        name: seed
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.PostResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get posts with optional filtering and pagination
+      tags:
+      - posts
+    post:
+      consumes:
+      - application/json
+      description: Create a new post with image analysis and similarity encoding (requires
+        authentication)
+      parameters:
+      - description: Post data to create
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreatePost'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreatePostResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new post
+      tags:
+      - posts
+  /posts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a post by ID from database (requires authentication)
+      parameters:
+      - description: Post ID to delete
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.DeleteResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Delete a post
+      tags:
+      - posts
+    patch:
+      consumes:
+      - application/json
+      description: Partially update a post's properties by ID (requires authentication)
+      parameters:
+      - description: Post ID to update
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Post fields to update
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.PatchPost'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.PatchResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Update a post
+      tags:
+      - posts
+  /posts/ids:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all post IDs in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.IDsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get all post IDs
+      tags:
+      - posts
+  /posts/similar:
+    get:
+      consumes:
+      - application/json
+      description: Find posts similar to a given post using similarity matching
+      parameters:
+      - description: Post ID to find similar posts for
+        in: query
+        name: id
+        required: true
+        type: integer
+      - default: 12
+        description: Maximum number of similar posts to return
+        in: query
+        name: page_size
+        type: integer
+      - description: Include nsfw posts in query
+        in: query
+        name: nsfw
+        type: boolean
+      - description: Include b&w posts in query
+        in: query
+        name: grayscale
+        type: boolean
+      - description: Include sprocketshot posts in query
+        in: query
+        name: sprocket
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.SimilarPostsResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Find similar posts
+      tags:
+      - posts
 securityDefinitions:
   BasicAuth:
     type: basic
