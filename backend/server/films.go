@@ -93,7 +93,7 @@ func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
 	values := r.URL.Query()
 
 	if sort := values.Get("sort"); sort != "" {
-		if sort == "alphabetically" || sort == "post_count" {
+		if sort == "alphabetically" || sort == "counts" {
 			switch sort {
 			case "alphabetically":
 				alpha := analogdb.FilmSortAlphabetically
