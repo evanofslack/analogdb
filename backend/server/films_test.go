@@ -20,7 +20,7 @@ func TestParseToFilmFilter(t *testing.T) {
 			url:         "/films",
 			expectError: false,
 			checkFilter: func(f *analogdb.FilmFilter) bool {
-				return f.Sort != nil && *f.Sort == analogdb.FilmSortAlphabetically
+				return f.Sort != nil && *f.Sort == analogdb.FilmSortAlphabetical
 			},
 		},
 		{
@@ -28,7 +28,7 @@ func TestParseToFilmFilter(t *testing.T) {
 			url:         "/films?sort=alphabetically",
 			expectError: false,
 			checkFilter: func(f *analogdb.FilmFilter) bool {
-				return f.Sort != nil && *f.Sort == analogdb.FilmSortAlphabetically
+				return f.Sort != nil && *f.Sort == analogdb.FilmSortAlphabetical
 			},
 		},
 		{

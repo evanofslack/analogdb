@@ -32,14 +32,14 @@ type CameraSort int
 
 const (
 	CameraSortUnknown CameraSort = iota
-	CameraSortAlphabetically
+	CameraSortAlphabetical
 	CameraSortCounts
 )
 
 func (s CameraSort) String() string {
 	switch s {
-	case CameraSortAlphabetically:
-		return "alphabetically"
+	case CameraSortAlphabetical:
+		return "alphabetical"
 	case CameraSortCounts:
 		return "counts"
 	default:
@@ -49,8 +49,8 @@ func (s CameraSort) String() string {
 
 func CameraSortFromString(s string) CameraSort {
 	switch strings.ToLower(s) {
-	case "alphabetically":
-		return CameraSortAlphabetically
+	case "alphabetical":
+		return CameraSortAlphabetical
 	case "counts":
 		return CameraSortCounts
 	default:

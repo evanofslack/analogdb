@@ -192,7 +192,7 @@ func TestCameraService_FindCameras(t *testing.T) {
 	})
 
 	t.Run("sort alphabetically", func(t *testing.T) {
-		sort := analogdb.CameraSortAlphabetically
+		sort := analogdb.CameraSortAlphabetical
 		filter := analogdb.NewCameraFilter(nil, &sort, nil, nil, nil, nil, nil, nil, nil)
 		cameras, err := service.FindCameras(ctx, filter)
 		if err != nil {

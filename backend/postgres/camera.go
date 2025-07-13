@@ -238,7 +238,7 @@ func filterToHavingCamera(filter *analogdb.CameraFilter) string {
 func filterToOrderCamera(filter *analogdb.CameraFilter) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
-		case analogdb.CameraSortAlphabetically:
+		case analogdb.CameraSortAlphabetical:
 			return " ORDER BY c.camera_make, c.camera_model DESC"
 		case analogdb.CameraSortCounts:
 			return " ORDER BY post_count DESC"
