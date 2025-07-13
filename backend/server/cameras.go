@@ -20,7 +20,7 @@ type CreateCameraResponse struct {
 }
 
 // default to sorting alphabetically
-var defaultCamerasSort = analogdb.CameraSortAlphabetically
+var defaultCamerasSort = analogdb.CameraSortAlphabetical
 
 const (
 	camerasPath = "/cameras"
@@ -96,7 +96,7 @@ func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
 		if sort == "alphabetically" || sort == "counts" {
 			switch sort {
 			case "alphabetically":
-				alpha := analogdb.CameraSortAlphabetically
+				alpha := analogdb.CameraSortAlphabetical
 				filter.Sort = &alpha
 			case "counts":
 				counts := analogdb.CameraSortCounts

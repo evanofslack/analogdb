@@ -241,7 +241,7 @@ func filterToHavingFilm(filter *analogdb.FilmFilter) string {
 func filterToOrderFilm(filter *analogdb.FilmFilter) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
-		case analogdb.FilmSortAlphabetically:
+		case analogdb.FilmSortAlphabetical:
 			return " ORDER BY f.film_make, f.film_type, f.film_speed DESC"
 		case analogdb.FilmSortCounts:
 			return " ORDER BY post_count DESC"

@@ -36,14 +36,14 @@ type FilmSort int
 
 const (
 	FilmSortUnknown FilmSort = iota
-	FilmSortAlphabetically
+	FilmSortAlphabetical
 	FilmSortCounts
 )
 
 func (s FilmSort) String() string {
 	switch s {
-	case FilmSortAlphabetically:
-		return "alphabetically"
+	case FilmSortAlphabetical:
+		return "alphabetical"
 	case FilmSortCounts:
 		return "counts"
 	default:
@@ -53,8 +53,8 @@ func (s FilmSort) String() string {
 
 func FilmSortFromString(s string) FilmSort {
 	switch strings.ToLower(s) {
-	case "alphabetically":
-		return FilmSortAlphabetically
+	case "alphabetical":
+		return FilmSortAlphabetical
 	case "counts":
 		return FilmSortCounts
 	default:

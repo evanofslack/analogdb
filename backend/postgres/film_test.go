@@ -280,7 +280,7 @@ func TestFilmService_FindFilms(t *testing.T) {
 	})
 
 	t.Run("sort alphabetically", func(t *testing.T) {
-		sort := analogdb.FilmSortAlphabetically
+		sort := analogdb.FilmSortAlphabetical
 		filter := analogdb.NewFilmFilter(nil, &sort, nil, nil, nil, nil, nil, nil, nil)
 		films, err := service.FindFilms(ctx, filter)
 		if err != nil {
@@ -403,7 +403,7 @@ func TestFilmService_FindFilms(t *testing.T) {
 
 	t.Run("combined filters and sorting", func(t *testing.T) {
 		make := "kodak"
-		sort := analogdb.FilmSortAlphabetically
+		sort := analogdb.FilmSortAlphabetical
 		limit := 1
 		filter := analogdb.NewFilmFilter(&limit, &sort, nil, &make, nil, nil, nil, nil, nil)
 		films, err := service.FindFilms(ctx, filter)

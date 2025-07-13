@@ -20,7 +20,7 @@ type CreateFilmResponse struct {
 }
 
 // default to sorting alphabetically
-var defaultFilmsSort = analogdb.FilmSortAlphabetically
+var defaultFilmsSort = analogdb.FilmSortAlphabetical
 
 const (
 	filmsPath = "/films"
@@ -96,7 +96,7 @@ func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
 		if sort == "alphabetically" || sort == "counts" {
 			switch sort {
 			case "alphabetically":
-				alpha := analogdb.FilmSortAlphabetically
+				alpha := analogdb.FilmSortAlphabetical
 				filter.Sort = &alpha
 			case "counts":
 				counts := analogdb.FilmSortCounts
