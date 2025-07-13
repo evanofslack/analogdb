@@ -10,10 +10,18 @@ import (
 
 	"github.com/evanofslack/analogdb"
 	"github.com/evanofslack/analogdb/config"
+	_ "github.com/evanofslack/analogdb/docs"
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
 	"github.com/go-chi/chi/v5"
 )
+
+// @title AnalogDB API
+// @version 1.0
+// @description API for analogdb film database
+// @host api.analogdb.com
+// @BasePath /v1
+// @securityDefinitions.basic BasicAuth
 
 const shutdownTimeout = 5 * time.Second
 
@@ -74,6 +82,7 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	s.mountStaticHandlers()
 	s.mountStatusHandlers()
 	s.mountStatsHandlers()
+	s.mountSwaggerHandlers()
 
 	// Mount collection resources
 	s.mountResourceHandlers()

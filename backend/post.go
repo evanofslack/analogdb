@@ -15,40 +15,40 @@ var primes = []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 7
 
 // Image represents the source info for an image
 type Image struct {
-	Label  string `json:"resolution"`
-	Url    string `json:"url"`
-	Width  int    `json:"width"`
-	Height int    `json:"height"`
+	Label  string `json:"resolution" example:"high"`
+	Url    string `json:"url" example:"https://cloudfront.net/1.jpeg"`
+	Width  int    `json:"width" example:"4800"`
+	Height int    `json:"height" example:"7600"`
 }
 
 // Color represents a single color of an image
 type Color struct {
-	Hex     string  `json:"hex"`
-	Css     string  `json:"css"`
-	Html    string  `json:"html"`
-	Percent float64 `json:"percent"`
+	Hex     string  `json:"hex" example:"#837d5c"`
+	Css     string  `json:"css" example:"dimgray"`
+	Html    string  `json:"html" example:"gray"`
+	Percent float64 `json:"percent" example:"0.55"`
 }
 
 // CreatePost is the model for creating a post.
 // This includes info from the original reddit post
 // as well as attributes about the image.
 type CreatePost struct {
-	Title       string    `json:"title"`
-	Author      string    `json:"author"`
-	Permalink   string    `json:"permalink"`
-	Description *string    `json:"description,omitempty"`
-	Score       int       `json:"upvotes"`
-	Nsfw        bool      `json:"nsfw"`
-	Grayscale   bool      `json:"grayscale"`
-	Time        int       `json:"unix_time"`
-	Sprocket    bool      `json:"sprocket"`
-	CameraMake  *string   `json:"camera_make,omitempty"`
-	CameraModel *string   `json:"camera_model,omitempty"`
-	FilmMake    *string   `json:"film_make,omitempty"`
-	FilmType    *string   `json:"film_type,omitempty"`
-	FilmSpeed   *int64    `json:"film_speed,omitempty"`
-	FocalLength *int64    `json:"focal_length,omitempty"`
-	Aperture    *string   `json:"aperture,omitempty"`
+	Title       string    `json:"title" example:"A day at the fields [Nikon FM2 | Portra 400]"`
+	Author      string    `json:"author" example:"thecameraman"`
+	Permalink   string    `json:"permalink" example:"https://www.reddit.com/r/analog/comments/1/post"`
+	Description *string   `json:"description,omitempty" example:"My favorite camera and film combo on 35mm at f/2.0"`
+	Score       int       `json:"upvotes" example:"1000"`
+	Nsfw        bool      `json:"nsfw" example:"false"`
+	Grayscale   bool      `json:"grayscale" example:"false"`
+	Time        int       `json:"unix_time" example:"1752354541"`
+	Sprocket    bool      `json:"sprocket" example:"false"`
+	CameraMake  *string   `json:"camera_make,omitempty" example:"nikon"`
+	CameraModel *string   `json:"camera_model,omitempty" example:"fm2"`
+	FilmMake    *string   `json:"film_make,omitempty" example:"kodak"`
+	FilmType    *string   `json:"film_type,omitempty" example:"color"`
+	FilmSpeed   *int64    `json:"film_speed,omitempty" example:"400"`
+	FocalLength *int64    `json:"focal_length,omitempty" example:"35"`
+	Aperture    *string   `json:"aperture,omitempty" example:"f/2.0"`
 	Images      []Image   `json:"images"`
 	Colors      []Color   `json:"colors"`
 	Keywords    []Keyword `json:"keywords"`
@@ -57,43 +57,43 @@ type CreatePost struct {
 // DisplayPost is the model for displaying a post.
 // Renames some of the json keys.
 type DisplayPost struct {
-	Title       string    `json:"title"`
-	Author      string    `json:"author"`
-	Permalink   string    `json:"permalink"`
-	Description *string    `json:"description,omitempty"`
-	Score       int       `json:"score"`
-	Nsfw        bool      `json:"nsfw"`
-	Grayscale   bool      `json:"grayscale"`
-	Time        int       `json:"timestamp"`
-	Sprocket    bool      `json:"sprocket"`
-	CameraMake  *string   `json:"camera_make,omitempty"`
-	CameraModel *string   `json:"camera_model,omitempty"`
-	FilmMake    *string   `json:"film_make,omitempty"`
-	FilmType    *string   `json:"film_type,omitempty"`
-	FilmSpeed   *int64    `json:"film_speed,omitempty"`
-	FocalLength *int64    `json:"focal_length,omitempty"`
-	Aperture    *string   `json:"aperture,omitempty"`
+	Title       string    `json:"title" example:"A day at the fields [Nikon FM2 | Portra 400]"`
+	Author      string    `json:"author" example:"thecameraman"`
+	Permalink   string    `json:"permalink" example:"https://www.reddit.com/r/analog/comments/1/post"`
+	Description *string   `json:"description,omitempty" example:"My favorite camera and film combo on 35mm at f/2.0"`
+	Score       int       `json:"upvotes" example:"1000"`
+	Nsfw        bool      `json:"nsfw" example:"false"`
+	Grayscale   bool      `json:"grayscale" example:"false"`
+	Time        int       `json:"unix_time" example:"1752354541"`
+	Sprocket    bool      `json:"sprocket" example:"false"`
+	CameraMake  *string   `json:"camera_make,omitempty" example:"nikon"`
+	CameraModel *string   `json:"camera_model,omitempty" example:"fm2"`
+	FilmMake    *string   `json:"film_make,omitempty" example:"kodak"`
+	FilmType    *string   `json:"film_type,omitempty" example:"color"`
+	FilmSpeed   *int64    `json:"film_speed,omitempty" example:"400"`
+	FocalLength *int64    `json:"focal_length,omitempty" example:"35"`
+	Aperture    *string   `json:"aperture,omitempty" example:"f/2.0"`
 	Images      []Image   `json:"images"`
 	Colors      []Color   `json:"colors"`
-	Keywords    []Keyword `json:"keywords,omitempty"`
+	Keywords    []Keyword `json:"keywords"`
 }
 
 // PatchPost is the model for patching a post.
 // Intentionally only allow certain fields to be updated.
 // Uses pointers and omit empty to allow partial unmarshalling
 type PatchPost struct {
-	Score       *int       `json:"upvotes,omitempty"`
-	Description *string     `json:"description,omitempty"`
-	Nsfw        *bool      `json:"nsfw,omitempty"`
-	Grayscale   *bool      `json:"grayscale,omitempty"`
-	Sprocket    *bool      `json:"sprocket,omitempty"`
-	CameraMake  *string    `json:"camera_make,omitempty"`
-	CameraModel *string    `json:"camera_model,omitempty"`
-	FilmMake    *string    `json:"film_make,omitempty"`
-	FilmType    *string    `json:"film_type,omitempty"`
-	FilmSpeed   *int       `json:"film_speed,omitempty"`
-	FocalLength *int       `json:"focal_length,omitempty"`
-	Aperture    *string    `json:"aperture,omitempty"`
+	Score       *int       `json:"upvotes,omitempty" example:"1010"`
+	Description *string    `json:"description,omitempty" example:"New description"`
+	Nsfw        *bool      `json:"nsfw,omitempty" example:"true"`
+	Grayscale   *bool      `json:"grayscale,omitempty" example:"false"`
+	Sprocket    *bool      `json:"sprocket,omitempty" example:"true"`
+	CameraMake  *string    `json:"camera_make,omitempty" example:"canon"`
+	CameraModel *string    `json:"camera_model,omitempty" example:"ae-1"`
+	FilmMake    *string    `json:"film_make,omitempty" example:"kodak"`
+	FilmType    *string    `json:"film_type,omitempty" example:"gold 200"`
+	FilmSpeed   *int       `json:"film_speed,omitempty" example:"200"`
+	FocalLength *int       `json:"focal_length,omitempty" example:"50"`
+	Aperture    *string    `json:"aperture,omitempty" example:"f/2.4"`
 	Colors      *[]Color   `json:"colors,omitempty"`
 	Keywords    *[]Keyword `json:"keywords,omitempty"`
 }
@@ -101,7 +101,7 @@ type PatchPost struct {
 // Post is the model of a returned post
 // including the auto-incremented ID from the DB
 type Post struct {
-	Id int `json:"id"`
+	Id int `json:"id" example:"1"`
 	DisplayPost
 }
 
@@ -368,11 +368,11 @@ func NewPostSimilarityFilter(limit *int, nsfw, grayscale, sprocket *bool, id *in
 
 // Meta includes details about the response.
 type Meta struct {
-	TotalPosts int    `json:"total_posts"`
-	PageSize   int    `json:"page_size"`
-	NextPageID string `json:"next_page_id"`
-	PageURL    string `json:"next_page_url"`
-	Seed       int    `json:"seed,omitempty"`
+    TotalPosts int    `json:"total_posts" example:"200"`
+    PageSize   int    `json:"page_size" example:"20"`
+    NextPageID string `json:"next_page_id" example:"1752244116"`
+    PageURL    string `json:"next_page_url" example:"/posts?sort=latest&page_size=20&page_id=1752244116"`
+    Seed       int    `json:"seed,omitempty" example:"37"`
 }
 
 type PostService interface {

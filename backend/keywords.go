@@ -4,8 +4,8 @@ import "context"
 
 // Keyword represents a single word/tag for a post
 type Keyword struct {
-	Word   string  `json:"word"`
-	Weight float64 `json:"weight"`
+    Word   string  `json:"word" example:"baseball"`
+    Weight float64 `json:"weight" example:"0.43"`
 }
 
 type KeywordService interface {
@@ -18,6 +18,6 @@ type KeywordFilter struct {
 }
 
 type KeywordSummary struct {
-	Word  string `json:"word"`
-	Count int    `json:"count"`
+    Word  string `json:"word" example:"baseball"`
+    Count int    `json:"count" example: "207"`
 }

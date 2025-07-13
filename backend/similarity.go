@@ -3,8 +3,8 @@ package analogdb
 import "context"
 
 type PostSimilarity struct {
-	Post  Post    `json:"post"`
-	Score float64 `json:"score"`
+    Post  Post    `json:"post"`
+    Score float64 `json:"score" example:"0.73"`
 }
 
 type SimilarityService interface {

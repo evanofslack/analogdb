@@ -13,11 +13,11 @@ import (
 )
 
 type Meta struct {
-	TotalPosts int    `json:"total_posts"`
-	PageSize   int    `json:"page_size"`
-	PageID     int    `json:"next_page_id"`
-	PageURL    string `json:"next_page_url"`
-	Seed       int    `json:"seed,omitempty"`
+	TotalPosts int    `json:"total_posts" example:"200"`
+	PageSize   int    `json:"page_size" example:"20"`
+	PageID     int `json:"next_page_id" example:"1752244116"`
+	PageURL    string `json:"next_page_url" example:"/posts?sort=latest&page_size=20&page_id=1752244116"`
+	Seed       int    `json:"seed,omitempty" example:"37"`
 }
 
 type PostResponse struct {
@@ -30,20 +30,20 @@ type SimilarPostsResponse struct {
 }
 
 type DeleteResponse struct {
-	Message string `json:"message"`
+	Message string `json:"message" example:"Success, post deleted"`
 }
 
 type PatchResponse struct {
-	Message string `json:"message"`
+	Message string `json:"message" example:"Success, post patched"`
 }
 
 type CreatePostResponse struct {
-	Message string        `json:"message"`
+	Message string        `json:"message" example:"Success, post created"`
 	Post    analogdb.Post `json:"post"`
 }
 
 type IDsResponse struct {
-	Ids []int `json:"ids"`
+	Ids []int `json:"ids" example:"1,2,3,4,5"`
 }
 
 // default limit on number of posts returned
@@ -84,6 +84,31 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 	})
 }
 
+// @Summary Get posts with optional filtering and pagination
+// @Description Retrieve posts with optional query parameters for filtering by camera, film, keywords, etc. Supports pagination
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param page_size query int false "Number of posts per page" default(20)
+// @Param page_id query int false "Page offset for pagination"
+// @Param sort query string false "Sort order" Enums(time,score,random) default(time)
+// @Param camera_make query string false "Filter by camera make"
+// @Param camera_model query string false "Filter by camera model"
+// @Param film_make query string false "Filter by film make"
+// @Param film_type query string false "Filter by film type"
+// @Param film_speed query int false "Filter by film speed"
+// @Param focal_length query int false "Filter by focal length"
+// @Param aperture query string false "Filter by aperture"
+// @Param author query string false "Filter by author"
+// @Param nsfw query bool false "Include NSFW posts"
+// @Param grayscale query bool false "Filter by grayscale posts"
+// @Param sprocket query bool false "Filter by sprocket posts"
+// @Param keywords query string false "Filter by keywords (comma-separated)"
+// @Param seed query int false "Random seed for consistent random sorting"
+// @Success 200 {object} PostResponse
+// @Failure 400 {object} analogdb.Error "Invalid request body"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Router /posts [get]
 func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToPostFilter(r)
 	if err != nil {
@@ -101,6 +126,21 @@ func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Find similar posts
+// @Description Find posts similar to a given post using similarity matching
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param id query int true "Post ID to find similar posts for"
+// @Param page_size query int false "Maximum number of similar posts to return" default(12)
+// @Param nsfw query bool false "Include nsfw posts in query"
+// @Param grayscale query bool false "Include b&w posts in query"
+// @Param sprocket query bool false "Include sprocketshot posts in query"
+// @Success 200 {object} SimilarPostsResponse
+// @Failure 400 {object} analogdb.Error "Invalid request body"
+// @Failure 404 {object} analogdb.Error "Not found"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Router /posts/similar [get]
 func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 	resp := SimilarPostsResponse{}
 
@@ -138,6 +178,19 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Delete a post
+// @Description Delete a post by ID from database (requires authentication)
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param id path int true "Post ID to delete"
+// @Success 200 {object} DeleteResponse
+// @Failure 400 {object} analogdb.Error "Invalid request body"
+// @Failure 404 {object} analogdb.Error "Not found"
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Security BasicAuth
+// @Router /posts/{id} [delete]
 func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -164,7 +217,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	success := DeleteResponse{Message: "success, post deleted"}
+	success := DeleteResponse{Message: "Success, post deleted"}
 
 	if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
 		s.writeError(w, r, err)
@@ -172,6 +225,19 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Create a new post
+// @Description Create a new post with image analysis and similarity encoding (requires authentication)
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param post body analogdb.CreatePost true "Post data to create"
+// @Success 201 {object} CreatePostResponse
+// @Failure 400 {object} analogdb.Error "Invalid request body"
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 422 {object} analogdb.Error "Unprocessable entity"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Security BasicAuth
+// @Router /posts [post]
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
@@ -210,6 +276,21 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Update a post
+// @Description Partially update a post's properties by ID (requires authentication)
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Param id path int true "Post ID to update"
+// @Param post body analogdb.PatchPost true "Post fields to update"
+// @Success 200 {object} PatchResponse
+// @Failure 400 {object} analogdb.Error "Invalid request body"
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 404 {object} analogdb.Error "Not found"
+// @Failure 422 {object} analogdb.Error "Unprocessable entity"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Security BasicAuth
+// @Router /posts/{id} [patch]
 func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	var patchPost analogdb.PatchPost
 	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
@@ -221,7 +302,7 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
 			if err := s.PostService.PatchPost(r.Context(), &patchPost, identify); err == nil {
-				success := PatchResponse{Message: "success, post patched"}
+				success := PatchResponse{Message: "Success, post patched"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
 					s.writeError(w, r, err)
 				}
@@ -234,6 +315,14 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Get all post IDs
+// @Description Retrieve a list of all post IDs in the system
+// @Tags posts
+// @Accept json
+// @Produce json
+// @Success 200 {object} IDsResponse
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Router /posts/ids [get]
 func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
 	ids, err := s.PostService.AllPostIDs(r.Context())
 	if err != nil {

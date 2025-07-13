@@ -15,7 +15,7 @@ type CamerasResponse struct {
 }
 
 type CreateCameraResponse struct {
-	Message string                `json:"message"`
+    Message string                `json:"message" example:"Success, camera created"`
 	Camera  analogdb.CreateCamera `json:"camera"`
 }
 
@@ -34,6 +34,22 @@ func (s *Server) mountCameraHandlers(r chi.Router) {
 	})
 }
 
+// @Summary Get cameras with optional filtering
+// @Description Retrieve cameras with optional query parameters for filtering and sorting
+// @Tags cameras
+// @Accept json
+// @Produce json
+// @Param sort query string false "Sort order" Enums(alphabetical, counts)
+// @Param page_size query int false "Number of results to return"
+// @Param make query string false "Filter by camera make"
+// @Param model query string false "Filter by camera model"
+// @Param id query int false "Filter by specific camera ID"
+// @Param include_counts query bool false "Include count data"
+// @Param exclude_zero_counts query bool false "Exclude zero counts"
+// @Success 200 {object} CamerasResponse
+// @Failure 400 {object} analogdb.Error "Invalid query parameters"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Router /cameras [get]
 func (s *Server) getCameras(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToCameraFilter(r)
 	if err != nil {
@@ -63,6 +79,20 @@ func (s *Server) makeCameraResponse(r *http.Request, filter *analogdb.CameraFilt
 	return resp, nil
 }
 
+// @Summary Create a new camera
+// @Description Create a new camera entry (requires authentication)
+// @Tags cameras
+// @Accept json
+// @Produce json
+// @Param camera body analogdb.CreateCamera true "camera data to create"
+// @Success 201 {object} CreateCameraResponse
+// @Failure 400 {object} analogdb.Error "Invalid request body"
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 422 {object} analogdb.Error "Unprocessable entity"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Security BasicAuth
+// @Router /cameras [put]
+// @Router /cameras [post]
 func (s *Server) createCamera(w http.ResponseWriter, r *http.Request) {
 	var createCamera analogdb.CreateCamera
 	if err := json.NewDecoder(r.Body).Decode(&createCamera); err != nil {

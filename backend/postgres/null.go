@@ -45,6 +45,9 @@ func (ns NullString) ToPtr() *string {
 	if !ns.Valid {
 		return nil
 	}
+	if ns.String == "" {
+	    return nil
+	}
 	return &ns.String
 }
 
