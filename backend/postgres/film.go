@@ -119,6 +119,7 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 	    `, where) + order + limit
 
 	if counts := filter.IncludeCounts; counts != nil && *counts {
+		having := filterToHavingFilm(filter)
 		query = fmt.Sprintf(`
 			SELECT 
 				f.id,
@@ -131,10 +132,11 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 				f.updated,
 				COUNT(p.id) as post_count
 			FROM films f
-		    WHERE %s
 			LEFT JOIN pictures p ON f.film_make = p.film_make AND f.film_type = p.film_type
+		    WHERE %s
 			GROUP BY f.id, f.film_make, f.film_type, f.film_speed, f.color_type, f.description, f.created, f.updated
-	`, where) + order + limit
+			HAVING %s
+	`, where, having) + order + limit
 	}
 
 	rows, err := tx.QueryContext(ctx, query, args...)
@@ -220,14 +222,21 @@ func filterToWhereFilm(filter *analogdb.FilmFilter, startIndex int) (string, []a
 		args = append(args, idsFormat)
 		index++
 	}
-	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
-		if includeCounts := filter.IncludeCounts; includeCounts != nil && *includeCounts {
-			where = append(where, "post_count > 0")
-		}
-	}
 
 	whereQuery := strings.Join(where, " AND ")
 	return whereQuery, args, index
+}
+
+func filterToHavingFilm(filter *analogdb.FilmFilter) string {
+	having := []string{"1=1"}
+
+	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
+		if includeCounts := filter.IncludeCounts; includeCounts != nil && *includeCounts {
+			having = append(having, "COUNT(p.id) > 0")
+		}
+	}
+
+	return strings.Join(having, " AND ")
 }
 
 // filterToOrderFilms converts film filter into an SQL "ORDER BY" statement
