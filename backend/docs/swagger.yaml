@@ -125,12 +125,12 @@ definitions:
       sprocket:
         example: false
         type: boolean
+      timestamp:
+        example: 1752354541
+        type: integer
       title:
         example: A day at the fields [Nikon FM2 | Portra 400]
         type: string
-      unix_time:
-        example: 1752354541
-        type: integer
     type: object
   analogdb.Error:
     properties:
@@ -300,12 +300,12 @@ definitions:
       sprocket:
         example: false
         type: boolean
+      timestamp:
+        example: 1752354541
+        type: integer
       title:
         example: A day at the fields [Nikon FM2 | Portra 400]
         type: string
-      unix_time:
-        example: 1752354541
-        type: integer
     type: object
   server.CamerasResponse:
     properties:

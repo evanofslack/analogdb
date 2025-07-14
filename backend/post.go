@@ -40,7 +40,7 @@ type CreatePost struct {
 	Score       int       `json:"score" example:"1000"`
 	Nsfw        bool      `json:"nsfw" example:"false"`
 	Grayscale   bool      `json:"grayscale" example:"false"`
-	Time        int       `json:"unix_time" example:"1752354541"`
+	Time        int       `json:"timestamp" example:"1752354541"`
 	Sprocket    bool      `json:"sprocket" example:"false"`
 	CameraMake  *string   `json:"camera_make,omitempty" example:"nikon"`
 	CameraModel *string   `json:"camera_model,omitempty" example:"fm2"`
@@ -64,7 +64,7 @@ type DisplayPost struct {
 	Score       int       `json:"score" example:"1000"`
 	Nsfw        bool      `json:"nsfw" example:"false"`
 	Grayscale   bool      `json:"grayscale" example:"false"`
-	Time        int       `json:"unix_time" example:"1752354541"`
+	Time        int       `json:"timestamp" example:"1752354541"`
 	Sprocket    bool      `json:"sprocket" example:"false"`
 	CameraMake  *string   `json:"camera_make,omitempty" example:"nikon"`
 	CameraModel *string   `json:"camera_model,omitempty" example:"fm2"`
