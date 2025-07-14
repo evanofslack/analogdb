@@ -132,7 +132,7 @@ class PostPatch:
     def to_json(self) -> Dict:
         body = {}
         if self.score is not None:
-            body["upvotes"] = self.score
+            body["score"] = self.score
         if self.descripton is not None:
             body["description"] = self.descripton
         if self.nsfw is not None:
@@ -213,7 +213,7 @@ class PostCreate:
         body["grayscale"] = self.grayscale
         body["unix_time"] = self.time
         body["sprocket"] = self.sprocket
-        body["upvotes"] = self.score
+        body["score"] = self.score
         if self.description is not None:
             body["description"] = self.description
 
