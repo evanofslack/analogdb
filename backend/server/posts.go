@@ -162,6 +162,19 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Get a post
+// @Description Get a post by ID from database
+// @Tags post
+// @Accept json
+// @Produce json
+// @Param id path int true "Post ID to get"
+// @Success 200 {object} analogdb.Post
+// @Failure 400 {object} analogdb.Error "Invalid request body"
+// @Failure 404 {object} analogdb.Error "Not found"
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Security BasicAuth
+// @Router /post/{id} [get]
 func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := strconv.Atoi(id); err == nil {
@@ -180,7 +193,7 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 
 // @Summary Delete a post
 // @Description Delete a post by ID from database (requires authentication)
-// @Tags posts
+// @Tags post
 // @Accept json
 // @Produce json
 // @Param id path int true "Post ID to delete"
@@ -190,7 +203,7 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} analogdb.Error "Unauthorized"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
-// @Router /posts/{id} [delete]
+// @Router /post/{id} [delete]
 func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -227,7 +240,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 
 // @Summary Create a new post
 // @Description Create a new post with image analysis and similarity encoding (requires authentication)
-// @Tags posts
+// @Tags post
 // @Accept json
 // @Produce json
 // @Param post body analogdb.CreatePost true "Post data to create"
@@ -237,7 +250,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
-// @Router /posts [post]
+// @Router /post [post]
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
 	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
@@ -278,7 +291,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 
 // @Summary Update a post
 // @Description Partially update a post's properties by ID (requires authentication)
-// @Tags posts
+// @Tags post
 // @Accept json
 // @Produce json
 // @Param id path int true "Post ID to update"
@@ -290,7 +303,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
-// @Router /posts/{id} [patch]
+// @Router /post/{id} [patch]
 func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	var patchPost analogdb.PatchPost
 	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
