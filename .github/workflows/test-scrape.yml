@@ -38,6 +38,7 @@ jobs:
         
       - name: Generate python client
         run: make gen-client-python
+        working-directory: .
 
       - name: Set up Python
         run: uv python install 3.13

@@ -54,6 +54,7 @@ jobs:
 
       - name: Generate python client
         run: make gen-client-python
+        working-directory: .
 
       - name: build and push
         uses: docker/build-push-action@v4
