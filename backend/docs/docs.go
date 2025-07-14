@@ -1176,13 +1176,13 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": false
                 },
+                "timestamp": {
+                    "type": "integer",
+                    "example": 1752354541
+                },
                 "title": {
                     "type": "string",
                     "example": "A day at the fields [Nikon FM2 | Portra 400]"
-                },
-                "unix_time": {
-                    "type": "integer",
-                    "example": 1752354541
                 }
             }
         },
@@ -1419,13 +1419,13 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": false
                 },
+                "timestamp": {
+                    "type": "integer",
+                    "example": 1752354541
+                },
                 "title": {
                     "type": "string",
                     "example": "A day at the fields [Nikon FM2 | Portra 400]"
-                },
-                "unix_time": {
-                    "type": "integer",
-                    "example": 1752354541
                 }
             }
         },
