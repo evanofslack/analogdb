@@ -9,7 +9,7 @@ on:
       - ".github/workflows/test-scrape.yml"
   pull_request:
     paths:
-      - scrape/**"
+      - "scrape/**"
       - ".github/workflows/test-scrape.yml"
 
 jobs:

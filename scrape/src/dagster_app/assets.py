@@ -394,7 +394,7 @@ def updated_post_title_metadatas(
             )
             continue
         context.log.debug(
-            f"Created patch for post title metadata, title={p.title}, metadata={meta}"
+            f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ""}, metadata={meta}"
         )
         patch = adb.create_post_patch(id=p.id, metadata=meta)
         patches.append(patch)
