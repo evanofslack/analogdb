@@ -1168,6 +1168,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "https://www.reddit.com/r/analog/comments/1/post"
                 },
+                "score": {
+                    "type": "integer",
+                    "example": 1000
+                },
                 "sprocket": {
                     "type": "boolean",
                     "example": false
@@ -1179,10 +1183,6 @@ const docTemplate = `{
                 "unix_time": {
                     "type": "integer",
                     "example": 1752354541
-                },
-                "upvotes": {
-                    "type": "integer",
-                    "example": 1000
                 }
             }
         },
@@ -1328,13 +1328,13 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": true
                 },
+                "score": {
+                    "type": "integer",
+                    "example": 1010
+                },
                 "sprocket": {
                     "type": "boolean",
                     "example": true
-                },
-                "upvotes": {
-                    "type": "integer",
-                    "example": 1010
                 }
             }
         },
@@ -1411,6 +1411,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "https://www.reddit.com/r/analog/comments/1/post"
                 },
+                "score": {
+                    "type": "integer",
+                    "example": 1000
+                },
                 "sprocket": {
                     "type": "boolean",
                     "example": false
@@ -1422,10 +1426,6 @@ const docTemplate = `{
                 "unix_time": {
                     "type": "integer",
                     "example": 1752354541
-                },
-                "upvotes": {
-                    "type": "integer",
-                    "example": 1000
                 }
             }
         },
