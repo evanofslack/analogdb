@@ -59,13 +59,12 @@ jobs:
 
       - name: Generate python client
         run: make gen-client-python
-        working-directory: .
 
       - name: build and push
         uses: docker/build-push-action@v4
         with:
-          context: "{{defaultContext}}:scrape"
-          file: ./Dockerfile
+          context: .
+          file: ./scrape/Dockerfile 
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
