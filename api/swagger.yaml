@@ -119,6 +119,9 @@ definitions:
       permalink:
         example: https://www.reddit.com/r/analog/comments/1/post
         type: string
+      score:
+        example: 1000
+        type: integer
       sprocket:
         example: false
         type: boolean
@@ -127,9 +130,6 @@ definitions:
         type: string
       unix_time:
         example: 1752354541
-        type: integer
-      upvotes:
-        example: 1000
         type: integer
     type: object
   analogdb.Error:
@@ -234,12 +234,12 @@ definitions:
       nsfw:
         example: true
         type: boolean
+      score:
+        example: 1010
+        type: integer
       sprocket:
         example: true
         type: boolean
-      upvotes:
-        example: 1010
-        type: integer
     type: object
   analogdb.Post:
     properties:
@@ -294,6 +294,9 @@ definitions:
       permalink:
         example: https://www.reddit.com/r/analog/comments/1/post
         type: string
+      score:
+        example: 1000
+        type: integer
       sprocket:
         example: false
         type: boolean
@@ -302,9 +305,6 @@ definitions:
         type: string
       unix_time:
         example: 1752354541
-        type: integer
-      upvotes:
-        example: 1000
         type: integer
     type: object
   server.CamerasResponse:
