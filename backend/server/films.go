@@ -15,7 +15,7 @@ type FilmsResponse struct {
 }
 
 type CreateFilmResponse struct {
-    Message string              `json:"message" example:"Success, film created"`
+	Message string              `json:"message" example:"Success, film created"`
 	Film    analogdb.CreateFilm `json:"film"`
 }
 
@@ -24,11 +24,14 @@ var defaultFilmsSort = analogdb.FilmSortAlphabetical
 
 const (
 	filmsPath = "/films"
+	filmPath  = "/film"
 )
 
 func (s *Server) mountFilmHandlers(r chi.Router) {
 	r.Route(filmsPath, func(r chi.Router) {
 		r.Get("/", s.getFilms)
+	})
+	r.Route(filmPath, func(r chi.Router) {
 		r.With(s.auth).Put("/", s.createFilm)
 		r.With(s.auth).Post("/", s.createFilm)
 	})
@@ -83,7 +86,7 @@ func (s *Server) makeFilmResponse(r *http.Request, filter *analogdb.FilmFilter) 
 
 // @Summary Create a new film
 // @Description Create a new film entry (requires authentication)
-// @Tags films
+// @Tags film
 // @Accept json
 // @Produce json
 // @Param film body analogdb.CreateFilm true "Film data to create"
@@ -93,8 +96,8 @@ func (s *Server) makeFilmResponse(r *http.Request, filter *analogdb.FilmFilter) 
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
-// @Router /films [put]
-// @Router /films [post]
+// @Router /film [put]
+// @Router /film [post]
 func (s *Server) createFilm(w http.ResponseWriter, r *http.Request) {
 	var createFilm analogdb.CreateFilm
 	if err := json.NewDecoder(r.Body).Decode(&createFilm); err != nil {

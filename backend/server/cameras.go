@@ -15,7 +15,7 @@ type CamerasResponse struct {
 }
 
 type CreateCameraResponse struct {
-    Message string                `json:"message" example:"Success, camera created"`
+	Message string                `json:"message" example:"Success, camera created"`
 	Camera  analogdb.CreateCamera `json:"camera"`
 }
 
@@ -24,11 +24,14 @@ var defaultCamerasSort = analogdb.CameraSortAlphabetical
 
 const (
 	camerasPath = "/cameras"
+	cameraPath  = "/camera"
 )
 
 func (s *Server) mountCameraHandlers(r chi.Router) {
 	r.Route(camerasPath, func(r chi.Router) {
 		r.Get("/", s.getCameras)
+	})
+	r.Route(cameraPath, func(r chi.Router) {
 		r.With(s.auth).Put("/", s.createCamera)
 		r.With(s.auth).Post("/", s.createCamera)
 	})
@@ -81,7 +84,7 @@ func (s *Server) makeCameraResponse(r *http.Request, filter *analogdb.CameraFilt
 
 // @Summary Create a new camera
 // @Description Create a new camera entry (requires authentication)
-// @Tags cameras
+// @Tags camera
 // @Accept json
 // @Produce json
 // @Param camera body analogdb.CreateCamera true "camera data to create"
@@ -91,8 +94,8 @@ func (s *Server) makeCameraResponse(r *http.Request, filter *analogdb.CameraFilt
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
-// @Router /cameras [put]
-// @Router /cameras [post]
+// @Router /camera [put]
+// @Router /camera [post]
 func (s *Server) createCamera(w http.ResponseWriter, r *http.Request) {
 	var createCamera analogdb.CreateCamera
 	if err := json.NewDecoder(r.Body).Decode(&createCamera); err != nil {
