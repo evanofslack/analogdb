@@ -28,6 +28,7 @@ name = "analogdb"
 version = "0.1.0"
 source = { editable = "packages/analogdb" }
 dependencies = [
+    { name = "analogdb-generated" },
     { name = "requests" },
     { name = "retry" },
 ]
@@ -39,12 +40,32 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "analogdb-generated", directory = "../api/clients/python" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "retry", specifier = ">=0.9.2" },
 ]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.4.0" }]
+
+[[package]]
+name = "analogdb-generated"
+version = "1.0.0"
+source = { directory = "../api/clients/python" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "typing-extensions" },
+    { name = "urllib3" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pydantic", specifier = ">=2" },
+    { name = "python-dateutil", specifier = ">=2.8.2" },
+    { name = "typing-extensions", specifier = ">=4.7.1" },
+    { name = "urllib3", specifier = ">=2.1.0,<3.0.0" },
+]
 
 [[package]]
 name = "annotated-types"
