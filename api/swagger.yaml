@@ -427,6 +427,85 @@ info:
   title: AnalogDB API
   version: "1.0"
 paths:
+  /camera:
+    post:
+      consumes:
+      - application/json
+      description: Create a new camera entry (requires authentication)
+      parameters:
+      - description: camera data to create
+        in: body
+        name: camera
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateCamera'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateCameraResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new camera
+      tags:
+      - camera
+    put:
+      consumes:
+      - application/json
+      description: Create a new camera entry (requires authentication)
+      parameters:
+      - description: camera data to create
+        in: body
+        name: camera
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateCamera'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateCameraResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new camera
+      tags:
+      - camera
   /cameras:
     get:
       consumes:
@@ -483,84 +562,6 @@ paths:
       summary: Get cameras with optional filtering
       tags:
       - cameras
-    post:
-      consumes:
-      - application/json
-      description: Create a new camera entry (requires authentication)
-      parameters:
-      - description: camera data to create
-        in: body
-        name: camera
-        required: true
-        schema:
-          $ref: '#/definitions/analogdb.CreateCamera'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/server.CreateCameraResponse'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "422":
-          description: Unprocessable entity
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      security:
-      - BasicAuth: []
-      summary: Create a new camera
-      tags:
-      - cameras
-    put:
-      consumes:
-      - application/json
-      description: Create a new camera entry (requires authentication)
-      parameters:
-      - description: camera data to create
-        in: body
-        name: camera
-        required: true
-        schema:
-          $ref: '#/definitions/analogdb.CreateCamera'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/server.CreateCameraResponse'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "422":
-          description: Unprocessable entity
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      security:
-      - BasicAuth: []
-      summary: Create a new camera
-      tags:
-      - cameras
   /encode:
     put:
       consumes:
@@ -602,6 +603,85 @@ paths:
       summary: Encode posts for similarity matching
       tags:
       - similarity
+  /film:
+    post:
+      consumes:
+      - application/json
+      description: Create a new film entry (requires authentication)
+      parameters:
+      - description: Film data to create
+        in: body
+        name: film
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateFilm'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateFilmResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new film
+      tags:
+      - film
+    put:
+      consumes:
+      - application/json
+      description: Create a new film entry (requires authentication)
+      parameters:
+      - description: Film data to create
+        in: body
+        name: film
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateFilm'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateFilmResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new film
+      tags:
+      - film
   /films:
     get:
       consumes:
@@ -664,84 +744,6 @@ paths:
           schema:
             $ref: '#/definitions/analogdb.Error'
       summary: Get films with optional filtering
-      tags:
-      - films
-    post:
-      consumes:
-      - application/json
-      description: Create a new film entry (requires authentication)
-      parameters:
-      - description: Film data to create
-        in: body
-        name: film
-        required: true
-        schema:
-          $ref: '#/definitions/analogdb.CreateFilm'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/server.CreateFilmResponse'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "422":
-          description: Unprocessable entity
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      security:
-      - BasicAuth: []
-      summary: Create a new film
-      tags:
-      - films
-    put:
-      consumes:
-      - application/json
-      description: Create a new film entry (requires authentication)
-      parameters:
-      - description: Film data to create
-        in: body
-        name: film
-        required: true
-        schema:
-          $ref: '#/definitions/analogdb.CreateFilm'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/server.CreateFilmResponse'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "422":
-          description: Unprocessable entity
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      security:
-      - BasicAuth: []
-      summary: Create a new film
       tags:
       - films
   /post:

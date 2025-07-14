@@ -1,0 +1,44 @@
+name: check-swagger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'Makefile'
+      - ".github/workflows/check-swagger.yml"
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'Makefile'
+      - ".github/workflows/check-swagger.yml"
+
+jobs:
+  check-swagger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.24"
+      
+      - name: Install swag
+        run: go install github.com/swaggo/swag/cmd/swag@latest
+      
+      - name: Generate swagger
+        run: make swagger
+        
+      - name: Check if swagger needs update
+        run: |
+          if ! git diff --quiet api/swagger.json api/swagger.yaml; then
+            echo "Swagger spec is out of date"
+            echo "Run: make swagger"
+            echo "Then commit the changes"
+            exit 1
+          fi
+        
+      - name: Show changes (if any)
+        if: failure()
+        run: git diff api/
