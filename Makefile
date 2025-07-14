@@ -45,3 +45,10 @@ swagger:
 	cp backend/docs/swagger.json api/
 	cp backend/docs/swagger.yaml api/
 	@echo "Swagger documentation generated and copied to api/"
+
+.PHONY: gen-client-python
+gen-client-python:
+	openapi-generator-cli generate -i api/swagger.yaml -g python -o api/clients/python \
+		--additional-properties=packageName=analogdb_generated,projectName=analogdb-generated
+	sed -i '' 's/license = "NoLicense"/license = "MIT"/' api/clients/python/pyproject.toml
+	cd scrape/packages/analogdb && uv sync
