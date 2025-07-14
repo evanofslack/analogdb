@@ -50,5 +50,7 @@ swagger:
 gen-client-python:
 	openapi-generator-cli generate -i api/swagger.yaml -g python -o api/clients/python \
 		--additional-properties=packageName=analogdb_generated,projectName=analogdb-generated
-	sed -i '' 's/license = "NoLicense"/license = "MIT"/' api/clients/python/pyproject.toml
+	sed -i.bak 's/license = "NoLicense"/license = "MIT"/' api/clients/python/pyproject.toml
+	rm -f api/clients/python/pyproject.toml.bak
 	cd scrape/packages/analogdb && uv sync
+

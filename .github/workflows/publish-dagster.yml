@@ -3,11 +3,12 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'main'
+      - "main"
     tags:
-      - 'v*'
+      - "v*"
     paths:
-      - 'scrape/**'
+      - "scrape/**"
+      - ".github/workflows/publish-dagster.yml"
 
 env:
   REGISTRY: docker.io
@@ -42,6 +43,18 @@ jobs:
 
       - name: set up docker buildx
         uses: docker/setup-buildx-action@v2
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install openapi-generator
+        run: npm install -g @openapitools/openapi-generator-cli
+
+      - name: Generate python client
+        run: make gen-client-python
+        working-directory: .
 
       - name: build and push
         uses: docker/build-push-action@v4
