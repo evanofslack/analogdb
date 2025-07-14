@@ -19,13 +19,12 @@ RUN pip install uv
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
+COPY api/clients/python/ /api/clients/python/
 
-COPY packages/ packages/
-
-COPY src/ src/
-
-COPY data/ data/
+COPY scrape/pyproject.toml scrape/uv.lock ./
+COPY scrape/packages/ packages/
+COPY scrape/src/ src/
+COPY scrape/data/ data/
 
 RUN uv venv && uv sync --frozen
 
