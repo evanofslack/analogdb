@@ -44,7 +44,7 @@ curl https://api.analogdb.com/posts
        author: navazuals,
        permalink: https://www.reddit.com/r/analog/comments/13p9lme/a_forest_on_the_coast_portra_400_canon_1v_50mm/,
        score: 89,
-       unix_time: 1684804283,
+       timestamp: 1684804283,
        nsfw: false,
        sprocket: false,
        images: [

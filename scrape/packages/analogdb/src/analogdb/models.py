@@ -211,7 +211,7 @@ class PostCreate:
         body["permalink"] = self.permalink
         body["nsfw"] = self.nsfw
         body["grayscale"] = self.grayscale
-        body["unix_time"] = self.time
+        body["timestamp"] = self.time
         body["sprocket"] = self.sprocket
         body["score"] = self.score
         if self.description is not None:
