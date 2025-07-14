@@ -744,6 +744,172 @@ paths:
       summary: Create a new film
       tags:
       - films
+  /post:
+    post:
+      consumes:
+      - application/json
+      description: Create a new post with image analysis and similarity encoding (requires
+        authentication)
+      parameters:
+      - description: Post data to create
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreatePost'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreatePostResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Create a new post
+      tags:
+      - post
+  /post/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a post by ID from database (requires authentication)
+      parameters:
+      - description: Post ID to delete
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.DeleteResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Delete a post
+      tags:
+      - post
+    get:
+      consumes:
+      - application/json
+      description: Get a post by ID from database
+      parameters:
+      - description: Post ID to get
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/analogdb.Post'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Get a post
+      tags:
+      - post
+    patch:
+      consumes:
+      - application/json
+      description: Partially update a post's properties by ID (requires authentication)
+      parameters:
+      - description: Post ID to update
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Post fields to update
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.PatchPost'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.PatchResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Update a post
+      tags:
+      - post
   /posts:
     get:
       consumes:
@@ -837,133 +1003,6 @@ paths:
           schema:
             $ref: '#/definitions/analogdb.Error'
       summary: Get posts with optional filtering and pagination
-      tags:
-      - posts
-    post:
-      consumes:
-      - application/json
-      description: Create a new post with image analysis and similarity encoding (requires
-        authentication)
-      parameters:
-      - description: Post data to create
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/analogdb.CreatePost'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/server.CreatePostResponse'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "422":
-          description: Unprocessable entity
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      security:
-      - BasicAuth: []
-      summary: Create a new post
-      tags:
-      - posts
-  /posts/{id}:
-    delete:
-      consumes:
-      - application/json
-      description: Delete a post by ID from database (requires authentication)
-      parameters:
-      - description: Post ID to delete
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/server.DeleteResponse'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "404":
-          description: Not found
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      security:
-      - BasicAuth: []
-      summary: Delete a post
-      tags:
-      - posts
-    patch:
-      consumes:
-      - application/json
-      description: Partially update a post's properties by ID (requires authentication)
-      parameters:
-      - description: Post ID to update
-        in: path
-        name: id
-        required: true
-        type: integer
-      - description: Post fields to update
-        in: body
-        name: post
-        required: true
-        schema:
-          $ref: '#/definitions/analogdb.PatchPost'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/server.PatchResponse'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "404":
-          description: Not found
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "422":
-          description: Unprocessable entity
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      security:
-      - BasicAuth: []
-      summary: Update a post
       tags:
       - posts
   /posts/ids:
