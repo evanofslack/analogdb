@@ -37,7 +37,7 @@ type CreatePost struct {
 	Author      string    `json:"author" example:"thecameraman"`
 	Permalink   string    `json:"permalink" example:"https://www.reddit.com/r/analog/comments/1/post"`
 	Description *string   `json:"description,omitempty" example:"My favorite camera and film combo on 35mm at f/2.0"`
-	Score       int       `json:"upvotes" example:"1000"`
+	Score       int       `json:"score" example:"1000"`
 	Nsfw        bool      `json:"nsfw" example:"false"`
 	Grayscale   bool      `json:"grayscale" example:"false"`
 	Time        int       `json:"unix_time" example:"1752354541"`
@@ -61,7 +61,7 @@ type DisplayPost struct {
 	Author      string    `json:"author" example:"thecameraman"`
 	Permalink   string    `json:"permalink" example:"https://www.reddit.com/r/analog/comments/1/post"`
 	Description *string   `json:"description,omitempty" example:"My favorite camera and film combo on 35mm at f/2.0"`
-	Score       int       `json:"upvotes" example:"1000"`
+	Score       int       `json:"score" example:"1000"`
 	Nsfw        bool      `json:"nsfw" example:"false"`
 	Grayscale   bool      `json:"grayscale" example:"false"`
 	Time        int       `json:"unix_time" example:"1752354541"`
@@ -82,7 +82,7 @@ type DisplayPost struct {
 // Intentionally only allow certain fields to be updated.
 // Uses pointers and omit empty to allow partial unmarshalling
 type PatchPost struct {
-	Score       *int       `json:"upvotes,omitempty" example:"1010"`
+	Score       *int       `json:"score,omitempty" example:"1010"`
 	Description *string    `json:"description,omitempty" example:"New description"`
 	Nsfw        *bool      `json:"nsfw,omitempty" example:"true"`
 	Grayscale   *bool      `json:"grayscale,omitempty" example:"false"`

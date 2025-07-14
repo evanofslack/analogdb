@@ -43,7 +43,7 @@ curl https://api.analogdb.com/posts
        title: A Forest on the Coast | Portra 400 | Canon 1V | 50mm,
        author: navazuals,
        permalink: https://www.reddit.com/r/analog/comments/13p9lme/a_forest_on_the_coast_portra_400_canon_1v_50mm/,
-       upvotes: 89,
+       score: 89,
        unix_time: 1684804283,
        nsfw: false,
        sprocket: false,
