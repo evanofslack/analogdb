@@ -801,6 +801,42 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "integer",
+                        "description": "Random seed for consistent random sorting",
+                        "name": "seed",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by post ID",
+                        "name": "id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by post title",
+                        "name": "title",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by author",
+                        "name": "author",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by start time (unix timestamp)",
+                        "name": "time_start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by end time (unix timestamp)",
+                        "name": "time_end",
+                        "in": "query"
+                    },
+                    {
                         "type": "string",
                         "description": "Filter by camera make",
                         "name": "camera_make",
@@ -843,39 +879,87 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "Filter by author",
-                        "name": "author",
-                        "in": "query"
-                    },
-                    {
                         "type": "boolean",
-                        "description": "Include NSFW posts",
+                        "description": "Filter by NSFW (true=only, false=exclude)",
                         "name": "nsfw",
                         "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "Filter by grayscale posts",
+                        "description": "Filter by black and white (true=only, false=exclude)",
                         "name": "grayscale",
                         "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "Filter by sprocket posts",
+                        "description": "Filter by sprocketshots (true=only, false=exclude)",
                         "name": "sprocket",
                         "in": "query"
                     },
                     {
-                        "type": "string",
-                        "description": "Filter by keywords (comma-separated)",
-                        "name": "keywords",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Filter by keywords (multiple allowed)",
+                        "name": "keyword",
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "Random seed for consistent random sorting",
-                        "name": "seed",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Color filter (multiple allowed)",
+                        "name": "color",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "number"
+                        },
+                        "collectionFormat": "csv",
+                        "description": "Minimum color percentage (multiple allowed)",
+                        "name": "min_color",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum picture width",
+                        "name": "width_min",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Maximum picture width",
+                        "name": "width_max",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum picture height",
+                        "name": "height_min",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Maximum picture height",
+                        "name": "height_max",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum picture aspect ratio",
+                        "name": "ratio_min",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Maximum picture aspect ratio",
+                        "name": "ratio_max",
                         "in": "query"
                     }
                 ],

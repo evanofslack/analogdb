@@ -15,7 +15,7 @@ import (
 type Meta struct {
 	TotalPosts int    `json:"total_posts" example:"200"`
 	PageSize   int    `json:"page_size" example:"20"`
-	PageID     int `json:"next_page_id" example:"1752244116"`
+	PageID     int    `json:"next_page_id" example:"1752244116"`
 	PageURL    string `json:"next_page_url" example:"/posts?sort=latest&page_size=20&page_id=1752244116"`
 	Seed       int    `json:"seed,omitempty" example:"37"`
 }
@@ -92,6 +92,12 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Param page_size query int false "Number of posts per page" default(20)
 // @Param page_id query int false "Page offset for pagination"
 // @Param sort query string false "Sort order" Enums(time,score,random) default(time)
+// @Param seed query int false "Random seed for consistent random sorting"
+// @Param id query int false "Filter by post ID"
+// @Param title query string false "Filter by post title"
+// @Param author query string false "Filter by author"
+// @Param time_start query int false "Filter by start time (unix timestamp)"
+// @Param time_end query int false "Filter by end time (unix timestamp)"
 // @Param camera_make query string false "Filter by camera make"
 // @Param camera_model query string false "Filter by camera model"
 // @Param film_make query string false "Filter by film make"
@@ -99,12 +105,18 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Param film_speed query int false "Filter by film speed"
 // @Param focal_length query int false "Filter by focal length"
 // @Param aperture query string false "Filter by aperture"
-// @Param author query string false "Filter by author"
-// @Param nsfw query bool false "Include NSFW posts"
-// @Param grayscale query bool false "Filter by grayscale posts"
-// @Param sprocket query bool false "Filter by sprocket posts"
-// @Param keywords query string false "Filter by keywords (comma-separated)"
-// @Param seed query int false "Random seed for consistent random sorting"
+// @Param nsfw query bool false "Filter by NSFW (true=only, false=exclude)"
+// @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
+// @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
+// @Param keyword query []string false "Filter by keywords (multiple allowed)"
+// @Param color query []string false "Color filter (multiple allowed)"
+// @Param min_color query []number false "Minimum color percentage (multiple allowed)"
+// @Param width_min query number false "Minimum picture width"
+// @Param width_max query number false "Maximum picture width"
+// @Param height_min query number false "Minimum picture height"
+// @Param height_max query number false "Maximum picture height"
+// @Param ratio_min query number false "Minimum picture aspect ratio"
+// @Param ratio_max query number false "Maximum picture aspect ratio"
 // @Success 200 {object} PostResponse
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 500 {object} analogdb.Error "Internal server error"
