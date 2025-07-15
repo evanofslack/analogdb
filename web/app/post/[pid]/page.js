@@ -1,4 +1,4 @@
-import { authorized_fetch } from "@lib/fetch";
+import { authorized_fetch } from "@lib/client";
 import ImagePage from "@components/imagePage";
 import { notFound } from "next/navigation";
 import { checkAdminAuth } from "@lib/auth";

@@ -1,4 +1,4 @@
-import { authorized_fetch } from "@lib/fetch";
+import { authorized_fetch } from "@lib/client";
 import { checkAdminAuth } from "@lib/auth";
 import About from "@components/about";
 import Header from "@components/header";

@@ -1,5 +1,5 @@
 import HomePage from "./home-page";
-import { authorized_fetch } from "@lib/fetch";
+import { authorized_fetch } from "@lib/client";
 import { Suspense } from "react";
 import { checkAdminAuth } from "@lib/auth";
 
