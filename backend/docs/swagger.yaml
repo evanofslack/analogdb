@@ -937,6 +937,30 @@ paths:
         in: query
         name: sort
         type: string
+      - description: Random seed for consistent random sorting
+        in: query
+        name: seed
+        type: integer
+      - description: Filter by post ID
+        in: query
+        name: id
+        type: integer
+      - description: Filter by post title
+        in: query
+        name: title
+        type: string
+      - description: Filter by author
+        in: query
+        name: author
+        type: string
+      - description: Filter by start time (unix timestamp)
+        in: query
+        name: time_start
+        type: integer
+      - description: Filter by end time (unix timestamp)
+        in: query
+        name: time_end
+        type: integer
       - description: Filter by camera make
         in: query
         name: camera_make
@@ -965,30 +989,63 @@ paths:
         in: query
         name: aperture
         type: string
-      - description: Filter by author
-        in: query
-        name: author
-        type: string
-      - description: Include NSFW posts
+      - description: Filter by NSFW (true=only, false=exclude)
         in: query
         name: nsfw
         type: boolean
-      - description: Filter by grayscale posts
+      - description: Filter by black and white (true=only, false=exclude)
         in: query
         name: grayscale
         type: boolean
-      - description: Filter by sprocket posts
+      - description: Filter by sprocketshots (true=only, false=exclude)
         in: query
         name: sprocket
         type: boolean
-      - description: Filter by keywords (comma-separated)
+      - collectionFormat: csv
+        description: Filter by keywords (multiple allowed)
         in: query
-        name: keywords
-        type: string
-      - description: Random seed for consistent random sorting
+        items:
+          type: string
+        name: keyword
+        type: array
+      - collectionFormat: csv
+        description: Color filter (multiple allowed)
         in: query
-        name: seed
-        type: integer
+        items:
+          type: string
+        name: color
+        type: array
+      - collectionFormat: csv
+        description: Minimum color percentage (multiple allowed)
+        in: query
+        items:
+          type: number
+        name: min_color
+        type: array
+      - description: Minimum picture width
+        in: query
+        name: width_min
+        type: number
+      - description: Maximum picture width
+        in: query
+        name: width_max
+        type: number
+      - description: Minimum picture height
+        in: query
+        name: height_min
+        type: number
+      - description: Maximum picture height
+        in: query
+        name: height_max
+        type: number
+      - description: Minimum picture aspect ratio
+        in: query
+        name: ratio_min
+        type: number
+      - description: Maximum picture aspect ratio
+        in: query
+        name: ratio_max
+        type: number
       produces:
       - application/json
       responses:
