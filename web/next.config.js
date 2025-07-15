@@ -1,20 +1,20 @@
-const path = require("path");
+const path = require('path');
 
 module.exports = {
-  output: "standalone",
+  output: 'standalone',
   reactStrictMode: true,
   images: {
     unoptimized: true,
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "d3i73ktnzbi69i.cloudfront.net",
+        protocol: 'https',
+        hostname: 'd3i73ktnzbi69i.cloudfront.net',
       },
     ],
   },
   experimental: {
     scrollRestoration: true,
-    optimizePackageImports: ["@mantine/core"],
+    optimizePackageImports: ['@mantine/core'],
   },
   env: {
     AUTH_USERNAME: process.env.AUTH_USERNAME,
@@ -27,11 +27,11 @@ module.exports = {
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      "@lib": path.resolve(__dirname, "lib"),
-      "@components": path.resolve(__dirname, "components"),
-      "@providers": path.resolve(__dirname, "providers"),
-      "@styles": path.resolve(__dirname, "styles"),
-      "@hooks": path.resolve(__dirname, "hooks"),
+      '@lib': path.resolve(__dirname, 'lib'),
+      '@components': path.resolve(__dirname, 'components'),
+      '@providers': path.resolve(__dirname, 'providers'),
+      '@styles': path.resolve(__dirname, 'styles'),
+      '@hooks': path.resolve(__dirname, 'hooks'),
     };
     return config;
   },

@@ -1,26 +1,26 @@
-import "@styles/globals.css";
-import "@mantine/core/styles.css";
-import "@mantine/code-highlight/styles.css";
+import '@styles/globals.css';
+import '@mantine/core/styles.css';
+import '@mantine/code-highlight/styles.css';
+import { CodeHighlightProvider } from '@components/codeHighlightProvider';
 import {
   ColorSchemeScript,
-  MantineProvider,
   mantineHtmlProps,
-} from "@mantine/core";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { BreakpointProvider } from "@providers/breakpoint";
-import { CodeHighlightProvider } from "@components/codeHighlightProvider";
+  MantineProvider,
+} from '@mantine/core';
+import { BreakpointProvider } from '@providers/breakpoint';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 
 export const metadata = {
-  title: "AnalogDB",
-  description: "The collection of film photography",
+  title: 'AnalogDB',
+  description: 'The collection of film photography',
 };
 
 const queries = {
-  xs: "(max-width: 480px)",
-  sm: "(max-width: 720px)",
-  md: "(max-width: 1024px)",
-  lg: "(max-width: 1440px)",
-  xl: "(max-width: 2048px)",
+  xs: '(max-width: 480px)',
+  sm: '(max-width: 720px)',
+  md: '(max-width: 1024px)',
+  lg: '(max-width: 1440px)',
+  xl: '(max-width: 2048px)',
 };
 
 export default function RootLayout({ children }) {

@@ -1,5 +1,5 @@
-import { PostsApi, Configuration } from "analogdb-generated";
-import { baseURL } from "./constants.js";
+import { Configuration, PostsApi } from 'analogdb-generated';
+import { baseURL } from './constants.js';
 
 const username = process.env.AUTH_USERNAME;
 const password = process.env.AUTH_PASSWORD;
@@ -13,13 +13,13 @@ const config = new Configuration({
 export const postsApi = new PostsApi(config);
 
 // Keep this for other endpoints not yet converted
-export async function authorized_fetch(route, method = "GET") {
+export async function authorized_fetch(route, method = 'GET') {
   const url = `${baseURL}${route}`;
   let headers = {};
 
   if (username && password) {
-    const auth = Buffer.from(`${username}:${password}`).toString("base64");
-    headers["Authorization"] = `Basic ${auth}`;
+    const auth = Buffer.from(`${username}:${password}`).toString('base64');
+    headers['Authorization'] = `Basic ${auth}`;
   }
 
   const response = await fetch(url, {

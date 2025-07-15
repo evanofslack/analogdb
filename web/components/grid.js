@@ -1,26 +1,27 @@
-"use client";
-import Masonry from "react-responsive-masonry";
-import { useBreakpoint } from "@providers/breakpoint.js";
-import GridImage from "./gridImage";
+'use client';
+
+import { useBreakpoint } from '@providers/breakpoint.js';
+import Masonry from 'react-responsive-masonry';
+import GridImage from './gridImage';
 
 export default function Grid(props) {
   const breakpoints = useBreakpoint();
 
   let numColumn = 5;
-  if (breakpoints["xs"]) {
+  if (breakpoints['xs']) {
     numColumn = 2;
-  } else if (breakpoints["sm"]) {
+  } else if (breakpoints['sm']) {
     numColumn = 3;
-  } else if (breakpoints["md"]) {
+  } else if (breakpoints['md']) {
     numColumn = 3;
-  } else if (breakpoints["lg"]) {
+  } else if (breakpoints['lg']) {
     numColumn = 4;
-  } else if (breakpoints["xl"]) {
+  } else if (breakpoints['xl']) {
     numColumn = 5;
   }
 
   return (
-    <Masonry columnsCount={numColumn} gutter={"15px"}>
+    <Masonry columnsCount={numColumn} gutter={'15px'}>
       {props.posts.map((post, index) => (
         <div key={index}>
           <GridImage post={post}></GridImage>

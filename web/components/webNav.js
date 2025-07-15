@@ -1,8 +1,9 @@
-"use client";
-import styles from "./webNav.module.css";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useBreakpoint } from "@providers/breakpoint";
+'use client';
+
+import { useBreakpoint } from '@providers/breakpoint';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import styles from './webNav.module.css';
 
 export default function WebNav(props) {
   let isAdmin = props.isAdmin;
@@ -11,7 +12,7 @@ export default function WebNav(props) {
   const breakpoints = useBreakpoint();
 
   let useMobile = false;
-  if (breakpoints["sm"]) {
+  if (breakpoints['sm']) {
     useMobile = true;
   }
   if (useMobile) {
@@ -22,26 +23,26 @@ export default function WebNav(props) {
       <div className={styles.headerContainer}>
         <Link
           href="/"
-          className={pathname == "/" ? styles.linkOn : styles.linkOff}
+          className={pathname == '/' ? styles.linkOn : styles.linkOff}
         >
           GALLERY
         </Link>
         <Link
           href="/about"
-          className={pathname == "/about" ? styles.linkOn : styles.linkOff}
+          className={pathname == '/about' ? styles.linkOn : styles.linkOff}
         >
           ABOUT
         </Link>
         <Link
           href="/docs"
-          className={pathname == "/docs" ? styles.linkOn : styles.linkOff}
+          className={pathname == '/docs' ? styles.linkOn : styles.linkOff}
         >
           API
         </Link>
         {isAdmin && (
           <Link
             href="/admin"
-            className={pathname == "/admin" ? styles.linkOn : styles.linkOff}
+            className={pathname == '/admin' ? styles.linkOn : styles.linkOff}
           >
             ADMIN
           </Link>

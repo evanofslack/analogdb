@@ -1,16 +1,17 @@
-"use client";
-import styles from "./header.module.css";
-import WebNav from "./webNav";
-import MobileNav from "./mobileNav";
-import Link from "next/link";
-import { useBreakpoint } from "@providers/breakpoint.js";
+'use client';
+
+import { useBreakpoint } from '@providers/breakpoint.js';
+import Link from 'next/link';
+import styles from './header.module.css';
+import MobileNav from './mobileNav';
+import WebNav from './webNav';
 
 export default function Header(props) {
   let isAdmin = props.isAdmin;
   const breakpoints = useBreakpoint();
 
   let useMobile = false;
-  if (breakpoints["sm"]) {
+  if (breakpoints['sm']) {
     useMobile = true;
   }
   return (

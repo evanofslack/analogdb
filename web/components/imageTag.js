@@ -1,10 +1,10 @@
-import styles from "./imageTag.module.css";
-import { baseURL } from "@lib/constants";
-import Image from "next/image";
-import Link from "next/link";
-import { Tooltip } from "@mantine/core";
-import { useClipboard } from "@mantine/hooks";
-import Keywords from "./keywords";
+import { baseURL } from '@lib/constants';
+import { Tooltip } from '@mantine/core';
+import { useClipboard } from '@mantine/hooks';
+import Image from 'next/image';
+import Link from 'next/link';
+import styles from './imageTag.module.css';
+import Keywords from './keywords';
 
 export default function ImageTag(props) {
   const clipboard = useClipboard({ timeout: 1000 });
@@ -12,11 +12,11 @@ export default function ImageTag(props) {
   let post = props.post;
   let similarPosts = props.similar.posts;
 
-  const api_endpoint = baseURL + "/post/";
-  const redditUserURL = "https://www.reddit.com/user/";
-  const author = post.author.replace("u/", "");
+  const api_endpoint = baseURL + '/post/';
+  const redditUserURL = 'https://www.reddit.com/user/';
+  const author = post.author.replace('u/', '');
 
-  const date = new Date(post.timestamp * 1000).toLocaleDateString("en-US");
+  const date = new Date(post.timestamp * 1000).toLocaleDateString('en-US');
 
   let hexColors = new Array();
   post.colors.forEach(function (color) {
@@ -51,7 +51,7 @@ export default function ImageTag(props) {
                 return (
                   <Tooltip
                     key={hex}
-                    label={clipboard.copied ? "copied" : hex}
+                    label={clipboard.copied ? 'copied' : hex}
                     position="top"
                     color="gray"
                   >
@@ -66,7 +66,7 @@ export default function ImageTag(props) {
               })}
             </div>
             <Keywords
-              keywords={Object.hasOwn(post, "keywords") ? post.keywords : []}
+              keywords={Object.hasOwn(post, 'keywords') ? post.keywords : []}
               maxKeywords={15}
             />
           </div>
@@ -88,7 +88,7 @@ export default function ImageTag(props) {
                     <Image
                       key={post.id}
                       priority
-                      style={{ objectFit: "cover" }}
+                      style={{ objectFit: 'cover' }}
                       src={post.images[1].url}
                       alt={`image ${post.id} by ${post.author}`}
                       sizes="100vw"

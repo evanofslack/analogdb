@@ -1,7 +1,7 @@
-import styles from "@styles/Error.module.css";
-import Header from "@components/header";
-import Footer from "@components/footer";
-import { checkAdminAuth } from "@lib/auth";
+import Footer from '@components/footer';
+import Header from '@components/header';
+import { checkAdminAuth } from '@lib/auth';
+import styles from '@styles/Error.module.css';
 
 export default async function NotFound() {
   const isAdmin = await checkAdminAuth();

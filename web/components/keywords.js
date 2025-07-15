@@ -1,6 +1,7 @@
-"use client";
-import { useRouter } from "next/navigation";
-import styles from "./keywords.module.css";
+'use client';
+
+import { useRouter } from 'next/navigation';
+import styles from './keywords.module.css';
 
 export default function Keywords({ keywords, maxKeywords = 15 }) {
   const router = useRouter();

@@ -1,7 +1,8 @@
-"use client";
-import { useState, useEffect } from "react";
-import { BsChevronDoubleUp } from "react-icons/bs";
-import styles from "./scrollTop.module.css";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { BsChevronDoubleUp } from 'react-icons/bs';
+import styles from './scrollTop.module.css';
 
 const ScrollTop = () => {
   const [visible, setVisible] = useState(false);
@@ -18,13 +19,13 @@ const ScrollTop = () => {
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: 'smooth',
     });
   };
 
   useEffect(() => {
-    window.addEventListener("scroll", toggleVisible);
-    return () => window.removeEventListener("scroll", toggleVisible);
+    window.addEventListener('scroll', toggleVisible);
+    return () => window.removeEventListener('scroll', toggleVisible);
   });
 
   return (

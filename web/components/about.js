@@ -1,23 +1,24 @@
-"use client";
-import styles from "./about.module.css";
-import Image from "next/image";
-import Link from "next/link";
-import Footer from "./footer";
-import { useBreakpoint } from "@providers/breakpoint";
-import { CodeHighlight } from "@mantine/code-highlight";
-import { IconPolaroid, IconUsers } from "@tabler/icons-react";
+'use client';
+
+import { CodeHighlight } from '@mantine/code-highlight';
+import { useBreakpoint } from '@providers/breakpoint';
+import { IconPolaroid, IconUsers } from '@tabler/icons-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import styles from './about.module.css';
+import Footer from './footer';
 
 export default function About(props) {
   const breakpoints = useBreakpoint();
   let isMobile = false;
-  if (breakpoints["sm"]) {
+  if (breakpoints['sm']) {
     isMobile = true;
   }
 
   let numPosts = props.data.numPosts;
   let numAuthors = props.data.numAuthors;
 
-  const apiQuery = "curl https://api.analogdb.com/posts";
+  const apiQuery = 'curl https://api.analogdb.com/posts';
 
   const apiResponse = `
 "meta":{
@@ -126,8 +127,8 @@ export default function About(props) {
                       language="javascript"
                       styles={{
                         code: {
-                          fontSize: "0.75rem",
-                          maxWidth: "40vw",
+                          fontSize: '0.75rem',
+                          maxWidth: '40vw',
                         },
                       }}
                     />
@@ -138,9 +139,9 @@ export default function About(props) {
                       language="javascript"
                       styles={{
                         code: {
-                          fontSize: "0.75rem",
-                          maxHeight: "70vh",
-                          maxWidth: "40vw",
+                          fontSize: '0.75rem',
+                          maxHeight: '70vh',
+                          maxWidth: '40vw',
                         },
                       }}
                     />
@@ -181,7 +182,7 @@ export default function About(props) {
             {!isMobile && (
               <div className={styles.imageThree}>
                 <Image
-                  src={"/github_logo.png"}
+                  src={'/github_logo.png'}
                   alt={`example AnalogDB API call`}
                   width="384"
                   height="216"

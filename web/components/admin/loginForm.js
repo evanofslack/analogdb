@@ -1,17 +1,17 @@
-import { loginAction } from "@lib/auth";
+import Footer from '@components/footer';
+import Header from '@components/header';
+import { loginAction } from '@lib/auth';
 import {
-  TextInput,
-  PasswordInput,
+  Alert,
   Button,
   Paper,
-  Title,
-  Alert,
+  PasswordInput,
   Stack,
-} from "@mantine/core";
-import { IconAlertCircle } from "@tabler/icons-react";
-import Header from "@components/header";
-import Footer from "@components/footer";
-import styles from "./loginForm.module.css";
+  TextInput,
+  Title,
+} from '@mantine/core';
+import { IconAlertCircle } from '@tabler/icons-react';
+import styles from './loginForm.module.css';
 
 export default function LoginForm(props) {
   let error = props.error;
@@ -52,7 +52,7 @@ export default function LoginForm(props) {
                 size="sm"
               />
 
-              {error === "invalid" && (
+              {error === 'invalid' && (
                 <Alert
                   variant="outline"
                   color="red"

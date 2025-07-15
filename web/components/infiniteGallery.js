@@ -1,10 +1,11 @@
-"use client";
-import styles from "./infiniteGallery.module.css";
-import Grid from "@components/grid";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { useState, useEffect } from "react";
-import { baseURL } from "@lib/constants";
-import { Loader } from "@mantine/core";
+'use client';
+
+import Grid from '@components/grid';
+import { baseURL } from '@lib/constants';
+import { Loader } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import InfiniteScroll from 'react-infinite-scroll-component';
+import styles from './infiniteGallery.module.css';
 
 export default function InfiniteGallery(props) {
   const [posts, setPosts] = useState(props.response.posts);
@@ -27,7 +28,7 @@ export default function InfiniteGallery(props) {
     fetch(nextPageRoute)
       .then((res) => res.json())
       .then((response) => {
-        if (response.meta.next_page_id == "") {
+        if (response.meta.next_page_id == '') {
           setHasMore(false);
         } else {
           setHasMore(true);
@@ -57,7 +58,7 @@ export default function InfiniteGallery(props) {
                 thats all folks, go take some pictures...
               </h3>
             }
-            style={{ overflowY: "hidden" }}
+            style={{ overflowY: 'hidden' }}
           >
             <Grid posts={posts} />
             <span />

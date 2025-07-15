@@ -1,5 +1,6 @@
-"use client";
-import styles from "./deletePostButton.module.css";
+'use client';
+
+import styles from './deletePostButton.module.css';
 
 export default function DeletePostButton({ postId }) {
   return (
