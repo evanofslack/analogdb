@@ -8,6 +8,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "analogdb-generated": "file:../api/clients/typescript",
     "@fontsource/courier-prime": "^4.5.0",
     "@mantine/code-highlight": "^8.0.1",
     "@mantine/core": "^8.0.1",
