@@ -1,5 +1,5 @@
-import { FiGithub } from 'react-icons/fi';
-import styles from './footer.module.css';
+import { FiGithub } from "react-icons/fi";
+import styles from "./footer.module.css";
 
 export default function Footer() {
   return (

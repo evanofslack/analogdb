@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import useKeyPress from '@hooks/useKeyPress';
-import { baseURL } from '@lib/constants.js';
+import useKeyPress from "@hooks/useKeyPress";
+import { baseURL } from "@lib/constants.js";
 import {
   Button,
   Checkbox,
@@ -11,25 +11,25 @@ import {
   SegmentedControl,
   TextInput,
   Tooltip,
-} from '@mantine/core';
-import { useBreakpoint } from '@providers/breakpoint.js';
+} from "@mantine/core";
+import { useBreakpoint } from "@providers/breakpoint.js";
 import {
   IconAdjustmentsHorizontal,
   IconArrowAutofitWidth,
   IconArrowsSort,
   IconPalette,
   IconSearch,
-} from '@tabler/icons-react';
-import { useQueryState } from 'nuqs';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import Footer from './footer';
-import styles from './gallery.module.css';
-import Header from './header';
-import InfiniteGallery from './infiniteGallery';
-import ScrollTop from './scrollTop';
+} from "@tabler/icons-react";
+import { useQueryState } from "nuqs";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Footer from "./footer";
+import styles from "./gallery.module.css";
+import Header from "./header";
+import InfiniteGallery from "./infiniteGallery";
+import ScrollTop from "./scrollTop";
 
 async function makeRequest(queryParams) {
-  const route = '/posts' + queryParams;
+  const route = "/posts" + queryParams;
   const response = await fetch(baseURL + route);
   const data = await response.json();
   return data;
@@ -46,136 +46,136 @@ function filterQueryParams(
   height,
   ratio
 ) {
-  let queryParams = '?' + 'sort=' + sort;
+  let queryParams = "?" + "sort=" + sort;
 
   switch (nsfw) {
-    case 'exclude':
-      queryParams = queryParams.concat('&nsfw=false');
+    case "exclude":
+      queryParams = queryParams.concat("&nsfw=false");
       break;
-    case 'only':
-      queryParams = queryParams.concat('&nsfw=true');
+    case "only":
+      queryParams = queryParams.concat("&nsfw=true");
       break;
   }
 
   switch (bw) {
-    case 'exclude':
-      queryParams = queryParams.concat('&grayscale=false');
+    case "exclude":
+      queryParams = queryParams.concat("&grayscale=false");
       break;
-    case 'only':
-      queryParams = queryParams.concat('&grayscale=true');
+    case "only":
+      queryParams = queryParams.concat("&grayscale=true");
       break;
   }
 
   switch (sprocket) {
-    case 'exclude':
-      queryParams = queryParams.concat('&sprocket=false');
+    case "exclude":
+      queryParams = queryParams.concat("&sprocket=false");
       break;
-    case 'only':
-      queryParams = queryParams.concat('&sprocket=true');
+    case "only":
+      queryParams = queryParams.concat("&sprocket=true");
       break;
   }
 
-  if (text !== '') {
+  if (text !== "") {
     let keywords = text.split(/[ ,]+/).filter(Boolean);
     keywords.forEach(
-      (word) => (queryParams = queryParams.concat('&keyword=' + word))
+      (word) => (queryParams = queryParams.concat("&keyword=" + word))
     );
   }
 
-  if (color !== '') {
-    queryParams = queryParams.concat('&color=' + color);
-    if (color === 'gray') {
-      queryParams = queryParams.concat('&min_color=' + '0.8');
-    } else if (color === 'black') {
-      queryParams = queryParams.concat('&min_color=' + '0.7');
-    } else if (color === 'white') {
-      queryParams = queryParams.concat('&min_color=' + '0.50');
-    } else if (color === 'teal') {
-      queryParams = queryParams.concat('&min_color=' + '0.35');
-    } else if (color === 'olive' || color === 'brown') {
-      queryParams = queryParams.concat('&min_color=' + '0.35');
-    } else if (color === 'tan') {
-      queryParams = queryParams.concat('&min_color=' + '0.30');
-    } else if (color === 'navy' || color === 'green') {
-      queryParams = queryParams.concat('&min_color=' + '0.25');
+  if (color !== "") {
+    queryParams = queryParams.concat("&color=" + color);
+    if (color === "gray") {
+      queryParams = queryParams.concat("&min_color=" + "0.8");
+    } else if (color === "black") {
+      queryParams = queryParams.concat("&min_color=" + "0.7");
+    } else if (color === "white") {
+      queryParams = queryParams.concat("&min_color=" + "0.50");
+    } else if (color === "teal") {
+      queryParams = queryParams.concat("&min_color=" + "0.35");
+    } else if (color === "olive" || color === "brown") {
+      queryParams = queryParams.concat("&min_color=" + "0.35");
+    } else if (color === "tan") {
+      queryParams = queryParams.concat("&min_color=" + "0.30");
+    } else if (color === "navy" || color === "green") {
+      queryParams = queryParams.concat("&min_color=" + "0.25");
     } else {
-      queryParams = queryParams.concat('&min_color=' + '0.15');
+      queryParams = queryParams.concat("&min_color=" + "0.15");
     }
   }
 
-  queryParams = queryParams.concat('&width_min=' + width[0]);
-  queryParams = queryParams.concat('&width_max=' + width[1]);
-  queryParams = queryParams.concat('&height_min=' + height[0]);
-  queryParams = queryParams.concat('&height_max=' + height[1]);
-  queryParams = queryParams.concat('&ratio_min=' + ratio[0]);
-  queryParams = queryParams.concat('&ratio_max=' + ratio[1]);
+  queryParams = queryParams.concat("&width_min=" + width[0]);
+  queryParams = queryParams.concat("&width_max=" + width[1]);
+  queryParams = queryParams.concat("&height_min=" + height[0]);
+  queryParams = queryParams.concat("&height_max=" + height[1]);
+  queryParams = queryParams.concat("&ratio_min=" + ratio[0]);
+  queryParams = queryParams.concat("&ratio_max=" + ratio[1]);
 
-  queryParams = queryParams.concat('&page_size=' + 100);
+  queryParams = queryParams.concat("&page_size=" + 100);
 
   // console.log(queryParams);
 
   return queryParams;
 }
 
-const defaultSort = 'latest';
-const defaultNsfw = 'exclude';
-const defaultBw = 'exclude';
-const defaultSprocket = 'include';
-const defaultColor = '';
-const defaultText = '';
+const defaultSort = "latest";
+const defaultNsfw = "exclude";
+const defaultBw = "exclude";
+const defaultSprocket = "include";
+const defaultColor = "";
+const defaultText = "";
 
 export default function Gallery(props) {
   let isAdmin = props.isAdmin;
   let data = props.data;
 
   // querystate
-  const [sort, setSort] = useQueryState('sort', {
-    history: 'push',
+  const [sort, setSort] = useQueryState("sort", {
+    history: "push",
     defaultValue: defaultSort,
   });
-  const [nsfw, setNsfw] = useQueryState('nsfw', {
-    history: 'push',
+  const [nsfw, setNsfw] = useQueryState("nsfw", {
+    history: "push",
     defaultValue: defaultNsfw,
   });
-  const [bw, setBw] = useQueryState('bw', {
-    history: 'push',
+  const [bw, setBw] = useQueryState("bw", {
+    history: "push",
     defaultValue: defaultBw,
   });
-  const [sprocket, setSprocket] = useQueryState('sprocket', {
-    history: 'push',
+  const [sprocket, setSprocket] = useQueryState("sprocket", {
+    history: "push",
     defaultValue: defaultSprocket,
   });
 
   // handle setting sizes
   let widthMinLimit = 600;
   let widthMaxLimit = 15000;
-  const [widthMin, setWidthMin] = useQueryState('widthMin', {
+  const [widthMin, setWidthMin] = useQueryState("widthMin", {
     defaultValue: widthMinLimit,
   });
-  const [widthMax, setWidthMax] = useQueryState('widthMax', {
+  const [widthMax, setWidthMax] = useQueryState("widthMax", {
     defaultValue: widthMaxLimit,
   });
 
   let heightMinLimit = 400;
   let heightMaxLimit = 12000;
-  const [heightMin, setHeightMin] = useQueryState('heightMin', {
+  const [heightMin, setHeightMin] = useQueryState("heightMin", {
     defaultValue: heightMinLimit,
   });
-  const [heightMax, setHeightMax] = useQueryState('heightMax', {
+  const [heightMax, setHeightMax] = useQueryState("heightMax", {
     defaultValue: heightMaxLimit,
   });
 
   let ratioMinLimit = 0.3;
   let ratioMaxLimit = 4.8;
-  const [ratioMin, setRatioMin] = useQueryState('ratioMin', {
+  const [ratioMin, setRatioMin] = useQueryState("ratioMin", {
     defaultValue: ratioMinLimit,
   });
-  const [ratioMax, setRatioMax] = useQueryState('ratioMax', {
+  const [ratioMax, setRatioMax] = useQueryState("ratioMax", {
     defaultValue: ratioMaxLimit,
   });
 
   // handle setting colors
-  const [color, setColor] = useQueryState('color', { defaultValue: '' });
+  const [color, setColor] = useQueryState("color", { defaultValue: "" });
 
   const handleColorClick = (event) => {
     let clickedColor = event.target.id;
@@ -190,20 +190,20 @@ export default function Gallery(props) {
   // hold input text in temp variable and
   // only set query state on updateRequest.
   // but temp value must come from query state, so direct routes set it.
-  const [text, setText] = useQueryState('text', { defaultValue: '' });
-  const [textTemp, setTextTemp] = useState(text || ''); // Initialize with URL value
+  const [text, setText] = useQueryState("text", { defaultValue: "" });
+  const [textTemp, setTextTemp] = useState(text || ""); // Initialize with URL value
 
-  const returnPress = useKeyPress('Enter');
+  const returnPress = useKeyPress("Enter");
 
   const breakpoints = useBreakpoint();
 
   let onlyIcon = false;
-  if (breakpoints['xs'] || breakpoints['sm']) {
+  if (breakpoints["xs"] || breakpoints["sm"]) {
     onlyIcon = true;
   }
 
   const textPlaceholder = () => {
-    return onlyIcon ? 'films, cameras...' : 'films, cameras, places...';
+    return onlyIcon ? "films, cameras..." : "films, cameras, places...";
   };
 
   const [response, setResponse] = useState(data);
@@ -303,11 +303,11 @@ export default function Gallery(props) {
                     marginRight: 10,
                     paddingLeft: 10,
                     paddingRight: onlyIcon ? 0 : 10,
-                    color: '#2E2E2E',
+                    color: "#2E2E2E",
                     fontWeight: 400,
-                    borderColor: '#CED4DA',
-                    '&:hover': {
-                      backgroundColor: '#fbfbfc',
+                    borderColor: "#CED4DA",
+                    "&:hover": {
+                      backgroundColor: "#fbfbfc",
                     },
                     leftSection: {
                       marginRight: 5,
@@ -431,11 +431,11 @@ export default function Gallery(props) {
                     marginRight: 10,
                     paddingLeft: 10,
                     paddingRight: onlyIcon ? 0 : 10,
-                    color: '#2E2E2E',
+                    color: "#2E2E2E",
                     fontWeight: 400,
-                    borderColor: '#CED4DA',
-                    '&:hover': {
-                      backgroundColor: '#fbfbfc',
+                    borderColor: "#CED4DA",
+                    "&:hover": {
+                      backgroundColor: "#fbfbfc",
                     },
                     leftSection: {
                       marginRight: 5,
@@ -451,260 +451,260 @@ export default function Gallery(props) {
               <div className={styles.colors}>
                 <Tooltip
                   label="red"
-                  color={color === 'red' ? 'red.8' : 'red.7'}
+                  color={color === "red" ? "red.8" : "red.7"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#f03e3e', border: 'None' },
+                      input: { backgroundColor: "#f03e3e", border: "None" },
                     }}
                     size="md"
                     color="red.8"
-                    checked={color === 'red'}
+                    checked={color === "red"}
                     onChange={handleColorClick}
                     key={1}
-                    id={'red'}
+                    id={"red"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="orange"
-                  color={color === 'orange' ? 'orange.7' : 'orange.6'}
+                  color={color === "orange" ? "orange.7" : "orange.6"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#fd7e14', border: 'None' },
+                      input: { backgroundColor: "#fd7e14", border: "None" },
                     }}
                     size="md"
                     color="orange.7"
-                    checked={color === 'orange'}
+                    checked={color === "orange"}
                     onChange={handleColorClick}
                     key={2}
-                    id={'orange'}
+                    id={"orange"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="beige"
-                  color={color === 'tan' ? 'brown.2' : 'brown.1'}
+                  color={color === "tan" ? "brown.2" : "brown.1"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#ffdcb0', border: 'None' },
+                      input: { backgroundColor: "#ffdcb0", border: "None" },
                     }}
                     size="md"
                     color="brown.2"
-                    checked={color === 'tan'}
+                    checked={color === "tan"}
                     onChange={handleColorClick}
                     key={3}
-                    id={'tan'}
+                    id={"tan"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="yellow"
-                  color={color === 'yellow' ? 'yellow.5' : 'yellow.4'}
+                  color={color === "yellow" ? "yellow.5" : "yellow.4"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#ffd43b', border: 'None' },
+                      input: { backgroundColor: "#ffd43b", border: "None" },
                     }}
                     size="md"
                     color="yellow.5"
-                    checked={color === 'yellow'}
+                    checked={color === "yellow"}
                     onChange={handleColorClick}
                     key={4}
-                    id={'yellow'}
+                    id={"yellow"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="green"
-                  color={color === 'green' ? 'green.9' : 'green.8'}
+                  color={color === "green" ? "green.9" : "green.8"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#2f9e44', border: 'None' },
+                      input: { backgroundColor: "#2f9e44", border: "None" },
                     }}
                     size="md"
                     color="green.9"
-                    checked={color === 'green'}
+                    checked={color === "green"}
                     onChange={handleColorClick}
                     key={5}
-                    id={'green'}
+                    id={"green"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="olive"
-                  color={color === 'olive' ? 'olive.9' : 'olive.8'}
+                  color={color === "olive" ? "olive.9" : "olive.8"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#4c4d00', border: 'None' },
+                      input: { backgroundColor: "#4c4d00", border: "None" },
                     }}
                     size="md"
                     color="olive.9"
-                    checked={color === 'olive'}
+                    checked={color === "olive"}
                     onChange={handleColorClick}
                     key={6}
-                    id={'olive'}
+                    id={"olive"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="teal"
-                  color={color === 'teal' ? 'cyan.6' : 'cyan.5'}
+                  color={color === "teal" ? "cyan.6" : "cyan.5"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#22b8cf', border: 'None' },
+                      input: { backgroundColor: "#22b8cf", border: "None" },
                     }}
                     size="md"
                     color="cyan.6"
-                    checked={color === 'teal'}
+                    checked={color === "teal"}
                     onChange={handleColorClick}
                     key={7}
-                    id={'teal'}
+                    id={"teal"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="navy"
-                  color={color === 'navy' ? 'navy.8' : 'navy.7'}
+                  color={color === "navy" ? "navy.8" : "navy.7"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#064679', border: 'None' },
+                      input: { backgroundColor: "#064679", border: "None" },
                     }}
                     size="md"
                     color="navy.8"
-                    checked={color === 'navy'}
+                    checked={color === "navy"}
                     onChange={handleColorClick}
                     key={8}
-                    id={'navy'}
+                    id={"navy"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="purple"
-                  color={color === 'purple' ? 'grape.9' : 'grape.8'}
+                  color={color === "purple" ? "grape.9" : "grape.8"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#9c36b5', border: 'None' },
+                      input: { backgroundColor: "#9c36b5", border: "None" },
                     }}
                     size="md"
                     color="grape.9"
-                    checked={color === 'purple'}
+                    checked={color === "purple"}
                     onChange={handleColorClick}
                     key={9}
-                    id={'purple'}
+                    id={"purple"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="gray"
-                  color={color === 'gray' ? 'dark.3' : 'dark.2'}
+                  color={color === "gray" ? "dark.3" : "dark.2"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#868e96', border: 'None' },
+                      input: { backgroundColor: "#868e96", border: "None" },
                     }}
                     size="md"
                     color="dark.3"
-                    checked={color === 'gray'}
+                    checked={color === "gray"}
                     onChange={handleColorClick}
                     key={10}
-                    id={'gray'}
+                    id={"gray"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="brown"
-                  color={color === 'brown' ? 'brown.8' : 'brown.7'}
+                  color={color === "brown" ? "brown.8" : "brown.7"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#7d4500', border: 'None' },
+                      input: { backgroundColor: "#7d4500", border: "None" },
                     }}
                     size="md"
                     color="brown.8"
-                    checked={color === 'brown'}
+                    checked={color === "brown"}
                     onChange={handleColorClick}
                     key={11}
-                    id={'brown'}
+                    id={"brown"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="black"
-                  color={color === 'black' ? 'dark.9' : 'dark.8'}
+                  color={color === "black" ? "dark.9" : "dark.8"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#141517', border: 'None' },
+                      input: { backgroundColor: "#141517", border: "None" },
                     }}
                     size="md"
                     color="dark.9"
-                    checked={color === 'black'}
+                    checked={color === "black"}
                     onChange={handleColorClick}
                     key={12}
-                    id={'black'}
+                    id={"black"}
                     className={styles.colorButton}
                     radius="xs"
                   />
                 </Tooltip>
                 <Tooltip
                   label="white"
-                  color={color === 'white' ? 'gray.3' : 'gray.2'}
+                  color={color === "white" ? "gray.3" : "gray.2"}
                   position="right"
                   withArrow
                 >
                   <Checkbox
                     styles={{
-                      input: { backgroundColor: '#e9ecef', border: 'None' },
+                      input: { backgroundColor: "#e9ecef", border: "None" },
                     }}
                     size="md"
                     color="gray.3"
-                    checked={color === 'white'}
+                    checked={color === "white"}
                     onChange={handleColorClick}
                     key={13}
-                    id={'white'}
+                    id={"white"}
                     className={styles.colorButton}
                     radius="xs"
                   />
@@ -726,11 +726,11 @@ export default function Gallery(props) {
                     marginRight: 10,
                     paddingLeft: 10,
                     paddingRight: onlyIcon ? 0 : 10,
-                    color: '#2E2E2E',
+                    color: "#2E2E2E",
                     fontWeight: 400,
-                    borderColor: '#CED4DA',
-                    '&:hover': {
-                      backgroundColor: '#fbfbfc',
+                    borderColor: "#CED4DA",
+                    "&:hover": {
+                      backgroundColor: "#fbfbfc",
                     },
                     leftSection: {
                       marginRight: 5,
@@ -787,11 +787,11 @@ export default function Gallery(props) {
                     marginRight: 10,
                     paddingLeft: 10,
                     paddingRight: onlyIcon ? 0 : 10,
-                    color: '#2E2E2E',
+                    color: "#2E2E2E",
                     fontWeight: 400,
-                    borderColor: '#CED4DA',
-                    '&:hover': {
-                      backgroundColor: '#fbfbfc',
+                    borderColor: "#CED4DA",
+                    "&:hover": {
+                      backgroundColor: "#fbfbfc",
                     },
                     leftSection: {
                       marginRight: 5,
@@ -811,9 +811,9 @@ export default function Gallery(props) {
                     value={nsfw}
                     onChange={setNsfw}
                     data={[
-                      { label: 'exclude', value: 'exclude' },
-                      { label: 'include', value: 'include' },
-                      { label: 'only', value: 'only' },
+                      { label: "exclude", value: "exclude" },
+                      { label: "include", value: "include" },
+                      { label: "only", value: "only" },
                     ]}
                   />
                 </div>
@@ -823,9 +823,9 @@ export default function Gallery(props) {
                     value={bw}
                     onChange={setBw}
                     data={[
-                      { label: 'exclude', value: 'exclude' },
-                      { label: 'include', value: 'include' },
-                      { label: 'only', value: 'only' },
+                      { label: "exclude", value: "exclude" },
+                      { label: "include", value: "include" },
+                      { label: "only", value: "only" },
                     ]}
                   />
                 </div>
@@ -835,9 +835,9 @@ export default function Gallery(props) {
                     value={sprocket}
                     onChange={setSprocket}
                     data={[
-                      { label: 'exclude', value: 'exclude' },
-                      { label: 'include', value: 'include' },
-                      { label: 'only', value: 'only' },
+                      { label: "exclude", value: "exclude" },
+                      { label: "include", value: "include" },
+                      { label: "only", value: "only" },
                     ]}
                   />
                 </div>

@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { AiOutlineMenu } from 'react-icons/ai';
-import { BiCheck } from 'react-icons/bi';
-import { FiGithub } from 'react-icons/fi';
-import { GrClose } from 'react-icons/gr';
-import styles from './mobileNav.module.css';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { AiOutlineMenu } from "react-icons/ai";
+import { BiCheck } from "react-icons/bi";
+import { FiGithub } from "react-icons/fi";
+import { GrClose } from "react-icons/gr";
+import styles from "./mobileNav.module.css";
 
 export default function MobileNav(props) {
   let isAdmin = props.isAdmin;
@@ -30,7 +30,7 @@ export default function MobileNav(props) {
                 <div className={styles.icon}>
                   <div className={styles.check}>
                     <h1 className={styles.iconText}>GALLERY</h1>
-                    {pathname === '/' && <BiCheck size="2rem" />}
+                    {pathname === "/" && <BiCheck size="2rem" />}
                   </div>
                 </div>
               </Link>
@@ -38,7 +38,7 @@ export default function MobileNav(props) {
                 <div className={styles.icon}>
                   <div className={styles.check}>
                     <h1 className={styles.iconText}>ABOUT</h1>
-                    {pathname === '/about' && <BiCheck size="2rem" />}
+                    {pathname === "/about" && <BiCheck size="2rem" />}
                   </div>
                 </div>
               </Link>
@@ -46,7 +46,7 @@ export default function MobileNav(props) {
                 <div className={styles.icon}>
                   <div className={styles.check}>
                     <h1 className={styles.iconText}>API</h1>
-                    {pathname === '/docs' && <BiCheck size="2rem" />}
+                    {pathname === "/docs" && <BiCheck size="2rem" />}
                   </div>
                 </div>
               </Link>
@@ -55,7 +55,7 @@ export default function MobileNav(props) {
                   <div className={styles.icon}>
                     <div className={styles.check}>
                       <h1 className={styles.iconText}>ADMIN</h1>
-                      {pathname === '/admin' && <BiCheck size="2rem" />}
+                      {pathname === "/admin" && <BiCheck size="2rem" />}
                     </div>
                   </div>
                 </Link>

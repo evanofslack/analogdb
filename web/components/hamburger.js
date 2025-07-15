@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { AiOutlineTrophy } from 'react-icons/ai';
-import { BiShuffle, BiTimeFive } from 'react-icons/bi';
-import { RiCameraLensFill } from 'react-icons/ri';
-import styles from './hamburger.module.css';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AiOutlineTrophy } from "react-icons/ai";
+import { BiShuffle, BiTimeFive } from "react-icons/bi";
+import { RiCameraLensFill } from "react-icons/ri";
+import styles from "./hamburger.module.css";
 
 export default function Hamburger() {
   const router = useRouter();
@@ -16,7 +16,7 @@ export default function Hamburger() {
         <div className={styles.headerContainer}>
           <Link
             href="/"
-            className={router.pathname == '/' ? styles.linkOn : styles.linkOff}
+            className={router.pathname == "/" ? styles.linkOn : styles.linkOff}
           >
             <div className={styles.icon}>
               <AiOutlineTrophy size="1.8rem" />
@@ -26,7 +26,7 @@ export default function Hamburger() {
           <Link
             href="/latest"
             className={
-              router.pathname == '/latest' ? styles.linkOn : styles.linkOff
+              router.pathname == "/latest" ? styles.linkOn : styles.linkOff
             }
           >
             <div className={styles.icon}>
@@ -37,7 +37,7 @@ export default function Hamburger() {
           <Link
             href="/random"
             className={
-              router.pathname == '/random' ? styles.linkOn : styles.linkOff
+              router.pathname == "/random" ? styles.linkOn : styles.linkOff
             }
           >
             <div className={styles.icon}>
@@ -48,7 +48,7 @@ export default function Hamburger() {
           <Link
             href="/bw"
             className={
-              router.pathname == '/bw' ? styles.linkOn : styles.linkOff
+              router.pathname == "/bw" ? styles.linkOn : styles.linkOff
             }
           >
             <div className={styles.icon}>

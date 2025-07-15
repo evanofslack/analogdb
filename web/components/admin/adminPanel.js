@@ -1,9 +1,9 @@
-import Footer from '@components/footer';
-import Header from '@components/header';
-import { logoutAction } from '@lib/auth';
-import { Button, Container, Group, Text, Title } from '@mantine/core';
-import { IconLogout } from '@tabler/icons-react';
-import styles from './adminPanel.module.css';
+import Footer from "@components/footer";
+import Header from "@components/header";
+import { logoutAction } from "@lib/auth";
+import { Button, Container, Group, Text, Title } from "@mantine/core";
+import { IconLogout } from "@tabler/icons-react";
+import styles from "./adminPanel.module.css";
 
 export default function AdminPanel(props) {
   let isAdmin = props.isAdmin;

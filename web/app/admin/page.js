@@ -1,6 +1,6 @@
-import AdminPanel from '@components/admin/adminPanel';
-import LoginForm from '@components/admin/loginForm';
-import { checkAdminAuth } from '@lib/auth';
+import AdminPanel from "@components/admin/adminPanel";
+import LoginForm from "@components/admin/loginForm";
+import { checkAdminAuth } from "@lib/auth";
 
 export default async function AdminPage({ searchParams }) {
   const isAdmin = await checkAdminAuth();

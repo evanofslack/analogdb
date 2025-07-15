@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import Footer from '@components/footer';
-import Header from '@components/header';
-import { checkAdminAuth } from '@lib/auth';
-import styles from '@styles/Error.module.css';
+import Footer from "@components/footer";
+import Header from "@components/header";
+import { checkAdminAuth } from "@lib/auth";
+import styles from "@styles/Error.module.css";
 
 export default async function Error({ error, reset }) {
   const isAdmin = await checkAdminAuth();

@@ -1,35 +1,35 @@
-'use client';
+"use client";
 
-import Footer from '@components/footer';
-import ImageTag from '@components/imageTag';
-import { ActionIcon, Tooltip } from '@mantine/core';
-import Image from 'next/image';
-import Link from 'next/link';
+import Footer from "@components/footer";
+import ImageTag from "@components/imageTag";
+import { ActionIcon, Tooltip } from "@mantine/core";
+import Image from "next/image";
+import Link from "next/link";
 import {
   AiOutlineArrowsAlt,
   AiOutlineDelete,
   AiOutlineDownload,
-} from 'react-icons/ai';
-import styles from './imagePage.module.css';
+} from "react-icons/ai";
+import styles from "./imagePage.module.css";
 
 async function handleDelete(postId) {
-  if (!confirm('Are you sure you want to delete this post?')) return;
+  if (!confirm("Are you sure you want to delete this post?")) return;
 
   const route = `/api/post/${postId}`;
   try {
     const response = await fetch(route, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
     });
 
     if (response.ok) {
-      window.location.href = '/';
+      window.location.href = "/";
     } else {
-      alert('Failed to delete post');
+      alert("Failed to delete post");
     }
   } catch (error) {
-    console.error('Error deleting post:', error);
-    alert('Error deleting post');
+    console.error("Error deleting post:", error);
+    alert("Error deleting post");
   }
 }
 
@@ -38,14 +38,14 @@ async function downloadImage(targetImage, name) {
     const downloadUrl = `/api/download?url=${encodeURIComponent(
       targetImage
     )}&filename=analogdb-${name}.jpg`;
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = downloadUrl;
     link.download = `analogdb-${name}.jpg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   } catch (error) {
-    console.error('Download failed:', error);
+    console.error("Download failed:", error);
     // Show user-friendly error message
   }
 }
@@ -68,7 +68,7 @@ export default function ImagePage(props) {
         <div className={styles.imageContainer}>
           <Image
             priority
-            style={{ objectFit: 'contain' }}
+            style={{ objectFit: "contain" }}
             fill
             src={image.url}
             alt={`image ${post.id} by ${post.author}`}

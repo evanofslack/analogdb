@@ -1,24 +1,24 @@
-import About from '@components/about';
-import styles from '@components/gallery.module.css';
-import Header from '@components/header';
-import { checkAdminAuth } from '@lib/auth';
-import { authorized_fetch } from '@lib/client';
+import About from "@components/about";
+import styles from "@components/gallery.module.css";
+import Header from "@components/header";
+import { checkAdminAuth } from "@lib/auth";
+import { authorized_fetch } from "@lib/client";
 
 export const metadata = {
-  title: 'AnalogDB',
-  description: 'Film photography database',
+  title: "AnalogDB",
+  description: "Film photography database",
 };
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
 async function getData() {
-  const postsRoute = '/posts';
-  const postsResponse = await authorized_fetch(postsRoute, 'GET');
+  const postsRoute = "/posts";
+  const postsResponse = await authorized_fetch(postsRoute, "GET");
   const postsData = await postsResponse.json();
   const numPosts = postsData.meta.total_posts;
 
-  const authorsRoute = '/authors';
-  const authorsResponse = await authorized_fetch(authorsRoute, 'GET');
+  const authorsRoute = "/authors";
+  const authorsResponse = await authorized_fetch(authorsRoute, "GET");
   const authorsData = await authorsResponse.json();
   const numAuthors = [...new Set(authorsData.authors)].length;
 

@@ -1,29 +1,29 @@
-'use client';
+"use client";
 
-import { CodeHighlight } from '@mantine/code-highlight';
-import { Code, Divider, Table } from '@mantine/core';
-import { useBreakpoint } from '@providers/breakpoint';
-import Link from 'next/link';
-import styles from './documentation.module.css';
-import Footer from './footer';
+import { CodeHighlight } from "@mantine/code-highlight";
+import { Code, Divider, Table } from "@mantine/core";
+import { useBreakpoint } from "@providers/breakpoint";
+import Link from "next/link";
+import styles from "./documentation.module.css";
+import Footer from "./footer";
 
 export default function Documentation() {
   const breakpoints = useBreakpoint();
   let isMobile = false;
-  if (breakpoints['sm']) {
+  if (breakpoints["sm"]) {
     isMobile = true;
   }
 
   const paginations = [
     {
-      field: 'page_size',
+      field: "page_size",
       description:
-        'set the number of records to return on each page (default 20, maximum 200)',
+        "set the number of records to return on each page (default 20, maximum 200)",
     },
     {
-      field: 'page_id',
+      field: "page_id",
       description:
-        'request a specific page of results. Each request returns a next_page_id that can be used to access the next page of results',
+        "request a specific page of results. Each request returns a next_page_id that can be used to access the next page of results",
     },
   ];
 
@@ -37,21 +37,21 @@ export default function Documentation() {
   ));
   // image resource table
   const images = [
-    { field: 'url', type: 'string', description: 'link to image' },
+    { field: "url", type: "string", description: "link to image" },
     {
-      field: 'resolution',
-      type: 'string',
-      description: 'low, medium, high, raw',
+      field: "resolution",
+      type: "string",
+      description: "low, medium, high, raw",
     },
     {
-      field: 'width',
-      type: 'integer',
-      description: 'width of image in pixels',
+      field: "width",
+      type: "integer",
+      description: "width of image in pixels",
     },
     {
-      field: 'height',
-      type: 'integer',
-      description: 'height of image in pixels',
+      field: "height",
+      type: "integer",
+      description: "height of image in pixels",
     },
   ];
 
@@ -67,51 +67,51 @@ export default function Documentation() {
 
   // post resource table
   const posts = [
-    { field: 'id', type: 'integer', description: 'unique identifier' },
+    { field: "id", type: "integer", description: "unique identifier" },
     {
-      field: 'title',
-      type: 'string',
-      description: 'title of post',
+      field: "title",
+      type: "string",
+      description: "title of post",
     },
     {
-      field: 'author',
-      type: 'string',
-      description: 'author of post',
+      field: "author",
+      type: "string",
+      description: "author of post",
     },
     {
-      field: 'permalink',
-      type: 'string',
-      description: 'url of post source',
+      field: "permalink",
+      type: "string",
+      description: "url of post source",
     },
     {
-      field: 'score',
-      type: 'integer',
-      description: 'total votes of post',
+      field: "score",
+      type: "integer",
+      description: "total votes of post",
     },
     {
-      field: 'timestamp',
-      type: 'integer',
-      description: 'time of post creation (unix time)',
+      field: "timestamp",
+      type: "integer",
+      description: "time of post creation (unix time)",
     },
     {
-      field: 'nsfw',
-      type: 'bool',
-      description: 'image is NSFW (not safe for work, 18+)',
+      field: "nsfw",
+      type: "bool",
+      description: "image is NSFW (not safe for work, 18+)",
     },
     {
-      field: 'grayscale',
-      type: 'bool',
-      description: 'image is graysacle (black & white)',
+      field: "grayscale",
+      type: "bool",
+      description: "image is graysacle (black & white)",
     },
     {
-      field: 'sprocket',
-      type: 'bool',
-      description: 'image is a sprocket shot (exposed film sockets)',
+      field: "sprocket",
+      type: "bool",
+      description: "image is a sprocket shot (exposed film sockets)",
     },
     {
-      field: 'images',
-      type: 'array[image]',
-      description: 'list of image',
+      field: "images",
+      type: "array[image]",
+      description: "list of image",
     },
   ];
 
@@ -128,24 +128,24 @@ export default function Documentation() {
   // meta resource table
   const metas = [
     {
-      field: 'total_posts',
-      type: 'integer',
-      description: 'total number of posts served by endpoint query',
+      field: "total_posts",
+      type: "integer",
+      description: "total number of posts served by endpoint query",
     },
     {
-      field: 'page_size',
-      type: 'integer',
-      description: 'maximum number of posts returned per page',
+      field: "page_size",
+      type: "integer",
+      description: "maximum number of posts returned per page",
     },
     {
-      field: 'next_page_id',
-      type: 'integer',
-      description: 'unique identifier of next page',
+      field: "next_page_id",
+      type: "integer",
+      description: "unique identifier of next page",
     },
     {
-      field: 'next_page_url',
-      type: 'string',
-      description: 'url path to fetch next page',
+      field: "next_page_url",
+      type: "string",
+      description: "url path to fetch next page",
     },
   ];
 
@@ -162,22 +162,22 @@ export default function Documentation() {
   // general params table
   const generals = [
     {
-      param: 'sort',
-      description: 'how to order the posts',
-      default: 'latest',
-      options: 'latest, top, random',
+      param: "sort",
+      description: "how to order the posts",
+      default: "latest",
+      options: "latest, top, random",
     },
     {
-      param: 'page_size',
-      description: 'maximum number of posts returned',
-      default: '20',
-      options: '1-200',
+      param: "page_size",
+      description: "maximum number of posts returned",
+      default: "20",
+      options: "1-200",
     },
     {
-      param: 'page_id',
-      description: 'ID of page to retrieve',
-      default: 'null',
-      options: '',
+      param: "page_id",
+      description: "ID of page to retrieve",
+      default: "null",
+      options: "",
     },
   ];
 
@@ -195,16 +195,16 @@ export default function Documentation() {
   // filters params table
   const filters = [
     {
-      param: 'nsfw',
-      description: 'include nsfw (18+) images',
+      param: "nsfw",
+      description: "include nsfw (18+) images",
     },
     {
-      param: 'grayscale',
-      description: 'include grayscale (black & white) images',
+      param: "grayscale",
+      description: "include grayscale (black & white) images",
     },
     {
-      param: 'sprocket',
-      description: 'include sprocket images',
+      param: "sprocket",
+      description: "include sprocket images",
     },
   ];
 
@@ -225,7 +225,7 @@ export default function Documentation() {
           <p>
             This document outlines the AnalogDB API. This API provides film
             photographs and metadata in JSON form as a REST-style service. The
-            API is open-source and available on{' '}
+            API is open-source and available on{" "}
             <u>
               <Link href="https://github.com/evanofslack/analogdb">github</Link>
             </u>
@@ -233,14 +233,14 @@ export default function Documentation() {
           </p>
           <p>
             The AnalogDB project is currently under development and subject to
-            change. All film pictures are scrapped from{' '}
+            change. All film pictures are scrapped from{" "}
             <u>
               <Link href="https://www.reddit.com/r/analog/">reddit</Link>
             </u>
             . All credit goes to the original photographers.
           </p>
           <p>
-            Use the following URI to access the endpoints:{' '}
+            Use the following URI to access the endpoints:{" "}
             <Code>https://api.analogdb.com</Code>
           </p>
           <div className={styles.divider}>
@@ -285,7 +285,7 @@ export default function Documentation() {
                 copiedLabel="copied"
                 styles={{
                   code: {
-                    fontSize: '0.75rem',
+                    fontSize: "0.75rem",
                   },
                 }}
               />
@@ -376,7 +376,7 @@ export default function Documentation() {
                 copiedLabel="copied"
                 styles={{
                   code: {
-                    fontSize: '0.75rem',
+                    fontSize: "0.75rem",
                   },
                 }}
               />
@@ -388,8 +388,8 @@ export default function Documentation() {
           </p>
           <p>
             If filter query parameters are not provided (null), posts of that
-            type are included in response. If filter is set to <Code>true</Code>{' '}
-            only photos of that type are returned. If set to <Code>false</Code>{' '}
+            type are included in response. If filter is set to <Code>true</Code>{" "}
+            only photos of that type are returned. If set to <Code>false</Code>{" "}
             , posts of that type are excluded.
           </p>
           <Table highlightOnHover withColumnBorders>
@@ -410,7 +410,7 @@ export default function Documentation() {
                 copiedLabel="copied"
                 styles={{
                   code: {
-                    fontSize: '0.75rem',
+                    fontSize: "0.75rem",
                   },
                 }}
               />
@@ -430,7 +430,7 @@ export default function Documentation() {
                 copiedLabel="copied"
                 styles={{
                   code: {
-                    fontSize: '0.75rem',
+                    fontSize: "0.75rem",
                   },
                 }}
               />

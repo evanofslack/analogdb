@@ -2,7 +2,7 @@
   "tabWidth": 2,
   "useTabs": false,
   "trailingComma": "es5",
-  "singleQuote": true,
+  "singleQuote": false,
   "semi": true,
   "plugins": ["@ianvs/prettier-plugin-sort-imports"],
   "importOrder": ["^@core/(.*)$", "^@server/(.*)$", "^@ui/(.*)$", "^[./]"]

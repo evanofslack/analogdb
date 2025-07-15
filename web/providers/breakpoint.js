@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 const defaultValue = {};
 
@@ -27,7 +27,7 @@ const BreakpointProvider = ({ children, queries }) => {
     if (window && window.matchMedia) {
       const matches = {};
       keys.forEach((media) => {
-        if (typeof queries[media] === 'string') {
+        if (typeof queries[media] === "string") {
           mediaQueryLists[media] = window.matchMedia(queries[media]);
           matches[media] = mediaQueryLists[media].matches;
         } else {
@@ -37,7 +37,7 @@ const BreakpointProvider = ({ children, queries }) => {
       setQueryMatch(matches);
       isAttached = true;
       keys.forEach((media) => {
-        if (typeof queries[media] === 'string') {
+        if (typeof queries[media] === "string") {
           mediaQueryLists[media].addListener(handleQueryListener);
         }
       });
@@ -46,7 +46,7 @@ const BreakpointProvider = ({ children, queries }) => {
     return () => {
       if (isAttached) {
         keys.forEach((media) => {
-          if (typeof queries[media] === 'string') {
+          if (typeof queries[media] === "string") {
             mediaQueryLists[media].removeListener(handleQueryListener);
           }
         });
@@ -64,7 +64,7 @@ const BreakpointProvider = ({ children, queries }) => {
 function useBreakpoint() {
   const context = useContext(BreakpointContext);
   if (context === defaultValue) {
-    throw new Error('useBreakpoint must be used within BreakpointProvider');
+    throw new Error("useBreakpoint must be used within BreakpointProvider");
   }
   return context;
 }

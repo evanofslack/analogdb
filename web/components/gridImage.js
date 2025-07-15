@@ -1,5 +1,5 @@
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
 export default function GridImage(props) {
   let post = props.post;
@@ -32,9 +32,9 @@ export default function GridImage(props) {
           blurDataURL={placeholder.url}
           quality={100}
           style={{
-            objectFit: 'cover',
-            width: '100%',
-            height: 'auto',
+            objectFit: "cover",
+            width: "100%",
+            height: "auto",
           }}
         />
       </div>

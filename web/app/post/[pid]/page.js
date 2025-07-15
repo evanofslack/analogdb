@@ -1,15 +1,15 @@
-import ImagePage from '@components/imagePage';
-import { checkAdminAuth } from '@lib/auth';
-import { authorized_fetch } from '@lib/client';
-import { notFound } from 'next/navigation';
+import ImagePage from "@components/imagePage";
+import { checkAdminAuth } from "@lib/auth";
+import { authorized_fetch } from "@lib/client";
+import { notFound } from "next/navigation";
 
 export async function generateStaticParams() {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     return [];
   }
 
   // get all post IDs for production
-  const response = await authorized_fetch('/ids', 'GET');
+  const response = await authorized_fetch("/ids", "GET");
   const data = await response.json();
 
   // only generate static pages for latest 500 posts
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }) {
   const { pid } = await params;
 
   try {
-    const response = await authorized_fetch(`/post/${pid}`, 'GET');
+    const response = await authorized_fetch(`/post/${pid}`, "GET");
     const post = await response.json();
 
     return {
@@ -32,14 +32,14 @@ export async function generateMetadata({ params }) {
     };
   } catch (error) {
     return {
-      title: 'Post | AnalogDB',
+      title: "Post | AnalogDB",
     };
   }
 }
 
 async function getPostData(pid) {
   const postRoute = `/post/${pid}`;
-  const response = await authorized_fetch(postRoute, 'GET');
+  const response = await authorized_fetch(postRoute, "GET");
 
   if (!response.ok) {
     return notFound();
@@ -48,16 +48,16 @@ async function getPostData(pid) {
   const post = await response.json();
 
   // only show nsfw results if the original image was nsfw
-  let query = '?nsfw=false';
+  let query = "?nsfw=false";
   if (post.nsfw) {
-    query = '';
+    query = "";
   }
 
   const similarRoute = `/post/${pid}/similar${query}`;
   let similar;
 
   try {
-    const similarResponse = await authorized_fetch(similarRoute, 'GET');
+    const similarResponse = await authorized_fetch(similarRoute, "GET");
     similar = await similarResponse.json();
   } catch (e) {
     similar = {};
@@ -74,4 +74,4 @@ export default async function Post({ params }) {
   return <ImagePage post={post} similar={similar} isAdmin={isAdmin} />;
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
