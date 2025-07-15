@@ -3,7 +3,7 @@ import styles from "./infiniteGallery.module.css";
 import Grid from "@components/grid";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useState, useEffect } from "react";
-import { baseURL } from "@lib/constants.js";
+import { baseURL } from "@lib/constants";
 import { Loader } from "@mantine/core";
 
 export default function InfiniteGallery(props) {

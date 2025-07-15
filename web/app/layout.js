@@ -1,4 +1,4 @@
-import "../styles/globals.css";
+import "@styles/globals.css";
 import "@mantine/core/styles.css";
 import "@mantine/code-highlight/styles.css";
 import {
@@ -7,8 +7,8 @@ import {
   mantineHtmlProps,
 } from "@mantine/core";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { BreakpointProvider } from "../providers/breakpoint";
-import { CodeHighlightProvider } from "../components/CodeHighlightProvider";
+import { BreakpointProvider } from "@providers/breakpoint";
+import { CodeHighlightProvider } from "@components/codeHighlightProvider";
 
 export const metadata = {
   title: "AnalogDB",

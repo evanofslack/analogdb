@@ -1,4 +1,4 @@
-import styles from "../styles/Error.module.css";
+import styles from "@styles/Error.module.css";
 import Header from "@components/header";
 import Footer from "@components/footer";
 import { checkAdminAuth } from "@lib/auth";

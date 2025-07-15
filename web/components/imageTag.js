@@ -1,10 +1,10 @@
 import styles from "./imageTag.module.css";
-import { baseURL } from "@lib/constants.js";
+import { baseURL } from "@lib/constants";
 import Image from "next/image";
 import Link from "next/link";
 import { Tooltip } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import Keywords from "../components/keywords";
+import Keywords from "./keywords";
 
 export default function ImageTag(props) {
   const clipboard = useClipboard({ timeout: 1000 });

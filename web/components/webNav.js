@@ -2,7 +2,7 @@
 import styles from "./webNav.module.css";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useBreakpoint } from "../providers/breakpoint.js";
+import { useBreakpoint } from "@providers/breakpoint";
 
 export default function WebNav(props) {
   let isAdmin = props.isAdmin;

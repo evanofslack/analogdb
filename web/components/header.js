@@ -3,7 +3,7 @@ import styles from "./header.module.css";
 import WebNav from "./webNav";
 import MobileNav from "./mobileNav";
 import Link from "next/link";
-import { useBreakpoint } from "../providers/breakpoint.js";
+import { useBreakpoint } from "@providers/breakpoint.js";
 
 export default function Header(props) {
   let isAdmin = props.isAdmin;

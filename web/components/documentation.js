@@ -4,7 +4,7 @@ import Footer from "./footer";
 import Link from "next/link";
 import { CodeHighlight } from "@mantine/code-highlight";
 import { Table, Code, Divider } from "@mantine/core";
-import { useBreakpoint } from "../providers/breakpoint.js";
+import { useBreakpoint } from "@providers/breakpoint";
 
 export default function Documentation() {
   const breakpoints = useBreakpoint();

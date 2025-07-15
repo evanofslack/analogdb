@@ -3,7 +3,7 @@ import styles from "./about.module.css";
 import Image from "next/image";
 import Link from "next/link";
 import Footer from "./footer";
-import { useBreakpoint } from "../providers/breakpoint.js";
+import { useBreakpoint } from "@providers/breakpoint";
 import { CodeHighlight } from "@mantine/code-highlight";
 import { IconPolaroid, IconUsers } from "@tabler/icons-react";
 

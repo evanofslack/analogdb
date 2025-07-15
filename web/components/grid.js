@@ -1,6 +1,6 @@
 "use client";
 import Masonry from "react-responsive-masonry";
-import { useBreakpoint } from "../providers/breakpoint.js";
+import { useBreakpoint } from "@providers/breakpoint.js";
 import GridImage from "./gridImage";
 
 export default function Grid(props) {

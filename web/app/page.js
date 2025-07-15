@@ -1,6 +1,6 @@
 import HomePage from "./home-page";
-import { authorized_fetch } from "@lib/client";
 import { Suspense } from "react";
+import { authorized_fetch } from "@lib/client";
 import { checkAdminAuth } from "@lib/auth";
 
 export const metadata = {

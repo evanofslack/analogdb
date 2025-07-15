@@ -1,12 +1,12 @@
 "use client";
 import styles from "./gallery.module.css";
-import Header from "../components/header";
+import Header from "./header";
 import Footer from "./footer";
-import InfiniteGallery from "../components/infiniteGallery";
-import ScrollTop from "../components/scrollTop";
+import InfiniteGallery from "./infiniteGallery";
+import ScrollTop from "./scrollTop";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useBreakpoint } from "../providers/breakpoint.js";
-import useKeyPress from "../hooks/useKeyPress";
+import { useBreakpoint } from "@providers/breakpoint.js";
+import useKeyPress from "@hooks/useKeyPress";
 import { useQueryState } from "nuqs";
 import {
   IconArrowAutofitWidth,
