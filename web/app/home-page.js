@@ -1,6 +1,7 @@
 "use client";
+
 import Gallery from "@components/gallery";
-import { BreakpointProvider } from "../providers/breakpoint";
+import { BreakpointProvider } from "@providers/breakpoint";
 
 const queries = {
   xs: "(max-width: 480px)",

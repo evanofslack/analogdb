@@ -1,32 +1,32 @@
 "use client";
-import styles from "./gallery.module.css";
-import Header from "../components/header";
-import Footer from "./footer";
-import InfiniteGallery from "../components/infiniteGallery";
-import ScrollTop from "../components/scrollTop";
-import { useState, useEffect, useRef, useCallback } from "react";
-import { useBreakpoint } from "../providers/breakpoint.js";
-import useKeyPress from "../hooks/useKeyPress";
-import { useQueryState } from "nuqs";
-import {
-  IconArrowAutofitWidth,
-  IconSearch,
-  IconArrowsSort,
-  IconAdjustmentsHorizontal,
-  IconPalette,
-} from "@tabler/icons-react";
 
-import {
-  TextInput,
-  Button,
-  SegmentedControl,
-  Menu,
-  Radio,
-  Checkbox,
-  Tooltip,
-  NumberInput,
-} from "@mantine/core";
+import useKeyPress from "@hooks/useKeyPress";
 import { baseURL } from "@lib/constants.js";
+import {
+  Button,
+  Checkbox,
+  Menu,
+  NumberInput,
+  Radio,
+  SegmentedControl,
+  TextInput,
+  Tooltip,
+} from "@mantine/core";
+import { useBreakpoint } from "@providers/breakpoint.js";
+import {
+  IconAdjustmentsHorizontal,
+  IconArrowAutofitWidth,
+  IconArrowsSort,
+  IconPalette,
+  IconSearch,
+} from "@tabler/icons-react";
+import { useQueryState } from "nuqs";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Footer from "./footer";
+import styles from "./gallery.module.css";
+import Header from "./header";
+import InfiniteGallery from "./infiniteGallery";
+import ScrollTop from "./scrollTop";
 
 async function makeRequest(queryParams) {
   const route = "/posts" + queryParams;

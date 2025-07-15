@@ -1,5 +1,5 @@
 import { checkAdminAuth } from "@lib/auth";
-import { authorized_fetch } from "@lib/fetch";
+import { authorized_fetch } from "@lib/cient";
 
 export async function DELETE(request, { params }) {
   const isAdmin = await checkAdminAuth();

@@ -1,8 +1,9 @@
 "use client";
-import styles from "./webNav.module.css";
+
+import { useBreakpoint } from "@providers/breakpoint";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useBreakpoint } from "../providers/breakpoint.js";
+import styles from "./webNav.module.css";
 
 export default function WebNav(props) {
   let isAdmin = props.isAdmin;

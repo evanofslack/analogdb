@@ -1,8 +1,8 @@
-import { authorized_fetch } from "@lib/fetch";
-import { checkAdminAuth } from "@lib/auth";
 import About from "@components/about";
-import Header from "@components/header";
 import styles from "@components/gallery.module.css";
+import Header from "@components/header";
+import { checkAdminAuth } from "@lib/auth";
+import { authorized_fetch } from "@lib/client";
 
 export const metadata = {
   title: "AnalogDB",

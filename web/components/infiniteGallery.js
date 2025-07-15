@@ -1,10 +1,11 @@
 "use client";
-import styles from "./infiniteGallery.module.css";
+
 import Grid from "@components/grid";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { useState, useEffect } from "react";
-import { baseURL } from "@lib/constants.js";
+import { baseURL } from "@lib/constants";
 import { Loader } from "@mantine/core";
+import { useEffect, useState } from "react";
+import InfiniteScroll from "react-infinite-scroll-component";
+import styles from "./infiniteGallery.module.css";
 
 export default function InfiniteGallery(props) {
   const [posts, setPosts] = useState(props.response.posts);

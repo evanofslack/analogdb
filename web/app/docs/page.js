@@ -1,6 +1,6 @@
-import Documentation from "../../components/documentation";
-import Header from "../../components/header";
-import styles from "../../components/gallery.module.css";
+import Documentation from "@components/documentation";
+import styles from "@components/gallery.module.css";
+import Header from "@components/header";
 import { checkAdminAuth } from "@lib/auth";
 
 export const metadata = {

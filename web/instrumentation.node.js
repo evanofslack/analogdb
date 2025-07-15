@@ -24,7 +24,10 @@ const sdk = new NodeSDK({
 console.log("OpenTelemetry initializing...");
 console.log(`Service: ${process.env.OTEL_SERVICE_NAME || "nextjs-app"}`);
 console.log(
-  `Endpoint: ${process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || "http://localhost:4318/v1/traces"}`
+  `Endpoint: ${
+    process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
+    "http://localhost:4318/v1/traces"
+  }`
 );
 
 sdk.start();

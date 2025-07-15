@@ -1,12 +1,13 @@
 "use client";
-import { AiOutlineMenu } from "react-icons/ai";
-import { useState } from "react";
-import styles from "./mobileNav.module.css";
-import { usePathname } from "next/navigation";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { AiOutlineMenu } from "react-icons/ai";
 import { BiCheck } from "react-icons/bi";
-import { GrClose } from "react-icons/gr";
 import { FiGithub } from "react-icons/fi";
+import { GrClose } from "react-icons/gr";
+import styles from "./mobileNav.module.css";
 
 export default function MobileNav(props) {
   let isAdmin = props.isAdmin;

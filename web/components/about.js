@@ -1,11 +1,12 @@
 "use client";
-import styles from "./about.module.css";
+
+import { CodeHighlight } from "@mantine/code-highlight";
+import { useBreakpoint } from "@providers/breakpoint";
+import { IconPolaroid, IconUsers } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
+import styles from "./about.module.css";
 import Footer from "./footer";
-import { useBreakpoint } from "../providers/breakpoint.js";
-import { CodeHighlight } from "@mantine/code-highlight";
-import { IconPolaroid, IconUsers } from "@tabler/icons-react";
 
 export default function About(props) {
   const breakpoints = useBreakpoint();

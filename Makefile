@@ -54,3 +54,9 @@ gen-client-python:
 	rm -f api/clients/python/pyproject.toml.bak
 	cd scrape/packages/analogdb && uv sync
 
+.PHONY: gen-client-typescript
+gen-client-typescript:
+	openapi-generator-cli generate -i api/swagger.yaml -g typescript-fetch -o api/clients/typescript \
+		--additional-properties=npmName=analogdb-generated,npmVersion=1.0.0,withSeparateModelsAndApi=true,typescriptThreePlus=true
+	cd api/clients/typescript && npm install
+	cd web && npm install

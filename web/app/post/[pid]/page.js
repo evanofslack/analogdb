@@ -1,7 +1,7 @@
-import { authorized_fetch } from "@lib/fetch";
 import ImagePage from "@components/imagePage";
-import { notFound } from "next/navigation";
 import { checkAdminAuth } from "@lib/auth";
+import { authorized_fetch } from "@lib/client";
+import { notFound } from "next/navigation";
 
 export async function generateStaticParams() {
   if (process.env.NODE_ENV === "development") {

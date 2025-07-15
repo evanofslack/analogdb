@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { BsChevronDoubleUp } from "react-icons/bs";
 import styles from "./scrollTop.module.css";
 

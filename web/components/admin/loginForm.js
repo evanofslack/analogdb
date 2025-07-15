@@ -1,16 +1,16 @@
+import Footer from "@components/footer";
+import Header from "@components/header";
 import { loginAction } from "@lib/auth";
 import {
-  TextInput,
-  PasswordInput,
+  Alert,
   Button,
   Paper,
-  Title,
-  Alert,
+  PasswordInput,
   Stack,
+  TextInput,
+  Title,
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
-import Header from "@components/header";
-import Footer from "@components/footer";
 import styles from "./loginForm.module.css";
 
 export default function LoginForm(props) {

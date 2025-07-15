@@ -1,10 +1,11 @@
 "use client";
+
+import { CodeHighlight } from "@mantine/code-highlight";
+import { Code, Divider, Table } from "@mantine/core";
+import { useBreakpoint } from "@providers/breakpoint";
+import Link from "next/link";
 import styles from "./documentation.module.css";
 import Footer from "./footer";
-import Link from "next/link";
-import { CodeHighlight } from "@mantine/code-highlight";
-import { Table, Code, Divider } from "@mantine/core";
-import { useBreakpoint } from "../providers/breakpoint.js";
 
 export default function Documentation() {
   const breakpoints = useBreakpoint();

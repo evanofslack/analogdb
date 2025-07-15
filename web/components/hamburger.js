@@ -1,11 +1,11 @@
 "use client";
-import styles from "./hamburger.module.css";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AiOutlineTrophy } from "react-icons/ai";
-import { BiTimeFive } from "react-icons/bi";
-import { BiShuffle } from "react-icons/bi";
+import { BiShuffle, BiTimeFive } from "react-icons/bi";
 import { RiCameraLensFill } from "react-icons/ri";
+import styles from "./hamburger.module.css";
 
 export default function Hamburger() {
   const router = useRouter();

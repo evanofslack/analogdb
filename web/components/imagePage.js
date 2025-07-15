@@ -1,15 +1,16 @@
 "use client";
+
+import Footer from "@components/footer";
+import ImageTag from "@components/imageTag";
+import { ActionIcon, Tooltip } from "@mantine/core";
 import Image from "next/image";
 import Link from "next/link";
-import ImageTag from "@components/imageTag";
-import Footer from "@components/footer";
-import styles from "./imagePage.module.css";
 import {
-  AiOutlineDownload,
   AiOutlineArrowsAlt,
   AiOutlineDelete,
+  AiOutlineDownload,
 } from "react-icons/ai";
-import { ActionIcon, Tooltip } from "@mantine/core";
+import styles from "./imagePage.module.css";
 
 async function handleDelete(postId) {
   if (!confirm("Are you sure you want to delete this post?")) return;
@@ -34,7 +35,9 @@ async function handleDelete(postId) {
 
 async function downloadImage(targetImage, name) {
   try {
-    const downloadUrl = `/api/download?url=${encodeURIComponent(targetImage)}&filename=analogdb-${name}.jpg`;
+    const downloadUrl = `/api/download?url=${encodeURIComponent(
+      targetImage
+    )}&filename=analogdb-${name}.jpg`;
     const link = document.createElement("a");
     link.href = downloadUrl;
     link.download = `analogdb-${name}.jpg`;

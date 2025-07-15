@@ -29,6 +29,9 @@ module.exports = {
       ...config.resolve.alias,
       "@lib": path.resolve(__dirname, "lib"),
       "@components": path.resolve(__dirname, "components"),
+      "@providers": path.resolve(__dirname, "providers"),
+      "@styles": path.resolve(__dirname, "styles"),
+      "@hooks": path.resolve(__dirname, "hooks"),
     };
     return config;
   },
