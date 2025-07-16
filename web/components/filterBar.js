@@ -15,7 +15,7 @@ import {
   IconPalette,
   IconSearch,
 } from "@tabler/icons-react";
-import styles from "./gallery.module.css";
+import styles from "./filterBar.module.css";
 
 export default function FilterBar({
   // State values
