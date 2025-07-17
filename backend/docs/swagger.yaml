@@ -1001,21 +1001,21 @@ paths:
         in: query
         name: sprocket
         type: boolean
-      - collectionFormat: csv
+      - collectionFormat: multi
         description: Filter by keywords (multiple allowed)
         in: query
         items:
           type: string
         name: keyword
         type: array
-      - collectionFormat: csv
+      - collectionFormat: multi
         description: Color filter (multiple allowed)
         in: query
         items:
           type: string
         name: color
         type: array
-      - collectionFormat: csv
+      - collectionFormat: multi
         description: Minimum color percentage (multiple allowed)
         in: query
         items:
