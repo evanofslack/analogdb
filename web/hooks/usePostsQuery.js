@@ -1,4 +1,4 @@
-import { postsApi } from "@lib/client.js";
+import { postsApi } from "@lib/client";
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 
