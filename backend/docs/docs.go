@@ -901,7 +901,7 @@ const docTemplate = `{
                         "items": {
                             "type": "string"
                         },
-                        "collectionFormat": "csv",
+                        "collectionFormat": "multi",
                         "description": "Filter by keywords (multiple allowed)",
                         "name": "keyword",
                         "in": "query"
@@ -911,7 +911,7 @@ const docTemplate = `{
                         "items": {
                             "type": "string"
                         },
-                        "collectionFormat": "csv",
+                        "collectionFormat": "multi",
                         "description": "Color filter (multiple allowed)",
                         "name": "color",
                         "in": "query"
@@ -921,7 +921,7 @@ const docTemplate = `{
                         "items": {
                             "type": "number"
                         },
-                        "collectionFormat": "csv",
+                        "collectionFormat": "multi",
                         "description": "Minimum color percentage (multiple allowed)",
                         "name": "min_color",
                         "in": "query"
