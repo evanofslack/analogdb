@@ -108,9 +108,9 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Param nsfw query bool false "Filter by NSFW (true=only, false=exclude)"
 // @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
 // @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
-// @Param keyword query []string false "Filter by keywords (multiple allowed)" collection(multi)
-// @Param color query []string false "Color filter (multiple allowed)" collection(multi)
-// @Param min_color query []number false "Minimum color percentage (multiple allowed)" collection(multi)
+// @Param keyword query []string false "Filter by keywords (multiple allowed)" collectionFormat(multi)
+// @Param color query []string false "Color filter (multiple allowed)" collectionFormat(multi)
+// @Param min_color query []number false "Minimum color percentage (multiple allowed)" collectionFormat(multi)
 // @Param width_min query number false "Minimum picture width"
 // @Param width_max query number false "Maximum picture width"
 // @Param height_min query number false "Minimum picture height"
