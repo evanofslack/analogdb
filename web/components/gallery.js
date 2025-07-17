@@ -11,11 +11,9 @@ import Header from "./header";
 import InfiniteGallery from "./infiniteGallery";
 import ScrollTop from "./scrollTop";
 
-export default function Gallery(props) {
-  const { isAdmin, data } = props;
-
+export default function Gallery({ isAdmin }) {
   const { response, isLoading, filters, setters, executeQuery, limits } =
-    usePostsQuery(data);
+    usePostsQuery();
 
   const returnPress = useKeyPress("Enter");
   const breakpoints = useBreakpoint();

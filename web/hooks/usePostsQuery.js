@@ -1,6 +1,6 @@
 import { postsApi } from "@lib/client.js";
 import { useQueryState } from "nuqs";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const DEFAULTS = {
   sort: "latest",
@@ -88,7 +88,7 @@ function buildQueryParams(
   return params;
 }
 
-export default function usePostsQuery(initialData) {
+export default function usePostsQuery() {
   const [sort, setSort] = useQueryState("sort", {
     history: "push",
     defaultValue: DEFAULTS.sort,
@@ -144,9 +144,8 @@ export default function usePostsQuery(initialData) {
   });
 
   const [textTemp, setTextTemp] = useState(text || "");
-  const [response, setResponse] = useState(initialData);
-  const [isLoading, setIsLoading] = useState(false);
-  const isInitialLoad = useRef(true);
+  const [response, setResponse] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const executeQuery = useCallback(async () => {
     setIsLoading(true);
@@ -196,23 +195,8 @@ export default function usePostsQuery(initialData) {
     setText,
   ]);
 
+  // Always fetch on mount and when filters change
   useEffect(() => {
-    if (isInitialLoad.current) {
-      const isUsingDefaults =
-        (sort || DEFAULTS.sort) === DEFAULTS.sort &&
-        (nsfw || DEFAULTS.nsfw) === DEFAULTS.nsfw &&
-        (bw || DEFAULTS.bw) === DEFAULTS.bw &&
-        (sprocket || DEFAULTS.sprocket) === DEFAULTS.sprocket &&
-        (text || DEFAULTS.text) === DEFAULTS.text &&
-        (color || DEFAULTS.color) === DEFAULTS.color;
-
-      if (isUsingDefaults) {
-        isInitialLoad.current = false;
-        return;
-      }
-    }
-
-    isInitialLoad.current = false;
     executeQuery();
   }, [
     sort,

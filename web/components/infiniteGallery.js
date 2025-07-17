@@ -2,37 +2,72 @@
 
 import Grid from "@components/grid";
 import { baseURL } from "@lib/constants";
-import { Loader } from "@mantine/core";
+import { Loader, Skeleton } from "@mantine/core";
 import { useEffect, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import styles from "./infiniteGallery.module.css";
 
 export default function InfiniteGallery(props) {
-  const [posts, setPosts] = useState(props.response.posts);
-  const [nextPageRoute, setNextPageRoute] = useState(
-    baseURL + props.response.meta.next_page_url
-  );
-  const [hasMore, setHasMore] = useState(props.response.meta.next_page_id);
-  const [totalPosts, setTotalPosts] = useState(props.response.meta.total_posts);
+  const { response, _ } = props;
 
-  // this seems like a hack
+  const [posts, setPosts] = useState([]);
+  const [nextPageRoute, setNextPageRoute] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const [isLocalLoading, setIsLocalLoading] = useState(true);
+
+  // Update state when response changes
   useEffect(() => {
-    setPosts(props.response.posts);
-    setNextPageRoute(baseURL + props.response.meta.next_page_url);
-    setHasMore(props.response.meta.next_page_id);
-    setTotalPosts(props.response.meta.total_posts);
-  }, [props.response]);
+    if (response && response.posts) {
+      setPosts(response.posts);
+      setNextPageRoute(
+        response.meta?.nextPageUrl ? baseURL + response.meta.nextPageUrl : null
+      );
+      setHasMore(!!response.meta?.nextPageId);
+      setTotalPosts(response.meta?.totalPosts || 0);
+      setIsLocalLoading(false);
+    }
+  }, [response]);
+
+  // Show skeleton loaders on initial load
+  if (isLocalLoading && posts.length === 0) {
+    return (
+      <div className={styles.skeletonContainer}>
+        <div className={styles.skeletonGrid}>
+          {[...Array(25)].map((_, index) => (
+            <Skeleton key={index} height={300} radius="md" animate={true} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Handle null/undefined response
+  if (
+    !isLocalLoading &&
+    response &&
+    response.posts &&
+    response.posts.length === 0
+  ) {
+    return (
+      <div className={styles.noResultsContainer}>
+        <h3 className={styles.noResults}>no posts found :(</h3>
+      </div>
+    );
+  }
 
   // Fetch next page of results for infinite scroll
   const fetchMore = () => {
+    if (!nextPageRoute) return;
+
     fetch(nextPageRoute)
       .then((res) => res.json())
       .then((response) => {
-        if (response.meta.next_page_id == "") {
+        if (response.meta.nextPageId == "") {
           setHasMore(false);
         } else {
           setHasMore(true);
-          setNextPageRoute(baseURL + response.meta.next_page_url);
+          setNextPageRoute(baseURL + response.meta.nextPageUrl);
         }
         setPosts(posts.concat(response.posts));
       });
@@ -65,7 +100,7 @@ export default function InfiniteGallery(props) {
           </InfiniteScroll>
         </div>
       )}
-      {totalPosts == 0 && (
+      {!isLocalLoading && totalPosts == 0 && (
         <div className={styles.noResultsContainer}>
           <h3 className={styles.noResults}> no posts found :( </h3>
         </div>
