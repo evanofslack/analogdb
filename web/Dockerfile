@@ -8,7 +8,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json package-lock.json* ./
+COPY web/package.json web/package-lock.json* ./
 RUN \
     if [ -f package-lock.json ]; then npm ci; \
     else echo "Lockfile not found." && exit 1; \
@@ -17,6 +17,8 @@ RUN \
 # 2. Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+COPY api/clients/typescript/ /api/clients/typescript/
 
 ARG AUTH_USERNAME
 ENV AUTH_USERNAME=$AUTH_USERNAME
