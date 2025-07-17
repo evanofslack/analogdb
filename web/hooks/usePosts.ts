@@ -9,8 +9,6 @@ import { useCallback, useEffect, useState } from "react";
 
 type FilterOption = "include" | "exclude" | "only";
 
-const defaultMinWidth = 600;
-
 const DEFAULTS = {
   sort: "latest" as PostsGetSortEnum,
   nsfw: "exclude" as FilterOption,
