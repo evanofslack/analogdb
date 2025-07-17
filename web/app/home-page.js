@@ -11,10 +11,10 @@ const queries = {
   xl: "(max-width: 2048px)",
 };
 
-export default function HomePage({ data, isAdmin }) {
+export default function HomePage({ isAdmin }) {
   return (
     <BreakpointProvider queries={queries}>
-      <Gallery data={data} isAdmin={isAdmin} />
+      <Gallery isAdmin={isAdmin} />
     </BreakpointProvider>
   );
 }

@@ -25,3 +25,47 @@
 .noResults {
   font-weight: 400;
 }
+
+.loading {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+  text-align: center;
+}
+
+.end {
+  padding-top: 7rem;
+  padding-bottom: 7rem;
+  text-align: center;
+  font-weight: 400;
+}
+
+.noResultsContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  flex-direction: column;
+  flex-grow: 1;
+  height: 65vh;
+}
+
+.noResults {
+  font-weight: 400;
+}
+
+.skeletonContainer {
+  padding: 1rem;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .skeletonGrid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+}
