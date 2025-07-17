@@ -29,7 +29,7 @@ export async function authorized_fetch(
     method: method,
     headers: headers,
     next: { revalidate: 60 },
-  });
+  } as RequestInit);
 
   return response;
 }

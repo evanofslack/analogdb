@@ -1,12 +1,33 @@
 import { postsApi } from "@lib/client";
+import { ServerPostResponse } from "analogdb-generated";
 import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 
+type FilterOption = "include" | "exclude" | "only";
+type SortOption = "latest" | "oldest" | "random";
+
+interface QueryParams {
+  sort: string;
+  pageSize: number;
+  widthMin: number;
+  widthMax: number;
+  heightMin: number;
+  heightMax: number;
+  ratioMin: number;
+  ratioMax: number;
+  nsfw?: boolean;
+  grayscale?: boolean;
+  sprocket?: boolean;
+  keyword?: string[];
+  color?: string;
+  minColor?: string;
+}
+
 const DEFAULTS = {
-  sort: "latest",
-  nsfw: "exclude",
-  bw: "exclude",
-  sprocket: "include",
+  sort: "latest" as SortOption,
+  nsfw: "exclude" as FilterOption,
+  bw: "exclude" as FilterOption,
+  sprocket: "include" as FilterOption,
   color: "",
   text: "",
   widthMin: 600,
@@ -17,7 +38,7 @@ const DEFAULTS = {
   ratioMax: 4.8,
 };
 
-const COLOR_MIN_VALUES = {
+const COLOR_MIN_VALUES: Record<string, string> = {
   gray: "0.8",
   black: "0.7",
   white: "0.50",
@@ -30,7 +51,7 @@ const COLOR_MIN_VALUES = {
   default: "0.15",
 };
 
-async function makeRequest(params) {
+async function makeRequest(params: QueryParams): Promise<ServerPostResponse> {
   try {
     const response = await postsApi.postsGet(params);
     return response;
@@ -41,17 +62,17 @@ async function makeRequest(params) {
 }
 
 function buildQueryParams(
-  sort,
-  nsfw,
-  bw,
-  sprocket,
-  text,
-  color,
-  width,
-  height,
-  ratio
-) {
-  const params = {
+  sort: string,
+  nsfw: string,
+  bw: string,
+  sprocket: string,
+  text: string,
+  color: string,
+  width: [number, number],
+  height: [number, number],
+  ratio: [number, number]
+): QueryParams {
+  const params: QueryParams = {
     sort: sort,
     pageSize: 100,
     widthMin: width[0],
@@ -73,11 +94,6 @@ function buildQueryParams(
 
   if (text !== "") {
     params.keyword = [text];
-  }
-
-  if (color !== "") {
-    params.color = [color];
-    params.minColor = [COLOR_MIN_VALUES[color] || COLOR_MIN_VALUES.default];
   }
 
   if (color !== "") {
@@ -143,14 +159,13 @@ export default function usePostsQuery() {
     shallow: false,
   });
 
-  const [textTemp, setTextTemp] = useState(text || "");
-  const [response, setResponse] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [textTemp, setTextTemp] = useState<string>(text || "");
+  const [response, setResponse] = useState<ServerPostResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const executeQuery = useCallback(async () => {
     setIsLoading(true);
 
-    // Handle textTemp -> text conversion
     if (textTemp === DEFAULTS.text) {
       setText(null);
     } else {
@@ -195,7 +210,6 @@ export default function usePostsQuery() {
     setText,
   ]);
 
-  // Always fetch on mount and when filters change
   useEffect(() => {
     executeQuery();
   }, [
