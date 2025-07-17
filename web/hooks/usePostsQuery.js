@@ -72,7 +72,12 @@ function buildQueryParams(
   if (sprocket === "only") params.sprocket = true;
 
   if (text !== "") {
-    params.keyword = text.split(/[ ,]+/).filter(Boolean);
+    params.keyword = [text];
+  }
+
+  if (color !== "") {
+    params.color = [color];
+    params.minColor = [COLOR_MIN_VALUES[color] || COLOR_MIN_VALUES.default];
   }
 
   if (color !== "") {
