@@ -8,6 +8,7 @@ on:
       - "v*"
     paths:
       - "web/**"
+      - ".github/workflows/publish-web.yml"
 
 env:
   REGISTRY: docker.io
@@ -57,8 +58,8 @@ jobs:
       - name: build and push
         uses: docker/build-push-action@v4
         with:
-          context: "{{defaultContext}}:web"
-          file: ./Dockerfile
+          context: .
+          file: ./web/Dockerfile 
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
