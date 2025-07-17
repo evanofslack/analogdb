@@ -1,8 +1,8 @@
 "use client";
 
 import useKeyPress from "@hooks/useKeyPress";
-import usePostsQuery from "@hooks/usePostsQuery";
-import { useBreakpoint } from "@providers/breakpoint.js";
+import usePosts from "@hooks/usePosts";
+import { useBreakpoint } from "@providers/breakpoint";
 import { useEffect } from "react";
 import FilterBar from "./filterBar";
 import Footer from "./footer";
@@ -13,7 +13,7 @@ import ScrollTop from "./scrollTop";
 
 export default function Gallery({ isAdmin }) {
   const { response, isLoading, filters, setters, executeQuery, limits } =
-    usePostsQuery();
+    usePosts();
 
   const returnPress = useKeyPress("Enter");
   const breakpoints = useBreakpoint();
