@@ -1,17 +1,22 @@
+"use client";
+
 import {
   Button,
   Menu,
   NumberInput,
   Radio,
   SegmentedControl,
+  Select,
   TextInput,
 } from "@mantine/core";
 import {
   IconAdjustmentsHorizontal,
   IconArrowAutofitWidth,
   IconArrowsSort,
+  IconCamera,
   IconSearch,
 } from "@tabler/icons-react";
+import { useEffect } from "react";
 import ColorFilter from "./colorFilter";
 import styles from "./filterBar.module.css";
 
@@ -29,6 +34,9 @@ export default function FilterBar({
   heightMax,
   ratioMin,
   ratioMax,
+  filmMake,
+  filmType,
+  filmSpeed,
 
   // State setters
   setSort,
@@ -43,6 +51,12 @@ export default function FilterBar({
   setHeightMax,
   setRatioMin,
   setRatioMax,
+  setFilmMake,
+  setFilmType,
+  setFilmSpeed,
+
+  filmMakeOptions,
+  filmTypeOptions,
 
   // UI state
   onlyIcon,
@@ -56,6 +70,16 @@ export default function FilterBar({
   ratioMinLimit,
   ratioMaxLimit,
 }) {
+  // Clear type when make changes
+  useEffect(() => {
+    if (filmMake && filmType) {
+      const isTypeValidForMake = filmTypeOptions.includes(filmType);
+      if (!isTypeValidForMake) {
+        setFilmType("");
+      }
+    }
+  }, [filmMake, filmType, filmTypeOptions, setFilmType]);
+
   return (
     <div className={styles.query}>
       <Menu shadow="md" width={170}>
@@ -188,6 +212,58 @@ export default function FilterBar({
 
       <ColorFilter color={color} setColor={setColor} onlyIcon={onlyIcon} />
 
+      <Menu shadow="md" width={280}>
+        <Menu.Target>
+          <Button
+            variant="outline"
+            color="gray"
+            leftSection={<IconCamera size={onlyIcon ? 22 : 18} stroke={1.5} />}
+            styles={() => ({
+              root: {
+                marginRight: 10,
+                paddingLeft: 10,
+                paddingRight: onlyIcon ? 0 : 10,
+                color: "#2E2E2E",
+                fontWeight: 400,
+                borderColor: "#CED4DA",
+                "&:hover": {
+                  backgroundColor: "#fbfbfc",
+                },
+                leftSection: {
+                  marginRight: 5,
+                },
+              },
+            })}
+          >
+            {!onlyIcon && <span>film</span>}
+          </Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>select film</Menu.Label>
+          <div className={styles.filmSelect}>
+            <Select
+              value={filmMake}
+              onChange={setFilmMake}
+              data={filmMakeOptions}
+              placeholder="Select make..."
+              searchable
+              clearable
+              size="xs"
+              style={{ marginBottom: 12 }}
+            />
+            <Select
+              value={filmType}
+              onChange={setFilmType}
+              data={filmTypeOptions}
+              placeholder="Select type..."
+              searchable
+              clearable
+              size="xs"
+              // disabled={!filmMake}
+            />
+          </div>
+        </Menu.Dropdown>
+      </Menu>
       <Menu shadow="md" width={125}>
         <Menu.Target>
           <Button

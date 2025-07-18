@@ -22,6 +22,9 @@ const DEFAULTS = {
   heightMax: 12000,
   ratioMin: 0.3,
   ratioMax: 4.8,
+  filmMake: null as string | null,
+  filmType: null as string | null,
+  filmSpeed: null as number | null,
 };
 
 const COLOR_MIN_VALUES: Record<string, number> = {
@@ -58,7 +61,10 @@ function buildQueryParams(
   color: string,
   width: [number, number],
   height: [number, number],
-  ratio: [number, number]
+  ratio: [number, number],
+  filmMake: string,
+  filmType: string,
+  filmSpeed: number | null
 ): PostsGetRequest {
   const params: PostsGetRequest = {
     sort: sort as PostsGetSortEnum,
@@ -89,6 +95,10 @@ function buildQueryParams(
     params.minColor = [COLOR_MIN_VALUES[color] || COLOR_MIN_VALUES.default];
   }
 
+  if (filmMake !== "") params.filmMake = filmMake;
+  if (filmType !== "") params.filmType = filmType;
+  if (filmSpeed !== null) params.filmSpeed = filmSpeed;
+
   return params;
 }
 
@@ -111,6 +121,16 @@ export default function usePosts() {
   const [text, setText] = useQueryState("text", {
     defaultValue: DEFAULTS.text,
   });
+  const [filmMake, setFilmMake] = useQueryState("film_make", {
+    defaultValue: DEFAULTS.filmMake,
+  });
+  const [filmType, setFilmType] = useQueryState("film_type", {
+    defaultValue: DEFAULTS.filmType,
+  });
+  const [filmSpeed, setFilmSpeed] = useQueryState(
+    "film_speed",
+    parseAsInteger.withDefault(DEFAULTS.filmSpeed)
+  );
 
   const [widthMin, setWidthMin] = useQueryState(
     "widthMin",
@@ -163,7 +183,10 @@ export default function usePosts() {
         color || DEFAULTS.color,
         [widthMin, widthMax],
         [heightMin, heightMax],
-        [ratioMin, ratioMax]
+        [ratioMin, ratioMax],
+        filmMake,
+        filmType,
+        filmSpeed
       );
       const data = await makeRequest(queryParams);
       setResponse(data);
@@ -186,6 +209,9 @@ export default function usePosts() {
     heightMax,
     ratioMin,
     ratioMax,
+    filmMake,
+    filmType,
+    filmSpeed,
     setText,
   ]);
 
@@ -204,6 +230,9 @@ export default function usePosts() {
     heightMax,
     ratioMin,
     ratioMax,
+    filmMake,
+    filmType,
+    filmSpeed,
     executeQuery,
   ]);
 
@@ -224,6 +253,9 @@ export default function usePosts() {
       heightMax,
       ratioMin,
       ratioMax,
+      filmMake,
+      filmType,
+      filmSpeed,
     },
     setters: {
       setSort,
@@ -238,6 +270,9 @@ export default function usePosts() {
       setHeightMax,
       setRatioMin,
       setRatioMax,
+      setFilmMake,
+      setFilmType,
+      setFilmSpeed,
     },
     executeQuery,
     limits: {

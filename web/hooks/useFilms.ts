@@ -9,10 +9,10 @@ import { useCallback, useEffect, useState } from "react";
 
 const DEFAULTS = {
   sort: "counts" as FilmsGetSortEnum,
-  make: "",
-  type: "",
+  make: null as string | null,
+  type: null as string | null,
   speed: null as number | null,
-  colortype: "",
+  colortype: null as string | null,
   pageSize: 100,
   includeCounts: true,
   excludeZeroCounts: true,
@@ -23,6 +23,7 @@ async function makeRequest(
 ): Promise<ServerFilmsResponse> {
   try {
     const response = await filmsApi.filmsGet(params);
+    // console.log(response);
     return response;
   } catch (error) {
     console.error("API request failed:", error);
@@ -31,6 +32,7 @@ async function makeRequest(
 }
 
 function buildQueryParams(
+  count: number | null,
   sort: string,
   make: string,
   type: string,
@@ -44,6 +46,7 @@ function buildQueryParams(
     excludeZeroCounts: DEFAULTS.excludeZeroCounts,
   };
 
+  if (count !== null) params.pageSize = count;
   if (make !== "") params.make = make;
   if (type !== "") params.type = type;
   if (speed !== null) params.speed = speed;
@@ -52,7 +55,7 @@ function buildQueryParams(
   return params;
 }
 
-export default function useFilms() {
+export default function useFilms(count: number) {
   const [sort, setSort] = useQueryState("sort", {
     defaultValue: DEFAULTS.sort,
   });
@@ -78,6 +81,7 @@ export default function useFilms() {
 
     try {
       const queryParams = buildQueryParams(
+        count,
         sort || DEFAULTS.sort,
         make || DEFAULTS.make,
         type || DEFAULTS.type,
@@ -96,6 +100,10 @@ export default function useFilms() {
   useEffect(() => {
     executeQuery();
   }, [executeQuery]);
+
+  useEffect(() => {
+    console.log(response);
+  }, [response]);
 
   return {
     response,
