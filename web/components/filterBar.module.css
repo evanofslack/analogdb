@@ -86,3 +86,15 @@
 .filmSelect {
   padding: 0.5rem 1rem 0.8rem;
 }
+
+.queryIconMode {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.filterButtons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}

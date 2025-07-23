@@ -2,7 +2,12 @@ import { Button, Checkbox, Menu, Tooltip } from "@mantine/core";
 import { IconPalette } from "@tabler/icons-react";
 import styles from "./colorFilter.module.css";
 
-export default function ColorFilter({ color, setColor, onlyIcon }) {
+export default function ColorFilter({
+  color,
+  setColor,
+  onlyIcon,
+  buttonStyles,
+}) {
   const handleColorClick = (event) => {
     let clickedColor = event.target.id;
     if (clickedColor === color) {
@@ -126,22 +131,7 @@ export default function ColorFilter({ color, setColor, onlyIcon }) {
           variant="outline"
           color="gray"
           leftSection={<IconPalette size={onlyIcon ? 22 : 18} stroke={1.5} />}
-          styles={() => ({
-            root: {
-              marginRight: 10,
-              paddingLeft: 10,
-              paddingRight: onlyIcon ? 0 : 10,
-              color: "#2E2E2E",
-              fontWeight: 400,
-              borderColor: "#CED4DA",
-              "&:hover": {
-                backgroundColor: "#fbfbfc",
-              },
-              leftSection: {
-                marginRight: 5,
-              },
-            },
-          })}
+          styles={() => buttonStyles}
         >
           {!onlyIcon && <span>color</span>}
         </Button>

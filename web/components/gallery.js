@@ -28,7 +28,7 @@ export default function Gallery({ isAdmin }) {
   const breakpoints = useBreakpoint();
 
   const onlyIcon = breakpoints["xs"] || breakpoints["sm"];
-  const textPlaceholder = onlyIcon ? "..." : "portrait, sunset, studio...";
+  const textPlaceholder = onlyIcon ? "search" : "search";
 
   const filmOptions = useMemo(() => {
     if (!filmsResponse?.films) return [];
