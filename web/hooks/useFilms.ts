@@ -101,10 +101,6 @@ export default function useFilms(count: number) {
     executeQuery();
   }, [executeQuery]);
 
-  useEffect(() => {
-    console.log(response);
-  }, [response]);
-
   return {
     response,
     isLoading,
