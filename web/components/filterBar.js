@@ -3,13 +3,12 @@
 import {
   Button,
   Menu,
+  Modal,
   NumberInput,
   Radio,
   SegmentedControl,
   Select,
-  TextInput,
 } from "@mantine/core";
-import { Spotlight, spotlight } from "@mantine/spotlight";
 import {
   IconAdjustmentsHorizontal,
   IconArrowAutofitWidth,
@@ -21,6 +20,7 @@ import {
 import { useState } from "react";
 import ColorFilter from "./colorFilter";
 import styles from "./filterBar.module.css";
+import Search from "./search";
 
 export default function FilterBar({
   // State values
@@ -71,17 +71,19 @@ export default function FilterBar({
   ratioMinLimit,
   ratioMaxLimit,
 }) {
-  const searchActions = [];
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const iconSize = onlyIcon ? 24 : 18;
 
-  const handleSpotlightSearch = (query) => {
+  const handleSearch = (query) => {
     setTextTemp(query);
-    // Add your search logic here
+    console.log("Searching for:", query);
   };
 
   const getButtonStyles = (onlyIcon) => ({
     root: {
-      marginRight: 10,
-      paddingLeft: 10,
+      marginRight: onlyIcon ? 2 : 10,
+      marginLeft: 2,
+      paddingLeft: onlyIcon ? 6 : 10,
       paddingRight: onlyIcon ? 0 : 10,
       color: "#2E2E2E",
       fontWeight: 400,
@@ -106,9 +108,7 @@ export default function FilterBar({
               <Button
                 variant="outline"
                 color="gray"
-                leftSection={
-                  <IconCamera size={onlyIcon ? 22 : 18} stroke={1.5} />
-                }
+                leftSection={<IconCamera size={iconSize} stroke={1.5} />}
                 styles={() => getButtonStyles(onlyIcon)}
               >
                 {!onlyIcon && <span>camera</span>}
@@ -146,9 +146,7 @@ export default function FilterBar({
               <Button
                 variant="outline"
                 color="gray"
-                leftSection={
-                  <IconMovie size={onlyIcon ? 22 : 18} stroke={1.5} />
-                }
+                leftSection={<IconMovie size={iconSize} stroke={1.5} />}
                 styles={() => getButtonStyles(onlyIcon)}
               >
                 {!onlyIcon && <span>film</span>}
@@ -193,10 +191,7 @@ export default function FilterBar({
                 variant="outline"
                 color="gray"
                 leftSection={
-                  <IconArrowAutofitWidth
-                    size={onlyIcon ? 22 : 18}
-                    stroke={1.6}
-                  />
+                  <IconArrowAutofitWidth size={iconSize} stroke={1.6} />
                 }
                 styles={() => getButtonStyles(onlyIcon)}
               >
@@ -308,9 +303,7 @@ export default function FilterBar({
               <Button
                 variant="outline"
                 color="gray"
-                leftSection={
-                  <IconArrowsSort size={onlyIcon ? 22 : 18} stroke={1.5} />
-                }
+                leftSection={<IconArrowsSort size={iconSize} stroke={1.5} />}
                 styles={() => getButtonStyles(onlyIcon)}
               >
                 {!onlyIcon && <span>sort</span>}
@@ -352,10 +345,7 @@ export default function FilterBar({
                 variant="outline"
                 color="gray"
                 leftSection={
-                  <IconAdjustmentsHorizontal
-                    size={onlyIcon ? 22 : 18}
-                    stroke={1.5}
-                  />
+                  <IconAdjustmentsHorizontal size={iconSize} stroke={1.5} />
                 }
                 styles={() => getButtonStyles(onlyIcon)}
               >
@@ -409,16 +399,16 @@ export default function FilterBar({
             <Button
               variant="outline"
               color="gray"
-              leftSection={<IconSearch size={22} stroke={1.5} />}
+              leftSection={<IconSearch size={iconSize} stroke={1.5} />}
               styles={() => getButtonStyles(onlyIcon)}
-              onClick={spotlight.open}
+              onClick={() => setSearchModalOpen(true)}
             />
           ) : (
             <Button
               variant="outline"
               color="gray"
-              leftSection={<IconSearch size={18} stroke={1.5} />}
-              onClick={spotlight.open}
+              leftSection={<IconSearch size={iconSize} stroke={1.5} />}
+              onClick={() => setSearchModalOpen(true)}
               styles={() => getButtonStyles(onlyIcon)}
             >
               search
@@ -426,18 +416,26 @@ export default function FilterBar({
           )}
         </div>
       </div>
-      <Spotlight
-        actions={searchActions}
-        highlightQuery
-        searchProps={{
-          leftSection: <IconSearch size={20} stroke={1.5} />,
-          placeholder: textPlaceholder,
-          value: textTemp,
-          onChange: (event) => setTextTemp(event.currentTarget.value),
+
+      <Modal
+        opened={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        size="lg"
+        centered
+        title="search"
+        overlayProps={{
+          backgroundOpacity: 0.4,
+          blur: 2,
         }}
-        onQueryChange={handleSpotlightSearch}
-        closeOnActionTrigger={false}
-      />
+      >
+        <Search
+          textTemp={textTemp}
+          setTextTemp={setTextTemp}
+          textPlaceholder={textPlaceholder}
+          onSearch={handleSearch}
+          onClose={() => setSearchModalOpen(false)}
+        />
+      </Modal>
     </>
   );
 }

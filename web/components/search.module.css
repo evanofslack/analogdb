@@ -1,0 +1,39 @@
+.searchContainer {
+  padding: 20px;
+  min-height: 400px;
+}
+
+.searchInput {
+  margin-bottom: 30px;
+  display: flex;
+  gap: 8px;
+}
+
+.trendingSection {
+  margin-top: 20px;
+}
+
+.trendingHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.trendingGrid {
+  margin: 0;
+}
+
+.trendingItem {
+  padding: 12px 16px;
+  border: 1px solid #ced4da;
+  background: #fff;
+}
+
+.trendingItem:hover {
+  background: #f8f9fa;
+  border-color: #ced4da;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
