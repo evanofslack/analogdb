@@ -7,17 +7,17 @@ import GridImage from "./gridImage";
 export default function Grid(props) {
   const breakpoints = useBreakpoint();
 
-  let numColumn = 5;
+  let numColumn = 4;
   if (breakpoints["xs"]) {
     numColumn = 2;
   } else if (breakpoints["sm"]) {
-    numColumn = 3;
+    numColumn = 2;
   } else if (breakpoints["md"]) {
     numColumn = 3;
   } else if (breakpoints["lg"]) {
-    numColumn = 4;
+    numColumn = 3;
   } else if (breakpoints["xl"]) {
-    numColumn = 5;
+    numColumn = 4;
   }
 
   return (
