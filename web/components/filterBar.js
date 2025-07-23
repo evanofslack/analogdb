@@ -14,6 +14,7 @@ import {
   IconArrowAutofitWidth,
   IconArrowsSort,
   IconCamera,
+  IconMovie,
   IconSearch,
 } from "@tabler/icons-react";
 import { useEffect } from "react";
@@ -71,6 +72,109 @@ export default function FilterBar({
 }) {
   return (
     <div className={styles.query}>
+      <Menu shadow="md" width={220}>
+        <Menu.Target>
+          <Button
+            variant="outline"
+            color="gray"
+            leftSection={<IconCamera size={onlyIcon ? 22 : 18} stroke={1.5} />}
+            styles={() => ({
+              root: {
+                marginRight: 10,
+                paddingLeft: 10,
+                paddingRight: onlyIcon ? 0 : 10,
+                color: "#2E2E2E",
+                fontWeight: 400,
+                borderColor: "#CED4DA",
+                "&:hover": {
+                  backgroundColor: "#fbfbfc",
+                },
+                leftSection: {
+                  marginRight: 5,
+                },
+              },
+            })}
+          >
+            {!onlyIcon && <span>camera</span>}
+          </Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>select film</Menu.Label>
+          <div className={styles.filmSelect}>
+            <Select
+              value={filmMake && filmType ? `${filmMake} - ${filmType}` : ""}
+              onChange={(value) => {
+                if (value) {
+                  const [make, type] = value.split(" - ");
+                  setFilmMake(make);
+                  setFilmType(type);
+                } else {
+                  setFilmMake(null);
+                  setFilmType(null);
+                }
+              }}
+              data={filmOptions.map((f) => f.label)}
+              placeholder="films..."
+              searchable
+              clearable
+              size="xs"
+              style={{ marginBottom: 12 }}
+            />
+          </div>
+        </Menu.Dropdown>
+      </Menu>
+      <Menu shadow="md" width={220}>
+        <Menu.Target>
+          <Button
+            variant="outline"
+            color="gray"
+            leftSection={<IconMovie size={onlyIcon ? 22 : 18} stroke={1.5} />}
+            styles={() => ({
+              root: {
+                marginRight: 10,
+                paddingLeft: 10,
+                paddingRight: onlyIcon ? 0 : 10,
+                color: "#2E2E2E",
+                fontWeight: 400,
+                borderColor: "#CED4DA",
+                "&:hover": {
+                  backgroundColor: "#fbfbfc",
+                },
+                leftSection: {
+                  marginRight: 5,
+                },
+              },
+            })}
+          >
+            {!onlyIcon && <span>film</span>}
+          </Button>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Label>select film</Menu.Label>
+          <div className={styles.filmSelect}>
+            <Select
+              value={filmMake && filmType ? `${filmMake} - ${filmType}` : ""}
+              onChange={(value) => {
+                if (value) {
+                  const [make, type] = value.split(" - ");
+                  setFilmMake(make);
+                  setFilmType(type);
+                } else {
+                  setFilmMake(null);
+                  setFilmType(null);
+                }
+              }}
+              data={filmOptions.map((f) => f.label)}
+              placeholder="films..."
+              searchable
+              clearable
+              size="xs"
+              style={{ marginBottom: 12 }}
+            />
+          </div>
+        </Menu.Dropdown>
+      </Menu>
+      <ColorFilter color={color} setColor={setColor} onlyIcon={onlyIcon} />
       <Menu shadow="md" width={170}>
         <Menu.Target>
           <Button
@@ -199,59 +303,6 @@ export default function FilterBar({
         </Menu.Dropdown>
       </Menu>
 
-      <ColorFilter color={color} setColor={setColor} onlyIcon={onlyIcon} />
-
-      <Menu shadow="md" width={280}>
-        <Menu.Target>
-          <Button
-            variant="outline"
-            color="gray"
-            leftSection={<IconCamera size={onlyIcon ? 22 : 18} stroke={1.5} />}
-            styles={() => ({
-              root: {
-                marginRight: 10,
-                paddingLeft: 10,
-                paddingRight: onlyIcon ? 0 : 10,
-                color: "#2E2E2E",
-                fontWeight: 400,
-                borderColor: "#CED4DA",
-                "&:hover": {
-                  backgroundColor: "#fbfbfc",
-                },
-                leftSection: {
-                  marginRight: 5,
-                },
-              },
-            })}
-          >
-            {!onlyIcon && <span>film</span>}
-          </Button>
-        </Menu.Target>
-        <Menu.Dropdown>
-          <Menu.Label>select film</Menu.Label>
-          <div className={styles.filmSelect}>
-            <Select
-              value={filmMake && filmType ? `${filmMake} - ${filmType}` : ""}
-              onChange={(value) => {
-                if (value) {
-                  const [make, type] = value.split(" - ");
-                  setFilmMake(make);
-                  setFilmType(type);
-                } else {
-                  setFilmMake("");
-                  setFilmType("");
-                }
-              }}
-              data={filmOptions.map((f) => f.label)}
-              placeholder="films..."
-              searchable
-              clearable
-              size="xs"
-              style={{ marginBottom: 12 }}
-            />
-          </div>
-        </Menu.Dropdown>
-      </Menu>
       <Menu shadow="md" width={125}>
         <Menu.Target>
           <Button
