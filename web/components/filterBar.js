@@ -17,7 +17,7 @@ import {
   IconMovie,
   IconSearch,
 } from "@tabler/icons-react";
-import { useEffect } from "react";
+import { useState } from "react";
 import ColorFilter from "./colorFilter";
 import styles from "./filterBar.module.css";
 
@@ -70,6 +70,8 @@ export default function FilterBar({
   ratioMinLimit,
   ratioMaxLimit,
 }) {
+  const [searchExpanded, setSearchExpanded] = useState(false);
+
   const getButtonStyles = (onlyIcon) => ({
     root: {
       marginRight: 10,
@@ -380,15 +382,48 @@ export default function FilterBar({
             </div>
           </Menu.Dropdown>
         </Menu>
+
+        {onlyIcon && (
+          <div className={styles.searchContainer}>
+            {!searchExpanded ? (
+              <Button
+                variant="outline"
+                color="gray"
+                leftSection={<IconSearch size={22} stroke={1.5} />}
+                styles={() => getButtonStyles(onlyIcon)}
+                onClick={() => setSearchExpanded(true)}
+              />
+            ) : (
+              <div className={styles.expandedSearch}>
+                <TextInput
+                  value={textTemp}
+                  onChange={(event) => setTextTemp(event.currentTarget.value)}
+                  leftSection={<IconSearch size={18} />}
+                  leftSectionPointerEvents="none"
+                  placeholder={textPlaceholder}
+                  onBlur={() => setSearchExpanded(false)}
+                  autoFocus
+                  styles={{
+                    input: {
+                      minWidth: "250px",
+                    },
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <TextInput
-        value={textTemp}
-        onChange={(event) => setTextTemp(event.currentTarget.value)}
-        leftSection={<IconSearch size={18} />}
-        leftSectionPointerEvents="none"
-        placeholder={textPlaceholder}
-      />
+      {!onlyIcon && (
+        <TextInput
+          value={textTemp}
+          onChange={(event) => setTextTemp(event.currentTarget.value)}
+          leftSection={<IconSearch size={18} />}
+          leftSectionPointerEvents="none"
+          placeholder={textPlaceholder}
+        />
+      )}
     </div>
   );
 }
