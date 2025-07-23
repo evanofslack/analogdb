@@ -55,8 +55,7 @@ export default function FilterBar({
   setFilmType,
   setFilmSpeed,
 
-  filmMakeOptions,
-  filmTypeOptions,
+  filmOptions,
 
   // UI state
   onlyIcon,
@@ -70,16 +69,6 @@ export default function FilterBar({
   ratioMinLimit,
   ratioMaxLimit,
 }) {
-  // Clear type when make changes
-  useEffect(() => {
-    if (filmMake && filmType) {
-      const isTypeValidForMake = filmTypeOptions.includes(filmType);
-      if (!isTypeValidForMake) {
-        setFilmType("");
-      }
-    }
-  }, [filmMake, filmType, filmTypeOptions, setFilmType]);
-
   return (
     <div className={styles.query}>
       <Menu shadow="md" width={170}>
@@ -242,24 +231,23 @@ export default function FilterBar({
           <Menu.Label>select film</Menu.Label>
           <div className={styles.filmSelect}>
             <Select
-              value={filmMake}
-              onChange={setFilmMake}
-              data={filmMakeOptions}
-              placeholder="Select make..."
+              value={filmMake && filmType ? `${filmMake} - ${filmType}` : ""}
+              onChange={(value) => {
+                if (value) {
+                  const [make, type] = value.split(" - ");
+                  setFilmMake(make);
+                  setFilmType(type);
+                } else {
+                  setFilmMake("");
+                  setFilmType("");
+                }
+              }}
+              data={filmOptions.map((f) => f.label)}
+              placeholder="films..."
               searchable
               clearable
               size="xs"
               style={{ marginBottom: 12 }}
-            />
-            <Select
-              value={filmType}
-              onChange={setFilmType}
-              data={filmTypeOptions}
-              placeholder="Select type..."
-              searchable
-              clearable
-              size="xs"
-              // disabled={!filmMake}
             />
           </div>
         </Menu.Dropdown>

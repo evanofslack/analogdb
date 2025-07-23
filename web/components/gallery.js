@@ -32,20 +32,17 @@ export default function Gallery({ isAdmin }) {
     ? "films, cameras..."
     : "films, cameras, places...";
 
-  // Generate film options from films response
   const filmOptions = useMemo(() => {
-    if (!filmsResponse?.films) return { makes: [], types: [] };
+    if (!filmsResponse?.films) return [];
 
-    const films = filmsResponse.films;
-    const makes = [...new Set(films.map((f) => f.make).filter(Boolean))];
-
-    // Filter types based on selected make
-    const typesForMake = filmFilters.make
-      ? films.filter((f) => f.make === filmFilters.make)
-      : films;
-    const types = [...new Set(typesForMake.map((f) => f.type).filter(Boolean))];
-
-    return { makes, types };
+    return filmsResponse.films
+      .filter((f) => f.make && f.type)
+      .map((f) => ({
+        make: f.make,
+        type: f.type,
+        label: `${f.make} - ${f.type}`,
+      }))
+      .filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i);
   }, [filmsResponse]);
 
   // Handle Enter key press for text search
@@ -55,10 +52,6 @@ export default function Gallery({ isAdmin }) {
     }
   }, [returnPress, executeQuery]);
 
-  useEffect(() => {
-    console.log(filmsResponse);
-  });
-
   return (
     <div className={styles.main}>
       <Header isAdmin={isAdmin} />
@@ -66,8 +59,7 @@ export default function Gallery({ isAdmin }) {
         <FilterBar
           {...filters}
           {...setters}
-          filmMakeOptions={filmOptions.makes}
-          filmTypeOptions={filmOptions.types}
+          filmOptions={filmOptions}
           onlyIcon={onlyIcon}
           textPlaceholder={textPlaceholder}
           widthMinLimit={limits.widthMin}
