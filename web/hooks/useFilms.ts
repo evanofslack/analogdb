@@ -4,7 +4,7 @@ import {
   FilmsGetSortEnum,
   ServerFilmsResponse,
 } from "analogdb-generated";
-import { parseAsInteger, useQueryState } from "nuqs";
+import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 
 const DEFAULTS = {
@@ -59,19 +59,10 @@ export default function useFilms(count: number) {
   const [sort, setSort] = useQueryState("film_sort", {
     defaultValue: DEFAULTS.sort,
   });
-  const [make, setMake] = useQueryState("film_make", {
-    defaultValue: DEFAULTS.make,
-  });
-  const [type, setType] = useQueryState("film_type", {
-    defaultValue: DEFAULTS.type,
-  });
-  const [speed, setSpeed] = useQueryState(
-    "film_speed",
-    parseAsInteger.withDefault(DEFAULTS.speed)
-  );
-  const [colortype, setColortype] = useQueryState("film_colortype", {
-    defaultValue: DEFAULTS.colortype,
-  });
+  const [make, setMake] = useState(DEFAULTS.make);
+  const [type, setType] = useState(DEFAULTS.type);
+  const [speed, setSpeed] = useState(DEFAULTS.speed);
+  const [colortype, setColortype] = useState(DEFAULTS.colortype);
 
   const [response, setResponse] = useState<ServerFilmsResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);

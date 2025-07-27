@@ -4,7 +4,7 @@ import {
   CamerasGetSortEnum,
   ServerCamerasResponse,
 } from "analogdb-generated";
-import { parseAsInteger, useQueryState } from "nuqs";
+import { useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 
 const DEFAULTS = {
@@ -51,12 +51,8 @@ export default function useCameras(count: number) {
   const [sort, setSort] = useQueryState("camera_sort", {
     defaultValue: DEFAULTS.sort,
   });
-  const [make, setMake] = useQueryState("camera_make", {
-    defaultValue: DEFAULTS.make,
-  });
-  const [model, setModel] = useQueryState("camera_model", {
-    defaultValue: DEFAULTS.model,
-  });
+  const [make, setMake] = useState(DEFAULTS.make);
+  const [model, setModel] = useState(DEFAULTS.model);
 
   const [response, setResponse] = useState<ServerCamerasResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
