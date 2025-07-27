@@ -1,4 +1,9 @@
-import { Configuration, FilmsApi, PostsApi } from "analogdb-generated";
+import {
+  CamerasApi,
+  Configuration,
+  FilmsApi,
+  PostsApi,
+} from "analogdb-generated";
 import { baseURL } from "./constants";
 
 const username = process.env.AUTH_USERNAME;
@@ -12,6 +17,7 @@ const config = new Configuration({
 
 export const postsApi: PostsApi = new PostsApi(config);
 export const filmsApi: FilmsApi = new FilmsApi(config);
+export const camerasApi: CamerasApi = new CamerasApi(config);
 
 export async function authorized_fetch(
   route: string,
