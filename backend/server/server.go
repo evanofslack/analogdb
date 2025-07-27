@@ -81,7 +81,7 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	// Mount only at base root
 	s.mountStaticHandlers()
 	s.mountStatusHandlers()
-	s.mountStatsHandlers()
+	s.mountDebugHandlers()
 	s.mountSwaggerHandlers()
 
 	// Mount collection resources
