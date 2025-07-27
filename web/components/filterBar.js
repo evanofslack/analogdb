@@ -38,7 +38,8 @@ export default function FilterBar({
   ratioMax,
   filmMake,
   filmType,
-  filmSpeed,
+  cameraMake,
+  cameraModel,
 
   // State setters
   setSort,
@@ -55,9 +56,11 @@ export default function FilterBar({
   setRatioMax,
   setFilmMake,
   setFilmType,
-  setFilmSpeed,
+  setCameraMake,
+  setCameraModel,
 
   filmOptions,
+  cameraOptions,
 
   // UI state
   onlyIcon,
@@ -76,7 +79,7 @@ export default function FilterBar({
 
   const handleSearch = (query) => {
     setTextTemp(query);
-    console.log("Searching for:", query);
+    console.log("Searching for: ", query);
   };
 
   const getButtonStyles = (onlyIcon) => ({
@@ -115,24 +118,26 @@ export default function FilterBar({
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
-              <Menu.Label>select film</Menu.Label>
+              <Menu.Label>select camera</Menu.Label>
               <div className={styles.filmSelect}>
                 <Select
                   value={
-                    filmMake && filmType ? `${filmMake} - ${filmType}` : ""
+                    cameraMake && cameraModel
+                      ? `${cameraMake} - ${cameraModel}`
+                      : ""
                   }
                   onChange={(value) => {
                     if (value) {
-                      const [make, type] = value.split(" - ");
-                      setFilmMake(make);
-                      setFilmType(type);
+                      const [make, model] = value.split(" - ");
+                      setCameraMake(make);
+                      setCameraModel(model);
                     } else {
-                      setFilmMake(null);
-                      setFilmType(null);
+                      setCameraMake(null);
+                      setCameraModel(null);
                     }
                   }}
-                  data={filmOptions.map((f) => f.label)}
-                  placeholder="films..."
+                  data={cameraOptions.map((c) => c.label)}
+                  placeholder="cameras..."
                   searchable
                   clearable
                   size="sm"

@@ -1,5 +1,6 @@
 "use client";
 
+import useCameras from "@hooks/useCameras";
 import useFilms from "@hooks/useFilms";
 import useKeyPress from "@hooks/useKeyPress";
 import usePosts from "@hooks/usePosts";
@@ -17,12 +18,20 @@ export default function Gallery({ isAdmin }) {
     usePosts();
 
   const {
-    response: filmsResponse, // Rename response to filmsResponse
+    response: filmsResponse,
     isLoading: isFilmLoading,
     filters: filmFilters,
     setters: filmSetters,
     executeQuery: executeFilmQuery,
   } = useFilms(500);
+
+  const {
+    response: camerasResponse,
+    isLoading: isCameraLoading,
+    filters: cameraFilters,
+    setters: cameraSetters,
+    executeQuery: executeCameraQuery,
+  } = useCameras(500);
 
   const returnPress = useKeyPress("Enter");
   const breakpoints = useBreakpoint();
@@ -45,6 +54,19 @@ export default function Gallery({ isAdmin }) {
       .filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i);
   }, [filmsResponse]);
 
+  const cameraOptions = useMemo(() => {
+    if (!camerasResponse?.cameras) return [];
+
+    return camerasResponse.cameras
+      .filter((f) => f.make && f.type)
+      .map((f) => ({
+        make: f.make,
+        model: f.model,
+        label: `${f.make} - ${f.model}`,
+      }))
+      .filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i);
+  }, [camerasResponse]);
+
   // Handle Enter key press for text search
   useEffect(() => {
     if (returnPress) {
@@ -60,6 +82,7 @@ export default function Gallery({ isAdmin }) {
           {...filters}
           {...setters}
           filmOptions={filmOptions}
+          cameraOptions={cameraOptions}
           onlyIcon={onlyIcon}
           textPlaceholder={textPlaceholder}
           widthMinLimit={limits.widthMin}

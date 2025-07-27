@@ -56,20 +56,20 @@ function buildQueryParams(
 }
 
 export default function useFilms(count: number) {
-  const [sort, setSort] = useQueryState("sort", {
+  const [sort, setSort] = useQueryState("film_sort", {
     defaultValue: DEFAULTS.sort,
   });
-  const [make, setMake] = useQueryState("make", {
+  const [make, setMake] = useQueryState("film_make", {
     defaultValue: DEFAULTS.make,
   });
-  const [type, setType] = useQueryState("type", {
+  const [type, setType] = useQueryState("film_type", {
     defaultValue: DEFAULTS.type,
   });
   const [speed, setSpeed] = useQueryState(
-    "speed",
+    "film_speed",
     parseAsInteger.withDefault(DEFAULTS.speed)
   );
-  const [colortype, setColortype] = useQueryState("colortype", {
+  const [colortype, setColortype] = useQueryState("film_colortype", {
     defaultValue: DEFAULTS.colortype,
   });
 

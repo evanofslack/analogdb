@@ -24,7 +24,8 @@ const DEFAULTS = {
   ratioMax: 4.8,
   filmMake: null as string | null,
   filmType: null as string | null,
-  filmSpeed: null as number | null,
+  cameraMake: null as string | null,
+  cameraModel: null as string | null,
 };
 
 const COLOR_MIN_VALUES: Record<string, number> = {
@@ -64,7 +65,8 @@ function buildQueryParams(
   ratio: [number, number],
   filmMake: string,
   filmType: string,
-  filmSpeed: number | null
+  cameraMake: string,
+  cameraModel: string
 ): PostsGetRequest {
   const params: PostsGetRequest = {
     sort: sort as PostsGetSortEnum,
@@ -97,7 +99,8 @@ function buildQueryParams(
 
   if (filmMake !== "") params.filmMake = filmMake;
   if (filmType !== "") params.filmType = filmType;
-  if (filmSpeed !== null) params.filmSpeed = filmSpeed;
+  if (cameraMake !== "") params.cameraMake = cameraMake;
+  if (cameraModel !== "") params.cameraModel = cameraModel;
 
   return params;
 }
@@ -127,10 +130,12 @@ export default function usePosts() {
   const [filmType, setFilmType] = useQueryState("film_type", {
     defaultValue: DEFAULTS.filmType,
   });
-  const [filmSpeed, setFilmSpeed] = useQueryState(
-    "film_speed",
-    parseAsInteger.withDefault(DEFAULTS.filmSpeed)
-  );
+  const [cameraMake, setCameraMake] = useQueryState("camera_make", {
+    defaultValue: DEFAULTS.cameraMake,
+  });
+  const [cameraModel, setCameraModel] = useQueryState("camera_model", {
+    defaultValue: DEFAULTS.cameraModel,
+  });
 
   const [widthMin, setWidthMin] = useQueryState(
     "widthMin",
@@ -186,7 +191,8 @@ export default function usePosts() {
         [ratioMin, ratioMax],
         filmMake,
         filmType,
-        filmSpeed
+        cameraMake,
+        cameraModel
       );
       const data = await makeRequest(queryParams);
       setResponse(data);
@@ -211,7 +217,8 @@ export default function usePosts() {
     ratioMax,
     filmMake,
     filmType,
-    filmSpeed,
+    cameraMake,
+    cameraModel,
     setText,
   ]);
 
@@ -232,7 +239,8 @@ export default function usePosts() {
     ratioMax,
     filmMake,
     filmType,
-    filmSpeed,
+    cameraMake,
+    cameraModel,
     executeQuery,
   ]);
 
@@ -255,7 +263,8 @@ export default function usePosts() {
       ratioMax,
       filmMake,
       filmType,
-      filmSpeed,
+      cameraMake,
+      cameraModel,
     },
     setters: {
       setSort,
@@ -272,7 +281,8 @@ export default function usePosts() {
       setRatioMax,
       setFilmMake,
       setFilmType,
-      setFilmSpeed,
+      setCameraMake,
+      setCameraModel,
     },
     executeQuery,
     limits: {
