@@ -12,8 +12,7 @@ FROM base AS builder
 WORKDIR /app
 
 # Copy generated API client
-COPY api/clients/typescript/ ./api/clients/typescript/
-
+COPY api/clients/typescript/ /api/clients/typescript/
 
 ARG AUTH_USERNAME
 ENV AUTH_USERNAME=$AUTH_USERNAME
