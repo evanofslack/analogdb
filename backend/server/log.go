@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"runtime/debug"
 	"strconv"
@@ -12,6 +13,7 @@ import (
 	events "github.com/evanofslack/analogdb/internal/gen/proto/analytics/v1"
 	"github.com/go-chi/chi/v5/middleware"
 )
+
 
 func (server *Server) logRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,10 +46,10 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 			}
 
 			traceID := traceid.FromContext(r.Context())
-			remoteIP := r.RemoteAddr
+			remoteIP := getRealIP(r)
+			protocol := getRealProto(r)
 			url := r.URL.String()
 			path := r.URL.Path
-			protocol := r.Proto
 			scheme := r.URL.Scheme
 			method := r.Method
 			userAgent := r.Header.Get("User-Agent")
@@ -118,4 +120,22 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 			}
 		}()
 	})
+}
+
+func getRealIP(req *http.Request) string {
+	if realIp := req.Header.Get("X-Real-IP"); realIp != "" {
+		return realIp
+	}
+	if remoteIp := req.Header.Get("X-Forwarded-For"); remoteIp != "" {
+		return remoteIp
+	}
+    host, _, _ := net.SplitHostPort(req.RemoteAddr)
+    return host
+}
+
+func getRealProto(req *http.Request) string {
+	if proto := req.Header.Get("X-Forwarded-Proto"); proto != "" {
+		return proto
+	}
+    return req.Proto
 }
