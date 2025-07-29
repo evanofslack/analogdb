@@ -20,7 +20,7 @@
     "@opentelemetry/semantic-conventions": "^1.34.0",
     "@tabler/icons-react": "^3.33.0",
     "analogdb-generated": "file:../api/clients/typescript",
-    "next": "^15.3.2",
+    "next": "^15.4.1",
     "nuqs": "^2.4.3",
     "prettier": "^2.8.1",
     "react": "19.1.0",
@@ -33,7 +33,8 @@
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.5.1",
-    "@types/react": "19.1.8",
+    "@types/node": "^24.0.14",
+    "@types/react": "^19.1.8",
     "eslint": "^8.30.0",
     "eslint-config-next": "^13.4.12",
     "postcss": "^8.5.3",

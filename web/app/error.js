@@ -2,11 +2,10 @@
 
 import Footer from "@components/footer";
 import Header from "@components/header";
-import { checkAdminAuth } from "@lib/auth";
 import styles from "@styles/Error.module.css";
 
-export default async function Error({ error, reset }) {
-  const isAdmin = await checkAdminAuth();
+export default function Error({ error, reset }) {
+  const isAdmin = false;
   return (
     <div>
       <Header isAdmin={isAdmin} />

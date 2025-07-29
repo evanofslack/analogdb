@@ -1,9 +1,11 @@
 "use client";
 
+import useCameras from "@hooks/useCameras";
+import useFilms from "@hooks/useFilms";
 import useKeyPress from "@hooks/useKeyPress";
-import usePostsQuery from "@hooks/usePostsQuery";
-import { useBreakpoint } from "@providers/breakpoint.js";
-import { useEffect } from "react";
+import usePosts from "@hooks/usePosts";
+import { useBreakpoint } from "@providers/breakpoint";
+import { useEffect, useMemo } from "react";
 import FilterBar from "./filterBar";
 import Footer from "./footer";
 import styles from "./gallery.module.css";
@@ -13,15 +15,57 @@ import ScrollTop from "./scrollTop";
 
 export default function Gallery({ isAdmin }) {
   const { response, isLoading, filters, setters, executeQuery, limits } =
-    usePostsQuery();
+    usePosts();
+
+  const {
+    response: filmsResponse,
+    isLoading: isFilmLoading,
+    filters: filmFilters,
+    setters: filmSetters,
+    executeQuery: executeFilmQuery,
+  } = useFilms(500);
+
+  const {
+    response: camerasResponse,
+    isLoading: isCameraLoading,
+    filters: cameraFilters,
+    setters: cameraSetters,
+    executeQuery: executeCameraQuery,
+  } = useCameras(500);
 
   const returnPress = useKeyPress("Enter");
   const breakpoints = useBreakpoint();
 
   const onlyIcon = breakpoints["xs"] || breakpoints["sm"];
   const textPlaceholder = onlyIcon
-    ? "films, cameras..."
-    : "films, cameras, places...";
+    ? "search pictures..."
+    : "search pictures...";
+
+  const filmOptions = useMemo(() => {
+    if (!filmsResponse?.films) return [];
+
+    return filmsResponse.films
+      .filter((f) => f.make && f.type)
+      .map((f) => ({
+        make: f.make,
+        type: f.type,
+        label: `${f.make} - ${f.type}`,
+      }))
+      .filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i);
+  }, [filmsResponse]);
+
+  const cameraOptions = useMemo(() => {
+    if (!camerasResponse?.cameras) return [];
+
+    return camerasResponse.cameras
+      .filter((f) => f.make && f.type)
+      .map((f) => ({
+        make: f.make,
+        model: f.model,
+        label: `${f.make} - ${f.model}`,
+      }))
+      .filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i);
+  }, [camerasResponse]);
 
   // Handle Enter key press for text search
   useEffect(() => {
@@ -37,6 +81,8 @@ export default function Gallery({ isAdmin }) {
         <FilterBar
           {...filters}
           {...setters}
+          filmOptions={filmOptions}
+          cameraOptions={cameraOptions}
           onlyIcon={onlyIcon}
           textPlaceholder={textPlaceholder}
           widthMinLimit={limits.widthMin}

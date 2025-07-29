@@ -3,7 +3,12 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 
+import analogdb_generated
 import requests
+from analogdb_generated import ApiClient, Configuration
+from analogdb_generated.api.post_api import PostApi
+from analogdb_generated.api.posts_api import PostsApi
+from analogdb_generated.models.analogdb_post import AnalogdbPost
 from requests.auth import HTTPBasicAuth
 
 from .models import (
@@ -55,6 +60,19 @@ class Client:
         self.base_url = base_url
         self.session = requests.Session()
         self.auth = HTTPBasicAuth(username, password) if username and password else None
+
+        config = Configuration(host=base_url)
+        if username and password:
+            config.username = username
+            config.password = password
+        self.api_client = ApiClient(config)
+        self.posts_api = PostsApi(self.api_client)
+        self.post_api = PostApi(self.api_client)
+
+    @retry(delay=1, times=5)
+    def get_post_gen(self, id: int) -> AnalogdbPost:
+        post = self.post_api.post_id_get(id)
+        return post
 
     def get_post(self, post_id: int) -> Post:
         response = self.session.get(f"{self.base_url}/post/{post_id}")

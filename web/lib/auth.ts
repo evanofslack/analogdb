@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-export async function loginAction(formData) {
+export async function loginAction(formData: FormData): Promise<void> {
   const username = formData.get("username");
   const password = formData.get("password");
 
@@ -11,32 +11,29 @@ export async function loginAction(formData) {
     username === process.env.ADMIN_USERNAME &&
     password === process.env.ADMIN_PASSWORD
   ) {
-    cookies().set("admin-token", process.env.ADMIN_SECRET, {
+    (await cookies()).set("admin-token", process.env.ADMIN_SECRET!, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 7, // 1 week
       path: "/",
     });
-
     redirect("/admin");
   } else {
-    // For simplicity, we'll redirect back with error in URL
     redirect("/admin?error=invalid");
   }
 }
 
-export async function logoutAction() {
-  cookies().set("admin-token", "", {
+export async function logoutAction(): Promise<void> {
+  (await cookies()).set("admin-token", "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     maxAge: 0,
     path: "/",
   });
-
   redirect("/admin");
 }
 
-export async function checkAdminAuth() {
+export async function checkAdminAuth(): Promise<boolean> {
   const cookieStore = await cookies();
   const adminToken = cookieStore.get("admin-token");
   return adminToken?.value === process.env.ADMIN_SECRET;

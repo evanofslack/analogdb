@@ -1,12 +1,19 @@
-import { postsApi } from "@lib/client.js";
-import { useQueryState } from "nuqs";
+import { postsApi } from "@lib/client";
+import {
+  PostsGetRequest,
+  PostsGetSortEnum,
+  ServerPostResponse,
+} from "analogdb-generated";
+import { parseAsFloat, parseAsInteger, useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 
+type FilterOption = "include" | "exclude" | "only";
+
 const DEFAULTS = {
-  sort: "latest",
-  nsfw: "exclude",
-  bw: "exclude",
-  sprocket: "include",
+  sort: "latest" as PostsGetSortEnum,
+  nsfw: "exclude" as FilterOption,
+  bw: "exclude" as FilterOption,
+  sprocket: "include" as FilterOption,
   color: "",
   text: "",
   widthMin: 600,
@@ -15,22 +22,28 @@ const DEFAULTS = {
   heightMax: 12000,
   ratioMin: 0.3,
   ratioMax: 4.8,
+  filmMake: null as string | null,
+  filmType: null as string | null,
+  cameraMake: null as string | null,
+  cameraModel: null as string | null,
 };
 
-const COLOR_MIN_VALUES = {
-  gray: "0.8",
-  black: "0.7",
-  white: "0.50",
-  teal: "0.35",
-  olive: "0.35",
-  brown: "0.35",
-  tan: "0.30",
-  navy: "0.25",
-  green: "0.25",
-  default: "0.15",
+const COLOR_MIN_VALUES: Record<string, number> = {
+  gray: 0.8,
+  black: 0.7,
+  white: 0.5,
+  teal: 0.35,
+  olive: 0.35,
+  brown: 0.35,
+  tan: 0.3,
+  navy: 0.25,
+  green: 0.25,
+  default: 0.15,
 };
 
-async function makeRequest(params) {
+async function makeRequest(
+  params: PostsGetRequest
+): Promise<ServerPostResponse> {
   try {
     const response = await postsApi.postsGet(params);
     return response;
@@ -41,18 +54,22 @@ async function makeRequest(params) {
 }
 
 function buildQueryParams(
-  sort,
-  nsfw,
-  bw,
-  sprocket,
-  text,
-  color,
-  width,
-  height,
-  ratio
-) {
-  const params = {
-    sort: sort,
+  sort: string,
+  nsfw: string,
+  bw: string,
+  sprocket: string,
+  text: string,
+  color: string,
+  width: [number, number],
+  height: [number, number],
+  ratio: [number, number],
+  filmMake: string,
+  filmType: string,
+  cameraMake: string,
+  cameraModel: string
+): PostsGetRequest {
+  const params: PostsGetRequest = {
+    sort: sort as PostsGetSortEnum,
     pageSize: 100,
     widthMin: width[0],
     widthMax: width[1],
@@ -80,77 +97,79 @@ function buildQueryParams(
     params.minColor = [COLOR_MIN_VALUES[color] || COLOR_MIN_VALUES.default];
   }
 
-  if (color !== "") {
-    params.color = color;
-    params.minColor = COLOR_MIN_VALUES[color] || COLOR_MIN_VALUES.default;
-  }
+  if (filmMake !== "") params.filmMake = filmMake;
+  if (filmType !== "") params.filmType = filmType;
+  if (cameraMake !== "") params.cameraMake = cameraMake;
+  if (cameraModel !== "") params.cameraModel = cameraModel;
 
   return params;
 }
 
-export default function usePostsQuery() {
+export default function usePosts() {
   const [sort, setSort] = useQueryState("sort", {
-    history: "push",
     defaultValue: DEFAULTS.sort,
-    shallow: false,
   });
   const [nsfw, setNsfw] = useQueryState("nsfw", {
-    history: "push",
     defaultValue: DEFAULTS.nsfw,
-    shallow: false,
   });
   const [bw, setBw] = useQueryState("bw", {
-    history: "push",
     defaultValue: DEFAULTS.bw,
-    shallow: false,
   });
   const [sprocket, setSprocket] = useQueryState("sprocket", {
-    history: "push",
     defaultValue: DEFAULTS.sprocket,
-    shallow: false,
   });
   const [color, setColor] = useQueryState("color", {
     defaultValue: DEFAULTS.color,
-    shallow: false,
   });
   const [text, setText] = useQueryState("text", {
     defaultValue: DEFAULTS.text,
-    shallow: false,
+  });
+  const [filmMake, setFilmMake] = useQueryState("film_make", {
+    defaultValue: DEFAULTS.filmMake,
+  });
+  const [filmType, setFilmType] = useQueryState("film_type", {
+    defaultValue: DEFAULTS.filmType,
+  });
+  const [cameraMake, setCameraMake] = useQueryState("camera_make", {
+    defaultValue: DEFAULTS.cameraMake,
+  });
+  const [cameraModel, setCameraModel] = useQueryState("camera_model", {
+    defaultValue: DEFAULTS.cameraModel,
   });
 
-  const [widthMin, setWidthMin] = useQueryState("widthMin", {
-    defaultValue: DEFAULTS.widthMin,
-    shallow: false,
-  });
-  const [widthMax, setWidthMax] = useQueryState("widthMax", {
-    defaultValue: DEFAULTS.widthMax,
-    shallow: false,
-  });
-  const [heightMin, setHeightMin] = useQueryState("heightMin", {
-    defaultValue: DEFAULTS.heightMin,
-    shallow: false,
-  });
-  const [heightMax, setHeightMax] = useQueryState("heightMax", {
-    defaultValue: DEFAULTS.heightMax,
-    shallow: false,
-  });
-  const [ratioMin, setRatioMin] = useQueryState("ratioMin", {
-    defaultValue: DEFAULTS.ratioMin,
-    shallow: false,
-  });
-  const [ratioMax, setRatioMax] = useQueryState("ratioMax", {
-    defaultValue: DEFAULTS.ratioMax,
-    shallow: false,
-  });
+  const [widthMin, setWidthMin] = useQueryState(
+    "widthMin",
+    parseAsInteger.withDefault(DEFAULTS.widthMin)
+  );
 
-  const [textTemp, setTextTemp] = useState(text || "");
-  const [response, setResponse] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [widthMax, setWidthMax] = useQueryState(
+    "widthMax",
+    parseAsInteger.withDefault(DEFAULTS.widthMax)
+  );
+  const [heightMin, setHeightMin] = useQueryState(
+    "heightMin",
+    parseAsInteger.withDefault(DEFAULTS.heightMin)
+  );
+  const [heightMax, setHeightMax] = useQueryState(
+    "heightMax",
+    parseAsInteger.withDefault(DEFAULTS.heightMax)
+  );
+  const [ratioMin, setRatioMin] = useQueryState(
+    "ratioMin",
+    parseAsFloat.withDefault(DEFAULTS.ratioMin)
+  );
+  const [ratioMax, setRatioMax] = useQueryState(
+    "ratioMax",
+    parseAsFloat.withDefault(DEFAULTS.ratioMax)
+  );
+
+  const [textTemp, setTextTemp] = useState<string>(text || "");
+  const [response, setResponse] = useState<ServerPostResponse | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const executeQuery = useCallback(async () => {
     setIsLoading(true);
 
-    // Handle textTemp -> text conversion
     if (textTemp === DEFAULTS.text) {
       setText(null);
     } else {
@@ -169,7 +188,11 @@ export default function usePostsQuery() {
         color || DEFAULTS.color,
         [widthMin, widthMax],
         [heightMin, heightMax],
-        [ratioMin, ratioMax]
+        [ratioMin, ratioMax],
+        filmMake,
+        filmType,
+        cameraMake,
+        cameraModel
       );
       const data = await makeRequest(queryParams);
       setResponse(data);
@@ -192,10 +215,13 @@ export default function usePostsQuery() {
     heightMax,
     ratioMin,
     ratioMax,
+    filmMake,
+    filmType,
+    cameraMake,
+    cameraModel,
     setText,
   ]);
 
-  // Always fetch on mount and when filters change
   useEffect(() => {
     executeQuery();
   }, [
@@ -211,6 +237,10 @@ export default function usePostsQuery() {
     heightMax,
     ratioMin,
     ratioMax,
+    filmMake,
+    filmType,
+    cameraMake,
+    cameraModel,
     executeQuery,
   ]);
 
@@ -231,6 +261,10 @@ export default function usePostsQuery() {
       heightMax,
       ratioMin,
       ratioMax,
+      filmMake,
+      filmType,
+      cameraMake,
+      cameraModel,
     },
     setters: {
       setSort,
@@ -245,6 +279,10 @@ export default function usePostsQuery() {
       setHeightMax,
       setRatioMin,
       setRatioMax,
+      setFilmMake,
+      setFilmType,
+      setCameraMake,
+      setCameraModel,
     },
     executeQuery,
     limits: {

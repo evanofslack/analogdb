@@ -4,7 +4,6 @@
   justify-content: flex-end;
   align-items: center;
   width: 100%;
-  padding-right: 1rem;
   padding-bottom: 2rem;
 }
 
@@ -81,4 +80,34 @@
 
 .numInput {
   max-width: 5rem;
+}
+
+.filmSelect {
+  padding: 0.5rem 1rem 0.8rem;
+}
+
+.queryIconMode {
+  flex-direction: row;
+}
+
+.filterButtons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: relative;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+}
+
+.expandedSearch {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 10;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
