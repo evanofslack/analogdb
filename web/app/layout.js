@@ -1,13 +1,13 @@
 import "@styles/globals.css";
 import "@mantine/core/styles.css";
 import "@mantine/code-highlight/styles.css";
-import { CodeHighlightProvider } from "@components/codeHighlightProvider";
 import {
   ColorSchemeScript,
   mantineHtmlProps,
   MantineProvider,
 } from "@mantine/core";
 import { BreakpointProvider } from "@providers/breakpoint";
+import { CodeHighlightProvider } from "@providers/codehighlight";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export const metadata = {
