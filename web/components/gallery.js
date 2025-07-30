@@ -58,7 +58,7 @@ export default function Gallery({ isAdmin }) {
     if (!camerasResponse?.cameras) return [];
 
     return camerasResponse.cameras
-      .filter((f) => f.make && f.type)
+      .filter((f) => f.make && f.model)
       .map((f) => ({
         make: f.make,
         model: f.model,

@@ -1,12 +1,23 @@
+"use client";
+
 import { baseURL } from "@lib/constants";
 import { Tooltip } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
+import {
+  IconApi,
+  IconCalendarWeek,
+  IconCamera,
+  IconMovie,
+  IconUser,
+} from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import styles from "./imageTag.module.css";
 import Keywords from "./keywords";
 
 export default function ImageTag(props) {
+  const router = useRouter();
   const clipboard = useClipboard({ timeout: 1000 });
 
   let post = props.post;
@@ -17,6 +28,32 @@ export default function ImageTag(props) {
   const author = post.author.replace("u/", "");
 
   const date = new Date(post.timestamp * 1000).toLocaleDateString("en-US");
+
+  const cameraInfo =
+    post.camera_make && post.camera_model
+      ? `${post.camera_make}, ${post.camera_model}`
+      : null;
+
+  const filmInfo =
+    post.film_make && post.film_type
+      ? `${post.film_make}, ${post.film_type}`
+      : null;
+
+  const handleFilmClick = () => {
+    router.push(
+      `/?film_make=${encodeURIComponent(
+        post.film_make
+      )}&film_type=${encodeURIComponent(post.film_type)}`
+    );
+  };
+
+  const handleCameraClick = () => {
+    router.push(
+      `/?camera_make=${encodeURIComponent(
+        post.camera_make
+      )}&camera_model=${encodeURIComponent(post.camera_model)}`
+    );
+  };
 
   let hexColors = new Array();
   post.colors.forEach(function (color) {
@@ -37,13 +74,48 @@ export default function ImageTag(props) {
         </a>
         <div className={styles.containerSub}>
           <div className={styles.containerAuthor}>
+            <div className={styles.infoItemCal}>
+              <Tooltip label={"uploaded"} position="bottom" color="gray">
+                <IconCalendarWeek size={16} className={styles.icon} />
+              </Tooltip>
+              {date}
+            </div>
             <a href={redditUserURL + author} className={styles.author}>
+              <Tooltip label={"author"} position="bottom" color="gray">
+                <IconUser size={16} className={styles.icon} />
+              </Tooltip>
               {author}
             </a>
+            {cameraInfo && (
+              <div
+                className={styles.infoItem}
+                onClick={handleCameraClick}
+                style={{ cursor: "pointer" }}
+              >
+                <Tooltip label={"camera"} position="bottom" color="gray">
+                  <IconCamera size={16} className={styles.icon} />
+                </Tooltip>
+                {cameraInfo}
+              </div>
+            )}
+            {filmInfo && (
+              <div
+                className={styles.infoItem}
+                onClick={handleFilmClick}
+                style={{ cursor: "pointer" }}
+              >
+                <Tooltip label={"film"} position="bottom" color="gray">
+                  <IconMovie size={16} className={styles.icon} />
+                </Tooltip>
+                {filmInfo}
+              </div>
+            )}
             <a href={api_endpoint + post.id} className={styles.id}>
+              <Tooltip label={"api response"} position="bottom" color="gray">
+                <IconApi size={16} className={styles.icon} />
+              </Tooltip>
               #{post.id}
             </a>
-            <div>{date}</div>
           </div>
           <div className={styles.containerColorsAndKeywords}>
             <div className={styles.containerColors}>
