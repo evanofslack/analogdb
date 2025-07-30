@@ -414,92 +414,81 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Starting find posts")
 	defer db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Finished find posts")
 
-	var colorArgs, keywordArgs, postArgs []any
+	var postArgs []any
 	index := 1
-	var colorWhere, keywordWhere, postWhere string
+	var postWhere string
 
-	colorWhere, colorArgs, index = filterToWhereColor(filter, index)
-	keywordWhere, keywordArgs, index = filterToWhereKeyword(filter, index)
 	postWhere, postArgs, index = filterToWherePost(filter, index)
 
-	keywordJoin := "LEFT OUTER"
-	if filter.Keywords != nil {
-		keywordJoin = "INNER"
-	}
+	args := postArgs
 
-	colorJoin := "LEFT OUTER"
-	if filter.Colors != nil {
-		colorJoin = "INNER"
-	}
-
-	args := append(colorArgs, keywordArgs...)
-	args = append(args, postArgs...)
-
-	order := filterToOrder(filter)
+	subqueryOrder := filterToOrder(filter)
+	mainOrder := " ORDER BY p.time DESC"
 	limit := formatLimit(filter)
 
 	query := fmt.Sprintf(`
-			SELECT
-				p.id,
-				p.url,
-				p.title,
-				p.author,
-				p.permalink,
-		        p.description,
-				p.score,
-				p.nsfw,
-				p.greyscale,
-				p.time,
-				p.width,
-				p.height,
-				p.sprocket,
-				p.lowUrl,
-				p.lowWidth,
-				p.lowHeight,
-				p.medUrl,
-				p.medWidth,
-				p.medHeight,
-				p.highUrl,
-				p.highWidth,
-				p.highHeight,
-				p.camera_make,
-                p.camera_model,
-                p.film_make,
-                p.film_type,
-                p.film_speed,
-                p.focal_length,
-                p.aperture,
-				c.hexes,
-				c.csses,
-				c.htmls,
-				c.percents,
-				k.words,
-				k.weights,
-				COUNT(*) OVER()
-			FROM
-				pictures p
-				%s JOIN (
-					SELECT
-						post_id,
-						STRING_AGG(colors.hex, ',' ORDER BY colors.percent DESC) as hexes,
-						STRING_AGG(colors.css, ',' ORDER BY colors.percent DESC) as csses,
-						STRING_AGG(colors.html, ',' ORDER BY colors.percent DESC) as htmls,
-						ARRAY_AGG(colors.percent ORDER BY colors.percent DESC) as percents
-					FROM colors
-					WHERE %s
-					GROUP BY post_id
-				) c on c.post_id = p.id
-				%s JOIN (
-					SELECT
-						post_id,
-						STRING_AGG(keywords.word, ',' ORDER BY keywords.weight DESC) as words,
-						ARRAY_AGG(keywords.weight ORDER BY keywords.weight DESC) as weights
-					FROM keywords
-					WHERE %s
-					GROUP BY post_id
-				) k on k.post_id = p.id
+		SELECT
+			p.id,
+			p.url,
+			p.title,
+			p.author,
+			p.permalink,
+			p.description,
+			p.score,
+			p.nsfw,
+			p.greyscale,
+			p.time,
+			p.width,
+			p.height,
+			p.sprocket,
+			p.lowUrl,
+			p.lowWidth,
+			p.lowHeight,
+			p.medUrl,
+			p.medWidth,
+			p.medHeight,
+			p.highUrl,
+			p.highWidth,
+			p.highHeight,
+			p.camera_make,
+			p.camera_model,
+			p.film_make,
+			p.film_type,
+			p.film_speed,
+			p.focal_length,
+			p.aperture,
+			c.hexes,
+			c.csses,
+			c.htmls,
+			c.percents,
+			k.words,
+			k.weights,
+			COUNT(*) OVER()
+		FROM (
+			SELECT * FROM pictures 
 			WHERE %s
-	`, colorJoin, colorWhere, keywordJoin, keywordWhere, postWhere) + order + limit
+			%s %s
+		) p
+		LEFT JOIN (
+			SELECT
+				post_id,
+				STRING_AGG(hex, ',' ORDER BY percent DESC) as hexes,
+				STRING_AGG(css, ',' ORDER BY percent DESC) as csses,
+				STRING_AGG(html, ',' ORDER BY percent DESC) as htmls,
+				ARRAY_AGG(percent ORDER BY percent DESC) as percents
+			FROM colors
+			GROUP BY post_id
+		) c ON c.post_id = p.id
+		LEFT JOIN (
+			SELECT
+				post_id,
+				STRING_AGG(word, ',' ORDER BY weight DESC) as words,
+				ARRAY_AGG(weight ORDER BY weight DESC) as weights
+			FROM keywords
+			GROUP BY post_id
+		) k ON k.post_id = p.id
+		%s
+	`, postWhere, subqueryOrder, limit, mainOrder)
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -519,7 +508,6 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 		}
 		post, err := rawPostToPost(*p)
 
-		// strip `u/` prefix from author (modifies in place)
 		stripAuthorPrefix(post)
 
 		if err != nil {
@@ -527,7 +515,6 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			return nil, 0, err
 		}
 		posts = append(posts, post)
-
 	}
 
 	err = tx.Commit()
@@ -537,6 +524,240 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	}
 
 	return posts, count, nil
+}
+
+func filterToOrder(filter *analogdb.PostFilter) string {
+	if sort := filter.Sort; sort != nil {
+		switch *sort {
+		case analogdb.PostSortTime:
+			return " ORDER BY time DESC"
+		case analogdb.PostSortScore:
+			return " ORDER BY score DESC"
+		case analogdb.PostSortRandom:
+			if filter.Seed == nil {
+				filter.SetSeed()
+			}
+			return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", *filter.Seed)
+		}
+	}
+	return ""
+}
+
+func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
+	index := startIndex
+	where, args := []string{"1=1"}, []any{}
+
+	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
+		switch *sort {
+		case analogdb.PostSortTime:
+			where = append(where, fmt.Sprintf("time < $%d", index))
+			args = append(args, *keyset)
+			index++
+		case analogdb.PostSortScore:
+			where = append(where, fmt.Sprintf("score < $%d", index))
+			args = append(args, *keyset)
+			index++
+		case analogdb.PostSortRandom:
+			if seed := filter.Seed; seed != nil {
+				where = append(where, fmt.Sprintf("MOD(time, $%d) > $%d", index, index+1))
+				args = append(args, *seed, *keyset%*seed)
+				index += 2
+			}
+		}
+	}
+
+	if nsfw := filter.Nsfw; nsfw != nil {
+		where = append(where, fmt.Sprintf("nsfw = $%d", index))
+		args = append(args, *nsfw)
+		index++
+	}
+
+	if grayscale := filter.Grayscale; grayscale != nil {
+		where = append(where, fmt.Sprintf("greyscale = $%d", index))
+		args = append(args, *grayscale)
+		index++
+	}
+
+	if sprocket := filter.Sprocket; sprocket != nil {
+		where = append(where, fmt.Sprintf("sprocket = $%d", index))
+		args = append(args, *sprocket)
+		index++
+	}
+
+	if ids := filter.IDs; ids != nil {
+		where = append(where, fmt.Sprintf("id = ANY($%d::int[])", index))
+		var idsFormat string
+		if len(*ids) == 1 {
+			id := (*ids)[0]
+			idsFormat = fmt.Sprintf("{%s}", strconv.Itoa(id))
+		} else {
+			idsString := []string{}
+			for _, i := range *ids {
+				idsString = append(idsString, strconv.Itoa(i))
+			}
+			idsFormat = "{" + strings.Join(idsString, ",") + "}"
+		}
+		args = append(args, idsFormat)
+		index++
+	}
+
+	if title := filter.Title; title != nil {
+		where = append(where, fmt.Sprintf("title ILIKE $%d", index))
+		args = append(args, "%"+*title+"%")
+		index++
+	}
+
+	if author := filter.Author; author != nil {
+		var matchAuthor string
+		if pre := (*author)[0:2]; pre != "u/" {
+			matchAuthor = "u/" + *author
+		} else {
+			matchAuthor = *author
+		}
+		where = append(where, fmt.Sprintf("author = $%d", index))
+		args = append(args, matchAuthor)
+		index++
+	}
+
+	if start := filter.TimeStart; start != nil {
+		where = append(where, fmt.Sprintf("time >= $%d", index))
+		startInt := int(start.Unix())
+		args = append(args, startInt)
+		index++
+	}
+	if end := filter.TimeEnd; end != nil {
+		where = append(where, fmt.Sprintf("time < $%d", index))
+		endInt := int(end.Unix())
+		args = append(args, endInt)
+		index++
+	}
+
+	if w := filter.Width; w != nil {
+		if minWidth, maxWidth := w.Min, w.Max; minWidth != nil && maxWidth != nil {
+			where = append(where, fmt.Sprintf("width BETWEEN $%d AND $%d", index, index+1))
+			args = append(args, *minWidth, *maxWidth)
+			index += 2
+		} else if minWidth := w.Min; minWidth != nil {
+			where = append(where, fmt.Sprintf("width >= $%d", index))
+			args = append(args, *minWidth)
+			index++
+		} else if maxWidth := w.Max; maxWidth != nil {
+			where = append(where, fmt.Sprintf("width <= $%d", index))
+			args = append(args, *maxWidth)
+			index++
+		}
+	}
+
+	if h := filter.Height; h != nil {
+		if minHeight, maxHeight := h.Min, h.Max; minHeight != nil && maxHeight != nil {
+			where = append(where, fmt.Sprintf("height BETWEEN $%d AND $%d", index, index+1))
+			args = append(args, *minHeight, *maxHeight)
+			index += 2
+		} else if minHeight := h.Min; minHeight != nil {
+			where = append(where, fmt.Sprintf("height >= $%d", index))
+			args = append(args, *minHeight)
+			index++
+		} else if maxHeight := h.Max; maxHeight != nil {
+			where = append(where, fmt.Sprintf("height <= $%d", index))
+			args = append(args, *maxHeight)
+			index++
+		}
+	}
+
+	if ar := filter.AspectRatio; ar != nil {
+		if minRatio, maxRatio := ar.Min, ar.Max; minRatio != nil && maxRatio != nil {
+			where = append(where, fmt.Sprintf("width::decimal / height::decimal BETWEEN $%d::decimal AND $%d::decimal", index, index+1))
+			args = append(args, *minRatio, *maxRatio)
+			index += 2
+		} else if minRatio := ar.Min; minRatio != nil {
+			where = append(where, fmt.Sprintf("width::decimal / height::decimal >= $%d::decimal", index))
+			args = append(args, *minRatio)
+			index++
+		} else if maxRatio := ar.Max; maxRatio != nil {
+			where = append(where, fmt.Sprintf("width::decimal / height::decimal <= $%d::decimal", index))
+			args = append(args, *maxRatio)
+			index++
+		}
+	}
+
+	if cm := filter.CameraMake; cm != nil {
+		where = append(where, fmt.Sprintf("camera_make = $%d", index))
+		args = append(args, *cm)
+		index++
+	}
+
+	if cmd := filter.CameraModel; cmd != nil {
+		where = append(where, fmt.Sprintf("camera_model = $%d", index))
+		args = append(args, *cmd)
+		index++
+	}
+
+	if fm := filter.FilmMake; fm != nil {
+		where = append(where, fmt.Sprintf("film_make = $%d", index))
+		args = append(args, *fm)
+		index++
+	}
+
+	if ft := filter.FilmType; ft != nil {
+		where = append(where, fmt.Sprintf("film_type = $%d", index))
+		args = append(args, *ft)
+		index++
+	}
+
+	if fs := filter.FilmSpeed; fs != nil {
+		where = append(where, fmt.Sprintf("film_speed = $%d", index))
+		args = append(args, *fs)
+		index++
+	}
+
+	if fl := filter.FocalLength; fl != nil {
+		where = append(where, fmt.Sprintf("focal_length = $%d", index))
+		args = append(args, *fl)
+		index++
+	}
+
+	if a := filter.Aperture; a != nil {
+		where = append(where, fmt.Sprintf("aperture = $%d", index))
+		args = append(args, *a)
+		index++
+	}
+
+	colorsP, colorPercentsP := filter.Colors, filter.ColorPercents
+	if colorsP != nil && colorPercentsP != nil {
+		colors, colorPercents := *colorsP, *colorPercentsP
+
+		for len(colors) > len(colorPercents) {
+			colorPercents = append(colorPercents, 0.0)
+		}
+
+		inner := ""
+		for i := range colors {
+			color, percent := colors[i], colorPercents[i]
+			inner += fmt.Sprintf("SELECT post_id from colors WHERE html = $%d GROUP BY post_id, html HAVING sum(percent) > $%d INTERSECT ", index, index+1)
+			index += 2
+			args = append(args, color, percent)
+		}
+
+		inner = strings.TrimSuffix(inner, " INTERSECT ")
+		statement := fmt.Sprintf("id IN (%s)", inner)
+		where = append(where, statement)
+	}
+
+	if filter.Keywords != nil {
+		inner := ""
+		for _, keyword := range *filter.Keywords {
+			inner += fmt.Sprintf("SELECT post_id from keywords WHERE word = $%d INTERSECT ", index)
+			index += 1
+			args = append(args, keyword)
+		}
+
+		inner = strings.TrimSuffix(inner, " INTERSECT ")
+		statement := fmt.Sprintf("id IN (%s)", inner)
+		where = append(where, statement)
+	}
+
+	whereQuery := strings.Join(where, " AND ")
+	return whereQuery, args, index
 }
 
 func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
@@ -799,24 +1020,6 @@ func (db *DB) allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 	return ids, nil
 }
 
-// filterToOrder converts filter into an SQL "ORDER BY" statement
-func filterToOrder(filter *analogdb.PostFilter) string {
-	if sort := filter.Sort; sort != nil {
-		switch *sort {
-		case analogdb.PostSortTime:
-			return " ORDER BY p.time DESC"
-		case analogdb.PostSortScore:
-			return " ORDER BY p.score DESC"
-		case analogdb.PostSortRandom:
-			if filter.Seed == nil {
-				filter.SetSeed()
-			}
-			return fmt.Sprintf(" ORDER BY MOD(p.time, %d), p.time DESC", *filter.Seed)
-		}
-	}
-	return ""
-}
-
 // formatLimit turns the limit into an SQL limit statement
 func formatLimit(filter *analogdb.PostFilter) string {
 	if limit := filter.Limit; limit != nil {
@@ -825,287 +1028,6 @@ func formatLimit(filter *analogdb.PostFilter) string {
 		}
 	}
 	return ""
-}
-
-func filterToWhereColor(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
-	index := startIndex
-	base := "1=1"
-	where, args := []string{base}, []any{}
-	colorsP, colorPercentsP := filter.Colors, filter.ColorPercents
-
-	if colorsP == nil || colorPercentsP == nil {
-		return base, args, index
-	}
-
-	colors, colorPercents := *colorsP, *colorPercentsP
-
-	// percents must not be shorter than colors
-	for len(colors) > len(colorPercents) {
-		colorPercents = append(colorPercents, 0.0)
-	}
-
-	// get all post ids matching colors.
-	// group by html color and sum grouped percents.
-	//
-	// i.e.
-	//
-	// WHERE post_id IN (
-	// 	SELECT post_id
-	// 	FROM colors
-	// 	WHERE html = 'red'
-	// 	GROUP BY post_id, html
-	// 	HAVING sum(percent) > 0.1
-	// 	INTERSECT
-	// 	SELECT post_id
-	// 	FROM colors
-	// 	WHERE html = 'black'
-	// 	GROUP BY post_id, html
-	// 	HAVING sum(percent) > 0.1
-	// )
-
-	inner := ""
-	// must do one intersection for each color.
-	for i := range colors {
-		color, percent := colors[i], colorPercents[i]
-		inner += fmt.Sprintf("SELECT post_id from colors WHERE html = $%d GROUP BY post_id, html HAVING sum(percent) > $%d INTERSECT ", index, index+1)
-		index += 2
-		args = append(args, color, percent)
-	}
-
-	// strip off the trailing intersect
-	inner = strings.TrimSuffix(inner, " INTERSECT ")
-	statement := fmt.Sprintf("post_id IN (%s)", inner)
-	where = append(where, statement)
-
-	whereQuery := strings.Join(where, " AND ")
-
-	return whereQuery, args, index
-}
-
-func filterToWhereKeyword(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
-	index := startIndex
-	base := "1=1"
-	where, args := []string{base}, []any{}
-
-	if filter.Keywords == nil {
-		return base, args, index
-	}
-
-	// get all post ids matching all keywords.
-	//
-	// i.e.
-	//
-	// WHERE post_id IN (
-	// 	SELECT post_id
-	// 	FROM keywords
-	// 	WHERE word = '$word1'
-	// 	INTERSECT
-	// 	SELECT post_id
-	// 	FROM keywords
-	// 	WHERE word = '$word2'
-	//  ...
-	// )
-
-	inner := ""
-	// must do one intersection for each keyword.
-	for _, keyword := range *filter.Keywords {
-		inner += fmt.Sprintf("SELECT post_id from keywords WHERE word = $%d INTERSECT ", index)
-		index += 1
-		args = append(args, keyword)
-	}
-
-	// strip off the trailing intersect
-	inner = strings.TrimSuffix(inner, " INTERSECT ")
-	statement := fmt.Sprintf("post_id IN (%s)", inner)
-	where = append(where, statement)
-
-	whereQuery := strings.Join(where, " AND ")
-
-	return whereQuery, args, index
-}
-
-// filterToWhere converts a PostFilter to an SQL WHERE statement
-func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
-	index := startIndex
-	where, args := []string{"1=1"}, []any{}
-
-	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
-		switch *sort {
-		case analogdb.PostSortTime:
-			where = append(where, fmt.Sprintf("p.time < $%d", index))
-			args = append(args, *keyset)
-			index++
-		case analogdb.PostSortScore:
-			where = append(where, fmt.Sprintf("p.score < $%d", index))
-			args = append(args, *keyset)
-			index++
-		case analogdb.PostSortRandom:
-			if seed := filter.Seed; seed != nil {
-				where = append(where, fmt.Sprintf("MOD(p.time, $%d) > $%d", index, index+1))
-				args = append(args, *seed, *keyset%*seed)
-				index += 2
-			}
-		}
-	}
-
-	if nsfw := filter.Nsfw; nsfw != nil {
-		where = append(where, fmt.Sprintf("p.nsfw = $%d", index))
-		args = append(args, *nsfw)
-		index++
-	}
-
-	if grayscale := filter.Grayscale; grayscale != nil {
-		where = append(where, fmt.Sprintf("p.greyscale = $%d", index))
-		args = append(args, *grayscale)
-		index++
-	}
-
-	if sprocket := filter.Sprocket; sprocket != nil {
-		where = append(where, fmt.Sprintf("p.sprocket = $%d", index))
-		args = append(args, *sprocket)
-		index++
-	}
-
-	if ids := filter.IDs; ids != nil {
-		where = append(where, fmt.Sprintf("p.id = ANY($%d::int[])", index))
-		// turn the slice of ids into a string i.e. "(1,2,3)"
-		var idsFormat string
-		if len(*ids) == 1 {
-			// single id can't have a comma
-			id := (*ids)[0]
-			idsFormat = fmt.Sprintf("{%s}", strconv.Itoa(id))
-		} else {
-			idsString := []string{}
-			for _, i := range *ids {
-				idsString = append(idsString, strconv.Itoa(i))
-			}
-			idsFormat = "{" + strings.Join(idsString, ",") + "}"
-		}
-		args = append(args, idsFormat)
-		index++
-	}
-
-	// match partial text in post title with ILIKE
-	if title := filter.Title; title != nil {
-		where = append(where, fmt.Sprintf("p.title ILIKE $%d", index))
-		args = append(args, "%"+*title+"%")
-		index++
-	}
-
-	// if query does not prefix author with 'u/' we need to add it
-	if author := filter.Author; author != nil {
-		var matchAuthor string
-		if pre := (*author)[0:2]; pre != "u/" {
-			matchAuthor = "u/" + *author
-		} else {
-			matchAuthor = *author
-		}
-		where = append(where, fmt.Sprintf("p.author = $%d", index))
-		args = append(args, matchAuthor)
-		index++
-	}
-
-	// inclusive start_time and exclusive end_time
-	// start_time <= post.time < end_time
-	if start := filter.TimeStart; start != nil {
-		where = append(where, fmt.Sprintf("p.time >= $%d", index))
-		startInt := int(start.Unix())
-		args = append(args, startInt)
-		index++
-	}
-	if end := filter.TimeEnd; end != nil {
-		where = append(where, fmt.Sprintf("p.time < $%d", index))
-		endInt := int(end.Unix())
-		args = append(args, endInt)
-		index++
-	}
-
-	if w := filter.Width; w != nil {
-		if minWidth := w.Min; minWidth != nil {
-			where = append(where, fmt.Sprintf("p.width >= $%d", index))
-			args = append(args, *minWidth)
-			index++
-		}
-
-		if maxWidth := w.Max; maxWidth != nil {
-			where = append(where, fmt.Sprintf("p.width <= $%d", index))
-			args = append(args, *maxWidth)
-			index++
-		}
-	}
-
-	if h := filter.Height; h != nil {
-		if minHeight := h.Min; minHeight != nil {
-			where = append(where, fmt.Sprintf("p.height >= $%d", index))
-			args = append(args, *minHeight)
-			index++
-		}
-
-		if maxHeight := h.Max; maxHeight != nil {
-			where = append(where, fmt.Sprintf("p.height <= $%d", index))
-			args = append(args, *maxHeight)
-			index++
-		}
-	}
-
-	if ar := filter.AspectRatio; ar != nil {
-		if minRatio := ar.Min; minRatio != nil {
-			where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal >= $%d::decimal", index))
-			args = append(args, *minRatio)
-			index++
-		}
-
-		if maxRatio := ar.Max; maxRatio != nil {
-			where = append(where, fmt.Sprintf("p.width::decimal / p.height::decimal <= $%d::decimal", index))
-			args = append(args, *maxRatio)
-			index++
-		}
-	}
-
-	if cm := filter.CameraMake; cm != nil {
-		where = append(where, fmt.Sprintf("p.camera_make = $%d", index))
-		args = append(args, *cm)
-		index++
-	}
-
-	if cmd := filter.CameraModel; cmd != nil {
-		where = append(where, fmt.Sprintf("p.camera_model = $%d", index))
-		args = append(args, *cmd)
-		index++
-	}
-
-	if fm := filter.FilmMake; fm != nil {
-		where = append(where, fmt.Sprintf("p.film_make = $%d", index))
-		args = append(args, *fm)
-		index++
-	}
-
-	if ft := filter.FilmType; ft != nil {
-		where = append(where, fmt.Sprintf("p.film_type = $%d", index))
-		args = append(args, *ft)
-		index++
-	}
-
-	if fs := filter.FilmSpeed; fs != nil {
-		where = append(where, fmt.Sprintf("p.film_speed = $%d", index))
-		args = append(args, *fs)
-		index++
-	}
-
-	if fl := filter.FocalLength; fl != nil {
-		where = append(where, fmt.Sprintf("p.focal_length = $%d", index))
-		args = append(args, *fl)
-		index++
-	}
-
-	if a := filter.Aperture; a != nil {
-		where = append(where, fmt.Sprintf("p.aperture = $%d", index))
-		args = append(args, *a)
-		index++
-	}
-
-	whereQuery := strings.Join(where, " AND ")
-	return whereQuery, args, index
 }
 
 // Converts a patch to an SQL set statement
