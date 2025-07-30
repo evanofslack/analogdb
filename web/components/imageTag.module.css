@@ -35,6 +35,26 @@
   font-family: "Courier Prime", Courier, monospace;
 }
 
+.infoItemCal {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.3rem;
+}
+.infoItem:hover {
+  text-decoration: underline;
+}
+
+.icon {
+  margin-right: 0.5rem;
+  color: gray;
+}
+
 .containerColorsAndKeywords {
   display: flex;
   flex-direction: column;
