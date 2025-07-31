@@ -46,7 +46,6 @@ async function downloadImage(targetImage, name) {
     document.body.removeChild(link);
   } catch (error) {
     console.error("Download failed:", error);
-    // Show user-friendly error message
   }
 }
 
@@ -62,7 +61,7 @@ export default function ImagePage(props) {
       <div className={styles.fullscreen}>
         <div className={styles.headerIcons}>
           <Link href={`/`} passHref={true}>
-            <h1 className={styles.title}>Analogdb</h1>
+            <h1 className={styles.title}>AnalogDB</h1>
           </Link>
         </div>
         <div className={styles.imageContainer}>
