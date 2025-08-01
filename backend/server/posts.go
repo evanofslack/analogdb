@@ -140,10 +140,10 @@ func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 
 // @Summary Find similar posts
 // @Description Find posts similar to a given post using similarity matching
-// @Tags posts
+// @Tags post
 // @Accept json
 // @Produce json
-// @Param id query int true "Post ID to find similar posts for"
+// @Param id path int true "Post ID to find similar posts for"
 // @Param page_size query int false "Maximum number of similar posts to return" default(12)
 // @Param nsfw query bool false "Include nsfw posts in query"
 // @Param grayscale query bool false "Include b&w posts in query"
@@ -152,7 +152,7 @@ func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 404 {object} analogdb.Error "Not found"
 // @Failure 500 {object} analogdb.Error "Internal server error"
-// @Router /posts/similar [get]
+// @Router /post/{id}/similar [get]
 func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 	resp := SimilarPostsResponse{}
 
