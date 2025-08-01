@@ -69,11 +69,11 @@
 }
 
 .scrollLeft {
-  animation: scrollLeft 120s linear infinite;
+  animation: scrollLeft 140s linear infinite;
 }
 
 .scrollRight {
-  animation: scrollRight 120s linear infinite;
+  animation: scrollRight 140s linear infinite;
 }
 
 @keyframes scrollLeft {
