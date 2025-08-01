@@ -1,10 +1,12 @@
 "use client";
 
+import { postsApi } from "@lib/client";
 import { CodeHighlight } from "@mantine/code-highlight";
 import { useBreakpoint } from "@providers/breakpoint";
 import { IconPolaroid, IconUsers } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import styles from "./about.module.css";
 import Footer from "./footer";
 
@@ -17,6 +19,59 @@ export default function About(props) {
 
   let numPosts = props.data.numPosts;
   let numAuthors = props.data.numAuthors;
+
+  const [colorData, setColorData] = useState({
+    red: [],
+    blue: [],
+    green: [],
+  });
+  const [loading, setLoading] = useState(true);
+
+  const COLOR_MIN_VALUES = {
+    red: 0.4,
+    navy: 0.4,
+    green: 0.4,
+  };
+
+  async function makeRequest(params) {
+    try {
+      const response = await postsApi.postsGet(params);
+      return response;
+    } catch (error) {
+      console.error("API request failed:", error);
+      throw error;
+    }
+  }
+
+  useEffect(() => {
+    const fetchColorData = async () => {
+      try {
+        const colors = ["red", "navy", "green"];
+        const promises = colors.map((color) => {
+          const params = {
+            color: [color],
+            minColor: [COLOR_MIN_VALUES[color]],
+            pageSize: 30,
+            nsfw: false,
+            sort: "random",
+          };
+          return makeRequest(params);
+        });
+
+        const results = await Promise.all(promises);
+        setColorData({
+          red: results[0].posts || [],
+          blue: results[1].posts || [],
+          green: results[2].posts || [],
+        });
+      } catch (error) {
+        console.error("Failed to fetch color data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchColorData();
+  }, []);
 
   const apiQuery = "curl https://api.analogdb.com/posts";
 
@@ -68,6 +123,45 @@ export default function About(props) {
   ...
 ]`;
 
+  const renderColorRow = (images, direction) => {
+    if (!images.length) return null;
+
+    // Duplicate images for seamless loop
+    const duplicatedImages = [...images, ...images];
+
+    return (
+      <div className={styles.colorRow}>
+        <div
+          className={`${styles.colorScrollContainer} ${
+            direction === "left" ? styles.scrollLeft : styles.scrollRight
+          }`}
+        >
+          {duplicatedImages.map((post, index) => {
+            const image =
+              post.images?.find((img) => img.resolution === "medium") ||
+              post.images?.[0];
+            if (!image) return null;
+
+            return (
+              <div
+                key={`${post.id}-${index}`}
+                className={styles.colorImageContainer}
+              >
+                <Image
+                  src={image.url}
+                  alt={post.title}
+                  width={image.width}
+                  height={image.height}
+                  className={styles.colorImage}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <main>
       <div className={styles.container}>
@@ -117,7 +211,30 @@ export default function About(props) {
         </div>
 
         <div className={styles.sectionTwoBg}>
-          <div className={styles.sectionTwo}>
+          <div className={styles.colorSection}>
+            {!loading && (
+              <>
+                {renderColorRow(colorData.red, "right")}
+                {renderColorRow(colorData.blue, "left")}
+                {renderColorRow(colorData.green, "right")}
+              </>
+            )}
+            <div className={styles.colorTextOverlay}>
+              <div className={styles.title}>Color Intelligence</div>
+              <p className={styles.subtitle}>
+                Dominant colors are extracted from every photo, allowing you to
+                discover images by their visual palette. Search and analyze
+                images by their distinct colors.
+              </p>
+              <Link href="/search?color=red" className={styles.link}>
+                explore colors
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.sectionThreeBg}>
+          <div className={styles.sectionThree}>
             <div>
               {!isMobile && (
                 <div className={styles.apiDemoContainer}>
@@ -150,10 +267,10 @@ export default function About(props) {
               )}
             </div>
             <div>
-              <div className={styles.title}>Accesible API</div>
+              <div className={styles.title}>Accessible API</div>
               <p className={styles.subtitle}>
                 The entire collection of film is exposed through a simple and
-                modern JSON API. Embeddeding beautiful film photos in your
+                modern JSON API. Embedding beautiful film photos in your
                 projects has never been easier.
               </p>
               <Link href="/docs" className={styles.link}>
@@ -163,13 +280,13 @@ export default function About(props) {
           </div>
         </div>
 
-        <div className={styles.sectionThreeBg}>
-          <div className={styles.sectionThree}>
+        <div className={styles.sectionFourBg}>
+          <div className={styles.sectionFour}>
             <div>
               <div className={styles.title}>Open-source</div>
               <p className={styles.subtitle}>
-                All code made publically avaliable on Github with flexible
-                licensing. Analogdb is an open community where all contributions
+                All code made publicly available on Github with flexible
+                licensing. AnalogDB is an open community where all contributions
                 are welcome!
               </p>
               <a
