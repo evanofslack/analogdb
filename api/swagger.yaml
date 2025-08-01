@@ -912,6 +912,56 @@ paths:
       summary: Update a post
       tags:
       - post
+  /post/{id}/similar:
+    get:
+      consumes:
+      - application/json
+      description: Find posts similar to a given post using similarity matching
+      parameters:
+      - description: Post ID to find similar posts for
+        in: path
+        name: id
+        required: true
+        type: integer
+      - default: 12
+        description: Maximum number of similar posts to return
+        in: query
+        name: page_size
+        type: integer
+      - description: Include nsfw posts in query
+        in: query
+        name: nsfw
+        type: boolean
+      - description: Include b&w posts in query
+        in: query
+        name: grayscale
+        type: boolean
+      - description: Include sprocketshot posts in query
+        in: query
+        name: sprocket
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.SimilarPostsResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Find similar posts
+      tags:
+      - post
   /posts:
     get:
       consumes:
@@ -1081,56 +1131,6 @@ paths:
           schema:
             $ref: '#/definitions/analogdb.Error'
       summary: Get all post IDs
-      tags:
-      - posts
-  /posts/similar:
-    get:
-      consumes:
-      - application/json
-      description: Find posts similar to a given post using similarity matching
-      parameters:
-      - description: Post ID to find similar posts for
-        in: query
-        name: id
-        required: true
-        type: integer
-      - default: 12
-        description: Maximum number of similar posts to return
-        in: query
-        name: page_size
-        type: integer
-      - description: Include nsfw posts in query
-        in: query
-        name: nsfw
-        type: boolean
-      - description: Include b&w posts in query
-        in: query
-        name: grayscale
-        type: boolean
-      - description: Include sprocketshot posts in query
-        in: query
-        name: sprocket
-        type: boolean
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/server.SimilarPostsResponse'
-        "400":
-          description: Invalid request body
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "404":
-          description: Not found
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      summary: Find similar posts
       tags:
       - posts
 securityDefinitions:

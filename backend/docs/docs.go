@@ -761,6 +761,81 @@ const docTemplate = `{
                 }
             }
         },
+        "/post/{id}/similar": {
+            "get": {
+                "description": "Find posts similar to a given post using similarity matching",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "post"
+                ],
+                "summary": "Find similar posts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID to find similar posts for",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 12,
+                        "description": "Maximum number of similar posts to return",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include nsfw posts in query",
+                        "name": "nsfw",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include b\u0026w posts in query",
+                        "name": "grayscale",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include sprocketshot posts in query",
+                        "name": "sprocket",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.SimilarPostsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/posts": {
             "get": {
                 "description": "Retrieve posts with optional query parameters for filtering by camera, film, keywords, etc. Supports pagination",
@@ -1003,81 +1078,6 @@ const docTemplate = `{
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/server.IDsResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/posts/similar": {
-            "get": {
-                "description": "Find posts similar to a given post using similarity matching",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Find similar posts",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Post ID to find similar posts for",
-                        "name": "id",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "default": 12,
-                        "description": "Maximum number of similar posts to return",
-                        "name": "page_size",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Include nsfw posts in query",
-                        "name": "nsfw",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Include b\u0026w posts in query",
-                        "name": "grayscale",
-                        "in": "query"
-                    },
-                    {
-                        "type": "boolean",
-                        "description": "Include sprocketshot posts in query",
-                        "name": "sprocket",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/server.SimilarPostsResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request body",
-                        "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
-                        }
-                    },
-                    "404": {
-                        "description": "Not found",
-                        "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
                         }
                     },
                     "500": {
