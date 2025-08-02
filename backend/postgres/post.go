@@ -410,15 +410,10 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	if filter != nil {
 		filterFmt = filter.String()
 	}
-
 	db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Starting find posts")
 	defer db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Finished find posts")
 
-	var postArgs []any
-	index := 1
-	var postWhere string
-
-	postWhere, postArgs, index = filterToWherePost(filter, index)
+	postWhere, postArgs := filterToWherePost(filter)
 
 	// Count total matching posts
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM pictures WHERE %s", postWhere)
@@ -547,8 +542,8 @@ func filterToOrder(filter *analogdb.PostFilter) string {
 	return ""
 }
 
-func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
-	index := startIndex
+func filterToWherePost(filter *analogdb.PostFilter) (string, []any) {
+	index := 1
 	where, args := []string{"1=1"}, []any{}
 
 	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
@@ -761,7 +756,7 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 	}
 
 	whereQuery := strings.Join(where, " AND ")
-	return whereQuery, args, index
+	return whereQuery, args
 }
 
 func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
