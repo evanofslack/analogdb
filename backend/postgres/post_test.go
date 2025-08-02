@@ -237,11 +237,28 @@ func TestPostService_FindPosts(t *testing.T) {
 		if err != nil {
 			t.Fatalf("FindPosts failed: %v", err)
 		}
-
 		for _, post := range posts {
 			if post.Time > end {
 				t.Errorf("Expected end > %v, got %v", end, post.Time)
 			}
+		}
+	})
+
+	t.Run("find posts with small limit returns correct total count", func(t *testing.T) {
+		limit := 2
+		filter := &analogdb.PostFilter{Limit: &limit}
+		posts, count, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+		if len(posts) != 2 {
+			t.Errorf("Expected 2 posts returned, got %d", len(posts))
+		}
+		if count <= limit {
+			t.Errorf("Expected total count (%d) to be greater than limit (%d)", count, limit)
+		}
+		if count != 3 {
+			t.Errorf("Expected total count to be 3 (all posts in seed data), got %d", count)
 		}
 	})
 }
