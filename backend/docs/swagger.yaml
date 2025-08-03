@@ -370,7 +370,7 @@ definitions:
         example: 1752244116
         type: integer
       next_page_url:
-        example: /posts?sort=latest&page_size=20&page_id=1752244116
+        example: /posts?sort=time&page_size=20&page_id=1752244116
         type: string
       page_size:
         example: 20
