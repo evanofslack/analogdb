@@ -423,7 +423,6 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	args := postArgs
 
 	subqueryOrder := filterToOrder(filter)
-	mainOrder := " ORDER BY p.time DESC"
 	limit := formatLimit(filter)
 
 	query := fmt.Sprintf(`
@@ -487,8 +486,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			FROM keywords
 			GROUP BY post_id
 		) k ON k.post_id = p.id
-		%s
-	`, postWhere, subqueryOrder, limit, mainOrder)
+	`, postWhere, subqueryOrder, limit)
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
