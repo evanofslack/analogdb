@@ -410,19 +410,21 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	if filter != nil {
 		filterFmt = filter.String()
 	}
-
 	db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Starting find posts")
 	defer db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Finished find posts")
 
-	var postArgs []any
-	index := 1
-	var postWhere string
+	postWhere, postArgs := filterToWherePost(filter)
+	subqueryOrder := filterToOrder(filter, "")
+	mainOrder := filterToOrder(filter, "p.")
 
-	postWhere, postArgs, index = filterToWherePost(filter, index)
-
-	args := postArgs
-    subqueryOrder := filterToOrder(filter, "")
-    mainOrder := filterToOrder(filter, "p.") 
+	// Count total matching posts
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM pictures WHERE %s", postWhere)
+	var count int
+	err := tx.QueryRowContext(ctx, countQuery, postArgs...).Scan(&count)
+	if err != nil {
+		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed to get post count")
+		return nil, 0, err
+	}
 
 	limit := formatLimit(filter)
 
@@ -462,8 +464,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			c.htmls,
 			c.percents,
 			k.words,
-			k.weights,
-			COUNT(*) OVER()
+			k.weights
 		FROM (
 			SELECT * FROM pictures 
 			WHERE %s
@@ -490,7 +491,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 		%s
 	`, postWhere, subqueryOrder, limit, mainOrder)
 
-	rows, err := tx.QueryContext(ctx, query, args...)
+	rows, err := tx.QueryContext(ctx, query, postArgs...)
 	if err != nil {
 		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed to find posts")
 		return nil, 0, err
@@ -498,10 +499,9 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	defer rows.Close()
 
 	posts := make([]*analogdb.Post, 0)
-	var count int
 	var p *rawPost
 	for rows.Next() {
-		p, count, err = scanRowToRawPostCount(rows)
+		p, err = scanRowToRawPostCount(rows)
 		if err != nil {
 			db.logger.Error().Err(err).Ctx(ctx).Msg("Failed to find posts")
 			return nil, 0, err
@@ -522,7 +522,6 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed to find posts")
 		return nil, 0, err
 	}
-
 	return posts, count, nil
 }
 
@@ -530,21 +529,21 @@ func filterToOrder(filter *analogdb.PostFilter, tableAlias string) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
 		case analogdb.PostSortTime:
-            return fmt.Sprintf(" ORDER BY %stime DESC", tableAlias)
+			return fmt.Sprintf(" ORDER BY %stime DESC", tableAlias)
 		case analogdb.PostSortScore:
-            return fmt.Sprintf(" ORDER BY %sscore DESC", tableAlias)
+			return fmt.Sprintf(" ORDER BY %sscore DESC", tableAlias)
 		case analogdb.PostSortRandom:
 			if filter.Seed == nil {
 				filter.SetSeed()
 			}
-            return fmt.Sprintf(" ORDER BY MOD(%stime, %d), %stime DESC", tableAlias, *filter.Seed, tableAlias)
+			return fmt.Sprintf(" ORDER BY MOD(%stime, %d), %stime DESC", tableAlias, *filter.Seed, tableAlias)
 		}
 	}
 	return ""
 }
 
-func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []any, int) {
-	index := startIndex
+func filterToWherePost(filter *analogdb.PostFilter) (string, []any) {
+	index := 1
 	where, args := []string{"1=1"}, []any{}
 
 	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
@@ -757,7 +756,7 @@ func filterToWherePost(filter *analogdb.PostFilter, startIndex int) (string, []a
 	}
 
 	whereQuery := strings.Join(where, " AND ")
-	return whereQuery, args, index
+	return whereQuery, args
 }
 
 func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
@@ -1275,9 +1274,8 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	return post, nil
 }
 
-func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
+func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, error) {
 	var p rawPost
-	var count int
 	if err := rows.Scan(
 		&p.id,
 		&p.rawCreatePost.url,
@@ -1313,11 +1311,10 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, int, error) {
 		&p.rawCreatePost.htmls,
 		&p.rawCreatePost.percents,
 		&p.rawCreatePost.words,
-		&p.rawCreatePost.weights,
-		&count); err != nil {
-		return nil, 0, err
+		&p.rawCreatePost.weights); err != nil {
+		return nil, err
 	}
-	return &p, count, nil
+	return &p, nil
 }
 
 // Strip the `u/` prefix from author
