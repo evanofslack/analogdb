@@ -10,7 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 type FilterOption = "include" | "exclude" | "only";
 
 const DEFAULTS = {
-  sort: "latest" as PostsGetSortEnum,
+  sort: "time" as PostsGetSortEnum,
   nsfw: "exclude" as FilterOption,
   bw: "exclude" as FilterOption,
   sprocket: "include" as FilterOption,

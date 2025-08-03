@@ -325,13 +325,13 @@ export default function FilterBar({
                   spacing="md"
                 >
                   <Radio
-                    value="latest"
-                    label="latest"
+                    value="time"
+                    label="time"
                     className={styles.radioButton}
                   />
                   <Radio
-                    value="top"
-                    label="top"
+                    value="score"
+                    label="score"
                     className={styles.radioButton}
                   />
                   <Radio

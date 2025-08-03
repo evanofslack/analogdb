@@ -49,10 +49,18 @@ async function makeRequest(
   params: PostsGetRequest
 ): Promise<ServerPostResponse> {
   try {
+    console.log("Posts API request params:", params);
     const response = await postsApi.postsGet(params);
+    console.log("Posts API response:", response.posts?.length, "posts");
     return response;
-  } catch (error) {
-    console.error("API request failed:", error);
+  } catch (error: any) {
+    console.error("Posts API request failed:", error.status, error.message);
+    if (error.response) {
+      console.error(
+        "Error response:",
+        await error.response.text().catch(() => "Could not read response")
+      );
+    }
     throw error;
   }
 }
@@ -61,10 +69,28 @@ async function makeSimilarRequest(
   params: PostIdSimilarGetRequest
 ): Promise<ServerPostResponse> {
   try {
+    console.log("Similar API request for post ID:", params.id);
     const response = await postApi.postIdSimilarGet(params);
+    console.log(
+      "Similar API response:",
+      response.posts?.length,
+      "similar posts"
+    );
     return response;
-  } catch (error) {
-    console.error("Similar API request failed:", error);
+  } catch (error: any) {
+    console.error(
+      "Similar API request failed for post",
+      params.id,
+      ":",
+      error.status,
+      error.message
+    );
+    if (error.response) {
+      console.error(
+        "Error response:",
+        await error.response.text().catch(() => "Could not read response")
+      );
+    }
     throw error;
   }
 }
@@ -128,7 +154,8 @@ export default function About(props: AboutProps) {
   useEffect(() => {
     const fetchSimilarityData = async (): Promise<void> => {
       try {
-        // Fetch 20 top posts
+        console.log("Starting similarity data fetch");
+
         const topPostsParams: PostsGetRequest = {
           pageSize: 20,
           nsfw: false,
@@ -139,14 +166,20 @@ export default function About(props: AboutProps) {
 
         const topPostsResponse = await makeRequest(topPostsParams);
         const topPosts = topPostsResponse.posts || [];
+        console.log("Fetched", topPosts.length, "top posts");
 
-        if (topPosts.length < 3) return;
+        if (topPosts.length < 3) {
+          console.log("Not enough posts for similarity clusters");
+          return;
+        }
 
-        // Select 3 random posts from the 20 for cluster centers
         const shuffled = [...topPosts].sort(() => 0.5 - Math.random());
         const centerPosts = shuffled.slice(0, 3);
+        console.log(
+          "Selected center posts:",
+          centerPosts.map((p) => p.id)
+        );
 
-        // Fetch similar posts for each center post
         const clusterPromises = centerPosts.map(async (centerPost) => {
           const similarParams: PostIdSimilarGetRequest = {
             id: centerPost.id,
@@ -164,6 +197,11 @@ export default function About(props: AboutProps) {
         });
 
         const clusters = await Promise.all(clusterPromises);
+        console.log(
+          "Completed similarity fetch for",
+          clusters.length,
+          "clusters"
+        );
         setSimilarityData({ clusters });
       } catch (error) {
         console.error("Failed to fetch similarity data:", error);
@@ -182,7 +220,7 @@ export default function About(props: AboutProps) {
   "total_posts":3637,
   "page_size":20,
   "next_page_id":1672251647,
-  "next_page_url":"/posts?sort=latest&page_size=20&page_id=1672251647"
+  "next_page_url":"/posts?sort=time&page_size=20&page_id=1672251647"
 },
 "posts":[
   {
