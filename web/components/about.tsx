@@ -159,6 +159,7 @@ export default function About(props: AboutProps) {
         const topPostsParams: PostsGetRequest = {
           pageSize: 20,
           nsfw: false,
+          grayscale: false,
           sort: PostsGetSortEnum.Score,
           ratioMin: 0.7,
           ratioMax: 1.5,
@@ -468,22 +469,22 @@ export default function About(props: AboutProps) {
           </div>
         </div>
 
-        {/* <div className={styles.sectionSimilarityBg}> */}
-        {/*   <div className={styles.similaritySection}> */}
-        {/*     {renderSimilarityClusters()} */}
-        {/*     <div className={styles.similarityTextOverlay}> */}
-        {/*       <div className={styles.title}>Vector Similarity</div> */}
-        {/*       <p className={styles.subtitle}> */}
-        {/*         Every image is encoded with AI-powered vector embeddings, */}
-        {/*         enabling intelligent visual similarity search. Discover photos */}
-        {/*         that share composition, subject matter, and aesthetic qualities. */}
-        {/*       </p> */}
-        {/*       <Link href="/search" className={styles.link}> */}
-        {/*         find similar */}
-        {/*       </Link> */}
-        {/*     </div> */}
-        {/*   </div> */}
-        {/* </div> */}
+        <div className={styles.sectionSimilarityBg}>
+          <div className={styles.similaritySection}>
+            {renderSimilarityClusters()}
+            <div className={styles.similarityTextOverlay}>
+              <div className={styles.title}>Vector Similarity</div>
+              <p className={styles.subtitle}>
+                Every image is encoded with AI-powered vector embeddings,
+                enabling intelligent visual similarity search. Discover photos
+                that share composition, subject matter, and aesthetic qualities.
+              </p>
+              <Link href="/search" className={styles.link}>
+                find similar
+              </Link>
+            </div>
+          </div>
+        </div>
 
         <div className={styles.sectionThreeBg}>
           <div className={styles.sectionThree}>
