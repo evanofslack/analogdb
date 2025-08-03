@@ -540,7 +540,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	filter := analogdb.NewPostFilter(&defaultPostsLimit, &defaultPostsSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	sortTime := analogdb.PostSortTime
 	sortScore := analogdb.PostSortScore
-	sortRandom := analogdb.PostSortScore
+	sortRandom := analogdb.PostSortRandom
 	values := r.URL.Query()
 
 	if sort := values.Get("sort"); sort != "" {
