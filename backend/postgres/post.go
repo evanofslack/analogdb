@@ -421,8 +421,9 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	postWhere, postArgs, index = filterToWherePost(filter, index)
 
 	args := postArgs
+    subqueryOrder := filterToOrder(filter, "")
+    mainOrder := filterToOrder(filter, "p.") 
 
-	subqueryOrder := filterToOrder(filter)
 	limit := formatLimit(filter)
 
 	query := fmt.Sprintf(`
@@ -486,7 +487,8 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			FROM keywords
 			GROUP BY post_id
 		) k ON k.post_id = p.id
-	`, postWhere, subqueryOrder, limit)
+		%s
+	`, postWhere, subqueryOrder, limit, mainOrder)
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -524,18 +526,18 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	return posts, count, nil
 }
 
-func filterToOrder(filter *analogdb.PostFilter) string {
+func filterToOrder(filter *analogdb.PostFilter, tableAlias string) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
 		case analogdb.PostSortTime:
-			return " ORDER BY time DESC"
+            return fmt.Sprintf(" ORDER BY %stime DESC", tableAlias)
 		case analogdb.PostSortScore:
-			return " ORDER BY score DESC"
+            return fmt.Sprintf(" ORDER BY %sscore DESC", tableAlias)
 		case analogdb.PostSortRandom:
 			if filter.Seed == nil {
 				filter.SetSeed()
 			}
-			return fmt.Sprintf(" ORDER BY MOD(time, %d), time DESC", *filter.Seed)
+            return fmt.Sprintf(" ORDER BY MOD(%stime, %d), %stime DESC", tableAlias, *filter.Seed, tableAlias)
 		}
 	}
 	return ""
