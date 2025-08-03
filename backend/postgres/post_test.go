@@ -261,6 +261,65 @@ func TestPostService_FindPosts(t *testing.T) {
 			t.Errorf("Expected total count to be 3 (all posts in seed data), got %d", count)
 		}
 	})
+	t.Run("find posts sorted by score descending", func(t *testing.T) {
+		sort := analogdb.PostSortScore
+		filter := &analogdb.PostFilter{Sort: &sort}
+		posts, count, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+
+		if len(posts) != 3 {
+			t.Errorf("Expected 3 posts, got %d", len(posts))
+		}
+		if count != 3 {
+			t.Errorf("Expected count 3, got %d", count)
+		}
+
+		// Verify posts are ordered by score descending
+		expectedScores := []int{220, 150, 85} // Based on seed data
+		for i, post := range posts {
+			if post.Score != expectedScores[i] {
+				t.Errorf("Post %d: expected score %d, got %d", i, expectedScores[i], post.Score)
+			}
+		}
+
+		// Verify the highest scoring post is first
+		if posts[0].Score != expectedScores[0] {
+			t.Errorf("Expected highest score %d to be first, got %d", expectedScores[0], posts[0].Score)
+		}
+	})
+
+	t.Run("find posts sorted by score with limit preserves ordering", func(t *testing.T) {
+		sort := analogdb.PostSortScore
+		limit := 2
+		filter := &analogdb.PostFilter{Sort: &sort, Limit: &limit}
+		posts, count, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+
+		if len(posts) != 2 {
+			t.Errorf("Expected 2 posts, got %d", len(posts))
+		}
+		if count != 3 {
+			t.Errorf("Expected total count 3, got %d", count)
+		}
+
+		// Verify we get the top 2 scores in correct order
+		expectedScores := []int{220, 150}
+		for i, post := range posts {
+			if post.Score != expectedScores[i] {
+				t.Errorf("Post %d: expected score %d, got %d", i, expectedScores[i], post.Score)
+			}
+		}
+
+		// Ensure ordering is preserved - first should be higher than second
+		if posts[0].Score <= posts[1].Score {
+			t.Errorf("Posts not properly ordered: first score %d should be > second score %d",
+				posts[0].Score, posts[1].Score)
+		}
+	})
 }
 
 func TestPostService_PatchPost(t *testing.T) {
