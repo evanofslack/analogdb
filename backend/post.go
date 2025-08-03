@@ -371,7 +371,7 @@ type Meta struct {
     TotalPosts int    `json:"total_posts" example:"200"`
     PageSize   int    `json:"page_size" example:"20"`
     NextPageID string `json:"next_page_id" example:"1752244116"`
-    PageURL    string `json:"next_page_url" example:"/posts?sort=latest&page_size=20&page_id=1752244116"`
+    PageURL    string `json:"next_page_url" example:"/posts?sort=time&page_size=20&page_id=1752244116"`
     Seed       int    `json:"seed,omitempty" example:"37"`
 }
 

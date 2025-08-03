@@ -26,7 +26,7 @@ from .models import (
 )
 
 DEFAULT_PAGE_SIZE = 20
-DEFAULT_SORT = "latest"
+DEFAULT_SORT = "time"
 
 
 def retry(delay=1, times=5):

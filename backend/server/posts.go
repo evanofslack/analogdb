@@ -16,7 +16,7 @@ type Meta struct {
 	TotalPosts int    `json:"total_posts" example:"200"`
 	PageSize   int    `json:"page_size" example:"20"`
 	PageID     int    `json:"next_page_id" example:"1752244116"`
-	PageURL    string `json:"next_page_url" example:"/posts?sort=latest&page_size=20&page_id=1752244116"`
+	PageURL    string `json:"next_page_url" example:"/posts?sort=time&page_size=20&page_id=1752244116"`
 	Seed       int    `json:"seed,omitempty" example:"37"`
 }
 
@@ -419,11 +419,11 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Me
 		numParams := 0
 		switch *sort {
 		case analogdb.PostSortTime:
-			path += fmt.Sprintf("%ssort=latest", paramJoiner(&numParams))
+			path += fmt.Sprintf("%ssort=%s", paramJoiner(&numParams), analogdb.PostSortTime.String())
 		case analogdb.PostSortScore:
-			path += fmt.Sprintf("%ssort=top", paramJoiner(&numParams))
+			path += fmt.Sprintf("%ssort=%s", paramJoiner(&numParams), analogdb.PostSortScore.String())
 		case analogdb.PostSortRandom:
-			path += fmt.Sprintf("%ssort=random", paramJoiner(&numParams))
+			path += fmt.Sprintf("%ssort=%s", paramJoiner(&numParams), analogdb.PostSortRandom.String())
 		}
 		if limit := filter.Limit; limit != nil {
 			path += fmt.Sprintf("%spage_size=%d", paramJoiner(&numParams), *limit)
@@ -538,24 +538,21 @@ func stringToInt(query string) (int, error) {
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	filter := analogdb.NewPostFilter(&defaultPostsLimit, &defaultPostsSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-
+	sortTime := analogdb.PostSortTime
+	sortScore := analogdb.PostSortScore
+	sortRandom := analogdb.PostSortScore
 	values := r.URL.Query()
 
 	if sort := values.Get("sort"); sort != "" {
-		if sort == "latest" || sort == "top" || sort == "random" {
-			switch sort {
-			case "latest":
-				time := analogdb.PostSortTime
-				filter.Sort = &time
-			case "top":
-				top := analogdb.PostSortScore
-				filter.Sort = &top
-			case "random":
-				random := analogdb.PostSortRandom
-				filter.Sort = &random
-			}
-		} else {
-			return nil, fmt.Errorf("invalid sort parameter %s, valid options are 'latest', 'top', 'random'", sort)
+		switch sort {
+		case sortTime.String():
+			filter.Sort = &sortTime
+		case sortScore.String():
+			filter.Sort = &sortScore
+		case sortRandom.String():
+			filter.Sort = &sortRandom
+		default:
+			return nil, fmt.Errorf("invalid sort parameter %s, valid options are '%s', '%s', '%s'", sort, sortTime, sortScore, sortRandom)
 		}
 	}
 

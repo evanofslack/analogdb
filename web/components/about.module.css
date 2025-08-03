@@ -31,7 +31,6 @@
 }
 
 .sectionTwoBg {
-  /*background-color: #fbfbfb;*/
   width: 100vw;
   display: flex;
   flex-direction: row;
@@ -112,6 +111,156 @@
   right: 33.33%;
   top: 50%;
   transform: translate(50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 2rem;
+  padding-right: 4rem;
+  padding-left: 4rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  max-width: 420px;
+  z-index: 10;
+}
+
+.sectionSimilarityBg {
+  width: 100vw;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  background-color: #f8f9fa;
+}
+
+.similaritySection {
+  width: 100vw;
+  height: 70vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 4rem;
+  margin-bottom: 8rem;
+}
+
+.clustersContainer {
+  position: relative;
+  width: 90vw;
+  height: 65vh;
+  max-width: 1200px;
+}
+
+.clusterContainer {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+}
+
+.clusterCenterContainer {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+  animation: clusterPulse 4s ease-in-out infinite;
+  z-index: 4;
+}
+
+@keyframes clusterPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+.clusterCenterImage {
+  width: 200px !important;
+  height: 200px !important;
+  object-fit: cover;
+}
+
+.clusterSimilarContainer {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 0.3rem;
+  overflow: hidden;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+  animation: clusterFloat 3s ease-in-out infinite;
+  animation-delay: calc(var(--index, 0) * 0.3s);
+  z-index: 3;
+}
+
+@keyframes clusterFloat {
+  0%,
+  100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1deg);
+  }
+}
+
+.clusterSimilarImage {
+  width: 80px !important;
+  height: 80px !important;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.clusterSimilarContainer:hover .clusterSimilarImage {
+  transform: scale(1.1);
+}
+
+.clusterConnectionLine {
+  position: absolute;
+  width: 1.5px;
+  height: 40px;
+  background: linear-gradient(
+    135deg,
+    rgba(46, 46, 46, 0.4),
+    rgba(46, 46, 46, 0.1)
+  );
+  top: 50%;
+  left: 50%;
+  transform-origin: bottom center;
+  animation: clusterConnectionPulse 2.5s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes clusterConnectionPulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scaleY(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scaleY(1.1);
+  }
+}
+
+.clusterContainer:nth-child(1) .clusterConnectionLine {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.clusterContainer:nth-child(2) .clusterConnectionLine {
+  transform: translate(-50%, -50%) rotate(-30deg);
+}
+.clusterContainer:nth-child(3) .clusterConnectionLine {
+  transform: translate(-50%, -50%) rotate(60deg);
+}
+
+.similarityTextOverlay {
+  position: absolute;
+  left: 33.33%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   padding: 2rem;
@@ -256,6 +405,55 @@
   }
 
   .sectionTwoBg {
+    flex-direction: column;
+  }
+
+  .similaritySection {
+    height: 55vh;
+    margin-top: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  .clustersContainer {
+    width: 95vw;
+    height: 45vh;
+  }
+
+  .clusterContainer {
+    width: 140px;
+    height: 140px;
+  }
+
+  .clusterCenterContainer {
+    width: 140px;
+    height: 140px;
+    transform: scale(0.8);
+  }
+
+  .clusterCenterImage {
+    width: 140px !important;
+    height: 140px !important;
+  }
+
+  .clusterSimilarContainer {
+    width: 60px;
+    height: 60px;
+    transform: scale(0.8);
+  }
+
+  .clusterSimilarImage {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .similarityTextOverlay {
+    position: static;
+    transform: none;
+    margin: 2rem;
+    max-width: none;
+  }
+
+  .sectionSimilarityBg {
     flex-direction: column;
   }
 }

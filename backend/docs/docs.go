@@ -1611,7 +1611,7 @@ const docTemplate = `{
                 },
                 "next_page_url": {
                     "type": "string",
-                    "example": "/posts?sort=latest\u0026page_size=20\u0026page_id=1752244116"
+                    "example": "/posts?sort=time\u0026page_size=20\u0026page_id=1752244116"
                 },
                 "page_size": {
                     "type": "integer",

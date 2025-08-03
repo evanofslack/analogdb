@@ -123,7 +123,7 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 100,
 				PageSize:   2,
 				PageID:     2000,
-				PageURL:    "/posts?sort=latest&page_size=2&page_id=2000",
+				PageURL:    "/posts?sort=time&page_size=2&page_id=2000",
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 50,
 				PageSize:   2,
 				PageID:     200,
-				PageURL:    "/posts?sort=top&page_size=2&page_id=200",
+				PageURL:    "/posts?sort=score&page_size=2&page_id=200",
 			},
 		},
 		{

@@ -16,7 +16,7 @@ class TestFilterToParams:
 
         expected = {
             "page_size": 20,
-            "sort": "latest",
+            "sort": "time",
         }
         assert params == expected
 
@@ -37,7 +37,7 @@ class TestFilterToParams:
         assert params["sprocket"] is False
         # Defaults should still be present for other params
         assert params["page_size"] == 20
-        assert params["sort"] == "latest"
+        assert params["sort"] == "time"
 
     def test_filter_with_partial_params(self, client):
         """When filter has some parameters, should mix filter and defaults."""
@@ -54,7 +54,7 @@ class TestFilterToParams:
         assert params["nsfw"] is False  # from filter
         assert params["sprocket"] is True  # from filter
         assert params["page_size"] == 20  # default
-        assert params["sort"] == "latest"  # default
+        assert params["sort"] == "time"  # default
 
 
 class TestParsePost:
