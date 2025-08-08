@@ -135,7 +135,7 @@
 
 .similaritySection {
   width: 100vw;
-  height: 70vh;
+  height: 80vh;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -148,128 +148,206 @@
 .clustersContainer {
   position: relative;
   width: 90vw;
-  height: 65vh;
+  height: 70vh;
   max-width: 1200px;
 }
 
 .clusterContainer {
   position: absolute;
-  width: 200px;
-  height: 200px;
+  width: min(35vw, 420px);
+  height: min(35vw, 420px);
 }
 
 .clusterCenterContainer {
   position: relative;
-  width: 200px;
-  height: 200px;
-  border-radius: 0.4rem;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
-  animation: clusterPulse 4s ease-in-out infinite;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   z-index: 4;
 }
 
-@keyframes clusterPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.03);
-  }
+.clusterCenterImage {
+  transition: transform 0.3s ease;
 }
 
-.clusterCenterImage {
-  width: 200px !important;
-  height: 200px !important;
-  object-fit: cover;
+.clusterCenterContainer:hover .clusterCenterImage {
+  transform: scale(1.01);
 }
 
 .clusterSimilarContainer {
   position: absolute;
-  width: 80px;
-  height: 80px;
-  border-radius: 0.3rem;
+  width: min(15vw, 180px);
+  height: min(15vw, 180px);
   overflow: hidden;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
-  animation: clusterFloat 3s ease-in-out infinite;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   animation-delay: calc(var(--index, 0) * 0.3s);
   z-index: 3;
 }
 
-@keyframes clusterFloat {
-  0%,
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-8px) rotate(1deg);
-  }
-}
-
 .clusterSimilarImage {
-  width: 80px !important;
-  height: 80px !important;
-  object-fit: cover;
   transition: transform 0.3s ease;
 }
 
 .clusterSimilarContainer:hover .clusterSimilarImage {
-  transform: scale(1.1);
+  transform: scale(1.03);
 }
 
-.clusterConnectionLine {
-  position: absolute;
-  width: 1.5px;
-  height: 40px;
-  background: linear-gradient(
-    135deg,
-    rgba(46, 46, 46, 0.4),
-    rgba(46, 46, 46, 0.1)
-  );
-  top: 50%;
-  left: 50%;
-  transform-origin: bottom center;
-  animation: clusterConnectionPulse 2.5s ease-in-out infinite;
-  z-index: 1;
+.clusterSimilarContainer:nth-child(2) {
+  animation: float1 8s ease-in-out infinite;
 }
 
-@keyframes clusterConnectionPulse {
+.clusterSimilarContainer:nth-child(3) {
+  animation: float2 12s ease-in-out infinite;
+}
+
+.clusterSimilarContainer:nth-child(4) {
+  animation: float3 10s ease-in-out infinite;
+}
+
+.clusterSimilarContainer:nth-child(5) {
+  animation: float4 14s ease-in-out infinite;
+}
+
+.clusterSimilarContainer:nth-child(6) {
+  animation: float5 9s ease-in-out infinite;
+}
+
+.clusterSimilarContainer:nth-child(7) {
+  animation: float6 11s ease-in-out infinite;
+}
+
+@keyframes float1 {
   0%,
   100% {
-    opacity: 0.4;
-    transform: translate(-50%, -50%) scaleY(1);
+    transform: translate(-3px, 2px);
+  }
+  25% {
+    transform: translate(-6px, 4px);
   }
   50% {
-    opacity: 0.7;
-    transform: translate(-50%, -50%) scaleY(1.1);
+    transform: translate(-1px, -2px);
+  }
+  75% {
+    transform: translate(-4px, 5px);
   }
 }
 
-.clusterContainer:nth-child(1) .clusterConnectionLine {
-  transform: translate(-50%, -50%) rotate(45deg);
+@keyframes float2 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  33% {
+    transform: translate(4px, -2px);
+  }
+  66% {
+    transform: translate(-2px, 3px);
+  }
 }
-.clusterContainer:nth-child(2) .clusterConnectionLine {
-  transform: translate(-50%, -50%) rotate(-30deg);
+
+@keyframes float3 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-2px, -3px);
+  }
+  60% {
+    transform: translate(3px, 2px);
+  }
+  80% {
+    transform: translate(-1px, -1px);
+  }
 }
-.clusterContainer:nth-child(3) .clusterConnectionLine {
-  transform: translate(-50%, -50%) rotate(60deg);
+
+@keyframes float4 {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  40% {
+    transform: translate(2px, 4px);
+  }
+  70% {
+    transform: translate(-3px, -2px);
+  }
+}
+
+@keyframes float5 {
+  0%,
+  100% {
+    transform: translateY(-50%) translate(0, 0);
+  }
+  30% {
+    transform: translateY(-50%) translate(-4px, 1px);
+  }
+  80% {
+    transform: translateY(-50%) translate(2px, -3px);
+  }
+}
+
+@keyframes float6 {
+  0%,
+  100% {
+    transform: translateY(-50%) translate(0, 0);
+  }
+  45% {
+    transform: translateY(-50%) translate(3px, -1px);
+  }
+  85% {
+    transform: translateY(-50%) translate(-2px, 2px);
+  }
 }
 
 .similarityTextOverlay {
   position: absolute;
-  left: 33.33%;
+  left: 20%;
   top: 50%;
   transform: translate(-50%, -50%);
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 2rem;
-  padding-right: 4rem;
-  padding-left: 4rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  max-width: 420px;
+  backdrop-filter: blur(15px);
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  max-width: 450px;
   z-index: 10;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .similaritySection {
+    height: 60vh;
+    margin-top: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  .clustersContainer {
+    width: 95vw;
+    height: 50vh;
+  }
+
+  .clusterContainer {
+    width: min(45vw, 200px);
+    height: min(45vw, 200px);
+  }
+
+  .clusterSimilarContainer {
+    width: min(20vw, 90px);
+    height: min(20vw, 90px);
+  }
+
+  .similarityTextOverlay {
+    position: static;
+    transform: none;
+    margin: 2rem;
+    max-width: none;
+  }
+
+  .sectionSimilarityBg {
+    flex-direction: column;
+  }
 }
 
 .sectionThreeBg {
@@ -374,7 +452,6 @@
 }
 
 .imageTwoBorder {
-  border-radius: 0.3rem;
   overflow: hidden;
 }
 
@@ -428,6 +505,7 @@
     width: 140px;
     height: 140px;
     transform: scale(0.8);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 0 2px white;
   }
 
   .clusterCenterImage {
@@ -439,6 +517,7 @@
     width: 60px;
     height: 60px;
     transform: scale(0.8);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 0 2px white;
   }
 
   .clusterSimilarImage {

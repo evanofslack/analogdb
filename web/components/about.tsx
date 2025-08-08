@@ -30,13 +30,9 @@ interface ColorData {
   olive: AnalogdbPost[];
 }
 
-interface SimilarityCluster {
-  centerPost: AnalogdbPost;
-  similarPosts: AnalogdbPost[];
-}
-
 interface SimilarityData {
-  clusters: SimilarityCluster[];
+  centerPost: AnalogdbPost | null;
+  similarPosts: AnalogdbPost[];
 }
 
 const COLOR_MIN_VALUES: Record<string, number> = {
@@ -111,7 +107,8 @@ export default function About(props: AboutProps) {
     olive: [],
   });
   const [similarityData, setSimilarityData] = useState<SimilarityData>({
-    clusters: [],
+    centerPost: null,
+    similarPosts: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
   const [similarityLoading, setSimilarityLoading] = useState<boolean>(true);
@@ -175,35 +172,18 @@ export default function About(props: AboutProps) {
         }
 
         const shuffled = [...topPosts].sort(() => 0.5 - Math.random());
-        const centerPosts = shuffled.slice(0, 3);
-        console.log(
-          "Selected center posts:",
-          centerPosts.map((p) => p.id)
-        );
+        const centerPost = shuffled[0];
 
-        const clusterPromises = centerPosts.map(async (centerPost) => {
-          const similarParams: PostIdSimilarGetRequest = {
-            id: centerPost.id,
-            pageSize: 5,
-            nsfw: false,
-          };
+        const similarParams: PostIdSimilarGetRequest = {
+          id: centerPost.id,
+          pageSize: 6,
+          nsfw: false,
+        };
 
-          const similarResponse = await makeSimilarRequest(similarParams);
-          const similarPosts = similarResponse.posts || [];
+        const similarResponse = await makeSimilarRequest(similarParams);
+        const similarPosts = similarResponse.posts || [];
 
-          return {
-            centerPost,
-            similarPosts,
-          };
-        });
-
-        const clusters = await Promise.all(clusterPromises);
-        console.log(
-          "Completed similarity fetch for",
-          clusters.length,
-          "clusters"
-        );
-        setSimilarityData({ clusters });
+        setSimilarityData({ centerPost, similarPosts });
       } catch (error) {
         console.error("Failed to fetch similarity data:", error);
       } finally {
@@ -308,92 +288,67 @@ export default function About(props: AboutProps) {
   };
 
   const renderSimilarityClusters = (): React.ReactElement | null => {
-    if (similarityLoading || !similarityData.clusters.length) return null;
+    if (similarityLoading || !similarityData.similarPosts.length) return null;
 
-    const clusterPositions = [
-      { left: "15%", top: "20%" },
-      { right: "20%", top: "15%" },
-      { left: "25%", bottom: "25%" },
-    ];
+    const clusterPosition = { left: "50%", top: "20%" };
 
     const similarPositions = [
-      [
-        { top: "-40px", left: "-50px" },
-        { top: "-45px", right: "-55px" },
-        { bottom: "-40px", left: "-45px" },
-        { bottom: "-50px", right: "-40px" },
-        { top: "40px", left: "-60px" },
-      ],
-      [
-        { top: "-50px", left: "-40px" },
-        { top: "-35px", right: "-60px" },
-        { bottom: "-45px", left: "-50px" },
-        { bottom: "-40px", right: "-45px" },
-        { top: "50px", right: "-55px" },
-      ],
-      [
-        { top: "-45px", left: "-55px" },
-        { top: "-50px", right: "-40px" },
-        { bottom: "-35px", left: "-60px" },
-        { bottom: "-45px", right: "-50px" },
-        { top: "45px", left: "-40px" },
-      ],
+      { top: "-160px", left: "-40px" }, // top-left
+      { top: "-130px", right: "-120px" }, // top-right
+      { bottom: "-150px", left: "-130px" }, // bottom-left
+      { bottom: "-165px", right: "-65px" }, // bottom-right
+      { top: "45%", left: "-190px", transform: "translateY(-50%)" }, // middle-left
+      { top: "55%", right: "-175px", transform: "translateY(-50%)" }, // middle-right
     ];
+    const centerPost = similarityData.centerPost;
+    const centerImage =
+      centerPost.images?.find((img) => img.resolution === "medium") ||
+      similarityData.centerPost.images?.[0];
+    if (!centerImage) return null;
+    const similarPosts = similarityData.similarPosts;
 
     return (
       <div className={styles.clustersContainer}>
-        {similarityData.clusters.map((cluster, clusterIndex) => {
-          const centerImage =
-            cluster.centerPost.images?.find(
-              (img) => img.resolution === "medium"
-            ) || cluster.centerPost.images?.[0];
-          if (!centerImage) return null;
+        <div
+          key={centerPost.id}
+          className={styles.clusterContainer}
+          style={clusterPosition}
+        >
+          <div className={styles.clusterCenterContainer}>
+            <Image
+              src={centerImage.url}
+              alt={centerPost.title}
+              fill
+              sizes="(max-width: 768px) 140px, 300px"
+              className={styles.clusterCenterImage}
+              style={{ objectFit: "cover" }}
+            />
+          </div>
 
-          const clusterPosition = clusterPositions[clusterIndex];
-          const positions = similarPositions[clusterIndex];
+          {similarPosts.slice(0, 6).map((post, index) => {
+            const image =
+              post.images?.find((img) => img.resolution === "medium") ||
+              post.images?.[0];
+            if (!image || !similarPositions[index]) return null;
 
-          return (
-            <div
-              key={cluster.centerPost.id}
-              className={styles.clusterContainer}
-              style={clusterPosition}
-            >
-              <div className={styles.clusterCenterContainer}>
+            return (
+              <div
+                key={post.id}
+                className={styles.clusterSimilarContainer}
+                style={similarPositions[index]}
+              >
                 <Image
-                  src={centerImage.url}
-                  alt={cluster.centerPost.title}
-                  width={200}
-                  height={200}
-                  className={styles.clusterCenterImage}
+                  src={image.url}
+                  alt={post.title}
+                  fill
+                  sizes="(max-width: 768px) 60px, 100px"
+                  className={styles.clusterSimilarImage}
+                  style={{ objectFit: "cover" }}
                 />
               </div>
-
-              {cluster.similarPosts.slice(0, 5).map((post, index) => {
-                const image =
-                  post.images?.find((img) => img.resolution === "medium") ||
-                  post.images?.[0];
-                if (!image || !positions[index]) return null;
-
-                return (
-                  <div
-                    key={post.id}
-                    className={styles.clusterSimilarContainer}
-                    style={positions[index]}
-                  >
-                    <div className={styles.clusterConnectionLine} />
-                    <Image
-                      src={image.url}
-                      alt={post.title}
-                      width={80}
-                      height={80}
-                      className={styles.clusterSimilarImage}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   };
