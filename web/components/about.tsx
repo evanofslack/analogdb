@@ -301,11 +301,19 @@ export default function About(props: AboutProps) {
       { top: "55%", right: "-175px", transform: "translateY(-50%)" }, // middle-right
     ];
     const centerPost = similarityData.centerPost;
+
     const centerImage =
       centerPost.images?.find((img) => img.resolution === "medium") ||
       similarityData.centerPost.images?.[0];
     if (!centerImage) return null;
     const similarPosts = similarityData.similarPosts;
+
+    // Calculate center image dimensions
+    const centerWidth = centerImage.width || 400;
+    const centerHeight = centerImage.height || 400;
+    const centerAspectRatio = centerWidth / centerHeight;
+    const centerMaxHeight = Math.min(window.innerWidth * 0.35, 420);
+    const centerContainerWidth = centerMaxHeight * centerAspectRatio;
 
     return (
       <div className={styles.clustersContainer}>
@@ -314,12 +322,18 @@ export default function About(props: AboutProps) {
           className={styles.clusterContainer}
           style={clusterPosition}
         >
-          <div className={styles.clusterCenterContainer}>
+          <div
+            className={styles.clusterCenterContainer}
+            style={{
+              width: `${centerContainerWidth}px`,
+              height: `${centerMaxHeight}px`,
+            }}
+          >
             <Image
               src={centerImage.url}
               alt={centerPost.title}
               fill
-              sizes="(max-width: 768px) 140px, 300px"
+              sizes="(max-width: 768px) 200px, 420px"
               className={styles.clusterCenterImage}
               style={{ objectFit: "cover" }}
             />
@@ -331,17 +345,28 @@ export default function About(props: AboutProps) {
               post.images?.[0];
             if (!image || !similarPositions[index]) return null;
 
+            const width = image.width || 200;
+            const height = image.height || 200;
+            const aspectRatio = width / height;
+            const maxHeight = Math.min(window.innerWidth * 0.15, 180);
+            const containerWidth = maxHeight * aspectRatio;
+
             return (
               <div
                 key={post.id}
                 className={styles.clusterSimilarContainer}
-                style={similarPositions[index]}
+                style={{
+                  ...similarPositions[index],
+                  width: `${containerWidth}px`,
+                  height: `${maxHeight}px`,
+                }}
               >
+                <div className={styles.clusterConnectionLine} />
                 <Image
                   src={image.url}
                   alt={post.title}
                   fill
-                  sizes="(max-width: 768px) 60px, 100px"
+                  sizes="(max-width: 768px) 90px, 180px"
                   className={styles.clusterSimilarImage}
                   style={{ objectFit: "cover" }}
                 />
