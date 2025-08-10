@@ -153,29 +153,28 @@ export default function About(props: AboutProps) {
       try {
         console.log("Starting similarity data fetch");
 
-        const topPostsParams: PostsGetRequest = {
-          pageSize: 20,
-          nsfw: false,
-          grayscale: false,
-          sort: PostsGetSortEnum.Score,
-          ratioMin: 0.7,
-          ratioMax: 1.5,
+        const ids: number[] = [
+          32298, 34246, 34252, 533, 30293, 4501, 5211, 1043, 4385, 2235, 6912,
+          33116, 2941, 1862, 30131,
+        ];
+        const shuffledIds = [...ids].sort(() => 0.5 - Math.random());
+        const id = shuffledIds[0];
+
+        const params: PostsGetRequest = {
+          id: id,
         };
 
-        const topPostsResponse = await makeRequest(topPostsParams);
-        const topPosts = topPostsResponse.posts || [];
-        console.log("Fetched", topPosts.length, "top posts");
+        const postResponse = await makeRequest(params);
+        const post = postResponse.posts?.[0];
 
-        if (topPosts.length < 3) {
-          console.log("Not enough posts for similarity clusters");
+        if (!post) {
+          console.error("No post found");
           return;
         }
-
-        const shuffled = [...topPosts].sort(() => 0.5 - Math.random());
-        const centerPost = shuffled[0];
+        console.log("Selected center post:", post.id);
 
         const similarParams: PostIdSimilarGetRequest = {
-          id: centerPost.id,
+          id: post.id,
           pageSize: 6,
           nsfw: false,
         };
@@ -183,7 +182,11 @@ export default function About(props: AboutProps) {
         const similarResponse = await makeSimilarRequest(similarParams);
         const similarPosts = similarResponse.posts || [];
 
-        setSimilarityData({ centerPost, similarPosts });
+        console.log("Completed similarity fetch for 1 cluster");
+        setSimilarityData({
+          centerPost: post,
+          similarPosts,
+        });
       } catch (error) {
         console.error("Failed to fetch similarity data:", error);
       } finally {
@@ -297,8 +300,8 @@ export default function About(props: AboutProps) {
       { top: "-130px", right: "-120px" }, // top-right
       { bottom: "-150px", left: "-130px" }, // bottom-left
       { bottom: "-165px", right: "-65px" }, // bottom-right
-      { top: "45%", left: "-190px", transform: "translateY(-50%)" }, // middle-left
-      { top: "55%", right: "-175px", transform: "translateY(-50%)" }, // middle-right
+      { top: "45%", left: "-170px", transform: "translateY(-50%)" }, // middle-left
+      { top: "55%", right: "-195px", transform: "translateY(-50%)" }, // middle-right
     ];
     const centerPost = similarityData.centerPost;
 
