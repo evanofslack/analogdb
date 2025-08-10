@@ -28,6 +28,12 @@ export default function RootLayout({ children }) {
     <html lang="en" {...mantineHtmlProps}>
       <head>
         <ColorSchemeScript />
+        <script
+          defer
+          src="https://umami.eslack.net/script.js"
+          data-website-id="dac2f8b3-f9d3-4089-b091-8a2221cd4871"
+          data-do-not-track="true"
+        />
       </head>
       <body>
         <MantineProvider>
