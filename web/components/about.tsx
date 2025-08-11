@@ -13,7 +13,7 @@ import {
 } from "analogdb-generated";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./about.module.css";
 import Footer from "./footer";
 
@@ -113,6 +113,14 @@ export default function About(props: AboutProps) {
   const [loading, setLoading] = useState<boolean>(true);
   const [similarityLoading, setSimilarityLoading] = useState<boolean>(true);
 
+  const [allSimilarityData, setAllSimilarityData] = useState<SimilarityData[]>(
+    []
+  );
+  const [currentSimilarityIndex, setCurrentSimilarityIndex] =
+    useState<number>(0);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     const fetchColorData = async (): Promise<void> => {
       try {
@@ -149,53 +157,100 @@ export default function About(props: AboutProps) {
   }, []);
 
   useEffect(() => {
-    const fetchSimilarityData = async (): Promise<void> => {
+    const fetchAllSimilarityData = async (): Promise<void> => {
       try {
-        console.log("Starting similarity data fetch");
+        console.log("Starting similarity data fetch for all posts");
 
         const ids: number[] = [
           32298, 34246, 34252, 533, 30293, 4501, 5211, 1043, 4385, 2235, 6912,
           33116, 2941, 1862, 30131,
         ];
-        const shuffledIds = [...ids].sort(() => 0.5 - Math.random());
-        const id = shuffledIds[0];
 
-        const params: PostsGetRequest = {
-          id: id,
-        };
-
-        const postResponse = await makeRequest(params);
-        const post = postResponse.posts?.[0];
-
-        if (!post) {
-          console.error("No post found");
-          return;
+        // Shuffle array in place
+        for (let i = ids.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [ids[i], ids[j]] = [ids[j], ids[i]];
         }
-        console.log("Selected center post:", post.id);
 
-        const similarParams: PostIdSimilarGetRequest = {
-          id: post.id,
-          pageSize: 6,
-          nsfw: false,
-        };
+        const allData: SimilarityData[] = [];
 
-        const similarResponse = await makeSimilarRequest(similarParams);
-        const similarPosts = similarResponse.posts || [];
+        // Fetch all posts and their similar images
+        for (const id of ids) {
+          try {
+            const params: PostsGetRequest = { id: id };
+            const postResponse = await makeRequest(params);
+            const post = postResponse.posts?.[0];
 
-        console.log("Completed similarity fetch for 1 cluster");
-        setSimilarityData({
-          centerPost: post,
-          similarPosts,
-        });
+            if (!post) {
+              console.error("No post found for ID:", id);
+              continue;
+            }
+
+            const similarParams: PostIdSimilarGetRequest = {
+              id: post.id,
+              pageSize: 6,
+              nsfw: false,
+              grayscale: false,
+            };
+
+            const similarResponse = await makeSimilarRequest(similarParams);
+            const similarPosts = similarResponse.posts || [];
+
+            allData.push({
+              centerPost: post,
+              similarPosts,
+            });
+          } catch (error) {
+            console.error("Failed to fetch data for ID:", id, error);
+          }
+        }
+
+        setAllSimilarityData(allData);
+        if (allData.length > 0) {
+          setSimilarityData(allData[0]);
+        }
       } catch (error) {
-        console.error("Failed to fetch similarity data:", error);
+        console.error("Failed to fetch all similarity data:", error);
       } finally {
         setSimilarityLoading(false);
       }
     };
 
-    fetchSimilarityData();
+    fetchAllSimilarityData();
   }, []);
+
+  useEffect(() => {
+    if (allSimilarityData.length <= 1) return;
+
+    const startCycling = () => {
+      intervalRef.current = setInterval(() => {
+        setIsTransitioning(true);
+
+        setTimeout(() => {
+          setCurrentSimilarityIndex((prevIndex) => {
+            const nextIndex = (prevIndex + 1) % allSimilarityData.length;
+            setSimilarityData(allSimilarityData[nextIndex]);
+            return nextIndex;
+          });
+
+          setTimeout(() => {
+            setIsTransitioning(false);
+          }, 50);
+        }, 250);
+      }, 7000);
+    };
+
+    const timer = setTimeout(() => {
+      startCycling();
+    }, 7000);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      clearTimeout(timer);
+    };
+  }, [allSimilarityData]);
 
   const apiQuery: string = "curl https://api.analogdb.com/posts";
 
@@ -296,22 +351,22 @@ export default function About(props: AboutProps) {
     const clusterPosition = { left: "50%", top: "20%" };
 
     const similarPositions = [
-      { top: "-160px", left: "-40px" }, // top-left
-      { top: "-130px", right: "-120px" }, // top-right
-      { bottom: "-150px", left: "-130px" }, // bottom-left
-      { bottom: "-165px", right: "-65px" }, // bottom-right
-      { top: "45%", left: "-170px", transform: "translateY(-50%)" }, // middle-left
-      { top: "55%", right: "-195px", transform: "translateY(-50%)" }, // middle-right
+      { top: "-160px", left: "-40px" },
+      { top: "-130px", right: "-120px" },
+      { bottom: "-150px", left: "-130px" },
+      { bottom: "-165px", right: "-65px" },
+      { top: "45%", left: "-170px", transform: "translateY(-50%)" },
+      { top: "55%", right: "-195px", transform: "translateY(-50%)" },
     ];
-    const centerPost = similarityData.centerPost;
 
+    const centerPost = similarityData.centerPost;
     const centerImage =
       centerPost.images?.find((img) => img.resolution === "medium") ||
       similarityData.centerPost.images?.[0];
     if (!centerImage) return null;
+
     const similarPosts = similarityData.similarPosts;
 
-    // Calculate center image dimensions
     const centerWidth = centerImage.width || 400;
     const centerHeight = centerImage.height || 400;
     const centerAspectRatio = centerWidth / centerHeight;
@@ -326,7 +381,9 @@ export default function About(props: AboutProps) {
           style={clusterPosition}
         >
           <div
-            className={styles.clusterCenterContainer}
+            className={`${styles.clusterCenterContainer} ${
+              isTransitioning ? styles.transitioning : ""
+            }`}
             style={{
               width: `${centerContainerWidth}px`,
               height: `${centerMaxHeight}px`,
@@ -357,7 +414,9 @@ export default function About(props: AboutProps) {
             return (
               <div
                 key={post.id}
-                className={styles.clusterSimilarContainer}
+                className={`${styles.clusterSimilarContainer} ${
+                  isTransitioning ? styles.transitioning : ""
+                }`}
                 style={{
                   ...similarPositions[index],
                   width: `${containerWidth}px`,
