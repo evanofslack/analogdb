@@ -250,7 +250,7 @@ func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder
 	if grayscale := filter.Grayscale; grayscale != nil {
 		statements = append(statements,
 			filters.Where().
-				WithPath([]string{"greyscale"}).
+				WithPath([]string{"grayscale"}).
 				WithOperator(filters.Equal).
 				WithValueBoolean(*grayscale),
 		)
