@@ -3,26 +3,42 @@ import styles from "@components/gallery.module.css";
 import Header from "@components/header";
 import { checkAdminAuth } from "@lib/auth";
 import { authorized_fetch } from "@lib/client";
+import { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "AnalogDB",
   description: "Film photography database",
 };
 
-export const revalidate = 60; // Revalidate every 60 seconds
+export const revalidate = 60;
 
-async function getData() {
+interface PostsResponse {
+  meta: {
+    total_posts: number;
+  };
+}
+
+interface AuthorsResponse {
+  authors: string[];
+}
+
+interface AboutData {
+  numPosts: number;
+  numAuthors: number;
+}
+
+async function getData(): Promise<AboutData> {
   const postsRoute = "/posts";
   const postsResponse = await authorized_fetch(postsRoute, "GET");
-  const postsData = await postsResponse.json();
+  const postsData: PostsResponse = await postsResponse.json();
   const numPosts = postsData.meta.total_posts;
 
   const authorsRoute = "/authors";
   const authorsResponse = await authorized_fetch(authorsRoute, "GET");
-  const authorsData = await authorsResponse.json();
-  const numAuthors = [...new Set(authorsData.authors)].length;
+  const authorsData: AuthorsResponse = await authorsResponse.json();
+  const numAuthors = Array.from(new Set(authorsData.authors)).length;
 
-  return { numPosts: numPosts, numAuthors: numAuthors };
+  return { numPosts, numAuthors };
 }
 
 export default async function AboutPage() {
