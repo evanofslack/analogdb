@@ -1,28 +1,14 @@
 "use client";
 
-import { postApi, postsApi } from "@lib/client";
 import { CodeHighlight } from "@mantine/code-highlight";
 import { useBreakpoint } from "@providers/breakpoint";
 import { IconPolaroid, IconUsers } from "@tabler/icons-react";
-import {
-  AnalogdbPost,
-  PostIdSimilarGetRequest,
-  PostsGetRequest,
-  PostsGetSortEnum,
-  ServerPostResponse,
-} from "analogdb-generated";
+import { AnalogdbPost } from "analogdb-generated";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./about.module.css";
 import Footer from "./footer";
-
-interface AboutProps {
-  data: {
-    numPosts: number;
-    numAuthors: number;
-  };
-}
 
 interface ColorData {
   red: AnalogdbPost[];
@@ -31,64 +17,17 @@ interface ColorData {
 }
 
 interface SimilarityData {
-  centerPost: AnalogdbPost | null;
+  centerPost: AnalogdbPost;
   similarPosts: AnalogdbPost[];
 }
 
-const COLOR_MIN_VALUES: Record<string, number> = {
-  red: 0.4,
-  navy: 0.4,
-  olive: 0.4,
-};
-
-async function makeRequest(
-  params: PostsGetRequest
-): Promise<ServerPostResponse> {
-  try {
-    console.log("Posts API request params:", params);
-    const response = await postsApi.postsGet(params);
-    console.log("Posts API response:", response.posts?.length, "posts");
-    return response;
-  } catch (error: any) {
-    console.error("Posts API request failed:", error.status, error.message);
-    if (error.response) {
-      console.error(
-        "Error response:",
-        await error.response.text().catch(() => "Could not read response")
-      );
-    }
-    throw error;
-  }
-}
-
-async function makeSimilarRequest(
-  params: PostIdSimilarGetRequest
-): Promise<ServerPostResponse> {
-  try {
-    console.log("Similar API request for post ID:", params.id);
-    const response = await postApi.postIdSimilarGet(params);
-    console.log(
-      "Similar API response:",
-      response.posts?.length,
-      "similar posts"
-    );
-    return response;
-  } catch (error: any) {
-    console.error(
-      "Similar API request failed for post",
-      params.id,
-      ":",
-      error.status,
-      error.message
-    );
-    if (error.response) {
-      console.error(
-        "Error response:",
-        await error.response.text().catch(() => "Could not read response")
-      );
-    }
-    throw error;
-  }
+interface AboutProps {
+  data: {
+    numPosts: number;
+    numAuthors: number;
+    colorData: ColorData;
+    allSimilarityData: SimilarityData[];
+  };
 }
 
 export default function About(props: AboutProps) {
@@ -98,126 +37,17 @@ export default function About(props: AboutProps) {
     isMobile = true;
   }
 
-  const numPosts: number = props.data.numPosts;
-  const numAuthors: number = props.data.numAuthors;
+  const { numPosts, numAuthors, colorData, allSimilarityData } = props.data;
 
-  const [colorData, setColorData] = useState<ColorData>({
-    red: [],
-    navy: [],
-    olive: [],
-  });
-  const [similarityData, setSimilarityData] = useState<SimilarityData>({
-    centerPost: null,
-    similarPosts: [],
-  });
-  const [loading, setLoading] = useState<boolean>(true);
-  const [similarityLoading, setSimilarityLoading] = useState<boolean>(true);
-
-  const [allSimilarityData, setAllSimilarityData] = useState<SimilarityData[]>(
-    []
-  );
   const [currentSimilarityIndex, setCurrentSimilarityIndex] =
     useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    const fetchColorData = async (): Promise<void> => {
-      try {
-        const colors: (keyof ColorData)[] = ["red", "navy", "olive"];
-        const apiColors: string[] = ["red", "navy", "olive"];
-
-        const promises = colors.map((_, index) => {
-          const apiColor = apiColors[index];
-          const params: PostsGetRequest = {
-            color: [apiColor],
-            minColor: [COLOR_MIN_VALUES[apiColor]],
-            pageSize: 30,
-            nsfw: false,
-            sort: PostsGetSortEnum.Random,
-            ratioMin: 0.7,
-            ratioMax: 1.5,
-          };
-          return makeRequest(params);
-        });
-
-        const results = await Promise.all(promises);
-        setColorData({
-          red: results[0].posts || [],
-          navy: results[1].posts || [],
-          olive: results[2].posts || [],
-        });
-      } catch (error) {
-        console.error("Failed to fetch color data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchColorData();
-  }, []);
-
-  useEffect(() => {
-    const fetchAllSimilarityData = async (): Promise<void> => {
-      try {
-        console.log("Starting similarity data fetch for all posts");
-
-        const ids: number[] = [
-          32298, 34246, 34252, 533, 30293, 4501, 5211, 1043, 4385, 2235, 6912,
-          33116, 2941, 1862, 30131,
-        ];
-
-        // Shuffle array in place
-        for (let i = ids.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [ids[i], ids[j]] = [ids[j], ids[i]];
-        }
-
-        const allData: SimilarityData[] = [];
-
-        // Fetch all posts and their similar images
-        for (const id of ids) {
-          try {
-            const params: PostsGetRequest = { id: id };
-            const postResponse = await makeRequest(params);
-            const post = postResponse.posts?.[0];
-
-            if (!post) {
-              console.error("No post found for ID:", id);
-              continue;
-            }
-
-            const similarParams: PostIdSimilarGetRequest = {
-              id: post.id,
-              pageSize: 6,
-              nsfw: false,
-              grayscale: false,
-            };
-
-            const similarResponse = await makeSimilarRequest(similarParams);
-            const similarPosts = similarResponse.posts || [];
-
-            allData.push({
-              centerPost: post,
-              similarPosts,
-            });
-          } catch (error) {
-            console.error("Failed to fetch data for ID:", id, error);
-          }
-        }
-
-        setAllSimilarityData(allData);
-        if (allData.length > 0) {
-          setSimilarityData(allData[0]);
-        }
-      } catch (error) {
-        console.error("Failed to fetch all similarity data:", error);
-      } finally {
-        setSimilarityLoading(false);
-      }
-    };
-
-    fetchAllSimilarityData();
-  }, []);
+  const currentSimilarityData = allSimilarityData[currentSimilarityIndex] || {
+    centerPost: null,
+    similarPosts: [],
+  };
 
   useEffect(() => {
     if (allSimilarityData.length <= 1) return;
@@ -228,9 +58,7 @@ export default function About(props: AboutProps) {
 
         setTimeout(() => {
           setCurrentSimilarityIndex((prevIndex) => {
-            const nextIndex = (prevIndex + 1) % allSimilarityData.length;
-            setSimilarityData(allSimilarityData[nextIndex]);
-            return nextIndex;
+            return (prevIndex + 1) % allSimilarityData.length;
           });
 
           setTimeout(() => {
@@ -346,7 +174,11 @@ export default function About(props: AboutProps) {
   };
 
   const renderSimilarityClusters = (): React.ReactElement | null => {
-    if (similarityLoading || !similarityData.similarPosts.length) return null;
+    if (
+      !currentSimilarityData.centerPost ||
+      !currentSimilarityData.similarPosts.length
+    )
+      return null;
 
     const clusterPosition = { left: "50%", top: "20%" };
 
@@ -359,18 +191,21 @@ export default function About(props: AboutProps) {
       { top: "55%", right: "-195px", transform: "translateY(-50%)" },
     ];
 
-    const centerPost = similarityData.centerPost;
+    const centerPost = currentSimilarityData.centerPost;
     const centerImage =
       centerPost.images?.find((img) => img.resolution === "medium") ||
-      similarityData.centerPost.images?.[0];
+      centerPost.images?.[0];
     if (!centerImage) return null;
 
-    const similarPosts = similarityData.similarPosts;
+    const similarPosts = currentSimilarityData.similarPosts;
 
     const centerWidth = centerImage.width || 400;
     const centerHeight = centerImage.height || 400;
     const centerAspectRatio = centerWidth / centerHeight;
-    const centerMaxHeight = Math.min(window.innerWidth * 0.35, 420);
+    const centerMaxHeight = Math.min(
+      typeof window !== "undefined" ? window.innerWidth * 0.35 : 420,
+      420
+    );
     const centerContainerWidth = centerMaxHeight * centerAspectRatio;
 
     return (
@@ -408,7 +243,10 @@ export default function About(props: AboutProps) {
             const width = image.width || 200;
             const height = image.height || 200;
             const aspectRatio = width / height;
-            const maxHeight = Math.min(window.innerWidth * 0.15, 180);
+            const maxHeight = Math.min(
+              typeof window !== "undefined" ? window.innerWidth * 0.15 : 180,
+              180
+            );
             const containerWidth = maxHeight * aspectRatio;
 
             return (
@@ -490,13 +328,9 @@ export default function About(props: AboutProps) {
 
         <div className={styles.sectionTwoBg}>
           <div className={styles.colorSection}>
-            {!loading && (
-              <>
-                {renderColorRow(colorData.red, "right", 0)}
-                {renderColorRow(colorData.navy, "left", 0)}
-                {renderColorRow(colorData.olive, "right", 0)}
-              </>
-            )}
+            {renderColorRow(colorData.red, "right", 0)}
+            {renderColorRow(colorData.navy, "left", 0)}
+            {renderColorRow(colorData.olive, "right", 0)}
             <div className={styles.colorTextOverlay}>
               <div className={styles.title}>Color Intelligence</div>
               <p className={styles.subtitle}>
@@ -517,9 +351,9 @@ export default function About(props: AboutProps) {
             <div className={styles.similarityTextOverlay}>
               <div className={styles.title}>Vector Similarity</div>
               <p className={styles.subtitle}>
-                Every image is encoded with AI-powered vector embeddings,
-                enabling intelligent visual similarity search. Discover photos
-                that share composition, subject matter, and aesthetic qualities.
+                Every image is encoded with vector embeddings, enabling
+                intelligent visual similarity search. Discover photos that share
+                composition and visual patterns.
               </p>
               <Link href="/search" className={styles.link}>
                 find similar
