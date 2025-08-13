@@ -39,10 +39,11 @@ class MetadataExtractor:
 
     PROMT = """
 system prompt:
-You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space, commas, /, or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, valid film speed list, and then a list of post titles + descriptions to extract metadata from.
+You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space, commas, /, or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, valid film speed list, and then a list of post titles + descriptions to extract metadata from. A numerical post_id is provided at start of each title, repeat the post_id back in the json output for cross reference / validation. 
 
 Extract the following information and return as array of JSON:
 {{
+  "post_id": "post id #"
   "camera_make": "camera brand name",
   "camera_model": "camera model name", 
   "film_make": "film brand name",
@@ -80,7 +81,6 @@ Validation rules:
 - If film type found but not make, match from valid film list
 - If camera make found but camera model not matched, ok to just set camera make
 - If film make found but film type not matched, ok to just set film make
-
 """
 
     def __init__(self, openai: OpenAI, llm_model: str):
@@ -88,17 +88,25 @@ Validation rules:
         self.llm_model = llm_model
 
     def extract(
-        self, titles: List[str], films: List[Film], cameras: List[Camera]
+        self,
+        titles: List[str],
+        films: List[Film],
+        cameras: List[Camera],
     ) -> Tuple[List[PhotoMetadata], str]:
-        prompt = self._create_prompt(titles, films, cameras)
+        ids: list[int] = list(range(1, len(titles) + 1))
+        prompt = self._create_prompt(ids, titles, films, cameras)
         posts_raw = self._query_metadata_llm(prompt)
         posts = []
-        for post, title in zip(posts_raw, titles):
-            posts.append(self._validate_metadata(post, title, films, cameras))
+        for id, post, title in zip(ids, posts_raw, titles):
+            posts.append(self._validate_metadata(post, id, title, films, cameras))
         return posts, prompt
 
     def _create_prompt(
-        self, titles: List[str], films: List[Film], cameras: List[Camera]
+        self,
+        ids: List[int],
+        titles: List[str],
+        films: List[Film],
+        cameras: List[Camera],
     ) -> str:
         prompt = self.PROMT
         prompt += "\n valid cameras:"
@@ -108,10 +116,10 @@ Validation rules:
         for film in films:
             prompt += str(film.to_json_minimal())
         prompt += f"\n valid film speeds: {self.VALID_FILM_SPEEDS}"
-        for i, title in enumerate(titles):
+        for id, title in zip(ids, titles):
             # remove newlines that break llm expected format.
             clean_title = title.replace("\n", " ").replace("\r", " ")
-            prompt += "\n" + f"title #{i}: {clean_title}"
+            prompt += "\n" + f"post_id: {id}, {clean_title}"
         return prompt
 
     def _query_metadata_llm(self, prompt: str) -> List[PhotoMetadata]:
@@ -145,6 +153,7 @@ Validation rules:
             metadata_list = []
             for item in data:
                 metadata = PhotoMetadata(
+                    post_id=item.get("post_id"),
                     camera_make=item.get("camera_make"),
                     camera_model=item.get("camera_model"),
                     film_make=item.get("film_make"),
@@ -161,11 +170,16 @@ Validation rules:
     def _validate_metadata(
         self,
         metadata: PhotoMetadata,
+        id: int,
         title: str,
         films: List[Film],
         cameras: List[Camera],
     ) -> PhotoMetadata:
         clean = PhotoMetadata()
+        # parse error, post id sanity check didn't match
+        if metadata.post_id != id:
+            return clean
+
         title = title.lower()
 
         clean.camera_make = self._validate_camera_make(metadata.camera_make, cameras)
