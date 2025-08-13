@@ -53,6 +53,7 @@ class Color:
 
 @dataclass
 class PhotoMetadata:
+    post_id: Optional[int] = None
     camera_make: Optional[str] = None
     camera_model: Optional[str] = None
     film_make: Optional[str] = None
@@ -62,7 +63,11 @@ class PhotoMetadata:
     aperture: Optional[str] = None
 
     def is_empty(self) -> bool:
-        return all(getattr(self, field.name) is None for field in fields(self))
+        return all(
+            getattr(self, field.name) is None
+            for field in fields(self)
+            if field.name != "post_id"
+        )
 
 
 @dataclass
