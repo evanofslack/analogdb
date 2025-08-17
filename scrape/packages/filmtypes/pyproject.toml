@@ -5,13 +5,17 @@ description = "Filmtypes scraping"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "aiohttp>=3.12.15",
     "beautifulsoup4>=4.13.4",
+    "openai>=1.99.9",
+    "python-dotenv>=1.1.1",
     "requests>=2.32.3",
 ]
 
 [dependency-groups]
 dev = [
     "pytest>=8.4.0",
+    "ruff>=0.12.9",
 ]
 
 [build-system]
