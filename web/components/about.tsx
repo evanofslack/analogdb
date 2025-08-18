@@ -1,28 +1,14 @@
 "use client";
 
-import { postApi, postsApi } from "@lib/client";
 import { CodeHighlight } from "@mantine/code-highlight";
 import { useBreakpoint } from "@providers/breakpoint";
 import { IconPolaroid, IconUsers } from "@tabler/icons-react";
-import {
-  AnalogdbPost,
-  PostIdSimilarGetRequest,
-  PostsGetRequest,
-  PostsGetSortEnum,
-  ServerPostResponse,
-} from "analogdb-generated";
+import { AnalogdbPost } from "analogdb-generated";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./about.module.css";
 import Footer from "./footer";
-
-interface AboutProps {
-  data: {
-    numPosts: number;
-    numAuthors: number;
-  };
-}
 
 interface ColorData {
   red: AnalogdbPost[];
@@ -30,69 +16,18 @@ interface ColorData {
   olive: AnalogdbPost[];
 }
 
-interface SimilarityCluster {
+interface SimilarityData {
   centerPost: AnalogdbPost;
   similarPosts: AnalogdbPost[];
 }
 
-interface SimilarityData {
-  clusters: SimilarityCluster[];
-}
-
-const COLOR_MIN_VALUES: Record<string, number> = {
-  red: 0.4,
-  navy: 0.4,
-  olive: 0.4,
-};
-
-async function makeRequest(
-  params: PostsGetRequest
-): Promise<ServerPostResponse> {
-  try {
-    console.log("Posts API request params:", params);
-    const response = await postsApi.postsGet(params);
-    console.log("Posts API response:", response.posts?.length, "posts");
-    return response;
-  } catch (error: any) {
-    console.error("Posts API request failed:", error.status, error.message);
-    if (error.response) {
-      console.error(
-        "Error response:",
-        await error.response.text().catch(() => "Could not read response")
-      );
-    }
-    throw error;
-  }
-}
-
-async function makeSimilarRequest(
-  params: PostIdSimilarGetRequest
-): Promise<ServerPostResponse> {
-  try {
-    console.log("Similar API request for post ID:", params.id);
-    const response = await postApi.postIdSimilarGet(params);
-    console.log(
-      "Similar API response:",
-      response.posts?.length,
-      "similar posts"
-    );
-    return response;
-  } catch (error: any) {
-    console.error(
-      "Similar API request failed for post",
-      params.id,
-      ":",
-      error.status,
-      error.message
-    );
-    if (error.response) {
-      console.error(
-        "Error response:",
-        await error.response.text().catch(() => "Could not read response")
-      );
-    }
-    throw error;
-  }
+interface AboutProps {
+  data: {
+    numPosts: number;
+    numAuthors: number;
+    colorData: ColorData;
+    allSimilarityData: SimilarityData[];
+  };
 }
 
 export default function About(props: AboutProps) {
@@ -102,122 +37,54 @@ export default function About(props: AboutProps) {
     isMobile = true;
   }
 
-  const numPosts: number = props.data.numPosts;
-  const numAuthors: number = props.data.numAuthors;
+  const { numPosts, numAuthors, colorData, allSimilarityData } = props.data;
 
-  const [colorData, setColorData] = useState<ColorData>({
-    red: [],
-    navy: [],
-    olive: [],
-  });
-  const [similarityData, setSimilarityData] = useState<SimilarityData>({
-    clusters: [],
-  });
-  const [loading, setLoading] = useState<boolean>(true);
-  const [similarityLoading, setSimilarityLoading] = useState<boolean>(true);
+  const [currentSimilarityIndex, setCurrentSimilarityIndex] =
+    useState<number>(0);
+  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const currentSimilarityData = allSimilarityData[currentSimilarityIndex] || {
+    centerPost: null,
+    similarPosts: [],
+  };
 
   useEffect(() => {
-    const fetchColorData = async (): Promise<void> => {
-      try {
-        const colors: (keyof ColorData)[] = ["red", "navy", "olive"];
-        const apiColors: string[] = ["red", "navy", "olive"];
+    if (allSimilarityData.length <= 1) return;
 
-        const promises = colors.map((_, index) => {
-          const apiColor = apiColors[index];
-          const params: PostsGetRequest = {
-            color: [apiColor],
-            minColor: [COLOR_MIN_VALUES[apiColor]],
-            pageSize: 30,
-            nsfw: false,
-            sort: PostsGetSortEnum.Random,
-            ratioMin: 0.7,
-            ratioMax: 1.5,
-          };
-          return makeRequest(params);
-        });
+    const startCycling = () => {
+      intervalRef.current = setInterval(() => {
+        setIsTransitioning(true);
 
-        const results = await Promise.all(promises);
-        setColorData({
-          red: results[0].posts || [],
-          navy: results[1].posts || [],
-          olive: results[2].posts || [],
-        });
-      } catch (error) {
-        console.error("Failed to fetch color data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchColorData();
-  }, []);
+        setTimeout(() => {
+          setCurrentSimilarityIndex((prevIndex) => {
+            return (prevIndex + 1) % allSimilarityData.length;
+          });
 
-  useEffect(() => {
-    const fetchSimilarityData = async (): Promise<void> => {
-      try {
-        console.log("Starting similarity data fetch");
-
-        const topPostsParams: PostsGetRequest = {
-          pageSize: 20,
-          nsfw: false,
-          sort: PostsGetSortEnum.Score,
-          ratioMin: 0.7,
-          ratioMax: 1.5,
-        };
-
-        const topPostsResponse = await makeRequest(topPostsParams);
-        const topPosts = topPostsResponse.posts || [];
-        console.log("Fetched", topPosts.length, "top posts");
-
-        if (topPosts.length < 3) {
-          console.log("Not enough posts for similarity clusters");
-          return;
-        }
-
-        const shuffled = [...topPosts].sort(() => 0.5 - Math.random());
-        const centerPosts = shuffled.slice(0, 3);
-        console.log(
-          "Selected center posts:",
-          centerPosts.map((p) => p.id)
-        );
-
-        const clusterPromises = centerPosts.map(async (centerPost) => {
-          const similarParams: PostIdSimilarGetRequest = {
-            id: centerPost.id,
-            pageSize: 5,
-            nsfw: false,
-          };
-
-          const similarResponse = await makeSimilarRequest(similarParams);
-          const similarPosts = similarResponse.posts || [];
-
-          return {
-            centerPost,
-            similarPosts,
-          };
-        });
-
-        const clusters = await Promise.all(clusterPromises);
-        console.log(
-          "Completed similarity fetch for",
-          clusters.length,
-          "clusters"
-        );
-        setSimilarityData({ clusters });
-      } catch (error) {
-        console.error("Failed to fetch similarity data:", error);
-      } finally {
-        setSimilarityLoading(false);
-      }
+          setTimeout(() => {
+            setIsTransitioning(false);
+          }, 50);
+        }, 250);
+      }, 7000);
     };
 
-    fetchSimilarityData();
-  }, []);
+    const timer = setTimeout(() => {
+      startCycling();
+    }, 7000);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      clearTimeout(timer);
+    };
+  }, [allSimilarityData]);
 
   const apiQuery: string = "curl https://api.analogdb.com/posts";
 
   const apiResponse: string = `
 "meta":{
-  "total_posts":3637,
+  "total_posts":18233,
   "page_size":20,
   "next_page_id":1672251647,
   "next_page_url":"/posts?sort=time&page_size=20&page_id=1672251647"
@@ -266,9 +133,11 @@ export default function About(props: AboutProps) {
   const renderColorRow = (
     images: AnalogdbPost[],
     direction: "left" | "right",
-    delay: number = 0
+    delay: number = 0,
+    isMobile: boolean
   ): React.ReactElement | null => {
     if (!images.length) return null;
+    if (isMobile) return null;
 
     const duplicatedImages = [...images, ...images];
 
@@ -306,93 +175,110 @@ export default function About(props: AboutProps) {
     );
   };
 
-  const renderSimilarityClusters = (): React.ReactElement | null => {
-    if (similarityLoading || !similarityData.clusters.length) return null;
+  const renderSimilarityClusters = (
+    isMobile: boolean
+  ): React.ReactElement | null => {
+    if (isMobile) return null;
+    if (
+      !currentSimilarityData.centerPost ||
+      !currentSimilarityData.similarPosts.length
+    )
+      return null;
 
-    const clusterPositions = [
-      { left: "15%", top: "20%" },
-      { right: "20%", top: "15%" },
-      { left: "25%", bottom: "25%" },
-    ];
+    const clusterPosition = { left: "50%", top: "20%" };
 
     const similarPositions = [
-      [
-        { top: "-40px", left: "-50px" },
-        { top: "-45px", right: "-55px" },
-        { bottom: "-40px", left: "-45px" },
-        { bottom: "-50px", right: "-40px" },
-        { top: "40px", left: "-60px" },
-      ],
-      [
-        { top: "-50px", left: "-40px" },
-        { top: "-35px", right: "-60px" },
-        { bottom: "-45px", left: "-50px" },
-        { bottom: "-40px", right: "-45px" },
-        { top: "50px", right: "-55px" },
-      ],
-      [
-        { top: "-45px", left: "-55px" },
-        { top: "-50px", right: "-40px" },
-        { bottom: "-35px", left: "-60px" },
-        { bottom: "-45px", right: "-50px" },
-        { top: "45px", left: "-40px" },
-      ],
+      { top: "-160px", left: "-40px" },
+      { top: "-130px", right: "-120px" },
+      { bottom: "-150px", left: "-130px" },
+      { bottom: "-165px", right: "-65px" },
+      { top: "45%", left: "-170px", transform: "translateY(-50%)" },
+      { top: "55%", right: "-195px", transform: "translateY(-50%)" },
     ];
+
+    const centerPost = currentSimilarityData.centerPost;
+    const centerImage =
+      centerPost.images?.find((img) => img.resolution === "medium") ||
+      centerPost.images?.[0];
+    if (!centerImage) return null;
+
+    const similarPosts = currentSimilarityData.similarPosts;
+
+    const centerWidth = centerImage.width || 400;
+    const centerHeight = centerImage.height || 400;
+    const centerAspectRatio = centerWidth / centerHeight;
+    const centerMaxHeight = Math.min(
+      typeof window !== "undefined" ? window.innerWidth * 0.35 : 420,
+      420
+    );
+    const centerContainerWidth = centerMaxHeight * centerAspectRatio;
 
     return (
       <div className={styles.clustersContainer}>
-        {similarityData.clusters.map((cluster, clusterIndex) => {
-          const centerImage =
-            cluster.centerPost.images?.find(
-              (img) => img.resolution === "medium"
-            ) || cluster.centerPost.images?.[0];
-          if (!centerImage) return null;
+        <div
+          key={centerPost.id}
+          className={styles.clusterContainer}
+          style={clusterPosition}
+        >
+          <div
+            className={`${styles.clusterCenterContainer} ${
+              isTransitioning ? styles.transitioning : ""
+            }`}
+            style={{
+              width: `${centerContainerWidth}px`,
+              height: `${centerMaxHeight}px`,
+            }}
+          >
+            <Image
+              src={centerImage.url}
+              alt={centerPost.title}
+              fill
+              sizes="(max-width: 768px) 200px, 420px"
+              className={styles.clusterCenterImage}
+              style={{ objectFit: "cover" }}
+            />
+          </div>
 
-          const clusterPosition = clusterPositions[clusterIndex];
-          const positions = similarPositions[clusterIndex];
+          {similarPosts.slice(0, 6).map((post, index) => {
+            const image =
+              post.images?.find((img) => img.resolution === "medium") ||
+              post.images?.[0];
+            if (!image || !similarPositions[index]) return null;
 
-          return (
-            <div
-              key={cluster.centerPost.id}
-              className={styles.clusterContainer}
-              style={clusterPosition}
-            >
-              <div className={styles.clusterCenterContainer}>
+            const width = image.width || 200;
+            const height = image.height || 200;
+            const aspectRatio = width / height;
+            const maxHeight = Math.min(
+              typeof window !== "undefined" ? window.innerWidth * 0.15 : 180,
+              180
+            );
+            const containerWidth = maxHeight * aspectRatio;
+
+            return (
+              <div
+                key={post.id}
+                className={`${styles.clusterSimilarContainer} ${
+                  isTransitioning ? styles.transitioning : ""
+                }`}
+                style={{
+                  ...similarPositions[index],
+                  width: `${containerWidth}px`,
+                  height: `${maxHeight}px`,
+                }}
+              >
+                <div className={styles.clusterConnectionLine} />
                 <Image
-                  src={centerImage.url}
-                  alt={cluster.centerPost.title}
-                  width={200}
-                  height={200}
-                  className={styles.clusterCenterImage}
+                  src={image.url}
+                  alt={post.title}
+                  fill
+                  sizes="(max-width: 768px) 90px, 180px"
+                  className={styles.clusterSimilarImage}
+                  style={{ objectFit: "cover" }}
                 />
               </div>
-
-              {cluster.similarPosts.slice(0, 5).map((post, index) => {
-                const image =
-                  post.images?.find((img) => img.resolution === "medium") ||
-                  post.images?.[0];
-                if (!image || !positions[index]) return null;
-
-                return (
-                  <div
-                    key={post.id}
-                    className={styles.clusterSimilarContainer}
-                    style={positions[index]}
-                  >
-                    <div className={styles.clusterConnectionLine} />
-                    <Image
-                      src={image.url}
-                      alt={post.title}
-                      width={80}
-                      height={80}
-                      className={styles.clusterSimilarImage}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -447,13 +333,9 @@ export default function About(props: AboutProps) {
 
         <div className={styles.sectionTwoBg}>
           <div className={styles.colorSection}>
-            {!loading && (
-              <>
-                {renderColorRow(colorData.red, "right", 0)}
-                {renderColorRow(colorData.navy, "left", 0)}
-                {renderColorRow(colorData.olive, "right", 0)}
-              </>
-            )}
+            {renderColorRow(colorData.red, "right", 0, isMobile)}
+            {renderColorRow(colorData.navy, "left", 0, isMobile)}
+            {renderColorRow(colorData.olive, "right", 0, isMobile)}
             <div className={styles.colorTextOverlay}>
               <div className={styles.title}>Color Intelligence</div>
               <p className={styles.subtitle}>
@@ -468,22 +350,22 @@ export default function About(props: AboutProps) {
           </div>
         </div>
 
-        {/* <div className={styles.sectionSimilarityBg}> */}
-        {/*   <div className={styles.similaritySection}> */}
-        {/*     {renderSimilarityClusters()} */}
-        {/*     <div className={styles.similarityTextOverlay}> */}
-        {/*       <div className={styles.title}>Vector Similarity</div> */}
-        {/*       <p className={styles.subtitle}> */}
-        {/*         Every image is encoded with AI-powered vector embeddings, */}
-        {/*         enabling intelligent visual similarity search. Discover photos */}
-        {/*         that share composition, subject matter, and aesthetic qualities. */}
-        {/*       </p> */}
-        {/*       <Link href="/search" className={styles.link}> */}
-        {/*         find similar */}
-        {/*       </Link> */}
-        {/*     </div> */}
-        {/*   </div> */}
-        {/* </div> */}
+        <div className={styles.sectionSimilarityBg}>
+          <div className={styles.similaritySection}>
+            {renderSimilarityClusters(isMobile)}
+            <div className={styles.similarityTextOverlay}>
+              <div className={styles.title}>Vector Similarity</div>
+              <p className={styles.subtitle}>
+                Every image is encoded with vector embeddings, enabling
+                intelligent visual similarity search. Discover photos that share
+                composition and visual patterns.
+              </p>
+              <Link href="/search" className={styles.link}>
+                find similar
+              </Link>
+            </div>
+          </div>
+        </div>
 
         <div className={styles.sectionThreeBg}>
           <div className={styles.sectionThree}>
