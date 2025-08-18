@@ -1,5 +1,5 @@
+import { deletePost } from "@app/actions/posts";
 import { checkAdminAuth } from "@lib/auth";
-import { authorized_fetch } from "@lib/client";
 
 export async function DELETE(request, { params }) {
   const isAdmin = await checkAdminAuth();
@@ -10,8 +10,7 @@ export async function DELETE(request, { params }) {
 
   try {
     const { pid } = await params;
-    const route = `/post/${pid}`;
-    const res = await authorized_fetch(route, "DELETE");
+    const res = await deletePost(pid);
     if (res.ok) {
       return new Response("Post deleted successfully", { status: 200 });
     } else {

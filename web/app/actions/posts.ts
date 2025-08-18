@@ -2,8 +2,10 @@
 
 import { postApi, postsApi } from "@lib/client";
 import {
+  PostIdDeleteRequest,
   PostIdSimilarGetRequest,
   PostsGetRequest,
+  ServerDeleteResponse,
   ServerPostResponse,
   ServerSimilarPostsResponse,
 } from "analogdb-generated";
@@ -39,6 +41,17 @@ export async function getPostsTotalCount(): Promise<number> {
     return response.meta.totalPosts;
   } catch (error) {
     console.error("get posts total count request failed:", error);
+    throw error;
+  }
+}
+
+export async function deletePost(id: number): Promise<ServerDeleteResponse> {
+  try {
+    const params: PostIdDeleteRequest = { id: id };
+    const response = await postApi.postIdDelete(params);
+    return response;
+  } catch (error) {
+    console.error("delete post request failed:", error);
     throw error;
   }
 }
