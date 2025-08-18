@@ -1,4 +1,4 @@
-import { camerasApi } from "@lib/client";
+import { getCameras } from "@app/actions/cameras";
 import {
   CamerasGetRequest,
   CamerasGetSortEnum,
@@ -15,18 +15,6 @@ const DEFAULTS = {
   includeCounts: true,
   excludeZeroCounts: true,
 };
-
-async function makeRequest(
-  params: CamerasGetRequest
-): Promise<ServerCamerasResponse> {
-  try {
-    const response = await camerasApi.camerasGet(params);
-    return response;
-  } catch (error) {
-    console.error("API request failed:", error);
-    throw error;
-  }
-}
 
 function buildQueryParams(
   count: number | null,
@@ -67,7 +55,7 @@ export default function useCameras(count: number) {
         make || DEFAULTS.make,
         model || DEFAULTS.model
       );
-      const data = await makeRequest(queryParams);
+      const data = await getCameras(queryParams);
       setResponse(data);
     } catch (error) {
       console.error("Failed to fetch cameras:", error);

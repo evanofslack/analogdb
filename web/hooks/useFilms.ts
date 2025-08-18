@@ -1,4 +1,4 @@
-import { filmsApi } from "@lib/client";
+import { getFilms } from "@app/actions/films";
 import {
   FilmsGetRequest,
   FilmsGetSortEnum,
@@ -17,19 +17,6 @@ const DEFAULTS = {
   includeCounts: true,
   excludeZeroCounts: true,
 };
-
-async function makeRequest(
-  params: FilmsGetRequest
-): Promise<ServerFilmsResponse> {
-  try {
-    const response = await filmsApi.filmsGet(params);
-    // console.log(response);
-    return response;
-  } catch (error) {
-    console.error("API request failed:", error);
-    throw error;
-  }
-}
 
 function buildQueryParams(
   count: number | null,
@@ -79,7 +66,7 @@ export default function useFilms(count: number) {
         speed,
         colortype || DEFAULTS.colortype
       );
-      const data = await makeRequest(queryParams);
+      const data = await getFilms(queryParams);
       setResponse(data);
     } catch (error) {
       console.error("Failed to fetch films:", error);

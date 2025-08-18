@@ -1,8 +1,13 @@
+import { getAuthorsTotalCount } from "@app/actions/authors";
+import {
+  getPosts,
+  getPostsSimilar,
+  getPostsTotalCount,
+} from "@app/actions/posts";
 import About from "@components/about";
 import styles from "@components/gallery.module.css";
 import Header from "@components/header";
 import { checkAdminAuth } from "@lib/auth";
-import { authorized_fetch, postApi, postsApi } from "@lib/client";
 import {
   PostIdSimilarGetRequest,
   PostsGetRequest,
@@ -18,33 +23,6 @@ export const metadata: Metadata = {
 };
 
 export const revalidate = 60;
-
-interface PostsResponse {
-  meta: {
-    total_posts: number;
-  };
-  posts?: Array<{
-    id: number;
-    title: string;
-    author: string;
-    permalink: string;
-    score: number;
-    nsfw: boolean;
-    grayscale: boolean;
-    timestamp: number;
-    sprocket: boolean;
-    images?: Array<{
-      resolution: string;
-      url: string;
-      width: number;
-      height: number;
-    }>;
-  }>;
-}
-
-interface AuthorsResponse {
-  authors: string[];
-}
 
 interface ColorData {
   red: NonNullable<ServerPostResponse["posts"]>;
@@ -70,30 +48,6 @@ const COLOR_MIN_VALUES: Record<string, number> = {
   olive: 0.4,
 };
 
-async function makeRequest(
-  params: PostsGetRequest
-): Promise<ServerPostResponse> {
-  try {
-    const response = await postsApi.postsGet(params);
-    return response;
-  } catch (error) {
-    console.error("API request failed:", error);
-    throw error;
-  }
-}
-
-async function makeSimilarRequest(
-  params: PostIdSimilarGetRequest
-): Promise<ServerSimilarPostsResponse> {
-  try {
-    const response = await postApi.postIdSimilarGet(params);
-    return response;
-  } catch (error) {
-    console.error("API request failed:", error);
-    throw error;
-  }
-}
-
 async function fetchColorData(): Promise<ColorData> {
   const colors = ["red", "navy", "olive"] as const;
 
@@ -108,7 +62,7 @@ async function fetchColorData(): Promise<ColorData> {
       ratioMax: 1.5,
     };
 
-    const response = await makeRequest(params);
+    const response = await getPosts(params);
     return response.posts || [];
   });
 
@@ -134,7 +88,7 @@ async function fetchSimilarityData(): Promise<SimilarityData[]> {
     try {
       // Fetch the center post
       const postParams: PostsGetRequest = { id: id };
-      const postResponse = await makeRequest(postParams);
+      const postResponse = await getPosts(postParams);
       const post = postResponse.posts?.[0];
 
       if (!post) continue;
@@ -147,7 +101,7 @@ async function fetchSimilarityData(): Promise<SimilarityData[]> {
         grayscale: false,
       };
 
-      const similarResponse = await makeSimilarRequest(similarParams);
+      const similarResponse = await getPostsSimilar(similarParams);
       const similarPosts = similarResponse.posts || [];
 
       allData.push({
@@ -163,18 +117,9 @@ async function fetchSimilarityData(): Promise<SimilarityData[]> {
 }
 
 async function getData(): Promise<AboutData> {
-  // Existing data fetching
-  const postsRoute = "/posts";
-  const postsResponse = await authorized_fetch(postsRoute, "GET");
-  const postsData: PostsResponse = await postsResponse.json();
-  const numPosts = postsData.meta.total_posts;
+  const numPosts = await getPostsTotalCount();
+  const numAuthors = await getAuthorsTotalCount();
 
-  const authorsRoute = "/authors";
-  const authorsResponse = await authorized_fetch(authorsRoute, "GET");
-  const authorsData: AuthorsResponse = await authorsResponse.json();
-  const numAuthors = Array.from(new Set(authorsData.authors)).length;
-
-  // New data fetching
   const [colorData, allSimilarityData] = await Promise.all([
     fetchColorData(),
     fetchSimilarityData(),
