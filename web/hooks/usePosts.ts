@@ -1,4 +1,4 @@
-import { postsApi } from "@lib/client";
+import { getPosts } from "@app/actions/posts";
 import {
   PostsGetRequest,
   PostsGetSortEnum,
@@ -40,18 +40,6 @@ const COLOR_MIN_VALUES: Record<string, number> = {
   green: 0.25,
   default: 0.15,
 };
-
-async function makeRequest(
-  params: PostsGetRequest
-): Promise<ServerPostResponse> {
-  try {
-    const response = await postsApi.postsGet(params);
-    return response;
-  } catch (error) {
-    console.error("API request failed:", error);
-    throw error;
-  }
-}
 
 function buildQueryParams(
   sort: string,
@@ -194,7 +182,7 @@ export default function usePosts() {
         cameraMake,
         cameraModel
       );
-      const data = await makeRequest(queryParams);
+      const data = await getPosts(queryParams);
       setResponse(data);
     } catch (error) {
       console.error("Failed to fetch posts:", error);

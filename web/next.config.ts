@@ -32,6 +32,7 @@ module.exports = {
       "@providers": path.resolve(__dirname, "providers"),
       "@styles": path.resolve(__dirname, "styles"),
       "@hooks": path.resolve(__dirname, "hooks"),
+      "@app": path.resolve(__dirname, "app"),
     };
     return config;
   },
