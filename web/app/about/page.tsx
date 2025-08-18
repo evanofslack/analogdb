@@ -76,43 +76,49 @@ async function fetchSimilarityData(): Promise<SimilarityData[]> {
     2941, 1862, 30131,
   ];
 
-  // Shuffle array
   for (let i = ids.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [ids[i], ids[j]] = [ids[j], ids[i]];
   }
 
+  const BATCH_SIZE = 5;
   const allData: SimilarityData[] = [];
 
-  for (const id of ids) {
-    try {
-      // Fetch the center post
-      const postParams: PostsGetRequest = { id: id };
-      const postResponse = await getPosts(postParams);
-      const post = postResponse.posts?.[0];
+  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
+    const batch = ids.slice(i, i + BATCH_SIZE);
 
-      if (!post) continue;
+    const promises = batch.map(async (id) => {
+      try {
+        const postParams: PostsGetRequest = { id };
+        const postResponse = await getPosts(postParams);
+        const post = postResponse.posts?.[0];
 
-      // Fetch similar posts
-      const similarParams: PostIdSimilarGetRequest = {
-        id: post.id,
-        pageSize: 6,
-        nsfw: false,
-        grayscale: false,
-      };
+        if (!post) return null;
 
-      const similarResponse = await getPostsSimilar(similarParams);
-      const similarPosts = similarResponse.posts || [];
+        const similarParams: PostIdSimilarGetRequest = {
+          id: post.id,
+          pageSize: 6,
+          nsfw: false,
+          grayscale: false,
+        };
 
-      allData.push({
-        centerPost: post,
-        similarPosts,
-      });
-    } catch (error) {
-      console.error("Failed to fetch data for ID:", id, error);
-    }
+        const similarResponse = await getPostsSimilar(similarParams);
+
+        return {
+          centerPost: post,
+          similarPosts: similarResponse.posts || [],
+        };
+      } catch (error) {
+        console.error("Fail fetch post or similar posts for id:", id, error);
+        return null;
+      }
+    });
+
+    const batchResults = await Promise.all(promises);
+    allData.push(
+      ...batchResults.filter((data): data is SimilarityData => data !== null)
+    );
   }
-
   return allData;
 }
 
