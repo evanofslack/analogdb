@@ -108,17 +108,17 @@
 
 .colorTextOverlay {
   position: absolute;
-  right: 33.33%;
+  right: 27%;
   top: 50%;
   transform: translate(50%, -50%);
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
   padding: 2rem;
-  padding-right: 4rem;
-  padding-left: 4rem;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
   border-radius: 0.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
   z-index: 10;
 }
 
@@ -130,7 +130,7 @@
   align-items: center;
   position: relative;
   overflow: hidden;
-  background-color: #f8f9fa;
+  /* background-color: #f8f9fa; */
 }
 
 .similaritySection {
@@ -307,51 +307,18 @@
 
 .similarityTextOverlay {
   position: absolute;
-  left: 20%;
+  left: 22%;
   top: 50%;
   transform: translate(-50%, -50%);
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(15px);
-  padding: 2.5rem;
-  border-radius: 12px;
+  padding: 2rem;
+  padding-right: 1.5rem;
+  padding-left: 1.5rem;
+  border-radius: 0.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  max-width: 450px;
+  max-width: 400px;
   z-index: 10;
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .similaritySection {
-    height: 60vh;
-    margin-top: 2rem;
-    margin-bottom: 4rem;
-  }
-
-  .clustersContainer {
-    width: 95vw;
-    height: 50vh;
-  }
-
-  .clusterContainer {
-    width: min(45vw, 200px);
-    height: min(45vw, 200px);
-  }
-
-  .clusterSimilarContainer {
-    width: min(20vw, 90px);
-    height: min(20vw, 90px);
-  }
-
-  .similarityTextOverlay {
-    position: static;
-    transform: none;
-    margin: 2rem;
-    max-width: none;
-  }
-
-  .sectionSimilarityBg {
-    flex-direction: column;
-  }
 }
 
 .sectionThreeBg {
@@ -469,75 +436,27 @@
   max-height: 60%;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 720px) {
   .colorSection {
-    height: 40vh;
+    height: 55vh;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
   }
-
-  .colorRow {
-    height: 13vh;
-  }
-
   .colorTextOverlay {
     position: static;
     transform: none;
     margin: 2rem;
-    max-width: none;
-  }
-
-  .sectionTwoBg {
-    flex-direction: column;
   }
 
   .similaritySection {
     height: 55vh;
-    margin-top: 2rem;
-    margin-bottom: 4rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
   }
-
-  .clustersContainer {
-    width: 95vw;
-    height: 45vh;
-  }
-
-  .clusterContainer {
-    width: 140px;
-    height: 140px;
-  }
-
-  .clusterCenterContainer {
-    width: 140px;
-    height: 140px;
-    transform: scale(0.8);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 0 2px white;
-  }
-
-  .clusterCenterImage {
-    width: 140px !important;
-    height: 140px !important;
-  }
-
-  .clusterSimilarContainer {
-    width: 60px;
-    height: 60px;
-    transform: scale(0.8);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 0 0 2px white;
-  }
-
-  .clusterSimilarImage {
-    width: 60px !important;
-    height: 60px !important;
-  }
-
   .similarityTextOverlay {
     position: static;
     transform: none;
     margin: 2rem;
-    max-width: none;
-  }
-
-  .sectionSimilarityBg {
-    flex-direction: column;
   }
 }
 

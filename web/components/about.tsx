@@ -84,7 +84,7 @@ export default function About(props: AboutProps) {
 
   const apiResponse: string = `
 "meta":{
-  "total_posts":3637,
+  "total_posts":18233,
   "page_size":20,
   "next_page_id":1672251647,
   "next_page_url":"/posts?sort=time&page_size=20&page_id=1672251647"
@@ -133,9 +133,11 @@ export default function About(props: AboutProps) {
   const renderColorRow = (
     images: AnalogdbPost[],
     direction: "left" | "right",
-    delay: number = 0
+    delay: number = 0,
+    isMobile: boolean
   ): React.ReactElement | null => {
     if (!images.length) return null;
+    if (isMobile) return null;
 
     const duplicatedImages = [...images, ...images];
 
@@ -173,7 +175,10 @@ export default function About(props: AboutProps) {
     );
   };
 
-  const renderSimilarityClusters = (): React.ReactElement | null => {
+  const renderSimilarityClusters = (
+    isMobile: boolean
+  ): React.ReactElement | null => {
+    if (isMobile) return null;
     if (
       !currentSimilarityData.centerPost ||
       !currentSimilarityData.similarPosts.length
@@ -328,9 +333,9 @@ export default function About(props: AboutProps) {
 
         <div className={styles.sectionTwoBg}>
           <div className={styles.colorSection}>
-            {renderColorRow(colorData.red, "right", 0)}
-            {renderColorRow(colorData.navy, "left", 0)}
-            {renderColorRow(colorData.olive, "right", 0)}
+            {renderColorRow(colorData.red, "right", 0, isMobile)}
+            {renderColorRow(colorData.navy, "left", 0, isMobile)}
+            {renderColorRow(colorData.olive, "right", 0, isMobile)}
             <div className={styles.colorTextOverlay}>
               <div className={styles.title}>Color Intelligence</div>
               <p className={styles.subtitle}>
@@ -347,7 +352,7 @@ export default function About(props: AboutProps) {
 
         <div className={styles.sectionSimilarityBg}>
           <div className={styles.similaritySection}>
-            {renderSimilarityClusters()}
+            {renderSimilarityClusters(isMobile)}
             <div className={styles.similarityTextOverlay}>
               <div className={styles.title}>Vector Similarity</div>
               <p className={styles.subtitle}>
