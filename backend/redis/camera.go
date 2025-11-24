@@ -1,4 +1,3 @@
-
 package redis
 
 import (
@@ -25,18 +24,18 @@ const (
 var _ analogdb.CameraService = (*CameraService)(nil)
 
 type CameraService struct {
-	rdb       *RDB
+	rdb         *RDB
 	cameraCache *Cache
-	dbService analogdb.CameraService
+	dbService   analogdb.CameraService
 }
 
 func NewCacheCameraService(rdb *RDB, dbService analogdb.CameraService) *CameraService {
 	cameraCache := rdb.NewCache(cameraInstance, cameraLocalSize, cameraTTL)
 
 	return &CameraService{
-		rdb:       rdb,
+		rdb:         rdb,
 		cameraCache: cameraCache,
-		dbService: dbService,
+		dbService:   dbService,
 	}
 }
 
@@ -45,13 +44,13 @@ func (s *CameraService) CreateCamera(ctx context.Context, camera *analogdb.Creat
 }
 
 func (s *CameraService) FindCameras(ctx context.Context, filter *analogdb.CameraFilter) ([]*analogdb.Camera, error) {
-	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cameraCache.instance).Msg("Starting all cameras with cache")
-	defer s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cameraCache.instance).Msg("Finished all cameras with cache")
+	s.rdb.logger.DebugContext(ctx, "Start find cameras with cache", "instance", s.cameraCache.instance)
+	defer s.rdb.logger.DebugContext(ctx, "Finish find cameras with cache", "instance", s.cameraCache.instance)
 
 	// generate a unique hash from the filter struct
 	hash, err := hashstructure.Hash(filter, hashstructure.FormatV2, nil)
 	if err != nil {
-		s.rdb.logger.Error().Err(err).Ctx(ctx).Str("instance", s.cameraCache.instance).Msg("Fail to hash camera filter")
+		s.rdb.logger.ErrorContext(ctx, "Fail hash camera filter", "instance", s.cameraCache.instance, "error", err)
 
 		// if we failed, fallback to db
 		return s.dbService.FindCameras(ctx, filter)
@@ -78,20 +77,20 @@ func (s *CameraService) FindCameras(ctx context.Context, filter *analogdb.Camera
 	// add cameras to cache
 	// do this async so response is returned quicker
 	go func() {
-		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cameraCache.instance).Msg("Adding cameras to cache")
+		s.rdb.logger.DebugContext(ctx, "Add cameras to cache", "instance", s.cameraCache.instance)
 
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
 		// add cameras to cache
-        if err := s.cameraCache.set(ctx, &cache.Item{
+		if err := s.cameraCache.set(ctx, &cache.Item{
 			Ctx:   ctx,
 			Key:   camerasHash,
 			Value: &cameras,
 			TTL:   cameraTTL,
 		}); err != nil {
-            s.rdb.logger.Warn().Ctx(ctx).Err(err).Str("instance", s.cameraCache.instance).Msg("Add cameras to cache")
+			s.rdb.logger.ErrorContext(ctx, "Fail add cameras to cache", "instance", s.cameraCache.instance, "error", err)
 		}
 	}()
 

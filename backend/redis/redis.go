@@ -30,7 +30,7 @@ type RDB struct {
 
 // create a new redis database
 func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics, tracingEnabled bool) (*RDB, error) {
-	logger.Debug().Msg("Initializing cache instance")
+	logger.Debug("Initializing cache instance")
 
 	opt, err := redis.ParseURL(url)
 	if err != nil {
@@ -38,12 +38,12 @@ func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics, tracing
 	}
 
 	db := redis.NewClient(opt)
-	logger.Debug().Msg("Created new redis client")
+	logger.Debug("Created new redis client")
 
 	// prometheus metrics for redis
 	redisCollector := newRedisCollector(db)
 	metrics.Registry.MustRegister(redisCollector)
-	logger.Info().Msg("Registered redis collector with prometheus")
+	logger.Info("Registered redis collector with prometheus")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	collector := newCacheCollector()
@@ -59,18 +59,18 @@ func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics, tracing
 
 	// prometheus metrics for redis based caches
 	rdb.metrics.Registry.MustRegister(rdb.collector)
-	rdb.logger.Info().Msg("Registered cache collector with prometheus")
+	rdb.logger.Info("Registered cache collector with prometheus")
 
 	// otel instrumentation of redis
 	if tracingEnabled {
 		if err := redisotel.InstrumentTracing(db); err != nil {
-			rdb.logger.Error().Err(err).Msg("Failed to instrument redis with tracing")
+			rdb.logger.Error("Fail instrument redis with tracing", "error", err)
 		} else {
-			rdb.logger.Info().Msg("Instrumented redis with tracing")
+			rdb.logger.Info("Instrumented redis with tracing")
 		}
 	}
 
-	rdb.logger.Info().Msg("Initialized cache instance")
+	rdb.logger.Info("Initialized cache instance")
 
 	return rdb, nil
 }
@@ -83,8 +83,8 @@ func (rdb *RDB) Open() error {
 }
 
 func (rdb *RDB) Close() error {
-	rdb.logger.Debug().Msg("Starting redis server close")
-	defer rdb.logger.Info().Msg("Closed redis server")
+	rdb.logger.Debug("Starting redis server close")
+	defer rdb.logger.Info("Closed redis server")
 
 	rdb.cancel()
 	if rdb.db != nil {
@@ -104,7 +104,7 @@ type Cache struct {
 
 // create a new cache backed by redis
 func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
-	rdb.logger.Debug().Str("instance", instance).Msg("Initializing new cache")
+	rdb.logger.Debug("Initializing new cache", "instance", instance)
 
 	inner := cache.New(&cache.Options{
 		Redis:        rdb.db,
@@ -123,15 +123,14 @@ func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
 
 	// register this cache instance with the collector
 	rdb.collector.registerCache(cache)
-	rdb.logger.Info().Str("instance", instance).Msg("Registered cache instance with prometheus")
-
-	rdb.logger.Info().Str("instance", instance).Msg("Initialized new cache")
+	rdb.logger.Info("Registered cache instance with prometheus", "instance", instance)
+	rdb.logger.Info("Initialized new cache", "instance", instance)
 
 	return cache
 }
 
 func (cache *Cache) get(ctx context.Context, key string, item interface{}) error {
-	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Getting item from cache")
+	cache.logger.DebugContext(ctx, "Getting item from cache", "instance", cache.instance)
 
 	// do the lookup on the inner cache
 	err := cache.cache.Get(ctx, key, item)
@@ -140,48 +139,47 @@ func (cache *Cache) get(ctx context.Context, key string, item interface{}) error
 
 		// was it a cache miss?
 		if strings.Contains(err.Error(), cacheMissErr) {
-			cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Cache miss")
+			cache.logger.DebugContext(ctx, "Cache miss", "instance", cache.instance)
 			cache.stats.incMisses()
 
 			// temporarily downlevel this error
 		} else if strings.Contains(err.Error(), decodeArrayErr1) || strings.Contains(err.Error(), decodeArrayErr2) {
-			cache.logger.Warn().Ctx(ctx).Str("instance", cache.instance).Msg(err.Error())
+			cache.logger.WarnContext(ctx, "Cache decode error", "instance", cache.instance, "error", err)
 			cache.stats.incErrors()
 
 			// or an actual error
 		} else {
-			cache.logger.Error().Err(err).Ctx(ctx).Str("instance", cache.instance).Msg("Error getting item from cache")
+			cache.logger.WarnContext(ctx, "Fail get item from cache", "instance", cache.instance, "error", err)
 			cache.stats.incErrors()
 		}
 		return err
 	}
 
 	// no error means cache hit
-	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Cache hit")
+	cache.logger.DebugContext(ctx, "Cache hit", "instance", cache.instance)
 	cache.stats.incHits()
 	return nil
 }
 
 func (cache *Cache) set(ctx context.Context, item *cache.Item) error {
-	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Setting item in cache")
+	cache.logger.DebugContext(ctx, "Set item in cache", "instance", cache.instance)
 
 	err := cache.cache.Set(item)
 	if err != nil {
-		cache.logger.Error().Err(err).Ctx(ctx).Str("instance", cache.instance).Msg("Failed to set item")
+		cache.logger.ErrorContext(ctx, "Fail set item in cache", "instance", cache.instance, "error", err)
 	}
 
-	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Added item cache")
+	cache.logger.DebugContext(ctx, "Add item in cache", "instance", cache.instance)
 	return err
 }
 
 func (cache *Cache) delete(ctx context.Context, key string) error {
-	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Deleting item from cache")
+	cache.logger.DebugContext(ctx, "Delete item in cache", "instance", cache.instance)
 
 	err := cache.cache.Delete(ctx, key)
 	if err != nil {
-		cache.logger.Error().Err(err).Ctx(ctx).Str("instance", cache.instance).Msg("Failed to delete item")
+		cache.logger.ErrorContext(ctx, "Fail delete item in cache", "instance", cache.instance, "error", err)
 	}
-
-	cache.logger.Debug().Ctx(ctx).Str("instance", cache.instance).Msg("Deleted item from cache")
+	cache.logger.ErrorContext(ctx, "Finish delete item in cache", "instance", cache.instance)
 	return err
 }
