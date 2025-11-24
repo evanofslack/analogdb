@@ -13,7 +13,7 @@ import (
 )
 
 func (ss SimilarityService) EncodePost(ctx context.Context, id int) error {
-	ss.db.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting encode post")
+	ss.db.logger.DebugContext(ctx, "Start encode post", "post_id", id)
 
 	ctx, span := ss.db.tracer.Tracer.Start(ctx, "vector:encode_post")
 	defer span.End()
@@ -37,7 +37,7 @@ func (ss SimilarityService) EncodePost(ctx context.Context, id int) error {
 }
 
 func (db *DB) downloadPostImage(ctx context.Context, post *analogdb.Post) (string, error) {
-	db.logger.Debug().Ctx(ctx).Msg("Starting download post")
+	db.logger.DebugContext(ctx, "Start download post", "post_id", post.Id)
 
 	ctx, span := db.tracer.Tracer.Start(ctx, "vector:download_post_image")
 	defer span.End()
@@ -77,7 +77,7 @@ func (db *DB) downloadPostImage(ctx context.Context, post *analogdb.Post) (strin
 }
 
 func (db *DB) postToPictureObject(ctx context.Context, post *analogdb.Post) (*models.Object, error) {
-	db.logger.Debug().Ctx(ctx).Msg("Starting convert post to picture object")
+	db.logger.DebugContext(ctx, "Start convert post to picture object", "post_id", post.Id)
 
 	image, err := db.downloadPostImage(ctx, post)
 	if err != nil {
@@ -89,7 +89,7 @@ func (db *DB) postToPictureObject(ctx context.Context, post *analogdb.Post) (*mo
 }
 
 func (db *DB) uploadObject(ctx context.Context, obj *models.Object) error {
-	db.logger.Debug().Ctx(ctx).Msg("Starting upload object")
+	db.logger.DebugContext(ctx, "Start upload object")
 
 	ctx, span := db.startTrace(ctx, "vector:upload_object")
 	defer span.End()
@@ -98,7 +98,7 @@ func (db *DB) uploadObject(ctx context.Context, obj *models.Object) error {
 	_, err := batcher.WithObject(obj).Do(ctx)
 	if err != nil {
 		err = fmt.Errorf("failed to upload to vector DB: %w", err)
-		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed upload to vector DB")
+		db.logger.ErrorContext(ctx, "Fail upload object", "error", err)
 		span.SetStatus(codes.Error, "Upload object failed")
 		span.RecordError(err)
 		return err

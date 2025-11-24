@@ -31,7 +31,7 @@ func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, bat
 }
 
 func (db *DB) batchUploadObjects(ctx context.Context, objects []*models.Object) error {
-	db.logger.Debug().Ctx(ctx).Msg("Starting batch upload to vector DB")
+	db.logger.DebugContext(ctx, "Start batch upload to vector db")
 
 	batcher := db.db.Batch().ObjectsBatcher()
 	for _, obj := range objects {
@@ -39,7 +39,7 @@ func (db *DB) batchUploadObjects(ctx context.Context, objects []*models.Object) 
 	}
 	_, err := batcher.Do(ctx)
 	if err != nil {
-		db.logger.Error().Err(err).Ctx(ctx).Msg("Failed to do batch upload to vector DB")
+		db.logger.ErrorContext(ctx, "Fail batch upload to vector db", "error", err)
 		return err
 	}
 	return nil
