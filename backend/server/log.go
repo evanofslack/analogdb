@@ -14,7 +14,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-
 func (server *Server) logRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
@@ -26,12 +25,7 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 		defer func() {
 			if rec := recover(); rec != nil {
 				err := rec.(error)
-				server.logger.Log().
-					Stack().
-					Err(err).
-					Ctx(ctx).
-					Bytes("debug_stack", debug.Stack()).
-					Msg("Caught error with recoverer")
+				server.logger.ErrorContext(ctx, "Caught and recovered", "error", err, "stack", debug.Stack())
 				http.Error(ww, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			}
 
@@ -63,38 +57,28 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 				var err error
 				bytesIn, err = strconv.Atoi(bytesInStr)
 				if err != nil {
-					server.logger.Warn().Str("bytes_in_str", bytesInStr).Msg("parse content-length to int")
+					server.logger.Warn("Parse content-length to int", "bytes_in_str", bytesInStr)
 				}
 			}
 			bytesOut := ww.BytesWritten()
 
 			// log end request
-			server.logger.Info().
-				Ctx(ctx).
-				Fields(map[string]interface{}{
-					"trace_id":   traceID,
-					"remote_ip":  remoteIP,
-					"path":       path,
-					"protocol":   protocol,
-					"scheme":     scheme,
-					"method":     method,
-					"user_agent": userAgent,
-					"accept":     accept,
-					"status":     status,
-					"latency_ms": latency,
-					"bytes_in":   bytesIn,
-					"bytes_out":  bytesOut,
-					"authorized": authorized,
-				}).
-				Msg("Handled request")
-
-			// log query params at debug level
-			server.logger.Debug().
-				Ctx(ctx).
-				Fields(map[string]interface{}{
-					"query": r.URL.Query(),
-				}).
-				Msg("Request query params")
+			server.logger.InfoContext(ctx, "Handle request",
+				"trace_id", traceID,
+				"remote_ip", remoteIP,
+				"path", path,
+				"protocol", protocol,
+				"scheme", scheme,
+				"method", method,
+				"user_agent", userAgent,
+				"accept", accept,
+				"status", status,
+				"latency_ms", latency,
+				"bytes_in", bytesIn,
+				"bytes_out", bytesOut,
+				"authorized", authorized,
+				"query_params", r.URL.Query(),
+			)
 
 			// send request to event stream too
 			event := &events.Event{
@@ -116,7 +100,7 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 				BytesOut:      int32(bytesOut),
 			}
 			if err := server.EventService.Write(context.Background(), event); err != nil {
-				server.logger.Warn().Err(err).Msg("Write request to event stream")
+				server.logger.WarnContext(ctx, "Fail write request to event stream", "error", err)
 			}
 		}()
 	})
@@ -129,13 +113,13 @@ func getRealIP(req *http.Request) string {
 	if remoteIp := req.Header.Get("X-Forwarded-For"); remoteIp != "" {
 		return remoteIp
 	}
-    host, _, _ := net.SplitHostPort(req.RemoteAddr)
-    return host
+	host, _, _ := net.SplitHostPort(req.RemoteAddr)
+	return host
 }
 
 func getRealProto(req *http.Request) string {
 	if proto := req.Header.Get("X-Forwarded-Proto"); proto != "" {
 		return proto
 	}
-    return req.Proto
+	return req.Proto
 }

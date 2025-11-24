@@ -25,7 +25,7 @@ func (s *Server) mountMiddleware() {
 	// attach before logger so span id is logged
 	if s.config.Tracing.Enabled {
 		s.router.Use(otelchi.Middleware("http", otelchi.WithChiRoutes(s.router)))
-		s.logger.Info().Msg("Added tracing middleware")
+		s.logger.Info("Added tracing middleware")
 	}
 
 	// extract traceid

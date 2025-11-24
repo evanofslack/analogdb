@@ -22,7 +22,7 @@ func (server *Server) addRatelimiter() {
 		}))
 
 	server.router.Use(middleware.Maybe(rateLimiter, server.applyRateLimit))
-	server.logger.Info().Msg("Added rate limiting middleware")
+	server.logger.Info("Added rate limiting middleware")
 }
 
 // apply rate limit if user is not authenticated
