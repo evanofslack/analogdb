@@ -35,9 +35,9 @@ func NewCacheAuthorService(rdb *RDB, dbService analogdb.AuthorService) *AuthorSe
 }
 
 func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
-	s.rdb.logger.Debug().Ctx(ctx).Ctx(ctx).Str("instance", s.cache.instance).Msg("Starting find authors with cache")
+	s.rdb.logger.DebugContext(ctx, "Start find authors with cache", "instance", s.cache.instance)
 	defer func() {
-		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cache.instance).Msg("Finished find authors with cache")
+		s.rdb.logger.DebugContext(ctx, "Finish find authors with cache", "instance", s.cache.instance)
 	}()
 
 	var authors []string
@@ -59,7 +59,7 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 	// add to cache
 	// do this async so response is returned quicker
 	go func() {
-		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.cache.instance).Msg("Adding authors to cache")
+		s.rdb.logger.DebugContext(ctx, "Add authors to cache", "instance", s.cache.instance)
 
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)

@@ -32,7 +32,7 @@ func (s *Server) passBasicAuth(expectUsername, expectPassword string, r *http.Re
 	}
 
 	if expectUsername == "" && expectPassword == "" {
-		s.logger.Warn().Msg("Auth expected username and password not set, not authenticating")
+		s.logger.Warn("Auth expected username and password not set, not authenticating")
 		return false
 	}
 

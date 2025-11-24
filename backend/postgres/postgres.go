@@ -23,7 +23,7 @@ type DB struct {
 }
 
 func NewDB(dsn string, logger *logger.Logger, migrationEnabled bool, migrationPath string, tracingEnabled bool) *DB {
-	logger.Debug().Str("migration_path", migrationPath).Bool("migration_enabled", migrationEnabled).Str("dsn", dsn).Msg("Initializing DB instance")
+	logger.Debug("Initializing db instance", "migration_path", migrationPath, "migration_enabled", migrationEnabled, "dsn", dsn)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	db := &DB{
@@ -35,16 +35,16 @@ func NewDB(dsn string, logger *logger.Logger, migrationEnabled bool, migrationPa
 		migrationPath:    migrationPath,
 		tracingEnabled:   tracingEnabled,
 	}
-	db.logger.Info().Msg("Initialized DB instance")
+	db.logger.Info("Initialized db instance")
 	return db
 }
 
 func (db *DB) Open() error {
-	db.logger.Debug().Msg("Opening DB instance")
-	defer db.logger.Info().Bool("migration_enabled", db.migrationEnabled).Msg("Opened DB instance")
+	db.logger.Debug("Opening db instance")
+	defer db.logger.Info("Opened db instance", "migration_enabled", db.migrationEnabled)
 
 	if db.dsn == "" {
-		return fmt.Errorf("data source name name must be set for DB")
+		return fmt.Errorf("data source name name must be set for db")
 	}
 
 	var err error
@@ -58,11 +58,11 @@ func (db *DB) Open() error {
 			otelsql.WithDatabaseName("analogdb"),
 			otelsql.WithSystem(semconv.DBSystemPostgreSQL),
 		)
-		db.logger.Info().Msg("Instrumented DB with tracing")
+		db.logger.Info("Instrumented db with tracing")
 	}
 
 	if db.db, err = sql.Open(driver, db.dsn); err != nil {
-		err = fmt.Errorf("open connection to DB: %w", err)
+		err = fmt.Errorf("open connection to db: %w", err)
 		return err
 	}
 
@@ -83,7 +83,7 @@ func (db *DB) Open() error {
 }
 
 func (db *DB) Close() error {
-	db.logger.Debug().Msg("Starting to close DB connection")
+	db.logger.Debug("Starting to close db connection")
 
 	db.cancel()
 
@@ -91,6 +91,6 @@ func (db *DB) Close() error {
 		db.db.Close()
 	}
 
-	db.logger.Info().Msg("Closed DB connection")
+	db.logger.Info("Closed db connection")
 	return nil
 }

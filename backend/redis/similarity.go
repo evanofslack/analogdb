@@ -71,15 +71,15 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 
 	id := *filter.ID
 
-	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.similarCache.instance).Int("postID", id).Msg("Starting find similar posts by image with cache")
+	s.rdb.logger.DebugContext(ctx, "Start find similar posts by image with cache", "instance", s.similarCache.instance, "post_id", id)
 	defer func() {
-		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.similarCache.instance).Int("postID", id).Msg("Finished find similar posts by image with cache")
+		s.rdb.logger.DebugContext(ctx, "Finish find similar posts by image with cache", "instance", s.similarCache.instance, "post_id", id)
 	}()
 
 	// generate a unique hash from the filter struct
 	hash, err := hashstructure.Hash(filter, hashstructure.FormatV2, nil)
 	if err != nil {
-		s.rdb.logger.Error().Err(err).Ctx(ctx).Str("instance", s.similarCache.instance).Int("postID", id).Msg("Failed to hash post similarity filter")
+		s.rdb.logger.ErrorContext(ctx, "Fail hash post similarity filter", "instance", s.similarCache.instance, "post_id", id, "error", err)
 
 		// if we failed, fallback to db
 		return s.dbService.FindSimilarPosts(ctx, filter)
@@ -87,8 +87,6 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 
 	postKey := fmt.Sprint(hash)
 	idKey := fmt.Sprint(id)
-
-	s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.similarCache.instance).Int("postID", id).Str("hash", postKey).Msg("Generated post key hash from similarity filter")
 
 	var posts []*analogdb.Post
 
@@ -109,7 +107,7 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 	// add similar posts to cache
 	// do this async so response is returned quicker
 	go func() {
-		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.similarCache.instance).Msg("Adding similar posts to cache")
+		s.rdb.logger.DebugContext(ctx, "Added similar posts to cache", "instance", s.similarCache.instance, "post_id", id)
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
@@ -125,7 +123,7 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 	// update id's hashes in cache
 	// do this async so response is returned quicker
 	go func() {
-		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.idKeysCache.instance).Msg("Adding id hashes to cache")
+		s.rdb.logger.DebugContext(ctx, "Added posts id hashes to cache", "instance", s.idKeysCache.instance, "post_id", id)
 		// create a new context; orignal one will be canceled when request is closed
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
@@ -146,7 +144,7 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 		// if key already exists in slice, no more to do
 		for _, h := range idKeyHashes {
 			if postKey == h {
-				s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.idKeysCache.instance).Int("postID", id).Str("hash", postKey).Msg("Post key hash already exists in cache, skipping")
+				s.rdb.logger.DebugContext(ctx, "Post key hash already exists in cache, skipping", "instance", s.idKeysCache.instance, "post_id", id, "hash", postKey)
 				return
 			}
 		}
@@ -164,18 +162,15 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 			Value: &idKeyHashes,
 			TTL:   similarTTL,
 		})
-
-		s.rdb.logger.Debug().Ctx(ctx).Int("postID", id).Str("hash", postKey).Msg(fmt.Sprintf("Added hash for postID, now has %d hashes", len(idKeyHashes)))
+		s.rdb.logger.DebugContext(ctx, "Added hash for post id", "instance", s.idKeysCache.instance, "post_id", id, "hash", postKey, "hashes", len(idKeyHashes))
 	}()
 
 	return posts, nil
 }
 
 func (s *SimilarityService) DeletePost(ctx context.Context, id int) error {
-	s.rdb.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Starting delete vector post with cache")
-	defer func() {
-		s.rdb.logger.Debug().Ctx(ctx).Int("postID", id).Msg("Finished delete vector post with cache")
-	}()
+	s.rdb.logger.DebugContext(ctx, "Start delete vector post with cache", "post_id", id)
+	defer s.rdb.logger.DebugContext(ctx, "Finish delete vector post with cache", "post_id", id)
 
 	// remove from cache in background
 	go func() {
@@ -199,12 +194,12 @@ func (s *SimilarityService) DeletePost(ctx context.Context, id int) error {
 
 		// for all hashes, remove from posts cache
 		for _, hash := range idKeyHashes {
-			s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.similarCache.instance).Int("postID", id).Str("hash", hash).Msg("Deleting hash from similar posts cache")
+			s.rdb.logger.DebugContext(ctx, "Delete hash from similar posts cache", "post_id", id, "hash", hash, "instance", s.similarCache)
 			s.similarCache.delete(ctx, hash)
 		}
 
 		// and remove from key ids cache
-		s.rdb.logger.Debug().Ctx(ctx).Str("instance", s.idKeysCache.instance).Int("postID", id).Msg("Deleting key from post ids cache")
+		s.rdb.logger.DebugContext(ctx, "Delete key from post ids cache", "post_id", id, "instance", s.idKeysCache)
 		s.idKeysCache.delete(ctx, idKey)
 	}()
 

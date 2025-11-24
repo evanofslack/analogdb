@@ -13,11 +13,11 @@ type NoopEventStream struct {
 
 func NewNoop(logger *logger.Logger) *NoopEventStream {
 	es := &NoopEventStream{logger: logger}
-	logger.Info().Msg("Initialized noop Kafka event stream")
+	logger.Info("Initialized noop Kafka event stream")
 	return es
 }
 
 func (n *NoopEventStream) Write(ctx context.Context, event *v1.Event) error {
-	n.logger.Debug().Msg("Noop, skip write event to Kafka")
+	n.logger.Debug("Noop, skip write event to Kafka")
 	return nil
 }

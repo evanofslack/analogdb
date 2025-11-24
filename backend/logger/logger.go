@@ -1,99 +1,49 @@
 package logger
 
 import (
-	"fmt"
-	"io"
+	"log/slog"
 	"os"
-	"strings"
-	"time"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/pkgerrors"
 )
 
 type Logger struct {
-	zerolog.Logger
+	*slog.Logger
 }
 
 func New(level, env, app string) (*Logger, error) {
+	var logLevel slog.Level
 	switch level {
 	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+		logLevel = slog.LevelDebug
 	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		logLevel = slog.LevelInfo
 	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+		logLevel = slog.LevelWarn
 	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case "fatal":
-		zerolog.SetGlobalLevel(zerolog.FatalLevel)
-	case "panic":
-		zerolog.SetGlobalLevel(zerolog.PanicLevel)
+		logLevel = slog.LevelError
 	default:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+		logLevel = slog.LevelInfo
 	}
 
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	opts := &slog.HandlerOptions{
+		Level:     logLevel,
+		AddSource: true,
+	}
 
-	var output io.Writer
+	var handler slog.Handler
 	if env == "debug" {
-		output = zerolog.ConsoleWriter{
-			Out:        os.Stderr,
-			TimeFormat: time.RFC3339,
-			FormatLevel: func(i interface{}) string {
-				return strings.ToUpper(fmt.Sprintf("[%s]", i))
-			},
-			FormatMessage: func(i interface{}) string {
-				return fmt.Sprintf("| %s |", i)
-			},
-		}
+		handler = slog.NewTextHandler(os.Stderr, opts)
 	} else {
-		output = os.Stderr
+		handler = slog.NewJSONHandler(os.Stderr, opts)
 	}
 
-	zerologger := zerolog.New(output).
-		With().
-		Caller().
-		Timestamp().
-		Str("app", app).
-		Logger()
-
-	logger := Logger{zerologger}
-	logger.Debug().Msg("Created new base logger")
-	return &logger, nil
-}
-
-func (l Logger) WithStackTrace() *Logger {
-	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
-	stackLogger := l.With().Stack().Logger()
-	stackLogger.Info().Msg("Added stack trace to logger")
-	return &Logger{
-		stackLogger,
-	}
+	logger := slog.New(handler).With(slog.String("app", app))
+	l := &Logger{logger}
+	l.Debug("Created new base logger")
+	return l, nil
 }
 
 func (l Logger) WithSubsystem(name string) *Logger {
-	serviceLogger := l.Logger.With().Str("subsystem", name).Logger()
-	serviceLogger.Debug().Msg("Created new subsystem logger")
-	return &Logger{
-		serviceLogger,
-	}
-}
-
-func (l Logger) WithSlackNotifier(url string) *Logger {
-	notifier := newSlackNotifier(url)
-	slackLogger := l.Hook(notifier)
-	slackLogger.Info().Msg("Added slack notifier to logger")
-	return &Logger{
-		slackLogger,
-	}
-}
-
-func (l Logger) WithTracer(serviceName string) *Logger {
-	tracer := newTracerHook(serviceName)
-	tracerLogger := l.Hook(tracer)
-	tracerLogger.Info().Msg("Added tracer to logger")
-	return &Logger{
-		tracerLogger,
-	}
+	subsystemLogger := l.With(slog.String("subsystem", name))
+	subsystemLogger.Debug("Created new subsystem logger")
+	return &Logger{subsystemLogger}
 }

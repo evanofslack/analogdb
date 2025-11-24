@@ -34,12 +34,12 @@ func NewDB(host string, scheme string, logger *logger.Logger, tracer *tracer.Tra
 		tracer:  tracer,
 	}
 	db.ctx, db.cancel = context.WithCancel(context.Background())
-	db.logger.Info().Msg("Initialized vector DB instance")
+	db.logger.Info("Initialized vector DB instance")
 	return db
 }
 
 func (db *DB) Open() error {
-	db.logger.Debug().Msg("Starting vector DB open")
+	db.logger.Debug("Starting vector DB open")
 
 	// validate host and scheme are set
 	if db.host == "" {
@@ -59,16 +59,16 @@ func (db *DB) Open() error {
 	db.db, err = weaviate.NewClient(cfg)
 	if err != nil {
 		err = fmt.Errorf("create new vector DB client: %w", err)
-		db.logger.Error().Err(err).Msg("Failed to open vector DB")
+		db.logger.Error("Fail open vector DB", "error", err)
 		return err
 	}
 
-	db.logger.Info().Msg("Opened new vector DB connection")
+	db.logger.Info("Opened new vector DB connection")
 	return err
 }
 
 func (db *DB) Migrate(ctx context.Context) error {
-	db.logger.Debug().Msg("Starting vector DB migration")
+	db.logger.Debug("Starting vector DB migration")
 
 	schema, err := db.getSchema(ctx)
 	if err != nil {
@@ -82,14 +82,14 @@ func (db *DB) Migrate(ctx context.Context) error {
 			return err
 		}
 	}
-	db.logger.Info().Msg("Completed vector DB migration")
+	db.logger.Info("Completed vector DB migration")
 	return nil
 }
 
 func (db *DB) Close() error {
-	db.logger.Debug().Msg("Starting vector DB close")
+	db.logger.Debug("Starting vector DB close")
 	db.cancel()
-	db.logger.Info().Msg("Closed vector DB connection")
+	db.logger.Info("Closed vector DB connection")
 	return nil
 }
 

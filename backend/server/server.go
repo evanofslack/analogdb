@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -57,16 +56,16 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	}
 
 	if s.config.Auth.Username == "" && s.config.Auth.Password == "" {
-		s.logger.Error().Msg("Config auth username and password not set!")
+		s.logger.Error("Config auth username and password not set!")
 	}
 
 	if s.config.Auth.RateLimitUsername == "" && s.config.Auth.RateLimitPassword == "" {
-		s.logger.Error().Msg("Config ratelimit auth username and password not set!")
+		s.logger.Error("Config ratelimit auth username and password not set!")
 	}
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		s.logger.Warn().Err(err).Msg("get hostname")
+		s.logger.Warn("Fail get hostname", "error", err)
 		s.hostname = hostname
 	}
 
@@ -92,8 +91,7 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 }
 
 func (s *Server) Run() error {
-	s.logger.Info().Msg(fmt.Sprintf("Serving http server at address %s", s.server.Addr))
-
+	s.logger.Info("Serving http server", "address", s.server.Addr)
 	go s.server.ListenAndServe()
 	return nil
 }
@@ -125,8 +123,8 @@ func (s *Server) mountResourceHandlers() {
 }
 
 func (s *Server) Close() error {
-	s.logger.Debug().Msg("Starting http server close")
-	defer s.logger.Info().Msg("Closed http server")
+	s.logger.Debug("Starting http server close")
+	defer s.logger.Info("Closed http server")
 
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()

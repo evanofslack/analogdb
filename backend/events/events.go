@@ -40,7 +40,7 @@ func New(logger *logger.Logger, topic string, brokers []string) (*EventStream, e
 
 	// Ensure the topic exists before creating the writer
 	if err := createTopicIfNotExist(logger, topic, brokers); err != nil {
-		logger.Warn().Err(err).Str("topic", topic).Msg("Failed to create topic")
+		logger.Warn("Fail create topic", "error", err, "topic", topic)
 	}
 
 	addr := kafka.TCP(brokers...)
@@ -60,13 +60,13 @@ func New(logger *logger.Logger, topic string, brokers []string) (*EventStream, e
 		connected: true,
 	}
 
-	logger.Info().Str("topic", topic).Strs("brokers", brokers).Str("addr", addr.String()).Int("batch_size", batchSize).Bool("async", async).Msg("Initialized kafka event stream")
+	logger.Info("Initialized kafka event stream", "brokers", brokers, "addr", addr.String(), "batch_size", batchSize, "async", async)
 	return es, nil
 }
 
 // Write serializes and writes record to kafka
 func (es *EventStream) Write(ctx context.Context, e *v1.Event) error {
-	es.logger.Debug().Str("topic", es.topic).Strs("brokers", es.brokers).Msg("Start write event to kafka")
+	es.logger.Debug("Start write event to kafka", "topic", es.topic, "brokers", es.brokers)
 	if !es.connected {
 		return fmt.Errorf("event stream not connected")
 	}
@@ -84,7 +84,7 @@ func (es *EventStream) Write(ctx context.Context, e *v1.Event) error {
 	if err := es.writer.WriteMessages(ctx, msg); err != nil {
 		return fmt.Errorf("write to kafka, topic=%s, err=%w", es.writer.Topic, err)
 	}
-	es.logger.Debug().Str("topic", es.topic).Strs("brokers", es.brokers).Msg("Finish write event to kafka")
+	es.logger.Debug("Finish write event to kafka", "topic", es.topic, "brokers", es.brokers)
 	return nil
 }
 
@@ -94,7 +94,7 @@ func (es *EventStream) Close() error {
 		return nil
 	}
 	es.connected = false
-	es.logger.Info().Str("topic", es.topic).Msg("Closing kafka event stream")
+	es.logger.Info("Closing kafka event stream", "topic", es.topic)
 	return es.writer.Close()
 }
 
@@ -108,7 +108,7 @@ func createTopicIfNotExist(logger *logger.Logger, topic string, brokers []string
 	// Check if topic exists
 	partitions, err := conn.ReadPartitions(topic)
 	if err == nil && len(partitions) > 0 {
-		logger.Debug().Str("topic", topic).Int("partitions", len(partitions)).Msg("Kafka topic already exists")
+		logger.Debug("Kafka topic already exists", "topic", topic, "partitions", len(partitions))
 		return nil
 	}
 
@@ -145,12 +145,12 @@ func createTopicIfNotExist(logger *logger.Logger, topic string, brokers []string
 	err = controllerConn.CreateTopics(topicConfigs...)
 	if err != nil {
 		if strings.Contains(err.Error(), "already exists") {
-			logger.Debug().Str("topic", topic).Msg("Topic already exists")
+			logger.Debug("Topic already exists", "topic", topic)
 			return nil
 		}
 		return fmt.Errorf("failed to create topic, err=%w", err)
 	}
 
-	logger.Info().Str("topic", topic).Msg("Successfully created kafka topic")
+	logger.Info("Successfully created kafka topic", "topic", topic)
 	return nil
 }

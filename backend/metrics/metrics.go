@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -29,7 +28,7 @@ type Metrics struct {
 }
 
 func New(logger *logger.Logger) (*Metrics, error) {
-	logger.Debug().Msg("Created new prometheus registry")
+	logger.Debug("Created new prometheus registry")
 
 	registry := prometheus.NewRegistry()
 
@@ -38,7 +37,7 @@ func New(logger *logger.Logger) (*Metrics, error) {
 		logger:   logger,
 	}
 
-	logger.Info().Msg("Initalized prometheus metrics")
+	logger.Info("Initalized prometheus metrics")
 
 	return metrics, nil
 }
@@ -51,14 +50,14 @@ func (m *Metrics) Serve(port string) {
 	addr := ":" + port
 	m.server = &http.Server{Addr: addr, Handler: mux}
 
-	m.logger.Info().Msg(fmt.Sprintf("Serving prometheus metrics server at address %s", m.server.Addr))
+	m.logger.Info("Serving prometheus metrics server", "address", m.server.Addr)
 
 	go m.server.ListenAndServe()
 }
 
 func (m *Metrics) Close() error {
-	m.logger.Debug().Msg("Starting prometheus metrics server close")
-	defer m.logger.Info().Msg("Closed prometheus metrics server")
+	m.logger.Debug("Closing prometheus metrics server")
+	defer m.logger.Info("Closed prometheus metrics server")
 
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()

@@ -45,20 +45,7 @@ func main() {
 		err = fmt.Errorf("create logger: %w", err)
 		fatal(nil, err)
 	}
-	logger.Info().Str("version", cfg.App.Version).Str("env", cfg.App.Env).Str("loglevel", cfg.Log.Level).Msg("Initializing application")
-
-	// add stack trace
-	logger = logger.WithStackTrace()
-
-	// add slack webhook to logger to notify on error
-	if webhookURL := cfg.Log.WebhookURL; webhookURL != "" && cfg.App.Env != "debug" {
-		logger = logger.WithSlackNotifier(webhookURL)
-	}
-
-	// add otel tracing to logger if enabled
-	if cfg.Tracing.Enabled {
-		logger = logger.WithTracer(cfg.App.Name)
-	}
+	logger.Info("Initializing application", "version", cfg.App.Version, "env", cfg.App.Env, "loglevel", cfg.Log.Level)
 
 	// initialize otlp tracing
 	tracingLogger := logger.WithSubsystem("tracer")
@@ -193,7 +180,7 @@ func main() {
 
 	// wait for shutdown
 	<-ctx.Done()
-	logger.Info().Msg("Got shutdown signal, starting graceful shutdown")
+	logger.Info("Got shutdown signal, starting graceful shutdown")
 
 	if err := server.Close(); err != nil {
 		err = fmt.Errorf("shutdown http server: %w", err)
@@ -223,7 +210,7 @@ func main() {
 
 func fatal(logger *logger.Logger, err error) {
 	if logger != nil {
-		logger.Error().Err(err).Msg("Fatal error, exiting")
+		logger.Error("Fatal error, exiting")
 	} else {
 		err := fmt.Errorf("fatal error, exiting; er=%w", err)
 		fmt.Fprintln(os.Stderr, err)
