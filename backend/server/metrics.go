@@ -105,7 +105,7 @@ func (server *Server) collectStats(next http.Handler) http.Handler {
 
 			// update prom metrics
 			server.stats.requestsTotal.WithLabelValues(method, code, routePattern).Inc()
-			server.stats.requestDuration.WithLabelValues(method, code, routePattern).Observe(float64(time.Since(start).Nanoseconds()) / 100000000)
+			server.stats.requestDuration.WithLabelValues(method, code, routePattern).Observe(time.Since(start).Seconds())
 			server.stats.requestSize.WithLabelValues(method, code, routePattern).Observe(requestSize)
 			server.stats.responseSize.WithLabelValues(method, code, routePattern).Observe(responseSize)
 		}()
