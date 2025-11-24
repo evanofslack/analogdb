@@ -19,8 +19,8 @@ func NewKeywordService(db *DB) *KeywordService {
 }
 
 func (s *KeywordService) GetKeywordSummary(ctx context.Context, limit int) (*[]analogdb.KeywordSummary, error) {
-	s.db.logger.Debug().Ctx(ctx).Msg("Starting find keyword summary")
-	defer s.db.logger.Debug().Ctx(ctx).Msg("Finished find keyword summary")
+	s.db.logger.DebugContext(ctx, "Start find keyword summary")
+	defer s.db.logger.DebugContext(ctx, "Finish find keyword summary")
 
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {

@@ -57,7 +57,7 @@ func (db *DB) createCamera(ctx context.Context, tx *sql.Tx, camera *analogdb.Cre
 
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
-		db.logger.Error().Ctx(ctx).Err(err).Int64("camera_id", id).Msg("Insert camera")
+		db.logger.ErrorContext(ctx, "Insert camera", "error", err, "camera_id", id)
 		return nil, err
 	}
 	defer stmt.Close()
@@ -68,7 +68,7 @@ func (db *DB) createCamera(ctx context.Context, tx *sql.Tx, camera *analogdb.Cre
 		camera.Model,
 		camera.Description).Scan(&id)
 	if err != nil {
-		db.logger.Error().Err(err).Ctx(ctx).Int64("camera_id", id).Msg("Insert camera")
+		db.logger.ErrorContext(ctx, "Insert camera", "error", err, "camera_id", id)
 		return nil, err
 	}
 
@@ -76,7 +76,7 @@ func (db *DB) createCamera(ctx context.Context, tx *sql.Tx, camera *analogdb.Cre
 		return nil, err
 	}
 
-	db.logger.Info().Ctx(ctx).Int64("postID", id).Msg("Finished inserting camera")
+	db.logger.InfoContext(ctx, "Finished inserting camera", "camera_id", id)
 	camera.Id = int(id)
 
 	return camera, nil
@@ -88,8 +88,8 @@ func (db *DB) findCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.Came
 	if filter != nil {
 		filterFmt = filter.String()
 	}
-	db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Starting find cameras")
-	defer db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Finished find cameras")
+	db.logger.DebugContext(ctx, "Start find cameras", "filter", filterFmt)
+	defer db.logger.DebugContext(ctx, "Finish find cameras", "filter", filterFmt)
 
 	var args []any
 	var where string
@@ -133,7 +133,7 @@ func (db *DB) findCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.Came
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
-		db.logger.Error().Err(err).Ctx(ctx).Msg("Find cameras")
+		db.logger.ErrorContext(ctx, "Find cameras", "error", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -146,7 +146,7 @@ func (db *DB) findCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.Came
 		var created, updated time.Time
 
 		if err := rows.Scan(&id, &make, &model, &description, &created, &updated, &postCount); err != nil {
-			db.logger.Error().Err(err).Ctx(ctx).Msg("Find cameras")
+			db.logger.ErrorContext(ctx, "Find cameras", "error", err)
 			return nil, err
 		}
 
@@ -164,7 +164,7 @@ func (db *DB) findCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.Came
 	}
 
 	if err = tx.Commit(); err != nil {
-		db.logger.Error().Err(err).Ctx(ctx).Msg("Find cameras")
+		db.logger.ErrorContext(ctx, "Find cameras", "error", err)
 		return nil, err
 	}
 

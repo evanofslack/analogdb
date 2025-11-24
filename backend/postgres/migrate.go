@@ -16,21 +16,15 @@ import (
 var migrationFS embed.FS
 
 func (db *DB) migrate() error {
-	db.logger.Debug().Msg("Starting DB migrations")
+	db.logger.Debug("Start db migrations")
+	defer db.logger.Info("Finish db migrations")
 
 	// Check what's specifically in the migrations directory
 	migrationsEntries, err := fs.ReadDir(migrationFS, "migrations")
 	if err != nil {
-		db.logger.Error().Err(err).Msg("Failed to read migrations directory from embedded filesystem")
 		return fmt.Errorf("read migrations directory, err=%w", err)
 	}
-	db.logger.Debug().Int("count", len(migrationsEntries)).Msg("Migration files found in embedded filesystem")
-	for _, entry := range migrationsEntries {
-		db.logger.Debug().
-			Str("name", entry.Name()).
-			Msg("Migration file")
-	}
-
+	db.logger.Debug("Migration files found in embedded filesystem", "count", len(migrationsEntries))
 	driver, err := postgres.WithInstance(db.db, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf("create postgres driver, err=%w", err)
@@ -55,7 +49,7 @@ func (db *DB) migrate() error {
 	// Run all pending migrations
 	if err := m.Up(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
-			db.logger.Debug().Msg("No migrations to apply (already up to date)")
+			db.logger.Debug("No migrations to apply (already up to date)")
 		} else {
 			return fmt.Errorf("run migrations, err=%w", err)
 		}
@@ -64,17 +58,14 @@ func (db *DB) migrate() error {
 	// Check final migration version
 	finalVersion, finalDirty, err := m.Version()
 	if err != nil && err != migrate.ErrNilVersion {
-		db.logger.Error().Err(err).Msg("Failed to get final migration version")
+		db.logger.Error("Fail get final migration version", "error", err)
 	} else if err == migrate.ErrNilVersion {
-		db.logger.Debug().Msg("Still no migration version after running migrations")
+		db.logger.Debug("No migration version after running migrations")
 	} else {
-		db.logger.Debug().
-			Uint("version", finalVersion).
-			Bool("dirty", finalDirty).
-			Msg("Final migration state")
+		db.logger.Debug("Final migration state", "version", finalVersion, "dirty", finalDirty)
 	}
 
-	db.logger.Debug().Msg("Verifying tables exist in database...")
+	db.logger.Debug("Verifying tables exist in database...")
 
 	// List all tables in public schema
 	rows, err := db.db.Query(`
@@ -84,27 +75,27 @@ func (db *DB) migrate() error {
 		ORDER BY table_name
 	`)
 	if err != nil {
-		db.logger.Error().Err(err).Msg("Failed to list all tables")
+		db.logger.Error("Fail list all tables", "error", err)
 	} else {
 		defer rows.Close()
 		var tableNames []string
 		for rows.Next() {
 			var tableName string
 			if err := rows.Scan(&tableName); err != nil {
-				db.logger.Error().Err(err).Msg("Failed to scan table name")
+				db.logger.Error("Fail scan table name", "error", err)
 				continue
 			}
 			tableNames = append(tableNames, tableName)
 		}
-		db.logger.Debug().Strs("tables", tableNames).Int("count", len(tableNames)).Msg("All tables in public schema")
 	}
 
-	db.logger.Info().Msg("Completed DB migrations")
+	db.logger.Info("Complete db migrations")
 	return nil
 }
 
 func (db *DB) migrateFromPath(migrationsPath string) error {
-	db.logger.Debug().Str("path", migrationsPath).Msg("Starting DB migrations from path")
+	db.logger.Debug("Start db migrations from path", "path", migrationsPath)
+	defer db.logger.Info("Finish db migrations from path", "path", migrationsPath)
 
 	driver, err := postgres.WithInstance(db.db, &postgres.Config{})
 	if err != nil {
@@ -125,7 +116,5 @@ func (db *DB) migrateFromPath(migrationsPath string) error {
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("run migrations, err=%w", err)
 	}
-
-	db.logger.Info().Str("path", migrationsPath).Msg("Completed DB migrations from path")
 	return nil
 }

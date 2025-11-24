@@ -19,8 +19,8 @@ func NewScrapeService(db *DB) *ScrapeService {
 }
 
 func (s *ScrapeService) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error) {
-	s.db.logger.Debug().Ctx(ctx).Msg("Starting get keyword updated post ids")
-	defer s.db.logger.Debug().Ctx(ctx).Msg("Finished keyword updated post ids")
+	s.db.logger.DebugContext(ctx, "Start get keyword updated post ids")
+	defer s.db.logger.DebugContext(ctx, "Finish get keyword updated post ids")
 
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {

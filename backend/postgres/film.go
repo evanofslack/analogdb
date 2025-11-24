@@ -58,7 +58,7 @@ func (db *DB) createFilm(ctx context.Context, tx *sql.Tx, film *analogdb.CreateF
 
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
-		db.logger.Error().Ctx(ctx).Err(err).Int64("film_id", id).Msg("Insert film")
+		db.logger.ErrorContext(ctx, "Insert film", "error", err, "film_id", id)
 		return nil, err
 	}
 	defer stmt.Close()
@@ -71,7 +71,7 @@ func (db *DB) createFilm(ctx context.Context, tx *sql.Tx, film *analogdb.CreateF
 		film.ColorType,
 		film.Description).Scan(&id)
 	if err != nil {
-		db.logger.Error().Err(err).Ctx(ctx).Int64("film_id", id).Msg("Insert film")
+		db.logger.ErrorContext(ctx, "Insert film", "error", err, "film_id", id)
 		return nil, err
 	}
 
@@ -79,7 +79,7 @@ func (db *DB) createFilm(ctx context.Context, tx *sql.Tx, film *analogdb.CreateF
 		return nil, err
 	}
 
-	db.logger.Info().Ctx(ctx).Int64("film_id", id).Msg("Finished inserting film")
+	db.logger.InfoContext(ctx, "Finish insert film", "film_id", id)
 	film.Id = int(id)
 
 	return film, nil
@@ -92,8 +92,8 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 		filterFmt = filter.String()
 	}
 
-	db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Starting find films")
-	defer db.logger.Debug().Ctx(ctx).Str("filter", filterFmt).Msg("Finished find films")
+	db.logger.DebugContext(ctx, "Start find film", "filter", filterFmt)
+	defer db.logger.DebugContext(ctx, "Finish find film", "filter", filterFmt)
 
 	var args []any
 	var where string
@@ -141,7 +141,7 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 
 	rows, err := tx.QueryContext(ctx, query, args...)
 	if err != nil {
-		db.logger.Error().Err(err).Ctx(ctx).Msg("Find films")
+		db.logger.ErrorContext(ctx, "Find films", "error", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -154,7 +154,7 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 		var created, updated time.Time
 
 		if err := rows.Scan(&id, &make, &filmType, &speed, &colorType, &description, &created, &updated, &postCount); err != nil {
-			db.logger.Error().Err(err).Ctx(ctx).Msg("Find films - scan error")
+			db.logger.ErrorContext(ctx, "Find films, scan error", "error", err)
 			return nil, err
 		}
 
@@ -174,7 +174,7 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 	}
 
 	if err = tx.Commit(); err != nil {
-		db.logger.Error().Err(err).Ctx(ctx).Msg("Find films")
+		db.logger.ErrorContext(ctx, "Find films", "error", err)
 		return nil, err
 	}
 	return films, nil
