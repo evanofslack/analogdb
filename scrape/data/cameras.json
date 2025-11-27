@@ -1382,6 +1382,11 @@
   },
   {
     "make": "rollei",
+    "model": "rolleiflex 3.5f",
+    "description": "The Rolleiflex 3.5F is a medium format twin-lens reflex (TLR) camera manufactured by Franke & Heidecke (Rollei) in Germany, introduced in 1958. It uses 120 roll film to produce 6x6 cm square images. The camera is equipped with a Carl Zeiss Tessar 75mm f/3.5 lens and a Synchro-Compur leaf shutter with speeds from 1 to 1/500 second plus Bulb. Focusing is achieved via a ground glass screen viewed through the waist-level finder, and film advance is automatic with a frame counter. The 3.5T features a built-in exposure meter in later versions and supports flash synchronization. Its compact, robust design and high-quality optics made it popular among both professionals and enthusiasts."
+  },
+  {
+    "make": "rollei",
     "model": "rolleiflex automat k4b",
     "description": "The Rolleiflex Automat K4B is a medium format twin-lens reflex camera that was produced by Rollei from 1945 to 1950. It features a built-in light meter and a 75mm f/3.5 taking lens. The camera uses 120 roll film and produces square 6x6cm negatives. The Automat K4B is known for its high-quality construction and excellent image quality. It has a waist-level viewfinder for composing and focusing, and a top-mounted film advance knob. The camera has a range of shutter speeds from 1 second to 1/500th of a second, as well as a bulb mode for long exposures. The Automat K4B is a versatile camera that is suitable for both professional and amateur photographers."
   },
