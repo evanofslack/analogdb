@@ -1,5 +1,10 @@
 [
   {
+    "make": "argus",
+    "model": "c4",
+    "description": "The Argus C4 is a 35mm fixed-lens rangefinder introduced in 1951, selling over 300,000 units as Argus’s modernized follow-up to the C3. It features a coupled coincident-image rangefinder integrated into a bright eye-level viewfinder and a permanently mounted 50mm f/2.8 Cintar lens with 10-blade aperture. The camera uses a behind-the-lens leaf shutter offering speeds from 1/10 to 1/300 s (early models to 1/200) and includes a hot shoe with evolving sync options across versions. Several iterations exist, most notably a rare all-black variant with no serial number and believed to be a very limited prototype run. The C4’s popularity eventually led to the Geiss-modified interchangeable-lens C4 and later the dedicated Argus C44 system."
+  },
+  {
     "make": "bronica",
     "model": "ec",
     "description": "The Bronica EC, released in 1972, was a 6x6 medium format SLR that replaced the S2A and introduced electronic focal plane shutter control to Bronica's lineup. Initially bundled with 75mm Nikkor lenses, production issues led Bronica to switch to their own 80mm f/2.8 MC Zenzanon lenses manufactured by Carl Zeiss Jena. The camera featured a redesigned split mirror system with incompatible film backs and viewfinders compared to previous models, though it maintained lens compatibility. The EC-TL variant (1975) became one of the first 6x6 SLRs to offer built-in TTL metering with aperture priority mode, while the later EC-TL-II revision simplified electronics but removed slow shutter speeds and manual metering capability. This series represented Bronica's final focal plane 6x6 design before transitioning to the leaf-shutter SQ series in 1980."
@@ -415,6 +420,11 @@
     "make": "fujifilm",
     "model": "tx-1",
     "description": "The Fujifilm TX-1 is a 35mm film rangefinder camera introduced in 1998, developed in collaboration with Hasselblad (where it was also sold as the XPan). It features a unique dual-format capability, allowing photographers to switch between standard 24x36mm and panoramic 24x65mm frames on standard 35mm film. The camera uses interchangeable lenses with a dedicated lens mount and offers manual focus operation. It is equipped with an electronically controlled, vertical-travel focal plane shutter with speeds from 8s to 1/1000s plus Bulb mode. The TX-1 includes aperture-priority auto exposure and manual exposure modes, with through-the-lens (TTL) metering. Its robust titanium body and panoramic capabilities make it notable among film rangefinders."
+  },
+  {
+    "make": "graflex",
+    "model": "pacemaker 45 crown graphic",
+    "description": "The Graflex Pacemaker 45 Crown Graphic is a 4×5 large-format press camera produced from 1947 to 1973 and known for its iconic presence in mid-century photography and film. It features a leaf-shutter lens system, double-extension bellows for close-focus capability, and multiple focusing/composition options including ground glass, optical viewfinder with masks, and an optional rangefinder. Despite its portability and durable folding-bed design, camera operation is methodical and slow, often requiring tripod use and careful step-by-step handling. Front movements are limited to rise, tilt-up, and shift, making it less versatile than full view cameras for perspective control. Collectors and users value its flexibility with lenses, Graflok compatibility, and the high image quality achievable on 4×5 sheet film or roll-film backs."
   },
   {
     "make": "graflex",
@@ -1154,6 +1164,11 @@
     "description": "The Olympus XA4 is a compact 35mm rangefinder camera that was introduced by Olympus in 1985. It is part of the highly regarded XA series of cameras known for their small size and high-quality optics. The XA4 features a fixed 28mm f/3.5 lens, which provides a wide field of view and is great for capturing landscapes and group shots. The camera also has a built-in flash with automatic exposure control, making it convenient for low-light situations. The XA4 has a unique multi-spot metering system that allows you to take precise exposure readings from multiple areas of the frame. It also offers manual focus control and a self-timer function. The camera is compact and lightweight, making it a perfect choice for travel and everyday photography. With its reliable performance and excellent image quality, the Olympus XA4 is a versatile camera that is loved by both beginners and experienced photographers."
   },
   {
+    "make": "panasonic",
+    "model": "vivitar tec 45",
+    "description": "The Vivitar Tec 45, released in 1985 and manufactured by Panasonic (sold internationally as the Panasonic C-600), is a premium compact 35mm autofocus camera positioned above many contemporary competitors. It features a 35mm f/3.2 lens with a 4-element/4-group design known for exceptional sharpness, neutral rendering, and a distinctive soft glow from flare. The camera offers fully automatic operation—autofocus, programmed shutter speeds from 1/30–1/500 sec, auto loading/advance/rewind, DX metering, and a built-in pop-up flash that can be manually suppressed. Differences between the Tec 45 and C-600 include the lens-cover power switch design and compatibility with auxiliary lenses (supported only on the Tec 45). Known for its snappy startup, comfortable two-handed ergonomics, and “retro-futuristic” styling, the Tec 45 remains a highly capable and underrated compact film camera."
+  },
+  {
     "make": "pentax",
     "model": "17",
     "description": "The Pentax 17 is a half-frame camera, capturing two 17mm x 24mm pictures within in a single 35mm-format (36mm x 24mm) film frame. It produces vertical-format pictures with similar ratios to those captured by smartphones, and with the distinctive image quality created only by a film camera. The design of the Pentax 17 was inspired by the Pentax brand’s heritage, incorporating manual operations unique to film photography — a selectable zone-focus system, manual film winding, manual film advance lever, and exposure compensation and ISO sensitivity adjustments, each with their own dials. It’s the ideal camera not only for film camera enthusiasts who have enjoyed film photography for years, but also for photographers who are excited about trying film photography for the first time."
@@ -1409,6 +1424,11 @@
     "make": "samsung",
     "model": "ecx 1",
     "description": "The Samsing ECX 1 is a compact auto focus point and shoot 35mm film camera designed by Porsche Design and introduced by Samsung in 1994. It features a 38 to 140mm zoom lens at f/3.8 to f/10.5 with 11 elements in 9 groups. When zooming the large LCD displays the focal length from 38 to 140mm. It has a double self-timer function that takes another picture 2 seconds after the first shot. It also offers the option to focus manually."
+  },
+  {
+    "make": "shanghai camera factory",
+    "model": "seagull 4a",
+    "description": "The Seagull 4A is a 6×6 medium-format TLR camera for 120 roll film, produced by the Shanghai Camera Factory from the late 1960s and reportedly remaining in production for decades. It features a right-hand wind-on crank with automatic frame counter and closely follows the Rolleiflex style, using a 75mm f/2.8 viewing lens and a 75mm f/3.5 HAIOU-31 taking lens. The camera includes a fixed folding finder hood with action finder, magnifier, and a plain focusing screen, plus a depth-of-field scale built into the focusing knob. Its leaf shutter offers B and 1–1/300 s speeds, with front-mounted controls, PC sync, and self-timer. Additional details include a Rollei-style locking back, tripod socket, engraved serial number, and an optional ever-ready leather case; a similar model was sold as the Revue 6×6."
   },
   {
     "make": "topcon",
