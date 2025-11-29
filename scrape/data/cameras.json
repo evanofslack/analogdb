@@ -1164,11 +1164,6 @@
     "description": "The Olympus XA4 is a compact 35mm rangefinder camera that was introduced by Olympus in 1985. It is part of the highly regarded XA series of cameras known for their small size and high-quality optics. The XA4 features a fixed 28mm f/3.5 lens, which provides a wide field of view and is great for capturing landscapes and group shots. The camera also has a built-in flash with automatic exposure control, making it convenient for low-light situations. The XA4 has a unique multi-spot metering system that allows you to take precise exposure readings from multiple areas of the frame. It also offers manual focus control and a self-timer function. The camera is compact and lightweight, making it a perfect choice for travel and everyday photography. With its reliable performance and excellent image quality, the Olympus XA4 is a versatile camera that is loved by both beginners and experienced photographers."
   },
   {
-    "make": "panasonic",
-    "model": "vivitar tec 45",
-    "description": "The Vivitar Tec 45, released in 1985 and manufactured by Panasonic (sold internationally as the Panasonic C-600), is a premium compact 35mm autofocus camera positioned above many contemporary competitors. It features a 35mm f/3.2 lens with a 4-element/4-group design known for exceptional sharpness, neutral rendering, and a distinctive soft glow from flare. The camera offers fully automatic operation—autofocus, programmed shutter speeds from 1/30–1/500 sec, auto loading/advance/rewind, DX metering, and a built-in pop-up flash that can be manually suppressed. Differences between the Tec 45 and C-600 include the lens-cover power switch design and compatibility with auxiliary lenses (supported only on the Tec 45). Known for its snappy startup, comfortable two-handed ergonomics, and “retro-futuristic” styling, the Tec 45 remains a highly capable and underrated compact film camera."
-  },
-  {
     "make": "pentax",
     "model": "17",
     "description": "The Pentax 17 is a half-frame camera, capturing two 17mm x 24mm pictures within in a single 35mm-format (36mm x 24mm) film frame. It produces vertical-format pictures with similar ratios to those captured by smartphones, and with the distinctive image quality created only by a film camera. The design of the Pentax 17 was inspired by the Pentax brand’s heritage, incorporating manual operations unique to film photography — a selectable zone-focus system, manual film winding, manual film advance lever, and exposure compensation and ISO sensitivity adjustments, each with their own dials. It’s the ideal camera not only for film camera enthusiasts who have enjoyed film photography for years, but also for photographers who are excited about trying film photography for the first time."
@@ -1454,6 +1449,11 @@
     "make": "vivitar",
     "model": "35cs",
     "description": "The Vivitar 35ES is a compact 35mm rangefinder camera introduced by Vivitar in 1978 and manufactured in Japan, based on Cosina's design. It features a fixed 40mm f/1.7 lens with six elements in four groups, notable for its fast maximum aperture and optical sharpness. The camera operates in shutter-priority automatic mode, with shutter speeds from 1/8 to 1/500 second plus Bulb, set via a leaf shutter. Exposure is measured through a CdS cell above the lens, supporting an exposure value (EV) range of 4.5 to 17, and film speeds from ISO 25 to 800. Focusing is manual, utilizing a superimposed rectangle rangefinder patch, and film is advanced with a single-stroke lever. The 35ES also includes a built-in X-sync for flash at all speeds, a 10-second mechanical self-timer, and operates on a 1.35V mercury battery (PX 675)."
+  },
+  {
+    "make": "vivitar",
+    "model": "tec 45",
+    "description": "The Vivitar Tec 45, released in 1985 and manufactured by Panasonic (sold internationally as the Panasonic C-600), is a premium compact 35mm autofocus camera positioned above many contemporary competitors. It features a 35mm f/3.2 lens with a 4-element/4-group design known for exceptional sharpness, neutral rendering, and a distinctive soft glow from flare. The camera offers fully automatic operation—autofocus, programmed shutter speeds from 1/30–1/500 sec, auto loading/advance/rewind, DX metering, and a built-in pop-up flash that can be manually suppressed. Differences between the Tec 45 and C-600 include the lens-cover power switch design and compatibility with auxiliary lenses (supported only on the Tec 45). Known for its snappy startup, comfortable two-handed ergonomics, and “retro-futuristic” styling, the Tec 45 remains a highly capable and underrated compact film camera."
   },
   {
     "make": "vivitar",
