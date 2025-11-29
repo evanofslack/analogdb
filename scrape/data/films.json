@@ -1177,6 +1177,13 @@
     "description": "KONO ALiEN 200 is an experimental color negative film that has been pre-exposed with little green men and alien heads on each frame for a particularly extraterrestrial effect. Created by hand using The Reanimator device, this film's unique effects lend a distinct and creative appearance to your photographs. The film has a nominal sensitivity of ISO 200/24° and should be processed in C-41 chemistry."
   },
   {
+    "type": "color 200",
+    "make": "kono",
+    "speed": 200,
+    "color_type": "color",
+    "description": "KONO Color 200 is a newly developed 35mm ISO 200 color negative film, created in Germany and spooled in refurbished cartridges using KONO’s custom-built machinery. Released in 2025 to celebrate analog photography being recognized as UNESCO intangible cultural heritage in Germany, it’s designed for creators who value traditional film’s character and craft. The film comes in 36-exposure rolls or bulk lengths and is packaged using recycled materials, reflecting KONO’s focus on sustainability. It offers classic C-41 processing and aims to deliver authentic, fun, and creatively flexible shooting results."
+  },
+  {
     "type": "katz 200",
     "make": "kono",
     "speed": 200,
@@ -1819,6 +1826,13 @@
     "speed": 500,
     "color_type": "color",
     "description": "Original SILBERSALZ35 500T True Cinefilm. Made with untouched Kodak Vision3 motion picture film like it is used in Hollywood. SILBERSALZ35 is professionally manufactured in metal cartridges and compatible with every 35mm camera out there. 200T has an ISO of 200 and is balanced for Tungsten (3200K). DX-Code is rated at 250 ISO (recommend overexposing film by one stop)."
+  },
+  {
+    "type": "retrochrome 320",
+    "make": "whatevergraphy",
+    "speed": 320,
+    "color_type": "color",
+    "description": "Whatevergraphy Retrochrome 320 is a 120-format color negative film created by repurposing expired 70mm Eastman Ektachrome stock, giving it a distinctive golden tone and visible perforation holes in the frame. Originally a high-speed daylight reversal film, it’s long past its E-6 shelf life but produces unique, unpredictable results when cross-processed in C-41. The film is designed for creative, experimental shooting, especially in low-light or mixed lighting. Its expired nature adds additional character, grain, and color shifts that many photographers find appealing."
   },
   {
     "type": "supreme 200",
