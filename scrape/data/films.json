@@ -672,6 +672,13 @@
     "description": "Fujichrome Provia 100F Professional RDP-III from Fujifilm is a daylight-balanced color transparency film that exhibits a super-fine grain structure with vivid and naturally appearing colors and rich tonal rendition. It has a medium-speed nominal sensitivity of ISO 100/21° when processed in E-6, CR-56, or C6R processes and can effectively be pulled one half stop or pushed two stops with minimal variations in color balance and gradation. Excellent reciprocity characteristics also make this film highly suitable for use during long exposures and ensures consistent film speeds and coloring across multiple and extended exposures. Medium overall contrast and saturation make this film ideal for use in a wide range of photographic applications and is especially well-suited for use in product, landscape, nature, portraiture, and fashion photography."
   },
   {
+    "type": "fujichrome t64",
+    "make": "fujifilm",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Fujichrome T64 Professional (RTP) is an ISO 64 tungsten-balanced color reversal film designed for high-accuracy color reproduction under 3200K lighting. It features ultrafine grain (RMS 7), high resolving power, and advanced coupler and color-correction layer technologies for exceptional hue fidelity and stable long-exposure performance. The film supports E-6/CR-56 processing and is available in 35mm, 120, and sheet formats. Its characteristics make it well-suited for product photography, architectural interiors, and precise artwork reproduction."
+  },
+  {
     "type": "fujichrome velvia 100",
     "make": "fujifilm",
     "speed": 100,
@@ -796,6 +803,41 @@
     "speed": 100,
     "color_type": "color",
     "description": "Fujifilm Reala 100 was a medium format (120) color negative film that expired in April 2005, distinct from the 35mm Superia Reala 100 variant. The film delivered excellent color reproduction with fine grain and good sharpness, maintaining quality even when shot 17 years past its expiration date at a reduced speed of EI 50. Known for producing true-to-life, earthy colors rather than the typical 'candylike' saturation of other Fujifilm emulsions, Reala 100 was particularly favored as a portrait film. The discontinuation of this emulsion represents one of many quality films lost during the early digital transition that are unlikely to return to production."
+  },
+  {
+    "type": "autumn 200",
+    "make": "hands on film",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Hands On Film Autumn 200 is an ISO 200 color negative film sold under the Singapore-based Hands On Film brand, with the underlying stock supplied by an undisclosed manufacturer. Available exclusively in 35mm format with DX coding, it offers medium sensitivity suitable for general-purpose photography in a range of lighting conditions. The film is processed using the standard C-41 method, making development widely accessible and compatible with common scanning workflows. Proper cool, dry storage is recommended to preserve image quality before and after development."
+  },
+  {
+    "type": "after hours 800",
+    "make": "hands on film",
+    "speed": 800,
+    "color_type": "color",
+    "description": "Hands On Film After Hours 800 is an ISO 1600 color negative film sold under the Singapore-based Hands On Film brand, with the actual manufacturer undisclosed. Available in 35mm format with DX coding, it provides high light sensitivity suitable for low-light and night photography across a wide range of analog cameras. The film uses standard C-41 processing, making development accessible through most photo labs and compatible with common scanning workflows. Proper cool, dry storage is recommended to maintain emulsion stability."
+  },
+  {
+    "type": "midnight 1600",
+    "make": "hands on film",
+    "speed": 1600,
+    "color_type": "color",
+    "description": "Hands On Film Midnight 1600 is an ISO 1600 color negative film sold under the Singapore-based Hands On Film brand, with the actual manufacturer undisclosed. Offered in 35mm format with DX coding, it is designed for low-light shooting and works in a wide range of analog cameras, from SLRs to compact point-and-shoots. The film uses standard C-41 processing, making development and scanning straightforward at most photo labs. For best results, it should be stored in a cool, dry place—ideally refrigerated—and brought to room temperature before use."
+  },
+  {
+    "type": "spring 200",
+    "make": "hands on film",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Hands On Film Spring 200 is a 35mm ISO 200 color negative film sold under the Singapore-based Hands On Film brand, with the underlying stock made by another manufacturer. It’s designed for daylight and overcast conditions, offering fine grain and natural color that works well for portraits, street photography, and landscapes. The film can be developed easily at any lab using the C-41 process and is compatible with traditional printing or scanning. For best quality, it should be stored in a cool, dry place and brought to room temperature before use."
+  },
+  {
+    "type": "summer 400",
+    "make": "hands on film",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Hands On Film Summer 400 is an ISO 400 color negative film sold under the Singapore-based Hands On Film brand, with the underlying stock sourced from an undisclosed manufacturer. It is a versatile 35mm film suited for a wide range of lighting conditions, offering good performance in both bright and low-light environments. The film is processed using the standard C-41 method, making development widely accessible at most photo labs. It includes DX coding and is compatible with all 35mm cameras."
   },
   {
     "type": "phoenix 200",
