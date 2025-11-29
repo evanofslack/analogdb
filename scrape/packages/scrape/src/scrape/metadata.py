@@ -75,7 +75,8 @@ Validation rules:
 - Handle assumed or unspecified makes: "Gold" -> "Kodak Gold"
 - Understand common alternative names: Nikon cameras prefix F is the same as N (F90 == N90)
 - Understand common abbreviations: P for Program (cameras), 
-- Understand common alternative names: Portrait -> Porta (film), color == colour, minolta Maxxum, Dynax, Alpha (a) are equivalent
+- Understand common alternative names: color == colour, minolta Maxxum, Dynax, Alpha (a) are equivalent
+- Understand common alternative film names: Portrait -> Porta, ORWO -> Original Wolfen
 - Cross-reference completion: Use valid lists to fill missing information
 - If camera model found but not make, match from valid camera list
 - If film type found but not make, match from valid film list
