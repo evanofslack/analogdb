@@ -240,14 +240,16 @@ func (db *DB) getStatsColors(ctx context.Context, tx *sql.Tx, filter *analogdb.S
 	query := fmt.Sprintf(`
 		SELECT
 			c.html                                   AS html_name,
-			c.hex,
+			MIN(c.hex)                               AS hex,
 			COUNT(DISTINCT c.post_id)                AS post_count,
 			ROUND(AVG(c.percent)::numeric, 3)        AS avg_percent
 		FROM colors c
 		JOIN pictures p ON c.post_id = p.id
-		WHERE ($1::bigint IS NULL OR p.time >= $1)
+		WHERE c.html IS NOT NULL
+		  AND c.html != ''
+		  AND ($1::bigint IS NULL OR p.time >= $1)
 		  AND ($2::bigint IS NULL OR p.time <= $2)
-		GROUP BY c.html, c.hex
+		GROUP BY c.html
 		ORDER BY post_count DESC
 		LIMIT %d
 	`, limit)

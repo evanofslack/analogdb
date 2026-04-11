@@ -23,7 +23,7 @@ export default async function StatsPageRoute() {
 
   const [overview, overTime, films, cameras, colors] = await Promise.all([
     getStatsOverview({}),
-    getStatsPostsOverTime({ granularity: "month" }),
+    getStatsPostsOverTime({ granularity: "month", start: 1640995200 }), // 2022-01-01
     getStatsFilms({ limit: 20, metric: "count" }),
     getStatsCameras({ limit: 20, metric: "count" }),
     getStatsColors({ limit: 30 }),

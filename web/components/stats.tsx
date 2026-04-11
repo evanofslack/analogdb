@@ -88,7 +88,7 @@ export default function StatsPage({
   }));
 
   const filmsData = (films.data ?? []).map((f) => ({
-    name: f.filmType ?? "",
+    name: `${f.filmMake ?? ""} ${f.filmType ?? ""}`.trim(),
     postCount: f.postCount ?? 0,
     avgScore: Math.round(f.avgScore ?? 0),
   }));
