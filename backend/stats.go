@@ -6,12 +6,16 @@ import (
 )
 
 type StatsOverview struct {
-	TotalPosts   int     `json:"total_posts" example:"42000"`
-	AvgScore     float64 `json:"avg_score" example:"853.2"`
-	EarliestPost int     `json:"earliest_post" example:"1609459200"`
-	LatestPost   int     `json:"latest_post" example:"1752354541"`
-	TotalCameras int     `json:"total_cameras" example:"380"`
-	TotalFilms   int     `json:"total_films" example:"210"`
+	TotalPosts    int     `json:"total_posts" example:"42000"`
+	TotalAuthors  int     `json:"total_authors" example:"8206"`
+	TotalCameras  int     `json:"total_cameras" example:"380"`
+	TotalFilms    int     `json:"total_films" example:"210"`
+	TotalKeywords int     `json:"total_keywords" example:"41492"`
+	AvgScore      float64 `json:"avg_score" example:"853.2"`
+	MedianScore   float64 `json:"median_score" example:"720.0"`
+	MinScore      float64 `json:"min_score" example:"1.0"`
+	MaxScore      float64 `json:"max_score" example:"98423.0"`
+	StdDevScore   float64 `json:"std_dev_score" example:"1240.5"`
 }
 
 type StatsPeriod struct {
