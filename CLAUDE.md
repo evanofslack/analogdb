@@ -14,6 +14,7 @@ AnalogDB is a full-stack application for managing and discovering analog photogr
 - **Consumer (`/consumer/`)**: Go service for processing analytics events with Kafka and ClickHouse
 - **Infrastructure (`/infra/`)**: Docker compose for observability stack (Prometheus, Grafana, Loki, Tempo)
 - **API Clients (`/api/clients/`)**: Auto-generated TypeScript and Python clients from OpenAPI spec
+- **Dev (`/dev/`)**: Database dump and restore utility scripts
 
 ## Common Commands
 
@@ -82,17 +83,22 @@ docker-compose -f docker-compose-dev.yaml up  # Development stack
 ## Code Architecture Notes
 
 ### Backend Structure
-- **Domain models**: `/backend/*.go` files define core types (Post, Camera, Film, etc.)
+- **Domain models**: `/backend/*.go` files define core types (Post, Camera, Film, Author, etc.)
 - **HTTP handlers**: `/backend/server/` contains REST API implementation
 - **Data layer**: `/backend/postgres/` for primary storage, `/backend/redis/` for caching
 - **Vector operations**: `/backend/weaviate/` handles image similarity using embeddings
 - **Configuration**: `/backend/config/` centralizes all app configuration
+- **Observability**: `/backend/logger/` (zerolog), `/backend/metrics/` (Prometheus), `/backend/tracer/` (OpenTelemetry)
+- **Analytics events**: `/backend/events/` publishes to Kafka; generated proto code lives in `/backend/internal/gen/proto/`
+- **Entrypoint**: `/backend/cmd/analogdb/`
+
+Note: the backend uses `rs/zerolog` for logging, not `slog`.
 
 ### Frontend Structure
-- **Pages**: `/web/app/` contains Next.js route pages
+- **Pages**: `/web/app/` contains Next.js App Router routes (about, admin, post, actions, docs)
 - **Components**: `/web/components/` has reusable React components with co-located CSS modules
 - **API Integration**: Uses generated TypeScript client from `/api/clients/typescript/`
-- **State Management**: Custom hooks in `/web/hooks/` for data fetching
+- **State Management**: Custom hooks in `/web/hooks/` for data fetching (usePosts, useCameras, useFilms)
 - **Styling**: CSS Modules pattern with Mantine component library
 
 ### Data Pipeline
@@ -102,8 +108,8 @@ docker-compose -f docker-compose-dev.yaml up  # Development stack
 - **Analytics**: Events flow through Kafka to ClickHouse via the consumer service
 
 ### API Design
-- **REST endpoints**: Follow conventional patterns (/posts, /cameras, /films)
-- **OpenAPI spec**: Auto-generated from Go struct annotations
+- **REST endpoints**: Follow conventional patterns (/posts, /cameras, /films, /authors)
+- **OpenAPI spec**: Auto-generated from Go struct annotations via swag
 - **Authentication**: Basic auth for admin endpoints
 - **Pagination**: Cursor-based pagination for large result sets
 
