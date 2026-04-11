@@ -1082,6 +1082,300 @@
                     }
                 }
             }
+        },
+        "/stats/cameras": {
+            "get": {
+                "description": "Returns cameras ranked by post count or average score",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Get cameras ranked by metric",
+                "parameters": [
+                    {
+                        "enum": [
+                            "score",
+                            "count"
+                        ],
+                        "type": "string",
+                        "default": "count",
+                        "description": "Ranking metric",
+                        "name": "metric",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Max results (max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by start time (unix timestamp)",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by end time (unix timestamp)",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.StatsCamerasResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/colors": {
+            "get": {
+                "description": "Returns the most frequently dominant colors across all posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Get dominant colors ranked by occurrence",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Max results (max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by start time (unix timestamp)",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by end time (unix timestamp)",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.StatsColorsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/films": {
+            "get": {
+                "description": "Returns film stocks ranked by post count or average score",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Get film stocks ranked by metric",
+                "parameters": [
+                    {
+                        "enum": [
+                            "score",
+                            "count"
+                        ],
+                        "type": "string",
+                        "default": "count",
+                        "description": "Ranking metric",
+                        "name": "metric",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Max results (max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by start time (unix timestamp)",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by end time (unix timestamp)",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.StatsFilmsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/overview": {
+            "get": {
+                "description": "Returns aggregate counts and score averages across all posts",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Get global statistics overview",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Filter by start time (unix timestamp)",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by end time (unix timestamp)",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.StatsOverviewResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/stats/posts/over-time": {
+            "get": {
+                "description": "Returns post counts and average scores grouped by time period",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Get post counts and scores over time",
+                "parameters": [
+                    {
+                        "enum": [
+                            "month",
+                            "week",
+                            "year"
+                        ],
+                        "type": "string",
+                        "default": "month",
+                        "description": "Time grouping",
+                        "name": "granularity",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by start time (unix timestamp)",
+                        "name": "start",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Filter by end time (unix timestamp)",
+                        "name": "end",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.StatsPeriodsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1511,6 +1805,134 @@
                 }
             }
         },
+        "analogdb.StatsCamera": {
+            "type": "object",
+            "properties": {
+                "avg_score": {
+                    "type": "number",
+                    "example": 880.4
+                },
+                "camera_make": {
+                    "type": "string",
+                    "example": "nikon"
+                },
+                "camera_model": {
+                    "type": "string",
+                    "example": "fm2"
+                },
+                "post_count": {
+                    "type": "integer",
+                    "example": 2341
+                }
+            }
+        },
+        "analogdb.StatsColor": {
+            "type": "object",
+            "properties": {
+                "avg_percent": {
+                    "type": "number",
+                    "example": 0.38
+                },
+                "hex": {
+                    "type": "string",
+                    "example": "#837d5c"
+                },
+                "html_name": {
+                    "type": "string",
+                    "example": "gray"
+                },
+                "post_count": {
+                    "type": "integer",
+                    "example": 5100
+                }
+            }
+        },
+        "analogdb.StatsFilm": {
+            "type": "object",
+            "properties": {
+                "avg_score": {
+                    "type": "number",
+                    "example": 942.1
+                },
+                "color_type": {
+                    "type": "string",
+                    "example": "color"
+                },
+                "film_make": {
+                    "type": "string",
+                    "example": "kodak"
+                },
+                "film_speed": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "film_type": {
+                    "type": "string",
+                    "example": "portra 400"
+                },
+                "post_count": {
+                    "type": "integer",
+                    "example": 1820
+                }
+            }
+        },
+        "analogdb.StatsMeta": {
+            "type": "object",
+            "properties": {
+                "generated_at": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "analogdb.StatsOverview": {
+            "type": "object",
+            "properties": {
+                "avg_score": {
+                    "type": "number",
+                    "example": 853.2
+                },
+                "earliest_post": {
+                    "type": "integer",
+                    "example": 1609459200
+                },
+                "latest_post": {
+                    "type": "integer",
+                    "example": 1752354541
+                },
+                "total_cameras": {
+                    "type": "integer",
+                    "example": 380
+                },
+                "total_films": {
+                    "type": "integer",
+                    "example": 210
+                },
+                "total_posts": {
+                    "type": "integer",
+                    "example": 42000
+                }
+            }
+        },
+        "analogdb.StatsPeriod": {
+            "type": "object",
+            "properties": {
+                "avg_score": {
+                    "type": "number",
+                    "example": 731.5
+                },
+                "count": {
+                    "type": "integer",
+                    "example": 412
+                },
+                "period": {
+                    "type": "string",
+                    "example": "2024-03"
+                }
+            }
+        },
         "server.CamerasResponse": {
             "type": "object",
             "properties": {
@@ -1652,6 +2074,73 @@
                     "items": {
                         "$ref": "#/definitions/analogdb.Post"
                     }
+                }
+            }
+        },
+        "server.StatsCamerasResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsCamera"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/analogdb.StatsMeta"
+                }
+            }
+        },
+        "server.StatsColorsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsColor"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/analogdb.StatsMeta"
+                }
+            }
+        },
+        "server.StatsFilmsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsFilm"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/analogdb.StatsMeta"
+                }
+            }
+        },
+        "server.StatsOverviewResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/analogdb.StatsOverview"
+                },
+                "generated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "server.StatsPeriodsResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsPeriod"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/analogdb.StatsMeta"
                 }
             }
         },

@@ -156,7 +156,7 @@ volumes:
   # redis:
   kafka:
 
-networks:
-  default:
-    external: true
-    name: analogdb
+# networks:
+#   default:
+#     external: true
+#     name: analogdb

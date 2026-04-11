@@ -4,6 +4,7 @@ import {
   FilmsApi,
   PostApi,
   PostsApi,
+  StatsApi,
 } from "analogdb-generated";
 import { baseURL } from "./constants";
 
@@ -39,6 +40,7 @@ export const postApi: PostApi = new PostApi(config);
 export const postsApi: PostsApi = new PostsApi(config);
 export const filmsApi: FilmsApi = new FilmsApi(config);
 export const camerasApi: CamerasApi = new CamerasApi(config);
+export const statsApi: StatsApi = new StatsApi(config);
 
 export async function authorized_fetch(
   route: string,

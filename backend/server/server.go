@@ -43,6 +43,7 @@ type Server struct {
 	KeywordService    analogdb.KeywordService
 	SimilarityService analogdb.SimilarityService
 	EventService      analogdb.EventService
+	StatsService      analogdb.StatsService
 }
 
 func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *config.Config) *Server {
@@ -107,6 +108,7 @@ func (s *Server) mountResourceHandlers() {
 	s.mountSimilarityHandlers(v1)
 	s.mountScrapeHandlers(v1)
 	s.mountKeywordHandlers(v1)
+	s.mountStatsHandlers(v1)
 	s.router.Mount("/v1", v1)
 
 	// Mount legacy routes with deprecation
@@ -119,6 +121,7 @@ func (s *Server) mountResourceHandlers() {
 		s.mountSimilarityHandlers(r)
 		s.mountScrapeHandlers(r)
 		s.mountKeywordHandlers(r)
+		s.mountStatsHandlers(r)
 	})
 }
 

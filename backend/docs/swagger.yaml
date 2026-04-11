@@ -307,6 +307,97 @@ definitions:
         example: A day at the fields [Nikon FM2 | Portra 400]
         type: string
     type: object
+  analogdb.StatsCamera:
+    properties:
+      avg_score:
+        example: 880.4
+        type: number
+      camera_make:
+        example: nikon
+        type: string
+      camera_model:
+        example: fm2
+        type: string
+      post_count:
+        example: 2341
+        type: integer
+    type: object
+  analogdb.StatsColor:
+    properties:
+      avg_percent:
+        example: 0.38
+        type: number
+      hex:
+        example: '#837d5c'
+        type: string
+      html_name:
+        example: gray
+        type: string
+      post_count:
+        example: 5100
+        type: integer
+    type: object
+  analogdb.StatsFilm:
+    properties:
+      avg_score:
+        example: 942.1
+        type: number
+      color_type:
+        example: color
+        type: string
+      film_make:
+        example: kodak
+        type: string
+      film_speed:
+        example: 400
+        type: integer
+      film_type:
+        example: portra 400
+        type: string
+      post_count:
+        example: 1820
+        type: integer
+    type: object
+  analogdb.StatsMeta:
+    properties:
+      generated_at:
+        type: string
+      total:
+        type: integer
+    type: object
+  analogdb.StatsOverview:
+    properties:
+      avg_score:
+        example: 853.2
+        type: number
+      earliest_post:
+        example: 1609459200
+        type: integer
+      latest_post:
+        example: 1752354541
+        type: integer
+      total_cameras:
+        example: 380
+        type: integer
+      total_films:
+        example: 210
+        type: integer
+      total_posts:
+        example: 42000
+        type: integer
+    type: object
+  analogdb.StatsPeriod:
+    properties:
+      avg_score:
+        example: 731.5
+        type: number
+      count:
+        example: 412
+        type: integer
+      period:
+        example: 2024-03
+        type: string
+    type: object
   server.CamerasResponse:
     properties:
       cameras:
@@ -403,6 +494,49 @@ definitions:
         items:
           $ref: '#/definitions/analogdb.Post'
         type: array
+    type: object
+  server.StatsCamerasResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/analogdb.StatsCamera'
+        type: array
+      meta:
+        $ref: '#/definitions/analogdb.StatsMeta'
+    type: object
+  server.StatsColorsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/analogdb.StatsColor'
+        type: array
+      meta:
+        $ref: '#/definitions/analogdb.StatsMeta'
+    type: object
+  server.StatsFilmsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/analogdb.StatsFilm'
+        type: array
+      meta:
+        $ref: '#/definitions/analogdb.StatsMeta'
+    type: object
+  server.StatsOverviewResponse:
+    properties:
+      data:
+        $ref: '#/definitions/analogdb.StatsOverview'
+      generated_at:
+        type: string
+    type: object
+  server.StatsPeriodsResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/analogdb.StatsPeriod'
+        type: array
+      meta:
+        $ref: '#/definitions/analogdb.StatsMeta'
     type: object
   server.encodePostsRequest:
     properties:
@@ -1133,6 +1267,202 @@ paths:
       summary: Get all post IDs
       tags:
       - posts
+  /stats/cameras:
+    get:
+      consumes:
+      - application/json
+      description: Returns cameras ranked by post count or average score
+      parameters:
+      - default: count
+        description: Ranking metric
+        enum:
+        - score
+        - count
+        in: query
+        name: metric
+        type: string
+      - default: 20
+        description: Max results (max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by start time (unix timestamp)
+        in: query
+        name: start
+        type: integer
+      - description: Filter by end time (unix timestamp)
+        in: query
+        name: end
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.StatsCamerasResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get cameras ranked by metric
+      tags:
+      - stats
+  /stats/colors:
+    get:
+      consumes:
+      - application/json
+      description: Returns the most frequently dominant colors across all posts
+      parameters:
+      - default: 20
+        description: Max results (max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by start time (unix timestamp)
+        in: query
+        name: start
+        type: integer
+      - description: Filter by end time (unix timestamp)
+        in: query
+        name: end
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.StatsColorsResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get dominant colors ranked by occurrence
+      tags:
+      - stats
+  /stats/films:
+    get:
+      consumes:
+      - application/json
+      description: Returns film stocks ranked by post count or average score
+      parameters:
+      - default: count
+        description: Ranking metric
+        enum:
+        - score
+        - count
+        in: query
+        name: metric
+        type: string
+      - default: 20
+        description: Max results (max 100)
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by start time (unix timestamp)
+        in: query
+        name: start
+        type: integer
+      - description: Filter by end time (unix timestamp)
+        in: query
+        name: end
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.StatsFilmsResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get film stocks ranked by metric
+      tags:
+      - stats
+  /stats/overview:
+    get:
+      consumes:
+      - application/json
+      description: Returns aggregate counts and score averages across all posts
+      parameters:
+      - description: Filter by start time (unix timestamp)
+        in: query
+        name: start
+        type: integer
+      - description: Filter by end time (unix timestamp)
+        in: query
+        name: end
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.StatsOverviewResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get global statistics overview
+      tags:
+      - stats
+  /stats/posts/over-time:
+    get:
+      consumes:
+      - application/json
+      description: Returns post counts and average scores grouped by time period
+      parameters:
+      - default: month
+        description: Time grouping
+        enum:
+        - month
+        - week
+        - year
+        in: query
+        name: granularity
+        type: string
+      - description: Filter by start time (unix timestamp)
+        in: query
+        name: start
+        type: integer
+      - description: Filter by end time (unix timestamp)
+        in: query
+        name: end
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.StatsPeriodsResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get post counts and scores over time
+      tags:
+      - stats
 securityDefinitions:
   BasicAuth:
     type: basic

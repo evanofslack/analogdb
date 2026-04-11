@@ -50,6 +50,14 @@ export default function MobileNav(props) {
                   </div>
                 </div>
               </Link>
+              <Link href="/stats" className={styles.link}>
+                <div className={styles.icon}>
+                  <div className={styles.check}>
+                    <h1 className={styles.iconText}>STATS</h1>
+                    {pathname === "/stats" && <BiCheck size="2rem" />}
+                  </div>
+                </div>
+              </Link>
               {isAdmin && (
                 <Link href="/admin" className={styles.link}>
                   <div className={styles.icon}>

@@ -39,6 +39,12 @@ export default function WebNav(props) {
         >
           API
         </Link>
+        <Link
+          href="/stats"
+          className={pathname == "/stats" ? styles.linkOn : styles.linkOff}
+        >
+          STATS
+        </Link>
         {isAdmin && (
           <Link
             href="/admin"
