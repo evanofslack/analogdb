@@ -153,8 +153,9 @@ Validation rules:
 
             metadata_list = []
             for item in data:
+                raw_id = item.get("post_id")
                 metadata = PhotoMetadata(
-                    post_id=item.get("post_id"),
+                    post_id=int(raw_id) if raw_id is not None else None,
                     camera_make=item.get("camera_make"),
                     camera_model=item.get("camera_model"),
                     film_make=item.get("film_make"),
