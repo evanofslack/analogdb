@@ -37,28 +37,30 @@ class MetadataExtractor:
     VALID_FOCAL_LENGTH_RANGE = (8, 800)  # 8mm to 800mm
     VALID_APERTURE_RANGE = (0.7, 32.0)  # f/0.7 to f/32
 
-    PROMT = """
-system prompt:
-You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as JSON. Only extract explicitly mentioned or clearly implied information. Leave fields blank rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside of containers like '[]' or '()' and may be separated by space, commas, /, or | characters. You will be provided with a list of valid cameras in json form, valid films in json form, valid film speed list, and then a list of post titles + descriptions to extract metadata from. A numerical post_id is provided at start of each title, repeat the post_id back in the json output for cross reference / validation. 
+    SYSTEM_PROMPT = """You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as a JSON array. Only extract explicitly mentioned or clearly implied information. Leave fields null rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside containers like '[]' or '()' and may be separated by space, commas, /, or | characters.
 
-Extract the following information and return as array of JSON:
-{{
-  "post_id": "post id #"
-  "camera_make": "camera brand name",
-  "camera_model": "camera model name", 
-  "film_make": "film brand name",
-  "film_type": "film type name",
-  "film_speed": integer_iso,
-  "focal_length": integer_mm,
-  "aperture": "f/X.X"
-}}
+A numerical post_id is provided at the start of each title — repeat it back as an integer in the output for cross-reference.
+
+Return a JSON array of objects with this shape:
+[
+  {
+    "post_id": 1,
+    "camera_make": "camera brand name",
+    "camera_model": "camera model name",
+    "film_make": "film brand name",
+    "film_type": "film type name",
+    "film_speed": 400,
+    "focal_length": 50,
+    "aperture": "f/2.8"
+  }
+]
 
 Extraction rules:
 - If multiple values exist, use only the first one
-- camera_make: Brand only (e.g., "Hasselblad", "Canon", "Nikon", "Mamiya"). Match valid camera list json.
-- camera_model: Model after make (e.g., "500cm", "AE-1", "F4", "RB67 Pro-S"). Match valid camera list json.
-- film_make: Manufacturer (e.g., "Kodak", "Fuji", "Ilford"). Match valid film list json.
-- film_type: Specific film (e.g., "Portra", "Ektachrome", "HP5"). Match valid film list json.
+- camera_make: Brand only (e.g., "Hasselblad", "Canon", "Nikon", "Mamiya"). Match valid camera list.
+- camera_model: Model after make (e.g., "500cm", "AE-1", "F4", "RB67 Pro-S"). Match valid camera list.
+- film_make: Manufacturer (e.g., "Kodak", "Fuji", "Ilford"). Match valid film list.
+- film_type: Specific film (e.g., "Portra", "Ektachrome", "HP5"). Match valid film list.
 - film_speed: ISO as integer (e.g., 400, 800). For push/pull like "400@800", use base speed (400)
 - focal_length: Lens focal length in mm as integer (e.g., 50, 85). For ranges like "20-35mm", use first number (20)
 - aperture: F-stop as "f/X.X" format (e.g., "f/2.8", "f/4")
@@ -74,15 +76,14 @@ Validation rules:
 - Handle common typos: "Hasselblad" variations, "Mamiya" vs "Mamya"
 - Handle assumed or unspecified makes: "Gold" -> "Kodak Gold"
 - Understand common alternative names: Nikon cameras prefix F is the same as N (F90 == N90)
-- Understand common abbreviations: P for Program (cameras), 
+- Understand common abbreviations: P for Program (cameras)
 - Understand common alternative names: color == colour, minolta Maxxum, Dynax, Alpha (a) are equivalent
 - Understand common alternative film names: Portrait -> Porta, ORWO -> Original Wolfen
 - Cross-reference completion: Use valid lists to fill missing information
 - If camera model found but not make, match from valid camera list
 - If film type found but not make, match from valid film list
 - If camera make found but camera model not matched, ok to just set camera make
-- If film make found but film type not matched, ok to just set film make
-"""
+- If film make found but film type not matched, ok to just set film make"""
 
     def __init__(self, openai: OpenAI, llm_model: str):
         self.openai = openai
@@ -109,16 +110,12 @@ Validation rules:
         films: List[Film],
         cameras: List[Camera],
     ) -> str:
-        prompt = self.PROMT
-        prompt += "\n valid cameras:"
-        for camera in cameras:
-            prompt += str(camera.to_json_minimal())
-        prompt += "\n valid films:"
-        for film in films:
-            prompt += str(film.to_json_minimal())
-        prompt += f"\n valid film speeds: {self.VALID_FILM_SPEEDS}"
+        prompt = "valid cameras:\n"
+        prompt += json.dumps([camera.to_json_minimal() for camera in cameras])
+        prompt += "\nvalid films:\n"
+        prompt += json.dumps([film.to_json_minimal() for film in films])
+        prompt += f"\nvalid film speeds: {sorted(self.VALID_FILM_SPEEDS)}\n"
         for id, title in zip(ids, titles):
-            # remove newlines that break llm expected format.
             clean_title = title.replace("\n", " ").replace("\r", " ")
             prompt += "\n" + f"post_id: {id}, {clean_title}"
         return prompt
@@ -130,13 +127,22 @@ Validation rules:
                 "X-Title": "analogdb.com",
             },
             model=self.llm_model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,  # Low temperature for consistent extraction
+            messages=[
+                {"role": "system", "content": self.SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0,
+            response_format={"type": "json_object"},
         )
 
         content = resp.choices[0].message.content
         if content is None:
             return [PhotoMetadata()]
+
+        content = content.strip()
+        if content.startswith("```"):
+            content = re.sub(r"^```(?:json)?\s*", "", content)
+            content = re.sub(r"\s*```$", "", content)
 
         try:
             j = json.loads(content)
@@ -148,6 +154,14 @@ Validation rules:
         """Parse JSON string to list of PhotoMetadata with manual field mapping."""
         try:
             data = json.loads(json_str) if isinstance(json_str, str) else json_str
+            # response_format=json_object wraps arrays in an object — unwrap any list value
+            if isinstance(data, dict):
+                for v in data.values():
+                    if isinstance(v, list):
+                        data = v
+                        break
+                else:
+                    return [PhotoMetadata()]
             if not isinstance(data, list):
                 return [PhotoMetadata()]
 

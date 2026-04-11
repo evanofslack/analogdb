@@ -52,7 +52,7 @@ class ImageProcessorResource(ConfigurableResource):
 class MetadataResource(ConfigurableResource):
     openai_url: str = ""
     openai_key: str = ""
-    openai_model: str = ""
+    openai_model: str = "google/gemini-2.5-flash"
 
     def client(self) -> MetadataExtractor:
         ai = OpenAI(
