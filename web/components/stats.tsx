@@ -1,8 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { BarsList, DonutChart, LineChart } from "@mantine/charts";
 import { SimpleGrid, Text, Title } from "@mantine/core";
-import styles from "./stats.module.css";
 import type {
   ServerStatsCamerasResponse,
   ServerStatsColorsResponse,
@@ -10,33 +9,21 @@ import type {
   ServerStatsOverviewResponse,
   ServerStatsPeriodsResponse,
 } from "analogdb-generated";
+import styles from "./stats.module.css";
 
-const ResponsiveContainer = dynamic(
-  () => import("recharts").then((m) => m.ResponsiveContainer),
-  { ssr: false }
-);
-const LineChart = dynamic(
-  () => import("recharts").then((m) => m.LineChart),
-  { ssr: false }
-);
-const BarChart = dynamic(
-  () => import("recharts").then((m) => m.BarChart),
-  { ssr: false }
-);
-const Line = dynamic(() => import("recharts").then((m) => m.Line), { ssr: false });
-const Bar = dynamic(() => import("recharts").then((m) => m.Bar), { ssr: false });
-const Cell = dynamic(() => import("recharts").then((m) => m.Cell), { ssr: false });
-const XAxis = dynamic(() => import("recharts").then((m) => m.XAxis), { ssr: false });
-const YAxis = dynamic(() => import("recharts").then((m) => m.YAxis), { ssr: false });
-const CartesianGrid = dynamic(() => import("recharts").then((m) => m.CartesianGrid), { ssr: false });
-const Tooltip = dynamic(() => import("recharts").then((m) => m.Tooltip), { ssr: false });
-const Legend = dynamic(() => import("recharts").then((m) => m.Legend), { ssr: false });
-const Label = dynamic(() => import("recharts").then((m) => m.Label), { ssr: false });
-
-const BAR_COLORS = [
-  "#1a1a1a", "#4a6fa5", "#b5838d", "#6b9e78", "#c9a96e",
-  "#7b6fa5", "#d4846a", "#5b9caa", "#a07850", "#6b8c42",
-  "#b56b6b", "#5b7b9c",
+const PIE_COLORS = [
+  "#1a1a1a",
+  "#4a6fa5",
+  "#b5838d",
+  "#6b9e78",
+  "#c9a96e",
+  "#7b6fa5",
+  "#d4846a",
+  "#5b9caa",
+  "#a07850",
+  "#6b8c42",
+  "#b56b6b",
+  "#5b7b9c",
 ];
 
 interface StatsProps {
@@ -57,7 +44,27 @@ function fmtScore(n?: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
-export default function StatsPage({ overview, overTime, films, cameras, colors }: StatsProps) {
+interface TileProps {
+  label: string;
+  value: string;
+}
+
+function Tile({ label, value }: TileProps) {
+  return (
+    <div className={styles.tile}>
+      <Text className={styles.tileLabel}>{label}</Text>
+      <Text className={styles.tileValue}>{value}</Text>
+    </div>
+  );
+}
+
+export default function StatsPage({
+  overview,
+  overTime,
+  films,
+  cameras,
+  colors,
+}: StatsProps) {
   const d = overview.data;
 
   const overTimeData = (overTime.data ?? []).map((p) => ({
@@ -66,158 +73,114 @@ export default function StatsPage({ overview, overTime, films, cameras, colors }
     "average score": Math.round(p.avgScore ?? 0),
   }));
 
-  const filmsData = (films.data ?? [])
-    .slice(0, 12)
-    .map((f) => ({
-      name: `${f.filmMake ?? ""} ${f.filmType ?? ""}`.trim(),
-      posts: f.postCount ?? 0,
-    }));
+  const filmsData = (films.data ?? []).slice(0, 12).map((f, i) => ({
+    name: `${f.filmMake ?? ""} ${f.filmType ?? ""}`.trim(),
+    value: f.postCount ?? 0,
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  }));
 
-  const camerasData = (cameras.data ?? [])
-    .slice(0, 12)
-    .map((c) => ({
-      name: `${c.cameraMake ?? ""} ${c.cameraModel ?? ""}`.trim(),
-      posts: c.postCount ?? 0,
-    }));
+  const camerasData = (cameras.data ?? []).slice(0, 12).map((c, i) => ({
+    name: `${c.cameraMake ?? ""} ${c.cameraModel ?? ""}`.trim(),
+    value: c.postCount ?? 0,
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  }));
 
   const colorsData = (colors.data ?? []).map((c) => ({
     name: c.htmlName ?? "",
-    hex: c.hex ?? "#888",
-    posts: c.postCount ?? 0,
+    value: c.postCount ?? 0,
+    color: c.hex ?? "#888",
   }));
 
   return (
     <div className={styles.page}>
       <section className={styles.section}>
-        <Title order={2} className={styles.sectionTitle}>Overview</Title>
-        <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="md">
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>total posts</Text>
-            <Text className={styles.tileValue}>{fmt(d?.totalPosts)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>authors</Text>
-            <Text className={styles.tileValue}>{fmt(d?.totalAuthors)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>cameras</Text>
-            <Text className={styles.tileValue}>{fmt(d?.totalCameras)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>films</Text>
-            <Text className={styles.tileValue}>{fmt(d?.totalFilms)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>keywords</Text>
-            <Text className={styles.tileValue}>{fmt(d?.totalKeywords)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>avg score</Text>
-            <Text className={styles.tileValue}>{fmtScore(d?.avgScore)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>median score</Text>
-            <Text className={styles.tileValue}>{fmtScore(d?.medianScore)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>min score</Text>
-            <Text className={styles.tileValue}>{fmtScore(d?.minScore)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>max score</Text>
-            <Text className={styles.tileValue}>{fmtScore(d?.maxScore)}</Text>
-          </div>
-          <div className={styles.tile}>
-            <Text className={styles.tileLabel}>score std dev</Text>
-            <Text className={styles.tileValue}>{fmtScore(d?.stdDevScore)}</Text>
-          </div>
+        <Title order={2} className={styles.sectionTitle}>
+          Overview
+        </Title>
+
+        <SimpleGrid cols={3} spacing="md" className={styles.tileGroup}>
+          <Tile label="total posts" value={fmt(d?.totalPosts)} />
+          <Tile label="authors" value={fmt(d?.totalAuthors)} />
+          <Tile label="keywords" value={fmt(d?.totalKeywords)} />
+        </SimpleGrid>
+
+        <SimpleGrid cols={2} spacing="md" className={styles.tileGroup}>
+          <Tile label="films" value={fmt(d?.totalFilms)} />
+          <Tile label="cameras" value={fmt(d?.totalCameras)} />
+        </SimpleGrid>
+
+        <SimpleGrid cols={5} spacing="md" className={styles.tileGroup}>
+          <Tile label="min score" value={fmtScore(d?.minScore)} />
+          <Tile label="median score" value={fmtScore(d?.medianScore)} />
+          <Tile label="avg score" value={fmtScore(d?.avgScore)} />
+          <Tile label="max score" value={fmtScore(d?.maxScore)} />
+          <Tile label="std dev" value={fmtScore(d?.stdDevScore)} />
         </SimpleGrid>
       </section>
 
       <section className={styles.section}>
-        <Title order={2} className={styles.sectionTitle}>Posts Over Time</Title>
-        <div className={styles.chartWrap}>
-          <ResponsiveContainer width="100%" height={320}>
-            <LineChart data={overTimeData} margin={{ top: 10, right: 60, left: 10, bottom: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} interval="preserveStartEnd">
-                <Label value="Date" offset={-15} position="insideBottom" style={{ fontSize: 12, fill: "#666" }} />
-              </XAxis>
-              <YAxis yAxisId="left" tick={{ fontSize: 11 }}>
-                <Label value="posts" angle={-90} position="insideLeft" offset={15} style={{ fontSize: 12, fill: "#666" }} />
-              </YAxis>
-              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 11 }}>
-                <Label value="average score" angle={90} position="insideRight" offset={15} style={{ fontSize: 12, fill: "#888" }} />
-              </YAxis>
-              <Tooltip />
-              <Legend layout="vertical" align="right" verticalAlign="middle" wrapperStyle={{ paddingLeft: 16, fontSize: 12 }} />
-              <Line yAxisId="left" type="monotone" dataKey="count" stroke="#1a1a1a" dot={false} strokeWidth={2} />
-              <Line yAxisId="right" type="monotone" dataKey="average score" stroke="#888" dot={false} strokeWidth={1.5} strokeDasharray="5 5" />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <Title order={2} className={styles.sectionTitle}>
+          Posts Over Time
+        </Title>
+        <LineChart
+          h={320}
+          data={overTimeData}
+          dataKey="date"
+          withDots={false}
+          withRightYAxis
+          xAxisLabel="date"
+          yAxisLabel="posts"
+          rightYAxisLabel="average score"
+          withLegend
+          legendProps={{
+            verticalAlign: "top",
+            align: "right",
+            layout: "vertical",
+            wrapperStyle: { paddingLeft: 16, fontSize: 12 },
+          }}
+          series={[
+            {
+              name: "count",
+              color: "#1a1a1a",
+              yAxisId: "left",
+              label: "posts",
+            },
+            {
+              name: "average score",
+              color: "#888",
+              yAxisId: "right",
+              strokeDasharray: "5 5",
+            },
+          ]}
+        />
       </section>
 
       <section className={styles.section}>
-        <Title order={2} className={styles.sectionTitle}>Top Films</Title>
-        <div className={styles.chartWrap}>
-          <ResponsiveContainer width="100%" height={Math.max(280, filmsData.length * 28)}>
-            <BarChart layout="vertical" data={filmsData} margin={{ top: 5, right: 30, left: 10, bottom: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e0e0e0" />
-              <XAxis type="number" tick={{ fontSize: 11 }}>
-                <Label value="posts" offset={-15} position="insideBottom" style={{ fontSize: 12, fill: "#666" }} />
-              </XAxis>
-              <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Bar dataKey="posts" radius={[0, 2, 2, 0]}>
-                {filmsData.map((_, i) => (
-                  <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <Title order={2} className={styles.sectionTitle}>Top Cameras</Title>
-        <div className={styles.chartWrap}>
-          <ResponsiveContainer width="100%" height={Math.max(280, camerasData.length * 28)}>
-            <BarChart layout="vertical" data={camerasData} margin={{ top: 5, right: 30, left: 10, bottom: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e0e0e0" />
-              <XAxis type="number" tick={{ fontSize: 11 }}>
-                <Label value="posts" offset={-15} position="insideBottom" style={{ fontSize: 12, fill: "#666" }} />
-              </XAxis>
-              <YAxis type="category" dataKey="name" width={140} tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Bar dataKey="posts" radius={[0, 2, 2, 0]}>
-                {camerasData.map((_, i) => (
-                  <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-
-      <section className={styles.section}>
-        <Title order={2} className={styles.sectionTitle}>Top Colors</Title>
-        <div className={styles.chartWrap}>
-          <ResponsiveContainer width="100%" height={Math.max(280, colorsData.length * 22)}>
-            <BarChart layout="vertical" data={colorsData} margin={{ top: 5, right: 30, left: 10, bottom: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e0e0e0" />
-              <XAxis type="number" tick={{ fontSize: 11 }}>
-                <Label value="posts" offset={-15} position="insideBottom" style={{ fontSize: 12, fill: "#666" }} />
-              </XAxis>
-              <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Bar dataKey="posts" radius={[0, 2, 2, 0]}>
-                {colorsData.map((entry, i) => (
-                  <Cell key={i} fill={entry.hex} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+        <Title order={2} className={styles.sectionTitle}>
+          Top Films, Cameras &amp; Colors
+        </Title>
+        <div className={styles.pieRow}>
+          <BarsList
+            data={filmsData}
+            minBarSize={200}
+            valueFormatter={(value) => value.toLocaleString("en-US")}
+            barsLabel="Films"
+            valueLabel="Posts"
+          />
+          <BarsList
+            data={camerasData}
+            minBarSize={100}
+            valueFormatter={(value) => value.toLocaleString("en-US")}
+            barsLabel="Cameras"
+            valueLabel="Posts"
+          />
+          <BarsList
+            data={colorsData}
+            minBarSize={50}
+            valueFormatter={(value) => value.toLocaleString("en-US")}
+            barsLabel="Colors"
+            valueLabel="Posts"
+          />
         </div>
       </section>
     </div>

@@ -8,7 +8,7 @@
 
 .section {
   width: 100%;
-  max-width: 900px;
+  max-width: 960px;
   margin-bottom: 4rem;
 }
 
@@ -19,8 +19,8 @@
   margin-bottom: 1.5rem;
 }
 
-.chartWrap {
-  width: 100%;
+.tileGroup {
+  margin-bottom: 0.75rem;
 }
 
 .tile {
@@ -45,8 +45,38 @@
   color: #1a1a1a;
 }
 
+.pieRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.pieWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 220px;
+}
+
+.pieTitle {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2e2e2e;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
 @media screen and (max-width: 720px) {
   .page {
     padding: 1rem 1rem 4rem;
+  }
+
+  .pieRow {
+    flex-direction: column;
+    align-items: center;
   }
 }
