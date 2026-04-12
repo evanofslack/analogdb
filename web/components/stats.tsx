@@ -227,35 +227,33 @@ export default function StatsPage({
         <Title order={2} className={styles.sectionTitle}>
           Posts Over Time
         </Title>
+        <Text className={styles.chartHalfTitle} mb="xs">
+          post count
+        </Text>
         <LineChart
-          h={320}
+          h={180}
           data={overTimeData}
           dataKey="date"
           withDots={false}
-          withRightYAxis
-          xAxisLabel="date"
+          gridAxis="xy"
           yAxisLabel="posts"
-          rightYAxisLabel="average score"
-          withLegend
-          legendProps={{
-            verticalAlign: "top",
-            align: "right",
-            layout: "vertical",
-            wrapperStyle: { paddingLeft: 16, fontSize: 12 },
-          }}
+          lineChartProps={{ syncId: "over-time" }}
+          series={[{ name: "count", color: "#1a1a1a", label: "posts" }]}
+          mb="xl"
+        />
+        <Text className={styles.chartHalfTitle} mb="xs">
+          average score
+        </Text>
+        <LineChart
+          h={180}
+          data={overTimeData}
+          dataKey="date"
+          withDots={false}
+          gridAxis="xy"
+          yAxisLabel="score"
+          lineChartProps={{ syncId: "over-time" }}
           series={[
-            {
-              name: "count",
-              color: "#1a1a1a",
-              yAxisId: "left",
-              label: "posts",
-            },
-            {
-              name: "average score",
-              color: "#888",
-              yAxisId: "right",
-              strokeDasharray: "5 5",
-            },
+            { name: "average score", color: "#4a6fa5", strokeDasharray: "5 5" },
           ]}
         />
       </section>
