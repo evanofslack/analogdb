@@ -19,20 +19,34 @@
   margin-bottom: 1.5rem;
 }
 
-.tileGroup {
-  margin-bottom: 0.75rem;
-}
-
-.tile {
+.statGroup {
   display: flex;
-  flex-direction: column;
-  padding: 1rem 1.2rem;
+  flex-direction: row;
   border: 1px solid #e8e8e8;
   border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 1.25rem;
+}
+
+.statGroupItem {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+}
+
+.statDivider {
+  width: 1px;
+  background: #e8e8e8;
+  flex-shrink: 0;
+}
+
+.statContent {
+  flex: 1;
+  padding: 1rem 1.4rem;
 }
 
 .tileLabel {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.05em;

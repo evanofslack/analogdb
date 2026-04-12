@@ -1,7 +1,7 @@
 "use client";
 
 import { BarsList, LineChart } from "@mantine/charts";
-import { SimpleGrid, Text, Title } from "@mantine/core";
+import { Text, Title } from "@mantine/core";
 import type {
   ServerStatsCamerasResponse,
   ServerStatsColorsResponse,
@@ -50,16 +50,22 @@ function fmtScore(n?: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
-interface TileProps {
-  label: string;
-  value: string;
+interface StatGroupProps {
+  items: { label: string; value: string }[];
 }
 
-function Tile({ label, value }: TileProps) {
+function StatGroup({ items }: StatGroupProps) {
   return (
-    <div className={styles.tile}>
-      <Text className={styles.tileLabel}>{label}</Text>
-      <Text className={styles.tileValue}>{value}</Text>
+    <div className={styles.statGroup}>
+      {items.map((item, i) => (
+        <div key={item.label} className={styles.statGroupItem}>
+          {i > 0 && <div className={styles.statDivider} />}
+          <div className={styles.statContent}>
+            <Text className={styles.tileLabel}>{item.label}</Text>
+            <Text className={styles.tileValue}>{item.value}</Text>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -183,24 +189,32 @@ export default function StatsPage({
           Overview
         </Title>
 
-        <SimpleGrid cols={3} spacing="md" className={styles.tileGroup}>
-          <Tile label="total posts" value={fmt(d?.totalPosts)} />
-          <Tile label="authors" value={fmt(d?.totalAuthors)} />
-          <Tile label="keywords" value={fmt(d?.totalKeywords)} />
-        </SimpleGrid>
+        <StatGroup
+          items={[
+            { label: "posts", value: fmt(d?.totalPosts) },
+            { label: "authors", value: fmt(d?.totalAuthors) },
+            { label: "keywords", value: fmt(d?.totalKeywords) },
+          ]}
+        />
 
-        <SimpleGrid cols={2} spacing="md" className={styles.tileGroup}>
-          <Tile label="films" value={fmt(d?.totalFilms)} />
-          <Tile label="cameras" value={fmt(d?.totalCameras)} />
-        </SimpleGrid>
+        <StatGroup
+          items={[
+            { label: "film brands", value: fmt(d?.totalFilmBrands) },
+            { label: "film stocks", value: fmt(d?.totalFilmStocks) },
+            { label: "camera brands", value: fmt(d?.totalCameraBrands) },
+            { label: "camera models", value: fmt(d?.totalCameraModels) },
+          ]}
+        />
 
-        <SimpleGrid cols={5} spacing="md" className={styles.tileGroup}>
-          <Tile label="min score" value={fmtScore(d?.minScore)} />
-          <Tile label="median score" value={fmtScore(d?.medianScore)} />
-          <Tile label="avg score" value={fmtScore(d?.avgScore)} />
-          <Tile label="max score" value={fmtScore(d?.maxScore)} />
-          <Tile label="std dev" value={fmtScore(d?.stdDevScore)} />
-        </SimpleGrid>
+        <StatGroup
+          items={[
+            { label: "min score", value: fmtScore(d?.minScore) },
+            { label: "median score", value: fmtScore(d?.medianScore) },
+            { label: "avg score", value: fmtScore(d?.avgScore) },
+            { label: "max score", value: fmtScore(d?.maxScore) },
+            { label: "std dev", value: fmtScore(d?.stdDevScore) },
+          ]}
+        />
       </section>
 
       <section className={styles.section}>

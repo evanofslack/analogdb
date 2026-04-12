@@ -6,16 +6,18 @@ import (
 )
 
 type StatsOverview struct {
-	TotalPosts    int     `json:"total_posts" example:"42000"`
-	TotalAuthors  int     `json:"total_authors" example:"8206"`
-	TotalCameras  int     `json:"total_cameras" example:"380"`
-	TotalFilms    int     `json:"total_films" example:"210"`
-	TotalKeywords int     `json:"total_keywords" example:"41492"`
-	AvgScore      float64 `json:"avg_score" example:"853.2"`
-	MedianScore   float64 `json:"median_score" example:"720.0"`
-	MinScore      float64 `json:"min_score" example:"1.0"`
-	MaxScore      float64 `json:"max_score" example:"98423.0"`
-	StdDevScore   float64 `json:"std_dev_score" example:"1240.5"`
+	TotalPosts       int     `json:"total_posts" example:"42000"`
+	TotalAuthors     int     `json:"total_authors" example:"8206"`
+	TotalKeywords    int     `json:"total_keywords" example:"41492"`
+	TotalFilmBrands  int     `json:"total_film_brands" example:"32"`
+	TotalFilmStocks  int     `json:"total_film_stocks" example:"210"`
+	TotalCameraBrands int    `json:"total_camera_brands" example:"45"`
+	TotalCameraModels int    `json:"total_camera_models" example:"380"`
+	AvgScore         float64 `json:"avg_score" example:"853.2"`
+	MedianScore      float64 `json:"median_score" example:"720.0"`
+	MinScore         float64 `json:"min_score" example:"1.0"`
+	MaxScore         float64 `json:"max_score" example:"98423.0"`
+	StdDevScore      float64 `json:"std_dev_score" example:"1240.5"`
 }
 
 type StatsPeriod struct {

@@ -75,18 +75,22 @@ func (db *DB) getStatsOverview(ctx context.Context, tx *sql.Tx, filter *analogdb
 
 	query := `
 		SELECT
-			COUNT(id)                                                    AS total_posts,
-			COUNT(DISTINCT author)                                       AS total_authors,
-			(SELECT COUNT(DISTINCT camera_make || camera_model)
-			 FROM pictures WHERE camera_make IS NOT NULL)                AS total_cameras,
+			COUNT(id)                                                           AS total_posts,
+			COUNT(DISTINCT author)                                              AS total_authors,
+			(SELECT COUNT(DISTINCT word) FROM keywords)                         AS total_keywords,
+			(SELECT COUNT(DISTINCT film_make)
+			 FROM pictures WHERE film_make IS NOT NULL)                         AS total_film_brands,
 			(SELECT COUNT(DISTINCT film_make || film_type)
-			 FROM pictures WHERE film_make IS NOT NULL)                  AS total_films,
-			(SELECT COUNT(DISTINCT word) FROM keywords)                  AS total_keywords,
-			ROUND(AVG(score)::numeric, 2)                                AS avg_score,
+			 FROM pictures WHERE film_make IS NOT NULL)                         AS total_film_stocks,
+			(SELECT COUNT(DISTINCT camera_make)
+			 FROM pictures WHERE camera_make IS NOT NULL)                       AS total_camera_brands,
+			(SELECT COUNT(DISTINCT camera_make || camera_model)
+			 FROM pictures WHERE camera_make IS NOT NULL)                       AS total_camera_models,
+			ROUND(AVG(score)::numeric, 2)                                       AS avg_score,
 			ROUND(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY score)::numeric, 2) AS median_score,
-			MIN(score)                                                   AS min_score,
-			MAX(score)                                                   AS max_score,
-			ROUND(STDDEV(score)::numeric, 2)                             AS std_dev_score
+			MIN(score)                                                          AS min_score,
+			MAX(score)                                                          AS max_score,
+			ROUND(STDDEV(score)::numeric, 2)                                    AS std_dev_score
 		FROM pictures
 		WHERE ($1::bigint IS NULL OR time >= $1)
 		  AND ($2::bigint IS NULL OR time <= $2)
@@ -96,9 +100,11 @@ func (db *DB) getStatsOverview(ctx context.Context, tx *sql.Tx, filter *analogdb
 	err := tx.QueryRowContext(ctx, query, startArg, endArg).Scan(
 		&overview.TotalPosts,
 		&overview.TotalAuthors,
-		&overview.TotalCameras,
-		&overview.TotalFilms,
 		&overview.TotalKeywords,
+		&overview.TotalFilmBrands,
+		&overview.TotalFilmStocks,
+		&overview.TotalCameraBrands,
+		&overview.TotalCameraModels,
 		&overview.AvgScore,
 		&overview.MedianScore,
 		&overview.MinScore,
