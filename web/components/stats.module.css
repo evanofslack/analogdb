@@ -19,6 +19,22 @@
   margin-bottom: 1.5rem;
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader .sectionTitle {
+  margin-bottom: 0;
+}
+
+.chartWrap {
+  width: 100%;
+  overflow: hidden;
+}
+
 .statGroup {
   display: flex;
   flex-direction: row;
@@ -68,6 +84,7 @@
 .chartHalf {
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .chartHalfTitle {

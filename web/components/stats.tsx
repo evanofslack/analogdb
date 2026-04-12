@@ -1,7 +1,9 @@
 "use client";
 
 import { BarsList, LineChart } from "@mantine/charts";
-import { Text, Title } from "@mantine/core";
+import { SegmentedControl, Text, Title } from "@mantine/core";
+import { useState, useTransition } from "react";
+import { getStatsPostsOverTime } from "@app/actions/stats";
 import type {
   ServerStatsCamerasResponse,
   ServerStatsColorsResponse,
@@ -70,6 +72,90 @@ function StatGroup({ items }: StatGroupProps) {
   );
 }
 
+const RANGE_GRANULARITY: Record<string, "week" | "month"> = {
+  month: "week",
+  year: "month",
+  all: "month",
+};
+
+function rangeStart(range: string): number {
+  const now = Math.floor(Date.now() / 1000);
+  if (range === "month") return now - 30 * 24 * 60 * 60;
+  if (range === "year") return now - 365 * 24 * 60 * 60;
+  return 1640995200; // 2022-01-01
+}
+
+function PostsOverTimeSection({ initial }: { initial: ServerStatsPeriodsResponse }) {
+  const [range, setRange] = useState("all");
+  const [data, setData] = useState(initial);
+  const [pending, startTransition] = useTransition();
+
+  function handleRangeChange(val: string) {
+    setRange(val);
+    startTransition(async () => {
+      const result = await getStatsPostsOverTime({
+        granularity: RANGE_GRANULARITY[val],
+        start: rangeStart(val),
+      });
+      setData(result);
+    });
+  }
+
+  const chartData = (data.data ?? []).map((p) => ({
+    date: p.period?.slice(0, 7) ?? "",
+    count: p.count ?? 0,
+    "average score": Math.round(p.avgScore ?? 0),
+  }));
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHeader}>
+        <Title order={2} className={styles.sectionTitle}>
+          Posts Over Time
+        </Title>
+        <SegmentedControl
+          size="xs"
+          value={range}
+          onChange={handleRangeChange}
+          disabled={pending}
+          data={[
+            { label: "Month", value: "month" },
+            { label: "Year", value: "year" },
+            { label: "All Time", value: "all" },
+          ]}
+        />
+      </div>
+      <div className={styles.chartWrap}>
+        <Text className={styles.chartHalfTitle} mb="xs">post count</Text>
+        <LineChart
+          h={180}
+          data={chartData}
+          dataKey="date"
+          withDots={false}
+          gridAxis="xy"
+          yAxisLabel="posts"
+          lineChartProps={{ syncId: "over-time" }}
+          series={[{ name: "count", color: "#1a1a1a", label: "posts" }]}
+          mb="xl"
+          opacity={pending ? 0.5 : 1}
+        />
+        <Text className={styles.chartHalfTitle} mb="xs">average score</Text>
+        <LineChart
+          h={180}
+          data={chartData}
+          dataKey="date"
+          withDots={false}
+          gridAxis="xy"
+          yAxisLabel="score"
+          lineChartProps={{ syncId: "over-time" }}
+          series={[{ name: "average score", color: "#4a6fa5", strokeDasharray: "5 5" }]}
+          opacity={pending ? 0.5 : 1}
+        />
+      </div>
+    </section>
+  );
+}
+
 interface ChartPairProps {
   title: string;
   leftLabel: string;
@@ -133,12 +219,6 @@ export default function StatsPage({
   keywordsByScore,
 }: StatsProps) {
   const d = overview.data;
-
-  const overTimeData = (overTime.data ?? []).map((p) => ({
-    date: p.period?.slice(0, 7) ?? "",
-    count: p.count ?? 0,
-    "average score": Math.round(p.avgScore ?? 0),
-  }));
 
   const filmsCountData = (filmsByCount.data ?? []).map((f, i) => ({
     name: `${f.filmMake ?? ""} ${f.filmType ?? ""}`.trim(),
@@ -223,40 +303,7 @@ export default function StatsPage({
         />
       </section>
 
-      <section className={styles.section}>
-        <Title order={2} className={styles.sectionTitle}>
-          Posts Over Time
-        </Title>
-        <Text className={styles.chartHalfTitle} mb="xs">
-          post count
-        </Text>
-        <LineChart
-          h={180}
-          data={overTimeData}
-          dataKey="date"
-          withDots={false}
-          gridAxis="xy"
-          yAxisLabel="posts"
-          lineChartProps={{ syncId: "over-time" }}
-          series={[{ name: "count", color: "#1a1a1a", label: "posts" }]}
-          mb="xl"
-        />
-        <Text className={styles.chartHalfTitle} mb="xs">
-          average score
-        </Text>
-        <LineChart
-          h={180}
-          data={overTimeData}
-          dataKey="date"
-          withDots={false}
-          gridAxis="xy"
-          yAxisLabel="score"
-          lineChartProps={{ syncId: "over-time" }}
-          series={[
-            { name: "average score", color: "#4a6fa5", strokeDasharray: "5 5" },
-          ]}
-        />
-      </section>
+      <PostsOverTimeSection initial={overTime} />
 
       <ChartPair
         title="Films"

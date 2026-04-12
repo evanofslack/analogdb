@@ -35,7 +35,7 @@ export default async function StatsPageRoute() {
     keywordsByScore,
   ] = await Promise.all([
     getStatsOverview({}),
-    getStatsPostsOverTime({ granularity: "month", start: 1640995200 }), // 2022-01-01
+    getStatsPostsOverTime({ granularity: "month", start: 1640995200 }),
     getStatsFilms({ limit: 12, metric: "count" }),
     getStatsFilms({ limit: 12, metric: "score" }),
     getStatsCameras({ limit: 12, metric: "count" }),
