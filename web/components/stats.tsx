@@ -76,6 +76,8 @@ interface ChartPairProps {
   rightLabel: string;
   leftData: { name: string; value: number; color: string }[];
   rightData: { name: string; value: number; color: string }[];
+  leftValue: string;
+  rightValue: string;
   leftValueFormatter?: (v: number) => string;
   rightValueFormatter?: (v: number) => string;
 }
@@ -86,6 +88,8 @@ function ChartPair({
   rightLabel,
   leftData,
   rightData,
+  leftValue,
+  rightValue,
   leftValueFormatter,
   rightValueFormatter,
 }: ChartPairProps) {
@@ -99,6 +103,7 @@ function ChartPair({
           <Text className={styles.chartHalfTitle}>{leftLabel}</Text>
           <BarsList
             data={leftData}
+            valueLabel={leftValue}
             valueFormatter={leftValueFormatter ?? ((v) => v.toLocaleString())}
           />
         </div>
@@ -107,6 +112,7 @@ function ChartPair({
           <BarsList
             data={rightData}
             valueFormatter={rightValueFormatter ?? ((v) => fmtScore(v))}
+            valueLabel={rightValue}
           />
         </div>
       </div>
@@ -260,8 +266,10 @@ export default function StatsPage({
         rightLabel="Highest rated"
         leftData={filmsCountData}
         rightData={filmsScoreData}
-        leftValueFormatter={(v) => v.toLocaleString() + " posts"}
-        rightValueFormatter={(v) => "avg " + fmtScore(v)}
+        leftValue="posts"
+        rightValue="score"
+        leftValueFormatter={(v) => v.toLocaleString()}
+        rightValueFormatter={(v) => fmtScore(v)}
       />
 
       <ChartPair
@@ -270,8 +278,10 @@ export default function StatsPage({
         rightLabel="Highest rated"
         leftData={camerasCountData}
         rightData={camerasScoreData}
-        leftValueFormatter={(v) => v.toLocaleString() + " posts"}
-        rightValueFormatter={(v) => "avg " + fmtScore(v)}
+        leftValue="posts"
+        rightValue="score"
+        leftValueFormatter={(v) => v.toLocaleString()}
+        rightValueFormatter={(v) => fmtScore(v)}
       />
 
       <ChartPair
@@ -280,8 +290,10 @@ export default function StatsPage({
         rightLabel="Highest rated"
         leftData={colorsCountData}
         rightData={colorsScoreData}
-        leftValueFormatter={(v) => v.toLocaleString() + " posts"}
-        rightValueFormatter={(v) => "avg " + fmtScore(v)}
+        leftValue="posts"
+        rightValue="score"
+        leftValueFormatter={(v) => v.toLocaleString()}
+        rightValueFormatter={(v) => fmtScore(v)}
       />
 
       <ChartPair
@@ -290,8 +302,10 @@ export default function StatsPage({
         rightLabel="Highest rated"
         leftData={keywordsCountData}
         rightData={keywordsScoreData}
-        leftValueFormatter={(v) => v.toLocaleString() + " posts"}
-        rightValueFormatter={(v) => "avg " + fmtScore(v)}
+        leftValue="posts"
+        rightValue="score"
+        leftValueFormatter={(v) => v.toLocaleString()}
+        rightValueFormatter={(v) => fmtScore(v)}
       />
     </div>
   );
