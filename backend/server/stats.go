@@ -34,6 +34,11 @@ type StatsColorsResponse struct {
 	Meta analogdb.StatsMeta    `json:"meta"`
 }
 
+type StatsKeywordsResponse struct {
+	Data []analogdb.StatsKeyword `json:"data"`
+	Meta analogdb.StatsMeta      `json:"meta"`
+}
+
 const (
 	statsPath         = "/stats"
 	defaultStatsLimit = 20
@@ -47,6 +52,7 @@ func (s *Server) mountStatsHandlers(r chi.Router) {
 		r.Get("/films", s.getStatsFilms)
 		r.Get("/cameras", s.getStatsCameras)
 		r.Get("/colors", s.getStatsColors)
+		r.Get("/keywords", s.getStatsKeywords)
 	})
 }
 
@@ -193,14 +199,15 @@ func (s *Server) getStatsCameras(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// @Summary Get dominant colors ranked by occurrence
-// @Description Returns the most frequently dominant colors across all posts
+// @Summary Get dominant colors ranked by metric
+// @Description Returns the most frequent dominant colors across all posts, ranked by post count or average score
 // @Tags stats
 // @Accept json
 // @Produce json
-// @Param limit query int false "Max results (max 100)" default(20)
-// @Param start query int false "Filter by start time (unix timestamp)"
-// @Param end   query int false "Filter by end time (unix timestamp)"
+// @Param metric query string false "Ranking metric" Enums(score, count) default(count)
+// @Param limit  query int    false "Max results (max 100)" default(20)
+// @Param start  query int    false "Filter by start time (unix timestamp)"
+// @Param end    query int    false "Filter by end time (unix timestamp)"
 // @Success 200 {object} StatsColorsResponse
 // @Failure 400 {object} analogdb.Error "Invalid query parameters"
 // @Failure 500 {object} analogdb.Error "Internal server error"
@@ -224,6 +231,44 @@ func (s *Server) getStatsColors(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, c := range colors {
 		resp.Data = append(resp.Data, *c)
+	}
+	if err := encodeResponse(w, r, http.StatusOK, resp); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+// @Summary Get keywords ranked by metric
+// @Description Returns keywords ranked by post count or average score
+// @Tags stats
+// @Accept json
+// @Produce json
+// @Param metric query string false "Ranking metric" Enums(score, count) default(count)
+// @Param limit  query int    false "Max results (max 100)" default(20)
+// @Param start  query int    false "Filter by start time (unix timestamp)"
+// @Param end    query int    false "Filter by end time (unix timestamp)"
+// @Success 200 {object} StatsKeywordsResponse
+// @Failure 400 {object} analogdb.Error "Invalid query parameters"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Router /stats/keywords [get]
+func (s *Server) getStatsKeywords(w http.ResponseWriter, r *http.Request) {
+	filter, err := parseToStatsFilter(r)
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	keywords, err := s.StatsService.GetKeywordStats(r.Context(), filter)
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	resp := StatsKeywordsResponse{
+		Meta: analogdb.StatsMeta{
+			Total:       len(keywords),
+			GeneratedAt: time.Now().UTC(),
+		},
+	}
+	for _, k := range keywords {
+		resp.Data = append(resp.Data, *k)
 	}
 	if err := encodeResponse(w, r, http.StatusOK, resp); err != nil {
 		s.writeError(w, r, err)

@@ -45,29 +45,24 @@
   color: #1a1a1a;
 }
 
-.pieRow {
+.chartPair {
   display: flex;
   flex-direction: row;
-  justify-content: space-around;
-  align-items: flex-start;
-  gap: 2rem;
-  flex-wrap: wrap;
+  gap: 3rem;
 }
 
-.pieWrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.chartHalf {
   flex: 1;
-  min-width: 220px;
+  min-width: 0;
 }
 
-.pieTitle {
-  font-size: 1rem;
+.chartHalfTitle {
+  font-size: 0.8rem;
   font-weight: 500;
-  color: #2e2e2e;
-  margin-bottom: 1rem;
-  text-align: center;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
 }
 
 @media screen and (max-width: 720px) {
@@ -75,8 +70,8 @@
     padding: 1rem 1rem 4rem;
   }
 
-  .pieRow {
+  .chartPair {
     flex-direction: column;
-    align-items: center;
+    gap: 2rem;
   }
 }

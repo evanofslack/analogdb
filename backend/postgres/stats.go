@@ -61,6 +61,15 @@ func (s *StatsService) GetColorStats(ctx context.Context, filter *analogdb.Stats
 	return s.db.getStatsColors(ctx, tx, filter)
 }
 
+func (s *StatsService) GetKeywordStats(ctx context.Context, filter *analogdb.StatsFilter) ([]*analogdb.StatsKeyword, error) {
+	tx, err := s.db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	return s.db.getStatsKeywords(ctx, tx, filter)
+}
+
 func (db *DB) getStatsOverview(ctx context.Context, tx *sql.Tx, filter *analogdb.StatsFilter) (*analogdb.StatsOverview, error) {
 	startArg, endArg := statsTimeArgs(filter)
 
@@ -242,6 +251,7 @@ func (db *DB) getStatsCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.
 }
 
 func (db *DB) getStatsColors(ctx context.Context, tx *sql.Tx, filter *analogdb.StatsFilter) ([]*analogdb.StatsColor, error) {
+	orderCol := statsOrderCol(filter)
 	limit := statsLimit(filter)
 	startArg, endArg := statsTimeArgs(filter)
 
@@ -250,7 +260,8 @@ func (db *DB) getStatsColors(ctx context.Context, tx *sql.Tx, filter *analogdb.S
 			c.html                                   AS html_name,
 			MIN(c.hex)                               AS hex,
 			COUNT(DISTINCT c.post_id)                AS post_count,
-			ROUND(AVG(c.percent)::numeric, 3)        AS avg_percent
+			ROUND(AVG(c.percent)::numeric, 3)        AS avg_percent,
+			ROUND(AVG(p.score)::numeric, 2)          AS avg_score
 		FROM colors c
 		JOIN pictures p ON c.post_id = p.id
 		WHERE c.html IS NOT NULL
@@ -258,9 +269,9 @@ func (db *DB) getStatsColors(ctx context.Context, tx *sql.Tx, filter *analogdb.S
 		  AND ($1::bigint IS NULL OR p.time >= $1)
 		  AND ($2::bigint IS NULL OR p.time <= $2)
 		GROUP BY c.html
-		ORDER BY post_count DESC
+		ORDER BY %s DESC
 		LIMIT %d
-	`, limit)
+	`, orderCol, limit)
 
 	rows, err := tx.QueryContext(ctx, query, startArg, endArg)
 	if err != nil {
@@ -272,7 +283,7 @@ func (db *DB) getStatsColors(ctx context.Context, tx *sql.Tx, filter *analogdb.S
 	var colors []*analogdb.StatsColor
 	for rows.Next() {
 		var c analogdb.StatsColor
-		if err := rows.Scan(&c.HtmlName, &c.Hex, &c.PostCount, &c.AvgPercent); err != nil {
+		if err := rows.Scan(&c.HtmlName, &c.Hex, &c.PostCount, &c.AvgPercent, &c.AvgScore); err != nil {
 			db.logger.ErrorContext(ctx, "Get stats colors, scan error", "error", err)
 			return nil, err
 		}
@@ -283,6 +294,50 @@ func (db *DB) getStatsColors(ctx context.Context, tx *sql.Tx, filter *analogdb.S
 		return nil, err
 	}
 	return colors, nil
+}
+
+func (db *DB) getStatsKeywords(ctx context.Context, tx *sql.Tx, filter *analogdb.StatsFilter) ([]*analogdb.StatsKeyword, error) {
+	orderCol := statsOrderCol(filter)
+	limit := statsLimit(filter)
+	startArg, endArg := statsTimeArgs(filter)
+
+	query := fmt.Sprintf(`
+		SELECT
+			k.word,
+			COUNT(DISTINCT k.post_id)                AS post_count,
+			ROUND(AVG(p.score)::numeric, 2)          AS avg_score
+		FROM keywords k
+		JOIN pictures p ON k.post_id = p.id
+		WHERE k.word IS NOT NULL
+		  AND k.word != ''
+		  AND ($1::bigint IS NULL OR p.time >= $1)
+		  AND ($2::bigint IS NULL OR p.time <= $2)
+		GROUP BY k.word
+		ORDER BY %s DESC
+		LIMIT %d
+	`, orderCol, limit)
+
+	rows, err := tx.QueryContext(ctx, query, startArg, endArg)
+	if err != nil {
+		db.logger.ErrorContext(ctx, "Get stats keywords", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keywords []*analogdb.StatsKeyword
+	for rows.Next() {
+		var k analogdb.StatsKeyword
+		if err := rows.Scan(&k.Word, &k.PostCount, &k.AvgScore); err != nil {
+			db.logger.ErrorContext(ctx, "Get stats keywords, scan error", "error", err)
+			return nil, err
+		}
+		keywords = append(keywords, &k)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return keywords, nil
 }
 
 func statsTimeArgs(filter *analogdb.StatsFilter) (startArg, endArg interface{}) {

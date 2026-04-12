@@ -7,11 +7,13 @@ import {
   StatsFilmsGetRequest,
   StatsCamerasGetRequest,
   StatsColorsGetRequest,
+  StatsKeywordsGetRequest,
   ServerStatsOverviewResponse,
   ServerStatsPeriodsResponse,
   ServerStatsFilmsResponse,
   ServerStatsCamerasResponse,
   ServerStatsColorsResponse,
+  ServerStatsKeywordsResponse,
 } from "analogdb-generated";
 
 export async function getStatsOverview(
@@ -65,6 +67,17 @@ export async function getStatsColors(
     return await statsApi.statsColorsGet(params);
   } catch (error) {
     console.error("get stats colors failed:", error);
+    throw error;
+  }
+}
+
+export async function getStatsKeywords(
+  params: StatsKeywordsGetRequest
+): Promise<ServerStatsKeywordsResponse> {
+  try {
+    return await statsApi.statsKeywordsGet(params);
+  } catch (error) {
+    console.error("get stats keywords failed:", error);
     throw error;
   }
 }

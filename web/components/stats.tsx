@@ -1,11 +1,12 @@
 "use client";
 
-import { BarsList, DonutChart, LineChart } from "@mantine/charts";
+import { BarsList, LineChart } from "@mantine/charts";
 import { SimpleGrid, Text, Title } from "@mantine/core";
 import type {
   ServerStatsCamerasResponse,
   ServerStatsColorsResponse,
   ServerStatsFilmsResponse,
+  ServerStatsKeywordsResponse,
   ServerStatsOverviewResponse,
   ServerStatsPeriodsResponse,
 } from "analogdb-generated";
@@ -29,9 +30,14 @@ const PIE_COLORS = [
 interface StatsProps {
   overview: ServerStatsOverviewResponse;
   overTime: ServerStatsPeriodsResponse;
-  films: ServerStatsFilmsResponse;
-  cameras: ServerStatsCamerasResponse;
-  colors: ServerStatsColorsResponse;
+  filmsByCount: ServerStatsFilmsResponse;
+  filmsByScore: ServerStatsFilmsResponse;
+  camerasByCount: ServerStatsCamerasResponse;
+  camerasByScore: ServerStatsCamerasResponse;
+  colorsByCount: ServerStatsColorsResponse;
+  colorsByScore: ServerStatsColorsResponse;
+  keywordsByCount: ServerStatsKeywordsResponse;
+  keywordsByScore: ServerStatsKeywordsResponse;
 }
 
 function fmt(n?: number): string {
@@ -58,12 +64,61 @@ function Tile({ label, value }: TileProps) {
   );
 }
 
+interface ChartPairProps {
+  title: string;
+  leftLabel: string;
+  rightLabel: string;
+  leftData: { name: string; value: number; color: string }[];
+  rightData: { name: string; value: number; color: string }[];
+  leftValueFormatter?: (v: number) => string;
+  rightValueFormatter?: (v: number) => string;
+}
+
+function ChartPair({
+  title,
+  leftLabel,
+  rightLabel,
+  leftData,
+  rightData,
+  leftValueFormatter,
+  rightValueFormatter,
+}: ChartPairProps) {
+  return (
+    <section className={styles.section}>
+      <Title order={2} className={styles.sectionTitle}>
+        {title}
+      </Title>
+      <div className={styles.chartPair}>
+        <div className={styles.chartHalf}>
+          <Text className={styles.chartHalfTitle}>{leftLabel}</Text>
+          <BarsList
+            data={leftData}
+            valueFormatter={leftValueFormatter ?? ((v) => v.toLocaleString())}
+          />
+        </div>
+        <div className={styles.chartHalf}>
+          <Text className={styles.chartHalfTitle}>{rightLabel}</Text>
+          <BarsList
+            data={rightData}
+            valueFormatter={rightValueFormatter ?? ((v) => fmtScore(v))}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function StatsPage({
   overview,
   overTime,
-  films,
-  cameras,
-  colors,
+  filmsByCount,
+  filmsByScore,
+  camerasByCount,
+  camerasByScore,
+  colorsByCount,
+  colorsByScore,
+  keywordsByCount,
+  keywordsByScore,
 }: StatsProps) {
   const d = overview.data;
 
@@ -73,22 +128,52 @@ export default function StatsPage({
     "average score": Math.round(p.avgScore ?? 0),
   }));
 
-  const filmsData = (films.data ?? []).slice(0, 12).map((f, i) => ({
+  const filmsCountData = (filmsByCount.data ?? []).map((f, i) => ({
     name: `${f.filmMake ?? ""} ${f.filmType ?? ""}`.trim(),
     value: f.postCount ?? 0,
     color: PIE_COLORS[i % PIE_COLORS.length],
   }));
 
-  const camerasData = (cameras.data ?? []).slice(0, 12).map((c, i) => ({
+  const filmsScoreData = (filmsByScore.data ?? []).map((f, i) => ({
+    name: `${f.filmMake ?? ""} ${f.filmType ?? ""}`.trim(),
+    value: Math.round(f.avgScore ?? 0),
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  }));
+
+  const camerasCountData = (camerasByCount.data ?? []).map((c, i) => ({
     name: `${c.cameraMake ?? ""} ${c.cameraModel ?? ""}`.trim(),
     value: c.postCount ?? 0,
     color: PIE_COLORS[i % PIE_COLORS.length],
   }));
 
-  const colorsData = (colors.data ?? []).map((c) => ({
+  const camerasScoreData = (camerasByScore.data ?? []).map((c, i) => ({
+    name: `${c.cameraMake ?? ""} ${c.cameraModel ?? ""}`.trim(),
+    value: Math.round(c.avgScore ?? 0),
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  }));
+
+  const colorsCountData = (colorsByCount.data ?? []).map((c) => ({
     name: c.htmlName ?? "",
     value: c.postCount ?? 0,
     color: c.hex ?? "#888",
+  }));
+
+  const colorsScoreData = (colorsByScore.data ?? []).map((c) => ({
+    name: c.htmlName ?? "",
+    value: Math.round(c.avgScore ?? 0),
+    color: c.hex ?? "#888",
+  }));
+
+  const keywordsCountData = (keywordsByCount.data ?? []).map((k, i) => ({
+    name: k.word ?? "",
+    value: k.postCount ?? 0,
+    color: PIE_COLORS[i % PIE_COLORS.length],
+  }));
+
+  const keywordsScoreData = (keywordsByScore.data ?? []).map((k, i) => ({
+    name: k.word ?? "",
+    value: Math.round(k.avgScore ?? 0),
+    color: PIE_COLORS[i % PIE_COLORS.length],
   }));
 
   return (
@@ -155,34 +240,45 @@ export default function StatsPage({
         />
       </section>
 
-      <section className={styles.section}>
-        <Title order={2} className={styles.sectionTitle}>
-          Top Films, Cameras &amp; Colors
-        </Title>
-        <div className={styles.pieRow}>
-          <BarsList
-            data={filmsData}
-            minBarSize={200}
-            valueFormatter={(value) => value.toLocaleString("en-US")}
-            barsLabel="Films"
-            valueLabel="Posts"
-          />
-          <BarsList
-            data={camerasData}
-            minBarSize={100}
-            valueFormatter={(value) => value.toLocaleString("en-US")}
-            barsLabel="Cameras"
-            valueLabel="Posts"
-          />
-          <BarsList
-            data={colorsData}
-            minBarSize={50}
-            valueFormatter={(value) => value.toLocaleString("en-US")}
-            barsLabel="Colors"
-            valueLabel="Posts"
-          />
-        </div>
-      </section>
+      <ChartPair
+        title="Films"
+        leftLabel="Most shot"
+        rightLabel="Highest rated"
+        leftData={filmsCountData}
+        rightData={filmsScoreData}
+        leftValueFormatter={(v) => v.toLocaleString() + " posts"}
+        rightValueFormatter={(v) => "avg " + fmtScore(v)}
+      />
+
+      <ChartPair
+        title="Cameras"
+        leftLabel="Most shot"
+        rightLabel="Highest rated"
+        leftData={camerasCountData}
+        rightData={camerasScoreData}
+        leftValueFormatter={(v) => v.toLocaleString() + " posts"}
+        rightValueFormatter={(v) => "avg " + fmtScore(v)}
+      />
+
+      <ChartPair
+        title="Colors"
+        leftLabel="Most common"
+        rightLabel="Highest rated"
+        leftData={colorsCountData}
+        rightData={colorsScoreData}
+        leftValueFormatter={(v) => v.toLocaleString() + " posts"}
+        rightValueFormatter={(v) => "avg " + fmtScore(v)}
+      />
+
+      <ChartPair
+        title="Keywords"
+        leftLabel="Most used"
+        rightLabel="Highest rated"
+        leftData={keywordsCountData}
+        rightData={keywordsScoreData}
+        leftValueFormatter={(v) => v.toLocaleString() + " posts"}
+        rightValueFormatter={(v) => "avg " + fmtScore(v)}
+      />
     </div>
   );
 }

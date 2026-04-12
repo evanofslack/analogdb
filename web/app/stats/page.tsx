@@ -2,6 +2,7 @@ import {
   getStatsCameras,
   getStatsColors,
   getStatsFilms,
+  getStatsKeywords,
   getStatsOverview,
   getStatsPostsOverTime,
 } from "@app/actions/stats";
@@ -21,12 +22,28 @@ export const revalidate = 3600;
 export default async function StatsPageRoute() {
   const isAdmin = await checkAdminAuth();
 
-  const [overview, overTime, films, cameras, colors] = await Promise.all([
+  const [
+    overview,
+    overTime,
+    filmsByCount,
+    filmsByScore,
+    camerasByCount,
+    camerasByScore,
+    colorsByCount,
+    colorsByScore,
+    keywordsByCount,
+    keywordsByScore,
+  ] = await Promise.all([
     getStatsOverview({}),
     getStatsPostsOverTime({ granularity: "month", start: 1640995200 }), // 2022-01-01
-    getStatsFilms({ limit: 20, metric: "count" }),
-    getStatsCameras({ limit: 20, metric: "count" }),
-    getStatsColors({ limit: 30 }),
+    getStatsFilms({ limit: 12, metric: "count" }),
+    getStatsFilms({ limit: 12, metric: "score" }),
+    getStatsCameras({ limit: 12, metric: "count" }),
+    getStatsCameras({ limit: 12, metric: "score" }),
+    getStatsColors({ limit: 12, metric: "count" }),
+    getStatsColors({ limit: 12, metric: "score" }),
+    getStatsKeywords({ limit: 12, metric: "count" }),
+    getStatsKeywords({ limit: 12, metric: "score" }),
   ]);
 
   return (
@@ -35,9 +52,14 @@ export default async function StatsPageRoute() {
       <StatsPage
         overview={overview}
         overTime={overTime}
-        films={films}
-        cameras={cameras}
-        colors={colors}
+        filmsByCount={filmsByCount}
+        filmsByScore={filmsByScore}
+        camerasByCount={camerasByCount}
+        camerasByScore={camerasByScore}
+        colorsByCount={colorsByCount}
+        colorsByScore={colorsByScore}
+        keywordsByCount={keywordsByCount}
+        keywordsByScore={keywordsByScore}
       />
     </div>
   );

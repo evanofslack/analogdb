@@ -45,6 +45,13 @@ type StatsColor struct {
 	Hex        string  `json:"hex" example:"#837d5c"`
 	PostCount  int     `json:"post_count" example:"5100"`
 	AvgPercent float64 `json:"avg_percent" example:"0.38"`
+	AvgScore   float64 `json:"avg_score" example:"820.5"`
+}
+
+type StatsKeyword struct {
+	Word      string  `json:"word" example:"35mm"`
+	PostCount int     `json:"post_count" example:"3200"`
+	AvgScore  float64 `json:"avg_score" example:"760.3"`
 }
 
 type StatsMeta struct {
@@ -66,4 +73,5 @@ type StatsService interface {
 	GetFilmStats(ctx context.Context, filter *StatsFilter) ([]*StatsFilm, error)
 	GetCameraStats(ctx context.Context, filter *StatsFilter) ([]*StatsCamera, error)
 	GetColorStats(ctx context.Context, filter *StatsFilter) ([]*StatsColor, error)
+	GetKeywordStats(ctx context.Context, filter *StatsFilter) ([]*StatsKeyword, error)
 }
