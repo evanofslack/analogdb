@@ -210,9 +210,9 @@ func main() {
 
 func fatal(logger *logger.Logger, err error) {
 	if logger != nil {
-		logger.Error("Fatal error, exiting")
+		logger.Error("Fatal error, exiting", "error", err)
 	} else {
-		err := fmt.Errorf("fatal error, exiting; er=%w", err)
+		err := fmt.Errorf("fatal error, exiting; err=%w", err)
 		fmt.Fprintln(os.Stderr, err)
 	}
 	os.Exit(1)
