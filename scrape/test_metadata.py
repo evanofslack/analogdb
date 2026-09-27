@@ -52,7 +52,7 @@ def main():
     extractor = MetadataExtractor(client, model)
     print(f"Using model: {model}\n")
 
-    metadatas, _ = extractor.extract(TEST_TITLES, films, cameras)
+    metadatas = extractor.extract(TEST_TITLES, films, cameras).metadata
 
     cases = [
         # (title_snippet, metadata, field_checks: [(label, actual, expected), ...])
