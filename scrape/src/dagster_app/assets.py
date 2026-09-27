@@ -35,6 +35,8 @@ daily_partitions = dg.TimeWindowPartitionsDefinition(
     fmt="%Y-%m-%d",
 )
 
+MIN_POSTS_FOR_COMMENTS = 5
+
 
 @dg.asset(partitions_def=daily_partitions, group_name="analogdb")
 def analogdb_posts(
@@ -440,6 +442,17 @@ def updated_reddit_comments(
     for p in analogdb_posts:
         c = r.scrape_comments(p.permalink)
         post_comments.append((p, c))
+
+    comment_count = sum(len(c) for _, c in post_comments)
+    context.log.info(
+        f"Scraped {comment_count} reddit comments from {len(post_comments)} posts for partition {context.partition_key}"
+    )
+    if len(post_comments) >= MIN_POSTS_FOR_COMMENTS and comment_count == 0:
+        raise dg.Failure(
+            f"No reddit comments found across {len(post_comments)} posts for partition {context.partition_key}"
+        )
+    context.add_output_metadata({"comment_count": comment_count})
+
     context.log.info(
         f"Created {len(post_comments)} updated reddit comments for partition {context.partition_key}"
     )
