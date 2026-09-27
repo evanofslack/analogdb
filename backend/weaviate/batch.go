@@ -115,12 +115,14 @@ func downloadAndEncodePost(post *analogdb.Post, wg *sync.WaitGroup, encodes chan
 		fmt.Println("image download request errored with resp:")
 		fmt.Println(resp)
 		failed <- id
+		return
 	}
 	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		failed <- id
+		return
 	}
 	encoded := base64.StdEncoding.EncodeToString(data)
 	encodes <- encoded
@@ -161,6 +163,9 @@ func newPictureObject(image string, postID int, grayscale bool, nsfw bool, sproc
 }
 
 func batchBy[T any](items []T, batchSize int) (batchs [][]T) {
+	if batchSize <= 0 {
+		batchSize = len(items)
+	}
 	for batchSize < len(items) {
 		items, batchs = items[batchSize:], append(batchs, items[0:batchSize:batchSize])
 	}
