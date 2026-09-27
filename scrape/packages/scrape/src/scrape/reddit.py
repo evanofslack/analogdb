@@ -54,28 +54,23 @@ class RedditScraper:
 
         # iterate over posts comments and convert to native type
         for c in submission.comments.list():
-            try:
-                if c is None:
-                    continue
-
-                if c is not Comment:
-                    continue
-                # deleted account's comments have text but no author
-                if c.author.name is None:
-                    author = "deleted"
-                else:
-                    author = c.author.name
-
-                comment = RedditComment(
-                    body=c.body,
-                    score=c.score,
-                    author=f"u/{author}",
-                    time=int(c.created_utc),
-                    permalink=f"{REDDIT_URL}{c.permalink}",
-                )
-                comments.append(comment)
-            except Exception:
+            if not isinstance(c, Comment):
                 continue
+
+            # deleted account's comments have text but no author
+            if c.author is None:
+                author = "deleted"
+            else:
+                author = c.author.name
+
+            comment = RedditComment(
+                body=c.body,
+                score=c.score,
+                author=f"u/{author}",
+                time=int(c.created_utc),
+                permalink=f"{REDDIT_URL}{c.permalink}",
+            )
+            comments.append(comment)
 
         return comments
 
