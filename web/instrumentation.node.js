@@ -5,7 +5,7 @@ import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-node";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 
 const resource = resourceFromAttributes({
-  [ATTR_SERVICE_NAME]: "api-service",
+  [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || "analogdb-web",
 });
 
 const spanProcessor = new SimpleSpanProcessor(
@@ -22,7 +22,7 @@ const sdk = new NodeSDK({
 });
 
 console.log("OpenTelemetry initializing...");
-console.log(`Service: ${process.env.OTEL_SERVICE_NAME || "nextjs-app"}`);
+console.log(`Service: ${process.env.OTEL_SERVICE_NAME || "analogdb-web"}`);
 console.log(
   `Endpoint: ${
     process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
