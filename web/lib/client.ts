@@ -1,3 +1,5 @@
+import "server-only";
+
 import {
   CamerasApi,
   Configuration,
@@ -11,10 +13,6 @@ const username = process.env.AUTH_USERNAME;
 const password = process.env.AUTH_PASSWORD;
 const auth = Buffer.from(`${username}:${password}`).toString("base64");
 
-console.log("Creating authenticated client");
-console.log("User:", process.env.AUTH_USERNAME);
-console.log("Password:", process.env.AUTH_PASSWORD);
-
 const config = new Configuration({
   basePath: baseURL,
   username: username,
@@ -22,17 +20,19 @@ const config = new Configuration({
   headers: {
     Authorization: `Basic ${auth}`, // add auth headers for all requests to bypass rate limit
   },
-  middleware: [
-    {
-      pre: async (context) => {
-        console.log(
-          `Request: method=${context.init.method}, url=${context.url}`
-        );
-        // console.log("Request headers:", context.init.headers);
-        return Promise.resolve(context);
-      },
-    },
-  ],
+  middleware:
+    process.env.NODE_ENV === "production"
+      ? []
+      : [
+          {
+            pre: async (context) => {
+              console.log(
+                `Request: method=${context.init.method}, url=${context.url}`
+              );
+              return Promise.resolve(context);
+            },
+          },
+        ],
 });
 
 export const postApi: PostApi = new PostApi(config);
