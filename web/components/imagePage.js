@@ -33,14 +33,11 @@ async function handleDelete(postId) {
   }
 }
 
-async function downloadImage(targetImage, name) {
+async function downloadImage(id) {
   try {
-    const downloadUrl = `/api/download?url=${encodeURIComponent(
-      targetImage
-    )}&filename=analogdb-${name}.jpg`;
     const link = document.createElement("a");
-    link.href = downloadUrl;
-    link.download = `analogdb-${name}.jpg`;
+    link.href = `/api/download/${id}`;
+    link.download = "";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -83,7 +80,7 @@ export default function ImagePage(props) {
               <ActionIcon
                 variant="subtle"
                 color="gray"
-                onClick={() => downloadImage(post.images[3].url, post.id)}
+                onClick={() => downloadImage(post.id)}
               >
                 <AiOutlineDownload size="24px" />
               </ActionIcon>
