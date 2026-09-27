@@ -53,13 +53,14 @@ class MetadataResource(ConfigurableResource):
     openai_url: str = ""
     openai_key: str = ""
     openai_model: str = "google/gemini-2.5-flash"
+    batch_size: int = 25
 
     def client(self) -> MetadataExtractor:
         ai = OpenAI(
             base_url=self.openai_url,
             api_key=self.openai_key,
         )
-        extractor = MetadataExtractor(ai, self.openai_model)
+        extractor = MetadataExtractor(ai, self.openai_model, self.batch_size)
         return extractor
 
 
