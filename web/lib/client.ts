@@ -5,12 +5,12 @@ import {
   PostApi,
   PostsApi,
 } from "analogdb-generated";
-import { version } from "../package.json";
+import pkg from "../package.json";
 import { baseURL } from "./constants";
 
 const username = process.env.AUTH_USERNAME;
 const password = process.env.AUTH_PASSWORD;
-const userAgent = `analogdb-web/${version}`;
+const userAgent = `analogdb-web/${pkg.version}`;
 const auth = Buffer.from(`${username}:${password}`).toString("base64");
 
 console.log("Creating authenticated client");
