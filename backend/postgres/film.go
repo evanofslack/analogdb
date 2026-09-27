@@ -172,6 +172,10 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 
 		films = append(films, film)
 	}
+	if err := rows.Err(); err != nil {
+		db.logger.ErrorContext(ctx, "Find films", "error", err)
+		return nil, err
+	}
 
 	if err = tx.Commit(); err != nil {
 		db.logger.ErrorContext(ctx, "Find films", "error", err)

@@ -53,6 +53,9 @@ func findAuthors(ctx context.Context, tx *sql.Tx) ([]string, error) {
 		}
 		authors = append(authors, author)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	err = tx.Commit()
 	if err != nil {
 		return nil, err

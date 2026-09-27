@@ -64,6 +64,9 @@ func getKeywordSummary(ctx context.Context, tx *sql.Tx, limit int) (*[]analogdb.
 		}
 		keywords = append(keywords, kw)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
