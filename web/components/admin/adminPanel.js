@@ -1,6 +1,6 @@
 import Footer from "@components/footer";
 import Header from "@components/header";
-import { logoutAction } from "@lib/auth";
+import { logoutAction } from "@app/actions/auth";
 import { Button, Container, Group, Text, Title } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
 import styles from "./adminPanel.module.css";
