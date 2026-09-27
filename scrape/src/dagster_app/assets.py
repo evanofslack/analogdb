@@ -131,24 +131,37 @@ def title_metadatas(
     analogdb_cameras: List[adb.Camera],
 ) -> Result[PhotoMetadata]:
     posts = [p for _, p in reddit_posts.successful().items()]
-    titles = [f"title: {p.title} description: {p.selftext}" for p in posts]
     titles = [
         f"title: {p.title}"
         + (f" description: {p.selftext}" if p.selftext is not None else "")
         for p in posts
     ]
-    metadatas, _ = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
+    extracted = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
+    metadatas = extracted.metadata
 
-    # context.log.debug(f"Extract title metadata with prompt:\n{prompt}")
-    for t, m in zip(titles, metadatas):
+    for t, m in zip(titles, metadatas, strict=True):
         context.log.debug(f"Extracted title metadata from {t}, metadata: {m}")
+
+    if extracted.failed > 0:
+        context.log.warn(
+            f"Failed to extract title metadata for {extracted.failed} of {len(titles)} posts"
+        )
+    if titles and extracted.failed == len(titles):
+        context.log.warn(
+            "Failed to extract title metadata for all posts, uploading without metadata"
+        )
 
     data = {}
     status = {}
-    for m, p in zip(metadatas, posts):
+    for m, p in zip(metadatas, posts, strict=True):
         id = p.permalink
         data[id] = m
         status[id] = Status.SUCCESS
+
+    with_metadata = len([m for m in metadatas if not m.is_empty()])
+    context.add_output_metadata(
+        {"llm_failed": extracted.failed, "with_metadata": with_metadata}
+    )
 
     result = Result(data=data, status=status)
     context.log.info(f"Extracted title metadata from {result.successful_count()} posts")
@@ -373,14 +386,18 @@ def updated_post_title_metadatas(
         + (f" description: {p.description}" if p.description is not None else "")
         for p in analogdb_posts
     ]
-    metadatas, _ = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
-    if len(analogdb_posts) != len(metadatas):
-        context.log.error(
-            f"Unequal count of posts and extracted metadata, {len(analogdb_posts)} != {len(metadatas)}"
+    extracted = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
+    if extracted.failed > 0:
+        context.log.warn(
+            f"Failed to extract title metadata for {extracted.failed} of {len(titles)} posts"
         )
-        raise Exception("Unequal count of posts and extracted metadata")
 
-    for p, m in zip(analogdb_posts, metadatas):
+    for p, m in zip(analogdb_posts, extracted.metadata, strict=True):
+        if m.is_empty():
+            context.log.debug(
+                f"Skip create patch for empty post title metadata, title={p.title}"
+            )
+            continue
         meta = adb.PhotoMetadata(
             m.camera_make,
             m.camera_model,
@@ -390,11 +407,6 @@ def updated_post_title_metadatas(
             m.focal_length,
             m.aperture,
         )
-        if meta.is_empty() or m.is_empty():
-            context.log.debug(
-                f"Skip create patch for empty post title metadata, title={p.title}, empty={meta.is_empty()}, empty={m.is_empty()}, metadata={meta}"
-            )
-            continue
         context.log.debug(
             f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ""}, metadata={meta}"
         )

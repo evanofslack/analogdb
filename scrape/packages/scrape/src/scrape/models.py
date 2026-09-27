@@ -71,6 +71,12 @@ class PhotoMetadata:
 
 
 @dataclass
+class ExtractResult:
+    metadata: List[PhotoMetadata]
+    failed: int
+
+
+@dataclass
 class Keyword:
     word: str
     weight: float

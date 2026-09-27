@@ -1,11 +1,11 @@
 import json
 import re
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from analogdb.models import Camera, Film
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 
-from .models import PhotoMetadata
+from .models import ExtractResult, PhotoMetadata
 
 
 class MetadataExtractor:
@@ -36,6 +36,7 @@ class MetadataExtractor:
     }
     VALID_FOCAL_LENGTH_RANGE = (8, 800)  # 8mm to 800mm
     VALID_APERTURE_RANGE = (0.7, 32.0)  # f/0.7 to f/32
+    MAX_ATTEMPTS = 2
 
     SYSTEM_PROMPT = """You are a photo metadata extraction assistant. Extract specific technical information from photo post titles and return as a JSON array. Only extract explicitly mentioned or clearly implied information. Leave fields null rather than guess. Accuracy with fewer fields is better than inaccuracy. Metadata is more likely to be inside containers like '[]' or '()' and may be separated by space, commas, /, or | characters.
 
@@ -85,23 +86,32 @@ Validation rules:
 - If camera make found but camera model not matched, ok to just set camera make
 - If film make found but film type not matched, ok to just set film make"""
 
-    def __init__(self, openai: OpenAI, llm_model: str):
+    def __init__(self, openai: OpenAI, llm_model: str, batch_size: int = 25):
         self.openai = openai
         self.llm_model = llm_model
+        self.batch_size = batch_size
 
     def extract(
         self,
         titles: List[str],
         films: List[Film],
         cameras: List[Camera],
-    ) -> Tuple[List[PhotoMetadata], str]:
-        ids: list[int] = list(range(1, len(titles) + 1))
-        prompt = self._create_prompt(ids, titles, films, cameras)
-        posts_raw = self._query_metadata_llm(prompt)
-        posts = []
-        for id, post, title in zip(ids, posts_raw, titles):
-            posts.append(self._validate_metadata(post, id, title, films, cameras))
-        return posts, prompt
+    ) -> ExtractResult:
+        results = [PhotoMetadata() for _ in titles]
+        failed = 0
+        for start in range(0, len(titles), self.batch_size):
+            chunk = titles[start : start + self.batch_size]
+            ids = list(range(1, len(chunk) + 1))
+            by_id = self._query_chunk(ids, chunk, films, cameras)
+            for id, title in zip(ids, chunk):
+                m = by_id.get(id)
+                if m is None:
+                    failed += 1
+                    continue
+                results[start + id - 1] = self._validate_metadata(
+                    m, title, films, cameras
+                )
+        return ExtractResult(metadata=results, failed=failed)
 
     def _create_prompt(
         self,
@@ -120,7 +130,24 @@ Validation rules:
             prompt += "\n" + f"post_id: {id}, {clean_title}"
         return prompt
 
-    def _query_metadata_llm(self, prompt: str) -> List[PhotoMetadata]:
+    def _query_chunk(
+        self,
+        ids: List[int],
+        titles: List[str],
+        films: List[Film],
+        cameras: List[Camera],
+    ) -> Dict[int, PhotoMetadata]:
+        prompt = self._create_prompt(ids, titles, films, cameras)
+        for _ in range(self.MAX_ATTEMPTS):
+            try:
+                items = self._query_metadata_llm(prompt)
+            except (OpenAIError, json.JSONDecodeError):
+                continue
+            if items is not None:
+                return self._parse_metadata_llm(items, ids)
+        return {}
+
+    def _query_metadata_llm(self, prompt: str) -> Optional[List]:
         resp = self.openai.chat.completions.create(
             extra_headers={
                 "HTTP-Referer": "analogdb.com",
@@ -137,69 +164,73 @@ Validation rules:
 
         content = resp.choices[0].message.content
         if content is None:
-            return [PhotoMetadata()]
+            return None
 
         content = content.strip()
         if content.startswith("```"):
             content = re.sub(r"^```(?:json)?\s*", "", content)
             content = re.sub(r"\s*```$", "", content)
 
-        try:
-            j = json.loads(content)
-            return self._parse_metadata_llm(j)
-        except json.JSONDecodeError:
-            return [PhotoMetadata()]
+        data = json.loads(content)
+        # response_format=json_object wraps arrays in an object — unwrap any list value
+        if isinstance(data, dict):
+            data = next((v for v in data.values() if isinstance(v, list)), None)
+        if not isinstance(data, list):
+            return None
+        return data
 
-    def _parse_metadata_llm(self, json_str: str) -> list[PhotoMetadata]:
-        """Parse JSON string to list of PhotoMetadata with manual field mapping."""
-        try:
-            data = json.loads(json_str) if isinstance(json_str, str) else json_str
-            # response_format=json_object wraps arrays in an object — unwrap any list value
-            if isinstance(data, dict):
-                for v in data.values():
-                    if isinstance(v, list):
-                        data = v
-                        break
-                else:
-                    return [PhotoMetadata()]
-            if not isinstance(data, list):
-                return [PhotoMetadata()]
+    def _parse_metadata_llm(
+        self, items: List, ids: List[int]
+    ) -> Dict[int, PhotoMetadata]:
+        by_id: Dict[int, PhotoMetadata] = {}
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            id = self._parse_post_id(item.get("post_id"))
+            if id not in ids or id in by_id:
+                continue
+            by_id[id] = PhotoMetadata(
+                post_id=id,
+                camera_make=item.get("camera_make"),
+                camera_model=item.get("camera_model"),
+                film_make=item.get("film_make"),
+                film_type=item.get("film_type"),
+                film_speed=item.get("film_speed"),
+                focal_length=item.get("focal_length"),
+                aperture=item.get("aperture"),
+            )
+        return by_id
 
-            metadata_list = []
-            for item in data:
-                raw_id = item.get("post_id")
-                metadata = PhotoMetadata(
-                    post_id=int(raw_id) if raw_id is not None else None,
-                    camera_make=item.get("camera_make"),
-                    camera_model=item.get("camera_model"),
-                    film_make=item.get("film_make"),
-                    film_type=item.get("film_type"),
-                    film_speed=item.get("film_speed"),
-                    focal_length=item.get("focal_length"),
-                    aperture=item.get("aperture"),
-                )
-                metadata_list.append(metadata)
-            return metadata_list
-        except (json.JSONDecodeError, TypeError, KeyError):
-            return [PhotoMetadata()]
+    def _parse_post_id(self, raw_id) -> Optional[int]:
+        if isinstance(raw_id, bool):
+            return None
+        if isinstance(raw_id, int):
+            return raw_id
+        if isinstance(raw_id, str) and raw_id.strip().isdigit():
+            return int(raw_id.strip())
+        return None
 
     def _validate_metadata(
         self,
         metadata: PhotoMetadata,
-        id: int,
         title: str,
         films: List[Film],
         cameras: List[Camera],
     ) -> PhotoMetadata:
         clean = PhotoMetadata()
-        # parse error, post id sanity check didn't match
-        if metadata.post_id != id:
-            return clean
 
         title = title.lower()
 
         clean.camera_make = self._validate_camera_make(metadata.camera_make, cameras)
         clean.camera_model = self._validate_camera_model(metadata.camera_model, cameras)
+        # drop model if the make/model pair is not a known camera
+        if clean.camera_make is not None and clean.camera_model is not None:
+            pairs = {
+                (camera.make.lower().strip(), camera.model.lower().strip())
+                for camera in cameras
+            }
+            if (clean.camera_make, clean.camera_model) not in pairs:
+                clean.camera_model = None
         # lookup make from model (only if exact make match)
         if clean.camera_model is not None and clean.camera_make is None:
             matching_cameras = [
@@ -277,11 +308,15 @@ Validation rules:
         if film_type and film_type not in types:
             film_type = None
 
-        # lookup make from type
+        # lookup make from type (only if exactly one make has that type)
         if film_type and film_make is None:
-            for film in films:
-                if film.type == film_type:
-                    film_make = film.make
+            matching_makes = {
+                film.make.lower().strip()
+                for film in films
+                if film.type.lower().strip() == film_type
+            }
+            if len(matching_makes) == 1:
+                film_make = matching_makes.pop()
 
         return film_make, film_type
 
