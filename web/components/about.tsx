@@ -80,7 +80,7 @@ export default function About(props: AboutProps) {
     };
   }, [allSimilarityData]);
 
-  const apiQuery: string = "curl https://api.analogdb.com/posts";
+  const apiQuery: string = "curl https://api.analogdb.com/v1/posts";
 
   const apiResponse: string = `
 "meta":{
@@ -343,7 +343,7 @@ export default function About(props: AboutProps) {
                 discover images by their visual palette. Search and analyze
                 images by their distinct colors.
               </p>
-              <Link href="/search?color=red" className={styles.link}>
+              <Link href="/?color=red" className={styles.link}>
                 explore colors
               </Link>
             </div>
@@ -360,7 +360,7 @@ export default function About(props: AboutProps) {
                 intelligent visual similarity search. Discover photos that share
                 composition and visual patterns.
               </p>
-              <Link href="/search" className={styles.link}>
+              <Link href="/" className={styles.link}>
                 find similar
               </Link>
             </div>
