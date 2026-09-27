@@ -8,7 +8,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import styles from "./infiniteGallery.module.css";
 
 export default function InfiniteGallery(props) {
-  const { response, _ } = props;
+  const { response } = props;
 
   const [posts, setPosts] = useState([]);
   const [nextPageRoute, setNextPageRoute] = useState(null);

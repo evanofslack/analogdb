@@ -128,7 +128,6 @@ export default function ImageTag(props) {
                     color="gray"
                   >
                     <div
-                      key={hex.id}
                       style={color(hex)}
                       className={styles.colorSquare}
                       onClick={() => clipboard.copy(hex)}
