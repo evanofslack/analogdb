@@ -10,7 +10,11 @@ export async function DELETE(request, { params }) {
 
   try {
     const { pid } = await params;
-    const res = await deletePost(pid);
+    const id = Number(pid);
+    if (Number.isNaN(id)) {
+      return new Response("Invalid post id", { status: 400 });
+    }
+    const res = await deletePost(id);
     if (res.ok) {
       return new Response("Post deleted successfully", { status: 200 });
     } else {
