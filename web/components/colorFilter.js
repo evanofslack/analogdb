@@ -7,6 +7,7 @@ export default function ColorFilter({
   setColor,
   onlyIcon,
   buttonStyles,
+  buttonClassNames,
 }) {
   const handleColorClick = (event) => {
     let clickedColor = event.target.id;
@@ -132,6 +133,7 @@ export default function ColorFilter({
           color="gray"
           leftSection={<IconPalette size={onlyIcon ? 22 : 18} stroke={1.5} />}
           styles={() => buttonStyles}
+          classNames={buttonClassNames}
         >
           {!onlyIcon && <span>color</span>}
         </Button>

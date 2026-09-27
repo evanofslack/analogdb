@@ -8,6 +8,7 @@ import {
   Radio,
   SegmentedControl,
   Select,
+  Stack,
 } from "@mantine/core";
 import {
   IconAdjustmentsHorizontal,
@@ -79,7 +80,6 @@ export default function FilterBar({
 
   const handleSearch = (query) => {
     setTextTemp(query);
-    console.log("Searching for: ", query);
   };
 
   const getButtonStyles = (onlyIcon) => ({
@@ -91,14 +91,15 @@ export default function FilterBar({
       color: "#2E2E2E",
       fontWeight: 400,
       borderColor: onlyIcon ? "transparent" : "#CED4DA",
-      "&:hover": {
-        backgroundColor: onlyIcon ? "transparent" : "#fbfbfc",
-      },
-      leftSection: {
-        marginRight: 5,
-      },
+    },
+    leftSection: {
+      marginRight: 5,
     },
   });
+
+  const buttonClassNames = {
+    root: onlyIcon ? styles.buttonIcon : styles.button,
+  };
 
   return (
     <>
@@ -113,6 +114,7 @@ export default function FilterBar({
                 color="gray"
                 leftSection={<IconCamera size={iconSize} stroke={1.5} />}
                 styles={() => getButtonStyles(onlyIcon)}
+                classNames={buttonClassNames}
               >
                 {!onlyIcon && <span>camera</span>}
               </Button>
@@ -123,12 +125,12 @@ export default function FilterBar({
                 <Select
                   value={
                     cameraMake && cameraModel
-                      ? `${cameraMake} - ${cameraModel}`
-                      : ""
+                      ? JSON.stringify([cameraMake, cameraModel])
+                      : null
                   }
                   onChange={(value) => {
                     if (value) {
-                      const [make, model] = value.split(" - ");
+                      const [make, model] = JSON.parse(value);
                       setCameraMake(make);
                       setCameraModel(model);
                     } else {
@@ -136,7 +138,10 @@ export default function FilterBar({
                       setCameraModel(null);
                     }
                   }}
-                  data={cameraOptions.map((c) => c.label)}
+                  data={cameraOptions.map((c) => ({
+                    value: JSON.stringify([c.make, c.model]),
+                    label: c.label,
+                  }))}
                   placeholder="cameras..."
                   searchable
                   clearable
@@ -153,6 +158,7 @@ export default function FilterBar({
                 color="gray"
                 leftSection={<IconMovie size={iconSize} stroke={1.5} />}
                 styles={() => getButtonStyles(onlyIcon)}
+                classNames={buttonClassNames}
               >
                 {!onlyIcon && <span>film</span>}
               </Button>
@@ -162,11 +168,13 @@ export default function FilterBar({
               <div className={styles.filmSelect}>
                 <Select
                   value={
-                    filmMake && filmType ? `${filmMake} - ${filmType}` : ""
+                    filmMake && filmType
+                      ? JSON.stringify([filmMake, filmType])
+                      : null
                   }
                   onChange={(value) => {
                     if (value) {
-                      const [make, type] = value.split(" - ");
+                      const [make, type] = JSON.parse(value);
                       setFilmMake(make);
                       setFilmType(type);
                     } else {
@@ -174,7 +182,10 @@ export default function FilterBar({
                       setFilmType(null);
                     }
                   }}
-                  data={filmOptions.map((f) => f.label)}
+                  data={filmOptions.map((f) => ({
+                    value: JSON.stringify([f.make, f.type]),
+                    label: f.label,
+                  }))}
                   placeholder="films..."
                   searchable
                   clearable
@@ -189,6 +200,7 @@ export default function FilterBar({
             setColor={setColor}
             onlyIcon={onlyIcon}
             buttonStyles={getButtonStyles(onlyIcon)}
+            buttonClassNames={buttonClassNames}
           />
           <Menu shadow="md" width={170}>
             <Menu.Target>
@@ -199,6 +211,7 @@ export default function FilterBar({
                   <IconArrowAutofitWidth size={iconSize} stroke={1.6} />
                 }
                 styles={() => getButtonStyles(onlyIcon)}
+                classNames={buttonClassNames}
               >
                 {!onlyIcon && <span>size</span>}
               </Button>
@@ -218,7 +231,7 @@ export default function FilterBar({
                           min={ratioMinLimit}
                           max={ratioMax}
                           step={0.01}
-                          precision={2}
+                          decimalScale={2}
                           size="xs"
                         />
                       </div>
@@ -232,7 +245,7 @@ export default function FilterBar({
                           min={ratioMin}
                           max={ratioMaxLimit}
                           step={0.01}
-                          precision={2}
+                          decimalScale={2}
                           size="xs"
                         />
                       </div>
@@ -310,6 +323,7 @@ export default function FilterBar({
                 color="gray"
                 leftSection={<IconArrowsSort size={iconSize} stroke={1.5} />}
                 styles={() => getButtonStyles(onlyIcon)}
+                classNames={buttonClassNames}
               >
                 {!onlyIcon && <span>sort</span>}
               </Button>
@@ -317,28 +331,24 @@ export default function FilterBar({
             <Menu.Dropdown>
               <Menu.Label>sort by</Menu.Label>
               <div className={styles.radio}>
-                <Radio.Group
-                  value={sort}
-                  onChange={setSort}
-                  name="Sort"
-                  orientation="vertical"
-                  spacing="md"
-                >
-                  <Radio
-                    value="time"
-                    label="time"
-                    className={styles.radioButton}
-                  />
-                  <Radio
-                    value="score"
-                    label="score"
-                    className={styles.radioButton}
-                  />
-                  <Radio
-                    value="random"
-                    label="random"
-                    className={styles.radioButton}
-                  />
+                <Radio.Group value={sort} onChange={setSort} name="Sort">
+                  <Stack gap="xs">
+                    <Radio
+                      value="time"
+                      label="time"
+                      className={styles.radioButton}
+                    />
+                    <Radio
+                      value="score"
+                      label="score"
+                      className={styles.radioButton}
+                    />
+                    <Radio
+                      value="random"
+                      label="random"
+                      className={styles.radioButton}
+                    />
+                  </Stack>
                 </Radio.Group>
               </div>
             </Menu.Dropdown>
@@ -353,6 +363,7 @@ export default function FilterBar({
                   <IconAdjustmentsHorizontal size={iconSize} stroke={1.5} />
                 }
                 styles={() => getButtonStyles(onlyIcon)}
+                classNames={buttonClassNames}
               >
                 {!onlyIcon && <span>filter</span>}
               </Button>
@@ -406,6 +417,7 @@ export default function FilterBar({
               color="gray"
               leftSection={<IconSearch size={iconSize} stroke={1.5} />}
               styles={() => getButtonStyles(onlyIcon)}
+              classNames={buttonClassNames}
               onClick={() => setSearchModalOpen(true)}
             />
           ) : (
@@ -415,6 +427,7 @@ export default function FilterBar({
               leftSection={<IconSearch size={iconSize} stroke={1.5} />}
               onClick={() => setSearchModalOpen(true)}
               styles={() => getButtonStyles(onlyIcon)}
+              classNames={buttonClassNames}
             >
               search
             </Button>
