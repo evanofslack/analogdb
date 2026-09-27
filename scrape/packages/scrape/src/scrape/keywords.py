@@ -70,7 +70,7 @@ class KeywordExtractor:
         bucket = AWS_BUCKET_COMMENTS
         body = json.dumps([comment.__dict__ for comment in comments]).encode("UTF-8")
         filename = f"{id}.json"
-        s3.put_object(bucket, filename, body, "json")
+        s3.put_object(bucket, filename, body, "application/json")
 
     def _extract_keywords(
         self, text: str, blacklist: Optional[Set[str]] = None

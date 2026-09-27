@@ -38,6 +38,7 @@ scrape_job = dg.define_asset_job(
 
 patch_scores_job = dg.define_asset_job(
     name="update_post_scores",
+    tags={"reddit": "true"},
     selection=[
         analogdb_posts,
         updated_post_scores,
@@ -47,6 +48,7 @@ patch_scores_job = dg.define_asset_job(
 
 patch_descriptions_job = dg.define_asset_job(
     name="update_post_descriptions",
+    tags={"reddit": "true"},
     selection=[
         analogdb_posts,
         updated_post_descriptions,
@@ -56,6 +58,7 @@ patch_descriptions_job = dg.define_asset_job(
 
 patch_keywords_job = dg.define_asset_job(
     name="update_post_keywords",
+    tags={"reddit": "true"},
     selection=[
         analogdb_posts,
         updated_reddit_comments,

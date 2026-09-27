@@ -63,6 +63,9 @@ run_coordinator:
       - key: "dagster/asset_group"
         value: "backfill"
         limit: 5
+      - key: "reddit"
+        value: "true"
+        limit: 2
 
 loggers:
   console:
