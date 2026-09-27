@@ -180,6 +180,6 @@ func (cache *Cache) delete(ctx context.Context, key string) error {
 	if err != nil {
 		cache.logger.ErrorContext(ctx, "Fail delete item in cache", "instance", cache.instance, "error", err)
 	}
-	cache.logger.ErrorContext(ctx, "Finish delete item in cache", "instance", cache.instance)
+	cache.logger.DebugContext(ctx, "Finish delete item in cache", "instance", cache.instance)
 	return err
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"net/http"
-	"runtime/debug"
 	"strconv"
 	"time"
 
@@ -23,12 +22,6 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 		next.ServeHTTP(ww, r)
 
 		defer func() {
-			if rec := recover(); rec != nil {
-				err := rec.(error)
-				server.logger.ErrorContext(ctx, "Caught and recovered", "error", err, "stack", debug.Stack())
-				http.Error(ww, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			}
-
 			// don't log healthcheck requests
 			if p := r.URL.Path; p == healthRoute || p == readyRoute {
 				return
