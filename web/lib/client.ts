@@ -5,10 +5,12 @@ import {
   PostApi,
   PostsApi,
 } from "analogdb-generated";
+import { version } from "../package.json";
 import { baseURL } from "./constants";
 
 const username = process.env.AUTH_USERNAME;
 const password = process.env.AUTH_PASSWORD;
+const userAgent = `analogdb-web/${version}`;
 const auth = Buffer.from(`${username}:${password}`).toString("base64");
 
 console.log("Creating authenticated client");
@@ -21,6 +23,7 @@ const config = new Configuration({
   password: password,
   headers: {
     Authorization: `Basic ${auth}`, // add auth headers for all requests to bypass rate limit
+    "User-Agent": userAgent,
   },
   middleware: [
     {
@@ -45,7 +48,7 @@ export async function authorized_fetch(
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET"
 ): Promise<Response> {
   const url = `${baseURL}${route}`;
-  let headers: Record<string, string> = {};
+  let headers: Record<string, string> = { "User-Agent": userAgent };
 
   if (username && password) {
     const auth = Buffer.from(`${username}:${password}`).toString("base64");
