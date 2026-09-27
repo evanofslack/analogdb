@@ -89,7 +89,7 @@ func TestParseToCameraFilter(t *testing.T) {
 			url:         "/cameras?exclude_zero_counts=true",
 			expectError: false,
 			checkFilter: func(f *analogdb.CameraFilter) bool {
-				return f.IncludeCounts != nil && *f.IncludeCounts == true
+				return f.ExcludeZeroCounts != nil && *f.ExcludeZeroCounts == true
 			},
 		},
 		{
@@ -97,7 +97,7 @@ func TestParseToCameraFilter(t *testing.T) {
 			url:         "/cameras?exclude_zero_counts=false",
 			expectError: false,
 			checkFilter: func(f *analogdb.CameraFilter) bool {
-				return f.IncludeCounts != nil && *f.IncludeCounts == false
+				return f.ExcludeZeroCounts != nil && *f.ExcludeZeroCounts == false
 			},
 		},
 		{

@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -189,7 +188,7 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 // @Router /post/{id} [get]
 func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
-		if identify, err := strconv.Atoi(id); err == nil {
+		if identify, err := stringToInt(id); err == nil {
 			if post, err := s.PostService.FindPostByID(r.Context(), identify); err == nil {
 				if err := encodeResponse(w, r, http.StatusOK, post); err != nil {
 					s.writeError(w, r, err)
@@ -227,7 +226,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var identify int
-	if identify, err = strconv.Atoi(id); err != nil {
+	if identify, err = stringToInt(id); err != nil {
 		s.writeError(w, r, err)
 		return
 	}
@@ -259,6 +258,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 // @Success 201 {object} CreatePostResponse
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 409 {object} analogdb.Error "Post with permalink already exists"
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
@@ -287,8 +287,8 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		toEncode := []int{created.Id}
 		err = s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
 		if err != nil {
-			s.writeError(w, r, err)
-			return
+			s.logger.ErrorContext(r.Context(), "Fail encode created post", "error", err, "post_id", created.Id)
+			s.stats.postEncodeFailures.Inc()
 		}
 	}
 
@@ -325,7 +325,7 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if id := chi.URLParam(r, "id"); id != "" {
-		if identify, err := strconv.Atoi(id); err == nil {
+		if identify, err := stringToInt(id); err == nil {
 			if err := s.PostService.PatchPost(r.Context(), &patchPost, identify); err == nil {
 				success := PatchResponse{Message: "Success, post patched"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
@@ -347,7 +347,7 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Success 200 {object} IDsResponse
 // @Failure 500 {object} analogdb.Error "Internal server error"
-// @Router /posts/ids [get]
+// @Router /ids [get]
 func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
 	ids, err := s.PostService.AllPostIDs(r.Context())
 	if err != nil {
@@ -522,7 +522,7 @@ func paramJoiner(numParams *int) string {
 func stringToBool(query string) (bool, error) {
 	val, err := strconv.ParseBool(query)
 	if err != nil {
-		return false, fmt.Errorf("failed to parse %s to bool, err=%w", query, err)
+		return false, badRequest("failed to parse %s to bool", query)
 	}
 	return val, nil
 }
@@ -530,9 +530,36 @@ func stringToBool(query string) (bool, error) {
 func stringToInt(query string) (int, error) {
 	val, err := strconv.Atoi(query)
 	if err != nil {
-		return 0, fmt.Errorf("failed to parse %s to integer, err=%w", query, err)
+		return 0, badRequest("failed to parse %s to integer", query)
 	}
 	return val, nil
+}
+
+func stringToInt64(query string) (int64, error) {
+	val, err := strconv.ParseInt(query, 10, 64)
+	if err != nil {
+		return 0, badRequest("failed to parse %s to integer", query)
+	}
+	return val, nil
+}
+
+func stringToFloat(query string) (float64, error) {
+	val, err := strconv.ParseFloat(query, 64)
+	if err != nil {
+		return 0, badRequest("failed to parse %s to float", query)
+	}
+	return val, nil
+}
+
+// clampLimit bounds a limit to max, using fallback when below min
+func clampLimit(limit, fallback, min, max int) int {
+	if limit < min {
+		return fallback
+	}
+	if limit > max {
+		return max
+	}
+	return limit
 }
 
 // parse URL for query parameters and convert to PostFilter needed to query db
@@ -552,7 +579,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		case sortRandom.String():
 			filter.Sort = &sortRandom
 		default:
-			return nil, fmt.Errorf("invalid sort parameter %s, valid options are '%s', '%s', '%s'", sort, sortTime, sortScore, sortRandom)
+			return nil, badRequest("invalid sort parameter %s, valid options are '%s', '%s', '%s'", sort, sortTime, sortScore, sortRandom)
 		}
 	}
 
@@ -560,18 +587,13 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		if intLimit, err := stringToInt(limit); err != nil {
 			return nil, err
 		} else {
-			// ensure limit is less than configured max
-			if intLimit <= maxPostsLimit {
-				filter.Limit = &intLimit
-			} else {
-				filter.Limit = &maxPostsLimit
-			}
+			intLimit = clampLimit(intLimit, defaultPostsLimit, 1, maxPostsLimit)
+			filter.Limit = &intLimit
 		}
 	}
 
 	if key := values.Get("page_id"); key != "" {
 		if keyset, err := stringToInt(key); err != nil {
-			err := fmt.Errorf("failed to parse %s to integer, err=%w", key, err)
 			return nil, err
 		} else {
 			filter.Keyset = &keyset
@@ -605,13 +627,15 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	if seed := values.Get("seed"); seed != "" {
 		if seed, err := stringToInt(seed); err != nil {
 			return nil, err
+		} else if seed <= 0 {
+			return nil, badRequest("seed must be a positive integer")
 		} else {
 			filter.Seed = &seed
 		}
 	}
 
 	if id := values.Get("id"); id != "" {
-		if identify, err := strconv.Atoi(id); err != nil {
+		if identify, err := stringToInt(id); err != nil {
 			return nil, err
 		} else {
 			filter.IDs = &[]int{identify}
@@ -627,7 +651,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if start := values.Get("time_start"); start != "" {
-		startInt, err := strconv.ParseInt(start, 10, 64)
+		startInt, err := stringToInt64(start)
 		if err != nil {
 			return nil, err
 		}
@@ -636,7 +660,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if end := values.Get("time_end"); end != "" {
-		endInt, err := strconv.ParseInt(end, 10, 64)
+		endInt, err := stringToInt64(end)
 		if err != nil {
 			return nil, err
 		}
@@ -661,7 +685,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if fs := values.Get("film_speed"); fs != "" {
-		if fsi, err := strconv.Atoi(fs); err != nil {
+		if fsi, err := stringToInt(fs); err != nil {
 			return nil, err
 		} else {
 			filter.FilmSpeed = &fsi
@@ -669,7 +693,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if fl := values.Get("focal_length"); fl != "" {
-		if fli, err := strconv.Atoi(fl); err != nil {
+		if fli, err := stringToInt(fl); err != nil {
 			return nil, err
 		} else {
 			filter.FocalLength = &fli
@@ -683,8 +707,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	if colorPercent, ok := values["min_color"]; ok {
 		percents := []float64{}
 		for _, p := range colorPercent {
-			if percent, err := strconv.ParseFloat(p, 64); err != nil {
-				err := fmt.Errorf("failed to parse %s to float, err=%w", colorPercent, err)
+			if percent, err := stringToFloat(p); err != nil {
 				return nil, err
 			} else {
 				percents = append(percents, percent)
@@ -703,8 +726,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if minWidth := values.Get("width_min"); minWidth != "" {
-		if width, err := strconv.ParseFloat(minWidth, 64); err != nil {
-			err := fmt.Errorf("failed to parse %s to float, err=%w", minWidth, err)
+		if width, err := stringToFloat(minWidth); err != nil {
 			return nil, err
 		} else {
 			filter.Width.Min = &width
@@ -712,8 +734,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if maxWidth := values.Get("width_max"); maxWidth != "" {
-		if width, err := strconv.ParseFloat(maxWidth, 64); err != nil {
-			err := fmt.Errorf("failed to parse %s to float, err=%w", maxWidth, err)
+		if width, err := stringToFloat(maxWidth); err != nil {
 			return nil, err
 		} else {
 			filter.Width.Max = &width
@@ -721,8 +742,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if minHeight := values.Get("height_min"); minHeight != "" {
-		if height, err := strconv.ParseFloat(minHeight, 64); err != nil {
-			err := fmt.Errorf("failed to parse %s to float, err=%w", minHeight, err)
+		if height, err := stringToFloat(minHeight); err != nil {
 			return nil, err
 		} else {
 			filter.Height.Min = &height
@@ -730,8 +750,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if maxHeight := values.Get("height_max"); maxHeight != "" {
-		if height, err := strconv.ParseFloat(maxHeight, 64); err != nil {
-			err := fmt.Errorf("failed to parse %s to float, err=%w", maxHeight, err)
+		if height, err := stringToFloat(maxHeight); err != nil {
 			return nil, err
 		} else {
 			filter.Height.Max = &height
@@ -739,8 +758,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if minRatio := values.Get("ratio_min"); minRatio != "" {
-		if ratio, err := strconv.ParseFloat(minRatio, 64); err != nil {
-			err := fmt.Errorf("failed to parse %s to float, err=%w", minRatio, err)
+		if ratio, err := stringToFloat(minRatio); err != nil {
 			return nil, err
 		} else {
 			filter.AspectRatio.Min = &ratio
@@ -748,8 +766,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if maxRatio := values.Get("ratio_max"); maxRatio != "" {
-		if ratio, err := strconv.ParseFloat(maxRatio, 64); err != nil {
-			err := fmt.Errorf("failed to parse %s to float, err=%w", maxRatio, err)
+		if ratio, err := stringToFloat(maxRatio); err != nil {
 			return nil, err
 		} else {
 			filter.AspectRatio.Max = &ratio
@@ -766,11 +783,11 @@ func parseToSimilarityFilter(r *http.Request) (*analogdb.PostSimilarityFilter, e
 	// there must be a post id
 	id := chi.URLParam(r, "id")
 	if id == "" {
-		return nil, errors.New("must include post id to query similar from")
+		return nil, badRequest("must include post id to query similar from")
 	}
-	postID, err := strconv.Atoi(id)
+	postID, err := stringToInt(id)
 	if err != nil {
-		return nil, fmt.Errorf("post id to query similar from must convert to int, error=%w", err)
+		return nil, err
 	}
 	filter.ID = &postID
 
@@ -779,15 +796,11 @@ func parseToSimilarityFilter(r *http.Request) (*analogdb.PostSimilarityFilter, e
 	filter.ExcludeIDs = &excluded
 
 	if limit := r.URL.Query().Get("page_size"); limit != "" {
-		if intLimit, err := strconv.Atoi(limit); err != nil {
+		if intLimit, err := stringToInt(limit); err != nil {
 			return nil, err
 		} else {
-			// ensure limit is less than configured max
-			if intLimit <= maxSimilarityLimit {
-				filter.Limit = &intLimit
-			} else {
-				filter.Limit = &maxSimilarityLimit
-			}
+			intLimit = clampLimit(intLimit, defaultSimilarityLimit, 1, maxSimilarityLimit)
+			filter.Limit = &intLimit
 		}
 	}
 

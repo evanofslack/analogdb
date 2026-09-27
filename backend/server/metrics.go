@@ -15,10 +15,11 @@ import (
 
 // track stats from http server
 type httpStats struct {
-	requestsTotal   *prometheus.CounterVec
-	requestDuration *prometheus.HistogramVec
-	requestSize     *prometheus.SummaryVec
-	responseSize    *prometheus.SummaryVec
+	requestsTotal      *prometheus.CounterVec
+	requestDuration    *prometheus.HistogramVec
+	requestSize        *prometheus.SummaryVec
+	responseSize       *prometheus.SummaryVec
+	postEncodeFailures prometheus.Counter
 }
 
 func newHttpStats() *httpStats {
@@ -61,11 +62,21 @@ func newHttpStats() *httpStats {
 		[]string{"method", "code", "path"},
 	)
 
+	postEncodeFailures := prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.PostSubsystem,
+			Name:      "encode_failures_total",
+			Help:      "Number of created posts that failed to encode",
+		},
+	)
+
 	stats := &httpStats{
-		requestsTotal:   requestsTotal,
-		requestDuration: requestDuration,
-		requestSize:     requestSize,
-		responseSize:    responseSize,
+		requestsTotal:      requestsTotal,
+		requestDuration:    requestDuration,
+		requestSize:        requestSize,
+		responseSize:       responseSize,
+		postEncodeFailures: postEncodeFailures,
 	}
 
 	return stats
@@ -76,6 +87,7 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 	registerer.MustRegister(stats.requestDuration)
 	registerer.MustRegister(stats.requestSize)
 	registerer.MustRegister(stats.responseSize)
+	registerer.MustRegister(stats.postEncodeFailures)
 	return nil
 }
 

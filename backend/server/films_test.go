@@ -105,7 +105,7 @@ func TestParseToFilmFilter(t *testing.T) {
 			url:         "/films?exclude_zero_counts=false",
 			expectError: false,
 			checkFilter: func(f *analogdb.FilmFilter) bool {
-				return f.IncludeCounts != nil && *f.IncludeCounts == false
+				return f.ExcludeZeroCounts != nil && *f.ExcludeZeroCounts == false
 			},
 		},
 		{

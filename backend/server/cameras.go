@@ -2,9 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
@@ -136,7 +134,7 @@ func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
 				filter.Sort = &counts
 			}
 		} else {
-			return nil, fmt.Errorf("invalid sort parameter %s, valid options are 'alphabetical', or 'counts'", sort)
+			return nil, badRequest("invalid sort parameter %s, valid options are 'alphabetical', or 'counts'", sort)
 		}
 	}
 
@@ -144,6 +142,7 @@ func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
 		if intLimit, err := stringToInt(limit); err != nil {
 			return nil, err
 		} else {
+			intLimit = clampLimit(intLimit, 1, 1, maxListLimit)
 			filter.Limit = &intLimit
 		}
 	}
@@ -157,7 +156,7 @@ func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
 	}
 
 	if id := values.Get("id"); id != "" {
-		if identify, err := strconv.Atoi(id); err != nil {
+		if identify, err := stringToInt(id); err != nil {
 			return nil, err
 		} else {
 			filter.IDs = &[]int{identify}
@@ -176,7 +175,7 @@ func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
 		if val, err := stringToBool(excludeZero); err != nil {
 			return nil, err
 		} else {
-			filter.IncludeCounts = &val
+			filter.ExcludeZeroCounts = &val
 		}
 	}
 

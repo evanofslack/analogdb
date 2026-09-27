@@ -17,6 +17,7 @@ const (
 	HttpSubsystem     = "http"
 	CacheSubsystem    = "cache"
 	RedisSubsystem    = "redis"
+	PostSubsystem     = "post"
 )
 
 // track stats from cache

@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	encodePath = "/encode"
+	encodePath             = "/encode"
+	defaultEncodeBatchSize = 20
+	maxEncodeBatchSize     = 100
 )
 
 func (s *Server) mountSimilarityHandlers(r chi.Router) {
@@ -20,12 +22,12 @@ func (s *Server) mountSimilarityHandlers(r chi.Router) {
 }
 
 type encodePostsRequest struct {
-    Ids       []int `json:"ids" examples:"1,2,3,4,5"`
-    BatchSize int   `json:"batch_size" example:"20"`
+	Ids       []int `json:"ids" examples:"1,2,3,4,5"`
+	BatchSize int   `json:"batch_size" example:"20"`
 }
 
 type encodePostsResponse struct {
-    Message string `json:"message" example:"successfully encoded 5 posts"`
+	Message string `json:"message" example:"successfully encoded 5 posts"`
 }
 
 // @Summary Encode posts for similarity matching
@@ -46,7 +48,14 @@ func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing ids or batch_size from request body"}
 		s.writeError(w, r, err)
+		return
 	}
+
+	if len(request.Ids) == 0 {
+		s.writeError(w, r, badRequest("must provide ids to encode"))
+		return
+	}
+	batchSize := clampLimit(request.BatchSize, defaultEncodeBatchSize, 1, maxEncodeBatchSize)
 
 	var message string
 
@@ -55,14 +64,16 @@ func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
 		err := s.SimilarityService.EncodePost(r.Context(), request.Ids[0])
 		if err != nil {
 			s.writeError(w, r, err)
+			return
 		}
 		message = "successfully encoded post"
 
 	} else {
 		// encode batch of posts
-		err := s.SimilarityService.BatchEncodePosts(r.Context(), request.Ids, request.BatchSize)
+		err := s.SimilarityService.BatchEncodePosts(r.Context(), request.Ids, batchSize)
 		if err != nil {
 			s.writeError(w, r, err)
+			return
 		}
 		message = fmt.Sprintf("successfully encoded %d posts", len(request.Ids))
 	}
