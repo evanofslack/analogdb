@@ -136,11 +136,12 @@ func (server *Server) collectStats(next http.Handler) http.Handler {
 
 		next.ServeHTTP(ww, r)
 
+		//nolint:contextcheck // reads route info from the request context
 		defer func() {
 			// grab the path
 			rctx := chi.RouteContext(r.Context())
 			routePattern := strings.Join(rctx.RoutePatterns, "")
-			routePattern = strings.Replace(routePattern, "/*/", "/", -1)
+			routePattern = strings.ReplaceAll(routePattern, "/*/", "/")
 
 			// grab the method and status code
 			method := r.Method

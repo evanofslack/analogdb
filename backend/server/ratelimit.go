@@ -19,7 +19,7 @@ func (server *Server) addRatelimiter() {
 			server.stats.rateLimited.Inc()
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusTooManyRequests)
-			w.Write([]byte(`{"error": "Too many requests"}`))
+			_, _ = w.Write([]byte(`{"error": "Too many requests"}`))
 		}))
 
 	server.router.Use(middleware.Maybe(rateLimiter, server.applyRateLimit))

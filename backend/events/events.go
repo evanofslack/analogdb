@@ -250,7 +250,7 @@ func createTopicIfNotExist(logger *logger.Logger, topic string, brokers []string
 	if err != nil {
 		return fmt.Errorf("failed to dial kafka: %w", err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	// Check if topic exists
 	partitions, err := conn.ReadPartitions(topic)
@@ -268,7 +268,7 @@ func createTopicIfNotExist(logger *logger.Logger, topic string, brokers []string
 	if err != nil {
 		return fmt.Errorf("failed to connect to controller broker: %w", err)
 	}
-	defer controllerConn.Close()
+	defer func() { _ = controllerConn.Close() }()
 
 	topicConfigs := []kafka.TopicConfig{
 		{

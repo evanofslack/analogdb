@@ -20,6 +20,7 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 
 		next.ServeHTTP(ww, r)
 
+		//nolint:contextcheck // event write must outlive the request context
 		defer func() {
 			// don't log healthcheck requests
 			if p := r.URL.Path; p == healthRoute || p == readyRoute {

@@ -71,19 +71,19 @@ func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		wg.Add(1)
-		go func(name string, check analogdb.ReadyService) {
+		go func(ctx context.Context, name string, check analogdb.ReadyService) {
 			defer wg.Done()
 			status := readyOK
-			ctx, cancel := context.WithTimeout(r.Context(), readyCheckTimeout)
+			ctx, cancel := context.WithTimeout(ctx, readyCheckTimeout)
 			defer cancel()
 			if err := check.Readyz(ctx); err != nil {
-				s.logger.WarnContext(r.Context(), "Readiness check failed", "dependency", name, "error", err)
+				s.logger.WarnContext(ctx, "Readiness check failed", "dependency", name, "error", err)
 				status = readyDown
 			}
 			mu.Lock()
 			statuses[name] = status
 			mu.Unlock()
-		}(name, check)
+		}(r.Context(), name, check)
 	}
 	wg.Wait()
 

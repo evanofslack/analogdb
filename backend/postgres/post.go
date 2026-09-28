@@ -1097,7 +1097,6 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 	if a := patch.Aperture; a != nil {
 		set = append(set, fmt.Sprintf("aperture = $%d", index))
 		args = append(args, *a)
-		index++
 	}
 
 	// no update fields provided

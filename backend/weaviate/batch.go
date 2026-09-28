@@ -66,7 +66,7 @@ func (db *DB) batchUploadObjects(ctx context.Context, objects []*models.Object) 
 
 	batcher := db.db.Batch().ObjectsBatcher()
 	for _, obj := range objects {
-		batcher.WithObject(obj)
+		batcher.WithObjects(obj)
 	}
 	resp, err := batcher.Do(ctx)
 	if err != nil {

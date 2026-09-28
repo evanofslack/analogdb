@@ -98,7 +98,9 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	s.server.Addr = ":" + port
 
 	s.stats = newHttpStats()
-	s.stats.register(s.metrics.Registry)
+	if err := s.stats.register(s.metrics.Registry); err != nil {
+		s.logger.Error("Fail register http metrics", "error", err)
+	}
 
 	s.mountMiddleware()
 

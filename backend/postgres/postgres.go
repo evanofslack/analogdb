@@ -79,6 +79,9 @@ func (db *DB) Open() error {
 			otelsql.WithDatabaseName("analogdb"),
 			otelsql.WithSystem(semconv.DBSystemPostgreSQL),
 		)
+		if err != nil {
+			return fmt.Errorf("register db tracing driver: %w", err)
+		}
 		db.logger.Info("Instrumented db with tracing")
 	}
 
@@ -132,7 +135,9 @@ func (db *DB) Close() error {
 	db.cancel()
 
 	if db.db != nil {
-		db.db.Close()
+		if err := db.db.Close(); err != nil {
+			return err
+		}
 	}
 
 	db.logger.Info("Closed db connection")

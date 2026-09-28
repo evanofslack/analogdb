@@ -115,7 +115,7 @@ func (db *DB) uploadObject(ctx context.Context, obj *models.Object) error {
 	defer span.End()
 
 	batcher := db.db.Batch().ObjectsBatcher()
-	_, err := batcher.WithObject(obj).Do(ctx)
+	_, err := batcher.WithObjects(obj).Do(ctx)
 	if err != nil {
 		err = fmt.Errorf("failed to upload to vector DB: %w", err)
 		db.logger.ErrorContext(ctx, "Fail upload object", "error", err)
