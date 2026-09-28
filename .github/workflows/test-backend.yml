@@ -40,6 +40,12 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.14
+          working-directory: ./backend
+
       - name: Run tests
         run: go test -race -coverprofile=coverage.out ./...
         env:

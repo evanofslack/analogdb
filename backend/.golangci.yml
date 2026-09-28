@@ -1,0 +1,39 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - contextcheck
+    - errcheck
+    - gosec
+    - govet
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*database/sql.Rows).Close
+        - (*database/sql.Stmt).Close
+        - (*database/sql.Tx).Rollback
+        - (io.ReadCloser).Close
+    staticcheck:
+      checks:
+        - all
+        - -ST*
+        - -QF*
+    gosec:
+      includes:
+        - G107
+        - G114
+  exclusions:
+    generated: lax
+    rules:
+      # cache writes run in goroutines with a context detached from the request
+      - path: redis/
+        linters:
+          - contextcheck
+    paths:
+      - docs
+      - internal/gen
