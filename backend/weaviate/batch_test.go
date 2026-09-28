@@ -69,10 +69,10 @@ func imageServer(t *testing.T) *httptest.Server {
 			http.NotFound(w, r)
 		case strings.HasPrefix(r.URL.Path, "/html"):
 			w.Header().Set("Content-Type", "text/html")
-			w.Write([]byte("<html></html>"))
+			_, _ = w.Write([]byte("<html></html>"))
 		default:
 			w.Header().Set("Content-Type", "image/jpeg")
-			w.Write([]byte("image" + r.URL.Path))
+			_, _ = w.Write([]byte("image" + r.URL.Path))
 		}
 	}))
 	t.Cleanup(srv.Close)
