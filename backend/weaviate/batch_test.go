@@ -1,8 +1,19 @@
 package weaviate
 
 import (
+	"context"
+	"encoding/base64"
+	"fmt"
+	"math/rand"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
+
+	"github.com/evanofslack/analogdb"
+	"github.com/evanofslack/analogdb/logger"
 )
 
 func TestBatchBy(t *testing.T) {
@@ -28,5 +39,123 @@ func TestBatchBy(t *testing.T) {
 				t.Errorf("expected %v, got %v", tt.expected, result)
 			}
 		})
+	}
+}
+
+func newTestDB(t *testing.T) *DB {
+	t.Helper()
+	l, err := logger.New("error", "debug", "analogdb-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &DB{logger: l}
+}
+
+func testPost(id int, url string) *analogdb.Post {
+	return &analogdb.Post{
+		Id: id,
+		DisplayPost: analogdb.DisplayPost{
+			Images: []analogdb.Image{{Url: url + "/low"}, {Url: url}},
+		},
+	}
+}
+
+func imageServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(time.Duration(rand.Intn(20)) * time.Millisecond)
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/missing"):
+			http.NotFound(w, r)
+		case strings.HasPrefix(r.URL.Path, "/html"):
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte("<html></html>"))
+		default:
+			w.Header().Set("Content-Type", "image/jpeg")
+			w.Write([]byte("image" + r.URL.Path))
+		}
+	}))
+	t.Cleanup(srv.Close)
+	return srv
+}
+
+func TestDownloadAndEncodePostsKeepsOrder(t *testing.T) {
+	srv := imageServer(t)
+
+	var posts []*analogdb.Post
+	for i := 0; i < 50; i++ {
+		posts = append(posts, testPost(i, fmt.Sprintf("%s/%d", srv.URL, i)))
+	}
+
+	results := downloadAndEncodePosts(context.Background(), posts)
+	if len(results) != len(posts) {
+		t.Fatalf("want %d results, got %d", len(posts), len(results))
+	}
+	for i, result := range results {
+		if result.err != nil {
+			t.Fatalf("post %d: %v", i, result.err)
+		}
+		if result.post.Id != posts[i].Id {
+			t.Errorf("result %d has post %d", i, result.post.Id)
+		}
+		want := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("image/%d", result.post.Id)))
+		if result.image != want {
+			t.Errorf("post %d has image of another post", result.post.Id)
+		}
+	}
+}
+
+func TestPostsToPictureObjectsReportsFailures(t *testing.T) {
+	srv := imageServer(t)
+	db := newTestDB(t)
+
+	posts := []*analogdb.Post{
+		testPost(1, srv.URL+"/1"),
+		testPost(2, srv.URL+"/missing"),
+		testPost(3, srv.URL+"/html"),
+		{Id: 4},
+		testPost(5, srv.URL+"/5"),
+	}
+
+	objects, failed := db.postsToPictureObjects(context.Background(), posts)
+	if want := []int{2, 3, 4}; !reflect.DeepEqual(failed, want) {
+		t.Errorf("want failed %v, got %v", want, failed)
+	}
+	if len(objects) != 2 {
+		t.Fatalf("want 2 objects, got %d", len(objects))
+	}
+	for _, obj := range objects {
+		postID := obj.Properties.(map[string]interface{})["post_id"].(int)
+		if obj.ID != pictureID(postID) {
+			t.Errorf("post %d has object ID %s, want %s", postID, obj.ID, pictureID(postID))
+		}
+	}
+}
+
+func TestDownloadAndEncodePostsEmpty(t *testing.T) {
+	if results := downloadAndEncodePosts(context.Background(), nil); len(results) != 0 {
+		t.Errorf("want no results, got %d", len(results))
+	}
+	failed, err := SimilarityService{}.BatchEncodePosts(context.Background(), nil, 0)
+	if err != nil || len(failed) != 0 {
+		t.Errorf("want no failures, got %v, %v", failed, err)
+	}
+}
+
+func TestPictureIDDeterministic(t *testing.T) {
+	a := newPictureObject("a", 42, false, false, false)
+	b := newPictureObject("b", 42, true, true, true)
+	if a.ID == "" || a.ID != b.ID {
+		t.Errorf("want same non-empty ID, got %q and %q", a.ID, b.ID)
+	}
+	if pictureID(42) == pictureID(43) {
+		t.Error("want different IDs for different posts")
+	}
+}
+
+func TestMissingIDs(t *testing.T) {
+	posts := []*analogdb.Post{{Id: 1}, {Id: 3}}
+	if got, want := missingIDs([]int{1, 2, 3, 4}, posts), []int{2, 4}; !reflect.DeepEqual(got, want) {
+		t.Errorf("want %v, got %v", want, got)
 	}
 }

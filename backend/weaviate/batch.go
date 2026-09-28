@@ -2,155 +2,151 @@ package weaviate
 
 import (
 	"context"
-	"encoding/base64"
-	"fmt"
-	"io"
-	"net/http"
-	"sync"
-	"time"
+	"slices"
+	"strconv"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/go-openapi/strfmt"
+	"github.com/google/uuid"
 	"github.com/weaviate/weaviate/entities/models"
+	"golang.org/x/sync/errgroup"
 )
 
-func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error {
+const maxConcurrentDownloads = 10
+
+var pictureNamespace = uuid.NewSHA1(uuid.NameSpaceURL, []byte("https://analogdb.com/picture"))
+
+// pictureID is the deterministic weaviate object ID for a post
+func pictureID(postID int) strfmt.UUID {
+	return strfmt.UUID(uuid.NewSHA1(pictureNamespace, []byte(strconv.Itoa(postID))).String())
+}
+
+// BatchEncodePosts encodes posts in batches and returns the IDs that failed to encode
+func (ss SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) ([]int, error) {
+	failedIDs := []int{}
+	if len(ids) == 0 {
+		return failedIDs, nil
+	}
+
 	batches := batchBy(ids, batchSize)
 	for _, batch := range batches {
 		filter := analogdb.PostFilter{IDs: &batch}
 		posts, _, err := ss.postService.FindPosts(ctx, &filter)
 		if err != nil {
-			return err
+			return failedIDs, err
 		}
-		pictureObjects := postsToPictureObjects(posts)
-		err = ss.db.batchUploadObjects(ctx, pictureObjects)
+		failedIDs = append(failedIDs, missingIDs(batch, posts)...)
+
+		pictureObjects, failedDownloads := ss.db.postsToPictureObjects(ctx, posts)
+		failedIDs = append(failedIDs, failedDownloads...)
+		if len(pictureObjects) == 0 {
+			continue
+		}
+
+		failedUploads, err := ss.db.batchUploadObjects(ctx, pictureObjects)
 		if err != nil {
-			return err
+			return failedIDs, err
+		}
+		for _, post := range posts {
+			if slices.Contains(failedUploads, pictureID(post.Id)) {
+				failedIDs = append(failedIDs, post.Id)
+			}
 		}
 	}
-	return nil
+
+	if len(failedIDs) != 0 {
+		ss.db.logger.WarnContext(ctx, "Fail encode some posts", "failed_ids", failedIDs, "total", len(ids))
+	}
+	return failedIDs, nil
 }
 
-func (db *DB) batchUploadObjects(ctx context.Context, objects []*models.Object) error {
+// batchUploadObjects upserts objects and returns the IDs of objects that failed
+func (db *DB) batchUploadObjects(ctx context.Context, objects []*models.Object) ([]strfmt.UUID, error) {
 	db.logger.DebugContext(ctx, "Start batch upload to vector db")
 
 	batcher := db.db.Batch().ObjectsBatcher()
 	for _, obj := range objects {
 		batcher.WithObject(obj)
 	}
-	_, err := batcher.Do(ctx)
+	resp, err := batcher.Do(ctx)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail batch upload to vector db", "error", err)
-		return err
+		return nil, err
 	}
-	return nil
+
+	var failed []strfmt.UUID
+	for _, r := range resp {
+		if r.Result == nil || r.Result.Errors == nil {
+			continue
+		}
+		db.logger.ErrorContext(ctx, "Fail upload object to vector db", "id", r.ID, "error", r.Result.Errors)
+		failed = append(failed, r.ID)
+	}
+	return failed, nil
 }
 
-func maxThreadsDownload(maxGoroutines int, posts []*analogdb.Post, wg *sync.WaitGroup, encodesChan chan string, postsChan chan *analogdb.Post, failedChan chan int) {
-	// limit max concurrent goroutines
-	guard := make(chan int, maxGoroutines)
-
-	for _, post := range posts {
-		wg.Add(1)
-		guard <- 1
-		go func(post *analogdb.Post, wg *sync.WaitGroup, encodesChan chan string, postsChan chan *analogdb.Post, failedChan chan int) {
-			downloadAndEncodePost(post, wg, encodesChan, postsChan, failedChan)
-			<-guard
-		}(post, wg, encodesChan, postsChan, failedChan)
-	}
+type encodeResult struct {
+	post  *analogdb.Post
+	image string
+	err   error
 }
 
-func downloadAndEncodePosts(posts []*analogdb.Post) ([]string, []*analogdb.Post, []int) {
-	var wg sync.WaitGroup
+// downloadAndEncodePosts downloads each post's image, writing results by index so posts and images stay paired
+func downloadAndEncodePosts(ctx context.Context, posts []*analogdb.Post) []encodeResult {
+	results := make([]encodeResult, len(posts))
 
-	encodesChan := make(chan string)
-	postsChan := make(chan *analogdb.Post)
-	failedChan := make(chan int)
+	var g errgroup.Group
+	g.SetLimit(maxConcurrentDownloads)
+	for i, post := range posts {
+		g.Go(func() error {
+			image, err := downloadImage(ctx, post)
+			results[i] = encodeResult{post: post, image: image, err: err}
+			return nil
+		})
+	}
+	_ = g.Wait()
 
-	maxGoroutines := 10
-	go maxThreadsDownload(maxGoroutines, posts, &wg, encodesChan, postsChan, failedChan)
+	return results
+}
 
-	go func() {
-		time.Sleep(time.Second * 2)
-		wg.Wait()
-		close(encodesChan)
-		close(postsChan)
-		close(failedChan)
-	}()
+func (db *DB) postsToPictureObjects(ctx context.Context, posts []*analogdb.Post) ([]*models.Object, []int) {
+	results := downloadAndEncodePosts(ctx, posts)
 
-	var encodedImages []string
-	var successPosts []*analogdb.Post
+	var pictureObjects []*models.Object
 	var failedIDs []int
 
-	for {
-		select {
-		case encoded, ok := <-encodesChan:
-			if ok {
-				encodedImages = append(encodedImages, encoded)
-			} else {
-				return encodedImages, successPosts, failedIDs
-			}
-		case post, ok := <-postsChan:
-			if ok {
-				successPosts = append(successPosts, post)
-			} else {
-				return encodedImages, successPosts, failedIDs
-			}
-		case id, ok := <-failedChan:
-			if ok {
-				failedIDs = append(failedIDs, id)
-			} else {
-				return encodedImages, successPosts, failedIDs
-			}
+	for _, result := range results {
+		post := result.post
+		if result.err != nil {
+			db.logger.ErrorContext(ctx, "Fail download and encode post image", "post_id", post.Id, "error", result.err)
+			failedIDs = append(failedIDs, post.Id)
+			continue
+		}
+		pictureObject := newPictureObject(result.image, post.Id, post.Grayscale, post.Nsfw, post.Sprocket)
+		pictureObjects = append(pictureObjects, pictureObject)
+	}
+
+	return pictureObjects, failedIDs
+}
+
+func missingIDs(ids []int, posts []*analogdb.Post) []int {
+	found := make(map[int]bool, len(posts))
+	for _, post := range posts {
+		found[post.Id] = true
+	}
+	var missing []int
+	for _, id := range ids {
+		if !found[id] {
+			missing = append(missing, id)
 		}
 	}
-}
-
-func downloadAndEncodePost(post *analogdb.Post, wg *sync.WaitGroup, encodes chan string, posts chan *analogdb.Post, failed chan int) {
-	defer wg.Done()
-
-	url := post.Images[1].Url
-	id := post.Id
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println("image download request errored with resp:")
-		fmt.Println(resp)
-		failed <- id
-		return
-	}
-	defer resp.Body.Close()
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		failed <- id
-		return
-	}
-	encoded := base64.StdEncoding.EncodeToString(data)
-	encodes <- encoded
-	posts <- post
-}
-
-func postsToPictureObjects(posts []*analogdb.Post) []*models.Object {
-	encodedImages, successPosts, failedIDs := downloadAndEncodePosts(posts)
-	var pictureObjects []*models.Object
-
-	for i := range encodedImages {
-		image := encodedImages[i]
-		post := successPosts[i]
-		pictureObject := newPictureObject(image, post.Id, post.Grayscale, post.Nsfw, post.Sprocket)
-		pictureObjects = append(pictureObjects, pictureObject)
-
-	}
-
-	if len(failedIDs) != 0 {
-		fmt.Println(fmt.Sprintf("failed to download/encode post ids: %v", failedIDs))
-	}
-
-	return pictureObjects
+	return missing
 }
 
 func newPictureObject(image string, postID int, grayscale bool, nsfw bool, sprocket bool) *models.Object {
 	object := models.Object{
-		Class: "Picture",
+		Class: PictureClass,
+		ID:    pictureID(postID),
 		Properties: map[string]interface{}{
 			"image":     image,
 			"post_id":   postID,
