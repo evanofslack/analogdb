@@ -2,6 +2,7 @@
 
 import Footer from "@components/footer";
 import ImageTag from "@components/imageTag";
+import useIsAdmin from "@hooks/useIsAdmin";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,6 +34,13 @@ async function handleDelete(postId) {
   }
 }
 
+function colorPlaceholder(post, image) {
+  const hex = post.colors?.[0]?.hex;
+  if (!hex) return "empty";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${image.width} ${image.height}"><rect width="100%" height="100%" fill="${hex}"/></svg>`;
+  return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 async function downloadImage(id) {
   try {
     const link = document.createElement("a");
@@ -49,9 +57,8 @@ async function downloadImage(id) {
 export default function ImagePage(props) {
   let post = props.post;
   let similar = props.similar;
-  let isAdmin = props.isAdmin;
+  const isAdmin = useIsAdmin();
   let image = post.images[2];
-  let placeholder = post.images[0];
 
   return (
     <div>
@@ -70,8 +77,7 @@ export default function ImagePage(props) {
             alt={`image ${post.id} by ${post.author}`}
             sizes="100vw"
             quality={100}
-            placeholder="blur"
-            blurDataURL={placeholder.url}
+            placeholder={colorPlaceholder(post, image)}
           />
         </div>
         <div className={styles.footerIcons}>

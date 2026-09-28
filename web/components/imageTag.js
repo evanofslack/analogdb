@@ -27,7 +27,9 @@ export default function ImageTag(props) {
   const redditUserURL = "https://www.reddit.com/user/";
   const author = post.author.replace("u/", "");
 
-  const date = new Date(post.timestamp * 1000).toLocaleDateString("en-US");
+  const date = new Date(post.timestamp * 1000).toLocaleDateString("en-US", {
+    timeZone: "UTC",
+  });
 
   const cameraInfo =
     post.camera_make && post.camera_model
@@ -158,11 +160,10 @@ export default function ImageTag(props) {
                   >
                     <Image
                       key={post.id}
-                      priority
                       style={{ objectFit: "cover" }}
                       src={post.images[1].url}
                       alt={`image ${post.id} by ${post.author}`}
-                      sizes="100vw"
+                      sizes="(max-width: 720px) 50vw, 200px"
                       fill
                       quality={100}
                     />

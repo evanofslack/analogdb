@@ -45,7 +45,8 @@ export const camerasApi: CamerasApi = new CamerasApi(config);
 
 export async function authorized_fetch(
   route: string,
-  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET"
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET",
+  revalidate: number = 60
 ): Promise<Response> {
   const url = `${baseURL}${route}`;
   let headers: Record<string, string> = { "User-Agent": userAgent };
@@ -58,7 +59,7 @@ export async function authorized_fetch(
   const response = await fetch(url, {
     method: method,
     headers: headers,
-    next: { revalidate: 60 },
+    next: { revalidate },
   } as RequestInit);
 
   return response;

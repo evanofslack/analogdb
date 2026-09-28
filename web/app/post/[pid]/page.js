@@ -1,30 +1,32 @@
 import ImagePage from "@components/imagePage";
-import { checkAdminAuth } from "@lib/auth";
 import { authorized_fetch } from "@lib/client";
 import { notFound } from "next/navigation";
+import { cache } from "react";
+
+export const dynamicParams = true;
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  if (process.env.NODE_ENV === "development") {
-    return [];
-  }
-
-  // get all post IDs for production
-  const response = await authorized_fetch("/ids", "GET");
-  const data = await response.json();
-
-  // only generate static pages for latest 500 posts
-  return data.ids.slice(-500).map((id) => ({
-    pid: id.toString(),
-  }));
+  return [];
 }
+
+const getPost = cache(async (pid) => {
+  const response = await authorized_fetch(`/post/${pid}`, "GET", revalidate);
+  if (!response.ok) {
+    return null;
+  }
+  return response.json();
+});
 
 // Generate metadata based on post
 export async function generateMetadata({ params }) {
   const { pid } = await params;
 
   try {
-    const response = await authorized_fetch(`/post/${pid}`, "GET");
-    const post = await response.json();
+    const post = await getPost(pid);
+    if (!post) {
+      return { title: "Post | AnalogDB" };
+    }
 
     return {
       title: `${post.title} | AnalogDB`,
@@ -38,14 +40,11 @@ export async function generateMetadata({ params }) {
 }
 
 async function getPostData(pid) {
-  const postRoute = `/post/${pid}`;
-  const response = await authorized_fetch(postRoute, "GET");
+  const post = await getPost(pid);
 
-  if (!response.ok) {
+  if (!post) {
     return notFound();
   }
-
-  const post = await response.json();
 
   // only show nsfw results if the original image was nsfw
   let query = "?nsfw=false";
@@ -57,7 +56,11 @@ async function getPostData(pid) {
   let similar;
 
   try {
-    const similarResponse = await authorized_fetch(similarRoute, "GET");
+    const similarResponse = await authorized_fetch(
+      similarRoute,
+      "GET",
+      revalidate
+    );
     similar = await similarResponse.json();
   } catch (e) {
     similar = {};
@@ -69,9 +72,6 @@ async function getPostData(pid) {
 export default async function Post({ params }) {
   const { pid } = await params;
   const { post, similar } = await getPostData(pid);
-  const isAdmin = await checkAdminAuth();
 
-  return <ImagePage post={post} similar={similar} isAdmin={isAdmin} />;
+  return <ImagePage post={post} similar={similar} />;
 }
-
-export const dynamic = "force-dynamic";
