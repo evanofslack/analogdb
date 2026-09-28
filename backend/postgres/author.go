@@ -22,12 +22,7 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 	s.db.logger.DebugContext(ctx, "Starting find authors")
 	defer s.db.logger.DebugContext(ctx, "Finished find authors")
 
-	tx, err := s.db.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	authors, err := findAuthors(ctx, tx)
+	authors, err := findAuthors(ctx, s.db.db)
 	if err != nil {
 		return nil, err
 	}
@@ -35,29 +30,24 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 	return authors, nil
 }
 
-func findAuthors(ctx context.Context, tx *sql.Tx) ([]string, error) {
+func findAuthors(ctx context.Context, db *sql.DB) ([]string, error) {
 	query := `
-			SELECT id, author FROM pictures ORDER BY id ASC`
-	rows, err := tx.QueryContext(ctx, query)
+			SELECT DISTINCT author FROM pictures ORDER BY author`
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
 	authors := make([]string, 0)
-	var id int
 	var author string
 	for rows.Next() {
-		if err := rows.Scan(&id, &author); err != nil {
+		if err := rows.Scan(&author); err != nil {
 			return nil, err
 		}
 		authors = append(authors, author)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	err = tx.Commit()
-	if err != nil {
 		return nil, err
 	}
 	return authors, nil

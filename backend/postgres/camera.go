@@ -20,12 +20,7 @@ func NewCameraService(db *DB) *CameraService {
 }
 
 func (s *CameraService) FindCameras(ctx context.Context, filter *analogdb.CameraFilter) ([]*analogdb.Camera, error) {
-	tx, err := s.db.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	return s.db.findCameras(ctx, tx, filter)
+	return s.db.findCameras(ctx, filter)
 }
 
 func (s *CameraService) CreateCamera(ctx context.Context, camera *analogdb.CreateCamera) (*analogdb.CreateCamera, error) {
@@ -83,7 +78,7 @@ func (db *DB) createCamera(ctx context.Context, tx *sql.Tx, camera *analogdb.Cre
 }
 
 // findCameras is the general function responsible for handling all camera queries
-func (db *DB) findCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.CameraFilter) ([]*analogdb.Camera, error) {
+func (db *DB) findCameras(ctx context.Context, filter *analogdb.CameraFilter) ([]*analogdb.Camera, error) {
 	filterFmt := "nil"
 	if filter != nil {
 		filterFmt = filter.String()
@@ -113,25 +108,27 @@ func (db *DB) findCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.Came
 		`, where) + order + limit
 
 	if counts := filter.IncludeCounts; counts != nil && *counts {
-		having := filterToHavingCamera(filter)
+		countWhere := filterToWhereCountCamera(filter)
 		query = fmt.Sprintf(`
-			SELECT 
+			SELECT
 				c.id,
 				c.camera_make,
 				c.camera_model,
 				c.description,
 				c.created,
 				c.updated,
-				COUNT(p.id) as post_count
+				COALESCE(p.post_count, 0) as post_count
 			FROM cameras c
-			LEFT JOIN pictures p ON c.camera_make = p.camera_make AND c.camera_model = p.camera_model
-		    WHERE %s
-			GROUP BY c.id, c.camera_make, c.camera_model, c.description, c.created, c.updated
-		    HAVING %s
-			`, where, having) + order + limit
+			LEFT JOIN (
+				SELECT camera_make AS make, camera_model AS model, COUNT(*) AS post_count
+				FROM pictures
+				GROUP BY camera_make, camera_model
+			) p ON p.make = c.camera_make AND p.model = c.camera_model
+		    WHERE %s AND %s
+			`, where, countWhere) + order + limit
 	}
 
-	rows, err := tx.QueryContext(ctx, query, args...)
+	rows, err := db.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Find cameras", "error", err)
 		return nil, err
@@ -163,11 +160,6 @@ func (db *DB) findCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.Came
 		cameras = append(cameras, camera)
 	}
 	if err := rows.Err(); err != nil {
-		db.logger.ErrorContext(ctx, "Find cameras", "error", err)
-		return nil, err
-	}
-
-	if err = tx.Commit(); err != nil {
 		db.logger.ErrorContext(ctx, "Find cameras", "error", err)
 		return nil, err
 	}
@@ -228,14 +220,14 @@ func filterToWhereCamera(filter *analogdb.CameraFilter, startIndex int) (string,
 	return whereQuery, args, index
 }
 
-func filterToHavingCamera(filter *analogdb.CameraFilter) string {
-	having := []string{"1=1"}
+func filterToWhereCountCamera(filter *analogdb.CameraFilter) string {
+	where := []string{"1=1"}
 	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
 		if includeCounts := filter.IncludeCounts; includeCounts != nil && *includeCounts {
-			having = append(having, "COUNT(p.id) > 0")
+			where = append(where, "COALESCE(p.post_count, 0) > 0")
 		}
 	}
-	return strings.Join(having, " AND ")
+	return strings.Join(where, " AND ")
 }
 
 // filterToOrderCamera converts camera filter into an SQL "ORDER BY" statement
@@ -243,7 +235,7 @@ func filterToOrderCamera(filter *analogdb.CameraFilter) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
 		case analogdb.CameraSortAlphabetical:
-			return " ORDER BY c.camera_make, c.camera_model DESC"
+			return " ORDER BY c.camera_make, c.camera_model"
 		case analogdb.CameraSortCounts:
 			return " ORDER BY post_count DESC"
 		}

@@ -22,12 +22,7 @@ func (s *KeywordService) GetKeywordSummary(ctx context.Context, limit int) (*[]a
 	s.db.logger.DebugContext(ctx, "Start find keyword summary")
 	defer s.db.logger.DebugContext(ctx, "Finish find keyword summary")
 
-	tx, err := s.db.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	summary, err := getKeywordSummary(ctx, tx, limit)
+	summary, err := getKeywordSummary(ctx, s.db.db, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +30,7 @@ func (s *KeywordService) GetKeywordSummary(ctx context.Context, limit int) (*[]a
 	return summary, nil
 }
 
-func getKeywordSummary(ctx context.Context, tx *sql.Tx, limit int) (*[]analogdb.KeywordSummary, error) {
+func getKeywordSummary(ctx context.Context, db *sql.DB, limit int) (*[]analogdb.KeywordSummary, error) {
 	query := `
 			SELECT
 				word,
@@ -49,7 +44,7 @@ func getKeywordSummary(ctx context.Context, tx *sql.Tx, limit int) (*[]analogdb.
 
 	arg := limit
 
-	rows, err := tx.QueryContext(ctx, query, arg)
+	rows, err := db.QueryContext(ctx, query, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +60,6 @@ func getKeywordSummary(ctx context.Context, tx *sql.Tx, limit int) (*[]analogdb.
 		keywords = append(keywords, kw)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	err = tx.Commit()
-	if err != nil {
 		return nil, err
 	}
 	return &keywords, nil

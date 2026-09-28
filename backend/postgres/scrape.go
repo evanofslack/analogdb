@@ -22,12 +22,7 @@ func (s *ScrapeService) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error
 	s.db.logger.DebugContext(ctx, "Start get keyword updated post ids")
 	defer s.db.logger.DebugContext(ctx, "Finish get keyword updated post ids")
 
-	tx, err := s.db.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	ids, err := keywordUpdatedPostIDs(ctx, tx)
+	ids, err := keywordUpdatedPostIDs(ctx, s.db.db)
 	if err != nil {
 		return nil, err
 	}
@@ -35,10 +30,10 @@ func (s *ScrapeService) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error
 	return ids, nil
 }
 
-func keywordUpdatedPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
+func keywordUpdatedPostIDs(ctx context.Context, db *sql.DB) ([]int, error) {
 	query := `
 			SELECT DISTINCT post_id FROM post_updates WHERE keywords_update_time IS NOT NULL ORDER BY post_id ASC`
-	rows, err := tx.QueryContext(ctx, query)
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +48,6 @@ func keywordUpdatedPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 		ids = append(ids, id)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	err = tx.Commit()
-	if err != nil {
 		return nil, err
 	}
 	return ids, nil

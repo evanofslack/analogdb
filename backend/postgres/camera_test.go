@@ -280,6 +280,22 @@ func TestCameraService_FindCameras(t *testing.T) {
 		}
 	})
 
+	t.Run("filter by make with counts", func(t *testing.T) {
+		includeCounts := true
+		make := "nikon"
+		filter := analogdb.NewCameraFilter(nil, nil, nil, &make, nil, nil, nil, &includeCounts, nil)
+		cameras, err := service.FindCameras(ctx, filter)
+		if err != nil {
+			t.Fatalf("Cameras failed: %v", err)
+		}
+		if len(cameras) != 1 {
+			t.Fatalf("Expected 1 camera, got %d", len(cameras))
+		}
+		if cameras[0].PostCount != 1 {
+			t.Errorf("Expected nikon fm2 to have 1 post, got %d", cameras[0].PostCount)
+		}
+	})
+
 	t.Run("sort by counts", func(t *testing.T) {
 		includeCounts := true
 		sort := analogdb.CameraSortCounts
