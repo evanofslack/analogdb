@@ -2,7 +2,9 @@ package server
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -11,11 +13,14 @@ import (
 )
 
 type Meta struct {
-	TotalPosts int    `json:"total_posts" example:"200"`
-	PageSize   int    `json:"page_size" example:"20"`
-	PageID     int    `json:"next_page_id" example:"1752244116"`
-	PageURL    string `json:"next_page_url" example:"/posts?sort=time&page_size=20&page_id=1752244116"`
-	Seed       int    `json:"seed,omitempty" example:"37"`
+	TotalPosts int `json:"total_posts" example:"200"`
+	PageSize   int `json:"page_size" example:"20"`
+	// Opaque cursor for the next page, empty at the end
+	NextCursor string `json:"next_cursor" example:"eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0"`
+	// Deprecated: use next_cursor
+	PageID  int    `json:"next_page_id" example:"1752244116"`
+	PageURL string `json:"next_page_url" example:"/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time"`
+	Seed    int    `json:"seed,omitempty" example:"37"`
 }
 
 type PostResponse struct {
@@ -59,6 +64,9 @@ var maxSimilarityLimit = 50
 // default to sorting by time descending (latest)
 var defaultPostsSort = analogdb.PostSortTime
 
+// random sort picks a seed from 1..randomSeedPool when none is given
+const randomSeedPool = 500
+
 const (
 	postsPath = "/posts"
 	postPath  = "/post"
@@ -88,9 +96,10 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Accept json
 // @Produce json
 // @Param page_size query int false "Number of posts per page" default(20)
-// @Param page_id query int false "Page offset for pagination"
+// @Param cursor query string false "Opaque cursor from next_cursor for the next page"
+// @Param page_id query int false "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random"
 // @Param sort query string false "Sort order" Enums(time,score,random) default(time)
-// @Param seed query int false "Random seed for consistent random sorting"
+// @Param seed query int false "Random seed for consistent random sorting, picked from 1..500 when missing"
 // @Param id query int false "Filter by post ID"
 // @Param title query string false "Filter by post title"
 // @Param author query string false "Filter by author"
@@ -120,6 +129,11 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Router /posts [get]
 func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("page_id") != "" {
+		w.Header().Set("Deprecation", "true")
+		w.Header().Set("Sunset", sunsetDate)
+		s.stats.deprecatedParams.WithLabelValues("page_id", legacyClient(r.UserAgent())).Inc()
+	}
 	filter, err := parseToPostFilter(r)
 	if err != nil {
 		s.writeError(w, r, err)
@@ -363,15 +377,27 @@ func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) makePostResponse(r *http.Request, filter *analogdb.PostFilter) (PostResponse, error) {
-	posts, count, err := s.PostService.FindPosts(r.Context(), filter)
+	// fetch one extra post to learn if there is a next page
+	query := *filter
+	pageSize := 0
+	if filter.Limit != nil {
+		pageSize = *filter.Limit
+		limit := pageSize + 1
+		query.Limit = &limit
+	}
+	posts, count, err := s.PostService.FindPosts(r.Context(), &query)
 	resp := PostResponse{}
 	if err != nil {
 		return resp, err
 	}
+	hasMore := pageSize > 0 && len(posts) > pageSize
+	if hasMore {
+		posts = posts[:pageSize]
+	}
 	for _, p := range posts {
 		resp.Posts = append(resp.Posts, *p)
 	}
-	resp.Meta, err = setMeta(filter, posts, count)
+	resp.Meta, err = setMeta(filter, posts, count, hasMore)
 	if err != nil {
 		return PostResponse{}, err
 	}
@@ -379,144 +405,151 @@ func (s *Server) makePostResponse(r *http.Request, filter *analogdb.PostFilter) 
 }
 
 // setMeta computes the metadata from a query
-func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int) (Meta, error) {
+func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int, hasMore bool) (Meta, error) {
 	meta := Meta{}
 
 	// totalPosts
 	meta.TotalPosts = count
 
+	sort := defaultPostsSort
+	if filter.Sort != nil {
+		sort = *filter.Sort
+	}
+
 	// add seed if sort order is random
-	if sort := filter.Sort; *sort == analogdb.PostSortRandom {
-		if seed := filter.Seed; seed != nil {
-			meta.Seed = *seed
-		}
+	seed := 0
+	if sort == analogdb.PostSortRandom && filter.Seed != nil {
+		seed = *filter.Seed
+		meta.Seed = seed
 	}
 
 	// pageSize
 	if limit := filter.Limit; limit != nil {
 		meta.PageSize = *limit
-		if len(posts) != *limit {
-			// reached the end of pagination
-			return meta, nil
-		}
 	}
 
-	// pageID
-	if sort := filter.Sort; sort != nil {
-		sortVal := *sort
-		if sortVal == analogdb.PostSortTime || sortVal == analogdb.PostSortRandom {
-			meta.PageID = posts[len(posts)-1].Time
-		} else if sortVal == analogdb.PostSortScore {
-			meta.PageID = posts[len(posts)-1].Score
-		} else {
-			return Meta{}, fmt.Errorf("invalid sort parameter: %s", sortVal.String())
-		}
+	if !hasMore || len(posts) == 0 {
+		// reached the end of pagination
+		return meta, nil
+	}
+	last := posts[len(posts)-1]
+
+	// pageID, kept non-zero while there are more pages
+	switch sort {
+	case analogdb.PostSortTime, analogdb.PostSortRandom:
+		meta.PageID = last.Time
+	case analogdb.PostSortScore:
+		meta.PageID = last.Score
+	default:
+		return Meta{}, fmt.Errorf("invalid sort parameter: %s", sort.String())
+	}
+	if meta.PageID == 0 {
+		meta.PageID = 1
 	}
 
-	// pageUrl
-	if sort := filter.Sort; sort != nil {
-		path := postsPath
-		numParams := 0
-		switch *sort {
-		case analogdb.PostSortTime:
-			path += fmt.Sprintf("%ssort=%s", paramJoiner(&numParams), analogdb.PostSortTime.String())
-		case analogdb.PostSortScore:
-			path += fmt.Sprintf("%ssort=%s", paramJoiner(&numParams), analogdb.PostSortScore.String())
-		case analogdb.PostSortRandom:
-			path += fmt.Sprintf("%ssort=%s", paramJoiner(&numParams), analogdb.PostSortRandom.String())
-		}
-		if limit := filter.Limit; limit != nil {
-			path += fmt.Sprintf("%spage_size=%d", paramJoiner(&numParams), *limit)
-		}
-		path += fmt.Sprintf("%spage_id=%d", paramJoiner(&numParams), meta.PageID)
-		if nsfw := filter.Nsfw; nsfw != nil {
-			path += fmt.Sprintf("%snsfw=%t", paramJoiner(&numParams), *nsfw)
-		}
-		if grayscale := filter.Grayscale; grayscale != nil {
-			path += fmt.Sprintf("%sgrayscale=%t", paramJoiner(&numParams), *grayscale)
-		}
-		if sprock := filter.Sprocket; sprock != nil {
-			path += fmt.Sprintf("%ssprocket=%t", paramJoiner(&numParams), *sprock)
-		}
-		if title := filter.Title; title != nil {
-			path += fmt.Sprintf("%stitle=%s", paramJoiner(&numParams), *title)
-		}
-		if author := filter.Author; author != nil {
-			path += fmt.Sprintf("%sauthor=%s", paramJoiner(&numParams), *author)
-		}
-		if cm := filter.CameraMake; cm != nil {
-			path += fmt.Sprintf("%scamera_make=%s", paramJoiner(&numParams), *cm)
-		}
-		if cm := filter.CameraModel; cm != nil {
-			path += fmt.Sprintf("%scamera_model=%s", paramJoiner(&numParams), *cm)
-		}
-		if fm := filter.FilmMake; fm != nil {
-			path += fmt.Sprintf("%sfilm_make=%s", paramJoiner(&numParams), *fm)
-		}
-		if ft := filter.FilmType; ft != nil {
-			path += fmt.Sprintf("%sfilm_type=%s", paramJoiner(&numParams), *ft)
-		}
-		if fs := filter.FilmSpeed; fs != nil {
-			path += fmt.Sprintf("%sfilm_speed=%d", paramJoiner(&numParams), *fs)
-		}
-		if fl := filter.FocalLength; fl != nil {
-			path += fmt.Sprintf("%sfocal_length=%d", paramJoiner(&numParams), *fl)
-		}
-		if a := filter.Aperture; a != nil {
-			path += fmt.Sprintf("%saperture=%s", paramJoiner(&numParams), *a)
-		}
-		if w := filter.Width; w != nil {
-			if min := w.Min; min != nil {
-				path += fmt.Sprintf("%swidth_min=%.2f", paramJoiner(&numParams), *min)
-			}
-			if max := w.Max; max != nil {
-				path += fmt.Sprintf("%swidth_max=%.2f", paramJoiner(&numParams), *max)
-			}
-		}
-		if h := filter.Height; h != nil {
-			if min := h.Min; min != nil {
-				path += fmt.Sprintf("%sheight_min=%.2f", paramJoiner(&numParams), *min)
-			}
-			if max := h.Max; max != nil {
-				path += fmt.Sprintf("%sheight_max=%.2f", paramJoiner(&numParams), *max)
-			}
-		}
-		if r := filter.AspectRatio; r != nil {
-			if min := r.Min; min != nil {
-				path += fmt.Sprintf("%sratio_min=%.2f", paramJoiner(&numParams), *min)
-			}
-			if max := r.Max; max != nil {
-				path += fmt.Sprintf("%sratio_max=%.2f", paramJoiner(&numParams), *max)
-			}
-		}
-		if colors := filter.Colors; colors != nil {
-			for _, color := range *colors {
-				path += fmt.Sprintf("%scolor=%s", paramJoiner(&numParams), color)
-			}
-		}
-		if colorPercents := filter.ColorPercents; colorPercents != nil {
-			for _, percent := range *colorPercents {
-				path += fmt.Sprintf("%smin_color=%.2f", paramJoiner(&numParams), percent)
-			}
-		}
-		if keywords := filter.Keywords; keywords != nil {
-			for _, keyword := range *keywords {
-				path += fmt.Sprintf("%skeyword=%s", paramJoiner(&numParams), keyword)
-			}
-		}
-		meta.PageURL = path
+	cursor, err := encodeCursor(sort, last, seed)
+	if err != nil {
+		return Meta{}, err
 	}
+	meta.NextCursor = cursor
+
+	values := filterToValues(filter, sort)
+	values.Set("cursor", cursor)
+	meta.PageURL = postsPath + "?" + values.Encode()
 	return meta, nil
 }
 
-func paramJoiner(numParams *int) string {
-	if *numParams == 0 {
-		*numParams += 1
-		return "?"
-	} else {
-		*numParams += 1
-		return "&"
+// filterToValues turns a filter back into query parameters
+func filterToValues(filter *analogdb.PostFilter, sort analogdb.PostSort) url.Values {
+	values := url.Values{}
+	values.Set("sort", sort.String())
+	if limit := filter.Limit; limit != nil {
+		values.Set("page_size", strconv.Itoa(*limit))
 	}
+	if seed := filter.Seed; seed != nil && sort == analogdb.PostSortRandom {
+		values.Set("seed", strconv.Itoa(*seed))
+	}
+	if nsfw := filter.Nsfw; nsfw != nil {
+		values.Set("nsfw", strconv.FormatBool(*nsfw))
+	}
+	if grayscale := filter.Grayscale; grayscale != nil {
+		values.Set("grayscale", strconv.FormatBool(*grayscale))
+	}
+	if sprock := filter.Sprocket; sprock != nil {
+		values.Set("sprocket", strconv.FormatBool(*sprock))
+	}
+	if ids := filter.IDs; ids != nil {
+		for _, id := range *ids {
+			values.Add("id", strconv.Itoa(id))
+		}
+	}
+	if title := filter.Title; title != nil {
+		values.Set("title", *title)
+	}
+	if author := filter.Author; author != nil {
+		values.Set("author", *author)
+	}
+	if start := filter.TimeStart; start != nil {
+		values.Set("time_start", strconv.FormatInt(start.Unix(), 10))
+	}
+	if end := filter.TimeEnd; end != nil {
+		values.Set("time_end", strconv.FormatInt(end.Unix(), 10))
+	}
+	if cm := filter.CameraMake; cm != nil {
+		values.Set("camera_make", *cm)
+	}
+	if cm := filter.CameraModel; cm != nil {
+		values.Set("camera_model", *cm)
+	}
+	if fm := filter.FilmMake; fm != nil {
+		values.Set("film_make", *fm)
+	}
+	if ft := filter.FilmType; ft != nil {
+		values.Set("film_type", *ft)
+	}
+	if fs := filter.FilmSpeed; fs != nil {
+		values.Set("film_speed", strconv.Itoa(*fs))
+	}
+	if fl := filter.FocalLength; fl != nil {
+		values.Set("focal_length", strconv.Itoa(*fl))
+	}
+	if a := filter.Aperture; a != nil {
+		values.Set("aperture", *a)
+	}
+	setDimension := func(dim *analogdb.Dimension, minKey, maxKey string) {
+		if dim == nil {
+			return
+		}
+		if min := dim.Min; min != nil {
+			values.Set(minKey, formatFloat(*min))
+		}
+		if max := dim.Max; max != nil {
+			values.Set(maxKey, formatFloat(*max))
+		}
+	}
+	setDimension(filter.Width, "width_min", "width_max")
+	setDimension(filter.Height, "height_min", "height_max")
+	setDimension(filter.AspectRatio, "ratio_min", "ratio_max")
+	if colors := filter.Colors; colors != nil {
+		for _, color := range *colors {
+			values.Add("color", color)
+		}
+	}
+	if colorPercents := filter.ColorPercents; colorPercents != nil {
+		for _, percent := range *colorPercents {
+			values.Add("min_color", formatFloat(percent))
+		}
+	}
+	if keywords := filter.Keywords; keywords != nil {
+		for _, keyword := range *keywords {
+			values.Add("keyword", keyword)
+		}
+	}
+	return values
+}
+
+func formatFloat(f float64) string {
+	return strconv.FormatFloat(f, 'f', -1, 64)
 }
 
 func stringToBool(query string) (bool, error) {
@@ -600,6 +633,36 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
+	if seed := values.Get("seed"); seed != "" {
+		if seed, err := strconv.Atoi(seed); err == nil && validSeed(seed) {
+			filter.Seed = &seed
+		}
+	}
+
+	if c := values.Get("cursor"); c != "" {
+		cursor, seed, err := decodeCursor(c, *filter.Sort)
+		if err != nil {
+			return nil, err
+		}
+		filter.Cursor = cursor
+		filter.Keyset = nil
+		if seed != 0 {
+			filter.Seed = &seed
+		}
+	}
+
+	if *filter.Sort == analogdb.PostSortRandom {
+		if filter.Keyset != nil {
+			return nil, badRequest("page_id is not supported with sort=random; use cursor")
+		}
+		if filter.Seed == nil {
+			seed := rand.IntN(randomSeedPool) + 1
+			filter.Seed = &seed
+		}
+	} else {
+		filter.Seed = nil
+	}
+
 	if nsfw := values.Get("nsfw"); nsfw != "" {
 		if val, err := stringToBool(nsfw); err != nil {
 			return nil, err
@@ -621,16 +684,6 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			return nil, err
 		} else {
 			filter.Sprocket = &val
-		}
-	}
-
-	if seed := values.Get("seed"); seed != "" {
-		if seed, err := stringToInt(seed); err != nil {
-			return nil, err
-		} else if seed <= 0 {
-			return nil, badRequest("seed must be a positive integer")
-		} else {
-			filter.Seed = &seed
 		}
 	}
 

@@ -23,6 +23,7 @@ type httpStats struct {
 	rateLimited        prometheus.Counter
 	unknownJSONFields  *prometheus.CounterVec
 	legacyRequests     *prometheus.CounterVec
+	deprecatedParams   *prometheus.CounterVec
 }
 
 func newHttpStats() *httpStats {
@@ -103,6 +104,16 @@ func newHttpStats() *httpStats {
 		[]string{"route", "client"},
 	)
 
+	deprecatedParams := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.HttpSubsystem,
+			Name:      "deprecated_param_total",
+			Help:      "Number of HTTP requests using a deprecated query parameter",
+		},
+		[]string{"param", "client"},
+	)
+
 	stats := &httpStats{
 		requestsTotal:      requestsTotal,
 		requestDuration:    requestDuration,
@@ -112,6 +123,7 @@ func newHttpStats() *httpStats {
 		rateLimited:        rateLimited,
 		unknownJSONFields:  unknownJSONFields,
 		legacyRequests:     legacyRequests,
+		deprecatedParams:   deprecatedParams,
 	}
 
 	return stats
@@ -126,6 +138,7 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 	registerer.MustRegister(stats.rateLimited)
 	registerer.MustRegister(stats.unknownJSONFields)
 	registerer.MustRegister(stats.legacyRequests)
+	registerer.MustRegister(stats.deprecatedParams)
 	return nil
 }
 

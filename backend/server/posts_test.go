@@ -15,32 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
-func TestParamJoiner(t *testing.T) {
-	tests := []struct {
-		name     string
-		input    int
-		expected string
-		newValue int
-	}{
-		{"first param", 0, "?", 1},
-		{"second param", 1, "&", 2},
-		{"third param", 5, "&", 6},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			numParams := tt.input
-			result := paramJoiner(&numParams)
-			if result != tt.expected {
-				t.Errorf("expected %s, got %s", tt.expected, result)
-			}
-			if numParams != tt.newValue {
-				t.Errorf("expected numParams to be %d, got %d", tt.newValue, numParams)
-			}
-		})
-	}
-}
-
 func TestStringToBool(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -112,56 +86,86 @@ func TestSetMeta(t *testing.T) {
 	sortRandom := analogdb.PostSortRandom
 	seed42 := 42
 
+	mustCursor := func(sort analogdb.PostSort, post *analogdb.Post, seed int) string {
+		c, err := encodeCursor(sort, post, seed)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return c
+	}
+	last := &analogdb.Post{Id: 7, DisplayPost: analogdb.DisplayPost{Time: 2000, Score: 200}}
+	lastRandom := &analogdb.Post{Id: 3, DisplayPost: analogdb.DisplayPost{Time: 1000, Score: 100}}
+	lastZeroScore := &analogdb.Post{Id: 9, DisplayPost: analogdb.DisplayPost{Time: 3000, Score: 0}}
+
 	tests := []struct {
 		name     string
 		filter   *analogdb.PostFilter
 		posts    []*analogdb.Post
 		count    int
+		hasMore  bool
 		expected Meta
 	}{
 		{
 			name:   "basic meta with time sort",
 			filter: &analogdb.PostFilter{Limit: &limit2, Sort: &sortTime},
 			posts: []*analogdb.Post{
-				{DisplayPost: analogdb.DisplayPost{Time: 1000, Score: 100}},
-				{DisplayPost: analogdb.DisplayPost{Time: 2000, Score: 200}},
+				{Id: 8, DisplayPost: analogdb.DisplayPost{Time: 1000, Score: 100}},
+				last,
 			},
-			count: 100,
+			count:   100,
+			hasMore: true,
 			expected: Meta{
 				TotalPosts: 100,
 				PageSize:   2,
+				NextCursor: mustCursor(sortTime, last, 0),
 				PageID:     2000,
-				PageURL:    "/posts?sort=time&page_size=2&page_id=2000",
+				PageURL:    "/posts?cursor=" + mustCursor(sortTime, last, 0) + "&page_size=2&sort=time",
 			},
 		},
 		{
 			name:   "meta with score sort",
 			filter: &analogdb.PostFilter{Limit: &limit2, Sort: &sortScore},
 			posts: []*analogdb.Post{
-				{DisplayPost: analogdb.DisplayPost{Time: 1000, Score: 100}},
-				{DisplayPost: analogdb.DisplayPost{Time: 2000, Score: 200}},
+				{Id: 8, DisplayPost: analogdb.DisplayPost{Time: 1000, Score: 100}},
+				last,
 			},
-			count: 50,
+			count:   50,
+			hasMore: true,
 			expected: Meta{
 				TotalPosts: 50,
 				PageSize:   2,
+				NextCursor: mustCursor(sortScore, last, 0),
 				PageID:     200,
-				PageURL:    "/posts?sort=score&page_size=2&page_id=200",
+				PageURL:    "/posts?cursor=" + mustCursor(sortScore, last, 0) + "&page_size=2&sort=score",
 			},
 		},
 		{
-			name:   "meta with random sort and seed",
-			filter: &analogdb.PostFilter{Limit: &limit1, Sort: &sortRandom, Seed: &seed42},
-			posts: []*analogdb.Post{
-				{DisplayPost: analogdb.DisplayPost{Time: 1000, Score: 100}},
-			},
-			count: 10,
+			name:    "meta with random sort and seed",
+			filter:  &analogdb.PostFilter{Limit: &limit1, Sort: &sortRandom, Seed: &seed42},
+			posts:   []*analogdb.Post{lastRandom},
+			count:   10,
+			hasMore: true,
 			expected: Meta{
 				TotalPosts: 10,
 				PageSize:   1,
+				NextCursor: mustCursor(sortRandom, lastRandom, 42),
 				PageID:     1000,
-				PageURL:    "/posts?sort=random&page_size=1&page_id=1000",
+				PageURL:    "/posts?cursor=" + mustCursor(sortRandom, lastRandom, 42) + "&page_size=1&seed=42&sort=random",
 				Seed:       42,
+			},
+		},
+		{
+			name:    "zero score keeps page id non-zero",
+			filter:  &analogdb.PostFilter{Limit: &limit1, Sort: &sortScore},
+			posts:   []*analogdb.Post{lastZeroScore},
+			count:   10,
+			hasMore: true,
+			expected: Meta{
+				TotalPosts: 10,
+				PageSize:   1,
+				NextCursor: mustCursor(sortScore, lastZeroScore, 0),
+				PageID:     1,
+				PageURL:    "/posts?cursor=" + mustCursor(sortScore, lastZeroScore, 0) + "&page_size=1&sort=score",
 			},
 		},
 		{
@@ -176,11 +180,23 @@ func TestSetMeta(t *testing.T) {
 				PageSize:   20,
 			},
 		},
+		{
+			name:    "end of pagination with random keeps seed",
+			filter:  &analogdb.PostFilter{Limit: &limit1, Sort: &sortRandom, Seed: &seed42},
+			posts:   []*analogdb.Post{lastRandom},
+			count:   1,
+			hasMore: false,
+			expected: Meta{
+				TotalPosts: 1,
+				PageSize:   1,
+				Seed:       42,
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := setMeta(tt.filter, tt.posts, tt.count)
+			result, err := setMeta(tt.filter, tt.posts, tt.count, tt.hasMore)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}
@@ -224,6 +240,10 @@ func FuzzParseToPostFilter(f *testing.F) {
 		"page_size=0",
 		"page_size=abc",
 		"sort=random&seed=7",
+		"sort=random&seed=0",
+		"sort=random&page_id=5",
+		"cursor=abc",
+		"sort=score&cursor=eyJzIjoic2NvcmUiLCJ2IjoxNTMsImlkIjo0MDIxMX0",
 		"sort=bad",
 		"author=x",
 		"time_start=abc",
