@@ -73,12 +73,12 @@ class Client:
         self,
         count: int = DEFAULT_PAGE_SIZE,
         filter: Optional[PostsFilter] = None,
-        page_id: Optional[int] = None,
+        cursor: Optional[str] = None,
     ) -> ServerPostResponse:
         params = self._filter_to_params(filter)
         params["page_size"] = count
-        if page_id is not None:
-            params["page_id"] = page_id
+        if cursor:
+            params["cursor"] = cursor
 
         resp = self._call(self.posts_api.posts_get, **params)
         if resp.posts is None:
@@ -89,24 +89,17 @@ class Client:
         self, count: int = 20, filter: Optional[PostsFilter] = None
     ) -> List[Post]:
         analog_posts = []
-        page_id = None
+        cursor = None
 
         num = DEFAULT_PAGE_SIZE * 5
         if num > count:
             num = count
         while len(analog_posts) < count:
-            resp = self.get_posts(num, filter, page_id)
-            for p in resp.posts:
-                if len(analog_posts) >= count:
-                    break
-                analog_posts.append(p)
-
-            if not resp.meta:
+            resp = self.get_posts(num, filter, cursor)
+            analog_posts.extend(resp.posts[: count - len(analog_posts)])
+            cursor = resp.meta.next_cursor if resp.meta else None
+            if not cursor:
                 break
-            # no more pages
-            if not resp.meta.next_page_url:
-                break
-            page_id = resp.meta.next_page_id
 
         return analog_posts
 
