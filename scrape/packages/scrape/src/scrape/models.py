@@ -29,6 +29,7 @@ class RedditComment:
 class ScrapeError:
     id: str
     url: str
+    permalink: str
     msg: str
 
 
@@ -124,9 +125,9 @@ def new_post_create(
     metadata: PhotoMetadata,
     images: PostImages,
     keywords: List[Keyword],
-) -> CreatePost | None:
+) -> CreatePost:
     if len(images.images) < 4:
-        return None
+        raise ValueError(f"Expected at least 4 images, got {len(images.images)}")
 
     cp = CreatePost(
         title=post.title,
