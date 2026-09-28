@@ -1,5 +1,6 @@
 "use client";
 
+import useIsAdmin from "@hooks/useIsAdmin";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -9,8 +10,8 @@ import { FiGithub } from "react-icons/fi";
 import { GrClose } from "react-icons/gr";
 import styles from "./mobileNav.module.css";
 
-export default function MobileNav(props) {
-  let isAdmin = props.isAdmin;
+export default function MobileNav() {
+  const isAdmin = useIsAdmin();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const toggle = () => setIsOpen((value) => !value);

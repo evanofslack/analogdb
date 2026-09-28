@@ -3,22 +3,28 @@
 import { CodeHighlight } from "@mantine/code-highlight";
 import { useBreakpoint } from "@providers/breakpoint";
 import { IconPolaroid, IconUsers } from "@tabler/icons-react";
-import { AnalogdbPost } from "analogdb-generated";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./about.module.css";
 import Footer from "./footer";
 
+export interface AboutImage {
+  id: number;
+  url: string;
+  width?: number;
+  height?: number;
+}
+
 interface ColorData {
-  red: AnalogdbPost[];
-  navy: AnalogdbPost[];
-  olive: AnalogdbPost[];
+  red: AboutImage[];
+  navy: AboutImage[];
+  olive: AboutImage[];
 }
 
 interface SimilarityData {
-  centerPost: AnalogdbPost;
-  similarPosts: AnalogdbPost[];
+  centerPost: AboutImage;
+  similarPosts: AboutImage[];
 }
 
 interface AboutProps {
@@ -30,6 +36,27 @@ interface AboutProps {
   };
 }
 
+const COLOR_ROW_SIZE = 20;
+
+function shuffle<T>(items: T[]): T[] {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+function pickColorRows(colorData: ColorData, random: boolean): ColorData {
+  const pick = (images: AboutImage[]) =>
+    (random ? shuffle(images) : images).slice(0, COLOR_ROW_SIZE);
+  return {
+    red: pick(colorData.red),
+    navy: pick(colorData.navy),
+    olive: pick(colorData.olive),
+  };
+}
+
 export default function About(props: AboutProps) {
   const breakpoints = useBreakpoint();
   let isMobile = false;
@@ -37,7 +64,19 @@ export default function About(props: AboutProps) {
     isMobile = true;
   }
 
-  const { numPosts, numAuthors, colorData, allSimilarityData } = props.data;
+  const { numPosts, numAuthors } = props.data;
+
+  const [colorData, setColorData] = useState<ColorData>(() =>
+    pickColorRows(props.data.colorData, false)
+  );
+  const [allSimilarityData, setAllSimilarityData] = useState<
+    SimilarityData[]
+  >(props.data.allSimilarityData);
+
+  useEffect(() => {
+    setColorData(pickColorRows(props.data.colorData, true));
+    setAllSimilarityData(shuffle(props.data.allSimilarityData));
+  }, [props.data]);
 
   const [currentSimilarityIndex, setCurrentSimilarityIndex] =
     useState<number>(0);
@@ -131,7 +170,7 @@ export default function About(props: AboutProps) {
 ]`;
 
   const renderColorRow = (
-    images: AnalogdbPost[],
+    images: AboutImage[],
     direction: "left" | "right",
     delay: number = 0,
     isMobile: boolean
@@ -149,20 +188,15 @@ export default function About(props: AboutProps) {
           }`}
           style={{ animationDelay: `${delay}s` }}
         >
-          {duplicatedImages.map((post, index) => {
-            const image =
-              post.images?.find((img) => img.resolution === "medium") ||
-              post.images?.[0];
-            if (!image) return null;
-
+          {duplicatedImages.map((image, index) => {
             return (
               <div
-                key={`${post.id}-${index}`}
+                key={`${image.id}-${index}`}
                 className={styles.colorImageContainer}
               >
                 <Image
                   src={image.url}
-                  alt={post.title}
+                  alt={`image ${image.id}`}
                   width={image.width}
                   height={image.height}
                   className={styles.colorImage}
@@ -196,11 +230,7 @@ export default function About(props: AboutProps) {
       { top: "55%", right: "-195px", transform: "translateY(-50%)" },
     ];
 
-    const centerPost = currentSimilarityData.centerPost;
-    const centerImage =
-      centerPost.images?.find((img) => img.resolution === "medium") ||
-      centerPost.images?.[0];
-    if (!centerImage) return null;
+    const centerImage = currentSimilarityData.centerPost;
 
     const similarPosts = currentSimilarityData.similarPosts;
 
@@ -216,7 +246,7 @@ export default function About(props: AboutProps) {
     return (
       <div className={styles.clustersContainer}>
         <div
-          key={centerPost.id}
+          key={centerImage.id}
           className={styles.clusterContainer}
           style={clusterPosition}
         >
@@ -231,7 +261,7 @@ export default function About(props: AboutProps) {
           >
             <Image
               src={centerImage.url}
-              alt={centerPost.title}
+              alt={`image ${centerImage.id}`}
               fill
               sizes="(max-width: 768px) 200px, 420px"
               className={styles.clusterCenterImage}
@@ -239,11 +269,8 @@ export default function About(props: AboutProps) {
             />
           </div>
 
-          {similarPosts.slice(0, 6).map((post, index) => {
-            const image =
-              post.images?.find((img) => img.resolution === "medium") ||
-              post.images?.[0];
-            if (!image || !similarPositions[index]) return null;
+          {similarPosts.slice(0, 6).map((image, index) => {
+            if (!similarPositions[index]) return null;
 
             const width = image.width || 200;
             const height = image.height || 200;
@@ -256,7 +283,7 @@ export default function About(props: AboutProps) {
 
             return (
               <div
-                key={post.id}
+                key={image.id}
                 className={`${styles.clusterSimilarContainer} ${
                   isTransitioning ? styles.transitioning : ""
                 }`}
@@ -269,7 +296,7 @@ export default function About(props: AboutProps) {
                 <div className={styles.clusterConnectionLine} />
                 <Image
                   src={image.url}
-                  alt={post.title}
+                  alt={`image ${image.id}`}
                   fill
                   sizes="(max-width: 768px) 90px, 180px"
                   className={styles.clusterSimilarImage}

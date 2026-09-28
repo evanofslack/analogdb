@@ -19,6 +19,15 @@ const cookieOptions = {
   path: "/",
 };
 
+const adminHintName = "admin-hint";
+
+const hintOptions = {
+  httpOnly: false,
+  secure: true,
+  sameSite: "strict" as const,
+  path: "/",
+};
+
 export async function loginAction(formData: FormData): Promise<void> {
   const ip = await clientIp();
   if (!consumeLoginAttempt(ip)) {
@@ -38,16 +47,26 @@ export async function loginAction(formData: FormData): Promise<void> {
   }
 
   resetLoginAttempts(ip);
-  (await cookies()).set(adminCookieName, token, {
+  const cookieStore = await cookies();
+  cookieStore.set(adminCookieName, token, {
     ...cookieOptions,
+    maxAge: sessionMaxAge,
+  });
+  cookieStore.set(adminHintName, "1", {
+    ...hintOptions,
     maxAge: sessionMaxAge,
   });
   redirect("/admin");
 }
 
 export async function logoutAction(): Promise<void> {
-  (await cookies()).set(adminCookieName, "", {
+  const cookieStore = await cookies();
+  cookieStore.set(adminCookieName, "", {
     ...cookieOptions,
+    maxAge: 0,
+  });
+  cookieStore.set(adminHintName, "", {
+    ...hintOptions,
     maxAge: 0,
   });
   redirect("/admin");

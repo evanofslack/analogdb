@@ -6,8 +6,7 @@ import styles from "./header.module.css";
 import MobileNav from "./mobileNav";
 import WebNav from "./webNav";
 
-export default function Header(props) {
-  let isAdmin = props.isAdmin;
+export default function Header() {
   const breakpoints = useBreakpoint();
 
   let useMobile = false;
@@ -20,8 +19,8 @@ export default function Header(props) {
         <Link href="/">AnalogDB</Link>
         <p className={styles.description}>the collection of film photography</p>
       </h1>
-      {useMobile && <MobileNav isAdmin={isAdmin} />}
-      {!useMobile && <WebNav isAdmin={isAdmin} />}
+      {useMobile && <MobileNav />}
+      {!useMobile && <WebNav />}
     </main>
   );
 }

@@ -13,7 +13,7 @@ import Header from "./header";
 import InfiniteGallery from "./infiniteGallery";
 import ScrollTop from "./scrollTop";
 
-export default function Gallery({ isAdmin }) {
+export default function Gallery() {
   const { response, isLoading, filters, setters, executeQuery, limits } =
     usePosts();
 
@@ -74,7 +74,7 @@ export default function Gallery({ isAdmin }) {
 
   return (
     <div className={styles.main}>
-      <Header isAdmin={isAdmin} />
+      <Header />
       <div className={styles.margin}>
         <FilterBar
           {...filters}

@@ -1,13 +1,13 @@
 "use client";
 
+import useIsAdmin from "@hooks/useIsAdmin";
 import { useBreakpoint } from "@providers/breakpoint";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./webNav.module.css";
 
-export default function WebNav(props) {
-  let isAdmin = props.isAdmin;
-
+export default function WebNav() {
+  const isAdmin = useIsAdmin();
   const pathname = usePathname();
   const breakpoints = useBreakpoint();
 

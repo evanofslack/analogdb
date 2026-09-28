@@ -1,4 +1,3 @@
-import { checkAdminAuth } from "@lib/auth";
 import { Suspense } from "react";
 import HomePage from "./home-page";
 
@@ -7,11 +6,10 @@ export const metadata = {
   description: "Film photography database",
 };
 
-export default async function Page() {
-  const isAdmin = await checkAdminAuth();
+export default function Page() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <HomePage isAdmin={isAdmin} />
+      <HomePage />
     </Suspense>
   );
 }
