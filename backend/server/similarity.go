@@ -1,11 +1,10 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -13,6 +12,7 @@ const (
 	encodePath             = "/encode"
 	defaultEncodeBatchSize = 20
 	maxEncodeBatchSize     = 100
+	encodeWriteTimeout     = 15 * time.Minute
 )
 
 func (s *Server) mountSimilarityHandlers(r chi.Router) {
@@ -45,9 +45,12 @@ type encodePostsResponse struct {
 // @Security BasicAuth
 // @Router /encode [put]
 func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
+	if err := http.NewResponseController(w).SetWriteDeadline(time.Now().Add(encodeWriteTimeout)); err != nil {
+		s.logger.WarnContext(r.Context(), "Fail extend write deadline for encode", "error", err)
+	}
+
 	var request encodePostsRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "error parsing ids or batch_size from request body"}
+	if err := s.decodeBody(w, r, &request, "error parsing ids or batch_size from request body"); err != nil {
 		s.writeError(w, r, err)
 		return
 	}

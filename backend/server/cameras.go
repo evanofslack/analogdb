@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/evanofslack/analogdb"
@@ -96,8 +95,7 @@ func (s *Server) makeCameraResponse(r *http.Request, filter *analogdb.CameraFilt
 // @Router /camera [post]
 func (s *Server) createCamera(w http.ResponseWriter, r *http.Request) {
 	var createCamera analogdb.CreateCamera
-	if err := json.NewDecoder(r.Body).Decode(&createCamera); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse camera from request body"}
+	if err := s.decodeBody(w, r, &createCamera, "parse camera from request body"); err != nil {
 		s.writeError(w, r, err)
 		return
 	}

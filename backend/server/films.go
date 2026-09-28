@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/evanofslack/analogdb"
@@ -101,8 +100,7 @@ func (s *Server) makeFilmResponse(r *http.Request, filter *analogdb.FilmFilter) 
 // @Router /film [post]
 func (s *Server) createFilm(w http.ResponseWriter, r *http.Request) {
 	var createFilm analogdb.CreateFilm
-	if err := json.NewDecoder(r.Body).Decode(&createFilm); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse film from request body"}
+	if err := s.decodeBody(w, r, &createFilm, "parse film from request body"); err != nil {
 		s.writeError(w, r, err)
 		return
 	}

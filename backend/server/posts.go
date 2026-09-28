@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -265,8 +264,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 // @Router /post [post]
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	var createPost analogdb.CreatePost
-	if err := json.NewDecoder(r.Body).Decode(&createPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse post from request body"}
+	if err := s.decodeBody(w, r, &createPost, "parse post from request body"); err != nil {
 		s.writeError(w, r, err)
 		return
 	}
@@ -321,8 +319,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 // @Router /post/{id} [patch]
 func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	var patchPost analogdb.PatchPost
-	if err := json.NewDecoder(r.Body).Decode(&patchPost); err != nil {
-		err = &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "parse patch from request body"}
+	if err := s.decodeBody(w, r, &patchPost, "parse patch from request body"); err != nil {
 		s.writeError(w, r, err)
 		return
 	}
