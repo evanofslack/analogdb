@@ -125,8 +125,8 @@ export default function About(props: AboutProps) {
 "meta":{
   "total_posts":18233,
   "page_size":20,
-  "next_page_id":1672251647,
-  "next_page_url":"/posts?sort=time&page_size=20&page_id=1672251647"
+  "next_cursor":"eyJzIjoidGltZSIsInYiOjE2NzIyNTE2NDcsImlkIjo1MTA4fQ",
+  "next_page_url":"/posts?cursor=eyJzIjoidGltZSIsInYiOjE2NzIyNTE2NDcsImlkIjo1MTA4fQ&page_size=20&sort=time"
 },
 "posts":[
   {
