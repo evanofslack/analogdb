@@ -1,12 +1,9 @@
 from typing import List, Optional
 
 import praw
-import requests
-from PIL.Image import Image
 from praw.models import Comment
 
-from .constants import BW_SUB, REDDIT_URL, SPROCKET_SUB, VALID_CONTENT
-from .image import ImageProcessor
+from .constants import REDDIT_URL, SPROCKET_SUB
 from .models import RedditComment, RedditPost, ScrapeError, ScrapeResult
 
 
@@ -15,9 +12,8 @@ class RedditScrapingError(Exception):
 
 
 class RedditScraper:
-    def __init__(self, reddit: praw.Reddit, image_processor: ImageProcessor):
+    def __init__(self, reddit: praw.Reddit):
         self.reddit = reddit
-        self.image = image_processor
 
     def scrape_posts(
         self,
@@ -122,24 +118,15 @@ class RedditScraper:
         if not url:
             raise RedditScrapingError("No valid URL found")
 
-        content_type = self._get_content_type(url)
-        if content_type is None or content_type not in VALID_CONTENT:
-            raise RedditScrapingError(f"Invalid content type: {content_type}")
-
-        image = self._download_image(url)
-
         return RedditPost(
-            image=image,
-            width=image.width,
-            height=image.height,
-            content_type=content_type,
+            image_url=url,
+            subreddit=subreddit,
             title=submission.title,
             selftext=submission.selftext,
             author=f"u/{submission.author.name}",
             permalink=permalink,
             score=submission.score,
             nsfw=submission.over_18,
-            grayscale=self._is_grayscale(image, subreddit),
             time=int(submission.created_utc),
             sprocket=self._is_sprocket(subreddit),
         )
@@ -156,27 +143,6 @@ class RedditScraper:
             if meta["e"] == "Image":
                 return meta["s"]["u"]
         return None
-
-    def _get_content_type(self, url: str) -> Optional[str]:
-        try:
-            response = requests.head(url, stream=True)
-            return response.headers.get("content-type")
-        except Exception:
-            return None
-
-    def _validate_content(self, content_type: Optional[str]) -> bool:
-        return content_type is not None and content_type in VALID_CONTENT
-
-    def _download_image(self, url: str) -> Image:
-        try:
-            return self.image.download_image(url)
-        except Exception as e:
-            raise RedditScrapingError(f"Failed to download image from {url}: {e}")
-
-    def _is_grayscale(self, image: Image, subreddit: str) -> bool:
-        if subreddit == BW_SUB:
-            return True
-        return self.image.is_grayscale(image)
 
     def _is_sprocket(self, subreddit: str) -> bool:
         return subreddit == SPROCKET_SUB

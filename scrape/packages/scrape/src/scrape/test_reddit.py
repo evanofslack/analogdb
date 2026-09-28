@@ -29,7 +29,7 @@ class TestScrapeComments:
         ]
         reddit = MagicMock()
         reddit.submission.return_value.comments.list.return_value = comments
-        scraper = RedditScraper(reddit, MagicMock())
+        scraper = RedditScraper(reddit)
 
         result = scraper.scrape_comments("https://reddit.com/r/analog/comments/abc")
 

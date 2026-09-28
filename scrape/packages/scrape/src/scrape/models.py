@@ -1,22 +1,17 @@
 from dataclasses import dataclass, fields
 from typing import List, Optional
 
-from PIL.Image import Image
-
 
 @dataclass
 class RedditPost:
-    image: Image
-    width: int
-    height: int
-    content_type: str
+    image_url: str
+    subreddit: str
     title: str
     selftext: Optional[str]
     author: str
     permalink: str
     score: int
     nsfw: bool
-    grayscale: bool
     time: int
     sprocket: bool
 
@@ -91,6 +86,15 @@ class S3Image:
 
 
 @dataclass
+class PostImages:
+    images: List[S3Image]
+    colors: List[Color]
+    grayscale: bool
+    width: int
+    height: int
+
+
+@dataclass
 class CreatePost:
     title: str
     author: str
@@ -118,11 +122,10 @@ class CreatePost:
 def new_post_create(
     post: RedditPost,
     metadata: PhotoMetadata,
-    images: List[S3Image],
+    images: PostImages,
     keywords: List[Keyword],
-    colors: List[Color],
 ) -> CreatePost | None:
-    if len(images) < 4:
+    if len(images.images) < 4:
         return None
 
     cp = CreatePost(
@@ -132,7 +135,7 @@ def new_post_create(
         description=post.selftext,
         score=post.score,
         nsfw=post.nsfw,
-        grayscale=post.grayscale,
+        grayscale=images.grayscale,
         time=post.time,
         sprocket=post.sprocket,
         camera_make=metadata.camera_make,
@@ -142,8 +145,8 @@ def new_post_create(
         film_speed=metadata.film_speed,
         focal_length=metadata.focal_length,
         aperture=metadata.aperture,
-        images=images,
+        images=images.images,
         keywords=keywords,
-        colors=colors,
+        colors=images.colors,
     )
     return cp

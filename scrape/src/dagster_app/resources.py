@@ -33,14 +33,13 @@ class RedditResource(ConfigurableResource):
     user_agent: str = ""
 
     def client(self) -> RedditScraper:
-        image_processor = ImageProcessor()
         reddit = praw.Reddit(
             client_id=self.client_id,
             client_secret=self.client_secret,
             user_agent=self.user_agent,
         )
 
-        scraper = RedditScraper(reddit, image_processor)
+        scraper = RedditScraper(reddit)
         return scraper
 
 
@@ -67,12 +66,11 @@ class MetadataResource(ConfigurableResource):
 class StorageResource(ConfigurableResource):
     s3_resource: S3Resource
 
-    # def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> str:
-    def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> str:
+    def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> None:
+        """Upload file data. The caller builds the public CloudFront URL."""
         self.s3_resource.get_client().put_object(
             Bucket=bucket, Key=key, Body=body, ContentType=content_type
         )
-        return f"https://{bucket}.s3.amazonaws.com/{key}"
 
 
 class KeywordExtractorResource(ConfigurableResource):

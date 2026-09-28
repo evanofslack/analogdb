@@ -6,12 +6,11 @@ from typing import List, Tuple
 import analogdb.models as adb
 import dagster as dg
 from scrape.models import (
-    Color,
     Keyword,
     PhotoMetadata,
+    PostImages,
     RedditComment,
     RedditPost,
-    S3Image,
     new_post_create,
 )
 
@@ -169,41 +168,27 @@ def title_metadatas(
 
 
 @dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
-def s3_images(
+def post_images(
     context: dg.AssetExecutionContext,
     image_processor: ImageProcessorResource,
     storage: StorageResource,
     reddit_posts,
-) -> Result[List[S3Image]]:
+) -> Result[PostImages]:
     data = {}
     status = {}
-    for _, p in reddit_posts.successful().items():
-        images = image_processor.client().upload_s3(p, storage)
-        id = p.permalink
-        data[id] = images
-        status[id] = Status.SUCCESS
+    errors = {}
+    processor = image_processor.client()
+    for id, p in reddit_posts.successful().items():
+        try:
+            data[id] = processor.process(p, storage)
+            status[id] = Status.SUCCESS
+        except Exception as e:
+            context.log.error(f"Failed to process images for {id}: {e}")
+            status[id] = Status.FAILED
+            errors[id] = str(e)
 
-    result = Result(data=data, status=status)
-    context.log.info(f"Uploaded s3 images for {result.successful_count()} posts")
-    return result
-
-
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
-def colors(
-    context: dg.AssetExecutionContext,
-    image_processor: ImageProcessorResource,
-    reddit_posts,
-) -> Result[Color]:
-    data = {}
-    status = {}
-    for _, p in reddit_posts.successful().items():
-        colors = image_processor.client().extract_colors(p.image)
-        id = p.permalink
-        data[id] = colors
-        status[id] = Status.SUCCESS
-
-    result = Result(data=data, status=status)
-    context.log.info(f"Extracted colors for {result.successful_count()} posts")
+    result = Result(data=data, status=status, errors=errors)
+    context.log.info(f"Processed images for {result.successful_count()} posts")
     return result
 
 
@@ -244,14 +229,13 @@ def final_posts(
     context: dg.AssetExecutionContext,
     reddit_posts,
     title_metadatas,
-    s3_images,
-    colors,
+    post_images,
     keywords,
 ):
     ids = (
         reddit_posts.successful_ids()
         & title_metadatas.successful_ids()
-        & s3_images.successful_ids()
+        & post_images.successful_ids()
     )
     context.log.info(f"Creating final posts for {len(ids)} posts")
 
@@ -264,9 +248,8 @@ def final_posts(
             final = new_post_create(
                 post=reddit_posts.data[id],
                 metadata=title_metadatas.data[id],
-                images=s3_images.data[id],
+                images=post_images.data[id],
                 keywords=keywords.data[id],
-                colors=colors.data[id],
             )
 
             data[id] = final
