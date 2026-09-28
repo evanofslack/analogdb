@@ -893,8 +893,14 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "type": "string",
+                        "description": "Opaque cursor from next_cursor for the next page",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
-                        "description": "Page offset for pagination",
+                        "description": "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random",
                         "name": "page_id",
                         "in": "query"
                     },
@@ -912,7 +918,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Random seed for consistent random sorting",
+                        "description": "Random seed for consistent random sorting, picked from 1..500 when missing",
                         "name": "seed",
                         "in": "query"
                     },
@@ -1611,13 +1617,19 @@ const docTemplate = `{
         "server.Meta": {
             "type": "object",
             "properties": {
+                "next_cursor": {
+                    "description": "Opaque cursor for the next page, empty at the end",
+                    "type": "string",
+                    "example": "eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0"
+                },
                 "next_page_id": {
+                    "description": "Deprecated: use next_cursor",
                     "type": "integer",
                     "example": 1752244116
                 },
                 "next_page_url": {
                     "type": "string",
-                    "example": "/posts?sort=time\u0026page_size=20\u0026page_id=1752244116"
+                    "example": "/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0\u0026page_size=20\u0026sort=time"
                 },
                 "page_size": {
                     "type": "integer",

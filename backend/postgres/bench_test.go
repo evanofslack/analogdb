@@ -2,11 +2,14 @@ package postgres
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"database/sql/driver"
+	"encoding/hex"
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -112,6 +115,25 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 		scoreKeyset = found[len(found)-1].Score
 	}
 
+	// cursor for the fifth page of the random sort with seed 37
+	randomSeed := 37
+	var randomCursor *analogdb.Cursor
+	for page := 1; page < 5; page++ {
+		filter := postFilter(analogdb.PostSortRandom)
+		filter.Seed = &randomSeed
+		filter.Cursor = randomCursor
+		found, _, err := posts.FindPosts(ctx, filter)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if len(found) == 0 {
+			b.Fatal("benchmark database has no posts, run make bench-seed")
+		}
+		last := found[len(found)-1]
+		sum := md5.Sum([]byte(strconv.Itoa(last.Id) + strconv.Itoa(randomSeed)))
+		randomCursor = &analogdb.Cursor{Hash: hex.EncodeToString(sum[:]), ID: last.Id}
+	}
+
 	randomSQL := func(order string) func(ctx context.Context) error {
 		query := "SELECT * FROM pictures ORDER BY " + order + " LIMIT 20"
 		return func(ctx context.Context) error {
@@ -140,6 +162,14 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 			filter := postFilter(analogdb.PostSortRandom)
 			seed := 37
 			filter.Seed = &seed
+			return filter
+		})},
+		{"sort_random_page5", findPosts(func() *analogdb.PostFilter {
+			filter := postFilter(analogdb.PostSortRandom)
+			seed := randomSeed
+			cursor := *randomCursor
+			filter.Seed = &seed
+			filter.Cursor = &cursor
 			return filter
 		})},
 		{"sort_random_mod_sql", randomSQL("MOD(time, 37), time DESC")},
