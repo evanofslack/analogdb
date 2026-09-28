@@ -20,12 +20,7 @@ func NewFilmService(db *DB) *FilmService {
 }
 
 func (s *FilmService) FindFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
-	tx, err := s.db.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	return s.db.findFilms(ctx, tx, filter)
+	return s.db.findFilms(ctx, filter)
 }
 
 func (s *FilmService) CreateFilm(ctx context.Context, film *analogdb.CreateFilm) (*analogdb.CreateFilm, error) {
@@ -86,7 +81,7 @@ func (db *DB) createFilm(ctx context.Context, tx *sql.Tx, film *analogdb.CreateF
 }
 
 // findFilms is the general function responsible for handling all film queries.
-func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
+func (db *DB) findFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
 	filterFmt := "nil"
 	if filter != nil {
 		filterFmt = filter.String()
@@ -119,9 +114,9 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 	    `, where) + order + limit
 
 	if counts := filter.IncludeCounts; counts != nil && *counts {
-		having := filterToHavingFilm(filter)
+		countWhere := filterToWhereCountFilm(filter)
 		query = fmt.Sprintf(`
-			SELECT 
+			SELECT
 				f.id,
 				f.film_make,
 				f.film_type,
@@ -130,16 +125,18 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 				f.description,
 				f.created,
 				f.updated,
-				COUNT(p.id) as post_count
+				COALESCE(p.post_count, 0) as post_count
 			FROM films f
-			LEFT JOIN pictures p ON f.film_make = p.film_make AND f.film_type = p.film_type
-		    WHERE %s
-			GROUP BY f.id, f.film_make, f.film_type, f.film_speed, f.color_type, f.description, f.created, f.updated
-			HAVING %s
-	`, where, having) + order + limit
+			LEFT JOIN (
+				SELECT film_make AS make, film_type AS type, COUNT(*) AS post_count
+				FROM pictures
+				GROUP BY film_make, film_type
+			) p ON p.make = f.film_make AND p.type = f.film_type
+		    WHERE %s AND %s
+	`, where, countWhere) + order + limit
 	}
 
-	rows, err := tx.QueryContext(ctx, query, args...)
+	rows, err := db.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Find films", "error", err)
 		return nil, err
@@ -177,10 +174,6 @@ func (db *DB) findFilms(ctx context.Context, tx *sql.Tx, filter *analogdb.FilmFi
 		return nil, err
 	}
 
-	if err = tx.Commit(); err != nil {
-		db.logger.ErrorContext(ctx, "Find films", "error", err)
-		return nil, err
-	}
 	return films, nil
 }
 
@@ -231,14 +224,14 @@ func filterToWhereFilm(filter *analogdb.FilmFilter, startIndex int) (string, []a
 	return whereQuery, args, index
 }
 
-func filterToHavingFilm(filter *analogdb.FilmFilter) string {
-	having := []string{"1=1"}
+func filterToWhereCountFilm(filter *analogdb.FilmFilter) string {
+	where := []string{"1=1"}
 	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
 		if includeCounts := filter.IncludeCounts; includeCounts != nil && *includeCounts {
-			having = append(having, "COUNT(p.id) > 0")
+			where = append(where, "COALESCE(p.post_count, 0) > 0")
 		}
 	}
-	return strings.Join(having, " AND ")
+	return strings.Join(where, " AND ")
 }
 
 // filterToOrderFilm converts film filter into an SQL "ORDER BY" statement
@@ -246,7 +239,7 @@ func filterToOrderFilm(filter *analogdb.FilmFilter) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
 		case analogdb.FilmSortAlphabetical:
-			return " ORDER BY f.film_make, f.film_type, f.film_speed DESC"
+			return " ORDER BY f.film_make, f.film_type, f.film_speed"
 		case analogdb.FilmSortCounts:
 			return " ORDER BY post_count DESC"
 		}

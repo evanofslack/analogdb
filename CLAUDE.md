@@ -14,7 +14,7 @@ AnalogDB is a full-stack application for managing and discovering analog photogr
 - **Consumer (`/consumer/`)**: Go service for processing analytics events with Kafka and ClickHouse
 - **Infrastructure (`/infra/`)**: Docker compose for observability stack (Prometheus, Grafana, Loki, Tempo)
 - **API Clients (`/api/clients/`)**: Auto-generated TypeScript and Python clients from OpenAPI spec
-- **Dev (`/dev/`)**: Database dump and restore utility scripts
+- **Bench (`/backend/bench/`)**: Synthetic seed data and post query benchmarks (see its README)
 
 ## Common Commands
 

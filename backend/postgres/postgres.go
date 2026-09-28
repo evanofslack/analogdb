@@ -6,9 +6,13 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/evanofslack/analogdb/logger"
+	"github.com/evanofslack/analogdb/metrics"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 	"go.nhat.io/otelsql"
 	semconv "go.opentelemetry.io/otel/semconv/v1.20.0"
 )
@@ -22,6 +26,20 @@ type DB struct {
 	migrationEnabled bool
 	migrationPath    string
 	tracingEnabled   bool
+	pool             Pool
+}
+
+// Pool holds connection pool limits. Zero values keep the database/sql defaults.
+type Pool struct {
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
+}
+
+// SetPool sets the connection pool limits applied on Open.
+func (db *DB) SetPool(pool Pool) {
+	db.pool = pool
 }
 
 func NewDB(dsn string, logger *logger.Logger, migrationEnabled bool, migrationPath string, tracingEnabled bool) *DB {
@@ -68,6 +86,7 @@ func (db *DB) Open() error {
 		err = fmt.Errorf("open connection to db: %w", err)
 		return err
 	}
+	db.applyPool()
 
 	if db.migrationEnabled {
 		// If migration path provided, use it
@@ -83,6 +102,28 @@ func (db *DB) Open() error {
 		}
 	}
 	return db.db.PingContext(db.ctx)
+}
+
+func (db *DB) applyPool() {
+	if db.pool.MaxOpenConns > 0 {
+		db.db.SetMaxOpenConns(db.pool.MaxOpenConns)
+	}
+	if db.pool.MaxIdleConns > 0 {
+		db.db.SetMaxIdleConns(db.pool.MaxIdleConns)
+	}
+	if db.pool.ConnMaxLifetime > 0 {
+		db.db.SetConnMaxLifetime(db.pool.ConnMaxLifetime)
+	}
+	if db.pool.ConnMaxIdleTime > 0 {
+		db.db.SetConnMaxIdleTime(db.pool.ConnMaxIdleTime)
+	}
+	db.logger.Debug("Set db pool", "max_open_conns", db.pool.MaxOpenConns, "max_idle_conns", db.pool.MaxIdleConns, "conn_max_lifetime", db.pool.ConnMaxLifetime, "conn_max_idle_time", db.pool.ConnMaxIdleTime)
+}
+
+// RegisterMetrics exposes connection pool stats as analogdb_go_sql_* series.
+func (db *DB) RegisterMetrics(registerer prometheus.Registerer) error {
+	collector := collectors.NewDBStatsCollector(db.db, metrics.AnalogdbNamespace)
+	return prometheus.WrapRegistererWithPrefix(metrics.AnalogdbNamespace+"_", registerer).Register(collector)
 }
 
 func (db *DB) Close() error {

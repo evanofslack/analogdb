@@ -1,0 +1,10 @@
+DROP INDEX IF EXISTS idx_post_updates_post;
+DROP INDEX IF EXISTS idx_colors_html;
+DROP INDEX IF EXISTS idx_colors_post_id;
+DROP INDEX IF EXISTS idx_keywords_word;
+DROP INDEX IF EXISTS idx_keywords_post_id;
+DROP INDEX IF EXISTS idx_pictures_film;
+DROP INDEX IF EXISTS idx_pictures_camera;
+DROP INDEX IF EXISTS idx_pictures_author;
+DROP INDEX IF EXISTS idx_pictures_score_id;
+DROP INDEX IF EXISTS idx_pictures_time_id;

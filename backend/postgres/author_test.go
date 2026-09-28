@@ -22,8 +22,8 @@ func TestAuthorService_FindAuthors(t *testing.T) {
 
 		expectedAuthors := []string{
 			"u/photographer1",
-			"u/streetphotographer",
 			"u/portraitist",
+			"u/streetphotographer",
 		}
 
 		if len(authors) != len(expectedAuthors) {

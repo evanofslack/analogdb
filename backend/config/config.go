@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
@@ -29,9 +30,13 @@ type App struct {
 }
 
 type DB struct {
-	URL              string `yaml:"url" env:"DATABASE_URL"`
-	MigrationEnabled bool   `yaml:"migration_enabled" env:"MIGRATION_ENABLED"`
-	MigrationPath    string `yaml:"migration_path" env:"MIGRATION_PATH"`
+	URL              string        `yaml:"url" env:"DATABASE_URL"`
+	MigrationEnabled bool          `yaml:"migration_enabled" env:"MIGRATION_ENABLED"`
+	MigrationPath    string        `yaml:"migration_path" env:"MIGRATION_PATH"`
+	MaxOpenConns     int           `yaml:"max_open_conns" env:"DATABASE_MAX_OPEN_CONNS" env-default:"20"`
+	MaxIdleConns     int           `yaml:"max_idle_conns" env:"DATABASE_MAX_IDLE_CONNS" env-default:"10"`
+	ConnMaxLifetime  time.Duration `yaml:"conn_max_lifetime" env:"DATABASE_CONN_MAX_LIFETIME" env-default:"30m"`
+	ConnMaxIdleTime  time.Duration `yaml:"conn_max_idle_time" env:"DATABASE_CONN_MAX_IDLE_TIME" env-default:"5m"`
 }
 
 type Redis struct {

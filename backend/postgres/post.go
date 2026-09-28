@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -45,18 +46,14 @@ type rawCreatePost struct {
 	filmSpeed   NullInt
 	focalLength NullInt
 	aperture    NullString
-	hexes       NullString
-	csses       NullString
-	htmls       NullString
-	percents    NullString
-	words       NullString
-	weights     NullString
 }
 
 // rawPost corresponds to the columns as a post is selected from the DB
 type rawPost struct {
 	id int
 	rawCreatePost
+	colors   []byte
+	keywords []byte
 }
 
 type PostService struct {
@@ -81,7 +78,7 @@ func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost)
 }
 
 func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
-	tx, err := s.db.db.BeginTx(ctx, nil)
+	tx, err := s.db.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, 0, err
 	}
@@ -90,7 +87,7 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 }
 
 func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post, error) {
-	tx, err := s.db.db.BeginTx(ctx, nil)
+	tx, err := s.db.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true})
 	if err != nil {
 		return nil, err
 	}
@@ -142,12 +139,7 @@ func toPublicError(err error, message string) error {
 }
 
 func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
-	tx, err := s.db.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-	ids, err := s.db.allPostIDs(ctx, tx)
+	ids, err := s.db.allPostIDs(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -416,12 +408,13 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	db.logger.DebugContext(ctx, "Start find posts", "filter", filterFmt)
 	defer db.logger.DebugContext(ctx, "Finish find posts", "filter", filterFmt)
 
-	postWhere, postArgs := filterToWherePost(filter)
+	postWhere, postArgs := filterToWherePost(filter, false)
+	countWhere, _ := filterToWherePost(filter, true)
 	subqueryOrder := filterToOrder(filter, "")
 	mainOrder := filterToOrder(filter, "p.")
 
 	// Count total matching posts
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM pictures WHERE %s", postWhere)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM pictures WHERE %s", countWhere)
 	var count int
 	err := tx.QueryRowContext(ctx, countQuery, postArgs...).Scan(&count)
 	if err != nil {
@@ -462,35 +455,29 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			p.film_speed,
 			p.focal_length,
 			p.aperture,
-			c.hexes,
-			c.csses,
-			c.htmls,
-			c.percents,
-			k.words,
-			k.weights
+			c.colors,
+			k.keywords
 		FROM (
-			SELECT * FROM pictures 
+			SELECT * FROM pictures
 			WHERE %s
 			%s %s
 		) p
-		LEFT JOIN (
-			SELECT
-				post_id,
-				STRING_AGG(hex, ',' ORDER BY percent DESC) as hexes,
-				STRING_AGG(css, ',' ORDER BY percent DESC) as csses,
-				STRING_AGG(html, ',' ORDER BY percent DESC) as htmls,
-				ARRAY_AGG(percent ORDER BY percent DESC) as percents
+		LEFT JOIN LATERAL (
+			SELECT COALESCE(
+				json_agg(json_build_object('hex', hex, 'css', css, 'html', html, 'percent', percent) ORDER BY percent DESC, id),
+				'[]'
+			) AS colors
 			FROM colors
-			GROUP BY post_id
-		) c ON c.post_id = p.id
-		LEFT JOIN (
-			SELECT
-				post_id,
-				STRING_AGG(word, ',' ORDER BY weight DESC) as words,
-				ARRAY_AGG(weight ORDER BY weight DESC) as weights
+			WHERE post_id = p.id
+		) c ON true
+		LEFT JOIN LATERAL (
+			SELECT COALESCE(
+				json_agg(json_build_object('word', word, 'weight', weight) ORDER BY weight DESC, id),
+				'[]'
+			) AS keywords
 			FROM keywords
-			GROUP BY post_id
-		) k ON k.post_id = p.id
+			WHERE post_id = p.id
+		) k ON true
 		%s
 	`, postWhere, subqueryOrder, limit, mainOrder)
 
@@ -510,13 +497,11 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			return nil, 0, err
 		}
 		post, err := rawPostToPost(*p)
-
-		stripAuthorPrefix(post)
-
 		if err != nil {
 			db.logger.ErrorContext(ctx, "Fail find posts", "error", err)
 			return nil, 0, err
 		}
+		stripAuthorPrefix(post)
 		posts = append(posts, post)
 	}
 	if err := rows.Err(); err != nil {
@@ -549,7 +534,10 @@ func filterToOrder(filter *analogdb.PostFilter, tableAlias string) string {
 	return ""
 }
 
-func filterToWherePost(filter *analogdb.PostFilter) (string, []any) {
+// filterToWherePost builds the WHERE clause. forCount only changes how color
+// filters are written: counting all matches is faster as one grouped scan of
+// colors, while a sorted page is faster checking each row until the limit.
+func filterToWherePost(filter *analogdb.PostFilter, forCount bool) (string, []any) {
 	index := 1
 	where, args := []string{"1=1"}, []any{}
 
@@ -736,30 +724,24 @@ func filterToWherePost(filter *analogdb.PostFilter) (string, []any) {
 			colorPercents = append(colorPercents, 0.0)
 		}
 
-		inner := ""
 		for i := range colors {
 			color, percent := colors[i], colorPercents[i]
-			inner += fmt.Sprintf("SELECT post_id from colors WHERE html = $%d GROUP BY post_id, html HAVING sum(percent) > $%d INTERSECT ", index, index+1)
+			if forCount {
+				where = append(where, fmt.Sprintf("id IN (SELECT post_id FROM colors WHERE html = $%d GROUP BY post_id HAVING sum(percent) > $%d)", index, index+1))
+			} else {
+				where = append(where, fmt.Sprintf("EXISTS (SELECT 1 FROM colors c WHERE c.post_id = pictures.id AND c.html = $%d HAVING sum(c.percent) > $%d)", index, index+1))
+			}
 			index += 2
 			args = append(args, color, percent)
 		}
-
-		inner = strings.TrimSuffix(inner, " INTERSECT ")
-		statement := fmt.Sprintf("id IN (%s)", inner)
-		where = append(where, statement)
 	}
 
 	if filter.Keywords != nil {
-		inner := ""
 		for _, keyword := range *filter.Keywords {
-			inner += fmt.Sprintf("SELECT post_id from keywords WHERE word = $%d INTERSECT ", index)
-			index += 1
+			where = append(where, fmt.Sprintf("EXISTS (SELECT 1 FROM keywords k WHERE k.post_id = pictures.id AND k.word = $%d)", index))
+			index++
 			args = append(args, keyword)
 		}
-
-		inner = strings.TrimSuffix(inner, " INTERSECT ")
-		statement := fmt.Sprintf("id IN (%s)", inner)
-		where = append(where, statement)
 	}
 
 	whereQuery := strings.Join(where, " AND ")
@@ -1005,12 +987,12 @@ func (db *DB) deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 	return nil
 }
 
-func (db *DB) allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
+func (db *DB) allPostIDs(ctx context.Context) ([]int, error) {
 	db.logger.DebugContext(ctx, "Start get all post ids")
 
 	query := `
 			SELECT id FROM pictures ORDER BY id ASC`
-	rows, err := tx.QueryContext(ctx, query)
+	rows, err := db.db.QueryContext(ctx, query)
 	if err != nil {
 		db.logger.DebugContext(ctx, "Fail get all post ids", "error", err)
 		return nil, err
@@ -1027,11 +1009,6 @@ func (db *DB) allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 		ids = append(ids, id)
 	}
 	if err := rows.Err(); err != nil {
-		db.logger.DebugContext(ctx, "Fail get all post ids", "error", err)
-		return nil, err
-	}
-	err = tx.Commit()
-	if err != nil {
 		db.logger.DebugContext(ctx, "Fail get all post ids", "error", err)
 		return nil, err
 	}
@@ -1144,15 +1121,6 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 5 colors"}
 	}
 
-	// we don't actually use these when creating the post here
-	// keywords are handled with seperate function
-	hexes := NullString{}
-	csses := NullString{}
-	htmls := NullString{}
-	percents := NullString{}
-	words := NullString{}
-	weights := NullString{}
-
 	post := &rawCreatePost{
 		url:         raw.Url,
 		title:       p.Title,
@@ -1182,12 +1150,6 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		filmSpeed:   NewNullIntFromPtr(p.FilmSpeed),
 		focalLength: NewNullIntFromPtr(p.FocalLength),
 		aperture:    NewNullStringFromPtr(p.Aperture),
-		hexes:       hexes,
-		csses:       csses,
-		htmls:       htmls,
-		percents:    percents,
-		words:       words,
-		weights:     weights,
 	}
 	return post, nil
 }
@@ -1200,71 +1162,14 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 	rawImage := analogdb.Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
 	images := []analogdb.Image{lowImage, medImage, highImage, rawImage}
 
-	// grab the colors
-	var hexes, csses, htmls, percents []string
 	colors := []analogdb.Color{}
-
-	// check for null
-	if p.hexes.Valid {
-		hexes = strings.Split(p.hexes.String, ",")
-	}
-	if p.csses.Valid {
-		csses = strings.Split(p.csses.String, ",")
-	}
-	if p.htmls.Valid {
-		htmls = strings.Split(p.htmls.String, ",")
-	}
-	if p.percents.Valid {
-		// remove '{}' from postgres array then split on commas
-		percents = strings.Split(strings.Trim(p.percents.String, "{}"), ",")
+	if err := json.Unmarshal(p.colors, &colors); err != nil {
+		return nil, err
 	}
 
-	// iterate over shortest slice. should all be same length though
-	iter := hexes
-	if len(csses) < len(iter) {
-		iter = csses
-	}
-	if len(htmls) < len(iter) {
-		iter = htmls
-	}
-	if len(percents) < len(iter) {
-		iter = percents
-	}
-
-	for i := range iter {
-		percent, err := strconv.ParseFloat(percents[i], 64)
-		if err != nil {
-			percent = 0.0
-		}
-		colors = append(colors, analogdb.Color{Hex: hexes[i], Css: csses[i], Html: htmls[i], Percent: percent})
-	}
-
-	// grab the keywords
-	var words, weights []string
 	keywords := []analogdb.Keyword{}
-
-	// check for null
-	if p.words.Valid {
-		words = strings.Split(p.words.String, ",")
-	}
-	if p.weights.Valid {
-		// remove '{}' from postgres array then split on commas
-		weights = strings.Split(strings.Trim(p.weights.String, "{}"), ",")
-	}
-
-	// iterate over keywords or percents, whichever is smaller
-	// technically should both be the same size but we can't be sure
-	iter = words
-	if len(weights) < len(words) {
-		iter = weights
-	}
-
-	for i := range iter {
-		weight, err := strconv.ParseFloat(weights[i], 64)
-		if err != nil {
-			weight = 0.0
-		}
-		keywords = append(keywords, analogdb.Keyword{Word: words[i], Weight: weight})
+	if err := json.Unmarshal(p.keywords, &keywords); err != nil {
+		return nil, err
 	}
 
 	post := &analogdb.Post{
@@ -1326,12 +1231,8 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, error) {
 		&p.rawCreatePost.filmSpeed,
 		&p.rawCreatePost.focalLength,
 		&p.rawCreatePost.aperture,
-		&p.rawCreatePost.hexes,
-		&p.rawCreatePost.csses,
-		&p.rawCreatePost.htmls,
-		&p.rawCreatePost.percents,
-		&p.rawCreatePost.words,
-		&p.rawCreatePost.weights); err != nil {
+		&p.colors,
+		&p.keywords); err != nil {
 		return nil, err
 	}
 	return &p, nil

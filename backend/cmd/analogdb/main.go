@@ -78,8 +78,18 @@ func main() {
 	// open connection to postgres
 	dbLogger := logger.WithSubsystem("database")
 	db := postgres.NewDB(cfg.DB.URL, dbLogger, cfg.DB.MigrationEnabled, cfg.DB.MigrationPath, cfg.Tracing.Enabled)
+	db.SetPool(postgres.Pool{
+		MaxOpenConns:    cfg.DB.MaxOpenConns,
+		MaxIdleConns:    cfg.DB.MaxIdleConns,
+		ConnMaxLifetime: cfg.DB.ConnMaxLifetime,
+		ConnMaxIdleTime: cfg.DB.ConnMaxIdleTime,
+	})
 	if err := db.Open(); err != nil {
 		err = fmt.Errorf("startup database: %w", err)
+		fatal(logger, err)
+	}
+	if err := db.RegisterMetrics(metrics.Registry); err != nil {
+		err = fmt.Errorf("register database metrics: %w", err)
 		fatal(logger, err)
 	}
 

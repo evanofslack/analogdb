@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb/logger"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -116,5 +117,34 @@ func TestMustOpenWithSeed(t *testing.T) {
 
 	if db == nil {
 		t.Fatal("must return DB")
+	}
+}
+
+func TestDB_PoolAndMetrics(t *testing.T) {
+	db, cleanup := mustOpen(t)
+	defer cleanup()
+
+	db.SetPool(Pool{MaxOpenConns: 7, MaxIdleConns: 3, ConnMaxLifetime: time.Minute, ConnMaxIdleTime: time.Second})
+	db.applyPool()
+	if got := db.db.Stats().MaxOpenConnections; got != 7 {
+		t.Errorf("Expected max open connections 7, got %d", got)
+	}
+
+	registry := prometheus.NewRegistry()
+	if err := db.RegisterMetrics(registry); err != nil {
+		t.Fatal(err)
+	}
+	families, err := registry.Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, f := range families {
+		if f.GetName() == "analogdb_go_sql_max_open_connections" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected analogdb_go_sql_max_open_connections to be registered")
 	}
 }
