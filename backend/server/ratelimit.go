@@ -14,11 +14,12 @@ func (server *Server) addRatelimiter() {
 
 	// rate limit by IP with json response
 	rateLimiter := httprate.Limit(rateLimit, rateLimitPeriod,
-		httprate.WithKeyFuncs(httprate.KeyByIP),
+		httprate.WithKeyFuncs(keyByClientIP),
 		httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
+			server.stats.rateLimited.Inc()
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusTooManyRequests)
-			w.Write([]byte(`{"error": "Too many requests"}`))
+			_, _ = w.Write([]byte(`{"error": "Too many requests"}`))
 		}))
 
 	server.router.Use(middleware.Maybe(rateLimiter, server.applyRateLimit))
@@ -40,4 +41,8 @@ func (server *Server) applyRateLimit(r *http.Request) bool {
 		return false
 	}
 	return true
+}
+
+func keyByClientIP(r *http.Request) (string, error) {
+	return getRealIP(r), nil
 }

@@ -112,7 +112,7 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
-		s.similarCache.set(ctx, &cache.Item{
+		_ = s.similarCache.set(ctx, &cache.Item{
 			Ctx:   ctx,
 			Key:   postKey,
 			Value: &posts,
@@ -156,7 +156,7 @@ func (s *SimilarityService) FindSimilarPosts(ctx context.Context, filter *analog
 		idKeyHashesString = strings.Join(idKeyHashes, delimiter)
 
 		// save this back to the cache
-		s.idKeysCache.set(ctx, &cache.Item{
+		_ = s.idKeysCache.set(ctx, &cache.Item{
 			Ctx:   ctx,
 			Key:   idKey,
 			Value: &idKeyHashes,
@@ -195,12 +195,12 @@ func (s *SimilarityService) DeletePost(ctx context.Context, id int) error {
 		// for all hashes, remove from posts cache
 		for _, hash := range idKeyHashes {
 			s.rdb.logger.DebugContext(ctx, "Delete hash from similar posts cache", "post_id", id, "hash", hash, "instance", s.similarCache)
-			s.similarCache.delete(ctx, hash)
+			_ = s.similarCache.delete(ctx, hash)
 		}
 
 		// and remove from key ids cache
 		s.rdb.logger.DebugContext(ctx, "Delete key from post ids cache", "post_id", id, "instance", s.idKeysCache)
-		s.idKeysCache.delete(ctx, idKey)
+		_ = s.idKeysCache.delete(ctx, idKey)
 	}()
 
 	return s.dbService.DeletePost(ctx, id)

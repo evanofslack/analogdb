@@ -47,7 +47,7 @@ func TestBenchMigrate(t *testing.T) {
 // See bench/README.md.
 func BenchmarkFindPosts(b *testing.B) {
 	db, rec := openBench(b)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 	ctx := context.Background()
 
 	cases := benchCases(b, db)
@@ -221,12 +221,7 @@ func withRuntimeParam(dsn, key, value string) string {
 // writeExplain runs each case once, then writes EXPLAIN (ANALYZE, BUFFERS)
 // for every statement the case sent.
 func writeExplain(ctx context.Context, db *DB, rec *queryRecorder, cases []benchCase, path string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
+	var out strings.Builder
 	for _, c := range cases {
 		rec.start()
 		err := c.run(ctx)
@@ -235,28 +230,30 @@ func writeExplain(ctx context.Context, db *DB, rec *queryRecorder, cases []bench
 			return fmt.Errorf("%s: %w", c.name, err)
 		}
 		for i, q := range queries {
-			fmt.Fprintf(f, "=== %s (statement %d of %d)\n%s\nargs: %v\n\n", c.name, i+1, len(queries), strings.TrimSpace(q.query), q.args)
-			rows, err := db.db.QueryContext(ctx, "EXPLAIN (ANALYZE, BUFFERS) "+q.query, q.args...)
-			if err != nil {
+			out.WriteString(fmt.Sprintf("=== %s (statement %d of %d)\n%s\nargs: %v\n\n", c.name, i+1, len(queries), strings.TrimSpace(q.query), q.args))
+			if err := explainQuery(ctx, db, q, &out); err != nil {
 				return fmt.Errorf("%s: %w", c.name, err)
 			}
-			for rows.Next() {
-				var line string
-				if err := rows.Scan(&line); err != nil {
-					rows.Close()
-					return err
-				}
-				fmt.Fprintln(f, line)
-			}
-			if err := rows.Err(); err != nil {
-				rows.Close()
-				return err
-			}
-			rows.Close()
-			fmt.Fprintln(f)
+			out.WriteString("\n")
 		}
 	}
-	return nil
+	return os.WriteFile(path, []byte(out.String()), 0o644)
+}
+
+func explainQuery(ctx context.Context, db *DB, q recordedQuery, out *strings.Builder) error {
+	rows, err := db.db.QueryContext(ctx, "EXPLAIN (ANALYZE, BUFFERS) "+q.query, q.args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var line string
+		if err := rows.Scan(&line); err != nil {
+			return err
+		}
+		out.WriteString(line + "\n")
+	}
+	return rows.Err()
 }
 
 type recordedQuery struct {

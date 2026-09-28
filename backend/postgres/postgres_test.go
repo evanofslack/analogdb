@@ -32,8 +32,8 @@ func mustOpen(t *testing.T) (*DB, func()) {
 	ctx := context.Background()
 
 	// Create PostgreSQL testcontainer
-	postgresContainer, err := postgres.RunContainer(ctx,
-		testcontainers.WithImage("postgres:15"),
+	postgresContainer, err := postgres.Run(ctx,
+		"postgres:15",
 		postgres.WithDatabase(testDBName),
 		postgres.WithUsername(testUser),
 		postgres.WithPassword(testPass),
@@ -100,8 +100,9 @@ func mustSeed(t *testing.T, db *DB) {
 	if err != nil {
 		t.Fatalf("Seed DB, err=%v", err)
 	}
-	_, err = db.db.Exec(string(seedSQL))
-	t.Helper()
+	if _, err := db.db.Exec(string(seedSQL)); err != nil {
+		t.Fatalf("Seed DB, err=%v", err)
+	}
 }
 
 func mustOpenWithSeed(t *testing.T) (*DB, func()) {

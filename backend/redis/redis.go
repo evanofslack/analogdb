@@ -82,6 +82,10 @@ func (rdb *RDB) Open() error {
 	return nil
 }
 
+func (rdb *RDB) Readyz(ctx context.Context) error {
+	return rdb.db.Ping(ctx).Err()
+}
+
 func (rdb *RDB) Close() error {
 	rdb.logger.Debug("Starting redis server close")
 	defer rdb.logger.Info("Closed redis server")

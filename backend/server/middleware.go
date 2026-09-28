@@ -18,6 +18,9 @@ func (s *Server) mountMiddleware() {
 	// add recoverer first
 	s.router.Use(middleware.Recoverer)
 
+	// resolve client ip from trusted proxies
+	s.router.Use(s.clientIP)
+
 	// collect prom metrics
 	s.router.Use(s.collectStats)
 
@@ -38,12 +41,11 @@ func (s *Server) mountMiddleware() {
 	s.addRatelimiter()
 
 	corsHandler := cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*", "http://localhost"},
-		AllowedMethods:   []string{"GET", "DELETE", "PUT", "POST", "PATCH"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
-		AllowCredentials: true,
-		MaxAge:           500,
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "HEAD", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Content-Type"},
+		AllowCredentials: false,
+		MaxAge:           3600,
 	})
 
 	// CORS

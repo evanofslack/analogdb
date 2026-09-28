@@ -124,7 +124,7 @@ func TestCloseDrainsQueue(t *testing.T) {
 func TestBatchTimeoutFlushes(t *testing.T) {
 	writer := &fakeWriter{}
 	es := newTestStream(t, writer, Options{QueueSize: 100, BatchSize: 100, BatchTimeout: 20 * time.Millisecond})
-	defer es.Close()
+	defer func() { _ = es.Close() }()
 
 	for i := 0; i < 3; i++ {
 		if err := es.Write(context.Background(), &v1.Event{}); err != nil {

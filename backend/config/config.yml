@@ -18,6 +18,8 @@ vector_database:
   scheme: "http"
 http:
   port: "8080"
+  trusted_proxies: ["172.16.0.0/12", "127.0.0.1/32"]
+  shutdown_drain_delay: "5s"
 logger:
   level: "info"
   webhook: ""

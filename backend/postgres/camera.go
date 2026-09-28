@@ -89,7 +89,7 @@ func (db *DB) findCameras(ctx context.Context, filter *analogdb.CameraFilter) ([
 	var args []any
 	var where string
 	index := 1
-	where, args, index = filterToWhereCamera(filter, index)
+	where, args, _ = filterToWhereCamera(filter, index)
 
 	order := filterToOrderCamera(filter)
 	limit := formatLimitCamera(filter)

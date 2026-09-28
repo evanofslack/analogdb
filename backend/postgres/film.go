@@ -93,7 +93,7 @@ func (db *DB) findFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*an
 	var args []any
 	var where string
 	index := 1
-	where, args, index = filterToWhereFilm(filter, index)
+	where, args, _ = filterToWhereFilm(filter, index)
 
 	order := filterToOrderFilm(filter)
 	limit := formatLimitFilm(filter)

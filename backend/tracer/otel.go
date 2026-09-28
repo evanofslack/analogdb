@@ -70,6 +70,7 @@ func (tracer *Tracer) StartExporter() error {
 	tracer.logger.Debug("Dialing GRPC endpoint for OTLP exporter", "endpoint", endpoint)
 
 	// dial the grpc endpoint where traces are exported
+	//nolint:staticcheck // blocking dial at startup, NewClient does not support WithBlock
 	conn, err := grpc.DialContext(ctx, endpoint, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {
 		return fmt.Errorf("dial GRPC endpoint for OTLP exporter, err=%w", err)

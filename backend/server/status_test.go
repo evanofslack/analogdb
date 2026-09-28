@@ -34,7 +34,7 @@ func TestHealthy(t *testing.T) {
 func TestUnhealthy(t *testing.T) {
 	s := mustOpen(t)
 	defer mustClose(t, s)
-	s.healthy = false
+	s.healthy.Store(false)
 	r := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	w := httptest.NewRecorder()
 	s.router.ServeHTTP(w, r)

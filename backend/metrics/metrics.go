@@ -2,6 +2,8 @@ package metrics
 
 import (
 	"context"
+	"errors"
+	"net"
 	"net/http"
 	"time"
 
@@ -46,15 +48,29 @@ func New(logger *logger.Logger) (*Metrics, error) {
 
 const metricsPath = "/metrics"
 
-func (m *Metrics) Serve(port string) {
+func (m *Metrics) Serve(port string) error {
 	mux := http.NewServeMux()
 	mux.Handle(metricsPath, promhttp.HandlerFor(m.Registry, promhttp.HandlerOpts{}))
 	addr := ":" + port
-	m.server = &http.Server{Addr: addr, Handler: mux}
+	m.server = &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
-	m.logger.Info("Serving prometheus metrics server", "address", m.server.Addr)
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
 
-	go m.server.ListenAndServe()
+	m.logger.Info("Serving prometheus metrics server", "address", ln.Addr().String())
+
+	go func() {
+		if err := m.server.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			m.logger.Error("Metrics server stopped", "error", err)
+		}
+	}()
+	return nil
 }
 
 func (m *Metrics) Close() error {

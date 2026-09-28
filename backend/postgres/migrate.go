@@ -87,6 +87,10 @@ func (db *DB) migrate() error {
 			}
 			tableNames = append(tableNames, tableName)
 		}
+		if err := rows.Err(); err != nil {
+			db.logger.Error("Fail list all tables", "error", err)
+		}
+		db.logger.Debug("Tables in database", "tables", tableNames)
 	}
 
 	db.logger.Info("Complete db migrations")
@@ -110,7 +114,7 @@ func (db *DB) migrateFromPath(migrationsPath string) error {
 	if err != nil {
 		return fmt.Errorf("create migrate instance, err=%w", err)
 	}
-	defer m.Close()
+	defer func() { _, _ = m.Close() }()
 
 	// Run all pending migrations
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {

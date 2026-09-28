@@ -3,8 +3,11 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net"
 	"net/http"
 	"os"
+	"sync/atomic"
 	"time"
 
 	"github.com/evanofslack/analogdb"
@@ -22,17 +25,24 @@ import (
 // @BasePath /v1
 // @securityDefinitions.basic BasicAuth
 
-const shutdownTimeout = 5 * time.Second
+const (
+	shutdownTimeout   = 5 * time.Second
+	readHeaderTimeout = 5 * time.Second
+	readTimeout       = 15 * time.Second
+	writeTimeout      = 30 * time.Second
+	idleTimeout       = 120 * time.Second
+)
 
 type Server struct {
-	server   *http.Server
-	router   *chi.Mux
-	healthy  bool
-	logger   *logger.Logger
-	metrics  *metrics.Metrics
-	config   *config.Config
-	stats    *httpStats
-	hostname string
+	server         *http.Server
+	router         *chi.Mux
+	healthy        atomic.Bool
+	logger         *logger.Logger
+	metrics        *metrics.Metrics
+	config         *config.Config
+	stats          *httpStats
+	hostname       string
+	trustedProxies []*net.IPNet
 
 	PostService       analogdb.PostService
 	FilmService       analogdb.FilmService
@@ -43,11 +53,19 @@ type Server struct {
 	KeywordService    analogdb.KeywordService
 	SimilarityService analogdb.SimilarityService
 	EventService      analogdb.EventService
+
+	CacheReadyService  analogdb.ReadyService
+	VectorReadyService analogdb.ReadyService
 }
 
 func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *config.Config) *Server {
 	s := &Server{
-		server:   &http.Server{},
+		server: &http.Server{
+			ReadHeaderTimeout: readHeaderTimeout,
+			ReadTimeout:       readTimeout,
+			WriteTimeout:      writeTimeout,
+			IdleTimeout:       idleTimeout,
+		},
 		router:   chi.NewRouter(),
 		logger:   logger,
 		metrics:  metrics,
@@ -70,11 +88,19 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 		s.hostname = hostname
 	}
 
+	trusted, invalid := parseTrustedProxies(s.config.HTTP.TrustedProxies)
+	if len(invalid) > 0 {
+		s.logger.Error("Ignoring invalid trusted proxies", "invalid", invalid)
+	}
+	s.trustedProxies = trusted
+
 	s.server.Handler = s.router
 	s.server.Addr = ":" + port
 
 	s.stats = newHttpStats()
-	s.stats.register(s.metrics.Registry)
+	if err := s.stats.register(s.metrics.Registry); err != nil {
+		s.logger.Error("Fail register http metrics", "error", err)
+	}
 
 	s.mountMiddleware()
 
@@ -87,13 +113,21 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	// Mount collection resources
 	s.mountResourceHandlers()
 
-	s.healthy = true
+	s.healthy.Store(true)
 	return s
 }
 
 func (s *Server) Run() error {
-	s.logger.Info("Serving http server", "address", s.server.Addr)
-	go s.server.ListenAndServe()
+	ln, err := net.Listen("tcp", s.server.Addr)
+	if err != nil {
+		return err
+	}
+	s.logger.Info("Serving http server", "address", ln.Addr().String())
+	go func() {
+		if err := s.server.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			s.logger.Error("Http server stopped", "error", err)
+		}
+	}()
 	return nil
 }
 
@@ -127,9 +161,14 @@ func (s *Server) Close() error {
 	s.logger.Debug("Starting http server close")
 	defer s.logger.Info("Closed http server")
 
+	s.healthy.Store(false)
+	if delay := s.config.HTTP.ShutdownDrainDelay; delay > 0 {
+		s.logger.Info("Draining http server before shutdown", "delay", delay.String())
+		time.Sleep(delay)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-	s.healthy = false
 	return s.server.Shutdown(ctx)
 }
 

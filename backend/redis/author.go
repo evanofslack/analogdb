@@ -65,7 +65,7 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
 		defer cancel()
 
-		s.cache.set(ctx, &cache.Item{
+		_ = s.cache.set(ctx, &cache.Item{
 			Ctx:   ctx,
 			Key:   authorsKey,
 			Value: &authors,

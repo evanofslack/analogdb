@@ -37,7 +37,7 @@ func mustOpen(t *testing.T) *Server {
 
 	config := &config.Config{}
 
-	s := New("8080", logger, metrics, config)
+	s := New("0", logger, metrics, config)
 	if err := s.Run(); err != nil {
 		t.Fatal(err)
 	}
