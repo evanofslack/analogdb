@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"net"
 	"net/http"
 	"strconv"
 	"time"
@@ -97,17 +96,6 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 			}
 		}()
 	})
-}
-
-func getRealIP(req *http.Request) string {
-	if realIp := req.Header.Get("X-Real-IP"); realIp != "" {
-		return realIp
-	}
-	if remoteIp := req.Header.Get("X-Forwarded-For"); remoteIp != "" {
-		return remoteIp
-	}
-	host, _, _ := net.SplitHostPort(req.RemoteAddr)
-	return host
 }
 
 func getRealProto(req *http.Request) string {

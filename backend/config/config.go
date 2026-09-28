@@ -49,7 +49,9 @@ type VectorDB struct {
 }
 
 type HTTP struct {
-	Port string `yaml:"port" env:"HTTP_PORT"`
+	Port               string        `yaml:"port" env:"HTTP_PORT"`
+	TrustedProxies     []string      `yaml:"trusted_proxies" env:"HTTP_TRUSTED_PROXIES" env-separator:","`
+	ShutdownDrainDelay time.Duration `yaml:"shutdown_drain_delay" env:"SHUTDOWN_DRAIN_DELAY"`
 }
 
 type Log struct {
