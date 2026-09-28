@@ -33,14 +33,13 @@ def make_post(id: int) -> dict:
     }
 
 
-def make_page(ids, next_page_id, next_page_url) -> dict:
+def make_page(ids, next_cursor) -> dict:
     return {
         "posts": [make_post(i) for i in ids],
         "meta": {
             "total_posts": 6,
             "page_size": 2,
-            "next_page_id": next_page_id,
-            "next_page_url": next_page_url,
+            "next_cursor": next_cursor,
         },
     }
 
@@ -78,24 +77,38 @@ class TestFilterToParams:
 
 
 class TestGetPosts:
-    def test_get_posts_all_follows_pages(self, client, httpserver: HTTPServer):
+    def test_get_posts_all_follows_cursors(self, client, httpserver: HTTPServer):
         httpserver.expect_ordered_request(
             "/v1/posts", query_string={"page_size": "6", "sort": "time"}
-        ).respond_with_json(make_page([1, 2], 3, "/posts?page_id=3"))
+        ).respond_with_json(make_page([1, 2], "c1"))
         httpserver.expect_ordered_request(
             "/v1/posts",
-            query_string={"page_size": "6", "sort": "time", "page_id": "3"},
-        ).respond_with_json(make_page([3, 4], 5, "/posts?page_id=5"))
+            query_string={"page_size": "6", "sort": "time", "cursor": "c1"},
+        ).respond_with_json(make_page([3, 4], "c2"))
         httpserver.expect_ordered_request(
             "/v1/posts",
-            query_string={"page_size": "6", "sort": "time", "page_id": "5"},
-        ).respond_with_json(make_page([5], 0, ""))
+            query_string={"page_size": "6", "sort": "time", "cursor": "c2"},
+        ).respond_with_json(make_page([5], ""))
 
         posts = client.get_posts_all(count=6)
 
         assert [p.id for p in posts] == [1, 2, 3, 4, 5]
         assert posts[0].images[0].resolution == "low"
+        assert all("page_id" not in r.args for r, _ in httpserver.log)
         httpserver.check_assertions()
+
+    def test_get_posts_all_stops_at_count(self, client, httpserver: HTTPServer):
+        httpserver.expect_ordered_request("/v1/posts").respond_with_json(
+            make_page([1, 2], "c1")
+        )
+        httpserver.expect_ordered_request(
+            "/v1/posts", query_string={"page_size": "3", "sort": "time", "cursor": "c1"}
+        ).respond_with_json(make_page([3, 4], "c2"))
+
+        posts = client.get_posts_all(count=3)
+
+        assert [p.id for p in posts] == [1, 2, 3]
+        assert len(httpserver.log) == 2
 
     def test_get_posts_with_filter(self, client, httpserver: HTTPServer):
         httpserver.expect_request(
@@ -106,7 +119,7 @@ class TestGetPosts:
                 "time_start": "1",
                 "time_end": "2",
             },
-        ).respond_with_json(make_page([1], 0, ""))
+        ).respond_with_json(make_page([1], ""))
 
         filter = PostsFilter(None, None, None, None, 1, 2)
         resp = client.get_posts(filter=filter)
@@ -115,7 +128,7 @@ class TestGetPosts:
 
     def test_get_posts_null_posts(self, client, httpserver: HTTPServer):
         httpserver.expect_request("/v1/posts").respond_with_json(
-            {"posts": None, "meta": {"next_page_url": ""}}
+            {"posts": None, "meta": {"next_cursor": ""}}
         )
 
         resp = client.get_posts()
@@ -124,9 +137,7 @@ class TestGetPosts:
         assert client.get_posts_all(count=10) == []
 
     def test_get_latest_links(self, client, httpserver: HTTPServer):
-        httpserver.expect_request("/v1/posts").respond_with_json(
-            make_page([1, 2], 0, "")
-        )
+        httpserver.expect_request("/v1/posts").respond_with_json(make_page([1, 2], ""))
 
         assert client.get_latest_links(2) == ["/r/analog/1", "/r/analog/2"]
 
