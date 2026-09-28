@@ -416,6 +416,10 @@ definitions:
     type: object
   server.encodePostsResponse:
     properties:
+      failed_ids:
+        items:
+          type: integer
+        type: array
       message:
         example: successfully encoded 5 posts
         type: string

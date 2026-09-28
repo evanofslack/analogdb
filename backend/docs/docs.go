@@ -1685,6 +1685,12 @@ const docTemplate = `{
         "server.encodePostsResponse": {
             "type": "object",
             "properties": {
+                "failed_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "message": {
                     "type": "string",
                     "example": "successfully encoded 5 posts"
