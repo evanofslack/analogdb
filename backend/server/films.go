@@ -2,9 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
@@ -21,6 +19,9 @@ type CreateFilmResponse struct {
 
 // default to sorting alphabetical
 var defaultFilmsSort = analogdb.FilmSortAlphabetical
+
+// max limit of films or cameras returned
+var maxListLimit = 1000
 
 const (
 	filmsPath = "/films"
@@ -138,7 +139,7 @@ func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
 				filter.Sort = &counts
 			}
 		} else {
-			return nil, fmt.Errorf("invalid sort parameter %s, valid options are 'alphabetical', or 'counts'", sort)
+			return nil, badRequest("invalid sort parameter %s, valid options are 'alphabetical', or 'counts'", sort)
 		}
 	}
 
@@ -146,6 +147,7 @@ func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
 		if intLimit, err := stringToInt(limit); err != nil {
 			return nil, err
 		} else {
+			intLimit = clampLimit(intLimit, 1, 1, maxListLimit)
 			filter.Limit = &intLimit
 		}
 	}
@@ -171,7 +173,7 @@ func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
 	}
 
 	if id := values.Get("id"); id != "" {
-		if identify, err := strconv.Atoi(id); err != nil {
+		if identify, err := stringToInt(id); err != nil {
 			return nil, err
 		} else {
 			filter.IDs = &[]int{identify}
@@ -190,7 +192,7 @@ func parseToFilmFilter(r *http.Request) (*analogdb.FilmFilter, error) {
 		if val, err := stringToBool(excludeZero); err != nil {
 			return nil, err
 		} else {
-			filter.IncludeCounts = &val
+			filter.ExcludeZeroCounts = &val
 		}
 	}
 

@@ -55,13 +55,19 @@ func (db *DB) downloadPostImage(ctx context.Context, post *analogdb.Post) (strin
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		resp.Body.Close()
 		err = fmt.Errorf("failed to request post image: %w", err)
 		span.SetStatus(codes.Error, "Request for post image failed")
 		span.RecordError(err)
 		return encode, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("failed to request post image, status=%d", resp.StatusCode)
+		span.SetStatus(codes.Error, "Request for post image failed")
+		span.RecordError(err)
+		return encode, err
+	}
 	span.AddEvent("Downloaded post image")
 
 	data, err := ioutil.ReadAll(resp.Body)

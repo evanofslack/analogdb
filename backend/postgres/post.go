@@ -114,7 +114,7 @@ func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, 
 	defer tx.Rollback()
 	err = s.db.patchPost(ctx, tx, patch, id)
 	if err != nil {
-		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: err.Error()}
+		return toPublicError(err, "fail patch post")
 	}
 	return nil
 }
@@ -127,9 +127,18 @@ func (s *PostService) DeletePost(ctx context.Context, id int) error {
 	defer tx.Rollback()
 	err = s.db.deletePost(ctx, tx, id)
 	if err != nil {
-		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: err.Error()}
+		return toPublicError(err, "fail delete post")
 	}
 	return nil
+}
+
+// toPublicError passes analogdb errors through and hides all others
+func toPublicError(err error, message string) error {
+	var e *analogdb.Error
+	if errors.As(err, &e) {
+		return e
+	}
+	return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: message}
 }
 
 func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
@@ -206,6 +215,9 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.filmSpeed.ToSQLNullInt64(),
 		create.focalLength.ToSQLNullInt64(),
 		create.aperture.ToSQLNullString()).Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, &analogdb.Error{Code: analogdb.ERRCONFLICT, Message: "post with permalink already exists"}
+	}
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail insert post", "error", err, "post_id", id)
 		return nil, err
@@ -262,13 +274,12 @@ func (db *DB) deleteKeywords(ctx context.Context, tx *sql.Tx, id int64) error {
 
 	query := "DELETE FROM keywords WHERE post_id = $1"
 
-	rows, err := tx.QueryContext(ctx, query, id)
-	defer rows.Close()
+	_, err := tx.ExecContext(ctx, query, id)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail delete post keywords", "post_id", id, "error", err)
 		return err
 	}
-	db.logger.InfoContext(ctx, "Finish delete post keywords", "post_id", id, "error", err)
+	db.logger.InfoContext(ctx, "Finish delete post keywords", "post_id", id)
 	return nil
 }
 
@@ -324,8 +335,7 @@ func (db *DB) deleteColors(ctx context.Context, tx *sql.Tx, id int64) error {
 
 	query := "DELETE FROM colors WHERE post_id = $1"
 
-	rows, err := tx.QueryContext(ctx, query, id)
-	defer rows.Close()
+	_, err := tx.ExecContext(ctx, query, id)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail delete post colors", "post_id", id, "error", err)
 		return err
@@ -509,6 +519,10 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 		}
 		posts = append(posts, post)
 	}
+	if err := rows.Err(); err != nil {
+		db.logger.ErrorContext(ctx, "Fail find posts", "error", err)
+		return nil, 0, err
+	}
 
 	err = tx.Commit()
 	if err != nil {
@@ -601,7 +615,7 @@ func filterToWherePost(filter *analogdb.PostFilter) (string, []any) {
 
 	if author := filter.Author; author != nil {
 		var matchAuthor string
-		if pre := (*author)[0:2]; pre != "u/" {
+		if !strings.HasPrefix(*author, "u/") {
 			matchAuthor = "u/" + *author
 		} else {
 			matchAuthor = *author
@@ -755,6 +769,15 @@ func filterToWherePost(filter *analogdb.PostFilter) (string, []any) {
 func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
 	db.logger.DebugContext(ctx, "Start patch post", "post_id", id)
 
+	var exists bool
+	if err := tx.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM pictures WHERE id = $1)", id).Scan(&exists); err != nil {
+		db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
+		return err
+	}
+	if !exists {
+		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "post not found"}
+	}
+
 	hasPatchFields := false
 
 	// if the patch includes general updates for the post
@@ -796,7 +819,7 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 	}
 
 	if !hasPatchFields {
-		err := errors.New("must include patch parameters")
+		err := &analogdb.Error{Code: analogdb.ERRBADREQUEST, Message: "must include patch parameters"}
 		db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
 		return err
 	}
@@ -877,12 +900,19 @@ func (db *DB) updatePostGeneral(ctx context.Context, tx *sql.Tx, patch *analogdb
 
 	query := "UPDATE pictures " + set + fmt.Sprintf(" WHERE id =  $%d", idPos)
 
-	rows, err := tx.QueryContext(ctx, query, args...)
+	result, err := tx.ExecContext(ctx, query, args...)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail update post", "post_id", id, "error", err)
 		return err
 	}
-	defer rows.Close()
+	affected, err := result.RowsAffected()
+	if err != nil {
+		db.logger.ErrorContext(ctx, "Fail update post", "post_id", id, "error", err)
+		return err
+	}
+	if affected == 0 {
+		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "post not found"}
+	}
 	db.logger.InfoContext(ctx, "Finish update post", "post_id", id)
 	return nil
 }
@@ -930,8 +960,7 @@ func (db *DB) insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *anal
 	keywords := patch.Keywords != nil
 	addTimeOrNull(keywords, &values)
 
-	rows, err := stmt.QueryContext(ctx, values...)
-	defer rows.Close()
+	_, err = stmt.ExecContext(ctx, values...)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail update post times", "post_id", id, "error", err)
 		return err
@@ -952,6 +981,9 @@ func (db *DB) deletePost(ctx context.Context, tx *sql.Tx, id int) error {
 
 	var returnedID int
 	err := row.Scan(&returnedID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "post not found"}
+	}
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail delete post", "post_id", id, "error", err)
 		return err
@@ -993,6 +1025,10 @@ func (db *DB) allPostIDs(ctx context.Context, tx *sql.Tx) ([]int, error) {
 			return nil, err
 		}
 		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		db.logger.DebugContext(ctx, "Fail get all post ids", "error", err)
+		return nil, err
 	}
 	err = tx.Commit()
 	if err != nil {

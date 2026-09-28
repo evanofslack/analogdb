@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/evanofslack/analogdb/config"
+	"github.com/evanofslack/analogdb/events"
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
 	"github.com/joho/godotenv"
@@ -42,6 +43,7 @@ func mustOpen(t *testing.T) *Server {
 	}
 
 	s.ReadyService = &mockReady{}
+	s.EventService = events.NewNoop(logger)
 
 	return s
 }

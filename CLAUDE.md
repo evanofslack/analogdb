@@ -88,11 +88,11 @@ docker-compose -f docker-compose-dev.yaml up  # Development stack
 - **Data layer**: `/backend/postgres/` for primary storage, `/backend/redis/` for caching
 - **Vector operations**: `/backend/weaviate/` handles image similarity using embeddings
 - **Configuration**: `/backend/config/` centralizes all app configuration
-- **Observability**: `/backend/logger/` (zerolog), `/backend/metrics/` (Prometheus), `/backend/tracer/` (OpenTelemetry)
+- **Observability**: `/backend/logger/` (slog), `/backend/metrics/` (Prometheus), `/backend/tracer/` (OpenTelemetry)
 - **Analytics events**: `/backend/events/` publishes to Kafka; generated proto code lives in `/backend/internal/gen/proto/`
 - **Entrypoint**: `/backend/cmd/analogdb/`
 
-Note: the backend uses `rs/zerolog` for logging, not `slog`.
+Note: the backend uses `log/slog` for logging, wrapped in `logger.Logger` (`/backend/logger/logger.go`), not zerolog.
 
 ### Frontend Structure
 - **Pages**: `/web/app/` contains Next.js App Router routes (about, admin, post, actions, docs)

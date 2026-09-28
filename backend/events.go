@@ -8,4 +8,5 @@ import (
 
 type EventService interface {
 	Write(ctx context.Context, event *v1.Event) error
+	Close() error
 }

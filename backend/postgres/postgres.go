@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/evanofslack/analogdb/logger"
 	_ "github.com/lib/pq"
@@ -23,7 +25,8 @@ type DB struct {
 }
 
 func NewDB(dsn string, logger *logger.Logger, migrationEnabled bool, migrationPath string, tracingEnabled bool) *DB {
-	logger.Debug("Initializing db instance", "migration_path", migrationPath, "migration_enabled", migrationEnabled, "dsn", dsn)
+	host, name := dsnHostAndName(dsn)
+	logger.Debug("Initializing db instance", "migration_path", migrationPath, "migration_enabled", migrationEnabled, "host", host, "db_name", name)
 	ctx, cancel := context.WithCancel(context.Background())
 
 	db := &DB{
@@ -93,4 +96,13 @@ func (db *DB) Close() error {
 
 	db.logger.Info("Closed db connection")
 	return nil
+}
+
+// dsnHostAndName returns the host and database name from a dsn
+func dsnHostAndName(dsn string) (string, string) {
+	u, err := url.Parse(dsn)
+	if err != nil {
+		return "", ""
+	}
+	return u.Host, strings.TrimPrefix(u.Path, "/")
 }

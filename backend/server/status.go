@@ -29,6 +29,7 @@ func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 	if !s.healthy {
 		err := &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "service not available"}
 		s.writeError(w, r, err)
+		return
 	}
 	if err := encodeResponse(w, r, http.StatusOK, "message: healthy"); err != nil {
 		s.writeError(w, r, err)
@@ -39,6 +40,7 @@ func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 	err := s.ReadyService.Readyz(r.Context())
 	if err != nil {
 		s.writeError(w, r, err)
+		return
 	}
 	if err := encodeResponse(w, r, http.StatusOK, "message: ready"); err != nil {
 		s.writeError(w, r, err)

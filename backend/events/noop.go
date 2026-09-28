@@ -21,3 +21,7 @@ func (n *NoopEventStream) Write(ctx context.Context, event *v1.Event) error {
 	n.logger.Debug("Noop, skip write event to Kafka")
 	return nil
 }
+
+func (n *NoopEventStream) Close() error {
+	return nil
+}

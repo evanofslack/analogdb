@@ -10,6 +10,7 @@ import (
 const (
 	keywordsPath        = "/keywords"
 	defaultKeywordLimit = 50
+	maxKeywordLimit     = 500
 )
 
 type KeywordsResponse struct {
@@ -30,12 +31,15 @@ func (s *Server) getSummary(w http.ResponseWriter, r *http.Request) {
 		limit, err = stringToInt(strLimit)
 		if err != nil {
 			s.writeError(w, r, err)
+			return
 		}
+		limit = clampLimit(limit, defaultKeywordLimit, 1, maxKeywordLimit)
 	}
 
 	keywords, err := s.KeywordService.GetKeywordSummary(r.Context(), limit)
 	if err != nil {
 		s.writeError(w, r, err)
+		return
 	}
 	response := KeywordsResponse{
 		Keywords: *keywords,

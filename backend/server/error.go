@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/evanofslack/analogdb"
@@ -13,6 +14,8 @@ var codes = map[string]int{
 	analogdb.ERRNOTFOUND:      http.StatusNotFound,
 	analogdb.ERRUNAVAILABLE:   http.StatusServiceUnavailable,
 	analogdb.ERRUNAUTHORIZED:  http.StatusUnauthorized,
+	analogdb.ERRBADREQUEST:    http.StatusBadRequest,
+	analogdb.ERRCONFLICT:      http.StatusConflict,
 }
 
 func errorStatusCode(code string) int {
@@ -20,6 +23,10 @@ func errorStatusCode(code string) int {
 		return v
 	}
 	return http.StatusInternalServerError
+}
+
+func badRequest(format string, a ...any) error {
+	return &analogdb.Error{Code: analogdb.ERRBADREQUEST, Message: fmt.Sprintf(format, a...)}
 }
 
 func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {

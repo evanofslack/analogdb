@@ -66,6 +66,7 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	hostname, err := os.Hostname()
 	if err != nil {
 		s.logger.Warn("Fail get hostname", "error", err)
+	} else {
 		s.hostname = hostname
 	}
 

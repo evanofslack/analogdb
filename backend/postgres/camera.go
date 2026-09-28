@@ -162,6 +162,10 @@ func (db *DB) findCameras(ctx context.Context, tx *sql.Tx, filter *analogdb.Came
 
 		cameras = append(cameras, camera)
 	}
+	if err := rows.Err(); err != nil {
+		db.logger.ErrorContext(ctx, "Find cameras", "error", err)
+		return nil, err
+	}
 
 	if err = tx.Commit(); err != nil {
 		db.logger.ErrorContext(ctx, "Find cameras", "error", err)

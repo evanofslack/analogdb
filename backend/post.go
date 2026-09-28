@@ -237,7 +237,7 @@ func (filter *PostFilter) String() string {
 		out = append(out, fmt.Sprintf("keyset: %d", *filter.Keyset))
 	}
 	if filter.Nsfw != nil {
-		out = append(out, fmt.Sprintf("keyset: %t", *filter.Nsfw))
+		out = append(out, fmt.Sprintf("nsfw: %t", *filter.Nsfw))
 	}
 	if filter.Grayscale != nil {
 		out = append(out, fmt.Sprintf("grayscale: %t", *filter.Grayscale))

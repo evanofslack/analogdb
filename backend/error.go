@@ -11,6 +11,8 @@ const (
 	ERRNOTFOUND      = "not_found"
 	ERRUNAVAILABLE   = "service_unavailable"
 	ERRUNAUTHORIZED  = "unauthorized"
+	ERRBADREQUEST    = "bad_request"
+	ERRCONFLICT      = "conflict"
 )
 
 // Error represents an API error with code and message

@@ -746,6 +746,25 @@ paths:
       summary: Get films with optional filtering
       tags:
       - films
+  /ids:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all post IDs in the system
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.IDsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get all post IDs
+      tags:
+      - posts
   /post:
     post:
       consumes:
@@ -772,6 +791,10 @@ paths:
             $ref: '#/definitions/analogdb.Error'
         "401":
           description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "409":
+          description: Post with permalink already exists
           schema:
             $ref: '#/definitions/analogdb.Error'
         "422":
@@ -1112,25 +1135,6 @@ paths:
           schema:
             $ref: '#/definitions/analogdb.Error'
       summary: Get posts with optional filtering and pagination
-      tags:
-      - posts
-  /posts/ids:
-    get:
-      consumes:
-      - application/json
-      description: Retrieve a list of all post IDs in the system
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/server.IDsResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-      summary: Get all post IDs
       tags:
       - posts
 securityDefinitions:

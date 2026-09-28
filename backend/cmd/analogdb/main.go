@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/evanofslack/analogdb/config"
@@ -25,7 +26,7 @@ const defaultConfigPath = "config.yml"
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() { <-c; cancel() }()
 
 	var cfgPath string
@@ -183,28 +184,31 @@ func main() {
 	logger.Info("Got shutdown signal, starting graceful shutdown")
 
 	if err := server.Close(); err != nil {
-		err = fmt.Errorf("shutdown http server: %w", err)
-		fatal(logger, err)
+		logger.Error("Fail shutdown http server", "error", err)
+	}
+
+	if err := eventService.Close(); err != nil {
+		logger.Error("Fail shutdown event service", "error", err)
+	}
+
+	if rdb != nil {
+		if err := rdb.Close(); err != nil {
+			logger.Error("Fail shutdown redis", "error", err)
+		}
 	}
 
 	if err := db.Close(); err != nil {
-		err = fmt.Errorf("shutdown DB: %w", err)
-		fatal(logger, err)
+		logger.Error("Fail shutdown DB", "error", err)
 	}
 
 	if err := dbVec.Close(); err != nil {
-		err = fmt.Errorf("shutdown vector DB: %w", err)
-		fatal(logger, err)
+		logger.Error("Fail shutdown vector DB", "error", err)
 	}
 
-	if err := rdb.Close(); err != nil {
-		err = fmt.Errorf("shutdown redis: %w", err)
-		fatal(logger, err)
-	}
-
-	if err := metrics.Close(); err != nil {
-		err = fmt.Errorf("shutdown metrics server: %w", err)
-		fatal(logger, err)
+	if cfg.Metrics.Enabled {
+		if err := metrics.Close(); err != nil {
+			logger.Error("Fail shutdown metrics server", "error", err)
+		}
 	}
 }
 

@@ -71,6 +71,25 @@ func TestPostService_CreatePost(t *testing.T) {
 		}
 	})
 
+	t.Run("duplicate permalink", func(t *testing.T) {
+		createPost := &analogdb.CreatePost{
+			Title:     "Duplicate Post",
+			Author:    "u/testuser",
+			Permalink: "test_post_duplicate",
+			Images:    make([]analogdb.Image, 4),
+			Colors:    make([]analogdb.Color, 5),
+		}
+
+		if _, err := service.CreatePost(ctx, createPost); err != nil {
+			t.Fatalf("CreatePost failed: %v", err)
+		}
+
+		_, err := service.CreatePost(ctx, createPost)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRCONFLICT {
+			t.Errorf("Expected code %s, got %s", analogdb.ERRCONFLICT, code)
+		}
+	})
+
 	t.Run("creation with insufficient images", func(t *testing.T) {
 		createPost := &analogdb.CreatePost{
 			Title:     "Test Post",
@@ -161,6 +180,18 @@ func TestPostService_FindPosts(t *testing.T) {
 		}
 		if count == 0 {
 			t.Error("Expected count > 0")
+		}
+	})
+
+	t.Run("find posts with one character author", func(t *testing.T) {
+		author := "x"
+		filter := &analogdb.PostFilter{Author: &author}
+		posts, _, err := service.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatalf("FindPosts failed: %v", err)
+		}
+		if len(posts) != 0 {
+			t.Errorf("Expected 0 posts, got %d", len(posts))
 		}
 	})
 
@@ -389,6 +420,26 @@ func TestPostService_PatchPost(t *testing.T) {
 		}
 	})
 
+	t.Run("patch missing post", func(t *testing.T) {
+		newScore := 1
+		patch := &analogdb.PatchPost{Score: &newScore}
+
+		err := service.PatchPost(ctx, patch, 9999)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRNOTFOUND {
+			t.Errorf("Expected code %s, got %s", analogdb.ERRNOTFOUND, code)
+		}
+	})
+
+	t.Run("patch missing post keywords", func(t *testing.T) {
+		newKeywords := []analogdb.Keyword{{Word: "missing", Weight: 0.5}}
+		patch := &analogdb.PatchPost{Keywords: &newKeywords}
+
+		err := service.PatchPost(ctx, patch, 9999)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRNOTFOUND {
+			t.Errorf("Expected code %s, got %s", analogdb.ERRNOTFOUND, code)
+		}
+	})
+
 	t.Run("patch with no fields", func(t *testing.T) {
 		patch := &analogdb.PatchPost{} // Empty patch
 
@@ -427,8 +478,8 @@ func TestPostService_DeletePost(t *testing.T) {
 
 	t.Run("delete non-existent post", func(t *testing.T) {
 		err := service.DeletePost(ctx, 9999)
-		if err == nil {
-			t.Error("Expected error when deleting non-existent post")
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRNOTFOUND {
+			t.Errorf("Expected code %s, got %s", analogdb.ERRNOTFOUND, code)
 		}
 	})
 }

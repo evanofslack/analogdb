@@ -504,6 +504,35 @@ const docTemplate = `{
                 }
             }
         },
+        "/ids": {
+            "get": {
+                "description": "Retrieve a list of all post IDs in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "posts"
+                ],
+                "summary": "Get all post IDs",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.IDsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/post": {
             "post": {
                 "security": [
@@ -548,6 +577,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Post with permalink already exists",
                         "schema": {
                             "$ref": "#/definitions/analogdb.Error"
                         }
@@ -1049,35 +1084,6 @@ const docTemplate = `{
                         "description": "Invalid request body",
                         "schema": {
                             "$ref": "#/definitions/analogdb.Error"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
-                        }
-                    }
-                }
-            }
-        },
-        "/posts/ids": {
-            "get": {
-                "description": "Retrieve a list of all post IDs in the system",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "posts"
-                ],
-                "summary": "Get all post IDs",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/server.IDsResponse"
                         }
                     },
                     "500": {
