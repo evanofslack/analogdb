@@ -72,7 +72,10 @@ func main() {
 	}
 
 	if cfg.Metrics.Enabled {
-		metrics.Serve(cfg.Metrics.Port)
+		if err := metrics.Serve(cfg.Metrics.Port); err != nil {
+			err = fmt.Errorf("start metrics server: %w", err)
+			fatal(logger, err)
+		}
 	}
 
 	// open connection to postgres
@@ -188,6 +191,10 @@ func main() {
 	server.KeywordService = keywordService
 	server.SimilarityService = similarityService
 	server.EventService = eventService
+	server.VectorReadyService = dbVec
+	if rdb != nil {
+		server.CacheReadyService = rdb
+	}
 
 	if err := server.Run(); err != nil {
 		err = fmt.Errorf("start http server: %w", err)

@@ -17,5 +17,5 @@ func NewReadyService(db *DB) *ReadyService {
 }
 
 func (s *ReadyService) Readyz(ctx context.Context) error {
-	return s.db.db.Ping()
+	return s.db.db.PingContext(ctx)
 }

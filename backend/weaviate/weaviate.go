@@ -86,6 +86,17 @@ func (db *DB) Migrate(ctx context.Context) error {
 	return nil
 }
 
+func (db *DB) Readyz(ctx context.Context) error {
+	ready, err := db.db.Misc().ReadyChecker().Do(ctx)
+	if err != nil {
+		return err
+	}
+	if !ready {
+		return fmt.Errorf("vector DB not ready")
+	}
+	return nil
+}
+
 func (db *DB) Close() error {
 	db.logger.Debug("Starting vector DB close")
 	db.cancel()

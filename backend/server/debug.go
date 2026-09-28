@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Server) mountDebugHandlers() {
-	s.router.Get("/debug/statsviz/ws", statsviz.Ws)
+	s.router.With(s.auth).Get("/debug/statsviz/ws", statsviz.Ws)
 	s.router.Get("/debug/statsviz", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/debug/statsviz/", 301)
 	})
