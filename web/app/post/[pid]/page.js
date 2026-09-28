@@ -18,24 +18,69 @@ const getPost = cache(async (pid) => {
   return response.json();
 });
 
-// Generate metadata based on post
+const defaultImage = {
+  url: "/opengraph-image.jpg",
+  width: 1200,
+  height: 630,
+  alt: "AnalogDB",
+};
+
+function describe(post) {
+  const author = post.author.replace("u/", "");
+  const camera = [post.camera_make, post.camera_model]
+    .filter(Boolean)
+    .join(" ");
+  const film = [post.film_make, post.film_type].filter(Boolean).join(" ");
+
+  let description = "Shot";
+  if (camera) description += ` on ${camera}`;
+  if (film) description += ` with ${film}`;
+  return `${description} by ${author}`;
+}
+
 export async function generateMetadata({ params }) {
   const { pid } = await params;
 
   try {
     const post = await getPost(pid);
     if (!post) {
-      return { title: "Post | AnalogDB" };
+      return { title: "Post" };
     }
 
+    const image = post.images?.find((img) => img.resolution === "high");
+    const shareImage =
+      image && !post.nsfw
+        ? {
+            url: image.url,
+            width: image.width,
+            height: image.height,
+            alt: post.title,
+          }
+        : defaultImage;
+    const description = describe(post);
+
     return {
-      title: `${post.title} | AnalogDB`,
-      description: `${post.title} - photo by ${post.author}`,
+      title: post.title,
+      description,
+      alternates: { canonical: `/post/${pid}` },
+      openGraph: {
+        siteName: "AnalogDB",
+        type: "article",
+        title: post.title,
+        description,
+        url: `/post/${pid}`,
+        images: [shareImage],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: post.title,
+        description,
+        images: [shareImage],
+      },
+      ...(post.nsfw && { robots: { index: false } }),
     };
   } catch (error) {
-    return {
-      title: "Post | AnalogDB",
-    };
+    return { title: "Post" };
   }
 }
 
