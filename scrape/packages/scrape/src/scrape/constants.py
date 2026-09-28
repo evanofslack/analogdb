@@ -39,10 +39,10 @@ IMAGE_TIMEOUT = (10, 60)
 JPEG_QUALITY = 90
 
 # max 99th percentile channel spread for an image to count as grayscale
-GRAYSCALE_TOLERANCE = 12
+GRAYSCALE_TOLERANCE = 15
 
 # posts from these subreddits are always grayscale
-GRAYSCALE_SUBREDDITS = {BW_SUB}
+GRAYSCALE_SUBREDDITS: set[str] = set()
 
 # upper limit to the number of extracted
 # colors presented in the output.

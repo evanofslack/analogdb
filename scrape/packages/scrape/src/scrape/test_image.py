@@ -154,10 +154,10 @@ class TestGrayscale:
     def test_sepia_is_not_grayscale(self):
         assert not ImageProcessor().is_grayscale(tinted_image((240, 200, 150)))
 
-    def test_bw_subreddit_hint(self):
+    def test_toned_bw_subreddit_post_is_color(self):
         buf = BytesIO()
         tinted_image((240, 200, 150)).save(buf, "JPEG")
         post = make_post(PERMALINK, subreddit="analog_bw")
 
         _, result = process(post, buf.getvalue())
-        assert result.grayscale
+        assert not result.grayscale
