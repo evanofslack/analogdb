@@ -11,8 +11,14 @@ import { CodeHighlightProvider } from "@providers/codehighlight";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export const metadata = {
-  title: "AnalogDB",
+  metadataBase: new URL("https://analogdb.com"),
+  title: { default: "AnalogDB", template: "%s | AnalogDB" },
   description: "The collection of film photography",
+  openGraph: {
+    siteName: "AnalogDB",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 const queries = {
