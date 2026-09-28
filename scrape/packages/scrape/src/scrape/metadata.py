@@ -8,6 +8,14 @@ from openai import OpenAI, OpenAIError
 from .models import ExtractResult, PhotoMetadata
 
 
+def _film_json(f: Film) -> Dict:
+    return {"type": f.type, "make": f.make, "speed": f.speed}
+
+
+def _camera_json(c: Camera) -> Dict:
+    return {"make": c.make, "model": c.model}
+
+
 class MetadataExtractor:
     VALID_FILM_SPEEDS = {
         1,
@@ -121,9 +129,9 @@ Validation rules:
         cameras: List[Camera],
     ) -> str:
         prompt = "valid cameras:\n"
-        prompt += json.dumps([camera.to_json_minimal() for camera in cameras])
+        prompt += json.dumps([_camera_json(camera) for camera in cameras])
         prompt += "\nvalid films:\n"
-        prompt += json.dumps([film.to_json_minimal() for film in films])
+        prompt += json.dumps([_film_json(film) for film in films])
         prompt += f"\nvalid film speeds: {sorted(self.VALID_FILM_SPEEDS)}\n"
         for id, title in zip(ids, titles):
             clean_title = title.replace("\n", " ").replace("\r", " ")
