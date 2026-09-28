@@ -1,32 +1,33 @@
 import functools
-import json
 import time
+from dataclasses import dataclass
+from importlib.metadata import version
 from typing import Any, Dict, List, Optional
 
-import analogdb_generated
-import requests
-from analogdb_generated import ApiClient, Configuration
+from analogdb_generated import ApiClient, ApiResponse, Configuration
+from analogdb_generated.api.camera_api import CameraApi
+from analogdb_generated.api.cameras_api import CamerasApi
+from analogdb_generated.api.film_api import FilmApi
+from analogdb_generated.api.films_api import FilmsApi
 from analogdb_generated.api.post_api import PostApi
 from analogdb_generated.api.posts_api import PostsApi
-from analogdb_generated.models.analogdb_post import AnalogdbPost
-from requests.auth import HTTPBasicAuth
+from analogdb_generated.exceptions import ApiException
+from analogdb_generated.models.server_post_response import ServerPostResponse
 
 from .models import (
     Camera,
     CameraCreate,
     Film,
     FilmCreate,
-    Image,
-    Meta,
     Post,
     PostCreate,
     PostPatch,
-    Posts,
     PostsFilter,
 )
 
 DEFAULT_PAGE_SIZE = 20
 DEFAULT_SORT = "time"
+USER_AGENT = f"analogdb-scraper/{version('analogdb')}"
 
 
 def retry(delay=1, times=5):
@@ -50,6 +51,12 @@ def retry(delay=1, times=5):
     return outer_wrapper
 
 
+@dataclass
+class Response:
+    status_code: int
+    text: str
+
+
 class Client:
     def __init__(
         self,
@@ -58,46 +65,36 @@ class Client:
         password: Optional[str] = None,
     ):
         self.base_url = base_url
-        self.session = requests.Session()
-        self.auth = HTTPBasicAuth(username, password) if username and password else None
 
-        config = Configuration(host=base_url)
+        config = Configuration(host=f"{base_url}/v1")
         if username and password:
             config.username = username
             config.password = password
         self.api_client = ApiClient(config)
+        self.api_client.user_agent = USER_AGENT
+
         self.posts_api = PostsApi(self.api_client)
         self.post_api = PostApi(self.api_client)
-
-    @retry(delay=1, times=5)
-    def get_post_gen(self, id: int) -> AnalogdbPost:
-        post = self.post_api.post_id_get(id)
-        return post
-
-    def get_post(self, post_id: int) -> Post:
-        response = self.session.get(f"{self.base_url}/post/{post_id}")
-        response.raise_for_status()
-
-        data = response.json()
-        return self._parse_post(data)
+        self.films_api = FilmsApi(self.api_client)
+        self.film_api = FilmApi(self.api_client)
+        self.cameras_api = CamerasApi(self.api_client)
+        self.camera_api = CameraApi(self.api_client)
 
     def get_posts(
         self,
         count: int = DEFAULT_PAGE_SIZE,
         filter: Optional[PostsFilter] = None,
         page_id: Optional[int] = None,
-    ) -> Posts:
+    ) -> ServerPostResponse:
         params = self._filter_to_params(filter)
         params["page_size"] = count
         if page_id is not None:
             params["page_id"] = page_id
 
-        url = f"{self.base_url}/posts"
-        response = self.session.get(url, params=params)
-        response.raise_for_status()
-
-        data = response.json()
-        return self._parse_posts_response(data)
+        resp = self.posts_api.posts_get(**params)
+        if resp.posts is None:
+            resp.posts = []
+        return resp
 
     def get_posts_all(
         self, count: int = 20, filter: Optional[PostsFilter] = None
@@ -118,7 +115,7 @@ class Client:
             if not resp.meta:
                 break
             # no more pages
-            if resp.meta.next_page_url == "":
+            if not resp.meta.next_page_url:
                 break
             page_id = resp.meta.next_page_id
 
@@ -129,143 +126,49 @@ class Client:
         return [post.permalink for post in posts]
 
     @retry(delay=1, times=5)
-    def upload_post(self, post: PostCreate) -> requests.Response:
-        json_post = json.dumps(post.to_json())
-        response = self.session.put(
-            f"{self.base_url}/post", data=json_post, auth=self.auth
-        )
-        return response
+    def upload_post(self, post: PostCreate) -> Response:
+        return self._send(lambda: self.post_api.post_post_with_http_info(post=post))
 
     @retry(delay=1, times=5)
-    def patch_post(self, patch: PostPatch) -> Optional[requests.Response]:
-        if patch.is_empty():
+    def patch_post(self, id: int, patch: PostPatch) -> Optional[Response]:
+        if not patch.to_dict():
             return None
 
-        json_patch = json.dumps(patch.to_json())
-        response = self.session.patch(
-            f"{self.base_url}/post/{patch.id}", data=json_patch, auth=self.auth
-        )
-        response.raise_for_status()
-        return response
+        resp = self.post_api.post_id_patch_with_http_info(id, post=patch)
+        return self._to_response(resp)
 
     @retry(delay=1, times=5)
-    def delete_post(self, post_id: int) -> requests.Response:
-        response = self.session.delete(
-            f"{self.base_url}/post/{post_id}", auth=self.auth
-        )
-        response.raise_for_status()
-        return response
-
-    def get_all_post_ids(self) -> List[int]:
-        response = self.session.get(f"{self.base_url}/ids")
-        response.raise_for_status()
-
-        data = response.json()
-        return [int(id) for id in data["ids"]]
-
-    @retry(delay=1, times=5)
-    def get_keyword_updated_post_ids(self) -> List[int]:
-        response = self.session.get(
-            f"{self.base_url}/scrape/keywords/updated", auth=self.auth
-        )
-        response.raise_for_status()
-
-        data = response.json()
-        return data["ids"]
-
-    @retry(delay=1, times=5)
-    def get_films(
-        self,
-    ) -> List[Film]:
-        url = f"{self.base_url}/films"
-        response = self.session.get(url)
-        response.raise_for_status()
-        data = response.json()
-        return [self._parse_film(film_data) for film_data in data["films"]]
+    def get_films(self) -> List[Film]:
+        return self.films_api.films_get().films or []
 
     @retry(delay=1, times=5)
     def get_cameras(self) -> List[Camera]:
-        url = f"{self.base_url}/cameras"
-        response = self.session.get(url)
-        response.raise_for_status()
-        data = response.json()
-        return [self._parse_camera(camera_data) for camera_data in data["cameras"]]
+        return self.cameras_api.cameras_get().cameras or []
 
     @retry(delay=1, times=5)
-    def upload_film(self, film: FilmCreate) -> requests.Response:
-        json_film = json.dumps(film.to_json())
-        response = self.session.put(
-            f"{self.base_url}/films", data=json_film, auth=self.auth
-        )
-        return response
+    def upload_film(self, film: FilmCreate) -> Response:
+        return self._send(lambda: self.film_api.film_post_with_http_info(film=film))
 
     @retry(delay=1, times=5)
-    def upload_camera(self, camera: CameraCreate) -> requests.Response:
-        json_camera = json.dumps(camera.to_json())
-        response = self.session.put(
-            f"{self.base_url}/cameras", data=json_camera, auth=self.auth
-        )
-        return response
-
-    def encode_images(self, ids: List[int], batch_size: int) -> requests.Response:
-        data = {"ids": ids, "batch_size": batch_size}
-        body = json.dumps(data)
-
-        response = self.session.put(
-            f"{self.base_url}/encode", data=body, auth=self.auth
-        )
-        response.raise_for_status()
-        return response
-
-    def _parse_posts_response(self, data: Dict[str, Any]) -> Posts:
-        posts = [self._parse_post(post_data) for post_data in data.get("posts") or []]
-        meta = self._parse_meta(data["meta"])
-        return Posts(posts=posts, meta=meta)
-
-    def _parse_meta(self, data: Dict[str, Any]) -> Meta:
-        return Meta(
-            total_posts=data["total_posts"],
-            page_size=data["page_size"],
-            next_page_id=data["next_page_id"],
-            next_page_url=data["next_page_url"],
+    def upload_camera(self, camera: CameraCreate) -> Response:
+        return self._send(
+            lambda: self.camera_api.camera_post_with_http_info(camera=camera)
         )
 
-    def _parse_post(self, data: Dict[str, Any]) -> Post:
-        images = [Image(**img) for img in data["images"]]
-        return Post(
-            id=data["id"],
-            title=data["title"],
-            author=data["author"],
-            permalink=data["permalink"],
-            description=data.get("description"),  # may be none
-            score=data["score"],
-            timestamp=data["timestamp"],
-            nsfw=data["nsfw"],
-            grayscale=data["grayscale"],
-            sprocket=data["sprocket"],
-            images=images,
+    def _send(self, call) -> Response:
+        try:
+            return self._to_response(call())
+        except ApiException as e:
+            return Response(status_code=e.status, text=e.body or "")
+
+    def _to_response(self, resp: ApiResponse) -> Response:
+        return Response(
+            status_code=resp.status_code,
+            text=resp.raw_data.decode("utf-8", errors="replace"),
         )
 
-    def _parse_film(self, data: Dict[str, Any]) -> Film:
-        return Film(
-            id=data["id"],
-            type=data["type"],
-            make=data["make"],
-            speed=data["speed"],
-            color_type=data["color_type"],
-            description=data["description"],
-        )
-
-    def _parse_camera(self, data: Dict) -> Camera:
-        return Camera(
-            id=str(data["id"]),
-            make=data["make"],
-            model=data["model"],
-            description=data["description"],
-        )
-
-    def _filter_to_params(self, filter: Optional[PostsFilter]) -> Dict[str, int | str]:
-        params: Dict[str, str | int] = {
+    def _filter_to_params(self, filter: Optional[PostsFilter]) -> Dict[str, Any]:
+        params: Dict[str, Any] = {
             "page_size": DEFAULT_PAGE_SIZE,
             "sort": DEFAULT_SORT,
         }
@@ -284,9 +187,3 @@ class Client:
             params["time_end"] = end
 
         return params
-
-
-if __name__ == "__main__":
-    c = Client()
-    posts = c.get_posts(count=20)
-    print(posts)
