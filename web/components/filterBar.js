@@ -10,6 +10,7 @@ import {
   Select,
   Stack,
 } from "@mantine/core";
+import { useDebouncedCallback } from "@mantine/hooks";
 import {
   IconAdjustmentsHorizontal,
   IconArrowAutofitWidth,
@@ -18,7 +19,7 @@ import {
   IconMovie,
   IconSearch,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ColorFilter from "./colorFilter";
 import styles from "./filterBar.module.css";
 import Search from "./search";
@@ -30,7 +31,7 @@ export default function FilterBar({
   bw,
   sprocket,
   color,
-  textTemp,
+  text,
   widthMin,
   widthMax,
   heightMin,
@@ -48,17 +49,12 @@ export default function FilterBar({
   setBw,
   setSprocket,
   setColor,
-  setTextTemp,
-  setWidthMin,
-  setWidthMax,
-  setHeightMin,
-  setHeightMax,
-  setRatioMin,
-  setRatioMax,
-  setFilmMake,
-  setFilmType,
-  setCameraMake,
-  setCameraModel,
+  setText,
+  setSizes,
+  setFilm,
+  setCamera,
+  onFilmMenuOpen,
+  onCameraMenuOpen,
 
   filmOptions,
   cameraOptions,
@@ -78,8 +74,73 @@ export default function FilterBar({
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const iconSize = onlyIcon ? 24 : 18;
 
-  const handleSearch = (query) => {
-    setTextTemp(query);
+  const sizes = {
+    widthMin,
+    widthMax,
+    heightMin,
+    heightMax,
+    ratioMin,
+    ratioMax,
+  };
+  const [drafts, setDrafts] = useState(sizes);
+  const draftsRef = useRef(drafts);
+
+  useEffect(() => {
+    const next = {
+      widthMin,
+      widthMax,
+      heightMin,
+      heightMax,
+      ratioMin,
+      ratioMax,
+    };
+    draftsRef.current = next;
+    setDrafts(next);
+  }, [widthMin, widthMax, heightMin, heightMax, ratioMin, ratioMax]);
+
+  const inRange = (value, min, max, integer) =>
+    typeof value === "number" &&
+    Number.isFinite(value) &&
+    (!integer || Number.isInteger(value)) &&
+    value >= min &&
+    value <= max;
+
+  const sizeErrors = (d) => {
+    const widthOrder = !(d.widthMin <= d.widthMax);
+    const heightOrder = !(d.heightMin <= d.heightMax);
+    const ratioOrder = !(d.ratioMin <= d.ratioMax);
+    return {
+      widthMin:
+        widthOrder || !inRange(d.widthMin, widthMinLimit, widthMaxLimit, true),
+      widthMax:
+        widthOrder || !inRange(d.widthMax, widthMinLimit, widthMaxLimit, true),
+      heightMin:
+        heightOrder ||
+        !inRange(d.heightMin, heightMinLimit, heightMaxLimit, true),
+      heightMax:
+        heightOrder ||
+        !inRange(d.heightMax, heightMinLimit, heightMaxLimit, true),
+      ratioMin:
+        ratioOrder || !inRange(d.ratioMin, ratioMinLimit, ratioMaxLimit, false),
+      ratioMax:
+        ratioOrder || !inRange(d.ratioMax, ratioMinLimit, ratioMaxLimit, false),
+    };
+  };
+
+  const errors = sizeErrors(drafts);
+
+  const commitSizes = useDebouncedCallback(() => {
+    const d = draftsRef.current;
+    if (Object.values(sizeErrors(d)).some(Boolean)) return;
+    const changed = Object.keys(d).some((key) => d[key] !== sizes[key]);
+    if (changed) setSizes(d);
+  }, 500);
+
+  const handleSizeChange = (key) => (value) => {
+    const next = { ...draftsRef.current, [key]: value };
+    draftsRef.current = next;
+    setDrafts(next);
+    commitSizes();
   };
 
   const getButtonStyles = (onlyIcon) => ({
@@ -107,7 +168,7 @@ export default function FilterBar({
         className={`${styles.query} ${onlyIcon ? styles.queryIconMode : ""}`}
       >
         <div className={styles.filterButtons}>
-          <Menu shadow="md" width={220}>
+          <Menu shadow="md" width={220} onOpen={onCameraMenuOpen}>
             <Menu.Target>
               <Button
                 variant="outline"
@@ -131,11 +192,9 @@ export default function FilterBar({
                   onChange={(value) => {
                     if (value) {
                       const [make, model] = JSON.parse(value);
-                      setCameraMake(make);
-                      setCameraModel(model);
+                      setCamera(make, model);
                     } else {
-                      setCameraMake(null);
-                      setCameraModel(null);
+                      setCamera(null, null);
                     }
                   }}
                   data={cameraOptions.map((c) => ({
@@ -151,7 +210,7 @@ export default function FilterBar({
               </div>
             </Menu.Dropdown>
           </Menu>
-          <Menu shadow="md" width={220}>
+          <Menu shadow="md" width={220} onOpen={onFilmMenuOpen}>
             <Menu.Target>
               <Button
                 variant="outline"
@@ -175,11 +234,9 @@ export default function FilterBar({
                   onChange={(value) => {
                     if (value) {
                       const [make, type] = JSON.parse(value);
-                      setFilmMake(make);
-                      setFilmType(type);
+                      setFilm(make, type);
                     } else {
-                      setFilmMake(null);
-                      setFilmType(null);
+                      setFilm(null, null);
                     }
                   }}
                   data={filmOptions.map((f) => ({
@@ -202,7 +259,7 @@ export default function FilterBar({
             buttonStyles={getButtonStyles(onlyIcon)}
             buttonClassNames={buttonClassNames}
           />
-          <Menu shadow="md" width={170}>
+          <Menu shadow="md" width={170} onClose={() => commitSizes.flush()}>
             <Menu.Target>
               <Button
                 variant="outline"
@@ -226,8 +283,9 @@ export default function FilterBar({
                       <span className={styles.numInputLabel}>min</span>
                       <div className={styles.numInput}>
                         <NumberInput
-                          value={ratioMin}
-                          onChange={setRatioMin}
+                          value={drafts.ratioMin}
+                          onChange={handleSizeChange("ratioMin")}
+                          error={errors.ratioMin}
                           min={ratioMinLimit}
                           max={ratioMax}
                           step={0.01}
@@ -240,8 +298,9 @@ export default function FilterBar({
                       <span className={styles.numInputLabel}>max</span>
                       <div className={styles.numInput}>
                         <NumberInput
-                          value={ratioMax}
-                          onChange={setRatioMax}
+                          value={drafts.ratioMax}
+                          onChange={handleSizeChange("ratioMax")}
+                          error={errors.ratioMax}
                           min={ratioMin}
                           max={ratioMaxLimit}
                           step={0.01}
@@ -259,8 +318,9 @@ export default function FilterBar({
                       <span className={styles.numInputLabel}>min</span>
                       <div className={styles.numInput}>
                         <NumberInput
-                          value={widthMin}
-                          onChange={setWidthMin}
+                          value={drafts.widthMin}
+                          onChange={handleSizeChange("widthMin")}
+                          error={errors.widthMin}
                           min={widthMinLimit}
                           max={widthMax}
                           size="xs"
@@ -271,8 +331,9 @@ export default function FilterBar({
                       <span className={styles.numInputLabel}>max</span>
                       <div className={styles.numInput}>
                         <NumberInput
-                          value={widthMax}
-                          onChange={setWidthMax}
+                          value={drafts.widthMax}
+                          onChange={handleSizeChange("widthMax")}
+                          error={errors.widthMax}
                           allowNegative={false}
                           min={widthMin}
                           max={widthMaxLimit}
@@ -289,8 +350,9 @@ export default function FilterBar({
                       <span className={styles.numInputLabel}>min</span>
                       <div className={styles.numInput}>
                         <NumberInput
-                          value={heightMin}
-                          onChange={setHeightMin}
+                          value={drafts.heightMin}
+                          onChange={handleSizeChange("heightMin")}
+                          error={errors.heightMin}
                           allowNegative={false}
                           min={heightMinLimit}
                           max={heightMax}
@@ -302,8 +364,9 @@ export default function FilterBar({
                       <span className={styles.numInputLabel}>max</span>
                       <div className={styles.numInput}>
                         <NumberInput
-                          value={heightMax}
-                          onChange={setHeightMax}
+                          value={drafts.heightMax}
+                          onChange={handleSizeChange("heightMax")}
+                          error={errors.heightMax}
                           min={heightMin}
                           max={heightMaxLimit}
                           size="xs"
@@ -347,6 +410,7 @@ export default function FilterBar({
                       value="random"
                       label="random"
                       className={styles.radioButton}
+                      onClick={() => sort === "random" && setSort("random")}
                     />
                   </Stack>
                 </Radio.Group>
@@ -447,10 +511,9 @@ export default function FilterBar({
         }}
       >
         <Search
-          textTemp={textTemp}
-          setTextTemp={setTextTemp}
+          text={text}
           textPlaceholder={textPlaceholder}
-          onSearch={handleSearch}
+          onSearch={setText}
           onClose={() => setSearchModalOpen(false)}
         />
       </Modal>

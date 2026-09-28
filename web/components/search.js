@@ -5,14 +5,8 @@ import { IconSearch, IconTrendingUp } from "@tabler/icons-react";
 import { useState } from "react";
 import styles from "./search.module.css";
 
-export default function Search({
-  textTemp,
-  setTextTemp,
-  textPlaceholder,
-  onSearch,
-  onClose,
-}) {
-  const [typedSearch, setTypedSearch] = useState(textTemp || "");
+export default function Search({ text, textPlaceholder, onSearch, onClose }) {
+  const [typedSearch, setTypedSearch] = useState(text || "");
 
   const trendingSearches = [
     "beach",
@@ -27,7 +21,6 @@ export default function Search({
 
   const handleKeyDown = (event) => {
     if (event.key === "Enter" && typedSearch.trim()) {
-      setTextTemp(typedSearch.trim());
       onSearch(typedSearch.trim());
       onClose();
     }
@@ -37,14 +30,12 @@ export default function Search({
   };
 
   const handleTrendingClick = (searchTerm) => {
-    setTextTemp(searchTerm);
     onSearch(searchTerm);
     onClose();
   };
 
   const handleSearchClick = () => {
     if (typedSearch.trim()) {
-      setTextTemp(typedSearch.trim());
       onSearch(typedSearch.trim());
       onClose();
     }
