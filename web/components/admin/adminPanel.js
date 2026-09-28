@@ -5,11 +5,10 @@ import { Button, Container, Group, Text, Title } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
 import styles from "./adminPanel.module.css";
 
-export default function AdminPanel(props) {
-  let isAdmin = props.isAdmin;
+export default function AdminPanel() {
   return (
     <div className={styles.main}>
-      <Header isAdmin={isAdmin} />
+      <Header />
       <Container size="xl" className={styles.container}>
         <div className={styles.wrapper}>
           <Group justify="space-between" align="center" mb="xl">

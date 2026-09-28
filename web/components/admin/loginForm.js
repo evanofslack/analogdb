@@ -15,10 +15,9 @@ import styles from "./loginForm.module.css";
 
 export default function LoginForm(props) {
   let error = props.error;
-  let isAdmin = props.isAdmin;
   return (
     <div className={styles.main}>
-      <Header isAdmin={isAdmin} />
+      <Header />
       <div className={styles.container}>
         <Paper
           className={styles.formWrapper}
