@@ -366,11 +366,16 @@ definitions:
     type: object
   server.Meta:
     properties:
+      next_cursor:
+        description: Opaque cursor for the next page, empty at the end
+        example: eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0
+        type: string
       next_page_id:
+        description: 'Deprecated: use next_cursor'
         example: 1752244116
         type: integer
       next_page_url:
-        example: /posts?sort=time&page_size=20&page_id=1752244116
+        example: /posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time
         type: string
       page_size:
         example: 20
@@ -1001,7 +1006,12 @@ paths:
         in: query
         name: page_size
         type: integer
-      - description: Page offset for pagination
+      - description: Opaque cursor from next_cursor for the next page
+        in: query
+        name: cursor
+        type: string
+      - description: 'Deprecated: use cursor. Keyset from next_page_id, not supported
+          with sort=random'
         in: query
         name: page_id
         type: integer
@@ -1014,7 +1024,8 @@ paths:
         in: query
         name: sort
         type: string
-      - description: Random seed for consistent random sorting
+      - description: Random seed for consistent random sorting, picked from 1..500
+          when missing
         in: query
         name: seed
         type: integer
