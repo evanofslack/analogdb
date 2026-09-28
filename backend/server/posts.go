@@ -285,7 +285,10 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	// if there is no context value or context value is true, do encode
 	if encode == nil || doEncode {
 		toEncode := []int{created.Id}
-		err = s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
+		failedIDs, err := s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
+		if err == nil && len(failedIDs) != 0 {
+			err = fmt.Errorf("failed to encode post ids %v", failedIDs)
+		}
 		if err != nil {
 			s.logger.ErrorContext(r.Context(), "Fail encode created post", "error", err, "post_id", created.Id)
 			s.stats.postEncodeFailures.Inc()

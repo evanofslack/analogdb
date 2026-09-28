@@ -93,7 +93,7 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 				BytesOut:      int32(bytesOut),
 			}
 			if err := server.EventService.Write(context.Background(), event); err != nil {
-				server.logger.WarnContext(ctx, "Fail write request to event stream", "error", err)
+				server.logger.DebugContext(ctx, "Fail write request to event stream", "error", err)
 			}
 		}()
 	})

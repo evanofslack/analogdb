@@ -275,8 +275,8 @@ type mockFailSimilarityService struct {
 	analogdb.SimilarityService
 }
 
-func (m *mockFailSimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error {
-	return errors.New("encode failed")
+func (m *mockFailSimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) ([]int, error) {
+	return nil, errors.New("encode failed")
 }
 
 func TestCreatePostEncodeFailure(t *testing.T) {

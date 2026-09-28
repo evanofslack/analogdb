@@ -55,59 +55,42 @@ func (db *DB) deletePost(ctx context.Context, id int) error {
 	ctx, span := db.startTrace(ctx, "vector:delete_post", trace.WithAttributes(attribute.Int("postID", id)))
 	defer span.End()
 
-	fields := []graphql.Field{
-		{Name: "post_id"},
-		{Name: "_additional", Fields: []graphql.Field{
-			{Name: "distance"},
-			{Name: "id"},
-		}},
-	}
-
 	where := filters.Where().
 		WithPath([]string{"post_id"}).
 		WithOperator(filters.Equal).
 		WithValueInt(int64(id))
 
-	result, err := db.db.GraphQL().Get().
+	result, err := db.db.Batch().ObjectsBatchDeleter().
 		WithClassName(PictureClass).
-		WithFields(fields...).
-		WithLimit(1).
 		WithWhere(where).
-		Do(ctx)
-
-	if err != nil || result == nil {
-		err = fmt.Errorf("find postID in vector DB, err=%w", err)
-		db.logger.ErrorContext(ctx, "Fail delete post from vector db", "post_id", id, "error", err)
-		span.SetStatus(codes.Error, "Get embedding by postID failed")
-		span.RecordError(err)
-		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("post %d not found", id)}
-	}
-	span.AddEvent("Got vector embedding by postID", trace.WithAttributes(attribute.Int("postID", id)))
-
-	pics, err := unmarshallPicturesResp(result)
-	if err != nil {
-		db.logger.ErrorContext(ctx, "Fail delete post from vector db", "post_id", id, "error", err)
-		span.SetStatus(codes.Error, "Unmarshall embedding failed")
-		span.RecordError(err)
-		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("post %d not found", id)}
-	}
-	uuid := pics[0].uuid
-	span.AddEvent("Unmarshalled embedding", trace.WithAttributes(attribute.Int("postID", id), attribute.String("uuid", uuid)))
-
-	err = db.db.Data().Deleter().
-		WithClassName(PictureClass).
-		WithID(pics[0].uuid).
+		WithOutput("minimal").
 		WithConsistencyLevel(replication.ConsistencyLevel.ALL). // default QUORUM
 		Do(ctx)
-	if err != nil {
+	if err != nil || result == nil || result.Results == nil {
+		err = fmt.Errorf("delete postID from vector DB, err=%w", err)
 		db.logger.ErrorContext(ctx, "Fail delete post from vector db", "post_id", id, "error", err)
 		span.SetStatus(codes.Error, "Delete picture failed")
 		span.RecordError(err)
 		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: fmt.Sprintf("post %d could not be deleted from vector DB", id)}
 	}
-	span.AddEvent("Deleted picture", trace.WithAttributes(attribute.Int("postID", id), attribute.String("uuid", uuid)))
-	db.logger.InfoContext(ctx, "Finish delete post from vector db", "post_id", id)
-	return err
+
+	results := result.Results
+	if results.Matches == 0 {
+		db.logger.WarnContext(ctx, "Found no post to delete in vector db", "post_id", id)
+		span.SetStatus(codes.Error, "Post not found")
+		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("post %d not found", id)}
+	}
+	if results.Failed > 0 {
+		err = fmt.Errorf("failed to delete %d of %d objects", results.Failed, results.Matches)
+		db.logger.ErrorContext(ctx, "Fail delete post from vector db", "post_id", id, "error", err)
+		span.SetStatus(codes.Error, "Delete picture failed")
+		span.RecordError(err)
+		return &analogdb.Error{Code: analogdb.ERRINTERNAL, Message: fmt.Sprintf("post %d could not be deleted from vector DB", id)}
+	}
+
+	span.AddEvent("Deleted pictures", trace.WithAttributes(attribute.Int("postID", id), attribute.Int64("count", results.Successful)))
+	db.logger.InfoContext(ctx, "Finish delete post from vector db", "post_id", id, "count", results.Successful)
+	return nil
 }
 
 type pictureResponse struct {

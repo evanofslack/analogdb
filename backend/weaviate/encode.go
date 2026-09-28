@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/weaviate/weaviate/entities/models"
@@ -36,50 +38,62 @@ func (ss SimilarityService) EncodePost(ctx context.Context, id int) error {
 	return nil
 }
 
+const (
+	imageDownloadTimeout = 30 * time.Second
+	maxImageBytes        = 20 << 20
+)
+
+var imageClient = &http.Client{Timeout: imageDownloadTimeout}
+
 func (db *DB) downloadPostImage(ctx context.Context, post *analogdb.Post) (string, error) {
 	db.logger.DebugContext(ctx, "Start download post", "post_id", post.Id)
 
 	ctx, span := db.tracer.Tracer.Start(ctx, "vector:download_post_image")
 	defer span.End()
 
-	var encode string
+	encode, err := downloadImage(ctx, post)
+	if err != nil {
+		span.SetStatus(codes.Error, "Download post image failed")
+		span.RecordError(err)
+		return "", err
+	}
+	span.AddEvent("Downloaded and encoded post image")
+	return encode, nil
+}
+
+// downloadImage fetches the post's medium image and returns it base64 encoded
+func downloadImage(ctx context.Context, post *analogdb.Post) (string, error) {
+	if len(post.Images) < 2 {
+		return "", fmt.Errorf("post %d has no medium image", post.Id)
+	}
 	url := post.Images[1].Url
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		err = fmt.Errorf("failed to create request: %w", err)
-		span.SetStatus(codes.Error, "Create request failed")
-		span.RecordError(err)
-		return encode, err
+		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := imageClient.Do(req)
 	if err != nil {
-		err = fmt.Errorf("failed to request post image: %w", err)
-		span.SetStatus(codes.Error, "Request for post image failed")
-		span.RecordError(err)
-		return encode, err
+		return "", fmt.Errorf("failed to request post image: %w", err)
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("failed to request post image, status=%d", resp.StatusCode)
-		span.SetStatus(codes.Error, "Request for post image failed")
-		span.RecordError(err)
-		return encode, err
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return "", fmt.Errorf("failed to request post image, status=%d", resp.StatusCode)
 	}
-	span.AddEvent("Downloaded post image")
+	if contentType := resp.Header.Get("Content-Type"); !strings.HasPrefix(contentType, "image/") {
+		return "", fmt.Errorf("post image has unexpected content type %q", contentType)
+	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxImageBytes+1))
 	if err != nil {
-		err = fmt.Errorf("failed to read post image: %w", err)
-		span.SetStatus(codes.Error, "Reading of post image bytes failed")
-		span.RecordError(err)
-		return encode, err
+		return "", fmt.Errorf("failed to read post image: %w", err)
 	}
-	encode = base64.StdEncoding.EncodeToString(data)
-	span.AddEvent("Encoded to base64")
-	return encode, nil
+	if len(data) > maxImageBytes {
+		return "", fmt.Errorf("post image larger than %d bytes", maxImageBytes)
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
 }
 
 func (db *DB) postToPictureObject(ctx context.Context, post *analogdb.Post) (*models.Object, error) {

@@ -10,7 +10,7 @@ type PostSimilarity struct {
 type SimilarityService interface {
 	CreateSchemas(ctx context.Context) error
 	EncodePost(ctx context.Context, id int) error
-	BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error
+	BatchEncodePosts(ctx context.Context, ids []int, batchSize int) ([]int, error)
 	FindSimilarPosts(ctx context.Context, filter *PostSimilarityFilter) ([]*Post, error)
 	DeletePost(ctx context.Context, id int) error
 }

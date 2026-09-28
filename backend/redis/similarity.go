@@ -60,7 +60,7 @@ func (s *SimilarityService) EncodePost(ctx context.Context, id int) error {
 	return s.dbService.EncodePost(ctx, id)
 }
 
-func (s *SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) error {
+func (s *SimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) ([]int, error) {
 	return s.dbService.BatchEncodePosts(ctx, ids, batchSize)
 }
 

@@ -27,7 +27,8 @@ type encodePostsRequest struct {
 }
 
 type encodePostsResponse struct {
-	Message string `json:"message" example:"successfully encoded 5 posts"`
+	Message   string `json:"message" example:"successfully encoded 5 posts"`
+	FailedIDs []int  `json:"failed_ids"`
 }
 
 // @Summary Encode posts for similarity matching
@@ -58,6 +59,7 @@ func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
 	batchSize := clampLimit(request.BatchSize, defaultEncodeBatchSize, 1, maxEncodeBatchSize)
 
 	var message string
+	failedIDs := []int{}
 
 	// encode single post
 	if len(request.Ids) == 1 {
@@ -70,16 +72,18 @@ func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		// encode batch of posts
-		err := s.SimilarityService.BatchEncodePosts(r.Context(), request.Ids, batchSize)
+		failed, err := s.SimilarityService.BatchEncodePosts(r.Context(), request.Ids, batchSize)
 		if err != nil {
 			s.writeError(w, r, err)
 			return
 		}
-		message = fmt.Sprintf("successfully encoded %d posts", len(request.Ids))
+		failedIDs = append(failedIDs, failed...)
+		message = fmt.Sprintf("successfully encoded %d posts", len(request.Ids)-len(failedIDs))
 	}
 
 	response := encodePostsResponse{
-		Message: message,
+		Message:   message,
+		FailedIDs: failedIDs,
 	}
 	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
 		s.writeError(w, r, err)
