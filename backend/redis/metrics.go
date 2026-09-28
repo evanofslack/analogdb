@@ -8,18 +8,20 @@ import (
 	"github.com/redis/go-redis/extra/redisprometheus/v9"
 )
 
+const (
+	errorKindRedis  = "redis"
+	errorKindDecode = "decode"
+)
+
 type cacheStats struct {
-	hits   uint64
-	misses uint64
-	errors uint64
+	hits         uint64
+	misses       uint64
+	redisErrors  uint64
+	decodeErrors uint64
 }
 
 func newCacheStats() *cacheStats {
-	stats := &cacheStats{
-		hits:   0,
-		misses: 0,
-		errors: 0,
-	}
+	stats := &cacheStats{}
 	return stats
 }
 
@@ -39,12 +41,19 @@ func (stats *cacheStats) getMisses() uint64 {
 	return atomic.LoadUint64(&stats.misses)
 }
 
-func (stats *cacheStats) incErrors() {
-	atomic.AddUint64(&stats.errors, 1)
+func (stats *cacheStats) incErrors(kind string) {
+	if kind == errorKindDecode {
+		atomic.AddUint64(&stats.decodeErrors, 1)
+		return
+	}
+	atomic.AddUint64(&stats.redisErrors, 1)
 }
 
-func (stats *cacheStats) getErrors() uint64 {
-	return atomic.LoadUint64(&stats.errors)
+func (stats *cacheStats) getErrors(kind string) uint64 {
+	if kind == errorKindDecode {
+		return atomic.LoadUint64(&stats.decodeErrors)
+	}
+	return atomic.LoadUint64(&stats.redisErrors)
 }
 
 type cacheCollector struct {
@@ -63,7 +72,7 @@ func newCacheCollector() *cacheCollector {
 	return &cacheCollector{
 		cacheHits:   prometheus.NewDesc(fqNameHits, "Number of cache hits", variableLabels, nil),
 		cacheMisses: prometheus.NewDesc(fqNameMisses, "Number of cache misses", variableLabels, nil),
-		cacheErrors: prometheus.NewDesc(fqNameErrors, "Number of cache errors", variableLabels, nil),
+		cacheErrors: prometheus.NewDesc(fqNameErrors, "Number of cache errors", []string{"instance", "kind"}, nil),
 	}
 }
 
@@ -83,13 +92,41 @@ func (collector *cacheCollector) Collect(ch chan<- prometheus.Metric) {
 
 		hits := float64(cache.stats.getHits())
 		misses := float64(cache.stats.getMisses())
-		errors := float64(cache.stats.getErrors())
 		instance := cache.instance
 
 		ch <- prometheus.MustNewConstMetric(collector.cacheHits, prometheus.CounterValue, hits, instance)
 		ch <- prometheus.MustNewConstMetric(collector.cacheMisses, prometheus.CounterValue, misses, instance)
-		ch <- prometheus.MustNewConstMetric(collector.cacheErrors, prometheus.CounterValue, errors, instance)
+		for _, kind := range []string{errorKindRedis, errorKindDecode} {
+			errors := float64(cache.stats.getErrors(kind))
+			ch <- prometheus.MustNewConstMetric(collector.cacheErrors, prometheus.CounterValue, errors, instance, kind)
+		}
 	}
+}
+
+type genStats struct {
+	invalidations *prometheus.CounterVec
+	incrErrors    prometheus.Counter
+}
+
+func newGenStats() *genStats {
+	return &genStats{
+		invalidations: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.CacheSubsystem,
+			Name:      "invalidations_total",
+			Help:      "Number of cache invalidations after writes",
+		}, []string{"entity"}),
+		incrErrors: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.CacheSubsystem,
+			Name:      "gen_incr_errors_total",
+			Help:      "Number of failed cache generation increments",
+		}),
+	}
+}
+
+func (stats *genStats) register(registerer prometheus.Registerer) {
+	registerer.MustRegister(stats.invalidations, stats.incrErrors)
 }
 
 func newRedisCollector(client redisprometheus.StatGetter) *redisprometheus.Collector {

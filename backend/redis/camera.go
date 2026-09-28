@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/cache/v9"
 	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/evanofslack/analogdb"
@@ -40,7 +39,12 @@ func NewCacheCameraService(rdb *RDB, dbService analogdb.CameraService) *CameraSe
 }
 
 func (s *CameraService) CreateCamera(ctx context.Context, camera *analogdb.CreateCamera) (*analogdb.CreateCamera, error) {
-	return s.dbService.CreateCamera(ctx, camera)
+	created, err := s.dbService.CreateCamera(ctx, camera)
+	if err != nil {
+		return nil, err
+	}
+	s.rdb.bumpGen(ctx, camerasEntity)
+	return created, nil
 }
 
 func (s *CameraService) FindCameras(ctx context.Context, filter *analogdb.CameraFilter) ([]*analogdb.Camera, error) {
@@ -56,43 +60,9 @@ func (s *CameraService) FindCameras(ctx context.Context, filter *analogdb.Camera
 		return s.dbService.FindCameras(ctx, filter)
 	}
 
-	camerasHash := fmt.Sprint(hash)
+	camerasKey := s.rdb.genCacheKey(ctx, camerasEntity, fmt.Sprint(hash))
 
-	var cameras []*analogdb.Camera
-
-	// try to get cameras from cache
-	camerasErr := s.cameraCache.get(ctx, camerasHash, &cameras)
-
-	// no error means we found in cache
-	if camerasErr == nil {
-		return cameras, nil
-	}
-
-	// fallback to db
-	cameras, err = s.dbService.FindCameras(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
-
-	// add cameras to cache
-	// do this async so response is returned quicker
-	go func() {
-		s.rdb.logger.DebugContext(ctx, "Add cameras to cache", "instance", s.cameraCache.instance)
-
-		// create a new context; orignal one will be canceled when request is closed
-		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
-		defer cancel()
-
-		// add cameras to cache
-		if err := s.cameraCache.set(ctx, &cache.Item{
-			Ctx:   ctx,
-			Key:   camerasHash,
-			Value: &cameras,
-			TTL:   cameraTTL,
-		}); err != nil {
-			s.rdb.logger.ErrorContext(ctx, "Fail add cameras to cache", "instance", s.cameraCache.instance, "error", err)
-		}
-	}()
-
-	return cameras, nil
+	return fetch(ctx, s.cameraCache, camerasKey, cameraTTL, func(ctx context.Context) ([]*analogdb.Camera, error) {
+		return s.dbService.FindCameras(ctx, filter)
+	})
 }
