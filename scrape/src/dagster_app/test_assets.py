@@ -6,12 +6,25 @@ import analogdb.models as adb
 import dagster as dg
 import numpy as np
 import pytest
+from analogdb.client import Uploaded
+from analogdb_generated.exceptions import ApiException
 from dagster_aws.s3 import S3Resource
 from PIL import Image
-from scrape.models import RedditPost
+from scrape.models import Keyword, PhotoMetadata, PostImages, RedditPost, S3Image
 
-from .assets import post_images, updated_reddit_comments
-from .resources import ImageProcessorResource, RedditResource, StorageResource
+from .assets import (
+    final_posts,
+    patch_post_scores,
+    post_images,
+    updated_reddit_comments,
+    upload_posts,
+)
+from .resources import (
+    AnalogDBResource,
+    ImageProcessorResource,
+    RedditResource,
+    StorageResource,
+)
 from .result import Result, Status
 
 
@@ -116,3 +129,136 @@ class TestPostImages:
 
         assert result.successful_count() == 20
         assert len(pickle.dumps(result)) < 100_000
+
+
+def make_post_images(count: int, image_count: int = 4) -> Result[PostImages]:
+    data = {}
+    for i in range(count):
+        permalink = f"https://www.reddit.com/r/analog/comments/{i}/title"
+        data[permalink] = PostImages(
+            images=[
+                S3Image(
+                    resolution=str(r), url=f"https://s3/{i}/{r}.jpg", width=1, height=1
+                )
+                for r in range(image_count)
+            ],
+            colors=[],
+            grayscale=False,
+            width=1,
+            height=1,
+        )
+    return Result(data=data, status={id: Status.SUCCESS for id in data})
+
+
+def run_final_posts(post_images_result, keywords_result):
+    reddit_posts = make_reddit_posts(3)
+    title_metadatas = Result(
+        data={id: PhotoMetadata() for id in reddit_posts.data},
+        status={id: Status.SUCCESS for id in reddit_posts.data},
+    )
+    context = dg.build_asset_context()
+    return final_posts(
+        context, reddit_posts, title_metadatas, post_images_result, keywords_result
+    )
+
+
+class TestFinalPosts:
+    def test_missing_keywords_uploads_without_them(self):
+        ids = list(make_reddit_posts(3).data)
+        missing = ids[1]
+        keywords = Result(
+            data={
+                id: [Keyword(word="film", weight=1.0)] for id in ids if id != missing
+            },
+            status={
+                id: Status.FAILED if id == missing else Status.SUCCESS for id in ids
+            },
+        )
+
+        result = run_final_posts(make_post_images(3), keywords)
+
+        assert result.successful_ids() == set(ids)
+        assert result.data[missing].keywords == []
+        assert result.data[ids[0]].keywords == [Keyword(word="film", weight=1.0)]
+
+    def test_too_few_images_fails(self):
+        images = make_post_images(3)
+        bad = next(iter(images.data))
+        images.data[bad].images = images.data[bad].images[:3]
+        keywords = Result(
+            data={id: [] for id in images.data},
+            status={id: Status.SUCCESS for id in images.data},
+        )
+
+        result = run_final_posts(images, keywords)
+
+        assert result.status[bad] == Status.FAILED
+        assert "4 images" in result.errors[bad]
+        assert result.successful_ids() == set(images.data) - {bad}
+
+
+def run_with_client(fn, client: MagicMock):
+    with patch.object(AnalogDBResource, "client", return_value=client):
+        return fn()
+
+
+class TestUploadPosts:
+    def test_failure_tries_every_post(self):
+        images = make_post_images(3)
+        keywords = Result(
+            data={id: [] for id in images.data},
+            status={id: Status.SUCCESS for id in images.data},
+        )
+        finals = run_final_posts(images, keywords)
+        bad = list(finals.data)[1]
+
+        def upload(post):
+            if post.permalink == bad:
+                raise ApiException(status=500, reason="boom")
+            return Uploaded.CREATED
+
+        client = MagicMock()
+        client.upload_post.side_effect = upload
+        context = dg.build_asset_context()
+
+        with pytest.raises(dg.Failure) as e:
+            run_with_client(
+                lambda: upload_posts(context, AnalogDBResource(), finals), client
+            )
+
+        assert client.upload_post.call_count == 3
+        assert e.value.metadata["created"].value == 2
+        assert e.value.metadata["failed"].value == 1
+
+    def test_exists_counts_as_success(self):
+        images = make_post_images(2)
+        keywords = Result(
+            data={id: [] for id in images.data},
+            status={id: Status.SUCCESS for id in images.data},
+        )
+        finals = run_final_posts(images, keywords)
+        client = MagicMock()
+        client.upload_post.return_value = Uploaded.EXISTS
+        context = dg.build_asset_context()
+
+        result = run_with_client(
+            lambda: upload_posts(context, AnalogDBResource(), finals), client
+        )
+
+        assert result.metadata == {"created": 0, "exists": 2, "failed": 0}
+
+
+class TestPatchPosts:
+    def test_failure_patches_rest(self):
+        patches = [(i, adb.PostPatch(score=i)) for i in range(3)]
+        client = MagicMock()
+        client.patch_post.side_effect = [None, ApiException(status=500), None]
+        context = dg.build_asset_context(partition_key="2024-01-01")
+
+        with pytest.raises(dg.Failure):
+            run_with_client(
+                lambda: patch_post_scores(context, patches, AnalogDBResource()),
+                client,
+            )
+
+        assert client.patch_post.call_count == 3
