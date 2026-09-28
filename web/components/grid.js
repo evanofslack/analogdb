@@ -22,8 +22,8 @@ export default function Grid(props) {
 
   return (
     <Masonry columnsCount={numColumn} gutter={"15px"}>
-      {props.posts.map((post, index) => (
-        <div key={index}>
+      {props.posts.map((post) => (
+        <div key={post.id}>
           <GridImage post={post}></GridImage>
         </div>
       ))}

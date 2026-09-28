@@ -1,36 +1,65 @@
 "use client";
 
 import Grid from "@components/grid";
-import { baseURL } from "@lib/constants";
-import { Loader, Skeleton } from "@mantine/core";
-import { useEffect, useState } from "react";
-import InfiniteScroll from "react-infinite-scroll-component";
+import { Button, Loader, Skeleton } from "@mantine/core";
+import { useEffect, useRef } from "react";
 import styles from "./infiniteGallery.module.css";
 
-export default function InfiniteGallery(props) {
-  const { response } = props;
+export default function InfiniteGallery({
+  pages,
+  isLoading,
+  isError,
+  isPlaceholderData,
+  hasNextPage,
+  isFetchingNextPage,
+  isFetchNextPageError,
+  fetchNextPage,
+  refetch,
+}) {
+  const sentinelRef = useRef(null);
+  const posts = pages.flatMap((page) => page.posts ?? []);
 
-  const [posts, setPosts] = useState([]);
-  const [nextPageRoute, setNextPageRoute] = useState(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [totalPosts, setTotalPosts] = useState(0);
-  const [isLocalLoading, setIsLocalLoading] = useState(true);
-
-  // Update state when response changes
   useEffect(() => {
-    if (response && response.posts) {
-      setPosts(response.posts);
-      setNextPageRoute(
-        response.meta?.nextPageUrl ? baseURL + response.meta.nextPageUrl : null
-      );
-      setHasMore(!!response.meta?.nextPageId);
-      setTotalPosts(response.meta?.totalPosts || 0);
-      setIsLocalLoading(false);
-    }
-  }, [response]);
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasNextPage) return;
 
-  // Show skeleton loaders on initial load
-  if (isLocalLoading && posts.length === 0) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasNextPage &&
+          !isFetchingNextPage &&
+          !isPlaceholderData &&
+          !isFetchNextPageError
+        ) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "0px 0px 1200px 0px" }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [
+    hasNextPage,
+    isFetchingNextPage,
+    isPlaceholderData,
+    isFetchNextPageError,
+    fetchNextPage,
+    pages.length,
+  ]);
+
+  if (isError && pages.length === 0) {
+    return (
+      <div className={styles.noResultsContainer}>
+        <h3 className={styles.noResults}>couldn&apos;t load posts</h3>
+        <Button variant="default" onClick={() => refetch()}>
+          retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className={styles.skeletonContainer}>
         <div className={styles.skeletonGrid}>
@@ -42,13 +71,7 @@ export default function InfiniteGallery(props) {
     );
   }
 
-  // Handle null/undefined response
-  if (
-    !isLocalLoading &&
-    response &&
-    response.posts &&
-    response.posts.length === 0
-  ) {
+  if (posts.length === 0) {
     return (
       <div className={styles.noResultsContainer}>
         <h3 className={styles.noResults}>no posts found :(</h3>
@@ -56,54 +79,33 @@ export default function InfiniteGallery(props) {
     );
   }
 
-  // Fetch next page of results for infinite scroll
-  const fetchMore = () => {
-    if (!nextPageRoute) return;
-
-    fetch(nextPageRoute)
-      .then((res) => res.json())
-      .then((response) => {
-        if (response.meta.nextPageId == "") {
-          setHasMore(false);
-        } else {
-          setHasMore(true);
-          setNextPageRoute(baseURL + response.meta.nextPageUrl);
-        }
-        setPosts(posts.concat(response.posts));
-      });
-  };
-
-  const loader = () => (
-    <h4 className={styles.loading}>
-      <Loader color="gray" variant="dots" />
-    </h4>
-  );
-
   return (
     <div>
-      {totalPosts != 0 && (
-        <div>
-          <InfiniteScroll
-            dataLength={posts.length}
-            next={fetchMore}
-            hasMore={hasMore}
-            loader={loader()}
-            endMessage={
-              <h3 className={styles.end}>
-                thats all folks, go take some pictures...
-              </h3>
-            }
-            style={{ overflowY: "hidden" }}
-          >
-            <Grid posts={posts} />
-            <span />
-          </InfiniteScroll>
+      {isPlaceholderData && (
+        <div className={styles.placeholderLoader}>
+          <Loader color="gray" />
         </div>
       )}
-      {!isLocalLoading && totalPosts == 0 && (
-        <div className={styles.noResultsContainer}>
-          <h3 className={styles.noResults}> no posts found :( </h3>
+      <div className={isPlaceholderData ? styles.dimmed : undefined}>
+        <Grid posts={posts} />
+      </div>
+      {hasNextPage && <div ref={sentinelRef} aria-hidden />}
+      {isFetchingNextPage && (
+        <h4 className={styles.loading}>
+          <Loader color="gray" variant="dots" />
+        </h4>
+      )}
+      {isFetchNextPageError && !isFetchingNextPage && (
+        <div className={styles.loading}>
+          <Button variant="default" onClick={() => fetchNextPage()}>
+            couldn&apos;t load more · retry
+          </Button>
         </div>
+      )}
+      {!hasNextPage && !isPlaceholderData && (
+        <h3 className={styles.end}>
+          thats all folks, go take some pictures...
+        </h3>
       )}
     </div>
   );
