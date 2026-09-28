@@ -7,6 +7,10 @@ app:
 database:
   url: ""
   migration_enabled: false
+  max_open_conns: 20
+  max_idle_conns: 10
+  conn_max_lifetime: 30m
+  conn_max_idle_time: 5m
 redis:
   url: ""
 vector_database:
