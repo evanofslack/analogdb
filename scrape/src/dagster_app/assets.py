@@ -297,15 +297,14 @@ def updated_post_scores(
     context: dg.AssetExecutionContext,
     analogdb_posts: List[adb.Post],
     reddit: RedditResource,
-) -> List[adb.PostPatch]:
+) -> List[Tuple[int, adb.PostPatch]]:
     r = reddit.client()
-    patches: List[adb.PostPatch] = []
+    patches: List[Tuple[int, adb.PostPatch]] = []
     for p in analogdb_posts:
         score = r.updated_score(p.permalink, p.score)
         if score is None:
             continue
-        patch = adb.create_post_patch(id=p.id, score=score)
-        patches.append(patch)
+        patches.append((p.id, adb.PostPatch(score=score)))
     context.log.info(f"Created {len(patches)} updated post scores")
     return patches
 
@@ -313,7 +312,7 @@ def updated_post_scores(
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def patch_post_scores(
     context: dg.AssetExecutionContext,
-    updated_post_scores: List[adb.PostPatch],
+    updated_post_scores: List[Tuple[int, adb.PostPatch]],
     analogdb: AnalogDBResource,
 ) -> None:
     if not updated_post_scores:
@@ -322,8 +321,8 @@ def patch_post_scores(
         )
 
     adb = analogdb.client()
-    for p in updated_post_scores:
-        adb.patch_post(p)
+    for id, p in updated_post_scores:
+        adb.patch_post(id, p)
     context.log.info(
         f"Patched {len(updated_post_scores)} post scores for partition {context.partition_key}"
     )
@@ -334,15 +333,14 @@ def updated_post_descriptions(
     context: dg.AssetExecutionContext,
     analogdb_posts: List[adb.Post],
     reddit: RedditResource,
-) -> List[adb.PostPatch]:
+) -> List[Tuple[int, adb.PostPatch]]:
     r = reddit.client()
-    patches: List[adb.PostPatch] = []
+    patches: List[Tuple[int, adb.PostPatch]] = []
     for p in analogdb_posts:
         desc = r.updated_selftext(p.permalink)
         if desc is None or desc == "":
             continue
-        patch = adb.create_post_patch(id=p.id, description=desc)
-        patches.append(patch)
+        patches.append((p.id, adb.PostPatch(description=desc)))
     context.log.info(f"Created {len(patches)} updated post descriptions")
     return patches
 
@@ -350,7 +348,7 @@ def updated_post_descriptions(
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def patch_post_descriptions(
     context: dg.AssetExecutionContext,
-    updated_post_descriptions: List[adb.PostPatch],
+    updated_post_descriptions: List[Tuple[int, adb.PostPatch]],
     analogdb: AnalogDBResource,
 ) -> None:
     if not updated_post_descriptions:
@@ -360,8 +358,8 @@ def patch_post_descriptions(
         return
 
     adb = analogdb.client()
-    for p in updated_post_descriptions:
-        adb.patch_post(p)
+    for id, p in updated_post_descriptions:
+        adb.patch_post(id, p)
     context.log.info(
         f"Patched {len(updated_post_descriptions)} post descriptions for partition {context.partition_key}"
     )
@@ -374,8 +372,8 @@ def updated_post_title_metadatas(
     metadata: MetadataResource,
     analogdb_films: List[adb.Film],
     analogdb_cameras: List[adb.Camera],
-) -> List[adb.PostPatch]:
-    patches: List[adb.PostPatch] = []
+) -> List[Tuple[int, adb.PostPatch]]:
+    patches: List[Tuple[int, adb.PostPatch]] = []
 
     if not analogdb_posts:
         context.log.info(f"No posts to process for partition {context.partition_key}")
@@ -398,20 +396,19 @@ def updated_post_title_metadatas(
                 f"Skip create patch for empty post title metadata, title={p.title}"
             )
             continue
-        meta = adb.PhotoMetadata(
-            m.camera_make,
-            m.camera_model,
-            m.film_make,
-            m.film_type,
-            m.film_speed,
-            m.focal_length,
-            m.aperture,
+        patch = adb.PostPatch(
+            camera_make=m.camera_make,
+            camera_model=m.camera_model,
+            film_make=m.film_make,
+            film_type=m.film_type,
+            film_speed=m.film_speed,
+            focal_length=m.focal_length,
+            aperture=m.aperture,
         )
         context.log.debug(
-            f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ""}, metadata={meta}"
+            f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ""}, metadata={patch}"
         )
-        patch = adb.create_post_patch(id=p.id, metadata=meta)
-        patches.append(patch)
+        patches.append((p.id, patch))
 
     context.log.info(f"Created {len(patches)} updated post title metadatas")
     return patches
@@ -420,7 +417,7 @@ def updated_post_title_metadatas(
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def patch_post_title_metadatas(
     context: dg.AssetExecutionContext,
-    updated_post_title_metadatas: List[adb.PostPatch],
+    updated_post_title_metadatas: List[Tuple[int, adb.PostPatch]],
     analogdb: AnalogDBResource,
 ) -> None:
     if not updated_post_title_metadatas:
@@ -428,8 +425,8 @@ def patch_post_title_metadatas(
         return
 
     adb = analogdb.client()
-    for p in updated_post_title_metadatas:
-        adb.patch_post(p)
+    for id, p in updated_post_title_metadatas:
+        adb.patch_post(id, p)
         time.sleep(0.2)
 
     context.log.info(
@@ -500,8 +497,8 @@ def updated_post_keywords(
     updated_reddit_comments: List[Tuple[adb.Post, List[RedditComment]]],
     keyword_extractor: KeywordExtractorResource,
     keyword_blacklist: KeywordBlacklistResource,
-) -> List[adb.PostPatch]:
-    patches: List[adb.PostPatch] = []
+) -> List[Tuple[int, adb.PostPatch]]:
+    patches: List[Tuple[int, adb.PostPatch]] = []
     if not updated_reddit_comments:
         context.log.info(
             f"No updated post keywords for partition {context.partition_key}"
@@ -521,9 +518,8 @@ def updated_post_keywords(
             blacklist,
         )
         for k in keywords:
-            adb_kws.append(adb.Keyword(k.word, k.weight))
-        patch = adb.create_post_patch(id=p.id, keywords=adb_kws)
-        patches.append(patch)
+            adb_kws.append(adb.Keyword(word=k.word, weight=k.weight))
+        patches.append((p.id, adb.PostPatch(keywords=adb_kws)))
 
     context.log.info(
         f"Created {len(patches)} updated post keywords for partition {context.partition_key}"
@@ -534,7 +530,7 @@ def updated_post_keywords(
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def patch_post_keywords(
     context: dg.AssetExecutionContext,
-    updated_post_keywords: List[adb.PostPatch],
+    updated_post_keywords: List[Tuple[int, adb.PostPatch]],
     analogdb: AnalogDBResource,
 ) -> None:
     if not updated_post_keywords:
@@ -544,8 +540,8 @@ def patch_post_keywords(
         return
 
     adb = analogdb.client()
-    for p in updated_post_keywords:
-        adb.patch_post(p)
+    for id, p in updated_post_keywords:
+        adb.patch_post(id, p)
     context.log.info(f"Patched {len(updated_post_keywords)} post keywords")
     context.log.info(
         f"Patched {len(updated_post_keywords)} post keywords for partition {context.partition_key}"

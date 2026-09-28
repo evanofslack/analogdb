@@ -4,35 +4,37 @@ import scrape.models as scrape
 
 def convert_create(p: scrape.CreatePost) -> analog.PostCreate:
     return analog.PostCreate(
-        p.title,
-        p.author,
-        p.permalink,
-        p.description,
-        p.score,
-        p.nsfw,
-        p.grayscale,
-        p.time,
-        p.sprocket,
-        p.camera_make,
-        p.camera_model,
-        p.film_make,
-        p.film_type,
-        p.film_speed,
-        p.focal_length,
-        p.aperture,
-        [convert_image(i) for i in p.images],
-        [convert_keyword(k) for k in p.keywords],
-        [convert_color(c) for c in p.colors],
+        title=p.title,
+        author=p.author,
+        permalink=p.permalink,
+        description=p.description,
+        score=p.score,
+        nsfw=p.nsfw,
+        grayscale=p.grayscale,
+        timestamp=p.time,
+        sprocket=p.sprocket,
+        camera_make=p.camera_make,
+        camera_model=p.camera_model,
+        film_make=p.film_make,
+        film_type=p.film_type,
+        film_speed=p.film_speed,
+        focal_length=p.focal_length,
+        aperture=p.aperture,
+        images=[convert_image(i) for i in p.images],
+        keywords=[convert_keyword(k) for k in p.keywords],
+        colors=[convert_color(c) for c in p.colors],
     )
 
 
 def convert_image(i: scrape.S3Image) -> analog.Image:
-    return analog.Image(i.url, i.resolution, i.width, i.height)
+    return analog.Image(
+        url=i.url, resolution=i.resolution, width=i.width, height=i.height
+    )
 
 
 def convert_color(c: scrape.Color) -> analog.Color:
-    return analog.Color(c.hex, c.css, c.html, c.percent)
+    return analog.Color(hex=c.hex, css=c.css, html=c.html, percent=c.percent)
 
 
 def convert_keyword(k: scrape.Keyword) -> analog.Keyword:
-    return analog.Keyword(k.word, k.weight)
+    return analog.Keyword(word=k.word, weight=k.weight)

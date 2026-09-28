@@ -7,10 +7,12 @@ on:
     paths:
       - "scrape/**"
       - ".github/workflows/test-scrape.yml"
+      - "api/swagger.yaml"
   pull_request:
     paths:
       - "scrape/**"
       - ".github/workflows/test-scrape.yml"
+      - "api/swagger.yaml"
 
 jobs:
   test:

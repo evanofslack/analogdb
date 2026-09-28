@@ -8,8 +8,8 @@ from openai import OpenAIError
 from .metadata import MetadataExtractor
 
 CAMERAS = [
-    Camera(id="1", make="Canon", model="AE-1", description=""),
-    Camera(id="2", make="Nikon", model="F3", description=""),
+    Camera(id=1, make="Canon", model="AE-1", description=""),
+    Camera(id=2, make="Nikon", model="F3", description=""),
 ]
 
 FILMS = [
