@@ -117,7 +117,12 @@ func main() {
 		kafkaLogger := logger.WithSubsystem("kafka")
 		topic := cfg.Kafka.Topic
 		brokers := strings.Split(cfg.Kafka.Brokers, ",")
-		eventService, err = events.New(kafkaLogger, topic, brokers)
+		opts := events.Options{
+			QueueSize:    cfg.Kafka.QueueSize,
+			BatchSize:    cfg.Kafka.BatchSize,
+			BatchTimeout: cfg.Kafka.BatchTimeout,
+		}
+		eventService, err = events.New(kafkaLogger, metrics.Registry, topic, brokers, opts)
 		if err != nil {
 			err = fmt.Errorf("startup kafka: %w", err)
 			fatal(logger, err)

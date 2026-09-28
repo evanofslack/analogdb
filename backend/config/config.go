@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/joho/godotenv"
@@ -73,6 +74,10 @@ type Kafka struct {
 	Enabled bool   `yaml:"enabled" env:"KAFKA_ENABLED"`
 	Topic   string `yaml:"topic" env:"KAFKA_TOPIC"`
 	Brokers string `yaml:"brokers" env:"KAFKA_BROKERS"`
+
+	QueueSize    int           `yaml:"queue_size" env:"KAFKA_QUEUE_SIZE" env-default:"10000"`
+	BatchSize    int           `yaml:"batch_size" env:"KAFKA_BATCH_SIZE" env-default:"100"`
+	BatchTimeout time.Duration `yaml:"batch_timeout" env:"KAFKA_BATCH_TIMEOUT" env-default:"1s"`
 }
 
 func New(path string) (*Config, error) {
