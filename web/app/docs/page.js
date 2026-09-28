@@ -3,8 +3,8 @@ import styles from "@components/gallery.module.css";
 import Header from "@components/header";
 
 export const metadata = {
-  title: "AnalogDB",
-  description: "Film photography database",
+  title: "API docs",
+  description: "Documentation for the AnalogDB public API",
 };
 
 export default function Docs() {

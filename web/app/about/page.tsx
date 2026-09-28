@@ -17,8 +17,8 @@ import { Metadata } from "next";
 import { unstable_cache } from "next/cache";
 
 export const metadata: Metadata = {
-  title: "AnalogDB",
-  description: "Film photography database",
+  title: "About",
+  description: "What AnalogDB is, with colors and similar photos from the archive",
 };
 
 export const dynamic = "force-dynamic";
