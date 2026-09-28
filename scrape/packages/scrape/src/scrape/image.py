@@ -1,6 +1,6 @@
-import uuid
+import hashlib
 from io import BytesIO
-from typing import Dict, List, Optional, Protocol, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import extcolors
 import numpy as np
@@ -15,13 +15,22 @@ from .constants import (
     CLOUDFRONT_URL,
     COLOR_LIMIT,
     COLOR_TOLERANCE,
+    GRAYSCALE_SUBREDDITS,
+    GRAYSCALE_TOLERANCE,
     HIGH_RES,
+    IMAGE_TIMEOUT,
+    JPEG_QUALITY,
     LOW_RES,
     MEDIUM_RES,
-    RAW_RES,
+    VALID_CONTENT,
 )
-from .models import Color, RedditPost, S3Image
+from .models import Color, PostImages, RedditPost, S3Image
 from .s3 import S3
+
+
+def channel_spread(image: Image.Image) -> np.ndarray:
+    a = np.asarray(image.convert("RGB"), dtype=np.int16)
+    return a.max(axis=2) - a.min(axis=2)
 
 
 class ImageProcessor:
@@ -107,52 +116,52 @@ class ImageProcessor:
         "image/gif": "gif",
     }
 
+    _content_format = {
+        "image/jpeg": "JPEG",
+        "image/jpg": "JPEG",
+        "image/png": "PNG",
+        "image/gif": "GIF",
+    }
+
     def __init__(self):
         self._css_names = list(webcolors.names(spec=webcolors.CSS3))
         self._css_color_tree = self._build_css_color_tree()
         self._html_names = list(webcolors.names(spec=webcolors.HTML4))
         self._html_color_tree = self._build_html_color_tree()
 
-    @retry(delay=1, tries=5)
-    def download_image(self, url: str) -> Image.Image:
-        resp = requests.get(url)
-        resp.raise_for_status()
-        buf = BytesIO(resp.content)
-        return Image.open(buf)
+    def process(self, post: RedditPost, s3: S3) -> PostImages:
+        content, content_type = self._download(post.image_url)
+        prefix = self._key_prefix(post.permalink)
+        sizes = {"low": LOW_RES, "medium": MEDIUM_RES, "high": HIGH_RES}
 
-    def upload_s3(self, post: RedditPost, s3: S3) -> List[S3Image]:
-        s3_images: List[S3Image] = []
-        dimensions: list[tuple[int, int] | None] = [
-            LOW_RES,
-            MEDIUM_RES,
-            HIGH_RES,
-            RAW_RES,
-        ]
-        resolutions: list[str] = [
-            "low",
-            "medium",
-            "high",
-            "raw",
-        ]
-        for dim, res in zip(dimensions, resolutions):
-            image, width, height = self.resize_image(image=post.image, size=dim)
-            filename = self._create_filename(content_type=post.content_type)
+        with Image.open(BytesIO(content)) as image:
+            width, height = image.width, image.height
+            resized = {res: self.resize_image(image, dim) for res, dim in sizes.items()}
 
-            url = self._upload_image(
-                s3=s3, image=image, filename=filename, content_type=post.content_type
-            )
+        images: List[S3Image] = []
+        for res, (img, w, h) in resized.items():
+            body = self.image_to_bytes(image=img, content_type=content_type)
+            url = self._upload_image(s3, prefix, res, body, content_type)
+            images.append(S3Image(resolution=res, url=url, width=w, height=h))
 
-            s3_image = S3Image(resolution=res, url=url, width=width, height=height)
-            s3_images.append(s3_image)
+        url = self._upload_image(s3, prefix, "raw", content, content_type)
+        images.append(S3Image(resolution="raw", url=url, width=width, height=height))
 
-        return s3_images
+        low = resized["low"][0]
+        return PostImages(
+            images=images,
+            colors=self._extract_colors(low),
+            grayscale=self._grayscale(low, post.subreddit),
+            width=width,
+            height=height,
+        )
 
     def is_grayscale(self, image: Image.Image) -> bool:
-        img = image.convert("RGB")
-        img_array = np.array(img)
-        # Check R, G, B channels all equal
-        r, g, b = img_array[:, :, 0], img_array[:, :, 1], img_array[:, :, 2]
-        return np.array_equal(r, g) and np.array_equal(g, b)
+        spread = channel_spread(image)
+        return bool(np.percentile(spread, 99) <= GRAYSCALE_TOLERANCE)
+
+    def _grayscale(self, image: Image.Image, subreddit: str) -> bool:
+        return subreddit in GRAYSCALE_SUBREDDITS or self.is_grayscale(image)
 
     def resize_image(
         self, image: Image.Image, size: Optional[Tuple[int, int]]
@@ -165,11 +174,27 @@ class ImageProcessor:
 
     def image_to_bytes(self, image: Image.Image, content_type: str) -> bytes:
         image_bytes = BytesIO()
-        format_name = content_type.removeprefix("image/")
-        image.save(image_bytes, format_name)
+        format_name = self._content_format[content_type]
+        if format_name == "JPEG":
+            image.save(image_bytes, format_name, quality=JPEG_QUALITY, optimize=True)
+        else:
+            image.save(image_bytes, format_name)
         return image_bytes.getvalue()
 
-    def extract_colors(
+    @retry(delay=1, tries=5)
+    def _fetch(self, url: str) -> requests.Response:
+        resp = requests.get(url, timeout=IMAGE_TIMEOUT)
+        resp.raise_for_status()
+        return resp
+
+    def _download(self, url: str) -> Tuple[bytes, str]:
+        resp = self._fetch(url)
+        content_type = resp.headers.get("content-type", "").split(";")[0].strip()
+        if content_type not in VALID_CONTENT:
+            raise ValueError(f"Invalid content type: {content_type}")
+        return resp.content, content_type
+
+    def _extract_colors(
         self, image: Image.Image, count: int = COLOR_LIMIT
     ) -> List[Color]:
         prepared_image = self._prepare_image_for_analysis(image)
@@ -213,22 +238,15 @@ class ImageProcessor:
 
         return processed_colors
 
-    def _create_filename(self, content_type: str) -> str:
-        id = str(uuid.uuid4())
-        suffix = self._content_suffix[content_type]
-        filename = f"{id}.{suffix}"
-        return filename
+    def _key_prefix(self, permalink: str) -> str:
+        return hashlib.sha256(permalink.encode()).hexdigest()[:24]
 
     def _upload_image(
-        self, s3: S3, image: Image.Image, filename: str, content_type: str
+        self, s3: S3, prefix: str, resolution: str, body: bytes, content_type: str
     ) -> str:
         bucket = AWS_BUCKET_PHOTOS
-        img_bytes = self.image_to_bytes(image=image, content_type=content_type)
-
-        try:
-            s3.put_object(bucket, filename, img_bytes, content_type)
-        except Exception as e:
-            raise e
+        filename = f"{prefix}-{resolution}.{self._content_suffix[content_type]}"
+        s3.put_object(bucket, filename, body, content_type)
 
         url = f"{CLOUDFRONT_URL}/{filename}"
         return url

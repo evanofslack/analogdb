@@ -32,6 +32,18 @@ VALID_CONTENT = [
     "image/gif",
 ]
 
+# connect and read timeouts in seconds for image downloads
+IMAGE_TIMEOUT = (10, 60)
+
+# jpeg quality for resized images
+JPEG_QUALITY = 90
+
+# max 99th percentile channel spread for an image to count as grayscale
+GRAYSCALE_TOLERANCE = 15
+
+# posts from these subreddits are always grayscale
+GRAYSCALE_SUBREDDITS: set[str] = set()
+
 # upper limit to the number of extracted
 # colors presented in the output.
 COLOR_LIMIT = 5
