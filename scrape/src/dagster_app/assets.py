@@ -126,7 +126,13 @@ def analogdb_permalinks(
     return links
 
 
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
+@dg.asset(
+    dagster_type=ResultDagsterType,
+    group_name="scrape",
+    retry_policy=dg.RetryPolicy(
+        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+    ),
+)
 def reddit_posts(
     context: dg.AssetExecutionContext,
     reddit: RedditResource,
@@ -217,7 +223,13 @@ def title_metadatas(
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
+@dg.asset(
+    dagster_type=ResultDagsterType,
+    group_name="scrape",
+    retry_policy=dg.RetryPolicy(
+        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+    ),
+)
 def post_images(
     context: dg.AssetExecutionContext,
     image_processor: ImageProcessorResource,
@@ -243,7 +255,13 @@ def post_images(
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
+@dg.asset(
+    dagster_type=ResultDagsterType,
+    group_name="scrape",
+    retry_policy=dg.RetryPolicy(
+        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+    ),
+)
 def keywords(
     context: dg.AssetExecutionContext,
     keyword_extractor: KeywordExtractorResource,
@@ -328,7 +346,12 @@ def final_posts(
     return result
 
 
-@dg.asset(group_name="scrape")
+@dg.asset(
+    group_name="scrape",
+    retry_policy=dg.RetryPolicy(
+        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+    ),
+)
 def upload_posts(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource, final_posts
 ) -> dg.MaterializeResult:

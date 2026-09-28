@@ -23,15 +23,18 @@ COPY api/clients/python/ /api/clients/python/
 
 COPY scrape/pyproject.toml scrape/uv.lock ./
 COPY scrape/packages/ packages/
+
+RUN uv sync --frozen --no-install-project
+
+RUN uv run --no-sync python -m spacy download en_core_web_lg
+
 COPY scrape/src/ src/
 COPY scrape/data/ data/
 
-RUN uv venv && uv sync --frozen
-
-RUN uv run python -m spacy download en_core_web_lg
+RUN uv sync --frozen --inexact
 
 ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 3000
 
-CMD ["uv", "run", "dagster", "dev", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["uv", "run", "dagster-webserver", "--host", "0.0.0.0", "--port", "3000"]

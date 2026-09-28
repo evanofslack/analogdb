@@ -12,7 +12,10 @@ services:
       - dagster_postgres_data:/var/lib/postgresql/data
 
   dagster_webserver:
-    build: .
+    build:
+      context: ..
+      dockerfile: scrape/Dockerfile
+    image: evanofslack/analogdb-dagster:latest
     container_name: dagster_webserver
     env_file:
       - .env
@@ -38,7 +41,10 @@ services:
       "
 
   dagster_daemon:
-    build: .
+    build:
+      context: ..
+      dockerfile: scrape/Dockerfile
+    image: evanofslack/analogdb-dagster:latest
     container_name: dagster_daemon
     env_file:
       - .env

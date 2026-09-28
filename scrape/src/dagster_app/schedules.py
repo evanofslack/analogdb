@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import dagster as dg
 
@@ -7,22 +7,28 @@ from .jobs import patch_keywords_job, patch_scores_job, scrape_job
 scrape_analog_schedule = dg.ScheduleDefinition(
     job=scrape_job,
     cron_schedule="0 0 * * *",
+    execution_timezone="UTC",
     name="scrape_analog_schedule",
     description="Daily scrape of posts",
 )
 
 
+def two_days_ago(context: dg.ScheduleEvaluationContext) -> str:
+    return (context.scheduled_execution_time - timedelta(days=2)).strftime("%Y-%m-%d")
+
+
 @dg.schedule(
     job=patch_scores_job,
     cron_schedule="0 1 * * *",
+    execution_timezone="UTC",
     name="update_post_scores_schedule",
     description="Daily update of post scores for two days past partition",
 )
 def update_post_scores_schedule(context: dg.ScheduleEvaluationContext):
-    # Get two days ago date for the partition
-    twodays = (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d")
+    twodays = two_days_ago(context)
 
     return dg.RunRequest(
+        run_key=f"scores-{twodays}",
         partition_key=twodays,
         tags={"schedule": "daily_post_scores", "partition": twodays},
     )
@@ -30,15 +36,16 @@ def update_post_scores_schedule(context: dg.ScheduleEvaluationContext):
 
 @dg.schedule(
     job=patch_keywords_job,
-    cron_schedule="0 1 * * *",
+    cron_schedule="30 1 * * *",
+    execution_timezone="UTC",
     name="update_post_keywords_schedule",
     description="Daily update of post keywords for two days past partition",
 )
 def update_post_keywords_schedule(context: dg.ScheduleEvaluationContext):
-    # Get two days ago date for the partition
-    twodays = (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d")
+    twodays = two_days_ago(context)
 
     return dg.RunRequest(
+        run_key=f"keywords-{twodays}",
         partition_key=twodays,
         tags={"schedule": "daily_keywords_scores", "partition": twodays},
     )
