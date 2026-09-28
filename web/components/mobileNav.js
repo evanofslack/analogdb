@@ -62,13 +62,7 @@ export default function MobileNav(props) {
               )}
             </nav>
             <div className={styles.footer}>
-              <p> &copy; 2022 analogdb </p>
-              <a href="https://github.com/evanofslack/analogdb">
-                <FiGithub size="1.2rem" />
-              </a>
-            </div>
-            <div className={styles.footer}>
-              <p> &copy; 2022 analogdb </p>
+              <p> &copy; 2025 AnalogDB </p>
               <a href="https://github.com/evanofslack/analogdb">
                 <FiGithub size="1.2rem" />
               </a>

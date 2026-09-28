@@ -1,4 +1,4 @@
-export const baseURL = "https://api.analogdb.com";
+export const baseURL = "https://api.analogdb.com/v1";
 export const otelURL = "http://otel-collector:4317";
 export const serviceName = "analogdb-web";
 

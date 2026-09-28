@@ -640,7 +640,7 @@ export default function Documentation() {
           {!isMobile && (
             <div className={styles.codeblock}>
               <CodeHighlight
-                code="curl https://api.analogdb.com/posts?page_size=10&page_id=774"
+                code="curl https://api.analogdb.com/v1/posts?page_size=10&page_id=774"
                 language="bash"
                 copyLabel="copy example"
                 copiedLabel="copied"
@@ -793,7 +793,7 @@ export default function Documentation() {
           {!isMobile && (
             <div className={styles.codeblock}>
               <CodeHighlight
-                code="curl https://api.analogdb.com/posts?sort=score&page_size=50"
+                code="curl https://api.analogdb.com/v1/posts?sort=score&page_size=50"
                 language="bash"
                 copyLabel="copy example"
                 copiedLabel="copied"
@@ -825,7 +825,7 @@ export default function Documentation() {
           {!isMobile && (
             <div className={styles.codeblock}>
               <CodeHighlight
-                code="curl 'https://api.analogdb.com/posts?camera_make=nikon&film_make=kodak&grayscale=false&keyword=portrait'"
+                code="curl 'https://api.analogdb.com/v1/posts?camera_make=nikon&film_make=kodak&grayscale=false&keyword=portrait'"
                 language="bash"
                 copyLabel="copy example"
                 copiedLabel="copied"
@@ -845,7 +845,7 @@ export default function Documentation() {
           {!isMobile && (
             <div className={styles.codeblock}>
               <CodeHighlight
-                code="curl https://api.analogdb.com/post/1924"
+                code="curl https://api.analogdb.com/v1/post/1924"
                 language="bash"
                 copyLabel="copy example"
                 copiedLabel="copied"
@@ -876,7 +876,7 @@ export default function Documentation() {
           {!isMobile && (
             <div className={styles.codeblock}>
               <CodeHighlight
-                code="curl https://api.analogdb.com/post/1924/similar?page_size=20&nsfw=false"
+                code="curl https://api.analogdb.com/v1/post/1924/similar?page_size=20&nsfw=false"
                 language="bash"
                 copyLabel="copy example"
                 copiedLabel="copied"
@@ -907,7 +907,7 @@ export default function Documentation() {
           {!isMobile && (
             <div className={styles.codeblock}>
               <CodeHighlight
-                code="curl https://api.analogdb.com/cameras?sort=counts&make=nikon&include_counts=true"
+                code="curl https://api.analogdb.com/v1/cameras?sort=counts&make=nikon&include_counts=true"
                 language="bash"
                 copyLabel="copy example"
                 copiedLabel="copied"
@@ -938,7 +938,7 @@ export default function Documentation() {
           {!isMobile && (
             <div className={styles.codeblock}>
               <CodeHighlight
-                code="curl https://api.analogdb.com/films?sort=counts&make=kodak&speed=400&include_zero_counts=true"
+                code="curl https://api.analogdb.com/v1/films?sort=counts&make=kodak&speed=400&include_zero_counts=true"
                 language="bash"
                 copyLabel="copy example"
                 copiedLabel="copied"
