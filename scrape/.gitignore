@@ -40,3 +40,6 @@ tmp*/
 .dagster/
 dagster_home/
 dagster_storage/
+
+grayscale-calibration/
+grayscale-review.html
