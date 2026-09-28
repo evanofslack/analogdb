@@ -58,9 +58,15 @@ func TestPostService_FindPostsGolden(t *testing.T) {
 		{"score", filter(analogdb.PostSortScore, nil)},
 		{"score_keyset", filter(analogdb.PostSortScore, func(f *analogdb.PostFilter) { f.Keyset = intPtr(150) })},
 		{"random_seed", filter(analogdb.PostSortRandom, func(f *analogdb.PostFilter) { f.Seed = intPtr(37) })},
-		{"random_seed_keyset", filter(analogdb.PostSortRandom, func(f *analogdb.PostFilter) {
+		{"time_cursor", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) {
+			f.Cursor = &analogdb.Cursor{Value: 1641427200, ID: 5}
+		})},
+		{"score_cursor", filter(analogdb.PostSortScore, func(f *analogdb.PostFilter) {
+			f.Cursor = &analogdb.Cursor{Value: 150, ID: 1}
+		})},
+		{"random_seed_cursor", filter(analogdb.PostSortRandom, func(f *analogdb.PostFilter) {
 			f.Seed = intPtr(37)
-			f.Keyset = intPtr(1641254400)
+			f.Cursor = &analogdb.Cursor{Hash: "8", ID: 0}
 		})},
 		{"keyword", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) { f.Keywords = &[]string{"portrait"} })},
 		{"keywords_two", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) { f.Keywords = &[]string{"portrait", "street"} })},

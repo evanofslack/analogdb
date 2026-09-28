@@ -3,15 +3,11 @@ package analogdb
 import (
 	"context"
 	"fmt"
-	"math/rand"
 	"strings"
 	"time"
 )
 
 const defaultMinColorPercent = 0.0
-
-// seeds for random post order
-var primes = []int{11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 107, 113, 131, 137, 149, 167, 173, 179, 191, 197, 227, 233, 239, 251, 257, 263}
 
 // Image represents the source info for an image
 type Image struct {
@@ -158,10 +154,19 @@ func (dim *Dimension) String() string {
 	return fmt.Sprintf("%s, %s", min, max)
 }
 
+// Cursor marks the last post of a page. Value is its time or score,
+// Hash is its random sort key.
+type Cursor struct {
+	Value int
+	Hash  string
+	ID    int
+}
+
 // PostFilter are options used for querying posts
 type PostFilter struct {
 	Limit         *int
 	Sort          *PostSort
+	Cursor        *Cursor
 	Keyset        *int
 	Nsfw          *bool
 	Grayscale     *bool
@@ -232,6 +237,9 @@ func (filter *PostFilter) String() string {
 	}
 	if filter.Sort != nil {
 		out = append(out, fmt.Sprintf("sort: %s", *filter.Sort))
+	}
+	if c := filter.Cursor; c != nil {
+		out = append(out, fmt.Sprintf("cursor: value=%d, hash=%s, id=%d", c.Value, c.Hash, c.ID))
 	}
 	if filter.Keyset != nil {
 		out = append(out, fmt.Sprintf("keyset: %d", *filter.Keyset))
@@ -305,14 +313,6 @@ func (filter *PostFilter) String() string {
 	return strings.Join(out, ", ")
 }
 
-func (filter *PostFilter) SetSeed() {
-	if filter.Seed == nil {
-		randomIndex := rand.Intn(len(primes))
-		seed := primes[randomIndex]
-		filter.Seed = &seed
-	}
-}
-
 func (filter *PostFilter) SetMinColorPercent() {
 	// If we have no colors, should have no percent
 	if filter.Colors == nil {
@@ -364,15 +364,6 @@ func NewPostSimilarityFilter(limit *int, nsfw, grayscale, sprocket *bool, id *in
 		ExcludeIDs: &excludedIDs,
 	}
 	return filter
-}
-
-// Meta includes details about the response.
-type Meta struct {
-    TotalPosts int    `json:"total_posts" example:"200"`
-    PageSize   int    `json:"page_size" example:"20"`
-    NextPageID string `json:"next_page_id" example:"1752244116"`
-    PageURL    string `json:"next_page_url" example:"/posts?sort=time&page_size=20&page_id=1752244116"`
-    Seed       int    `json:"seed,omitempty" example:"37"`
 }
 
 type PostService interface {

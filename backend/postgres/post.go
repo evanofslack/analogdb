@@ -408,15 +408,26 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	db.logger.DebugContext(ctx, "Start find posts", "filter", filterFmt)
 	defer db.logger.DebugContext(ctx, "Finish find posts", "filter", filterFmt)
 
-	postWhere, postArgs := filterToWherePost(filter, false)
+	postWhere, countArgs := filterToWherePost(filter, false)
 	countWhere, _ := filterToWherePost(filter, true)
-	subqueryOrder := filterToOrder(filter, "")
-	mainOrder := filterToOrder(filter, "p.")
+
+	postArgs := append([]any{}, countArgs...)
+	seedIndex := 0
+	if isRandomSort(filter) {
+		postArgs = append(postArgs, filterSeed(filter))
+		seedIndex = len(postArgs)
+	}
+	if pageWhere, pageArgs := filterToPageWhere(filter, len(postArgs)+1, seedIndex); pageWhere != "" {
+		postWhere += " AND " + pageWhere
+		postArgs = append(postArgs, pageArgs...)
+	}
+	subqueryOrder := filterToOrder(filter, "", seedIndex)
+	mainOrder := filterToOrder(filter, "p.", seedIndex)
 
 	// Count total matching posts
 	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM pictures WHERE %s", countWhere)
 	var count int
-	err := tx.QueryRowContext(ctx, countQuery, postArgs...).Scan(&count)
+	err := tx.QueryRowContext(ctx, countQuery, countArgs...).Scan(&count)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail get post count", "error", err)
 		return nil, 0, err
@@ -517,21 +528,60 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	return posts, count, nil
 }
 
-func filterToOrder(filter *analogdb.PostFilter, tableAlias string) string {
+func isRandomSort(filter *analogdb.PostFilter) bool {
+	return filter.Sort != nil && *filter.Sort == analogdb.PostSortRandom
+}
+
+func filterSeed(filter *analogdb.PostFilter) int {
+	if filter.Seed != nil {
+		return *filter.Seed
+	}
+	return 0
+}
+
+// filterToOrder builds the ORDER BY clause. seedIndex is the
+// parameter holding the seed for random sort.
+func filterToOrder(filter *analogdb.PostFilter, tableAlias string, seedIndex int) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
 		case analogdb.PostSortTime:
-			return fmt.Sprintf(" ORDER BY %stime DESC", tableAlias)
+			return fmt.Sprintf(" ORDER BY %[1]stime DESC, %[1]sid DESC", tableAlias)
 		case analogdb.PostSortScore:
-			return fmt.Sprintf(" ORDER BY %sscore DESC", tableAlias)
+			return fmt.Sprintf(" ORDER BY %[1]sscore DESC, %[1]sid DESC", tableAlias)
 		case analogdb.PostSortRandom:
-			if filter.Seed == nil {
-				filter.SetSeed()
-			}
-			return fmt.Sprintf(" ORDER BY MOD(%stime, %d), %stime DESC", tableAlias, *filter.Seed, tableAlias)
+			return fmt.Sprintf(" ORDER BY md5(%[1]sid::text || $%[2]d::text), %[1]sid", tableAlias, seedIndex)
 		}
 	}
 	return ""
+}
+
+// filterToPageWhere builds the predicate that starts the page after the
+// cursor, or after the legacy keyset. The count query never includes it.
+func filterToPageWhere(filter *analogdb.PostFilter, index int, seedIndex int) (string, []any) {
+	sort := filter.Sort
+	if sort == nil {
+		return "", nil
+	}
+	if c := filter.Cursor; c != nil {
+		switch *sort {
+		case analogdb.PostSortTime:
+			return fmt.Sprintf("(time, id) < ($%d, $%d)", index, index+1), []any{c.Value, c.ID}
+		case analogdb.PostSortScore:
+			return fmt.Sprintf("(score, id) < ($%d, $%d)", index, index+1), []any{c.Value, c.ID}
+		case analogdb.PostSortRandom:
+			return fmt.Sprintf("(md5(id::text || $%d::text), id) > ($%d, $%d)", seedIndex, index, index+1), []any{c.Hash, c.ID}
+		}
+		return "", nil
+	}
+	if keyset := filter.Keyset; keyset != nil {
+		switch *sort {
+		case analogdb.PostSortTime:
+			return fmt.Sprintf("time < $%d", index), []any{*keyset}
+		case analogdb.PostSortScore:
+			return fmt.Sprintf("score < $%d", index), []any{*keyset}
+		}
+	}
+	return "", nil
 }
 
 // filterToWherePost builds the WHERE clause. forCount only changes how color
@@ -540,25 +590,6 @@ func filterToOrder(filter *analogdb.PostFilter, tableAlias string) string {
 func filterToWherePost(filter *analogdb.PostFilter, forCount bool) (string, []any) {
 	index := 1
 	where, args := []string{"1=1"}, []any{}
-
-	if sort, keyset := filter.Sort, filter.Keyset; sort != nil && keyset != nil {
-		switch *sort {
-		case analogdb.PostSortTime:
-			where = append(where, fmt.Sprintf("time < $%d", index))
-			args = append(args, *keyset)
-			index++
-		case analogdb.PostSortScore:
-			where = append(where, fmt.Sprintf("score < $%d", index))
-			args = append(args, *keyset)
-			index++
-		case analogdb.PostSortRandom:
-			if seed := filter.Seed; seed != nil {
-				where = append(where, fmt.Sprintf("MOD(time, $%d) > $%d", index, index+1))
-				args = append(args, *seed, *keyset%*seed)
-				index += 2
-			}
-		}
-	}
 
 	if nsfw := filter.Nsfw; nsfw != nil {
 		where = append(where, fmt.Sprintf("nsfw = $%d", index))
