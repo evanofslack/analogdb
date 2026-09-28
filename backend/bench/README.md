@@ -62,3 +62,28 @@ ANALOGDB_BENCH_READONLY=1 make bench BENCH_DSN='postgres://user:pass@host:5432/a
 
 The color case uses `teal` because the scraper maps `blue` to `teal`, so no real post has
 the html color `blue`.
+
+## Results
+
+100k seeded posts, `postgres:15` in docker (colima VM with 2 CPUs and 2 GB) on an Apple M5,
+`-benchtime=2s -count=3`, median of the three runs. Before is the code and schema before
+migration `000009_add_indexes`. After is the same seeded database after `make bench-migrate`.
+
+| Case | Before (ms/op) | After (ms/op) | Plan after |
+|---|---:|---:|---|
+| `posts_default` | 836 | 3.7 | yes: `idx_pictures_time_id`, colors and keywords by `idx_*_post_id` |
+| `sort_score_page5` | 737 | 4.5 | yes: `idx_pictures_score_id` for page and count |
+| `sort_random` | 808 | 22.0 | seq scan and sort of `pictures` (no index by design), colors and keywords by `idx_*_post_id` |
+| `sort_random_mod_sql` | 26.7 | 19.4 | seq scan and sort (no index by design) |
+| `sort_random_md5_sql` | 48.3 | 39.9 | seq scan and sort (no index by design) |
+| `keyword_portrait` | 872 | 5.3 | yes: `idx_keywords_word` for page and count |
+| `color_teal_min_0.2` | 855 | 10.7 | yes: `idx_colors_html` for page and count |
+| `camera_nikon_fm2` | 734 | 1.8 | yes: `idx_pictures_camera` |
+| `title_beach` | 764 | 45.1 | page walks `idx_pictures_time_id`, count is a seq scan (no trigram index) |
+| `cameras_with_counts` | 18.1 | 4.5 | yes: index only scan of `idx_pictures_camera` |
+
+Before, every post query aggregated all of `colors` and `keywords` (seq scans and on disk
+sorts), which is where the ~800 ms went. The two raw random cases run the same SQL before and
+after, so their difference is run to run noise. They show `md5(id::text || '42')` costs about
+twice `MOD(time, seed)` at 100k rows. `title_beach` is dominated by the count, a full scan with
+`ILIKE`: about 42 ms at 100k rows, so roughly 10 ms at production size.
