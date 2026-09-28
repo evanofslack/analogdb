@@ -1,10 +1,8 @@
-import functools
-import time
-from dataclasses import dataclass
+from enum import Enum
 from importlib.metadata import version
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
-from analogdb_generated import ApiClient, ApiResponse, Configuration
+from analogdb_generated import ApiClient, Configuration
 from analogdb_generated.api.camera_api import CameraApi
 from analogdb_generated.api.cameras_api import CamerasApi
 from analogdb_generated.api.film_api import FilmApi
@@ -13,6 +11,7 @@ from analogdb_generated.api.post_api import PostApi
 from analogdb_generated.api.posts_api import PostsApi
 from analogdb_generated.exceptions import ApiException
 from analogdb_generated.models.server_post_response import ServerPostResponse
+from urllib3 import Retry
 
 from .models import (
     Camera,
@@ -28,33 +27,19 @@ from .models import (
 DEFAULT_PAGE_SIZE = 20
 DEFAULT_SORT = "time"
 USER_AGENT = f"analogdb-scraper/{version('analogdb')}"
+REQUEST_TIMEOUT = (10.0, 30.0)
+RETRIES = Retry(
+    total=4,
+    backoff_factor=1,
+    status_forcelist=[429, 502, 503, 504],
+    allowed_methods=None,
+    raise_on_status=False,
+)
 
 
-def retry(delay=1, times=5):
-    def outer_wrapper(function):
-        @functools.wraps(function)
-        def inner_wrapper(*args, **kwargs):
-            final_excep = None
-            for counter in range(times):
-                if counter > 0:
-                    time.sleep(delay)
-                final_excep = None
-                try:
-                    return function(*args, **kwargs)
-                except Exception as e:
-                    final_excep = e
-            if final_excep is not None:
-                raise final_excep
-
-        return inner_wrapper
-
-    return outer_wrapper
-
-
-@dataclass
-class Response:
-    status_code: int
-    text: str
+class Uploaded(str, Enum):
+    CREATED = "created"
+    EXISTS = "exists"
 
 
 class Client:
@@ -63,10 +48,14 @@ class Client:
         base_url: str = "https://api.analogdb.com",
         username: Optional[str] = None,
         password: Optional[str] = None,
+        timeout: Tuple[float, float] = REQUEST_TIMEOUT,
+        retries: Retry = RETRIES,
     ):
         self.base_url = base_url
+        self.timeout = timeout
 
         config = Configuration(host=f"{base_url}/v1")
+        config.retries = retries
         if username and password:
             config.username = username
             config.password = password
@@ -91,7 +80,7 @@ class Client:
         if page_id is not None:
             params["page_id"] = page_id
 
-        resp = self.posts_api.posts_get(**params)
+        resp = self._call(self.posts_api.posts_get, **params)
         if resp.posts is None:
             resp.posts = []
         return resp
@@ -125,47 +114,34 @@ class Client:
         posts = self.get_posts_all(count)
         return [post.permalink for post in posts]
 
-    @retry(delay=1, times=5)
-    def upload_post(self, post: PostCreate) -> Response:
-        return self._send(lambda: self.post_api.post_post_with_http_info(post=post))
-
-    @retry(delay=1, times=5)
-    def patch_post(self, id: int, patch: PostPatch) -> Optional[Response]:
-        if not patch.to_dict():
-            return None
-
-        resp = self.post_api.post_id_patch_with_http_info(id, post=patch)
-        return self._to_response(resp)
-
-    @retry(delay=1, times=5)
-    def get_films(self) -> List[Film]:
-        return self.films_api.films_get().films or []
-
-    @retry(delay=1, times=5)
-    def get_cameras(self) -> List[Camera]:
-        return self.cameras_api.cameras_get().cameras or []
-
-    @retry(delay=1, times=5)
-    def upload_film(self, film: FilmCreate) -> Response:
-        return self._send(lambda: self.film_api.film_post_with_http_info(film=film))
-
-    @retry(delay=1, times=5)
-    def upload_camera(self, camera: CameraCreate) -> Response:
-        return self._send(
-            lambda: self.camera_api.camera_post_with_http_info(camera=camera)
-        )
-
-    def _send(self, call) -> Response:
+    def upload_post(self, post: PostCreate) -> Uploaded:
         try:
-            return self._to_response(call())
+            self._call(self.post_api.post_post, post=post)
         except ApiException as e:
-            return Response(status_code=e.status, text=e.body or "")
+            if e.status == 409:
+                return Uploaded.EXISTS
+            raise
+        return Uploaded.CREATED
 
-    def _to_response(self, resp: ApiResponse) -> Response:
-        return Response(
-            status_code=resp.status_code,
-            text=resp.raw_data.decode("utf-8", errors="replace"),
-        )
+    def patch_post(self, id: int, patch: PostPatch) -> None:
+        if not patch.to_dict():
+            return
+        self._call(self.post_api.post_id_patch, id, post=patch)
+
+    def get_films(self) -> List[Film]:
+        return self._call(self.films_api.films_get).films or []
+
+    def get_cameras(self) -> List[Camera]:
+        return self._call(self.cameras_api.cameras_get).cameras or []
+
+    def upload_film(self, film: FilmCreate) -> None:
+        self._call(self.film_api.film_post, film=film)
+
+    def upload_camera(self, camera: CameraCreate) -> None:
+        self._call(self.camera_api.camera_post, camera=camera)
+
+    def _call(self, fn, *args, **kwargs):
+        return fn(*args, _request_timeout=self.timeout, **kwargs)
 
     def _filter_to_params(self, filter: Optional[PostsFilter]) -> Dict[str, Any]:
         params: Dict[str, Any] = {
