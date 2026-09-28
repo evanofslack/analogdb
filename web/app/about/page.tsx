@@ -4,35 +4,34 @@ import {
   getPostsSimilar,
   getPostsTotalCount,
 } from "@app/actions/posts";
-import About from "@components/about";
+import About, { AboutImage } from "@components/about";
 import styles from "@components/gallery.module.css";
 import Header from "@components/header";
-import { checkAdminAuth } from "@lib/auth";
 import {
+  AnalogdbPost,
   PostIdSimilarGetRequest,
   PostsGetRequest,
   PostsGetSortEnum,
-  ServerPostResponse,
-  ServerSimilarPostsResponse,
 } from "analogdb-generated";
 import { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 
 export const metadata: Metadata = {
   title: "AnalogDB",
   description: "Film photography database",
 };
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 
 interface ColorData {
-  red: NonNullable<ServerPostResponse["posts"]>;
-  navy: NonNullable<ServerPostResponse["posts"]>;
-  olive: NonNullable<ServerPostResponse["posts"]>;
+  red: AboutImage[];
+  navy: AboutImage[];
+  olive: AboutImage[];
 }
 
 interface SimilarityData {
-  centerPost: NonNullable<ServerPostResponse["posts"]>[0];
-  similarPosts: NonNullable<ServerSimilarPostsResponse["posts"]>;
+  centerPost: AboutImage;
+  similarPosts: AboutImage[];
 }
 
 interface AboutData {
@@ -47,6 +46,32 @@ const COLOR_MIN_VALUES: Record<string, number> = {
   navy: 0.4,
   olive: 0.4,
 };
+
+const SIMILARITY_IDS = [
+  32298, 34246, 34252, 533, 30293, 4501, 5211, 1043, 4385, 2235, 6912, 33116,
+  2941, 1862, 30131,
+];
+
+const NUM_CLUSTERS = 8;
+
+function toImage(post: AnalogdbPost): AboutImage | null {
+  const image =
+    post.images?.find((img) => img.resolution === "medium") ||
+    post.images?.[0];
+  if (!image?.url) return null;
+  return {
+    id: post.id,
+    url: image.url,
+    width: image.width,
+    height: image.height,
+  };
+}
+
+function toImages(posts: AnalogdbPost[] | undefined): AboutImage[] {
+  return (posts || [])
+    .map(toImage)
+    .filter((image): image is AboutImage => image !== null);
+}
 
 async function fetchColorData(): Promise<ColorData> {
   const colors = ["red", "navy", "olive"] as const;
@@ -63,7 +88,7 @@ async function fetchColorData(): Promise<ColorData> {
     };
 
     const response = await getPosts(params);
-    return response.posts || [];
+    return toImages(response.posts);
   });
 
   const [red, navy, olive] = await Promise.all(promises);
@@ -71,65 +96,53 @@ async function fetchColorData(): Promise<ColorData> {
 }
 
 async function fetchSimilarityData(): Promise<SimilarityData[]> {
-  const ids = [
-    32298, 34246, 34252, 533, 30293, 4501, 5211, 1043, 4385, 2235, 6912, 33116,
-    2941, 1862, 30131,
-  ];
+  const ids = [...SIMILARITY_IDS];
 
   for (let i = ids.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [ids[i], ids[j]] = [ids[j], ids[i]];
   }
 
-  const BATCH_SIZE = 5;
-  const allData: SimilarityData[] = [];
+  const promises = ids.slice(0, NUM_CLUSTERS).map(async (id) => {
+    try {
+      const similarParams: PostIdSimilarGetRequest = {
+        id,
+        pageSize: 6,
+        nsfw: false,
+        grayscale: false,
+      };
 
-  for (let i = 0; i < ids.length; i += BATCH_SIZE) {
-    const batch = ids.slice(i, i + BATCH_SIZE);
+      const [postResponse, similarResponse] = await Promise.all([
+        getPosts({ id }),
+        getPostsSimilar(similarParams),
+      ]);
+      const post = postResponse.posts?.[0];
+      const centerPost = post ? toImage(post) : null;
 
-    const promises = batch.map(async (id) => {
-      try {
-        const postParams: PostsGetRequest = { id };
-        const postResponse = await getPosts(postParams);
-        const post = postResponse.posts?.[0];
+      if (!centerPost) return null;
 
-        if (!post) return null;
+      return {
+        centerPost,
+        similarPosts: toImages(similarResponse.posts),
+      };
+    } catch (error) {
+      console.error("Fail fetch post or similar posts for id:", id, error);
+      return null;
+    }
+  });
 
-        const similarParams: PostIdSimilarGetRequest = {
-          id: post.id,
-          pageSize: 6,
-          nsfw: false,
-          grayscale: false,
-        };
-
-        const similarResponse = await getPostsSimilar(similarParams);
-
-        return {
-          centerPost: post,
-          similarPosts: similarResponse.posts || [],
-        };
-      } catch (error) {
-        console.error("Fail fetch post or similar posts for id:", id, error);
-        return null;
-      }
-    });
-
-    const batchResults = await Promise.all(promises);
-    allData.push(
-      ...batchResults.filter((data): data is SimilarityData => data !== null)
-    );
-  }
-  return allData;
+  const results = await Promise.all(promises);
+  return results.filter((data): data is SimilarityData => data !== null);
 }
 
 async function getData(): Promise<AboutData> {
-  const numPosts = await getPostsTotalCount();
-  const numAuthors = await getAuthorsTotalCount();
-
-  const [colorData, allSimilarityData] = await Promise.all([
-    fetchColorData(),
-    fetchSimilarityData(),
-  ]);
+  const [numPosts, numAuthors, colorData, allSimilarityData] =
+    await Promise.all([
+      getPostsTotalCount(),
+      getAuthorsTotalCount(),
+      fetchColorData(),
+      fetchSimilarityData(),
+    ]);
 
   return {
     numPosts,
@@ -139,13 +152,16 @@ async function getData(): Promise<AboutData> {
   };
 }
 
+const getCachedData = unstable_cache(getData, ["about-data"], {
+  revalidate: 3600,
+});
+
 export default async function AboutPage() {
-  const data = await getData();
-  const isAdmin = await checkAdminAuth();
+  const data = await getCachedData();
 
   return (
     <div className={styles.container}>
-      <Header isAdmin={isAdmin} />
+      <Header />
       <About data={data} />
     </div>
   );
