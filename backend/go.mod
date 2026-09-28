@@ -5,6 +5,7 @@ go 1.24.3
 replace github.com/evanofslack/analogdb/proto => ../proto
 
 require (
+	github.com/alicebob/miniredis/v2 v2.39.0
 	github.com/arl/statsviz v0.5.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/go-chi/cors v1.2.0
@@ -114,6 +115,7 @@ require (
 	github.com/vmihailenco/go-tinylfu v0.2.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.4 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	github.com/yuin/gopher-lua v1.1.1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
