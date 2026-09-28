@@ -83,7 +83,13 @@ def analogdb_permalinks(
     return links
 
 
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
+@dg.asset(
+    dagster_type=ResultDagsterType,
+    group_name="scrape",
+    retry_policy=dg.RetryPolicy(
+        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+    ),
+)
 def reddit_posts(
     context: dg.AssetExecutionContext,
     reddit: RedditResource,
@@ -167,7 +173,13 @@ def title_metadatas(
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
+@dg.asset(
+    dagster_type=ResultDagsterType,
+    group_name="scrape",
+    retry_policy=dg.RetryPolicy(
+        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+    ),
+)
 def post_images(
     context: dg.AssetExecutionContext,
     image_processor: ImageProcessorResource,
@@ -192,7 +204,13 @@ def post_images(
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
+@dg.asset(
+    dagster_type=ResultDagsterType,
+    group_name="scrape",
+    retry_policy=dg.RetryPolicy(
+        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+    ),
+)
 def keywords(
     context: dg.AssetExecutionContext,
     keyword_extractor: KeywordExtractorResource,
@@ -265,7 +283,12 @@ def final_posts(
     return result
 
 
-@dg.asset(group_name="scrape")
+@dg.asset(
+    group_name="scrape",
+    retry_policy=dg.RetryPolicy(
+        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+    ),
+)
 def upload_posts(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource, final_posts
 ) -> None:
@@ -389,7 +412,7 @@ def updated_post_title_metadatas(
             aperture=m.aperture,
         )
         context.log.debug(
-            f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ""}, metadata={patch}"
+            f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ''}, metadata={patch}"
         )
         patches.append((p.id, patch))
 
@@ -539,7 +562,7 @@ def debug_posts(context: dg.AssetExecutionContext, final_posts) -> None:
     logger.info(f"Would upload {final_posts.successful_count()} posts")
 
     for i, (_, p) in enumerate(final_posts.successful().items()):
-        logger.info(f"Post {i+1}: {p.title} by {p.author} with score {p.score}")
+        logger.info(f"Post {i + 1}: {p.title} by {p.author} with score {p.score}")
 
     posts_dict = [asdict(p) for _, p in final_posts.successful().items()]
     with open("debug_posts.json", "w") as f:
@@ -577,11 +600,11 @@ def upload_films(
                 break
             elif attempt == max_retries - 1:
                 context.log.warn(
-                    f"Fail upload film, attempt={attempt+1}, max_retries={max_retries}, make={film.make}, type={film.type}, speed={film.speed}, body={resp.text}, status={resp.status_code}"
+                    f"Fail upload film, attempt={attempt + 1}, max_retries={max_retries}, make={film.make}, type={film.type}, speed={film.speed}, body={resp.text}, status={resp.status_code}"
                 )
             else:
                 context.log.debug(
-                    f"Retry upload film, attempt={attempt+1}, max_retries={max_retries}, make={film.make}, type={film.type}, speed={film.speed}, body={resp.text}, status={resp.status_code}"
+                    f"Retry upload film, attempt={attempt + 1}, max_retries={max_retries}, make={film.make}, type={film.type}, speed={film.speed}, body={resp.text}, status={resp.status_code}"
                 )
 
     context.log.info(f"Uploaded {success} films")
@@ -614,11 +637,11 @@ def upload_cameras(
                 break
             elif attempt == max_retries - 1:
                 context.log.warn(
-                    f"Fail upload camera attempt={attempt+1}, max_retries={max_retries}, make={camera.make}, model={camera.model}, body={resp.text}, status={resp.status_code}"
+                    f"Fail upload camera attempt={attempt + 1}, max_retries={max_retries}, make={camera.make}, model={camera.model}, body={resp.text}, status={resp.status_code}"
                 )
             else:
                 context.log.debug(
-                    f"Retry upload camera, attempt={attempt+1}, max_retries={max_retries}, make={camera.make}, model={camera.model}, body={resp.text}, status={resp.status_code}"
+                    f"Retry upload camera, attempt={attempt + 1}, max_retries={max_retries}, make={camera.make}, model={camera.model}, body={resp.text}, status={resp.status_code}"
                 )
 
     context.log.info(f"Uploaded {success} cameras")
