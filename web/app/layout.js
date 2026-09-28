@@ -8,6 +8,7 @@ import {
 } from "@mantine/core";
 import { BreakpointProvider } from "@providers/breakpoint";
 import { CodeHighlightProvider } from "@providers/codehighlight";
+import { QueryProvider } from "@providers/query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export const metadata = {
@@ -45,9 +46,11 @@ export default function RootLayout({ children }) {
         <MantineProvider>
           <CodeHighlightProvider>
             <NuqsAdapter>
-              <BreakpointProvider queries={queries}>
-                {children}
-              </BreakpointProvider>
+              <QueryProvider>
+                <BreakpointProvider queries={queries}>
+                  {children}
+                </BreakpointProvider>
+              </QueryProvider>
             </NuqsAdapter>
           </CodeHighlightProvider>
         </MantineProvider>
