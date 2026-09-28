@@ -20,6 +20,9 @@ type httpStats struct {
 	requestSize        *prometheus.SummaryVec
 	responseSize       *prometheus.SummaryVec
 	postEncodeFailures prometheus.Counter
+	rateLimited        prometheus.Counter
+	unknownJSONFields  *prometheus.CounterVec
+	legacyRequests     *prometheus.CounterVec
 }
 
 func newHttpStats() *httpStats {
@@ -71,12 +74,44 @@ func newHttpStats() *httpStats {
 		},
 	)
 
+	rateLimited := prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.HttpSubsystem,
+			Name:      "rate_limited_total",
+			Help:      "Number of HTTP requests rejected by the rate limiter",
+		},
+	)
+
+	unknownJSONFields := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.HttpSubsystem,
+			Name:      "unknown_json_fields_total",
+			Help:      "Number of request bodies containing unknown JSON fields",
+		},
+		[]string{"route"},
+	)
+
+	legacyRequests := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.HttpSubsystem,
+			Name:      "legacy_requests_total",
+			Help:      "Number of HTTP requests to deprecated unversioned routes",
+		},
+		[]string{"route", "client"},
+	)
+
 	stats := &httpStats{
 		requestsTotal:      requestsTotal,
 		requestDuration:    requestDuration,
 		requestSize:        requestSize,
 		responseSize:       responseSize,
 		postEncodeFailures: postEncodeFailures,
+		rateLimited:        rateLimited,
+		unknownJSONFields:  unknownJSONFields,
+		legacyRequests:     legacyRequests,
 	}
 
 	return stats
@@ -88,6 +123,9 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 	registerer.MustRegister(stats.requestSize)
 	registerer.MustRegister(stats.responseSize)
 	registerer.MustRegister(stats.postEncodeFailures)
+	registerer.MustRegister(stats.rateLimited)
+	registerer.MustRegister(stats.unknownJSONFields)
+	registerer.MustRegister(stats.legacyRequests)
 	return nil
 }
 
