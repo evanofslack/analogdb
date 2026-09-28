@@ -5,6 +5,8 @@ from typing import List, Tuple
 
 import analogdb.models as adb
 import dagster as dg
+from analogdb.client import Client, Uploaded
+from analogdb_generated.exceptions import ApiException
 from scrape.models import (
     Keyword,
     PhotoMetadata,
@@ -35,6 +37,47 @@ daily_partitions = dg.TimeWindowPartitionsDefinition(
 )
 
 MIN_POSTS_FOR_COMMENTS = 5
+
+
+def add_result_metadata(context: dg.AssetExecutionContext, result: Result) -> None:
+    context.add_output_metadata(
+        {"success": result.successful_count(), "failed": result.failed_count()}
+    )
+
+
+def error_detail(e: Exception) -> str:
+    if isinstance(e, ApiException):
+        return f"status={e.status}, body={e.body}"
+    return f"error={e}"
+
+
+def patch_posts(
+    context: dg.AssetExecutionContext,
+    client: Client,
+    patches: List[Tuple[int, adb.PostPatch]],
+    name: str,
+    delay: float = 0,
+) -> None:
+    failed = 0
+    for id, p in patches:
+        try:
+            client.patch_post(id, p)
+        except Exception as e:
+            failed += 1
+            context.log.error(
+                f"Failed to patch post {name}, id={id}, {error_detail(e)}"
+            )
+        if delay:
+            time.sleep(delay)
+
+    context.log.info(
+        f"Patched {len(patches) - failed} post {name} for partition {context.partition_key}"
+    )
+    if failed > 0:
+        raise dg.Failure(
+            description=f"Failed to patch {failed} of {len(patches)} post {name} for partition {context.partition_key}",
+            metadata={"patched": len(patches) - failed, "failed": failed},
+        )
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="analogdb")
@@ -105,18 +148,24 @@ def reddit_posts(
     context.log.info(f"Scraped {len(result_sprocket.posts)} posts from r/sprocketshots")
 
     posts = result_analog.posts + result_analog_bw.posts + result_sprocket.posts
-    errors = result_analog.errors + result_analog_bw.errors + result_sprocket.errors
-    for err in errors:
-        context.log.warn(f"Scrape reddit post, {err}")
+    scrape_errors = (
+        result_analog.errors + result_analog_bw.errors + result_sprocket.errors
+    )
 
     data = {}
     status = {}
+    errors = {}
     for p in posts:
         id = p.permalink
         data[id] = p
         status[id] = Status.SUCCESS
+    for err in scrape_errors:
+        context.log.warn(f"Scrape reddit post, {err}")
+        status[err.permalink] = Status.FAILED
+        errors[err.permalink] = err.msg
 
-    result = Result(data=data, status=status)
+    result = Result(data=data, status=status, errors=errors)
+    add_result_metadata(context, result)
     context.log.info(f"Scraped {result.successful_count()} successful posts")
     return result
 
@@ -163,6 +212,7 @@ def title_metadatas(
     )
 
     result = Result(data=data, status=status)
+    add_result_metadata(context, result)
     context.log.info(f"Extracted title metadata from {result.successful_count()} posts")
     return result
 
@@ -188,6 +238,7 @@ def post_images(
             errors[id] = str(e)
 
     result = Result(data=data, status=status, errors=errors)
+    add_result_metadata(context, result)
     context.log.info(f"Processed images for {result.successful_count()} posts")
     return result
 
@@ -202,24 +253,30 @@ def keywords(
 ) -> Result[Keyword]:
     data = {}
     status = {}
+    errors = {}
     r = reddit.client()
     kw = keyword_extractor.client()
     blacklist = keyword_blacklist.client().blacklist
 
     for id, p in reddit_posts.successful().items():
-        comments = r.scrape_comments(p.permalink)
-        keywords = kw.post_keywords(
-            p.title,
-            p.score,
-            comments,
-            keyword_extractor.max_keywords,
-            blacklist,
-        )
-        id = p.permalink
-        data[id] = keywords
-        status[id] = Status.SUCCESS
+        try:
+            comments = r.scrape_comments(p.permalink)
+            keywords = kw.post_keywords(
+                p.title,
+                p.score,
+                comments,
+                keyword_extractor.max_keywords,
+                blacklist,
+            )
+            data[id] = keywords
+            status[id] = Status.SUCCESS
+        except Exception as e:
+            context.log.error(f"Failed to extract keywords for {id}: {e}")
+            status[id] = Status.FAILED
+            errors[id] = str(e)
 
-    result = Result(data=data, status=status)
+    result = Result(data=data, status=status, errors=errors)
+    add_result_metadata(context, result)
     context.log.info(f"Extracted keywords for {result.successful_count()} posts")
     return result
 
@@ -242,14 +299,19 @@ def final_posts(
     data = {}
     status = {}
     errors = {}
+    post_keywords = keywords.successful()
 
     for id in ids:
         try:
+            kws = post_keywords.get(id)
+            if kws is None:
+                context.log.warn(f"Missing keywords for {id}, uploading without them")
+                kws = []
             final = new_post_create(
                 post=reddit_posts.data[id],
                 metadata=title_metadatas.data[id],
                 images=post_images.data[id],
-                keywords=keywords.data[id],
+                keywords=kws,
             )
 
             data[id] = final
@@ -261,6 +323,7 @@ def final_posts(
             errors[id] = str(e)
 
     result = Result(data=data, status=status, errors=errors)
+    add_result_metadata(context, result)
     context.log.info(f"Created {result.successful_count()} final posts")
     return result
 
@@ -268,11 +331,36 @@ def final_posts(
 @dg.asset(group_name="scrape")
 def upload_posts(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource, final_posts
-) -> None:
+) -> dg.MaterializeResult:
     adb = analogdb.client()
-    for _, p in final_posts.successful().items():
-        adb.upload_post(convert_create(p))
-    context.log.info(f"Uploaded {final_posts.successful_count()} posts")
+    created = 0
+    exists = 0
+    failed = 0
+    for id, p in final_posts.successful().items():
+        try:
+            uploaded = adb.upload_post(convert_create(p))
+        except Exception as e:
+            failed += 1
+            context.log.error(
+                f"Failed to upload post, permalink={id}, {error_detail(e)}"
+            )
+            continue
+        if uploaded == Uploaded.EXISTS:
+            exists += 1
+            context.log.info(f"Post already exists, permalink={id}")
+        else:
+            created += 1
+
+    counts = {"created": created, "exists": exists, "failed": failed}
+    context.log.info(
+        f"Uploaded posts, created={created}, exists={exists}, failed={failed}"
+    )
+    if failed > 0:
+        raise dg.Failure(
+            description=f"Failed to upload {failed} of {created + exists + failed} posts",
+            metadata=counts,
+        )
+    return dg.MaterializeResult(metadata=counts)
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
@@ -303,12 +391,7 @@ def patch_post_scores(
             f"No updated post scores to process for partition {context.partition_key}"
         )
 
-    adb = analogdb.client()
-    for id, p in updated_post_scores:
-        adb.patch_post(id, p)
-    context.log.info(
-        f"Patched {len(updated_post_scores)} post scores for partition {context.partition_key}"
-    )
+    patch_posts(context, analogdb.client(), updated_post_scores, "scores")
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
@@ -340,12 +423,7 @@ def patch_post_descriptions(
         )
         return
 
-    adb = analogdb.client()
-    for id, p in updated_post_descriptions:
-        adb.patch_post(id, p)
-    context.log.info(
-        f"Patched {len(updated_post_descriptions)} post descriptions for partition {context.partition_key}"
-    )
+    patch_posts(context, analogdb.client(), updated_post_descriptions, "descriptions")
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
@@ -407,13 +485,12 @@ def patch_post_title_metadatas(
         context.log.info(f"No patches to apply for partition {context.partition_key}")
         return
 
-    adb = analogdb.client()
-    for id, p in updated_post_title_metadatas:
-        adb.patch_post(id, p)
-        time.sleep(0.2)
-
-    context.log.info(
-        f"Patched {len(updated_post_title_metadatas)} post title metadatas for partition {context.partition_key}"
+    patch_posts(
+        context,
+        analogdb.client(),
+        updated_post_title_metadatas,
+        "title metadatas",
+        delay=0.2,
     )
 
 
@@ -522,13 +599,7 @@ def patch_post_keywords(
         )
         return
 
-    adb = analogdb.client()
-    for id, p in updated_post_keywords:
-        adb.patch_post(id, p)
-    context.log.info(f"Patched {len(updated_post_keywords)} post keywords")
-    context.log.info(
-        f"Patched {len(updated_post_keywords)} post keywords for partition {context.partition_key}"
-    )
+    patch_posts(context, analogdb.client(), updated_post_keywords, "keywords")
 
 
 @dg.asset(group_name="scrape")
@@ -553,10 +624,10 @@ def upload_films(
     context: dg.AssetExecutionContext,
     films_json: FilmsJsonResource,
     analogdb: AnalogDBResource,
-) -> None:
+) -> dg.MaterializeResult:
     analog = analogdb.client()
     success = 0
-    max_retries = 5
+    failed = 0
 
     for f in films_json.client():
         film = adb.FilmCreate(
@@ -566,25 +637,27 @@ def upload_films(
             color_type=f["color_type"],
             description=f["description"],
         )
-
-        for attempt in range(max_retries):
-            resp = analog.upload_film(film)
-            if resp.status_code in [200, 201]:
-                context.log.debug(
-                    f"Uploaded film, make={film.make}, type={film.type}, speed={film.speed}"
-                )
-                success += 1
-                break
-            elif attempt == max_retries - 1:
-                context.log.warn(
-                    f"Fail upload film, attempt={attempt+1}, max_retries={max_retries}, make={film.make}, type={film.type}, speed={film.speed}, body={resp.text}, status={resp.status_code}"
-                )
-            else:
-                context.log.debug(
-                    f"Retry upload film, attempt={attempt+1}, max_retries={max_retries}, make={film.make}, type={film.type}, speed={film.speed}, body={resp.text}, status={resp.status_code}"
-                )
+        try:
+            analog.upload_film(film)
+        except Exception as e:
+            failed += 1
+            context.log.error(
+                f"Failed to upload film, make={film.make}, type={film.type}, speed={film.speed}, {error_detail(e)}"
+            )
+            continue
+        context.log.debug(
+            f"Uploaded film, make={film.make}, type={film.type}, speed={film.speed}"
+        )
+        success += 1
 
     context.log.info(f"Uploaded {success} films")
+    counts = {"success": success, "failed": failed}
+    if failed > 0:
+        raise dg.Failure(
+            description=f"Failed to upload {failed} of {success + failed} films",
+            metadata=counts,
+        )
+    return dg.MaterializeResult(metadata=counts)
 
 
 @dg.asset(group_name="scrape")
@@ -592,10 +665,10 @@ def upload_cameras(
     context: dg.AssetExecutionContext,
     cameras_json: CamerasJsonResource,
     analogdb: AnalogDBResource,
-) -> None:
+) -> dg.MaterializeResult:
     analog = analogdb.client()
     success = 0
-    max_retries = 5
+    failed = 0
 
     for f in cameras_json.client():
         camera = adb.CameraCreate(
@@ -603,22 +676,22 @@ def upload_cameras(
             model=f["model"],
             description=f["description"],
         )
-
-        for attempt in range(max_retries):
-            resp = analog.upload_camera(camera)
-            if resp.status_code in [200, 201]:
-                context.log.debug(
-                    f"Uploaded camera, make={camera.make}, model={camera.model}"
-                )
-                success += 1
-                break
-            elif attempt == max_retries - 1:
-                context.log.warn(
-                    f"Fail upload camera attempt={attempt+1}, max_retries={max_retries}, make={camera.make}, model={camera.model}, body={resp.text}, status={resp.status_code}"
-                )
-            else:
-                context.log.debug(
-                    f"Retry upload camera, attempt={attempt+1}, max_retries={max_retries}, make={camera.make}, model={camera.model}, body={resp.text}, status={resp.status_code}"
-                )
+        try:
+            analog.upload_camera(camera)
+        except Exception as e:
+            failed += 1
+            context.log.error(
+                f"Failed to upload camera, make={camera.make}, model={camera.model}, {error_detail(e)}"
+            )
+            continue
+        context.log.debug(f"Uploaded camera, make={camera.make}, model={camera.model}")
+        success += 1
 
     context.log.info(f"Uploaded {success} cameras")
+    counts = {"success": success, "failed": failed}
+    if failed > 0:
+        raise dg.Failure(
+            description=f"Failed to upload {failed} of {success + failed} cameras",
+            metadata=counts,
+        )
+    return dg.MaterializeResult(metadata=counts)

@@ -1,11 +1,16 @@
 import base64
 import json
+import threading
+import time
 
 import pytest
+from analogdb_generated.exceptions import ApiException
 from pytest_httpserver import HTTPServer
+from urllib3 import Retry
+from urllib3.exceptions import HTTPError
 from werkzeug import Request, Response
 
-from .client import Client
+from .client import REQUEST_TIMEOUT, Client, Uploaded
 from .models import CameraCreate, FilmCreate, PostCreate, PostPatch, PostsFilter
 
 AUTH = "Basic " + base64.b64encode(b"user:pass").decode()
@@ -173,20 +178,21 @@ class TestRequests:
             json=film.to_dict(),
         ).respond_with_json({"message": "ok", "film": film.to_dict()}, status=201)
 
-        resp = client.upload_film(film)
+        client.upload_film(film)
 
-        assert resp.status_code == 201
         httpserver.check_assertions()
 
-    def test_upload_camera_error_returns_status(self, client, httpserver: HTTPServer):
+    def test_upload_camera_error_raises(self, client, httpserver: HTTPServer):
         httpserver.expect_request(
             "/v1/camera", method="POST", headers={"Authorization": AUTH}
         ).respond_with_json({"error": "bad"}, status=422)
 
-        resp = client.upload_camera(CameraCreate(make="nikon", model="fm2"))
+        with pytest.raises(ApiException) as e:
+            client.upload_camera(CameraCreate(make="nikon", model="fm2"))
 
-        assert resp.status_code == 422
-        assert "bad" in resp.text
+        assert e.value.status == 422
+        assert "bad" in e.value.body
+        assert len(httpserver.log) == 1
 
     def test_upload_post(self, client, httpserver: HTTPServer):
         post = PostCreate(title="t", permalink="/r/analog/1", timestamp=1, images=[])
@@ -202,9 +208,7 @@ class TestRequests:
             },
         ).respond_with_json({"message": "ok"}, status=201)
 
-        resp = client.upload_post(post)
-
-        assert resp.status_code == 201
+        assert client.upload_post(post) == Uploaded.CREATED
 
     def test_patch_post_sends_only_set_fields(self, client, httpserver: HTTPServer):
         seen = {}
@@ -226,3 +230,78 @@ class TestRequests:
     def test_patch_post_empty_is_skipped(self, client, httpserver: HTTPServer):
         assert client.patch_post(7, PostPatch()) is None
         assert len(httpserver.log) == 0
+
+
+def post_create() -> PostCreate:
+    return PostCreate(title="t", permalink="/r/analog/1", timestamp=1, images=[])
+
+
+class TestUploadPostStatus:
+    def test_conflict_is_exists(self, client, httpserver: HTTPServer):
+        httpserver.expect_request("/v1/post", method="POST").respond_with_json(
+            {"error": "exists"}, status=409
+        )
+
+        assert client.upload_post(post_create()) == Uploaded.EXISTS
+        assert len(httpserver.log) == 1
+
+    def test_server_error_raises_without_retry(self, client, httpserver: HTTPServer):
+        httpserver.expect_request("/v1/post", method="POST").respond_with_json(
+            {"error": "boom"}, status=500
+        )
+
+        with pytest.raises(ApiException) as e:
+            client.upload_post(post_create())
+
+        assert e.value.status == 500
+        assert len(httpserver.log) == 1
+
+    def test_unavailable_is_retried(self, client, httpserver: HTTPServer):
+        httpserver.expect_ordered_request("/v1/post", method="POST").respond_with_json(
+            {"error": "down"}, status=503
+        )
+        httpserver.expect_ordered_request("/v1/post", method="POST").respond_with_json(
+            {"message": "ok"}, status=201
+        )
+
+        assert client.upload_post(post_create()) == Uploaded.CREATED
+        assert len(httpserver.log) == 2
+
+    def test_unauthorized_is_not_retried(self, client, httpserver: HTTPServer):
+        httpserver.expect_request("/v1/post", method="POST").respond_with_json(
+            {"error": "unauthorized"}, status=401
+        )
+
+        with pytest.raises(ApiException) as e:
+            client.upload_post(post_create())
+
+        assert e.value.status == 401
+        assert len(httpserver.log) == 1
+
+
+class TestTimeout:
+    def test_default_timeout(self, client):
+        assert client.timeout == REQUEST_TIMEOUT == (10.0, 30.0)
+
+    def test_hanging_server_times_out(self, httpserver: HTTPServer):
+        release = threading.Event()
+
+        def handler(request: Request):
+            release.wait(5)
+            return Response(json.dumps({"films": []}), mimetype="application/json")
+
+        httpserver.expect_request("/v1/films").respond_with_handler(handler)
+        client = Client(
+            base_url=httpserver.url_for("").rstrip("/"),
+            timeout=(1.0, 0.2),
+            retries=Retry(0),
+        )
+
+        start = time.monotonic()
+        try:
+            with pytest.raises(HTTPError):
+                client.get_films()
+        finally:
+            release.set()
+
+        assert time.monotonic() - start < 2

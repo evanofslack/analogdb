@@ -34,7 +34,12 @@ class RedditScraper:
                 if post:
                     posts.append(post)
             except RedditScrapingError as e:
-                err = ScrapeError(id=submission.id, url=submission.url, msg=str(e))
+                err = ScrapeError(
+                    id=submission.id,
+                    url=submission.url,
+                    permalink=f"{REDDIT_URL}{submission.permalink}",
+                    msg=str(e),
+                )
                 errors.append(err)
                 continue
 

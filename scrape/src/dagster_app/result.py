@@ -60,10 +60,7 @@ class Result(Generic[T]):
 
     def failed_count(self) -> int:
         """Get only failed processed items count."""
-        failed = [
-            id for id, _ in self.data.items() if self.status.get(id) == Status.FAILED
-        ]
-        return len(failed)
+        return len([s for s in self.status.values() if s == Status.FAILED])
 
     def filter_by_ids(self, item_ids: Set[str]) -> "Result[T]":
         """Create new result with only specified IDs."""
