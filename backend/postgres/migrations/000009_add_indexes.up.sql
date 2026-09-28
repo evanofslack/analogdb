@@ -1,0 +1,10 @@
+CREATE INDEX IF NOT EXISTS idx_pictures_time_id ON pictures (time DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_pictures_score_id ON pictures (score DESC, id DESC);
+CREATE INDEX IF NOT EXISTS idx_pictures_author ON pictures (author);
+CREATE INDEX IF NOT EXISTS idx_pictures_camera ON pictures (camera_make, camera_model);
+CREATE INDEX IF NOT EXISTS idx_pictures_film ON pictures (film_make, film_type, film_speed);
+CREATE INDEX IF NOT EXISTS idx_keywords_post_id ON keywords (post_id);
+CREATE INDEX IF NOT EXISTS idx_keywords_word ON keywords (word, post_id);
+CREATE INDEX IF NOT EXISTS idx_colors_post_id ON colors (post_id);
+CREATE INDEX IF NOT EXISTS idx_colors_html ON colors (html, post_id) INCLUDE (percent);
+CREATE INDEX IF NOT EXISTS idx_post_updates_post ON post_updates (post_id);
