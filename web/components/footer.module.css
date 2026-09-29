@@ -1,6 +1,5 @@
 .footer {
-  background-color: #eaeaea;
-  background-color: #ffffff;
+  background-color: var(--adb-surface);
   padding-top: 1.1rem;
   padding-bottom: 1rem;
   padding-left: 2.5rem;

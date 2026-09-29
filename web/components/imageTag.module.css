@@ -30,7 +30,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  color: gray;
+  color: var(--adb-muted);
   font-weight: 400;
   font-family: "Courier Prime", Courier, monospace;
 }
@@ -52,7 +52,7 @@
 
 .icon {
   margin-right: 0.5rem;
-  color: gray;
+  color: var(--adb-muted);
 }
 
 .containerColorsAndKeywords {
@@ -79,11 +79,11 @@
   max-width: 4rem;
   max-height: 4rem;
   margin: 0.3rem;
-  box-shadow: 1px 1px 8px lightgray;
+  box-shadow: 1px 1px 8px var(--adb-shadow);
 }
 
 .colorSquare:hover {
-  box-shadow: 2px 2px 16px lightgray;
+  box-shadow: 2px 2px 16px var(--adb-shadow);
   transform: scale(1.035);
 }
 
@@ -104,10 +104,10 @@
   margin-left: 0.2rem;
   margin-right: 0.2rem;
   border: solid;
-  border-color: lightgray;
+  border-color: var(--adb-pill-border);
   border-width: 1.5px;
   border-radius: 11px;
-  color: #636363;
+  color: var(--adb-pill-fg);
   margin-top: 0.4rem;
   margin-bottom: 0.4rem;
   padding-left: 0.6rem;
@@ -117,13 +117,13 @@
   font-weight: 500;
   font-size: 0.8rem;
   text-transform: uppercase;
-  background-color: #f5f5f5;
+  background-color: var(--adb-pill-bg);
   /* box-shadow: 0.5px 0.5px 20px 0.5px lightgray; */
 }
 .keyword:hover {
-  color: #f5f5f5;
-  background-color: #636363;
-  border-color: #636363;
+  color: var(--adb-pill-hover-fg);
+  background-color: var(--adb-pill-fg);
+  border-color: var(--adb-pill-fg);
 }
 
 .title {
@@ -137,7 +137,7 @@
 
 .author {
   font-size: 1rem;
-  color: gray;
+  color: var(--adb-muted);
   margin-bottom: 0.3rem;
 }
 .author:hover {

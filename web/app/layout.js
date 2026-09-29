@@ -8,6 +8,7 @@ import {
 } from "@mantine/core";
 import { CodeHighlightProvider } from "@providers/codehighlight";
 import { QueryProvider } from "@providers/query";
+import { theme } from "@providers/theme";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 export const metadata = {
@@ -25,7 +26,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript />
+        <ColorSchemeScript defaultColorScheme="light" />
         <script
           defer
           src="https://umami.eslack.net/script.js"
@@ -34,7 +35,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
-        <MantineProvider>
+        <MantineProvider theme={theme} defaultColorScheme="light">
           <CodeHighlightProvider>
             <NuqsAdapter>
               <QueryProvider>{children}</QueryProvider>

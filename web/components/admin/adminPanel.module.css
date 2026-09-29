@@ -8,7 +8,7 @@
 .container {
   min-height: 70vh;
   padding: 1rem;
-  background-color: #ffffff;
+  background-color: var(--adb-surface);
 }
 
 .wrapper {
@@ -16,14 +16,14 @@
 }
 
 .contentCard {
-  background: white;
+  background: var(--adb-surface);
   border-radius: 8px;
-  box-shadow: 0 0.5px 3px rgba(0, 0, 0, 0.2);
-  border: 0px solid #e5e7eb;
+  box-shadow: 0 0.5px 3px var(--adb-shadow-overlay);
+  border: 0px solid var(--adb-border-soft);
   overflow: hidden;
 }
 
 .cardHeader {
   padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--adb-border-soft);
 }

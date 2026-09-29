@@ -1,12 +1,12 @@
 .title {
   font-size: 3rem;
-  color: #2e2e2e;
+  color: var(--adb-heading);
   font-weight: 600;
 }
 
 .subtitle {
   font-size: 1.2rem;
-  color: #2e2e2e;
+  color: var(--adb-heading);
   font-weight: 400;
   max-width: 20rem;
   margin-bottom: 2rem;
@@ -111,13 +111,13 @@
   right: 27%;
   top: 50%;
   transform: translate(50%, -50%);
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--adb-glass);
   backdrop-filter: blur(15px);
   padding: 2rem;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
   border-radius: 0.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px var(--adb-shadow-overlay);
   max-width: 400px;
   z-index: 10;
 }
@@ -310,13 +310,13 @@
   left: 22%;
   top: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--adb-glass);
   backdrop-filter: blur(15px);
   padding: 2rem;
   padding-right: 1.5rem;
   padding-left: 1.5rem;
   border-radius: 0.5rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px var(--adb-shadow-overlay);
   max-width: 400px;
   z-index: 10;
 }
@@ -356,15 +356,15 @@
   flex-direction: row;
   justify-content: space-around;
   align-items: center;
-  background-color: #ffffff;
+  background-color: var(--adb-surface);
   max-width: 900px;
 }
 
 .link {
   font-size: 1rem;
-  color: white;
+  color: var(--adb-cta-fg);
   font-weight: 400;
-  background-color: #2e2e2e;
+  background-color: var(--adb-heading);
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
   padding-right: 1rem;
@@ -405,7 +405,7 @@
   font-weight: 300;
   margin: 0;
   margin-top: -0.25rem;
-  color: gray;
+  color: var(--adb-muted);
 }
 
 .apiDemoContainer {
@@ -419,7 +419,7 @@
   max-width: 600px;
   width: 100%;
   margin-right: 5vw;
-  box-shadow: 0px 1px 10px 0.1px #dbdbdb;
+  box-shadow: 0px 1px 10px 0.1px var(--adb-shadow-strong);
 }
 
 .imageTwoBorder {

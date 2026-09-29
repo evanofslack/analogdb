@@ -15,3 +15,63 @@ a {
 * {
   box-sizing: border-box;
 }
+
+:root {
+  --adb-heading: #2e2e2e;
+  --adb-nav: #444444;
+  --adb-muted: #808080;
+  --adb-muted-alt: #878787;
+  --adb-surface: #ffffff;
+  --adb-surface-alt: #f7f7f7;
+  --adb-surface-hover: #f8f9fa;
+  --adb-glass: rgba(255, 255, 255, 0.95);
+  --adb-border: #ced4da;
+  --adb-border-soft: #e5e7eb;
+  --adb-divider: #e0e0e0;
+  --adb-pill-bg: #f7f7f7;
+  --adb-pill-fg: #636363;
+  --adb-pill-border: lightgray;
+  --adb-pill-hover-bg: #636363;
+  --adb-pill-hover-fg: #f5f5f5;
+  --adb-shadow: lightgray;
+  --adb-shadow-strong: #dbdbdb;
+  --adb-shadow-overlay: rgba(0, 0, 0, 0.15);
+  --adb-cta-bg: #2e2e2e;
+  --adb-cta-fg: #ffffff;
+  --adb-code-fg: #000000;
+  --adb-danger-bg: #fef2f2;
+  --adb-danger-border: #fecaca;
+  --adb-danger-fg: #b91c1c;
+  --adb-swatch-white-outline: #adb5bd;
+  --adb-swatch-black-outline: transparent;
+}
+
+[data-mantine-color-scheme="dark"] {
+  --adb-heading: var(--mantine-color-dark-0);
+  --adb-nav: var(--mantine-color-dark-1);
+  --adb-muted: var(--mantine-color-dark-2);
+  --adb-muted-alt: var(--mantine-color-dark-2);
+  --adb-surface: var(--mantine-color-dark-7);
+  --adb-surface-alt: var(--mantine-color-dark-6);
+  --adb-surface-hover: var(--mantine-color-dark-5);
+  --adb-glass: rgba(26, 26, 26, 0.9);
+  --adb-border: var(--mantine-color-dark-4);
+  --adb-border-soft: var(--mantine-color-dark-4);
+  --adb-divider: var(--mantine-color-dark-4);
+  --adb-pill-bg: var(--mantine-color-dark-6);
+  --adb-pill-fg: var(--mantine-color-dark-1);
+  --adb-pill-border: var(--mantine-color-dark-4);
+  --adb-pill-hover-bg: var(--mantine-color-dark-1);
+  --adb-pill-hover-fg: var(--mantine-color-dark-7);
+  --adb-shadow: rgba(0, 0, 0, 0.6);
+  --adb-shadow-strong: rgba(0, 0, 0, 0.6);
+  --adb-shadow-overlay: rgba(0, 0, 0, 0.5);
+  --adb-cta-bg: var(--mantine-color-dark-0);
+  --adb-cta-fg: var(--mantine-color-dark-7);
+  --adb-code-fg: var(--mantine-color-dark-0);
+  --adb-danger-bg: rgba(127, 29, 29, 0.35);
+  --adb-danger-border: #7f1d1d;
+  --adb-danger-fg: #fca5a5;
+  --adb-swatch-white-outline: #adb5bd;
+  --adb-swatch-black-outline: var(--mantine-color-dark-2);
+}

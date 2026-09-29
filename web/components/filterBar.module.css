@@ -66,7 +66,7 @@
 
 .numInputLabel {
   font-size: 0.8rem;
-  color: #878787;
+  color: var(--adb-muted-alt);
 }
 
 .numInputRow {
@@ -103,9 +103,9 @@
   right: 0;
   top: 0;
   z-index: 10;
-  background: white;
+  background: var(--adb-surface);
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px var(--adb-shadow-overlay);
 }
 
 .query .button {
@@ -113,9 +113,9 @@
   margin-left: 2px;
   padding-left: 10px;
   padding-right: 10px;
-  color: #2e2e2e;
+  color: var(--adb-heading);
   font-weight: 400;
-  border-color: #ced4da;
+  border-color: var(--adb-border);
 }
 
 .query .button .buttonSection {
@@ -123,7 +123,7 @@
 }
 
 .query .button:not([data-disabled]):hover {
-  background-color: #fbfbfc;
+  background-color: var(--adb-surface-hover);
 }
 
 @media (max-width: 720px) {

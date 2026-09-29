@@ -20,12 +20,12 @@
 
 .code {
   font-family: monospace;
-  color: black;
+  color: var(--adb-code-fg);
   padding: 3px;
   border-radius: 3px;
   font-size: 105%;
   white-space: pre;
-  background: #f7f7f7;
+  background: var(--adb-surface-alt);
 }
 
 .codeblock {
@@ -34,28 +34,28 @@
 }
 
 .h1 {
-  color: #2e2e2e;
+  color: var(--adb-heading);
   font-size: 1.9rem;
   margin-top: 3.5rem;
   margin-bottom: 0rem;
 }
 
 .h2 {
-  color: #2e2e2e;
+  color: var(--adb-heading);
   font-size: 1.5rem;
   margin-top: 2.7rem;
   margin-bottom: 0rem;
 }
 
 .h3 {
-  color: #2e2e2e;
+  color: var(--adb-heading);
   font-size: 1.1rem;
   margin-top: 2rem;
   margin-bottom: 0rem;
 }
 
 .h4 {
-  color: #2e2e2e;
+  color: var(--adb-heading);
   font-size: 1rem;
   margin-top: 1.6rem;
   margin-bottom: 0rem;

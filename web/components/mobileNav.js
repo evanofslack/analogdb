@@ -9,6 +9,7 @@ import { BiCheck } from "react-icons/bi";
 import { FiGithub } from "react-icons/fi";
 import { GrClose } from "react-icons/gr";
 import styles from "./mobileNav.module.css";
+import ThemeToggle from "./themeToggle";
 
 export default function MobileNav() {
   const isAdmin = useIsAdmin();
@@ -17,7 +18,8 @@ export default function MobileNav() {
   const toggle = () => setIsOpen((value) => !value);
 
   return (
-    <div>
+    <div className={styles.bar}>
+      <ThemeToggle />
       <AiOutlineMenu size="1.8rem" onClick={toggle} />
       {isOpen && (
         <div className={styles.blur}>
