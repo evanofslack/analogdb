@@ -1,0 +1,16 @@
+[
+  { "input": "Nikon F-3", "key": "nikonf3" },
+  { "input": "500 C/M", "key": "500cm" },
+  { "input": "HP5+", "key": "hp5" },
+  { "input": "Tri-X 400", "key": "trix400" },
+  { "input": "Voigtländer", "key": "voigtlander" },
+  { "input": "Pentax6x7", "key": "pentax6x7" },
+  { "input": "Olympus OM-2", "key": "olympusom2" },
+  { "input": "Chinon Industries Inc.", "key": "chinonindustriesinc" },
+  { "input": "Yes!Star", "key": "yesstar" },
+  { "input": "Fuji & Kodak", "key": "fujiandkodak" },
+  { "input": "  RB67 Pro-S  ", "key": "rb67pros" },
+  { "input": "T-MAX P3200", "key": "tmaxp3200" },
+  { "input": "Ektachrome E100", "key": "ektachromee100" },
+  { "input": "", "key": "" }
+]
