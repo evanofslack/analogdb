@@ -7,7 +7,6 @@ import os
 
 from analogdb.client import Client
 from openai import OpenAI
-
 from scrape.metadata import MetadataExtractor
 
 TEST_TITLES = [
