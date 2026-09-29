@@ -5,9 +5,8 @@ import styles from "./colorFilter.module.css";
 export default function ColorFilter({
   color,
   setColor,
-  onlyIcon,
-  buttonStyles,
   buttonClassNames,
+  labelClassName,
 }) {
   const handleColorClick = (event) => {
     let clickedColor = event.target.id;
@@ -131,11 +130,10 @@ export default function ColorFilter({
         <Button
           variant="outline"
           color="gray"
-          leftSection={<IconPalette size={onlyIcon ? 22 : 18} stroke={1.5} />}
-          styles={() => buttonStyles}
+          leftSection={<IconPalette size={18} stroke={1.5} />}
           classNames={buttonClassNames}
         >
-          {!onlyIcon && <span>color</span>}
+          <span className={labelClassName}>color</span>
         </Button>
       </Menu.Target>
       <Menu.Dropdown>

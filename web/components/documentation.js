@@ -2,18 +2,11 @@
 
 import { CodeHighlight } from "@mantine/code-highlight";
 import { Code, Divider, Table } from "@mantine/core";
-import { useBreakpoint } from "@providers/breakpoint";
 import Link from "next/link";
 import styles from "./documentation.module.css";
 import Footer from "./footer";
 
 export default function Documentation() {
-  const breakpoints = useBreakpoint();
-  let isMobile = false;
-  if (breakpoints["sm"]) {
-    isMobile = true;
-  }
-
   const paginations = [
     {
       field: "page_size",
@@ -652,21 +645,19 @@ export default function Documentation() {
             </Table.Thead>
             <Table.Tbody>{paginationRows}</Table.Tbody>
           </Table>
-          {!isMobile && (
-            <div className={styles.codeblock}>
-              <CodeHighlight
-                code="curl https://api.analogdb.com/v1/posts?page_size=10&cursor=eyJzIjoidGltZSIsInYiOjE3OTA1Mzk5MjIsImlkIjo0MDA1Mn0"
-                language="bash"
-                copyLabel="copy example"
-                copiedLabel="copied"
-                styles={{
-                  code: {
-                    fontSize: "0.75rem",
-                  },
-                }}
-              />
-            </div>
-          )}
+          <div className={styles.codeblock}>
+            <CodeHighlight
+              code="curl https://api.analogdb.com/v1/posts?page_size=10&cursor=eyJzIjoidGltZSIsInYiOjE3OTA1Mzk5MjIsImlkIjo0MDA1Mn0"
+              language="bash"
+              copyLabel="copy example"
+              copiedLabel="copied"
+              styles={{
+                code: {
+                  fontSize: "0.75rem",
+                },
+              }}
+            />
+          </div>
           <div className={styles.divider}>
             <Divider my="sm" />
           </div>
@@ -805,21 +796,19 @@ export default function Documentation() {
             </Table.Thead>
             <Table.Tbody>{postsGeneralRows}</Table.Tbody>
           </Table>
-          {!isMobile && (
-            <div className={styles.codeblock}>
-              <CodeHighlight
-                code="curl https://api.analogdb.com/v1/posts?sort=score&page_size=50"
-                language="bash"
-                copyLabel="copy example"
-                copiedLabel="copied"
-                styles={{
-                  code: {
-                    fontSize: "0.75rem",
-                  },
-                }}
-              />
-            </div>
-          )}
+          <div className={styles.codeblock}>
+            <CodeHighlight
+              code="curl https://api.analogdb.com/v1/posts?sort=score&page_size=50"
+              language="bash"
+              copyLabel="copy example"
+              copiedLabel="copied"
+              styles={{
+                code: {
+                  fontSize: "0.75rem",
+                },
+              }}
+            />
+          </div>
           <h3 className={styles.h3}>Filter Parameters</h3>
           <p>
             Posts can be filtered by various criteria including camera, film,
@@ -837,41 +826,37 @@ export default function Documentation() {
             </Table.Thead>
             <Table.Tbody>{postsFilterRows}</Table.Tbody>
           </Table>
-          {!isMobile && (
-            <div className={styles.codeblock}>
-              <CodeHighlight
-                code="curl 'https://api.analogdb.com/v1/posts?camera_make=nikon&film_make=kodak&grayscale=false&keyword=portrait'"
-                language="bash"
-                copyLabel="copy example"
-                copiedLabel="copied"
-                styles={{
-                  code: {
-                    fontSize: "0.75rem",
-                  },
-                }}
-              />
-            </div>
-          )}
+          <div className={styles.codeblock}>
+            <CodeHighlight
+              code="curl 'https://api.analogdb.com/v1/posts?camera_make=nikon&film_make=kodak&grayscale=false&keyword=portrait'"
+              language="bash"
+              copyLabel="copy example"
+              copiedLabel="copied"
+              styles={{
+                code: {
+                  fontSize: "0.75rem",
+                },
+              }}
+            />
+          </div>
           <h2 className={styles.h2}> /post/:id </h2>
           <p>
             Returns a single specific <Code>post</Code> resource as identified
             by ID.
           </p>
-          {!isMobile && (
-            <div className={styles.codeblock}>
-              <CodeHighlight
-                code="curl https://api.analogdb.com/v1/post/1924"
-                language="bash"
-                copyLabel="copy example"
-                copiedLabel="copied"
-                styles={{
-                  code: {
-                    fontSize: "0.75rem",
-                  },
-                }}
-              />
-            </div>
-          )}
+          <div className={styles.codeblock}>
+            <CodeHighlight
+              code="curl https://api.analogdb.com/v1/post/1924"
+              language="bash"
+              copyLabel="copy example"
+              copiedLabel="copied"
+              styles={{
+                code: {
+                  fontSize: "0.75rem",
+                },
+              }}
+            />
+          </div>
           <h2 className={styles.h2}> /post/:id/similar </h2>
           <p>
             Returns a collection of <Code>post</Code> resources that are
@@ -888,21 +873,19 @@ export default function Documentation() {
             </Table.Thead>
             <Table.Tbody>{similarParamRows}</Table.Tbody>
           </Table>
-          {!isMobile && (
-            <div className={styles.codeblock}>
-              <CodeHighlight
-                code="curl https://api.analogdb.com/v1/post/1924/similar?page_size=20&nsfw=false"
-                language="bash"
-                copyLabel="copy example"
-                copiedLabel="copied"
-                styles={{
-                  code: {
-                    fontSize: "0.75rem",
-                  },
-                }}
-              />
-            </div>
-          )}
+          <div className={styles.codeblock}>
+            <CodeHighlight
+              code="curl https://api.analogdb.com/v1/post/1924/similar?page_size=20&nsfw=false"
+              language="bash"
+              copyLabel="copy example"
+              copiedLabel="copied"
+              styles={{
+                code: {
+                  fontSize: "0.75rem",
+                },
+              }}
+            />
+          </div>
           <h2 className={styles.h2}> /cameras </h2>
           <p>
             Returns a collection of <Code>camera</Code> resources with optional
@@ -919,21 +902,19 @@ export default function Documentation() {
             </Table.Thead>
             <Table.Tbody>{camerasParamRows}</Table.Tbody>
           </Table>
-          {!isMobile && (
-            <div className={styles.codeblock}>
-              <CodeHighlight
-                code="curl https://api.analogdb.com/v1/cameras?sort=counts&make=nikon&include_counts=true"
-                language="bash"
-                copyLabel="copy example"
-                copiedLabel="copied"
-                styles={{
-                  code: {
-                    fontSize: "0.75rem",
-                  },
-                }}
-              />
-            </div>
-          )}
+          <div className={styles.codeblock}>
+            <CodeHighlight
+              code="curl https://api.analogdb.com/v1/cameras?sort=counts&make=nikon&include_counts=true"
+              language="bash"
+              copyLabel="copy example"
+              copiedLabel="copied"
+              styles={{
+                code: {
+                  fontSize: "0.75rem",
+                },
+              }}
+            />
+          </div>
           <h2 className={styles.h2}> /films </h2>
           <p>
             Returns a collection of <Code>film</Code> resources with optional
@@ -950,21 +931,19 @@ export default function Documentation() {
             </Table.Thead>
             <Table.Tbody>{filmsParamRows}</Table.Tbody>
           </Table>
-          {!isMobile && (
-            <div className={styles.codeblock}>
-              <CodeHighlight
-                code="curl https://api.analogdb.com/v1/films?sort=counts&make=kodak&speed=400&include_zero_counts=true"
-                language="bash"
-                copyLabel="copy example"
-                copiedLabel="copied"
-                styles={{
-                  code: {
-                    fontSize: "0.75rem",
-                  },
-                }}
-              />
-            </div>
-          )}
+          <div className={styles.codeblock}>
+            <CodeHighlight
+              code="curl https://api.analogdb.com/v1/films?sort=counts&make=kodak&speed=400&include_zero_counts=true"
+              language="bash"
+              copyLabel="copy example"
+              copiedLabel="copied"
+              styles={{
+                code: {
+                  fontSize: "0.75rem",
+                },
+              }}
+            />
+          </div>
         </div>
       </div>
       <Footer />

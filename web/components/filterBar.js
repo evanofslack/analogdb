@@ -53,14 +53,11 @@ export default function FilterBar({
   setSizes,
   setFilm,
   setCamera,
-  onFilmMenuOpen,
-  onCameraMenuOpen,
 
   filmOptions,
   cameraOptions,
 
   // UI state
-  onlyIcon,
   textPlaceholder,
 
   // Limits
@@ -72,7 +69,7 @@ export default function FilterBar({
   ratioMaxLimit,
 }) {
   const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const iconSize = onlyIcon ? 24 : 18;
+  const iconSize = 18;
 
   const sizes = {
     widthMin,
@@ -143,41 +140,24 @@ export default function FilterBar({
     commitSizes();
   };
 
-  const getButtonStyles = (onlyIcon) => ({
-    root: {
-      marginRight: onlyIcon ? 2 : 10,
-      marginLeft: 2,
-      paddingLeft: onlyIcon ? 6 : 10,
-      paddingRight: onlyIcon ? 0 : 10,
-      color: "#2E2E2E",
-      fontWeight: 400,
-      borderColor: onlyIcon ? "transparent" : "#CED4DA",
-    },
-    leftSection: {
-      marginRight: 5,
-    },
-  });
-
   const buttonClassNames = {
-    root: onlyIcon ? styles.buttonIcon : styles.button,
+    root: styles.button,
+    section: styles.buttonSection,
   };
 
   return (
     <>
-      <div
-        className={`${styles.query} ${onlyIcon ? styles.queryIconMode : ""}`}
-      >
+      <div className={styles.query}>
         <div className={styles.filterButtons}>
-          <Menu shadow="md" width={220} onOpen={onCameraMenuOpen}>
+          <Menu shadow="md" width={220}>
             <Menu.Target>
               <Button
                 variant="outline"
                 color="gray"
                 leftSection={<IconCamera size={iconSize} stroke={1.5} />}
-                styles={() => getButtonStyles(onlyIcon)}
                 classNames={buttonClassNames}
               >
-                {!onlyIcon && <span>camera</span>}
+                <span className={styles.label}>camera</span>
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -210,16 +190,15 @@ export default function FilterBar({
               </div>
             </Menu.Dropdown>
           </Menu>
-          <Menu shadow="md" width={220} onOpen={onFilmMenuOpen}>
+          <Menu shadow="md" width={220}>
             <Menu.Target>
               <Button
                 variant="outline"
                 color="gray"
                 leftSection={<IconMovie size={iconSize} stroke={1.5} />}
-                styles={() => getButtonStyles(onlyIcon)}
                 classNames={buttonClassNames}
               >
-                {!onlyIcon && <span>film</span>}
+                <span className={styles.label}>film</span>
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -255,9 +234,8 @@ export default function FilterBar({
           <ColorFilter
             color={color}
             setColor={setColor}
-            onlyIcon={onlyIcon}
-            buttonStyles={getButtonStyles(onlyIcon)}
             buttonClassNames={buttonClassNames}
+            labelClassName={styles.label}
           />
           <Menu shadow="md" width={170} onClose={() => commitSizes.flush()}>
             <Menu.Target>
@@ -267,10 +245,9 @@ export default function FilterBar({
                 leftSection={
                   <IconArrowAutofitWidth size={iconSize} stroke={1.6} />
                 }
-                styles={() => getButtonStyles(onlyIcon)}
                 classNames={buttonClassNames}
               >
-                {!onlyIcon && <span>size</span>}
+                <span className={styles.label}>size</span>
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -385,10 +362,9 @@ export default function FilterBar({
                 variant="outline"
                 color="gray"
                 leftSection={<IconArrowsSort size={iconSize} stroke={1.5} />}
-                styles={() => getButtonStyles(onlyIcon)}
                 classNames={buttonClassNames}
               >
-                {!onlyIcon && <span>sort</span>}
+                <span className={styles.label}>sort</span>
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -426,10 +402,9 @@ export default function FilterBar({
                 leftSection={
                   <IconAdjustmentsHorizontal size={iconSize} stroke={1.5} />
                 }
-                styles={() => getButtonStyles(onlyIcon)}
                 classNames={buttonClassNames}
               >
-                {!onlyIcon && <span>filter</span>}
+                <span className={styles.label}>filter</span>
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -475,27 +450,15 @@ export default function FilterBar({
             </Menu.Dropdown>
           </Menu>
 
-          {onlyIcon ? (
-            <Button
-              variant="outline"
-              color="gray"
-              leftSection={<IconSearch size={iconSize} stroke={1.5} />}
-              styles={() => getButtonStyles(onlyIcon)}
-              classNames={buttonClassNames}
-              onClick={() => setSearchModalOpen(true)}
-            />
-          ) : (
-            <Button
-              variant="outline"
-              color="gray"
-              leftSection={<IconSearch size={iconSize} stroke={1.5} />}
-              onClick={() => setSearchModalOpen(true)}
-              styles={() => getButtonStyles(onlyIcon)}
-              classNames={buttonClassNames}
-            >
-              search
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            color="gray"
+            leftSection={<IconSearch size={iconSize} stroke={1.5} />}
+            onClick={() => setSearchModalOpen(true)}
+            classNames={buttonClassNames}
+          >
+            <span className={styles.label}>search</span>
+          </Button>
         </div>
       </div>
 

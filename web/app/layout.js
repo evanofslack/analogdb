@@ -6,7 +6,6 @@ import {
   mantineHtmlProps,
   MantineProvider,
 } from "@mantine/core";
-import { BreakpointProvider } from "@providers/breakpoint";
 import { CodeHighlightProvider } from "@providers/codehighlight";
 import { QueryProvider } from "@providers/query";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -20,14 +19,6 @@ export const metadata = {
     type: "website",
   },
   twitter: { card: "summary_large_image" },
-};
-
-const queries = {
-  xs: "(max-width: 480px)",
-  sm: "(max-width: 720px)",
-  md: "(max-width: 1024px)",
-  lg: "(max-width: 1440px)",
-  xl: "(max-width: 2048px)",
 };
 
 export default function RootLayout({ children }) {
@@ -46,11 +37,7 @@ export default function RootLayout({ children }) {
         <MantineProvider>
           <CodeHighlightProvider>
             <NuqsAdapter>
-              <QueryProvider>
-                <BreakpointProvider queries={queries}>
-                  {children}
-                </BreakpointProvider>
-              </QueryProvider>
+              <QueryProvider>{children}</QueryProvider>
             </NuqsAdapter>
           </CodeHighlightProvider>
         </MantineProvider>

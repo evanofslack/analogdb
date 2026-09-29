@@ -1,7 +1,6 @@
 "use client";
 
 import { CodeHighlight } from "@mantine/code-highlight";
-import { useBreakpoint } from "@providers/breakpoint";
 import { IconPolaroid, IconUsers } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -58,25 +57,25 @@ function pickColorRows(colorData: ColorData, random: boolean): ColorData {
 }
 
 export default function About(props: AboutProps) {
-  const breakpoints = useBreakpoint();
-  let isMobile = false;
-  if (breakpoints["sm"]) {
-    isMobile = true;
-  }
-
   const { numPosts, numAuthors } = props.data;
 
   const [colorData, setColorData] = useState<ColorData>(() =>
     pickColorRows(props.data.colorData, false)
   );
-  const [allSimilarityData, setAllSimilarityData] = useState<
-    SimilarityData[]
-  >(props.data.allSimilarityData);
+  const [allSimilarityData, setAllSimilarityData] = useState<SimilarityData[]>(
+    props.data.allSimilarityData
+  );
+
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
 
   useEffect(() => {
     setColorData(pickColorRows(props.data.colorData, true));
     setAllSimilarityData(shuffle(props.data.allSimilarityData));
   }, [props.data]);
+
+  useEffect(() => {
+    setViewportWidth(window.innerWidth);
+  }, []);
 
   const [currentSimilarityIndex, setCurrentSimilarityIndex] =
     useState<number>(0);
@@ -172,16 +171,14 @@ export default function About(props: AboutProps) {
   const renderColorRow = (
     images: AboutImage[],
     direction: "left" | "right",
-    delay: number = 0,
-    isMobile: boolean
+    delay: number = 0
   ): React.ReactElement | null => {
     if (!images.length) return null;
-    if (isMobile) return null;
 
     const duplicatedImages = [...images, ...images];
 
     return (
-      <div className={styles.colorRow}>
+      <div className={`${styles.colorRow} ${styles.desktopOnly}`}>
         <div
           className={`${styles.colorScrollContainer} ${
             direction === "left" ? styles.scrollLeft : styles.scrollRight
@@ -209,10 +206,7 @@ export default function About(props: AboutProps) {
     );
   };
 
-  const renderSimilarityClusters = (
-    isMobile: boolean
-  ): React.ReactElement | null => {
-    if (isMobile) return null;
+  const renderSimilarityClusters = (): React.ReactElement | null => {
     if (
       !currentSimilarityData.centerPost ||
       !currentSimilarityData.similarPosts.length
@@ -238,13 +232,13 @@ export default function About(props: AboutProps) {
     const centerHeight = centerImage.height || 400;
     const centerAspectRatio = centerWidth / centerHeight;
     const centerMaxHeight = Math.min(
-      typeof window !== "undefined" ? window.innerWidth * 0.35 : 420,
+      viewportWidth ? viewportWidth * 0.35 : 420,
       420
     );
     const centerContainerWidth = centerMaxHeight * centerAspectRatio;
 
     return (
-      <div className={styles.clustersContainer}>
+      <div className={`${styles.clustersContainer} ${styles.desktopOnly}`}>
         <div
           key={centerImage.id}
           className={styles.clusterContainer}
@@ -276,7 +270,7 @@ export default function About(props: AboutProps) {
             const height = image.height || 200;
             const aspectRatio = width / height;
             const maxHeight = Math.min(
-              typeof window !== "undefined" ? window.innerWidth * 0.15 : 180,
+              viewportWidth ? viewportWidth * 0.15 : 180,
               180
             );
             const containerWidth = maxHeight * aspectRatio;
@@ -325,44 +319,40 @@ export default function About(props: AboutProps) {
               view latest
             </Link>
           </div>
-          {!isMobile && (
-            <div className={styles.stats}>
-              <div className={styles.statRow}>
-                <IconPolaroid
-                  size={40}
-                  color="#cacaca"
-                  stroke={1.1}
-                  className={styles.statIcon}
-                />
-                <div className={styles.statCol}>
-                  <p className={styles.statNum}>{numPosts.toLocaleString()}</p>
-                  <p className={styles.statTitle}>photos</p>
-                </div>
-              </div>
-
-              <div className={styles.statRow}>
-                <IconUsers
-                  size={36}
-                  color="#cacaca"
-                  stroke={1.5}
-                  className={styles.statIcon}
-                />
-                <div className={styles.statCol}>
-                  <p className={styles.statNum}>
-                    {numAuthors.toLocaleString()}
-                  </p>
-                  <p className={styles.statTitle}>photographers</p>
-                </div>
+          <div className={`${styles.stats} ${styles.desktopOnly}`}>
+            <div className={styles.statRow}>
+              <IconPolaroid
+                size={40}
+                color="#cacaca"
+                stroke={1.1}
+                className={styles.statIcon}
+              />
+              <div className={styles.statCol}>
+                <p className={styles.statNum}>{numPosts.toLocaleString()}</p>
+                <p className={styles.statTitle}>photos</p>
               </div>
             </div>
-          )}
+
+            <div className={styles.statRow}>
+              <IconUsers
+                size={36}
+                color="#cacaca"
+                stroke={1.5}
+                className={styles.statIcon}
+              />
+              <div className={styles.statCol}>
+                <p className={styles.statNum}>{numAuthors.toLocaleString()}</p>
+                <p className={styles.statTitle}>photographers</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className={styles.sectionTwoBg}>
           <div className={styles.colorSection}>
-            {renderColorRow(colorData.red, "right", 0, isMobile)}
-            {renderColorRow(colorData.navy, "left", 0, isMobile)}
-            {renderColorRow(colorData.olive, "right", 0, isMobile)}
+            {renderColorRow(colorData.red, "right", 0)}
+            {renderColorRow(colorData.navy, "left", 0)}
+            {renderColorRow(colorData.olive, "right", 0)}
             <div className={styles.colorTextOverlay}>
               <div className={styles.title}>Color Intelligence</div>
               <p className={styles.subtitle}>
@@ -379,7 +369,7 @@ export default function About(props: AboutProps) {
 
         <div className={styles.sectionSimilarityBg}>
           <div className={styles.similaritySection}>
-            {renderSimilarityClusters(isMobile)}
+            {renderSimilarityClusters()}
             <div className={styles.similarityTextOverlay}>
               <div className={styles.title}>Vector Similarity</div>
               <p className={styles.subtitle}>
@@ -397,35 +387,35 @@ export default function About(props: AboutProps) {
         <div className={styles.sectionThreeBg}>
           <div className={styles.sectionThree}>
             <div>
-              {!isMobile && (
-                <div className={styles.apiDemoContainer}>
-                  <div className={styles.apiDemo}>
-                    <CodeHighlight
-                      code={apiQuery}
-                      language="javascript"
-                      styles={{
-                        code: {
-                          fontSize: "0.75rem",
-                          maxWidth: "40vw",
-                        },
-                      }}
-                    />
-                  </div>
-                  <div className={styles.apiDemo}>
-                    <CodeHighlight
-                      code={apiResponse}
-                      language="javascript"
-                      styles={{
-                        code: {
-                          fontSize: "0.75rem",
-                          maxHeight: "70vh",
-                          maxWidth: "40vw",
-                        },
-                      }}
-                    />
-                  </div>
+              <div
+                className={`${styles.apiDemoContainer} ${styles.desktopOnly}`}
+              >
+                <div className={styles.apiDemo}>
+                  <CodeHighlight
+                    code={apiQuery}
+                    language="javascript"
+                    styles={{
+                      code: {
+                        fontSize: "0.75rem",
+                        maxWidth: "40vw",
+                      },
+                    }}
+                  />
                 </div>
-              )}
+                <div className={styles.apiDemo}>
+                  <CodeHighlight
+                    code={apiResponse}
+                    language="javascript"
+                    styles={{
+                      code: {
+                        fontSize: "0.75rem",
+                        maxHeight: "70vh",
+                        maxWidth: "40vw",
+                      },
+                    }}
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <div className={styles.title}>Accessible API</div>
@@ -457,17 +447,15 @@ export default function About(props: AboutProps) {
                 view source
               </a>
             </div>
-            {!isMobile && (
-              <div className={styles.imageThree}>
-                <Image
-                  src={"/github_logo.png"}
-                  alt={`example AnalogDB API call`}
-                  width="384"
-                  height="216"
-                  quality={100}
-                />
-              </div>
-            )}
+            <div className={`${styles.imageThree} ${styles.desktopOnly}`}>
+              <Image
+                src={"/github_logo.png"}
+                alt={`example AnalogDB API call`}
+                width="384"
+                height="216"
+                quality={100}
+              />
+            </div>
           </div>
         </div>
       </div>
