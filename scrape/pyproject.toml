@@ -3,8 +3,8 @@ name = "dagster-app"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
-    "dagster>=1.5.0",
-    "dagster-webserver>=1.5.0",
+    "dagster>=1.10.19",
+    "dagster-webserver>=1.10.19",
     "analogdb",
     "scrape",
     "python-dotenv>=1.1.0",
