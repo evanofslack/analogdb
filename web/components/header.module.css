@@ -23,6 +23,10 @@
   display: none;
 }
 
+.mobileNav {
+  display: none;
+}
+
 .description {
   margin-top: 0.3rem;
   line-height: 1.5;
@@ -60,5 +64,11 @@
   .about {
     display: inline;
     padding-right: 0.5rem;
+  }
+  .webNav {
+    display: none;
+  }
+  .mobileNav {
+    display: block;
   }
 }

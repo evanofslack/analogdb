@@ -75,3 +75,9 @@
   margin-top: 2rem;
   margin-bottom: 0rem;
 }
+
+@media (max-width: 720px) {
+  .codeblock {
+    display: none;
+  }
+}

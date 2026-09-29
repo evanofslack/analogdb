@@ -1,7 +1,6 @@
 "use client";
 
 import useIsAdmin from "@hooks/useIsAdmin";
-import { useBreakpoint } from "@providers/breakpoint";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import styles from "./webNav.module.css";
@@ -9,15 +8,6 @@ import styles from "./webNav.module.css";
 export default function WebNav() {
   const isAdmin = useIsAdmin();
   const pathname = usePathname();
-  const breakpoints = useBreakpoint();
-
-  let useMobile = false;
-  if (breakpoints["sm"]) {
-    useMobile = true;
-  }
-  if (useMobile) {
-    return null;
-  }
   return (
     <nav>
       <div className={styles.headerContainer}>

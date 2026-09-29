@@ -1,11 +1,7 @@
 "use client";
 
-import useCameras from "@hooks/useCameras";
-import useFilms from "@hooks/useFilms";
 import usePosts from "@hooks/usePosts";
 import { pickSeed } from "@lib/seed";
-import { useBreakpoint } from "@providers/breakpoint";
-import { useMemo, useState } from "react";
 import FilterBar from "./filterBar";
 import Footer from "./footer";
 import styles from "./gallery.module.css";
@@ -13,45 +9,19 @@ import Header from "./header";
 import InfiniteGallery from "./infiniteGallery";
 import ScrollTop from "./scrollTop";
 
-export default function Gallery() {
-  const { filters, setFilters, limits, ...posts } = usePosts();
+export default function Gallery({
+  initialPage,
+  initialFilters,
+  initialColumns,
+  filmOptions,
+  cameraOptions,
+}) {
+  const { filters, setFilters, limits, ...posts } = usePosts(
+    initialPage,
+    initialFilters
+  );
 
-  const [filmMenuOpened, setFilmMenuOpened] = useState(false);
-  const [cameraMenuOpened, setCameraMenuOpened] = useState(false);
-
-  const { data: filmsResponse } = useFilms(500, filmMenuOpened);
-  const { data: camerasResponse } = useCameras(500, cameraMenuOpened);
-
-  const breakpoints = useBreakpoint();
-
-  const onlyIcon = breakpoints["xs"] || breakpoints["sm"];
   const textPlaceholder = "search pictures...";
-
-  const filmOptions = useMemo(() => {
-    if (!filmsResponse?.films) return [];
-
-    return filmsResponse.films
-      .filter((f) => f.make && f.type)
-      .map((f) => ({
-        make: f.make,
-        type: f.type,
-        label: `${f.make} - ${f.type}`,
-      }))
-      .filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i);
-  }, [filmsResponse]);
-
-  const cameraOptions = useMemo(() => {
-    if (!camerasResponse?.cameras) return [];
-
-    return camerasResponse.cameras
-      .filter((f) => f.make && f.model)
-      .map((f) => ({
-        make: f.make,
-        model: f.model,
-        label: `${f.make} - ${f.model}`,
-      }))
-      .filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i);
-  }, [camerasResponse]);
 
   const setSort = (sort) => {
     if (sort === "random") {
@@ -95,11 +65,8 @@ export default function Gallery() {
           setCamera={(make, model) =>
             setFilters({ camera_make: make, camera_model: model })
           }
-          onFilmMenuOpen={() => setFilmMenuOpened(true)}
-          onCameraMenuOpen={() => setCameraMenuOpened(true)}
           filmOptions={filmOptions}
           cameraOptions={cameraOptions}
-          onlyIcon={onlyIcon}
           textPlaceholder={textPlaceholder}
           widthMinLimit={limits.widthMin}
           widthMaxLimit={limits.widthMax}
@@ -108,7 +75,7 @@ export default function Gallery() {
           ratioMinLimit={limits.ratioMin}
           ratioMaxLimit={limits.ratioMax}
         />
-        <InfiniteGallery {...posts} />
+        <InfiniteGallery {...posts} initialColumns={initialColumns} />
         <ScrollTop />
       </div>
       <Footer />

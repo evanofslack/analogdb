@@ -1,11 +1,13 @@
 "use client";
 
+import GallerySkeleton from "@components/gallerySkeleton";
 import Grid from "@components/grid";
-import { Button, Loader, Skeleton } from "@mantine/core";
+import { Button, Loader } from "@mantine/core";
 import { useEffect, useRef } from "react";
 import styles from "./infiniteGallery.module.css";
 
 export default function InfiniteGallery({
+  initialColumns,
   pages,
   isLoading,
   isError,
@@ -60,15 +62,7 @@ export default function InfiniteGallery({
   }
 
   if (isLoading) {
-    return (
-      <div className={styles.skeletonContainer}>
-        <div className={styles.skeletonGrid}>
-          {[...Array(25)].map((_, index) => (
-            <Skeleton key={index} height={300} radius="md" animate={true} />
-          ))}
-        </div>
-      </div>
-    );
+    return <GallerySkeleton />;
   }
 
   if (posts.length === 0) {
@@ -87,7 +81,7 @@ export default function InfiniteGallery({
         </div>
       )}
       <div className={isPlaceholderData ? styles.dimmed : undefined}>
-        <Grid posts={posts} />
+        <Grid posts={posts} initialColumns={initialColumns} />
       </div>
       {hasNextPage && <div ref={sentinelRef} aria-hidden />}
       {isFetchingNextPage && (

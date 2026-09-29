@@ -1,0 +1,16 @@
+.grid {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  gap: 15px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 0;
+  gap: 15px;
+}
