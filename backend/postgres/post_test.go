@@ -105,18 +105,55 @@ func TestPostService_CreatePost(t *testing.T) {
 		}
 	})
 
-	t.Run("creation with insufficient colors", func(t *testing.T) {
+	t.Run("creation with fewer colors", func(t *testing.T) {
 		createPost := &analogdb.CreatePost{
 			Title:     "Test Post",
 			Author:    "u/testuser",
 			Permalink: "test_post_unique_3",
+			Images: []analogdb.Image{
+				{Label: "low", Url: "http://example.com/fewer_low.jpg"},
+				{Label: "medium", Url: "http://example.com/fewer_med.jpg"},
+				{Label: "high", Url: "http://example.com/fewer_high.jpg"},
+				{Label: "raw", Url: "http://example.com/fewer_raw.jpg"},
+			},
+			Colors: make([]analogdb.Color, 4),
+		}
+
+		post, err := service.CreatePost(ctx, createPost)
+		if err != nil {
+			t.Fatalf("CreatePost failed: %v", err)
+		}
+		if len(post.Colors) != 4 {
+			t.Errorf("Expected 4 colors, got %d", len(post.Colors))
+		}
+	})
+
+	t.Run("creation with no colors", func(t *testing.T) {
+		createPost := &analogdb.CreatePost{
+			Title:     "Test Post",
+			Author:    "u/testuser",
+			Permalink: "test_post_unique_4",
 			Images:    make([]analogdb.Image, 4),
-			Colors:    []analogdb.Color{{Hex: "#FF0000"}}, // Only 1 color
 		}
 
 		_, err := service.CreatePost(ctx, createPost)
-		if err == nil {
-			t.Error("Expected error for insufficient colors")
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRUNPROCESSABLE {
+			t.Errorf("Expected code %s, got %s", analogdb.ERRUNPROCESSABLE, code)
+		}
+	})
+
+	t.Run("creation with too many colors", func(t *testing.T) {
+		createPost := &analogdb.CreatePost{
+			Title:     "Test Post",
+			Author:    "u/testuser",
+			Permalink: "test_post_unique_5",
+			Images:    make([]analogdb.Image, 4),
+			Colors:    make([]analogdb.Color, 6),
+		}
+
+		_, err := service.CreatePost(ctx, createPost)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRUNPROCESSABLE {
+			t.Errorf("Expected code %s, got %s", analogdb.ERRUNPROCESSABLE, code)
 		}
 	})
 }
