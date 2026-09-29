@@ -1147,8 +1147,8 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	high := p.Images[2]
 	raw := p.Images[3]
 
-	if len(p.Colors) != 5 {
-		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 5 colors"}
+	if len(p.Colors) == 0 || len(p.Colors) > 5 {
+		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 1 to 5 colors"}
 	}
 
 	post := &rawCreatePost{
