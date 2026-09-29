@@ -15,10 +15,10 @@
   margin-left: 0.2rem;
   margin-right: 0.2rem;
   border: solid;
-  border-color: lightgray;
+  border-color: var(--adb-pill-border);
   border-width: 1.5px;
   border-radius: 9px;
-  color: #636363;
+  color: var(--adb-pill-fg);
   margin-top: 0.4rem;
   margin-bottom: 0.4rem;
   padding-left: 0.6rem;
@@ -28,12 +28,12 @@
   font-weight: 500;
   font-size: 0.8rem;
   text-transform: uppercase;
-  background-color: #f7f7f7;
+  background-color: var(--adb-pill-bg);
 }
 .keyword:hover {
-  color: #f5f5f5;
-  background-color: #636363;
-  border-color: #636363;
+  color: var(--adb-pill-hover-fg);
+  background-color: var(--adb-pill-fg);
+  border-color: var(--adb-pill-fg);
 }
 
 .keywordButton {

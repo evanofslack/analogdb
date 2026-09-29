@@ -11,7 +11,7 @@
   line-height: 1.15;
   font-size: 1.5rem;
   text-align: left;
-  color: #2e2e2e;
+  color: var(--adb-heading);
 }
 
 .imageContainer {
@@ -42,14 +42,14 @@
 .adminSection {
   margin-top: 2rem;
   padding: 1.5rem;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
+  background-color: var(--adb-danger-bg);
+  border: 1px solid var(--adb-danger-border);
   border-radius: 8px;
 }
 
 .sectionTitle {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #b91c1c;
+  color: var(--adb-danger-fg);
   margin: 0 0 0.75rem 0;
 }

@@ -3,6 +3,7 @@
 import useIsAdmin from "@hooks/useIsAdmin";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ThemeToggle from "./themeToggle";
 import styles from "./webNav.module.css";
 
 export default function WebNav() {
@@ -37,6 +38,7 @@ export default function WebNav() {
             ADMIN
           </Link>
         )}
+        <ThemeToggle />
       </div>
     </nav>
   );

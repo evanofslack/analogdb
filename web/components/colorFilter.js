@@ -110,6 +110,7 @@ export default function ColorFilter({
       id: "black",
       label: "black",
       bg: "#141517",
+      outline: "var(--adb-swatch-black-outline)",
       tooltipColor: "dark.8",
       checkedColor: "dark.9",
       colorProp: "dark.9",
@@ -118,6 +119,7 @@ export default function ColorFilter({
       id: "white",
       label: "white",
       bg: "#e9ecef",
+      outline: "var(--adb-swatch-white-outline)",
       tooltipColor: "gray.2",
       checkedColor: "gray.3",
       colorProp: "gray.3",
@@ -153,7 +155,12 @@ export default function ColorFilter({
             >
               <Checkbox
                 styles={{
-                  input: { backgroundColor: colorOption.bg, border: "None" },
+                  input: {
+                    backgroundColor: colorOption.bg,
+                    border: colorOption.outline
+                      ? `1px solid ${colorOption.outline}`
+                      : "none",
+                  },
                 }}
                 size="md"
                 color={colorOption.colorProp}
