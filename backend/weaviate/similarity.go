@@ -17,6 +17,13 @@ import (
 
 const PictureClass = "Picture"
 
+// some posts have more than one picture object, so fetch extra
+// neighbors to still fill the limit after removing repeats
+const (
+	similarOverFetch = 3
+	maxSimilarFetch  = 200
+)
+
 var _ analogdb.SimilarityService = (*SimilarityService)(nil)
 
 type SimilarityService struct {
@@ -153,7 +160,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 		db.logger.ErrorContext(ctx, "Fail unmarshall similar posts from vector db", "post_id", postID, "error", err)
 		span.SetStatus(codes.Error, "Unmarshall embedding failed")
 		span.RecordError(err)
-		return ids, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("post %d not found", postID)}
+		return ids, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("post %d has no similarity embedding", postID)}
 	}
 	uuid := pics[0].uuid
 	span.AddEvent("Unmarshalled embedding", trace.WithAttributes(attribute.Int("postID", postID), attribute.String("uuid", uuid)))
@@ -179,7 +186,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 	result, err = db.db.GraphQL().Get().
 		WithClassName(PictureClass).
 		WithFields(fields...).
-		WithLimit(limit).
+		WithLimit(fetchLimit(limit)).
 		WithWhere(where).
 		WithNearObject(nearObject).
 		Do(ctx)
@@ -200,9 +207,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 	}
 	span.AddEvent("Unmarshalled embedding", trace.WithAttributes(attribute.Int("postID", postID), attribute.String("uuid", uuid)))
 
-	for _, pic := range pics {
-		ids = append(ids, pic.postID)
-	}
+	ids = similarPostIDs(pics, postID, limit)
 
 	if len(ids) == 0 {
 		db.logger.WarnContext(ctx, "Found zero similar posts", "post_id", postID)
@@ -211,6 +216,29 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 		return ids, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "no similar posts found"}
 	}
 	return ids, err
+}
+
+func fetchLimit(limit int) int {
+	if limit <= 0 {
+		return limit
+	}
+	return min(limit*similarOverFetch, max(limit, maxSimilarFetch))
+}
+
+// similarPostIDs returns the post ids of pics in order, without repeats
+// or the post itself, trimmed to limit
+func similarPostIDs(pics []pictureResponse, postID int, limit int) []int {
+	ids := make([]int, 0, len(pics))
+	for _, pic := range pics {
+		if pic.postID != postID {
+			ids = append(ids, pic.postID)
+		}
+	}
+	ids = analogdb.DedupeIDs(ids)
+	if limit > 0 && len(ids) > limit {
+		ids = ids[:limit]
+	}
+	return ids
 }
 
 func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder, error) {
