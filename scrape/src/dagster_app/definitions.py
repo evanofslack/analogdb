@@ -2,6 +2,8 @@ import dagster as dg
 from dagster_aws.s3 import S3Resource
 from dotenv import load_dotenv
 
+load_dotenv()
+
 from dagster_app.constants import (
     BLACKLIST_PATH,
     CAMERAS_PATH,
@@ -58,8 +60,6 @@ from .schedules import (
     update_post_keywords_schedule,
     update_post_scores_schedule,
 )
-
-load_dotenv()
 
 defs = dg.Definitions(
     assets=[

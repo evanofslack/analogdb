@@ -16,6 +16,7 @@ from scrape.models import (
     new_post_create,
 )
 
+from .constants import SUBREDDITS
 from .convert import convert_create
 from .resources import (
     AnalogDBResource,
@@ -138,25 +139,14 @@ def reddit_posts(
     reddit: RedditResource,
     analogdb_permalinks: List[str],
 ) -> Result[RedditPost]:
-    result_analog = reddit.client().scrape_posts(
-        "analog", 15, analogdb_permalinks, "top"
-    )
-    context.log.info(f"Scraped {len(result_analog.posts)} posts from r/analog")
-
-    result_analog_bw = reddit.client().scrape_posts(
-        "analog_bw", 2, analogdb_permalinks, "top"
-    )
-    context.log.info(f"Scraped {len(result_analog_bw.posts)} posts from r/analog_bw")
-
-    result_sprocket = reddit.client().scrape_posts(
-        "SprocketShots", 2, analogdb_permalinks, "top"
-    )
-    context.log.info(f"Scraped {len(result_sprocket.posts)} posts from r/sprocketshots")
-
-    posts = result_analog.posts + result_analog_bw.posts + result_sprocket.posts
-    scrape_errors = (
-        result_analog.errors + result_analog_bw.errors + result_sprocket.errors
-    )
+    r = reddit.client()
+    posts = []
+    scrape_errors = []
+    for subreddit, count in SUBREDDITS:
+        scraped = r.scrape_posts(subreddit, count, analogdb_permalinks, "top")
+        context.log.info(f"Scraped {len(scraped.posts)} posts from r/{subreddit}")
+        posts += scraped.posts
+        scrape_errors += scraped.errors
 
     data = {}
     status = {}
@@ -413,6 +403,7 @@ def patch_post_scores(
         context.log.info(
             f"No updated post scores to process for partition {context.partition_key}"
         )
+        return
 
     patch_posts(context, analogdb.client(), updated_post_scores, "scores")
 
