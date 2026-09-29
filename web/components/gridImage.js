@@ -9,7 +9,6 @@ export default function GridImage(props) {
 
   let low = post.images[0];
   let medium = post.images[1];
-  let placeholder = low;
 
   // 1st gen low res is too small, use medium res
   // 2nd gen low res is fine
@@ -26,15 +25,14 @@ export default function GridImage(props) {
           width={image.width}
           height={image.height}
           alt={`image ${post.id} by ${post.author}`}
-          // fill
-          sizes="(max-width: 768px) 100vw, 33vw"
-          placeholder="blur"
-          blurDataURL={placeholder.url}
-          quality={100}
+          sizes="(max-width: 720px) 50vw, (max-width: 1440px) 33vw, 25vw"
+          priority={props.priority}
+          fetchPriority={props.priority ? "high" : undefined}
           style={{
             objectFit: "cover",
             width: "100%",
             height: "auto",
+            backgroundColor: post.colors?.[0]?.hex,
           }}
         />
       </div>
