@@ -32,3 +32,11 @@ metrics:
 tracing:
   enabled: true
   endpoint: ""
+clickhouse:
+  enabled: false
+  host: ""
+  port: 9000
+  database: ""
+  username: ""
+  password: ""
+  table: "httprequests"

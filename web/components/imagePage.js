@@ -1,15 +1,19 @@
 "use client";
 
+import PostEditor from "@components/admin/postEditor";
 import Footer from "@components/footer";
 import ImageTag from "@components/imageTag";
 import useIsAdmin from "@hooks/useIsAdmin";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   AiOutlineArrowsAlt,
   AiOutlineDelete,
   AiOutlineDownload,
+  AiOutlineEdit,
 } from "react-icons/ai";
 import styles from "./imagePage.module.css";
 
@@ -58,6 +62,8 @@ export default function ImagePage(props) {
   let post = props.post;
   let similar = props.similar;
   const isAdmin = useIsAdmin();
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
   let image = post.images[2];
 
   return (
@@ -101,7 +107,19 @@ export default function ImagePage(props) {
                 <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
               </ActionIcon>
             </Tooltip>
-            {/* Show delete button only to admin */}
+            {/* Show edit and delete buttons only to admin */}
+            {isAdmin && (
+              <Tooltip label="edit" withArrow className="px-2">
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => setEditing(true)}
+                  aria-label="edit"
+                >
+                  <AiOutlineEdit size="24px" />
+                </ActionIcon>
+              </Tooltip>
+            )}
             {isAdmin && (
               <Tooltip label="delete" withArrow className="px-2">
                 <ActionIcon
@@ -117,6 +135,14 @@ export default function ImagePage(props) {
         </div>
       </div>
       <ImageTag post={post} similar={similar} />
+      {isAdmin && (
+        <PostEditor
+          post={post}
+          opened={editing}
+          onClose={() => setEditing(false)}
+          onSaved={() => router.refresh()}
+        />
+      )}
 
       <Footer />
     </div>

@@ -1,4 +1,4 @@
-import { deletePost } from "@app/actions/posts";
+import { removePost } from "@app/actions/admin";
 import { checkAdminAuth } from "@lib/auth";
 
 export async function DELETE(request, { params }) {
@@ -14,8 +14,8 @@ export async function DELETE(request, { params }) {
     if (Number.isNaN(id)) {
       return new Response("Invalid post id", { status: 400 });
     }
-    const res = await deletePost(id);
-    if (res.ok) {
+    const result = await removePost(id);
+    if (result.ok) {
       return new Response("Post deleted successfully", { status: 200 });
     } else {
       return new Response("Failed to delete post", { status: 500 });

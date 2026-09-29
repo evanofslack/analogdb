@@ -59,7 +59,18 @@ func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 		"redis":    s.CacheReadyService,
 		"weaviate": s.VectorReadyService,
 	}
+	statuses := s.checkDependencies(r.Context(), checks)
 
+	code := http.StatusOK
+	if statuses["postgres"] != readyOK {
+		code = http.StatusServiceUnavailable
+	}
+	if err := encodeResponse(w, r, code, statuses); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+func (s *Server) checkDependencies(ctx context.Context, checks map[string]analogdb.ReadyService) map[string]string {
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 	statuses := make(map[string]string, len(checks))
@@ -83,15 +94,8 @@ func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 			mu.Lock()
 			statuses[name] = status
 			mu.Unlock()
-		}(r.Context(), name, check)
+		}(ctx, name, check)
 	}
 	wg.Wait()
-
-	code := http.StatusOK
-	if statuses["postgres"] != readyOK {
-		code = http.StatusServiceUnavailable
-	}
-	if err := encodeResponse(w, r, code, statuses); err != nil {
-		s.writeError(w, r, err)
-	}
+	return statuses
 }

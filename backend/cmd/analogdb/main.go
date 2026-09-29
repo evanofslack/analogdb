@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/evanofslack/analogdb/clickhouse"
 	"github.com/evanofslack/analogdb/config"
 	"github.com/evanofslack/analogdb/events"
 	"github.com/evanofslack/analogdb/logger"
@@ -144,6 +145,22 @@ func main() {
 		eventService = events.NewNoop(logger)
 	}
 
+	// open connection to clickhouse if enabled, admin analytics only
+	var analytics *clickhouse.DB
+	if cfg.ClickHouse.Enabled {
+		chLogger := logger.WithSubsystem("clickhouse")
+		ch := cfg.ClickHouse
+		analytics, err = clickhouse.NewDB(ch.Host, ch.Port, ch.Database, ch.Username, ch.Password, ch.Table, chLogger)
+		if err != nil {
+			err = fmt.Errorf("startup clickhouse: %w", err)
+			fatal(logger, err)
+		}
+		if err := analytics.Open(); err != nil {
+			logger.Error("Fail open clickhouse, admin analytics disabled", "error", err)
+			analytics = nil
+		}
+	}
+
 	// initialize http server
 	httpLogger := logger.WithSubsystem("http")
 	server := server.New(cfg.HTTP.Port, httpLogger, metrics, cfg)
@@ -192,6 +209,11 @@ func main() {
 	server.SimilarityService = similarityService
 	server.EventService = eventService
 	server.VectorReadyService = dbVec
+	server.VectorCounter = dbVec
+	server.AdminService = postgres.NewAdminService(db)
+	if analytics != nil {
+		server.AnalyticsService = analytics
+	}
 	if rdb != nil {
 		server.CacheReadyService = rdb
 	}
@@ -225,6 +247,12 @@ func main() {
 
 	if err := dbVec.Close(); err != nil {
 		logger.Error("Fail shutdown vector DB", "error", err)
+	}
+
+	if analytics != nil {
+		if err := analytics.Close(); err != nil {
+			logger.Error("Fail shutdown clickhouse", "error", err)
+		}
 	}
 
 	if cfg.Metrics.Enabled {

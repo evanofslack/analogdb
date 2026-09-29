@@ -16,6 +16,7 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		r, auth := withAuthState(r)
 		ctx := r.Context()
 
 		next.ServeHTTP(ww, r)
@@ -27,10 +28,7 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 				return
 			}
 
-			authorized := false
-			if a := r.Context().Value(authKey); a != nil {
-				authorized = true
-			}
+			authorized := auth.ok
 
 			traceID := traceid.FromContext(r.Context())
 			remoteIP := getRealIP(r)

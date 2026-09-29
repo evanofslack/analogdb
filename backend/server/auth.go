@@ -9,13 +9,29 @@ import (
 
 type contextKey string
 
-const authKey contextKey = "authorized"
+const (
+	authKey      contextKey = "authorized"
+	authStateKey contextKey = "auth_state"
+)
+
+// authState lets logRequests see whether auth passed further down the chain
+type authState struct {
+	ok bool
+}
+
+func withAuthState(r *http.Request) (*http.Request, *authState) {
+	state := &authState{}
+	return r.WithContext(context.WithValue(r.Context(), authStateKey, state)), state
+}
 
 func (s *Server) auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authenticated := s.passBasicAuth(s.config.Auth.Username, s.config.Auth.Password, r)
 
 		if authenticated {
+			if state, ok := r.Context().Value(authStateKey).(*authState); ok {
+				state.ok = true
+			}
 			ctx := context.WithValue(r.Context(), authKey, true)
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return

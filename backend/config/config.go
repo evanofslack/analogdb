@@ -9,16 +9,17 @@ import (
 )
 
 type Config struct {
-	App      `yaml:"app"`
-	DB       `yaml:"database"`
-	Redis    `yaml:"redis"`
-	VectorDB `yaml:"vector_database"`
-	HTTP     `yaml:"http"`
-	Log      `yaml:"logger"`
-	Auth     `yaml:"auth"`
-	Metrics  `yaml:"metrics"`
-	Tracing  `yaml:"tracing"`
-	Kafka    `yaml:"kafka"`
+	App        `yaml:"app"`
+	DB         `yaml:"database"`
+	Redis      `yaml:"redis"`
+	VectorDB   `yaml:"vector_database"`
+	HTTP       `yaml:"http"`
+	Log        `yaml:"logger"`
+	Auth       `yaml:"auth"`
+	Metrics    `yaml:"metrics"`
+	Tracing    `yaml:"tracing"`
+	Kafka      `yaml:"kafka"`
+	ClickHouse `yaml:"clickhouse"`
 }
 
 type App struct {
@@ -84,6 +85,16 @@ type Kafka struct {
 	QueueSize    int           `yaml:"queue_size" env:"KAFKA_QUEUE_SIZE" env-default:"10000"`
 	BatchSize    int           `yaml:"batch_size" env:"KAFKA_BATCH_SIZE" env-default:"100"`
 	BatchTimeout time.Duration `yaml:"batch_timeout" env:"KAFKA_BATCH_TIMEOUT" env-default:"1s"`
+}
+
+type ClickHouse struct {
+	Enabled  bool   `yaml:"enabled" env:"CLICKHOUSE_ENABLED"`
+	Host     string `yaml:"host" env:"CLICKHOUSE_HOST"`
+	Port     int    `yaml:"port" env:"CLICKHOUSE_PORT" env-default:"9000"`
+	Database string `yaml:"database" env:"CLICKHOUSE_DATABASE"`
+	Username string `yaml:"username" env:"CLICKHOUSE_USERNAME"`
+	Password string `yaml:"password" env:"CLICKHOUSE_PASSWORD"`
+	Table    string `yaml:"table" env:"CLICKHOUSE_TABLE" env-default:"httprequests"`
 }
 
 func New(path string) (*Config, error) {
