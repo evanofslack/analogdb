@@ -23,7 +23,9 @@ export default function Grid(props) {
   return (
     <Masonry columnsCount={numColumn} gutter={"15px"}>
       {props.posts.map((post) => (
-        <div key={post.id}>
+        // Masonry wraps items in a flex row, so without a width they shrink to
+        // fit and unloaded images collapse to 0x0
+        <div key={post.id} style={{ width: "100%" }}>
           <GridImage post={post}></GridImage>
         </div>
       ))}
