@@ -1,6 +1,6 @@
 """
 Standalone test for LLM metadata extraction.
-Usage: uv run python test_metadata.py
+Usage: uv run python scripts/check_metadata_llm.py
 Requires: OPENROUTER_API_KEY, OPENROUTER_BASE_URL, OPENROUTER_MODEL env vars (or defaults)
 """
 import os
