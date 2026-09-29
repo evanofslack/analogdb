@@ -179,7 +179,7 @@ func main() {
 
 	// if cache enabled, replace the with cache implementation
 	if cfg.App.CacheEnabled {
-		similarityService = redis.NewCacheSimilarityService(rdb, similarityService)
+		similarityService = redis.NewCacheSimilarityService(rdb, similarityService, postService)
 	}
 
 	server.PostService = postService

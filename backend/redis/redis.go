@@ -2,30 +2,33 @@ package redis
 
 import (
 	"context"
-	"strings"
+	"errors"
 	"time"
 
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/metrics"
-	"github.com/go-redis/cache/v9"
+	rediscache "github.com/go-redis/cache/v9"
 	"github.com/redis/go-redis/v9"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/redis/go-redis/extra/redisotel/v9"
 )
 
 const (
-	cacheMissErr    = "cache: key is missing"
-	decodeArrayErr1 = "msgpack: invalid code=8c decoding array length"
-	decodeArrayErr2 = "msgpack: number of fields in array-encoded struct has changed"
+	// max ttl for the in memory cache of each instance
+	localTTL = time.Minute
 )
 
 type RDB struct {
-	db        *redis.Client
-	ctx       context.Context
-	cancel    func()
-	logger    *logger.Logger
-	metrics   *metrics.Metrics
-	collector *cacheCollector
+	db          *redis.Client
+	ctx         context.Context
+	cancel      func()
+	logger      *logger.Logger
+	metrics     *metrics.Metrics
+	collector   *cacheCollector
+	stats       *genStats
+	generations map[string]*generation
+	now         func() time.Time
 }
 
 // create a new redis database
@@ -49,16 +52,20 @@ func NewRDB(url string, logger *logger.Logger, metrics *metrics.Metrics, tracing
 	collector := newCacheCollector()
 
 	rdb := &RDB{
-		db:        db,
-		ctx:       ctx,
-		cancel:    cancel,
-		logger:    logger,
-		metrics:   metrics,
-		collector: collector,
+		db:          db,
+		ctx:         ctx,
+		cancel:      cancel,
+		logger:      logger,
+		metrics:     metrics,
+		collector:   collector,
+		stats:       newGenStats(),
+		generations: newGenerations(),
+		now:         time.Now,
 	}
 
 	// prometheus metrics for redis based caches
 	rdb.metrics.Registry.MustRegister(rdb.collector)
+	rdb.stats.register(rdb.metrics.Registry)
 	rdb.logger.Info("Registered cache collector with prometheus")
 
 	// otel instrumentation of redis
@@ -100,19 +107,23 @@ func (rdb *RDB) Close() error {
 }
 
 type Cache struct {
-	cache    *cache.Cache
+	cache    *rediscache.Cache
+	local    rediscache.LocalCache
+	redis    *redis.Client
 	instance string
 	stats    *cacheStats
 	logger   *logger.Logger
+	group    singleflight.Group
 }
 
 // create a new cache backed by redis
 func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
 	rdb.logger.Debug("Initializing new cache", "instance", instance)
 
-	inner := cache.New(&cache.Options{
+	local := rediscache.NewTinyLFU(size, min(ttl, localTTL))
+	inner := rediscache.New(&rediscache.Options{
 		Redis:        rdb.db,
-		LocalCache:   cache.NewTinyLFU(size, ttl),
+		LocalCache:   local,
 		StatsEnabled: true,
 	})
 
@@ -120,6 +131,8 @@ func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
 
 	cache := &Cache{
 		cache:    inner,
+		local:    local,
+		redis:    rdb.db,
 		instance: instance,
 		stats:    stats,
 		logger:   rdb.logger,
@@ -133,57 +146,110 @@ func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
 	return cache
 }
 
+// get looks up a key and decodes it into item.
+// Returns cache.ErrCacheMiss when the key is missing or can't be decoded.
 func (cache *Cache) get(ctx context.Context, key string, item interface{}) error {
 	cache.logger.DebugContext(ctx, "Getting item from cache", "instance", cache.instance)
 
-	// do the lookup on the inner cache
-	err := cache.cache.Get(ctx, key, item)
-	// we got an error
+	b, err := cache.getBytes(ctx, key)
+	if errors.Is(err, rediscache.ErrCacheMiss) {
+		cache.logger.DebugContext(ctx, "Cache miss", "instance", cache.instance)
+		cache.stats.incMisses()
+		return err
+	}
 	if err != nil {
-
-		// was it a cache miss?
-		if strings.Contains(err.Error(), cacheMissErr) {
-			cache.logger.DebugContext(ctx, "Cache miss", "instance", cache.instance)
-			cache.stats.incMisses()
-
-			// temporarily downlevel this error
-		} else if strings.Contains(err.Error(), decodeArrayErr1) || strings.Contains(err.Error(), decodeArrayErr2) {
-			cache.logger.WarnContext(ctx, "Cache decode error", "instance", cache.instance, "error", err)
-			cache.stats.incErrors()
-
-			// or an actual error
-		} else {
-			cache.logger.WarnContext(ctx, "Fail get item from cache", "instance", cache.instance, "error", err)
-			cache.stats.incErrors()
-		}
+		cache.logger.WarnContext(ctx, "Fail get item from cache", "instance", cache.instance, "error", err)
+		cache.stats.incErrors(errorKindRedis)
 		return err
 	}
 
-	// no error means cache hit
+	if err := cache.cache.Unmarshal(b, item); err != nil {
+		cache.logger.WarnContext(ctx, "Cache decode error", "instance", cache.instance, "error", err)
+		cache.stats.incErrors(errorKindDecode)
+		_ = cache.delete(ctx, key)
+		return rediscache.ErrCacheMiss
+	}
+
 	cache.logger.DebugContext(ctx, "Cache hit", "instance", cache.instance)
 	cache.stats.incHits()
 	return nil
 }
 
-func (cache *Cache) set(ctx context.Context, item *cache.Item) error {
+func (cache *Cache) getBytes(ctx context.Context, key string) ([]byte, error) {
+	if b, ok := cache.local.Get(key); ok {
+		return b, nil
+	}
+	b, err := cache.redis.Get(ctx, key).Bytes()
+	if errors.Is(err, redis.Nil) {
+		return nil, rediscache.ErrCacheMiss
+	}
+	if err != nil {
+		return nil, err
+	}
+	cache.local.Set(key, b)
+	return b, nil
+}
+
+func (cache *Cache) set(ctx context.Context, key string, value interface{}, ttl time.Duration) {
 	cache.logger.DebugContext(ctx, "Set item in cache", "instance", cache.instance)
 
-	err := cache.cache.Set(item)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cacheOpTimeout)
+	defer cancel()
+
+	err := cache.cache.Set(&rediscache.Item{
+		Ctx:   ctx,
+		Key:   key,
+		Value: value,
+		TTL:   ttl,
+	})
 	if err != nil {
 		cache.logger.ErrorContext(ctx, "Fail set item in cache", "instance", cache.instance, "error", err)
+		cache.stats.incErrors(errorKindRedis)
 	}
-
-	cache.logger.DebugContext(ctx, "Add item in cache", "instance", cache.instance)
-	return err
 }
 
 func (cache *Cache) delete(ctx context.Context, key string) error {
 	cache.logger.DebugContext(ctx, "Delete item in cache", "instance", cache.instance)
 
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cacheOpTimeout)
+	defer cancel()
+
 	err := cache.cache.Delete(ctx, key)
 	if err != nil {
 		cache.logger.ErrorContext(ctx, "Fail delete item in cache", "instance", cache.instance, "error", err)
+		cache.stats.incErrors(errorKindRedis)
 	}
 	cache.logger.DebugContext(ctx, "Finish delete item in cache", "instance", cache.instance)
 	return err
+}
+
+// once runs load for a key at most once at a time and stores the result.
+// Concurrent misses on the same key share one call to load.
+func (cache *Cache) once(ctx context.Context, key string, load func(ctx context.Context) (any, error)) (any, error) {
+	v, err, _ := cache.group.Do(key, func() (any, error) {
+		return load(context.WithoutCancel(ctx))
+	})
+	return v, err
+}
+
+// fetch returns the value under key or loads, stores and returns it.
+func fetch[T any](ctx context.Context, cache *Cache, key string, ttl time.Duration, load func(ctx context.Context) (T, error)) (T, error) {
+	var value T
+	if err := cache.get(ctx, key, &value); err == nil {
+		return value, nil
+	}
+
+	v, err := cache.once(ctx, key, func(ctx context.Context) (any, error) {
+		value, err := load(ctx)
+		if err != nil {
+			return nil, err
+		}
+		cache.set(ctx, key, value, ttl)
+		return value, nil
+	})
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	return v.(T), nil
 }

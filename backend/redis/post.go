@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/cache/v9"
 	"github.com/mitchellh/hashstructure/v2"
 
 	"github.com/evanofslack/analogdb"
@@ -14,6 +13,8 @@ import (
 const (
 	// timeout for cache operations
 	cacheOpTimeout = time.Second * 5
+	// timeout for removing a post after a write
+	evictTimeout = time.Second
 
 	// name of post cache
 	postInstance = "post"
@@ -53,7 +54,12 @@ func NewCachePostService(rdb *RDB, dbService analogdb.PostService) *PostService 
 }
 
 func (s *PostService) CreatePost(ctx context.Context, post *analogdb.CreatePost) (*analogdb.Post, error) {
-	return s.dbService.CreatePost(ctx, post)
+	created, err := s.dbService.CreatePost(ctx, post)
+	if err != nil {
+		return nil, err
+	}
+	s.rdb.bumpGen(ctx, postsEntity, filmsEntity, camerasEntity)
+	return created, nil
 }
 
 func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
@@ -69,17 +75,28 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 		return s.dbService.FindPosts(ctx, filter)
 	}
 
-	postsHash := fmt.Sprint(hash)
-	postsCountHash := fmt.Sprintf("%s-%s", postsHash, "count")
+	// the count does not depend on the page or order, so all pages share it
+	countFilter := *filter
+	countFilter.Limit = nil
+	countFilter.Cursor = nil
+	countFilter.Keyset = nil
+	countFilter.Sort = nil
+	countFilter.Seed = nil
+	countHash, err := hashstructure.Hash(countFilter, hashstructure.FormatV2, nil)
+	if err != nil {
+		s.rdb.logger.ErrorContext(ctx, "Fail hash post count filter", "instance", s.postsCache.instance, "error", err)
+		return s.dbService.FindPosts(ctx, filter)
+	}
+
+	postsKey := s.rdb.genCacheKey(ctx, postsEntity, fmt.Sprint(hash))
+	countKey := s.rdb.genCacheKey(ctx, postsEntity, fmt.Sprintf("count:%d", countHash))
 
 	var posts []*analogdb.Post
 	var count int
 
-	// try to get posts from cache
-	postsErr := s.postsCache.get(ctx, postsHash, &posts)
-
-	// try to get posts count from cache
-	countErr := s.postsCache.get(ctx, postsCountHash, &count)
+	// try to get posts and count from cache
+	postsErr := s.postsCache.get(ctx, postsKey, &posts)
+	countErr := s.postsCache.get(ctx, countKey, &count)
 
 	// no error means we found in cache
 	if postsErr == nil && countErr == nil {
@@ -87,41 +104,25 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	}
 
 	// fallback to db
-	posts, count, err = s.dbService.FindPosts(ctx, filter)
+	v, err := s.postsCache.once(ctx, postsKey, func(ctx context.Context) (any, error) {
+		posts, count, err := s.dbService.FindPosts(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+		s.postsCache.set(ctx, postsKey, posts, postsTTL)
+		s.postsCache.set(ctx, countKey, count, postsTTL)
+		return postsResult{posts: posts, count: count}, nil
+	})
 	if err != nil {
 		return nil, 0, err
 	}
+	result := v.(postsResult)
+	return result.posts, result.count, nil
+}
 
-	// add posts to cache
-	// do this async so response is returned quicker
-	go func() {
-		s.rdb.logger.DebugContext(ctx, "Add posts and counts to cache", "instance", s.postsCache.instance)
-
-		// create a new context; orignal one will be canceled when request is closed
-		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
-		defer cancel()
-
-		// add posts to cache
-		if err := s.postsCache.set(ctx, &cache.Item{
-			Ctx:   ctx,
-			Key:   postsHash,
-			Value: &posts,
-			TTL:   postsTTL,
-		}); err != nil {
-			s.rdb.logger.ErrorContext(ctx, "Fail add posts to cache", "instance", s.postsCache.instance, "error", err)
-		}
-		// add posts count to cache
-		if err := s.postsCache.set(ctx, &cache.Item{
-			Ctx:   ctx,
-			Key:   postsCountHash,
-			Value: &count,
-			TTL:   postsTTL,
-		}); err != nil {
-			s.rdb.logger.ErrorContext(ctx, "Fail add posts count to cache", "instance", s.postsCache.instance, "error", err)
-		}
-	}()
-
-	return posts, count, nil
+type postsResult struct {
+	posts []*analogdb.Post
+	count int
 }
 
 func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post, error) {
@@ -140,56 +141,59 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 	}
 
 	// error means we must fallback to db
-	post, err = s.dbService.FindPostByID(ctx, id)
+	v, err := s.postCache.once(ctx, postKey, func(ctx context.Context) (any, error) {
+		before, genErr := s.rdb.readGen(ctx, postsEntity)
+		post, err := s.dbService.FindPostByID(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+
+		// a write during the lookup may have made this post stale, only cache it if none happened
+		after, err := s.rdb.readGen(ctx, postsEntity)
+		if genErr == nil && err == nil && before == after {
+			s.postCache.set(ctx, postKey, post, postTTL)
+		}
+		return post, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	// add post to cache
-	// do this async so response is returned quicker
-	go func() {
-		s.rdb.logger.DebugContext(ctx, "Add post by id to cache", "instance", s.postCache.instance, "post_id", id)
-		// create a new context; orignal one will be canceled when request is closed
-		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
-		defer cancel()
-
-		// add to cache
-		if err := s.postCache.set(ctx, &cache.Item{
-			Ctx:   ctx,
-			Key:   postKey,
-			Value: &post,
-			TTL:   postTTL,
-		}); err != nil {
-			s.rdb.logger.ErrorContext(ctx, "Fail add post by id to cache", "instance", s.postCache.instance, "post_id", id, "error", err)
-		}
-	}()
-	return post, nil
+	return v.(*analogdb.Post), nil
 }
 
 func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, id int) error {
 	s.rdb.logger.DebugContext(ctx, "Start patch post with cache", "instance", s.postCache.instance, "post_id", id)
 	defer s.rdb.logger.DebugContext(ctx, "Finish patch post with cache", "instance", s.postCache.instance, "post_id", id)
 
-	// remove post from the cache
-	go s.removePostFromCache(ctx, id)
-
-	return s.dbService.PatchPost(ctx, patch, id)
+	s.removePostFromCache(ctx, id)
+	if err := s.dbService.PatchPost(ctx, patch, id); err != nil {
+		return err
+	}
+	s.invalidatePost(ctx, id)
+	return nil
 }
 
 func (s *PostService) DeletePost(ctx context.Context, id int) error {
 	s.rdb.logger.DebugContext(ctx, "Start delete post with cache", "instance", s.postCache.instance, "post_id", id)
 	defer s.rdb.logger.DebugContext(ctx, "Finish delete post with cache", "instance", s.postCache.instance, "post_id", id)
 
-	// cache is now stale, delete old entries
-	go func() {
-		s.removePostFromCache(ctx, id)
-	}()
-
-	return s.dbService.DeletePost(ctx, id)
+	s.removePostFromCache(ctx, id)
+	if err := s.dbService.DeletePost(ctx, id); err != nil {
+		return err
+	}
+	s.invalidatePost(ctx, id)
+	return nil
 }
 
 func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 	return s.dbService.AllPostIDs(ctx)
+}
+
+// invalidatePost runs after a write is committed
+func (s *PostService) invalidatePost(ctx context.Context, id int) {
+	s.rdb.bumpGen(ctx, postsEntity, filmsEntity, camerasEntity)
+	s.removePostFromCache(ctx, id)
+	s.rdb.stats.invalidations.WithLabelValues(postInstance).Inc()
 }
 
 func (s *PostService) removePostFromCache(ctx context.Context, id int) {
@@ -197,8 +201,7 @@ func (s *PostService) removePostFromCache(ctx context.Context, id int) {
 
 	postKey := fmt.Sprint(id)
 
-	// create a new context
-	ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), evictTimeout)
 	defer cancel()
 	if err := s.postCache.delete(ctx, postKey); err != nil {
 		s.rdb.logger.ErrorContext(ctx, "Fail remove post from cache", "instance", s.postCache.instance, "post_id", id, "error", err)

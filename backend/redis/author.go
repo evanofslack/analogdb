@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb"
-	"github.com/go-redis/cache/v9"
 )
 
 const (
@@ -40,38 +39,9 @@ func (s *AuthorService) FindAuthors(ctx context.Context) ([]string, error) {
 		s.rdb.logger.DebugContext(ctx, "Finish find authors with cache", "instance", s.cache.instance)
 	}()
 
-	var authors []string
+	key := s.rdb.genCacheKey(ctx, postsEntity, authorsKey)
 
-	// try to get from the cache
-	err := s.cache.get(ctx, authorsKey, &authors)
-
-	// no error means we found it
-	if err == nil {
-		return authors, nil
-	}
-
-	// fallback to postgres if not in cache
-	authors, err = s.dbService.FindAuthors(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// add to cache
-	// do this async so response is returned quicker
-	go func() {
-		s.rdb.logger.DebugContext(ctx, "Add authors to cache", "instance", s.cache.instance)
-
-		// create a new context; orignal one will be canceled when request is closed
-		ctx, cancel := context.WithTimeout(context.Background(), cacheOpTimeout)
-		defer cancel()
-
-		_ = s.cache.set(ctx, &cache.Item{
-			Ctx:   ctx,
-			Key:   authorsKey,
-			Value: &authors,
-			TTL:   authorsTTL,
-		})
-	}()
-
-	return authors, nil
+	return fetch(ctx, s.cache, key, authorsTTL, func(ctx context.Context) ([]string, error) {
+		return s.dbService.FindAuthors(ctx)
+	})
 }

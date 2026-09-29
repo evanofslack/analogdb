@@ -36,8 +36,6 @@ func (ss SimilarityService) FindSimilarPosts(ctx context.Context, similarityFilt
 	ctx, span := ss.db.tracer.Tracer.Start(ctx, "vector:find_similar_posts")
 	defer span.End()
 
-	var posts []*analogdb.Post
-
 	// get similar IDs
 	ids, err := ss.db.getSimilarPostIDs(ctx, similarityFilter)
 	if err != nil {
@@ -46,8 +44,18 @@ func (ss SimilarityService) FindSimilarPosts(ctx context.Context, similarityFilt
 
 	// turn IDs into posts
 	filter := analogdb.NewPostFilterWithIDs(ids)
-	posts, _, err = ss.postService.FindPosts(ctx, filter)
-	return posts, err
+	posts, _, err := ss.postService.FindPosts(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	return analogdb.OrderPostsByIDs(posts, ids), nil
+}
+
+func (ss SimilarityService) FindSimilarPostIDs(ctx context.Context, similarityFilter *analogdb.PostSimilarityFilter) ([]int, error) {
+	ctx, span := ss.db.tracer.Tracer.Start(ctx, "vector:find_similar_post_ids")
+	defer span.End()
+
+	return ss.db.getSimilarPostIDs(ctx, similarityFilter)
 }
 
 func (db *DB) deletePost(ctx context.Context, id int) error {

@@ -12,6 +12,7 @@ type SimilarityService interface {
 	EncodePost(ctx context.Context, id int) error
 	BatchEncodePosts(ctx context.Context, ids []int, batchSize int) ([]int, error)
 	FindSimilarPosts(ctx context.Context, filter *PostSimilarityFilter) ([]*Post, error)
+	FindSimilarPostIDs(ctx context.Context, filter *PostSimilarityFilter) ([]int, error)
 	DeletePost(ctx context.Context, id int) error
 }
 
@@ -20,3 +21,18 @@ type SimilarityService interface {
 type ContextKey string
 
 const EncodeContextKey ContextKey = "encode"
+
+// OrderPostsByIDs returns the posts in the order of ids, skipping ids with no post
+func OrderPostsByIDs(posts []*Post, ids []int) []*Post {
+	byID := make(map[int]*Post, len(posts))
+	for _, p := range posts {
+		byID[p.Id] = p
+	}
+	ordered := make([]*Post, 0, len(posts))
+	for _, id := range ids {
+		if p, ok := byID[id]; ok {
+			ordered = append(ordered, p)
+		}
+	}
+	return ordered
+}
