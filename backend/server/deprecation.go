@@ -6,15 +6,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
 )
 
 var sunsetDate = time.Date(2027, time.March, 31, 0, 0, 0, 0, time.UTC).Format(http.TimeFormat)
-
-const (
-	webUserAgentPrefix     = "analogdb-web/"
-	scraperUserAgentPrefix = "analogdb-scraper/"
-)
 
 func (s *Server) deprecationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -33,9 +29,9 @@ func (s *Server) deprecationMiddleware(next http.Handler) http.Handler {
 
 func legacyClient(userAgent string) string {
 	switch {
-	case strings.HasPrefix(userAgent, webUserAgentPrefix):
+	case strings.HasPrefix(userAgent, analogdb.WebUserAgentPrefix):
 		return "web"
-	case strings.HasPrefix(userAgent, scraperUserAgentPrefix):
+	case strings.HasPrefix(userAgent, analogdb.ScraperUserAgentPrefix):
 		return "scraper"
 	default:
 		return "other"
