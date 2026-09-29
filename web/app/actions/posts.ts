@@ -1,16 +1,13 @@
 "use server";
 
-import { checkAdminAuth } from "@lib/auth";
 import { postApi, postsApi } from "@lib/client";
 import {
-  PostIdDeleteRequest,
   PostIdSimilarGetRequest,
   PostsGetRequest,
-  ServerDeleteResponse,
   ServerPostResponse,
   ServerSimilarPostsResponse,
 } from "analogdb-generated";
-import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 
 const maxPageSize = 100;
 
@@ -110,23 +107,6 @@ export async function getPostsTotalCount(): Promise<number> {
     return response.meta.totalPosts;
   } catch (error) {
     console.error("get posts total count request failed:", error);
-    throw error;
-  }
-}
-
-export async function deletePost(id: number): Promise<ServerDeleteResponse> {
-  if (!(await checkAdminAuth())) {
-    throw new Error("Unauthorized");
-  }
-  try {
-    const params: PostIdDeleteRequest = { id: id };
-    const response = await postApi.postIdDelete(params);
-    revalidatePath(`/post/${id}`);
-    revalidatePath("/");
-    revalidateTag("posts");
-    return response;
-  } catch (error) {
-    console.error("delete post request failed:", error);
     throw error;
   }
 }
