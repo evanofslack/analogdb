@@ -86,9 +86,13 @@ func (s *SimilarityService) FindSimilarPostIDs(ctx context.Context, filter *anal
 
 	key := fmt.Sprintf("similar:%d", hash)
 
-	return fetch(ctx, s.similarCache, key, similarTTL, func(ctx context.Context) ([]int, error) {
+	ids, err := fetch(ctx, s.similarCache, key, similarTTL, func(ctx context.Context) ([]int, error) {
 		return s.dbService.FindSimilarPostIDs(ctx, filter)
 	})
+	if err != nil {
+		return nil, err
+	}
+	return analogdb.DedupeIDs(ids), nil
 }
 
 func (s *SimilarityService) DeletePost(ctx context.Context, id int) error {
