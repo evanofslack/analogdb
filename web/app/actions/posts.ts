@@ -10,7 +10,7 @@ import {
   ServerPostResponse,
   ServerSimilarPostsResponse,
 } from "analogdb-generated";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 
 const maxPageSize = 100;
 
@@ -69,6 +69,26 @@ export async function getPosts(
   }
 }
 
+const getPostsCached = unstable_cache(
+  (params: PostsGetRequest) => postsApi.postsGet(params),
+  ["posts"],
+  { revalidate: 60, tags: ["posts"] }
+);
+
+export async function getFirstPosts(
+  params: PostsGetRequest
+): Promise<ServerPostResponse> {
+  try {
+    const response = await getPostsCached(
+      sanitizeParams(params, postsParamKeys)
+    );
+    return response;
+  } catch (error) {
+    console.error("get first posts request failed:", error);
+    throw error;
+  }
+}
+
 export async function getPostsSimilar(
   params: PostIdSimilarGetRequest
 ): Promise<ServerSimilarPostsResponse> {
@@ -103,6 +123,7 @@ export async function deletePost(id: number): Promise<ServerDeleteResponse> {
     const response = await postApi.postIdDelete(params);
     revalidatePath(`/post/${id}`);
     revalidatePath("/");
+    revalidateTag("posts");
     return response;
   } catch (error) {
     console.error("delete post request failed:", error);
