@@ -21,9 +21,13 @@ export default function Documentation() {
         "set the number of records to return on each page (default 20, maximum 200)",
     },
     {
-      field: "page_id",
+      field: "cursor",
       description:
-        "request a specific page of results. Each request returns a next_page_id that can be used to access the next page of results",
+        "request the next page of results. Each request returns a next_cursor that can be passed back to access the next page of results",
+    },
+    {
+      field: "page_id",
+      description: "deprecated, use cursor",
     },
   ];
 
@@ -323,9 +327,14 @@ export default function Documentation() {
       description: "maximum number of posts returned per page",
     },
     {
+      field: "next_cursor",
+      type: "string",
+      description: "cursor for the next page, empty on the last page",
+    },
+    {
       field: "next_page_id",
       type: "integer",
-      description: "unique identifier of next page",
+      description: "deprecated, use next_cursor",
     },
     {
       field: "next_page_url",
@@ -364,8 +373,14 @@ export default function Documentation() {
       options: "1-200",
     },
     {
+      param: "cursor",
+      description: "cursor of page to retrieve, from next_cursor",
+      default: "null",
+      options: "",
+    },
+    {
       param: "page_id",
-      description: "ID of page to retrieve",
+      description: "deprecated, use cursor",
       default: "null",
       options: "",
     },
@@ -640,7 +655,7 @@ export default function Documentation() {
           {!isMobile && (
             <div className={styles.codeblock}>
               <CodeHighlight
-                code="curl https://api.analogdb.com/v1/posts?page_size=10&page_id=774"
+                code="curl https://api.analogdb.com/v1/posts?page_size=10&cursor=eyJzIjoidGltZSIsInYiOjE3OTA1Mzk5MjIsImlkIjo0MDA1Mn0"
                 language="bash"
                 copyLabel="copy example"
                 copiedLabel="copied"

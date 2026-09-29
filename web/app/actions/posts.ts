@@ -16,7 +16,6 @@ const maxPageSize = 100;
 
 const postsParamKeys = [
   "pageSize",
-  "pageId",
   "cursor",
   "sort",
   "seed",

@@ -2,10 +2,10 @@
 
 import useCameras from "@hooks/useCameras";
 import useFilms from "@hooks/useFilms";
-import useKeyPress from "@hooks/useKeyPress";
 import usePosts from "@hooks/usePosts";
+import { pickSeed } from "@lib/seed";
 import { useBreakpoint } from "@providers/breakpoint";
-import { useEffect, useMemo } from "react";
+import { useMemo, useState } from "react";
 import FilterBar from "./filterBar";
 import Footer from "./footer";
 import styles from "./gallery.module.css";
@@ -14,26 +14,14 @@ import InfiniteGallery from "./infiniteGallery";
 import ScrollTop from "./scrollTop";
 
 export default function Gallery() {
-  const { response, isLoading, filters, setters, executeQuery, limits } =
-    usePosts();
+  const { filters, setFilters, limits, ...posts } = usePosts();
 
-  const {
-    response: filmsResponse,
-    isLoading: isFilmLoading,
-    filters: filmFilters,
-    setters: filmSetters,
-    executeQuery: executeFilmQuery,
-  } = useFilms(500);
+  const [filmMenuOpened, setFilmMenuOpened] = useState(false);
+  const [cameraMenuOpened, setCameraMenuOpened] = useState(false);
 
-  const {
-    response: camerasResponse,
-    isLoading: isCameraLoading,
-    filters: cameraFilters,
-    setters: cameraSetters,
-    executeQuery: executeCameraQuery,
-  } = useCameras(500);
+  const { data: filmsResponse } = useFilms(500, filmMenuOpened);
+  const { data: camerasResponse } = useCameras(500, cameraMenuOpened);
 
-  const returnPress = useKeyPress("Enter");
   const breakpoints = useBreakpoint();
 
   const onlyIcon = breakpoints["xs"] || breakpoints["sm"];
@@ -65,20 +53,50 @@ export default function Gallery() {
       .filter((v, i, arr) => arr.findIndex((x) => x.label === v.label) === i);
   }, [camerasResponse]);
 
-  // Handle Enter key press for text search
-  useEffect(() => {
-    if (returnPress) {
-      executeQuery();
+  const setSort = (sort) => {
+    if (sort === "random") {
+      setFilters({ sort: sort, seed: pickSeed() });
+    } else {
+      setFilters({ sort: sort, seed: null });
     }
-  }, [returnPress, executeQuery]);
+  };
 
   return (
     <div className={styles.main}>
       <Header />
       <div className={styles.margin}>
         <FilterBar
-          {...filters}
-          {...setters}
+          sort={filters.sort}
+          nsfw={filters.nsfw}
+          bw={filters.bw}
+          sprocket={filters.sprocket}
+          color={filters.color}
+          text={filters.text}
+          widthMin={filters.widthMin}
+          widthMax={filters.widthMax}
+          heightMin={filters.heightMin}
+          heightMax={filters.heightMax}
+          ratioMin={filters.ratioMin}
+          ratioMax={filters.ratioMax}
+          filmMake={filters.film_make}
+          filmType={filters.film_type}
+          cameraMake={filters.camera_make}
+          cameraModel={filters.camera_model}
+          setSort={setSort}
+          setNsfw={(nsfw) => setFilters({ nsfw })}
+          setBw={(bw) => setFilters({ bw })}
+          setSprocket={(sprocket) => setFilters({ sprocket })}
+          setColor={(color) => setFilters({ color })}
+          setText={(text) => setFilters({ text: text || null })}
+          setSizes={(sizes) => setFilters(sizes)}
+          setFilm={(make, type) =>
+            setFilters({ film_make: make, film_type: type })
+          }
+          setCamera={(make, model) =>
+            setFilters({ camera_make: make, camera_model: model })
+          }
+          onFilmMenuOpen={() => setFilmMenuOpened(true)}
+          onCameraMenuOpen={() => setCameraMenuOpened(true)}
           filmOptions={filmOptions}
           cameraOptions={cameraOptions}
           onlyIcon={onlyIcon}
@@ -90,7 +108,7 @@ export default function Gallery() {
           ratioMinLimit={limits.ratioMin}
           ratioMaxLimit={limits.ratioMax}
         />
-        <InfiniteGallery response={response} isLoading={isLoading} />
+        <InfiniteGallery {...posts} />
         <ScrollTop />
       </div>
       <Footer />
