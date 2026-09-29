@@ -114,6 +114,7 @@ export default function ImagePage(props) {
                   variant="subtle"
                   color="gray"
                   onClick={() => setEditing(true)}
+                  aria-label="edit"
                 >
                   <AiOutlineEdit size="24px" />
                 </ActionIcon>
