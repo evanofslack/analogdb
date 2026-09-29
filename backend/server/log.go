@@ -54,7 +54,7 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 			bytesOut := ww.BytesWritten()
 
 			// log end request
-			server.logger.InfoContext(ctx, "Handle request",
+			server.logger.DebugContext(ctx, "Handle request",
 				"trace_id", traceID,
 				"remote_ip", remoteIP,
 				"path", path,

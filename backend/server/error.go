@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/evanofslack/analogdb"
@@ -33,10 +34,17 @@ func badRequest(format string, a ...any) error {
 func (s *Server) writeError(w http.ResponseWriter, r *http.Request, err error) {
 	ctx := r.Context()
 	code, message := analogdb.ErrorCode(err), analogdb.ErrorMessage(err)
-	s.logger.ErrorContext(ctx, message, "error", err, "method", r.Method, "path", r.URL.Path, "code", code)
+	status := errorStatusCode(code)
+
+	// client errors are expected, keep ERROR for server failures
+	level := slog.LevelError
+	if status < http.StatusInternalServerError {
+		level = slog.LevelInfo
+	}
+	s.logger.Log(ctx, level, message, "error", err, "method", r.Method, "path", r.URL.Path, "code", code, "status", status)
 
 	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(errorStatusCode(code))
+	w.WriteHeader(status)
 	marshallErr := json.NewEncoder(w).Encode(&ErrorResponse{Error: message})
 	if marshallErr != nil {
 		s.logger.ErrorContext(ctx, "Fail json marshall server error", "error", err)
