@@ -495,3 +495,35 @@ func TestGenerationMemo(t *testing.T) {
 		t.Errorf("invalidations = %v, want 1", got)
 	}
 }
+
+func TestSimilarNeverReturnsDuplicates(t *testing.T) {
+	ctx := context.Background()
+	rdb, _ := newMiniRDB(t)
+	db := newFakePostService(1, 2, 3, 4)
+	posts := NewCachePostService(rdb, db)
+	vec := &fakeSimilarityService{similar: map[int][]int{1: {3, 2, 3, 4, 2, 3}}}
+	similar := NewCacheSimilarityService(rdb, vec, posts)
+
+	id := 1
+	filter := &analogdb.PostSimilarityFilter{ID: &id}
+	for range 2 {
+		ids, err := similar.FindSimilarPostIDs(ctx, filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !slices.Equal(ids, []int{3, 2, 4}) {
+			t.Errorf("similar ids = %v, want [3 2 4]", ids)
+		}
+
+		got, err := similar.FindSimilarPosts(ctx, filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if ids := postIDs(got); !slices.Equal(ids, []int{3, 2, 4}) {
+			t.Errorf("similar posts = %v, want [3 2 4]", ids)
+		}
+	}
+	if calls := vec.calls.Load(); calls != 1 {
+		t.Errorf("expected similar ids to be cached, got %d calls", calls)
+	}
+}
