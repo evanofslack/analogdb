@@ -104,12 +104,19 @@ func (db *DB) Close() error {
 	return db.conn.Close()
 }
 
-func (db *DB) query(ctx context.Context, query string, args ...any) (driver.Rows, context.CancelFunc, error) {
+// query runs with the query timeout, call done to close the rows
+func (db *DB) query(ctx context.Context, query string, args ...any) (driver.Rows, func(), error) {
 	ctx, cancel := context.WithTimeout(ctx, queryTimeout)
 	rows, err := db.conn.Query(ctx, query, args...)
 	if err != nil {
 		cancel()
 		return nil, nil, err
 	}
-	return rows, cancel, nil
+	done := func() {
+		if err := rows.Close(); err != nil {
+			db.logger.Warn("Fail close clickhouse rows", "error", err)
+		}
+		cancel()
+	}
+	return rows, done, nil
 }

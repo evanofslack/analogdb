@@ -25,13 +25,12 @@ func (db *DB) Audit(ctx context.Context, filter *analogdb.AuditFilter) ([]*analo
 			AND start_time < ?
 		ORDER BY start_time DESC
 		LIMIT ?`, timeExpr, clientExpr, db.table)
-	rows, cancel, err := db.query(ctx, query, before, filter.Limit)
+	rows, done, err := db.query(ctx, query, before, filter.Limit)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail audit query", "error", err)
 		return nil, err
 	}
-	defer cancel()
-	defer rows.Close()
+	defer done()
 
 	entries := make([]*analogdb.AuditEntry, 0)
 	for rows.Next() {

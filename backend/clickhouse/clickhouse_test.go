@@ -74,7 +74,7 @@ func mustOpen(t *testing.T) *DB {
 	if err := db.Open(); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { db.Close() })
+	t.Cleanup(func() { _ = db.Close() })
 
 	schema, err := os.ReadFile(filepath.Join("testdata", "httprequests.sql"))
 	if err != nil {

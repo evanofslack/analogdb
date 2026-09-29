@@ -81,12 +81,11 @@ func (db *DB) trafficSeries(ctx context.Context, since int64, bucketExpr string)
 		FROM (SELECT start_time, response_code, %s AS client FROM %s WHERE start_time >= ?)
 		GROUP BY bucket
 		ORDER BY bucket`, bucketExpr, clientExpr, db.table)
-	rows, cancel, err := db.query(ctx, query, since)
+	rows, done, err := db.query(ctx, query, since)
 	if err != nil {
 		return nil, err
 	}
-	defer cancel()
-	defer rows.Close()
+	defer done()
 
 	series := make([]analogdb.TrafficBucket, 0)
 	for rows.Next() {
@@ -110,12 +109,11 @@ func (db *DB) trafficTotals(ctx context.Context, since int64, t *analogdb.Traffi
 			toInt64(countIf(response_code >= 500))
 		FROM %s
 		WHERE start_time >= ?`, db.table)
-	rows, cancel, err := db.query(ctx, query, since)
+	rows, done, err := db.query(ctx, query, since)
 	if err != nil {
 		return err
 	}
-	defer cancel()
-	defer rows.Close()
+	defer done()
 
 	if rows.Next() {
 		if err := rows.Scan(&t.Requests, &t.UniqueIPs, &t.Status2, &t.Status3, &t.Status4, &t.Status5); err != nil {
@@ -138,12 +136,11 @@ func (db *DB) trafficRoutes(ctx context.Context, since int64) ([]analogdb.Traffi
 		GROUP BY route
 		ORDER BY requests DESC, route
 		LIMIT ?`, routeExpr, db.table)
-	rows, cancel, err := db.query(ctx, query, since, topLimit)
+	rows, done, err := db.query(ctx, query, since, topLimit)
 	if err != nil {
 		return nil, err
 	}
-	defer cancel()
-	defer rows.Close()
+	defer done()
 
 	routes := make([]analogdb.TrafficRoute, 0)
 	for rows.Next() {
@@ -164,12 +161,11 @@ func (db *DB) trafficPosts(ctx context.Context, since int64) ([]analogdb.Traffic
 		GROUP BY post_id
 		ORDER BY requests DESC, post_id
 		LIMIT ?`, postIDExpr, db.table)
-	rows, cancel, err := db.query(ctx, query, since, topLimit)
+	rows, done, err := db.query(ctx, query, since, topLimit)
 	if err != nil {
 		return nil, err
 	}
-	defer cancel()
-	defer rows.Close()
+	defer done()
 
 	posts := make([]analogdb.TrafficPost, 0)
 	for rows.Next() {
@@ -189,12 +185,11 @@ func (db *DB) trafficLegacy(ctx context.Context, since int64) ([]analogdb.Traffi
 		WHERE start_time >= ?
 		GROUP BY client
 		ORDER BY client`, clientExpr, legacyExpr, db.table)
-	rows, cancel, err := db.query(ctx, query, since)
+	rows, done, err := db.query(ctx, query, since)
 	if err != nil {
 		return nil, err
 	}
-	defer cancel()
-	defer rows.Close()
+	defer done()
 
 	legacy := make([]analogdb.TrafficLegacy, 0)
 	for rows.Next() {
@@ -241,12 +236,11 @@ func (db *DB) trafficIPs(ctx context.Context, since int64) ([]analogdb.TrafficCo
 }
 
 func (db *DB) trafficCounts(ctx context.Context, query string, withClient bool, args ...any) ([]analogdb.TrafficCount, error) {
-	rows, cancel, err := db.query(ctx, query, args...)
+	rows, done, err := db.query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
-	defer cancel()
-	defer rows.Close()
+	defer done()
 
 	counts := make([]analogdb.TrafficCount, 0)
 	for rows.Next() {
@@ -270,12 +264,11 @@ func (db *DB) trafficErrors(ctx context.Context, since int64) ([]analogdb.Traffi
 		WHERE start_time >= ? AND response_code >= 500
 		ORDER BY start_time DESC
 		LIMIT ?`, timeExpr, db.table)
-	rows, cancel, err := db.query(ctx, query, since, errorsLimit)
+	rows, done, err := db.query(ctx, query, since, errorsLimit)
 	if err != nil {
 		return nil, err
 	}
-	defer cancel()
-	defer rows.Close()
+	defer done()
 
 	errs := make([]analogdb.TrafficError, 0)
 	for rows.Next() {
