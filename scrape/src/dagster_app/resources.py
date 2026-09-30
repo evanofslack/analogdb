@@ -9,6 +9,7 @@ from openai import OpenAI
 from scrape.image import ImageProcessor
 from scrape.keywords import KeywordBlacklist, KeywordExtractor
 from scrape.metadata import MetadataExtractor
+from scrape.metadata_llm import MetadataExtractorV2
 from scrape.reddit import RedditScraper
 
 
@@ -53,6 +54,7 @@ class MetadataResource(ConfigurableResource):
     openai_key: str = ""
     openai_model: str = "google/gemini-2.5-flash"
     batch_size: int = 25
+    version: str = "v1"
 
     def client(self) -> MetadataExtractor:
         ai = OpenAI(
@@ -61,6 +63,13 @@ class MetadataResource(ConfigurableResource):
         )
         extractor = MetadataExtractor(ai, self.openai_model, self.batch_size)
         return extractor
+
+    def client_v2(self) -> MetadataExtractorV2:
+        ai = OpenAI(
+            base_url=self.openai_url,
+            api_key=self.openai_key,
+        )
+        return MetadataExtractorV2(ai, self.openai_model)
 
 
 class StorageResource(ConfigurableResource):
