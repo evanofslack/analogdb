@@ -1,0 +1,33 @@
+[private]
+default:
+    @just --list
+
+# Start the dev server with hot reload
+dev:
+    npm run dev
+
+build:
+    npm run build
+
+lint:
+    npm run lint
+
+fmt:
+    npx prettier --write .
+
+# Start the web container
+up:
+    docker compose up -d
+
+down:
+    docker compose down --remove-orphans
+
+# Rebuild and start the web container
+rebuild:
+    docker compose up -d --force-recreate --build
+
+logs:
+    docker compose logs --follow
+
+clean:
+    rm -rf .next
