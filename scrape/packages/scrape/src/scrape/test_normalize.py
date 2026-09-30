@@ -25,5 +25,11 @@ def test_normalize_key(text, key):
 
 
 def test_normalize_tokens():
-    assert normalize_tokens("Nikon F-3, Portra 400!") == ["nikon", "f", "3", "portra", "400"]
+    assert normalize_tokens("Nikon F-3, Portra 400!") == [
+        "nikon",
+        "f",
+        "3",
+        "portra",
+        "400",
+    ]
     assert normalize_tokens("Voigtländer") == ["voigtlander"]
