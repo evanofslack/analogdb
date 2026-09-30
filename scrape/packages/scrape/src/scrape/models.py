@@ -1,5 +1,5 @@
-from dataclasses import dataclass, fields
-from typing import List, Optional
+from dataclasses import dataclass, field, fields
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -70,6 +70,35 @@ class PhotoMetadata:
 class ExtractResult:
     metadata: List[PhotoMetadata]
     failed: int
+
+
+@dataclass
+class MetadataPost:
+    title: str
+    description: Optional[str] = None
+    op_comments: List[str] = field(default_factory=list)
+
+
+@dataclass
+class UnmatchedMention:
+    kind: str
+    raw: str
+    key: str
+    make: Optional[str] = None
+    model: Optional[str] = None
+    type: Optional[str] = None
+    speed: Optional[int] = None
+
+    def to_dict(self) -> Dict:
+        return {k: v for k, v in self.__dict__.items() if v is not None}
+
+
+@dataclass
+class MatchResult:
+    proposed: PhotoMetadata
+    unmatched: List[UnmatchedMention] = field(default_factory=list)
+    flags: List[str] = field(default_factory=list)
+    raw: Optional[Dict] = None
 
 
 @dataclass
