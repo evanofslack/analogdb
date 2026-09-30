@@ -10,7 +10,7 @@ AnalogDB is a full-stack application for managing and discovering analog photogr
 
 - **Backend (`/backend/`)**: Go HTTP API using chi router, PostgreSQL for data, Redis for caching, Weaviate for vector similarity
 - **Frontend (`/web/`)**: Next.js React application with TypeScript, CSS modules, Mantine components
-- **Scraping (`/scraper/`, `/scrape/`)**: Python services for data ingestion and ETL pipelines using Dagster
+- **Scraping (`/scrape/`)**: Python services for data ingestion and ETL pipelines using Dagster
 - **Consumer (`/consumer/`)**: Go service for processing analytics events with Kafka and ClickHouse
 - **Infrastructure (`/infra/`)**: Docker compose for observability stack (Prometheus, Grafana, Loki, Tempo)
 - **API Clients (`/api/clients/`)**: Auto-generated TypeScript and Python clients from OpenAPI spec
@@ -45,9 +45,6 @@ npm install                # May be needed after client regeneration
 ```bash
 # Scraping service (from /scrape/)
 uv sync                    # Install dependencies
-
-# Legacy scraper (from /scraper/)
-# Uses Pipfile/Pipenv for dependency management
 ```
 
 ### API Client Generation
