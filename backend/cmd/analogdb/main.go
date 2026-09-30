@@ -211,6 +211,7 @@ func main() {
 	server.VectorReadyService = dbVec
 	server.VectorCounter = dbVec
 	server.AdminService = postgres.NewAdminService(db)
+	server.ExtractionService = postgres.NewExtractionService(db)
 	if analytics != nil {
 		server.AnalyticsService = analytics
 	}

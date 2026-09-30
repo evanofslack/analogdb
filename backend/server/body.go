@@ -20,7 +20,11 @@ const (
 )
 
 func (s *Server) decodeBody(w http.ResponseWriter, r *http.Request, v any, message string) error {
-	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxBodyBytes))
+	return s.decodeBodyLimit(w, r, v, message, maxBodyBytes)
+}
+
+func (s *Server) decodeBodyLimit(w http.ResponseWriter, r *http.Request, v any, message string, limit int64) error {
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, limit))
 	if err != nil {
 		var maxBytesErr *http.MaxBytesError
 		if errors.As(err, &maxBytesErr) {

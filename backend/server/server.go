@@ -55,6 +55,7 @@ type Server struct {
 	SimilarityService analogdb.SimilarityService
 	EventService      analogdb.EventService
 	AdminService      analogdb.AdminService
+	ExtractionService analogdb.ExtractionService
 	AnalyticsService  analogdb.AnalyticsService
 	VectorCounter     analogdb.VectorCounter
 

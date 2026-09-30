@@ -58,6 +58,7 @@ func (s *Server) mountAdminHandlers(r chi.Router) {
 		r.Get("/posts/missing", s.getAdminMissingPosts)
 		r.Get("/traffic", s.getAdminTraffic)
 		r.Get("/audit", s.getAdminAudit)
+		s.mountExtractionHandlers(r)
 	})
 }
 
