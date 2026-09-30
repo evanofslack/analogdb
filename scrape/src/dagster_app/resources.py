@@ -9,7 +9,6 @@ from openai import OpenAI
 from scrape.image import ImageProcessor
 from scrape.keywords import KeywordBlacklist, KeywordExtractor
 from scrape.metadata import MetadataExtractor
-from scrape.metadata_llm import MetadataExtractorV2
 from scrape.reddit import RedditScraper
 
 
@@ -52,28 +51,27 @@ class ImageProcessorResource(ConfigurableResource):
 class MetadataResource(ConfigurableResource):
     openai_url: str = ""
     openai_key: str = ""
-    openai_model: str = "google/gemini-2.5-flash"
-    batch_size: int = 25
-    version: str = "v1"
+    openai_model: str = "google/gemini-2.5-flash-lite"
+    batch_size: int = 20
 
     def client(self) -> MetadataExtractor:
         ai = OpenAI(
             base_url=self.openai_url,
             api_key=self.openai_key,
         )
-        extractor = MetadataExtractor(ai, self.openai_model, self.batch_size)
-        return extractor
-
-    def client_v2(self) -> MetadataExtractorV2:
-        ai = OpenAI(
-            base_url=self.openai_url,
-            api_key=self.openai_key,
-        )
-        return MetadataExtractorV2(ai, self.openai_model)
+        return MetadataExtractor(ai, self.openai_model, self.batch_size)
 
 
 class StorageResource(ConfigurableResource):
     s3_resource: S3Resource
+
+    def get_object(self, bucket: str, key: str) -> Optional[bytes]:
+        """File data, or None when the key doesn't exist."""
+        s3 = self.s3_resource.get_client()
+        try:
+            return s3.get_object(Bucket=bucket, Key=key)["Body"].read()
+        except s3.exceptions.NoSuchKey:
+            return None
 
     def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> None:
         """Upload file data. The caller builds the public CloudFront URL."""

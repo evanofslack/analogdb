@@ -6,9 +6,36 @@ from typing import Dict, Iterable, List, Optional
 from analogdb.models import Camera, Film
 from rapidfuzz import fuzz
 
-from .metadata import MetadataExtractor
 from .models import MatchResult, MetadataPost, PhotoMetadata, UnmatchedMention
 from .normalize import normalize_key, normalize_tokens
+
+VALID_FILM_SPEEDS = {
+    1,
+    2,
+    3,
+    6,
+    12,
+    20,
+    25,
+    50,
+    64,
+    80,
+    100,
+    125,
+    160,
+    200,
+    250,
+    320,
+    400,
+    500,
+    800,
+    1000,
+    1600,
+    3200,
+    6400,
+}
+VALID_FOCAL_LENGTH_RANGE = (8, 800)
+VALID_APERTURE_RANGE = (0.7, 32.0)
 
 FUZZY_MIN = 92
 FUZZY_GAP = 5
@@ -623,7 +650,7 @@ def valid_speed(speed) -> Optional[int]:
         speed = int(speed)
     except (TypeError, ValueError):
         return None
-    return speed if speed in MetadataExtractor.VALID_FILM_SPEEDS else None
+    return speed if speed in VALID_FILM_SPEEDS else None
 
 
 def valid_focal_length(value) -> Optional[int]:
@@ -631,7 +658,7 @@ def valid_focal_length(value) -> Optional[int]:
         value = int(float(value))
     except (TypeError, ValueError):
         return None
-    low, high = MetadataExtractor.VALID_FOCAL_LENGTH_RANGE
+    low, high = VALID_FOCAL_LENGTH_RANGE
     return value if low <= value <= high else None
 
 
@@ -645,7 +672,7 @@ def valid_aperture(value) -> Optional[str]:
     if not m:
         return None
     f = float(m.group(1))
-    low, high = MetadataExtractor.VALID_APERTURE_RANGE
+    low, high = VALID_APERTURE_RANGE
     if not low <= f <= high:
         return None
     return f"f/{int(f)}" if f == int(f) else f"f/{f}"

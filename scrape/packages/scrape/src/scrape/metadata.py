@@ -203,11 +203,13 @@ RESPONSE_SCHEMA = _object(
 )
 
 
-def post_input(post_id: int, post: MetadataPost, limit: int = 2000) -> str:
+def post_text(post: MetadataPost, limit: int = 1980) -> str:
+    """Title, description and OP comments as the LLM sees them, one per line."""
+
     def clean(text: Optional[str]) -> str:
         return " ".join((text or "").split())
 
-    lines = [f"post_id: {post_id}", f"title: {clean(post.title)}"]
+    lines = [f"title: {clean(post.title)}"]
     if clean(post.description):
         lines.append(f"description: {clean(post.description)}")
     text = "\n".join(lines)
@@ -216,6 +218,10 @@ def post_input(post_id: int, post: MetadataPost, limit: int = 2000) -> str:
     if comments and room > 0:
         text += f"\nop comments: {comments[:room]}"
     return text[:limit]
+
+
+def post_input(post_id: int, post: MetadataPost) -> str:
+    return f"post_id: {post_id}\n{post_text(post)}"
 
 
 class Transcriber:
@@ -327,7 +333,7 @@ def parse_transcripts(content: Optional[str], ids: List[int]) -> Dict[int, Dict]
     return by_id
 
 
-class MetadataExtractorV2:
+class MetadataExtractor:
     """Transcribe with the LLM, then match to the catalog in code."""
 
     def __init__(self, openai: OpenAI, llm_model: str, batch_size: int = 20):
