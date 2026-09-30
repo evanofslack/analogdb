@@ -11,7 +11,7 @@ import (
 // ensure interface is implemented
 var _ analogdb.AdminService = (*AdminService)(nil)
 
-var adminTables = []string{"pictures", "keywords", "colors", "post_updates", "cameras", "films"}
+var adminTables = []string{"pictures", "keywords", "colors", "post_updates", "cameras", "films", "post_extractions"}
 
 type AdminService struct {
 	db *DB
