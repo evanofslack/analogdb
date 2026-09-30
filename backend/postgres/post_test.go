@@ -477,6 +477,32 @@ func TestPostService_PatchPost(t *testing.T) {
 		}
 	})
 
+	t.Run("patch clears metadata", func(t *testing.T) {
+		make, speed := "nikon", 400
+		if err := service.PatchPost(ctx, &analogdb.PatchPost{CameraMake: &make, FilmSpeed: &speed}, 2); err != nil {
+			t.Fatalf("PatchPost failed: %v", err)
+		}
+		patch := &analogdb.PatchPost{Clear: []string{"film_speed", "camera_make"}}
+		if err := service.PatchPost(ctx, patch, 2); err != nil {
+			t.Fatalf("PatchPost clear failed: %v", err)
+		}
+		post, err := service.FindPostByID(ctx, 2)
+		if err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if post.FilmSpeed != nil || post.CameraMake != nil {
+			t.Errorf("want cleared film speed and camera make, got %v %v", post.FilmSpeed, post.CameraMake)
+		}
+	})
+
+	t.Run("patch rejects unknown clear field", func(t *testing.T) {
+		patch := &analogdb.PatchPost{Clear: []string{"score"}}
+		err := service.PatchPost(ctx, patch, 1)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRBADREQUEST {
+			t.Errorf("Expected code %s, got %s", analogdb.ERRBADREQUEST, code)
+		}
+	})
+
 	t.Run("patch with no fields", func(t *testing.T) {
 		patch := &analogdb.PatchPost{} // Empty patch
 
