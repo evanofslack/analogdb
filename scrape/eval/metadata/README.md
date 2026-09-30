@@ -8,13 +8,15 @@ Run everything from `scrape/`. The scripts read `scrape/.env` (OpenRouter, Reddi
 
 ## Files
 
+Everything in `data/` is local and not committed. Rebuild it with the steps below.
+
 | File | What |
 |---|---|
 | `data/sample.json` | the posts: text, OP comments, image, stored metadata, stratum, set |
 | `data/catalog.json` | catalog snapshot the labels were made against |
 | `data/drafts.json` | draft labels from a strong model, the starting point for review |
 | `data/gold.json` | reviewed labels, the truth for scoring |
-| `data/review.html` | the labeling page (not committed, rebuild it) |
+| `data/review.html` | the labeling page |
 | `data/runs/<tag>.json` | cached predictions of one scored run |
 | `data/reports/<tag>.md`, `.html`, `.json` | score reports |
 | `normalize_cases.json` | shared normalization fixture (Python and Go) |
@@ -40,8 +42,8 @@ that still has room:
 OP comments come from the S3 cache (`analog-comments/<id>.json`), or Reddit when missing. Only
 the post author's own comments are kept, oldest first, 1,500 characters in total.
 
-The API's random order shifts as posts are added, so `sample.json` is the fixed set. Don't
-resample unless you mean to relabel.
+The API's random order shifts as posts are added, so the same seed gives a different sample
+later. Keep `sample.json` and `gold.json` together: labels only match the sample they came from.
 
 ## 2. Draft labels
 
