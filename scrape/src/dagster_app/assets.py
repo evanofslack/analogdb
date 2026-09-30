@@ -16,6 +16,7 @@ from scrape.models import (
     new_post_create,
 )
 
+from .catalog import UploadPlan, camera_upload_plan, film_upload_plan
 from .constants import SUBREDDITS
 from .convert import convert_create
 from .resources import (
@@ -481,7 +482,7 @@ def updated_post_title_metadatas(
             aperture=m.aperture,
         )
         context.log.debug(
-            f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ""}, metadata={patch}"
+            f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ''}, metadata={patch}"
         )
         patches.append((p.id, patch))
 
@@ -624,7 +625,7 @@ def debug_posts(context: dg.AssetExecutionContext, final_posts) -> None:
     logger.info(f"Would upload {final_posts.successful_count()} posts")
 
     for i, (_, p) in enumerate(final_posts.successful().items()):
-        logger.info(f"Post {i+1}: {p.title} by {p.author} with score {p.score}")
+        logger.info(f"Post {i + 1}: {p.title} by {p.author} with score {p.score}")
 
     posts_dict = [asdict(p) for _, p in final_posts.successful().items()]
     with open("debug_posts.json", "w") as f:
@@ -640,10 +641,10 @@ def upload_films(
     analogdb: AnalogDBResource,
 ) -> dg.MaterializeResult:
     analog = analogdb.client()
-    success = 0
+    plan = film_upload_plan(films_json.client(), analog.get_films())
     failed = 0
 
-    for f in films_json.client():
+    for f in plan.new + plan.updated:
         film = adb.FilmCreate(
             type=f["type"],
             make=f["make"],
@@ -662,16 +663,8 @@ def upload_films(
         context.log.debug(
             f"Uploaded film, make={film.make}, type={film.type}, speed={film.speed}"
         )
-        success += 1
 
-    context.log.info(f"Uploaded {success} films")
-    counts = {"success": success, "failed": failed}
-    if failed > 0:
-        raise dg.Failure(
-            description=f"Failed to upload {failed} of {success + failed} films",
-            metadata=counts,
-        )
-    return dg.MaterializeResult(metadata=counts)
+    return upload_result(context, "films", plan, failed)
 
 
 @dg.asset(group_name="scrape")
@@ -681,10 +674,10 @@ def upload_cameras(
     analogdb: AnalogDBResource,
 ) -> dg.MaterializeResult:
     analog = analogdb.client()
-    success = 0
+    plan = camera_upload_plan(cameras_json.client(), analog.get_cameras())
     failed = 0
 
-    for f in cameras_json.client():
+    for f in plan.new + plan.updated:
         camera = adb.CameraCreate(
             make=f["make"],
             model=f["model"],
@@ -699,13 +692,31 @@ def upload_cameras(
             )
             continue
         context.log.debug(f"Uploaded camera, make={camera.make}, model={camera.model}")
-        success += 1
 
-    context.log.info(f"Uploaded {success} cameras")
-    counts = {"success": success, "failed": failed}
+    return upload_result(context, "cameras", plan, failed)
+
+
+def upload_result(
+    context: dg.AssetExecutionContext, kind: str, plan: UploadPlan, failed: int
+) -> dg.MaterializeResult:
+    """Only new and changed entries are sent: the backend upserts, and every
+    conflicting insert still uses up an id."""
+    counts = {
+        "new": len(plan.new),
+        "updated": len(plan.updated),
+        "unchanged": plan.unchanged,
+        "failed": failed,
+        "not_in_json": len(plan.not_in_json),
+    }
+    context.log.info(f"Uploaded {kind}: {counts}")
+    if plan.not_in_json:
+        context.log.warning(
+            f"Live {kind} missing from the json: {', '.join(plan.not_in_json)}"
+        )
+    sent = len(plan.new) + len(plan.updated)
     if failed > 0:
         raise dg.Failure(
-            description=f"Failed to upload {failed} of {success + failed} cameras",
+            description=f"Failed to upload {failed} of {sent} {kind}",
             metadata=counts,
         )
     return dg.MaterializeResult(metadata=counts)
