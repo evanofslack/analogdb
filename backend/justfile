@@ -1,0 +1,82 @@
+colima_sock := home_directory() / ".colima/default/docker.sock"
+testcontainers_env := if path_exists(colima_sock) == "true" { "DOCKER_HOST=unix://" + colima_sock + " TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock TESTCONTAINERS_RYUK_DISABLED=true" } else { "" }
+
+export BENCH_DSN := env("BENCH_DSN", "postgres://postgres:postgres@localhost:55432/analogdb?sslmode=disable")
+bench_posts := env("BENCH_POSTS", "100000")
+bench_args := env("BENCH_ARGS", "-benchtime=2s")
+bench_explain := env("BENCH_EXPLAIN", "")
+psql := env("PSQL", "docker exec -i analogdb-bench psql -U postgres -d analogdb")
+
+[private]
+default:
+    @just --list
+
+# Start all backend containers
+up:
+    docker compose up -d
+
+# Stop backend containers
+down:
+    docker compose down --remove-orphans
+
+# Rebuild and start backend containers
+rebuild:
+    docker compose up -d --build
+
+# Follow logs, optionally for one service
+logs *service:
+    docker compose logs --follow {{ service }}
+
+# Start only postgres
+db:
+    docker compose up -d postgres
+
+# Start postgres, weaviate and i2v-neural
+infra:
+    docker compose up -d postgres weaviate i2v-neural
+
+# Run the API on the host
+run:
+    go run ./cmd/analogdb
+
+# Open psql in the postgres container
+psql:
+    docker compose exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+
+# Run tests, using colima for testcontainers when present
+test *args:
+    {{ testcontainers_env }} go test -race {{ args }} ./...
+
+# Run tests with coverage and open the report
+cover:
+    {{ testcontainers_env }} go test -coverprofile=coverage.out ./...
+    go tool cover -html=coverage.out
+
+lint:
+    go vet ./...
+
+fmt:
+    gofmt -w .
+
+clean:
+    rm -f coverage.out
+
+# Start the bench postgres on port 55432
+bench-db:
+    docker run -d --name analogdb-bench -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=analogdb -p 55432:5432 postgres:15
+
+# Apply migrations to the bench database
+bench-migrate:
+    ANALOGDB_BENCH_DSN="{{ BENCH_DSN }}" ANALOGDB_BENCH_MIGRATE=1 go test ./postgres -run '^TestBenchMigrate$' -count=1
+
+# Migrate and seed the bench database
+bench-seed: bench-migrate
+    {{ psql }} -v posts={{ bench_posts }} < bench/seed.sql
+
+# Run the post query benchmark
+bench:
+    ANALOGDB_BENCH_DSN="{{ BENCH_DSN }}" ANALOGDB_BENCH_EXPLAIN="{{ if bench_explain == "" { "" } else { absolute_path(bench_explain) } }}" go test ./postgres -run '^$' -bench '^BenchmarkFindPosts$' {{ bench_args }}
+
+# Remove the bench database
+bench-clean:
+    docker rm -f analogdb-bench

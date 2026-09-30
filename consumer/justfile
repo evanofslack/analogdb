@@ -1,0 +1,34 @@
+[private]
+default:
+    @just --list
+
+# Start the consumer and clickhouse
+up:
+    docker compose up -d
+
+down:
+    docker compose down --remove-orphans
+
+# Rebuild and start containers
+rebuild:
+    docker compose up -d --build
+
+# Follow logs, optionally for one service
+logs *service:
+    docker compose logs --follow {{ service }}
+
+# Open clickhouse-client in the clickhouse container
+clickhouse:
+    docker compose exec clickhouse sh -c 'clickhouse-client --user "$CLICKHOUSE_USER" --password "$CLICKHOUSE_PASSWORD" -d "$CLICKHOUSE_DB"'
+
+test *args:
+    go test -race {{ args }} ./...
+
+lint:
+    go vet ./...
+
+fmt:
+    gofmt -w .
+
+clean:
+    rm -f coverage.out
