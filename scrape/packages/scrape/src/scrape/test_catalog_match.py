@@ -334,7 +334,7 @@ def test_db_alias(matcher):
     m = CatalogMatcher(
         cameras,
         [],
-        [CatalogAlias("camera", "hasselblad500classic", "hasselblad", "500c/m")],
+        [CatalogAlias("camera", "hasselblad", "500c/m", "500 classic")],
     )
     r = m.match(
         {
@@ -349,6 +349,49 @@ def test_db_alias(matcher):
         MetadataPost(title="Hasselblad 500 Classic"),
     )
     assert r.proposed.camera_model == "500c/m"
+
+
+def test_aliases_match_with_and_without_make():
+    cameras = [Camera(id=1, make="nikon", model="f501", description="")]
+    films = [
+        Film(
+            id=1,
+            make="kodak",
+            type="colorplus 200",
+            speed=200,
+            color_type="color",
+            description="",
+        )
+    ]
+    m = CatalogMatcher(
+        cameras,
+        films,
+        [
+            CatalogAlias("camera", "nikon", "f501", "n2020"),
+            CatalogAlias("film", "kodak", "colorplus 200", "kodacolor 200"),
+            CatalogAlias("film", "kodak", "missing", "nothing"),
+        ],
+    )
+    for make, type in [
+        ("Kodak", "Kodacolor 200"),
+        (None, "Kodacolor 200"),
+        ("Kodak", "Kodacolor"),
+    ]:
+        text = f"{make or ''} {type}"
+        r = m.match(
+            {"films": [{"text": text, "make": make, "type": type, "box_speed": None}]},
+            MetadataPost(title=text),
+        )
+        assert (r.proposed.film_make, r.proposed.film_type, r.proposed.film_speed) == (
+            "kodak",
+            "colorplus 200",
+            200,
+        ), type
+    r = m.match(
+        {"cameras": [{"text": "Nikon N2020", "make": "Nikon", "model": "N2020"}]},
+        MetadataPost(title="Nikon N2020"),
+    )
+    assert (r.proposed.camera_make, r.proposed.camera_model) == ("nikon", "f501")
 
 
 def test_helpers():

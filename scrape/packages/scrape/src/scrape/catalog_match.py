@@ -119,10 +119,12 @@ def _digits(key: str) -> List[str]:
 
 @dataclass
 class CatalogAlias:
+    """Another name for a catalog entry: alias "kodacolor 200" of kodak "colorplus 200"."""
+
     kind: str
-    key: str
     make: str
     name: str
+    alias: str
 
 
 @dataclass
@@ -284,14 +286,27 @@ class CatalogMatcher:
         self.camera_aliases: Dict[str, Camera] = {}
         self.film_aliases: Dict[str, Film] = {}
         for a in aliases or []:
+            make = a.make.lower().strip()
             if a.kind == "camera":
-                c = self._find_camera(a.make, a.name)
-                if c:
-                    self.camera_aliases[a.key] = c
+                c = self._find_camera(make, a.name)
+                if not c:
+                    continue
+                self.camera_aliases[_key(f"{make} {a.alias}")] = c
+                key = _key(a.alias)
+                self.models.setdefault(make, {}).setdefault(key, []).append(c)
+                self.models_any.setdefault(key, []).append(c)
             elif a.kind == "film":
-                f = self._find_film(a.make, a.name)
-                if f:
-                    self.film_aliases[a.key] = f
+                f = self._find_film(make, a.name)
+                if not f:
+                    continue
+                self.film_aliases[_key(f"{make} {a.alias}")] = f
+                for key in {
+                    _key(a.alias),
+                    *film_type_keys(a.alias, self.film_make_words),
+                }:
+                    if key:
+                        self.types.setdefault(make, {}).setdefault(key, []).append(f)
+                        self.types_any.setdefault(key, []).append(f)
 
     def _find_camera(self, make: str, model: str) -> Optional[Camera]:
         hits = self.models.get(make.lower(), {}).get(_key(model), [])
