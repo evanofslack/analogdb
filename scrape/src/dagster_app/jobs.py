@@ -19,6 +19,7 @@ from .assets import (
     updated_reddit_comments,
     upload_posts,
 )
+from .backfill import backfill_post_metadata, rematch_post_metadata
 
 scrape_job = dg.define_asset_job(
     name="scrape_and_upload",
@@ -65,4 +66,16 @@ patch_keywords_job = dg.define_asset_job(
         patch_post_keywords,
         patch_post_metadata,
     ],
+)
+
+
+backfill_metadata_job = dg.define_asset_job(
+    name="backfill_metadata",
+    tags={"reddit": "true"},
+    selection=[backfill_post_metadata],
+)
+
+rematch_metadata_job = dg.define_asset_job(
+    name="rematch_metadata",
+    selection=[rematch_post_metadata],
 )

@@ -34,10 +34,13 @@ from .assets import (
     upload_films,
     upload_posts,
 )
+from .backfill import backfill_post_metadata, rematch_post_metadata
 from .jobs import (
+    backfill_metadata_job,
     patch_descriptions_job,
     patch_keywords_job,
     patch_scores_job,
+    rematch_metadata_job,
     scrape_job,
 )
 from .resources import (
@@ -59,6 +62,8 @@ from .schedules import (
 
 defs = dg.Definitions(
     assets=[
+        backfill_post_metadata,
+        rematch_post_metadata,
         analogdb_permalinks,
         analogdb_posts,
         debug_posts,
@@ -112,6 +117,8 @@ defs = dg.Definitions(
         "io_manager": io_manager(),
     },
     jobs=[
+        backfill_metadata_job,
+        rematch_metadata_job,
         scrape_job,
         patch_descriptions_job,
         patch_scores_job,
