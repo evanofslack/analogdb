@@ -117,11 +117,6 @@
   },
   {
     "make": "canon",
-    "model": "eos 1n",
-    "description": "The Canon EOS-1N, released in November 1994, was Canon's flagship professional 35mm SLR that superseded the original EOS-1 with significant improvements including a 5-point autofocus system, enhanced weather sealing, and expanded exposure capabilities. The camera featured a rugged polycarbonate body without built-in flash (intentionally omitted for professional durability), 100% viewfinder coverage, and multiple metering modes including 16-zone evaluative and spot metering with shutter speeds from 30 seconds to 1/8000s. Optional power accessories like the PB-E1 Power Booster could increase the frame rate from 3 to 6 fps, while a specialized EOS-1N RS variant offered 10 fps shooting with a fixed pellicle mirror. The camera also served as the foundation for Canon's first digital SLRs through collaboration with Kodak in the late 1990s, before being replaced by the EOS-1V in 2000."
-  },
-  {
-    "make": "canon",
     "model": "eos 100",
     "description": "The Canon EOS 100 (Elan in America, EOS100 QD in Japan) is a 35mm autofocus SLR film camera that was released in August 1991. It is a mid-range 35mm autofocus SLR notable for introducing silent operation mechanisms in film advance and rewind, reducing noise to as little as one-eighth compared to earlier models. It uses the Canon EF lens mount system and features TTL phase-detection autofocus with both One-Shot AF and Predictive AI Servo AF, and a cross-type sensor for improved accuracy. The electronic shutter offers speeds from 30 seconds to 1/4000 second, alongside various auto and manual exposure modes including shutter-priority, aperture-priority, depth-of-field AE, and multiple program modes. The built-in flash automatically adjusts its coverage to match lens focal lengths (28mm, 50mm, and 80mm), and offers red-eye reduction, second-curtain sync, and flash exposure compensation. The camera provides advanced metering options with a 6-zone evaluative system and partial and center-weighted averaging, as well as a Quick Control Dial for real-time exposure adjustments while viewing through the viewfinder. Additional features include a 0.75x magnification pentaprism viewfinder, external LCD display for key settings, automatic film loading and rewind, support for multiple exposures and custom functions, all powered by a 6V lithium battery."
   },
@@ -865,6 +860,9 @@
   {
     "make": "nikon",
     "model": "f501",
+    "aliases": [
+      "n2020"
+    ],
     "description": "The Nikon N2020, also known as the Nikon F501, is a 35mm film SLR camera that was introduced by Nikon in 1986. It was part of Nikon's advanced amateur series and was designed to be a more affordable option compared to professional-level cameras. The N2020 features a durable and lightweight body with a comfortable grip, making it easy to handle and carry. It has a built-in motor drive, allowing for continuous shooting at a rate of up to 2 frames per second. The camera also has a reliable autofocus system with multiple focus modes, including single-shot and continuous autofocus. The N2020 offers a wide range of exposure modes, including program, aperture priority, shutter priority, and manual. It has a bright viewfinder with a clear and easy-to-read display of exposure information. The camera is compatible with Nikon F-mount lenses, giving users access to a wide range of high-quality lenses. Overall, the Nikon N2020 is a versatile and reliable camera that is well-suited for both beginners and experienced photographers."
   },
   {
@@ -880,6 +878,9 @@
   {
     "make": "nikon",
     "model": "f601",
+    "aliases": [
+      "n6006"
+    ],
     "description": "The Nikon N6006, also known as the F601 in some markets, is a 35mm autofocus SLR camera that was introduced by Nikon in 1990. It is part of Nikon's mid-range line of cameras and was aimed at enthusiasts and advanced amateurs. The N6006 features a durable and lightweight body, making it comfortable to carry and handle. It has a built-in motor drive, allowing for continuous shooting at up to 2.5 frames per second. The camera also offers a wide range of exposure modes, including aperture-priority, shutter-priority, program, and manual modes, giving photographers full control over their images. With its advanced autofocus system, the N6006 ensures sharp and accurate focusing, even in challenging lighting conditions. The camera is compatible with a wide range of Nikon F-mount lenses, providing photographers with versatility and creative possibilities. Overall, the Nikon N6006 is a reliable and versatile camera that delivers excellent image quality and performance."
   },
   {
@@ -951,16 +952,6 @@
     "make": "nikon",
     "model": "n2000",
     "description": "The Nikon N2000, also known as the F-301 in some markets, is a 35mm SLR film camera introduced by Nikon in 1985. It was Nikon's first SLR to feature integrated motorized film advance, allowing automatic winding at up to 2.5 frames per second. The camera uses the Nikon F-mount, supporting a wide range of Nikkor lenses. It offers both Programmed Auto-Exposure (AE) and Manual exposure modes, with a built-in TTL center-weighted light meter. The N2000 is powered by four AAA batteries and features a top shutter speed of 1/2000 second. Notably, it does not include a built-in flash but provides a hot shoe for external flash units."
-  },
-  {
-    "make": "nikon",
-    "model": "n2020",
-    "description": "The Nikon N2020, also known as the Nikon F501, is a 35mm film SLR camera that was introduced by Nikon in 1986. It was part of Nikon's advanced amateur series and was designed to be a more affordable option compared to professional-level cameras. The N2020 features a durable and lightweight body with a comfortable grip, making it easy to handle and carry. It has a built-in motor drive, allowing for continuous shooting at a rate of up to 2 frames per second. The camera also has a reliable autofocus system with multiple focus modes, including single-shot and continuous autofocus. The N2020 offers a wide range of exposure modes, including program, aperture priority, shutter priority, and manual. It has a bright viewfinder with a clear and easy-to-read display of exposure information. The camera is compatible with Nikon F-mount lenses, giving users access to a wide range of high-quality lenses. Overall, the Nikon N2020 is a versatile and reliable camera that is well-suited for both beginners and experienced photographers."
-  },
-  {
-    "make": "nikon",
-    "model": "n6006",
-    "description": "The Nikon N6006, also known as the F601 in some markets, is a 35mm autofocus SLR camera that was introduced by Nikon in 1990. It is part of Nikon's mid-range line of cameras and was aimed at enthusiasts and advanced amateurs. The N6006 features a durable and lightweight body, making it comfortable to carry and handle. It has a built-in motor drive, allowing for continuous shooting at up to 2.5 frames per second. The camera also offers a wide range of exposure modes, including aperture-priority, shutter-priority, program, and manual modes, giving photographers full control over their images. With its advanced autofocus system, the N6006 ensures sharp and accurate focusing, even in challenging lighting conditions. The camera is compatible with a wide range of Nikon F-mount lenses, providing photographers with versatility and creative possibilities. Overall, the Nikon N6006 is a reliable and versatile camera that delivers excellent image quality and performance."
   },
   {
     "make": "nikon",
@@ -1589,11 +1580,6 @@
     "make": "zeiss ikon",
     "model": "nettar",
     "description": "The Zeiss Ikon Nettar is a medium format folding camera that was produced by Zeiss Ikon from 1934 to 1951. It is known for its compact and lightweight design, making it a popular choice for amateur photographers. The camera features a bellows system that allows for easy folding and unfolding, making it highly portable and convenient to carry. It uses 120 roll film, which provides high-resolution images with excellent detail. The Nettar is equipped with a high-quality Zeiss Ikon lens, known for its sharpness and clarity. It has a range of shutter speeds and aperture settings, allowing for versatile shooting in different lighting conditions. The camera also has a built-in viewfinder and a tripod mount for added stability. Overall, the Zeiss Ikon Nettar is a reliable and compact medium format camera that delivers excellent image quality."
-  },
-  {
-    "make": "zeiss ikon",
-    "model": "zm",
-    "description": "The Zeiss Ikon ZM is a high-quality 35mm rangefinder camera that was introduced by Zeiss Ikon in 2004. It is designed for photographers who appreciate the precision and craftsmanship of traditional film cameras. The ZM features a durable metal body with a classic design, reminiscent of the iconic Leica M cameras. It is compatible with Leica M-mount lenses, allowing photographers to take advantage of the excellent optics available in the Leica lens lineup. The camera has a bright and clear viewfinder with a built-in rangefinder for accurate focusing. It offers manual exposure control, allowing photographers to have full creative control over their images. The ZM also has a built-in light meter for convenient exposure metering. Overall, the Zeiss Ikon ZM is a reliable and versatile camera that combines the best of traditional craftsmanship with modern functionality."
   },
   {
     "make": "zeiss ikon",
