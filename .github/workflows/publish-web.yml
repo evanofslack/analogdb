@@ -52,8 +52,11 @@ jobs:
       - name: Install openapi-generator
         run: npm install -g @openapitools/openapi-generator-cli
 
+      - name: Setup just
+        uses: extractions/setup-just@v2
+
       - name: Generate typescript client
-        run: make gen-client-typescript
+        run: just gen-client-typescript
 
       - name: build and push
         uses: docker/build-push-action@v4

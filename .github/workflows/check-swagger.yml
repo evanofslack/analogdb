@@ -5,12 +5,12 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
-      - 'Makefile'
+      - 'justfile'
       - ".github/workflows/check-swagger.yml"
   pull_request:
     paths:
       - 'backend/**'
-      - 'Makefile'
+      - 'justfile'
       - ".github/workflows/check-swagger.yml"
 
 jobs:
@@ -27,14 +27,17 @@ jobs:
       - name: Install swag
         run: go install github.com/swaggo/swag/cmd/swag@latest
       
+      - name: Setup just
+        uses: extractions/setup-just@v2
+
       - name: Generate swagger
-        run: make swagger
+        run: just swagger
         
       - name: Check if swagger needs update
         run: |
           if ! git diff --quiet api/swagger.json api/swagger.yaml; then
             echo "Swagger spec is out of date"
-            echo "Run: make swagger"
+            echo "Run: just swagger"
             echo "Then commit the changes"
             exit 1
           fi

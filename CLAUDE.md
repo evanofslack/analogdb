@@ -18,41 +18,65 @@ AnalogDB is a full-stack application for managing and discovering analog photogr
 
 ## Common Commands
 
-### Backend Development
-```bash
-# Start backend services (from /backend/)
-make upd                    # Start with docker-compose in background
-make infra                  # Start just PostgreSQL, Weaviate, and i2v-neural
-make test                   # Run all Go tests
-go test ./...              # Alternative test command
+Tasks run through [just](https://github.com/casey/just). The root `justfile` loads one module per
+service, so `just backend test` from the root is the same as `just test` inside `/backend/`.
+Run `just` to list every recipe.
 
-# Database operations
-make db                     # Start just PostgreSQL
+### Whole Repo
+```bash
+just setup                 # Create the docker network and install deps for every service
+just up                    # Start backend, consumer, web and infra containers
+just down                  # Stop them
+just ps                    # List analogdb containers
+just test                  # Backend, consumer and scrape tests
+just lint                  # go vet, ruff and next lint
+just fmt                   # gofmt, ruff and black, prettier
+just check                 # lint, test and swagger-check
+just clean                 # Remove build and test artifacts
+just nuke                  # Delete all containers, volumes and the network (asks first)
 ```
 
-### Frontend Development
+### Backend
 ```bash
-# Frontend (from /web/)
-npm run dev                 # Start development server
-npm run build              # Build for production
-npm run lint               # Run ESLint
+just backend up            # Start all backend containers
+just backend infra         # Start just PostgreSQL, Weaviate, and i2v-neural
+just backend db            # Start just PostgreSQL
+just backend run           # Run the API on the host
+just backend test          # go test -race, sets colima testcontainers env when present
+just backend psql          # psql shell in the postgres container
+just backend logs postgres # Follow logs, all services when none given
+just backend bench         # Post query benchmark, see /backend/bench/README.md
+```
 
-# Install dependencies after API client changes
-npm install                # May be needed after client regeneration
+### Frontend
+```bash
+just web dev               # Start development server
+just web build             # Build for production
+just web lint              # Run ESLint
+just web rebuild           # Rebuild and start the web container
 ```
 
 ### Python Services
 ```bash
-# Scraping service (from /scrape/)
-uv sync                    # Install dependencies
+just scrape sync           # Install dependencies
+just scrape dev            # Run the Dagster dev server
+just scrape test           # Run pytest over src and packages
+```
+
+### Consumer and Infra
+```bash
+just consumer test         # Consumer Go tests
+just consumer clickhouse   # clickhouse-client in the clickhouse container
+just infra up              # Start Prometheus, Grafana, Loki, Tempo
 ```
 
 ### API Client Generation
 ```bash
-# Root level commands for API client generation
-make swagger               # Generate OpenAPI spec from Go code
-make gen-client-python     # Generate Python client
-make gen-client-typescript # Generate TypeScript client
+just swagger               # Generate OpenAPI spec from Go code
+just swagger-check         # Fail if the committed spec is stale, as CI does
+just gen-client-python     # Generate Python client
+just gen-client-typescript # Generate TypeScript client
+just gen-clients           # Both clients
 
 # These commands:
 # 1. Generate swagger.json/yaml from Go annotations in backend
@@ -62,19 +86,12 @@ make gen-client-typescript # Generate TypeScript client
 
 ### Protocol Buffers
 ```bash
-# Generate protobuf code for analytics events
-make proto                 # Generate for both backend and consumer
-make proto-backend         # Generate just for backend
-make proto-consumer        # Generate just for consumer
+just proto                 # Generate analytics event code for backend and consumer
 ```
 
-### Infrastructure & Testing
+### Load Testing
 ```bash
-# Infrastructure
-docker-compose -f docker-compose-dev.yaml up  # Development stack
-
-# Load testing (from /test/k6/)
-./run.sh                   # Run k6 performance tests
+just load scripts/<name>.js  # Run a k6 script from /test/k6/
 ```
 
 ## Code Architecture Notes
@@ -112,15 +129,16 @@ Note: the backend uses `log/slog` for logging, wrapped in `logger.Logger` (`/bac
 
 ## Development Workflow
 
-1. **Backend changes**: Modify Go code, run tests with `make test`, update swagger with `make swagger`
+1. **Backend changes**: Modify Go code, run tests with `just backend test`, update swagger with `just swagger`
 2. **Frontend changes**: Work in `/web/`, use `npm run dev` for hot reload
-3. **API changes**: Regenerate clients with `make gen-client-*` after OpenAPI spec updates
+3. **API changes**: Regenerate clients with `just gen-clients` after OpenAPI spec updates
 4. **Database changes**: Add migrations to `/backend/postgres/migrations/`
 5. **Infrastructure**: Use docker-compose files for consistent development environments
 
 ## Testing
 
-- **Backend**: `go test ./...` runs all unit tests
-- **Frontend**: Uses Next.js built-in testing via `npm test`
+- **Backend**: `just backend test` runs all unit tests
+- **Scrape**: `just scrape test` runs pytest
+- **Frontend**: No test suite yet, `just web lint` runs ESLint
 - **Integration**: Docker compose in `/test/k6/` for load testing
 - **Database**: Test containers used in Go tests for isolated database testing

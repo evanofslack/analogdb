@@ -15,12 +15,12 @@ Tooling to measure the post queries against a realistic, deterministic dataset.
 From `backend/`:
 
 ```bash
-make bench-db      # postgres:15 in docker, published on localhost:55432
-make bench-seed    # run migrations, then seed.sql (about 20s for 100k posts)
-make bench         # run the benchmark
+just bench-db      # postgres:15 in docker, published on localhost:55432
+just bench-seed    # run migrations, then seed.sql (about 20s for 100k posts)
+just bench         # run the benchmark
 ```
 
-`make bench-seed` removes all existing rows. Options:
+`just bench-seed` removes all existing rows. Run these from `/backend/`, or as `just backend bench` from the root. Options are environment variables:
 
 | Variable | Default | Meaning |
 |---|---|---|
@@ -28,11 +28,11 @@ make bench         # run the benchmark
 | `BENCH_POSTS` | `100000` | Number of posts to seed |
 | `BENCH_ARGS` | `-benchtime=2s` | Extra `go test` flags, for example `-count=3` |
 | `BENCH_EXPLAIN` | empty | File to write `EXPLAIN (ANALYZE, BUFFERS)` for every statement of every case |
-| `PSQL` | `docker exec -i analogdb-bench psql -U postgres -d analogdb` | psql command used by `bench-seed`. With a local psql use `PSQL='psql "$(BENCH_DSN)"'` |
+| `PSQL` | `docker exec -i analogdb-bench psql -U postgres -d analogdb` | psql command used by `bench-seed`. With a local psql use `PSQL='psql "$BENCH_DSN"'` |
 
 ```bash
-make bench BENCH_EXPLAIN=bench/explain.txt
-make bench-migrate   # apply new migrations to an already seeded database
+BENCH_EXPLAIN=bench/explain.txt just bench
+just bench-migrate   # apply new migrations to an already seeded database
 ```
 
 ### Read only mode
@@ -42,7 +42,7 @@ benchmark then cannot write anything, so it can run against any database, includ
 restored dump:
 
 ```bash
-ANALOGDB_BENCH_READONLY=1 make bench BENCH_DSN='postgres://user:pass@host:5432/analogdb'
+ANALOGDB_BENCH_READONLY=1 BENCH_DSN='postgres://user:pass@host:5432/analogdb' just bench
 ```
 
 ## Cases
@@ -67,7 +67,7 @@ the html color `blue`.
 
 100k seeded posts, `postgres:15` in docker (colima VM with 2 CPUs and 2 GB) on an Apple M5,
 `-benchtime=2s -count=3`, median of the three runs. Before is the code and schema before
-migration `000009_add_indexes`. After is the same seeded database after `make bench-migrate`.
+migration `000009_add_indexes`. After is the same seeded database after `just bench-migrate`.
 
 | Case | Before (ms/op) | After (ms/op) | Plan after |
 |---|---:|---:|---|

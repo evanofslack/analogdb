@@ -1,0 +1,44 @@
+[private]
+default:
+    @just --list
+
+# Install all workspace deps
+sync:
+    uv sync --dev
+
+# Run the Dagster dev server
+dev:
+    uv run dagster dev
+
+test *args:
+    uv run pytest src packages {{ args }}
+
+lint:
+    uv run ruff check .
+
+fmt:
+    uv run ruff check --fix .
+    uv run black .
+
+# Download the spacy model
+spacy:
+    uv run -- spacy download en_core_web_lg
+
+# Start the Dagster containers
+up:
+    docker compose up -d
+
+down:
+    docker compose down --remove-orphans
+
+# Rebuild and start containers
+rebuild:
+    docker compose up -d --build
+
+# Follow logs, optionally for one service
+logs *service:
+    docker compose logs --follow {{ service }}
+
+clean:
+    rm -rf .pytest_cache .ruff_cache coverage.xml .coverage
+    find . -name __pycache__ -not -path './.venv/*' -type d -prune -exec rm -rf {} +
