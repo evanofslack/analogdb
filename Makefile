@@ -6,10 +6,6 @@ backend :
 web :
 	cd web && make upd
 
-.PHONY: scraper
-scraper :
-	cd scraper && make upd
-
 PROTO_DIR := proto
 BACKEND_GO_OUT_DIR := backend/internal/gen/proto
 CONSUMER_GO_OUT_DIR := consumer/internal/gen/proto
