@@ -45,11 +45,26 @@ func TestMigrateUpDownUp(t *testing.T) {
 		t.Fatalf("Expected 10 indexes after up, got %d", got)
 	}
 
-	if err := m.Steps(-1); err != nil {
-		t.Fatalf("Migrate down one step, err=%v", err)
+	tableExists := func(name string) bool {
+		t.Helper()
+		var exists bool
+		if err := db.db.QueryRow(`SELECT to_regclass($1) IS NOT NULL`, name).Scan(&exists); err != nil {
+			t.Fatal(err)
+		}
+		return exists
+	}
+	if !tableExists("post_extractions") {
+		t.Fatal("Expected post_extractions after up")
+	}
+
+	if err := m.Migrate(8); err != nil {
+		t.Fatalf("Migrate down to version 8, err=%v", err)
 	}
 	if got := indexCount(); got != 0 {
 		t.Fatalf("Expected 0 indexes after down, got %d", got)
+	}
+	if tableExists("post_extractions") {
+		t.Fatal("Expected no post_extractions after down")
 	}
 
 	if err := m.Up(); err != nil {

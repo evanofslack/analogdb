@@ -15,6 +15,153 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/admin/extractions": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "List stored metadata extractions, newest post first (requires authentication)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "extractions"
+                ],
+                "summary": "List post metadata extractions",
+                "parameters": [
+                    {
+                        "type": "boolean",
+                        "description": "Only extractions with or without unmatched mentions",
+                        "name": "has_unmatched",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "camera",
+                            "film"
+                        ],
+                        "type": "string",
+                        "description": "Only extractions with an unmatched mention of this kind",
+                        "name": "kind",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Only extractions with an unmatched mention with this normalized key",
+                        "name": "key",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Include the input text and raw LLM output",
+                        "name": "full",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Only post ids below this, for paging",
+                        "name": "before_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 100,
+                        "description": "Number of results, at most 500",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.ExtractionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid query parameters",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Create or replace the stored metadata extraction of each post (requires authentication). Posts that don't exist are skipped.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "extractions"
+                ],
+                "summary": "Store post metadata extractions",
+                "parameters": [
+                    {
+                        "description": "extractions to store, at most 500",
+                        "name": "extractions",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.ExtractionsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.UpsertExtractionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid extractions",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable entity",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/camera": {
             "put": {
                 "security": [
@@ -1388,6 +1535,16 @@ const docTemplate = `{
                     "type": "string",
                     "example": "ae-1"
                 },
+                "clear": {
+                    "description": "Clear sets these metadata fields to null",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "film_speed"
+                    ]
+                },
                 "colors": {
                     "type": "array",
                     "items": {
@@ -1529,6 +1686,46 @@ const docTemplate = `{
                 }
             }
         },
+        "analogdb.PostExtraction": {
+            "type": "object",
+            "properties": {
+                "created": {
+                    "type": "string"
+                },
+                "extractor_version": {
+                    "type": "string",
+                    "example": "2026-10-a"
+                },
+                "input": {
+                    "type": "string",
+                    "example": "title: Dusk [Nikon FM, Portra 400]"
+                },
+                "input_hash": {
+                    "type": "string",
+                    "example": "9f2c..."
+                },
+                "model": {
+                    "type": "string",
+                    "example": "google/gemini-2.5-flash-lite"
+                },
+                "post_id": {
+                    "type": "integer",
+                    "example": 1234
+                },
+                "raw": {
+                    "type": "object"
+                },
+                "unmatched": {
+                    "type": "array",
+                    "items": {
+                        "type": "object"
+                    }
+                },
+                "updated": {
+                    "type": "string"
+                }
+            }
+        },
         "server.CamerasResponse": {
             "type": "object",
             "properties": {
@@ -1582,6 +1779,32 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Success, post deleted"
+                }
+            }
+        },
+        "server.ExtractionsRequest": {
+            "type": "object",
+            "properties": {
+                "extractions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.PostExtraction"
+                    }
+                }
+            }
+        },
+        "server.ExtractionsResponse": {
+            "type": "object",
+            "properties": {
+                "extractions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.PostExtraction"
+                    }
+                },
+                "next_before_id": {
+                    "type": "integer",
+                    "example": 1200
                 }
             }
         },
@@ -1676,6 +1899,24 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/analogdb.Post"
                     }
+                }
+            }
+        },
+        "server.UpsertExtractionsResponse": {
+            "type": "object",
+            "properties": {
+                "skipped": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        1234
+                    ]
+                },
+                "written": {
+                    "type": "integer",
+                    "example": 499
                 }
             }
         },

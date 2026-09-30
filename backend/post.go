@@ -92,6 +92,36 @@ type PatchPost struct {
 	Aperture    *string    `json:"aperture,omitempty" example:"f/2.4"`
 	Colors      *[]Color   `json:"colors,omitempty"`
 	Keywords    *[]Keyword `json:"keywords,omitempty"`
+	// Clear sets these metadata fields to null
+	Clear []string `json:"clear,omitempty" example:"film_speed"`
+}
+
+// ClearableFields are the fields a patch may clear
+var ClearableFields = []string{
+	"camera_make", "camera_model", "film_make", "film_type", "film_speed", "focal_length", "aperture",
+}
+
+// ValidateClear checks that cleared fields are clearable and not also set
+func (p *PatchPost) ValidateClear() error {
+	set := map[string]bool{
+		"camera_make":  p.CameraMake != nil,
+		"camera_model": p.CameraModel != nil,
+		"film_make":    p.FilmMake != nil,
+		"film_type":    p.FilmType != nil,
+		"film_speed":   p.FilmSpeed != nil,
+		"focal_length": p.FocalLength != nil,
+		"aperture":     p.Aperture != nil,
+	}
+	for _, field := range p.Clear {
+		isSet, ok := set[field]
+		if !ok {
+			return &Error{Code: ERRBADREQUEST, Message: fmt.Sprintf("cannot clear %q", field)}
+		}
+		if isSet {
+			return &Error{Code: ERRBADREQUEST, Message: fmt.Sprintf("cannot both set and clear %q", field)}
+		}
+	}
+	return nil
 }
 
 // Post is the model of a returned post

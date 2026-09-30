@@ -205,6 +205,13 @@ definitions:
       camera_model:
         example: ae-1
         type: string
+      clear:
+        description: Clear sets these metadata fields to null
+        example:
+        - film_speed
+        items:
+          type: string
+        type: array
       colors:
         items:
           $ref: '#/definitions/analogdb.Color'
@@ -307,6 +314,34 @@ definitions:
         example: A day at the fields [Nikon FM2 | Portra 400]
         type: string
     type: object
+  analogdb.PostExtraction:
+    properties:
+      created:
+        type: string
+      extractor_version:
+        example: 2026-10-a
+        type: string
+      input:
+        example: 'title: Dusk [Nikon FM, Portra 400]'
+        type: string
+      input_hash:
+        example: 9f2c...
+        type: string
+      model:
+        example: google/gemini-2.5-flash-lite
+        type: string
+      post_id:
+        example: 1234
+        type: integer
+      raw:
+        type: object
+      unmatched:
+        items:
+          type: object
+        type: array
+      updated:
+        type: string
+    type: object
   server.CamerasResponse:
     properties:
       cameras:
@@ -343,6 +378,23 @@ definitions:
       message:
         example: Success, post deleted
         type: string
+    type: object
+  server.ExtractionsRequest:
+    properties:
+      extractions:
+        items:
+          $ref: '#/definitions/analogdb.PostExtraction'
+        type: array
+    type: object
+  server.ExtractionsResponse:
+    properties:
+      extractions:
+        items:
+          $ref: '#/definitions/analogdb.PostExtraction'
+        type: array
+      next_before_id:
+        example: 1200
+        type: integer
     type: object
   server.FilmsResponse:
     properties:
@@ -409,6 +461,18 @@ definitions:
           $ref: '#/definitions/analogdb.Post'
         type: array
     type: object
+  server.UpsertExtractionsResponse:
+    properties:
+      skipped:
+        example:
+        - 1234
+        items:
+          type: integer
+        type: array
+      written:
+        example: 499
+        type: integer
+    type: object
   server.encodePostsRequest:
     properties:
       batch_size:
@@ -436,6 +500,103 @@ info:
   title: AnalogDB API
   version: "1.0"
 paths:
+  /admin/extractions:
+    get:
+      description: List stored metadata extractions, newest post first (requires authentication)
+      parameters:
+      - description: Only extractions with or without unmatched mentions
+        in: query
+        name: has_unmatched
+        type: boolean
+      - description: Only extractions with an unmatched mention of this kind
+        enum:
+        - camera
+        - film
+        in: query
+        name: kind
+        type: string
+      - description: Only extractions with an unmatched mention with this normalized
+          key
+        in: query
+        name: key
+        type: string
+      - description: Include the input text and raw LLM output
+        in: query
+        name: full
+        type: boolean
+      - description: Only post ids below this, for paging
+        in: query
+        name: before_id
+        type: integer
+      - default: 100
+        description: Number of results, at most 500
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.ExtractionsResponse'
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: List post metadata extractions
+      tags:
+      - extractions
+    post:
+      consumes:
+      - application/json
+      description: Create or replace the stored metadata extraction of each post (requires
+        authentication). Posts that don't exist are skipped.
+      parameters:
+      - description: extractions to store, at most 500
+        in: body
+        name: extractions
+        required: true
+        schema:
+          $ref: '#/definitions/server.ExtractionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.UpsertExtractionsResponse'
+        "400":
+          description: Invalid extractions
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "422":
+          description: Unprocessable entity
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Store post metadata extractions
+      tags:
+      - extractions
   /camera:
     post:
       consumes:

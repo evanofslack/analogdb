@@ -337,6 +337,10 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, r, err)
 		return
 	}
+	if err := patchPost.ValidateClear(); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
 
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := stringToInt(id); err == nil {

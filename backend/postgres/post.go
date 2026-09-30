@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	goTime "time"
@@ -805,7 +806,8 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 		patch.FilmType != nil ||
 		patch.FilmSpeed != nil ||
 		patch.FocalLength != nil ||
-		patch.Aperture != nil {
+		patch.Aperture != nil ||
+		len(patch.Clear) > 0 {
 		hasPatchFields = true
 		if err := db.updatePostGeneral(ctx, tx, patch, id); err != nil {
 			db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
@@ -1128,6 +1130,13 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 	if a := patch.Aperture; a != nil {
 		set = append(set, fmt.Sprintf("aperture = $%d", index))
 		args = append(args, *a)
+	}
+
+	for _, field := range patch.Clear {
+		if !slices.Contains(analogdb.ClearableFields, field) {
+			return "", args, &analogdb.Error{Code: analogdb.ERRBADREQUEST, Message: fmt.Sprintf("cannot clear %q", field)}
+		}
+		set = append(set, field+" = NULL")
 	}
 
 	// no update fields provided
