@@ -1,15 +1,19 @@
 from enum import Enum
 from importlib.metadata import version
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from analogdb_generated import ApiClient, Configuration
 from analogdb_generated.api.camera_api import CameraApi
 from analogdb_generated.api.cameras_api import CamerasApi
+from analogdb_generated.api.extractions_api import ExtractionsApi
 from analogdb_generated.api.film_api import FilmApi
 from analogdb_generated.api.films_api import FilmsApi
 from analogdb_generated.api.post_api import PostApi
 from analogdb_generated.api.posts_api import PostsApi
 from analogdb_generated.exceptions import ApiException
+from analogdb_generated.models.server_extractions_request import (
+    ServerExtractionsRequest,
+)
 from analogdb_generated.models.server_post_response import ServerPostResponse
 from urllib3 import Retry
 
@@ -20,6 +24,7 @@ from .models import (
     FilmCreate,
     Post,
     PostCreate,
+    PostExtraction,
     PostPatch,
     PostsFilter,
 )
@@ -28,6 +33,8 @@ DEFAULT_PAGE_SIZE = 20
 DEFAULT_SORT = "time"
 USER_AGENT = f"analogdb-scraper/{version('analogdb')}"
 REQUEST_TIMEOUT = (10.0, 30.0)
+EXTRACTIONS_CHUNK = 200
+EXTRACTIONS_PAGE_SIZE = 500
 RETRIES = Retry(
     total=4,
     backoff_factor=1,
@@ -68,6 +75,7 @@ class Client:
         self.film_api = FilmApi(self.api_client)
         self.cameras_api = CamerasApi(self.api_client)
         self.camera_api = CameraApi(self.api_client)
+        self.extractions_api = ExtractionsApi(self.api_client)
 
     def get_posts(
         self,
@@ -132,6 +140,51 @@ class Client:
 
     def upload_camera(self, camera: CameraCreate) -> None:
         self._call(self.camera_api.camera_post, camera=camera)
+
+    def upsert_extractions(
+        self, extractions: List[PostExtraction], chunk_size: int = EXTRACTIONS_CHUNK
+    ) -> Tuple[int, List[int]]:
+        """Store extractions, returning how many were written and the post ids
+        skipped because the post no longer exists."""
+        written = 0
+        skipped: List[int] = []
+        for start in range(0, len(extractions), chunk_size):
+            chunk = extractions[start : start + chunk_size]
+            resp = self._call(
+                self.extractions_api.admin_extractions_post,
+                extractions=ServerExtractionsRequest(extractions=chunk),
+            )
+            written += resp.written or 0
+            skipped.extend(resp.skipped or [])
+        return written, skipped
+
+    def get_extractions(
+        self,
+        has_unmatched: Optional[bool] = None,
+        kind: Optional[str] = None,
+        key: Optional[str] = None,
+        full: bool = False,
+        before_id: Optional[int] = None,
+        limit: int = EXTRACTIONS_PAGE_SIZE,
+    ) -> Tuple[List[PostExtraction], Optional[int]]:
+        resp = self._call(
+            self.extractions_api.admin_extractions_get,
+            has_unmatched=has_unmatched,
+            kind=kind,
+            key=key,
+            full=full,
+            before_id=before_id,
+            limit=limit,
+        )
+        return resp.extractions or [], resp.next_before_id
+
+    def iter_extractions(self, **filters: Any) -> Iterator[PostExtraction]:
+        before_id = None
+        while True:
+            page, before_id = self.get_extractions(before_id=before_id, **filters)
+            yield from page
+            if before_id is None:
+                return
 
     def _call(self, fn, *args, **kwargs):
         return fn(*args, _request_timeout=self.timeout, **kwargs)
