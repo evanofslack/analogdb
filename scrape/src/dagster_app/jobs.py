@@ -7,8 +7,8 @@ from .assets import (
     keywords,
     patch_post_descriptions,
     patch_post_keywords,
+    patch_post_metadata,
     patch_post_scores,
-    patch_post_title_metadatas,
     post_images,
     reddit_comments_to_s3,
     reddit_posts,
@@ -16,10 +16,10 @@ from .assets import (
     updated_post_descriptions,
     updated_post_keywords,
     updated_post_scores,
-    updated_post_title_metadatas,
     updated_reddit_comments,
     upload_posts,
 )
+from .backfill import backfill_post_metadata, rematch_post_metadata
 
 scrape_job = dg.define_asset_job(
     name="scrape_and_upload",
@@ -40,6 +40,7 @@ patch_scores_job = dg.define_asset_job(
     selection=[
         analogdb_posts,
         updated_post_scores,
+        patch_post_metadata,
         patch_post_scores,
     ],
 )
@@ -63,14 +64,18 @@ patch_keywords_job = dg.define_asset_job(
         reddit_comments_to_s3,
         updated_post_keywords,
         patch_post_keywords,
+        patch_post_metadata,
     ],
 )
 
-patch_post_title_metadatas_job = dg.define_asset_job(
-    name="update_post_title_metadatas_descriptions",
-    selection=[
-        analogdb_posts,
-        updated_post_title_metadatas,
-        patch_post_title_metadatas,
-    ],
+
+backfill_metadata_job = dg.define_asset_job(
+    name="backfill_metadata",
+    tags={"reddit": "true"},
+    selection=[backfill_post_metadata],
+)
+
+rematch_metadata_job = dg.define_asset_job(
+    name="rematch_metadata",
+    selection=[rematch_post_metadata],
 )

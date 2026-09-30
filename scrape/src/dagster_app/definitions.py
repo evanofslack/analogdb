@@ -13,8 +13,6 @@ from dagster_app.constants import (
 from dagster_app.iomanager import io_manager
 
 from .assets import (
-    analogdb_cameras,
-    analogdb_films,
     analogdb_permalinks,
     analogdb_posts,
     debug_posts,
@@ -22,8 +20,8 @@ from .assets import (
     keywords,
     patch_post_descriptions,
     patch_post_keywords,
+    patch_post_metadata,
     patch_post_scores,
-    patch_post_title_metadatas,
     post_images,
     reddit_comments_to_s3,
     reddit_posts,
@@ -31,17 +29,18 @@ from .assets import (
     updated_post_descriptions,
     updated_post_keywords,
     updated_post_scores,
-    updated_post_title_metadatas,
     updated_reddit_comments,
     upload_cameras,
     upload_films,
     upload_posts,
 )
+from .backfill import backfill_post_metadata, rematch_post_metadata
 from .jobs import (
+    backfill_metadata_job,
     patch_descriptions_job,
     patch_keywords_job,
-    patch_post_title_metadatas_job,
     patch_scores_job,
+    rematch_metadata_job,
     scrape_job,
 )
 from .resources import (
@@ -63,8 +62,8 @@ from .schedules import (
 
 defs = dg.Definitions(
     assets=[
-        analogdb_cameras,
-        analogdb_films,
+        backfill_post_metadata,
+        rematch_post_metadata,
         analogdb_permalinks,
         analogdb_posts,
         debug_posts,
@@ -72,8 +71,8 @@ defs = dg.Definitions(
         keywords,
         patch_post_descriptions,
         patch_post_keywords,
+        patch_post_metadata,
         patch_post_scores,
-        patch_post_title_metadatas,
         post_images,
         reddit_comments_to_s3,
         reddit_posts,
@@ -81,7 +80,6 @@ defs = dg.Definitions(
         updated_post_descriptions,
         updated_post_keywords,
         updated_post_scores,
-        updated_post_title_metadatas,
         updated_reddit_comments,
         upload_cameras,
         upload_films,
@@ -119,9 +117,10 @@ defs = dg.Definitions(
         "io_manager": io_manager(),
     },
     jobs=[
+        backfill_metadata_job,
+        rematch_metadata_job,
         scrape_job,
         patch_descriptions_job,
-        patch_post_title_metadatas_job,
         patch_scores_job,
         patch_keywords_job,
     ],

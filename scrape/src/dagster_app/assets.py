@@ -9,6 +9,7 @@ from analogdb.client import Client, Uploaded
 from analogdb_generated.exceptions import ApiException
 from scrape.models import (
     Keyword,
+    MetadataPost,
     PhotoMetadata,
     PostImages,
     RedditComment,
@@ -19,6 +20,7 @@ from scrape.models import (
 from .catalog import UploadPlan, camera_upload_plan, film_upload_plan
 from .constants import SUBREDDITS
 from .convert import convert_create
+from .metadata_flow import extract_and_write, load_catalog
 from .resources import (
     AnalogDBResource,
     CamerasJsonResource,
@@ -101,24 +103,6 @@ def analogdb_posts(
 
 
 @dg.asset(group_name="analogdb")
-def analogdb_films(
-    context: dg.AssetExecutionContext, analogdb: AnalogDBResource
-) -> List[adb.Film]:
-    films = analogdb.client().get_films()
-    context.log.info(f"Fetched {len(films)} films")
-    return films
-
-
-@dg.asset(group_name="analogdb")
-def analogdb_cameras(
-    context: dg.AssetExecutionContext, analogdb: AnalogDBResource
-) -> List[adb.Camera]:
-    cameras = analogdb.client().get_cameras()
-    context.log.info(f"Fetched {len(cameras)} cameras")
-    return cameras
-
-
-@dg.asset(group_name="analogdb")
 def analogdb_permalinks(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource
 ) -> List[str]:
@@ -171,46 +155,48 @@ def reddit_posts(
 def title_metadatas(
     context: dg.AssetExecutionContext,
     metadata: MetadataResource,
+    analogdb: AnalogDBResource,
+    cameras_json: CamerasJsonResource,
+    films_json: FilmsJsonResource,
     reddit_posts,
-    analogdb_films: List[adb.Film],
-    analogdb_cameras: List[adb.Camera],
 ) -> Result[PhotoMetadata]:
     posts = [p for _, p in reddit_posts.successful().items()]
-    titles = [
-        f"title: {p.title}"
-        + (f" description: {p.selftext}" if p.selftext is not None else "")
-        for p in posts
-    ]
-    extracted = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
-    metadatas = extracted.metadata
-
-    for t, m in zip(titles, metadatas, strict=True):
-        context.log.debug(f"Extracted title metadata from {t}, metadata: {m}")
-
-    if extracted.failed > 0:
-        context.log.warn(
-            f"Failed to extract title metadata for {extracted.failed} of {len(titles)} posts"
-        )
-    if titles and extracted.failed == len(titles):
-        context.log.warn(
-            "Failed to extract title metadata for all posts, uploading without metadata"
-        )
-
-    data = {}
-    status = {}
-    for m, p in zip(metadatas, posts, strict=True):
-        id = p.permalink
-        data[id] = m
-        status[id] = Status.SUCCESS
-
-    with_metadata = len([m for m in metadatas if not m.is_empty()])
-    context.add_output_metadata(
-        {"llm_failed": extracted.failed, "with_metadata": with_metadata}
+    catalog = load_catalog(context, analogdb.client(), cameras_json, films_json)
+    inputs = [MetadataPost(title=p.title, description=p.selftext) for p in posts]
+    results = metadata.client().extract(
+        inputs, catalog.cameras, catalog.films, catalog.aliases
     )
 
+    failed = 0
+    data = {}
+    status = {}
+    for p, r in zip(posts, results, strict=True):
+        if "llm_failed" in r.flags:
+            failed += 1
+        context.log.debug(f"Extracted metadata from {p.title}, metadata: {r.proposed}")
+        data[p.permalink] = r.proposed
+        status[p.permalink] = Status.SUCCESS
+
+    if failed > 0:
+        context.log.warn(
+            f"Failed to extract metadata for {failed} of {len(posts)} posts"
+        )
+    if posts and failed == len(posts):
+        context.log.warn(
+            "Failed to extract metadata for all posts, uploading without it"
+        )
+
+    with_metadata = len([r for r in results if not r.proposed.is_empty()])
     result = Result(data=data, status=status)
-    add_result_metadata(context, result)
-    context.log.info(f"Extracted title metadata from {result.successful_count()} posts")
+    context.add_output_metadata(
+        {
+            "success": result.successful_count(),
+            "failed": result.failed_count(),
+            "llm_failed": failed,
+            "with_metadata": with_metadata,
+        }
+    )
+    context.log.info(f"Extracted metadata from {result.successful_count()} posts")
     return result
 
 
@@ -442,74 +428,6 @@ def patch_post_descriptions(
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
-def updated_post_title_metadatas(
-    context: dg.AssetExecutionContext,
-    analogdb_posts: List[adb.Post],
-    metadata: MetadataResource,
-    analogdb_films: List[adb.Film],
-    analogdb_cameras: List[adb.Camera],
-) -> List[Tuple[int, adb.PostPatch]]:
-    patches: List[Tuple[int, adb.PostPatch]] = []
-
-    if not analogdb_posts:
-        context.log.info(f"No posts to process for partition {context.partition_key}")
-        return patches
-
-    titles = [
-        f"title: {p.title}"
-        + (f" description: {p.description}" if p.description is not None else "")
-        for p in analogdb_posts
-    ]
-    extracted = metadata.client().extract(titles, analogdb_films, analogdb_cameras)
-    if extracted.failed > 0:
-        context.log.warn(
-            f"Failed to extract title metadata for {extracted.failed} of {len(titles)} posts"
-        )
-
-    for p, m in zip(analogdb_posts, extracted.metadata, strict=True):
-        if m.is_empty():
-            context.log.debug(
-                f"Skip create patch for empty post title metadata, title={p.title}"
-            )
-            continue
-        patch = adb.PostPatch(
-            camera_make=m.camera_make,
-            camera_model=m.camera_model,
-            film_make=m.film_make,
-            film_type=m.film_type,
-            film_speed=m.film_speed,
-            focal_length=m.focal_length,
-            aperture=m.aperture,
-        )
-        context.log.debug(
-            f"Created patch for post title metadata, title={p.title}, description={p.description if p.description is not None else ''}, metadata={patch}"
-        )
-        patches.append((p.id, patch))
-
-    context.log.info(f"Created {len(patches)} updated post title metadatas")
-    return patches
-
-
-@dg.asset(partitions_def=daily_partitions, group_name="backfill")
-def patch_post_title_metadatas(
-    context: dg.AssetExecutionContext,
-    updated_post_title_metadatas: List[Tuple[int, adb.PostPatch]],
-    analogdb: AnalogDBResource,
-) -> None:
-    if not updated_post_title_metadatas:
-        context.log.info(f"No patches to apply for partition {context.partition_key}")
-        return
-
-    patch_posts(
-        context,
-        analogdb.client(),
-        updated_post_title_metadatas,
-        "title metadatas",
-        delay=0.2,
-    )
-
-
-@dg.asset(partitions_def=daily_partitions, group_name="backfill")
 def updated_reddit_comments(
     context: dg.AssetExecutionContext,
     analogdb_posts: List[adb.Post],
@@ -541,6 +459,46 @@ def updated_reddit_comments(
         f"Created {len(post_comments)} updated reddit comments for partition {context.partition_key}"
     )
     return post_comments
+
+
+@dg.asset(partitions_def=daily_partitions, group_name="backfill")
+def patch_post_metadata(
+    context: dg.AssetExecutionContext,
+    updated_reddit_comments: List[Tuple[adb.Post, List[RedditComment]]],
+    analogdb: AnalogDBResource,
+    metadata: MetadataResource,
+    cameras_json: CamerasJsonResource,
+    films_json: FilmsJsonResource,
+) -> dg.MaterializeResult:
+    """Second metadata pass two days after posting, now with the author's own
+    comments. Overwrites by the write rule and stores the extraction."""
+    if not updated_reddit_comments:
+        context.log.info(f"No posts for metadata in partition {context.partition_key}")
+        return dg.MaterializeResult(metadata={"posts": 0})
+
+    client = analogdb.client()
+    catalog = load_catalog(context, client, cameras_json, films_json)
+    posts = [p for p, _ in updated_reddit_comments]
+    comments = {p.id: c for p, c in updated_reddit_comments}
+    stats = extract_and_write(
+        context,
+        client,
+        metadata.client(),
+        catalog,
+        metadata.openai_model,
+        posts,
+        comments,
+    )
+    context.log.info(
+        f"Metadata for partition {context.partition_key}: patched={stats.patched}, "
+        f"unchanged={stats.unchanged}, llm_failed={stats.llm_failed}"
+    )
+    if stats.failures():
+        raise dg.Failure(
+            description=f"{stats.patch_failed} metadata patches and {stats.store_failed} extractions failed",
+            metadata=stats.metadata(),
+        )
+    return dg.MaterializeResult(metadata=stats.metadata())
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")

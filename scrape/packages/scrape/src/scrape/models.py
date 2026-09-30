@@ -67,12 +67,6 @@ class PhotoMetadata:
 
 
 @dataclass
-class ExtractResult:
-    metadata: List[PhotoMetadata]
-    failed: int
-
-
-@dataclass
 class MetadataPost:
     title: str
     description: Optional[str] = None

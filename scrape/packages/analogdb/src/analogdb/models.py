@@ -19,6 +19,9 @@ from analogdb_generated.models.analogdb_patch_post import (
     AnalogdbPatchPost as PostPatch,
 )
 from analogdb_generated.models.analogdb_post import AnalogdbPost as Post
+from analogdb_generated.models.analogdb_post_extraction import (
+    AnalogdbPostExtraction as PostExtraction,
+)
 
 __all__ = [
     "Camera",
@@ -30,6 +33,7 @@ __all__ = [
     "Keyword",
     "Post",
     "PostCreate",
+    "PostExtraction",
     "PostPatch",
     "PostsFilter",
     "create_posts_filter",

@@ -5,11 +5,12 @@ import httpx
 from analogdb.models import Camera, Film
 from openai import BadRequestError
 
-from .metadata_llm import (
-    MetadataExtractorV2,
+from .metadata import (
+    MetadataExtractor,
     Transcriber,
     parse_transcripts,
     post_input,
+    post_text,
 )
 from .models import MetadataPost
 
@@ -73,11 +74,12 @@ def test_post_input_caps_comments_first():
     post = MetadataPost(
         title="Title  here", description="desc\nline", op_comments=["a" * 5000]
     )
-    text = post_input(3, post, limit=200)
+    text = post_text(post, limit=200)
     assert text.startswith(
-        "post_id: 3\ntitle: Title here\ndescription: desc line\nop comments: aaa"
+        "title: Title here\ndescription: desc line\nop comments: aaa"
     )
-    assert len(text) <= 200
+    assert len(text) == 200
+    assert post_input(3, post).startswith("post_id: 3\ntitle: Title here")
 
 
 def test_schema_rejected_falls_back_to_json_object():
@@ -150,7 +152,7 @@ def test_extractor_v2_end_to_end():
             description="",
         )
     ]
-    extractor = MetadataExtractorV2(FakeOpenAI([response]), "model")
+    extractor = MetadataExtractor(FakeOpenAI([response]), "model")
     posts = [
         MetadataPost(title="Rain [Contax G2, Portra400]"),
         MetadataPost(title="Nikon F-3"),

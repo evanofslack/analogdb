@@ -11,7 +11,14 @@ from urllib3.exceptions import HTTPError
 from werkzeug import Request, Response
 
 from .client import REQUEST_TIMEOUT, Client, Uploaded
-from .models import CameraCreate, FilmCreate, PostCreate, PostPatch, PostsFilter
+from .models import (
+    CameraCreate,
+    FilmCreate,
+    PostCreate,
+    PostExtraction,
+    PostPatch,
+    PostsFilter,
+)
 
 AUTH = "Basic " + base64.b64encode(b"user:pass").decode()
 
@@ -316,3 +323,70 @@ class TestTimeout:
             release.set()
 
         assert time.monotonic() - start < 2
+
+
+def extraction(post_id: int) -> PostExtraction:
+    return PostExtraction(
+        post_id=post_id,
+        extractor_version="v",
+        model="m",
+        input="title: x",
+        input_hash="h",
+        raw={"cameras": [], "films": [], "lenses": []},
+        unmatched=[{"kind": "camera", "raw": "Nikon FM", "key": "nikonfm"}],
+    )
+
+
+class TestExtractions:
+    def test_upsert_chunks_and_sums(self, client, httpserver: HTTPServer):
+        bodies = []
+
+        def handler(request: Request):
+            body = json.loads(request.get_data(as_text=True))
+            bodies.append(body)
+            ids = [e["post_id"] for e in body["extractions"]]
+            resp = {"written": len(ids) - 1, "skipped": ids[-1:]}
+            return Response(json.dumps(resp), mimetype="application/json")
+
+        httpserver.expect_request(
+            "/v1/admin/extractions", method="POST", headers={"Authorization": AUTH}
+        ).respond_with_handler(handler)
+
+        written, skipped = client.upsert_extractions(
+            [extraction(i) for i in range(1, 6)], chunk_size=2
+        )
+
+        assert [len(b["extractions"]) for b in bodies] == [2, 2, 1]
+        assert bodies[0]["extractions"][0]["raw"] == {
+            "cameras": [],
+            "films": [],
+            "lenses": [],
+        }
+        assert written == 2
+        assert skipped == [2, 4, 5]
+
+    def test_iter_follows_before_id(self, client, httpserver: HTTPServer):
+        def page(ids, next_before):
+            return {
+                "extractions": [extraction(i).to_dict() for i in ids],
+                "next_before_id": next_before,
+            }
+
+        httpserver.expect_ordered_request(
+            "/v1/admin/extractions",
+            query_string={"has_unmatched": "true", "full": "true", "limit": "500"},
+        ).respond_with_json(page([9, 8], 8))
+        httpserver.expect_ordered_request(
+            "/v1/admin/extractions",
+            query_string={
+                "has_unmatched": "true",
+                "full": "true",
+                "before_id": "8",
+                "limit": "500",
+            },
+        ).respond_with_json(page([7], None))
+
+        got = [
+            e.post_id for e in client.iter_extractions(has_unmatched=True, full=True)
+        ]
+        assert got == [9, 8, 7]
