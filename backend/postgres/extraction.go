@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -40,22 +41,9 @@ func (s *ExtractionService) UpsertExtractions(ctx context.Context, extractions [
 	for _, e := range extractions {
 		ids = append(ids, int64(e.PostID))
 	}
-	rows, err := tx.QueryContext(ctx, `SELECT id FROM pictures WHERE id = ANY($1)`, pq.Array(ids))
+	exists, err := existingPostIDs(ctx, tx, ids)
 	if err != nil {
 		return 0, nil, fmt.Errorf("find posts: %w", err)
-	}
-	exists := make(map[int]bool, len(ids))
-	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
-			rows.Close()
-			return 0, nil, err
-		}
-		exists[id] = true
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return 0, nil, err
 	}
 
 	stmt, err := tx.PrepareContext(ctx, `
@@ -96,6 +84,24 @@ func (s *ExtractionService) UpsertExtractions(ctx context.Context, extractions [
 		return 0, nil, err
 	}
 	return written, skipped, nil
+}
+
+func existingPostIDs(ctx context.Context, tx *sql.Tx, ids []int64) (map[int]bool, error) {
+	rows, err := tx.QueryContext(ctx, `SELECT id FROM pictures WHERE id = ANY($1)`, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	exists := make(map[int]bool, len(ids))
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		exists[id] = true
+	}
+	return exists, rows.Err()
 }
 
 func (s *ExtractionService) FindExtractions(ctx context.Context, filter *analogdb.ExtractionFilter) ([]*analogdb.PostExtraction, error) {
