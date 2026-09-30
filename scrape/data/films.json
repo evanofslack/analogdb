@@ -988,6 +988,9 @@
   },
   {
     "type": "colorplus 200",
+    "aliases": [
+      "kodacolor 200"
+    ],
     "make": "kodak",
     "speed": 200,
     "color_type": "color",
