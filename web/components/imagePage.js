@@ -2,11 +2,12 @@
 
 import PostEditor from "@components/admin/postEditor";
 import Footer from "@components/footer";
+import Header from "@components/header";
 import ImageTag from "@components/imageTag";
 import useIsAdmin from "@hooks/useIsAdmin";
+import { postAlt } from "@lib/seo";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -69,10 +70,8 @@ export default function ImagePage(props) {
   return (
     <div>
       <div className={styles.fullscreen}>
-        <div className={styles.headerIcons}>
-          <Link href={`/`} passHref={true}>
-            <h1 className={styles.title}>AnalogDB</h1>
-          </Link>
+        <div className={styles.header}>
+          <Header compact />
         </div>
         <div className={styles.imageContainer}>
           <Image
@@ -80,7 +79,7 @@ export default function ImagePage(props) {
             style={{ objectFit: "contain" }}
             fill
             src={image.url}
-            alt={`image ${post.id} by ${post.author}`}
+            alt={postAlt(post)}
             sizes="100vw"
             quality={100}
             placeholder={colorPlaceholder(post, image)}

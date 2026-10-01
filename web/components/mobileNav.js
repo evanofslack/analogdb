@@ -32,7 +32,7 @@ export default function MobileNav() {
               <Link href="/" className={styles.link}>
                 <div className={styles.icon}>
                   <div className={styles.check}>
-                    <h1 className={styles.iconText}>GALLERY</h1>
+                    <span className={styles.iconText}>GALLERY</span>
                     {pathname === "/" && <BiCheck size="2rem" />}
                   </div>
                 </div>
@@ -40,7 +40,7 @@ export default function MobileNav() {
               <Link href="/about" className={styles.link}>
                 <div className={styles.icon}>
                   <div className={styles.check}>
-                    <h1 className={styles.iconText}>ABOUT</h1>
+                    <span className={styles.iconText}>ABOUT</span>
                     {pathname === "/about" && <BiCheck size="2rem" />}
                   </div>
                 </div>
@@ -48,7 +48,7 @@ export default function MobileNav() {
               <Link href="/docs" className={styles.link}>
                 <div className={styles.icon}>
                   <div className={styles.check}>
-                    <h1 className={styles.iconText}>API</h1>
+                    <span className={styles.iconText}>API</span>
                     {pathname === "/docs" && <BiCheck size="2rem" />}
                   </div>
                 </div>
@@ -57,7 +57,7 @@ export default function MobileNav() {
                 <Link href="/admin" className={styles.link}>
                   <div className={styles.icon}>
                     <div className={styles.check}>
-                      <h1 className={styles.iconText}>ADMIN</h1>
+                      <span className={styles.iconText}>ADMIN</span>
                       {pathname === "/admin" && <BiCheck size="2rem" />}
                     </div>
                   </div>
