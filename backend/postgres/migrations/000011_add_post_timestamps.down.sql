@@ -1,0 +1,1 @@
+ALTER TABLE pictures DROP COLUMN IF EXISTS updated, DROP COLUMN IF EXISTS created;

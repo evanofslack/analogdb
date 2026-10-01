@@ -69,6 +69,17 @@ func TestPostService_CreatePost(t *testing.T) {
 		if len(post.Keywords) != 2 {
 			t.Errorf("Expected 2 keywords, got %d", len(post.Keywords))
 		}
+		if post.Created.IsZero() || !post.Updated.Equal(post.Created) {
+			t.Errorf("Expected created set and equal to updated, got created %v updated %v", post.Created, post.Updated)
+		}
+
+		found, err := service.FindPostByID(ctx, post.Id)
+		if err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if !found.Created.Equal(post.Created) || !found.Updated.Equal(post.Updated) {
+			t.Errorf("Expected found times %v %v, got %v %v", post.Created, post.Updated, found.Created, found.Updated)
+		}
 	})
 
 	t.Run("duplicate permalink", func(t *testing.T) {
@@ -454,6 +465,34 @@ func TestPostService_PatchPost(t *testing.T) {
 		}
 		if len(post.Keywords) != 2 {
 			t.Errorf("Expected 2 keywords, got %d", len(post.Keywords))
+		}
+	})
+
+	t.Run("patch sets updated", func(t *testing.T) {
+		score := 500
+		keywords := []analogdb.Keyword{{Word: "touched", Weight: 0.5}}
+		patches := map[string]*analogdb.PatchPost{
+			"score":    {Score: &score},
+			"keywords": {Keywords: &keywords},
+		}
+		for name, patch := range patches {
+			before, err := service.FindPostByID(ctx, 2)
+			if err != nil {
+				t.Fatalf("FindPostByID failed: %v", err)
+			}
+			if err := service.PatchPost(ctx, patch, 2); err != nil {
+				t.Fatalf("PatchPost %s failed: %v", name, err)
+			}
+			after, err := service.FindPostByID(ctx, 2)
+			if err != nil {
+				t.Fatalf("FindPostByID failed: %v", err)
+			}
+			if !after.Updated.After(before.Updated) {
+				t.Errorf("Patch %s: expected updated after %v, got %v", name, before.Updated, after.Updated)
+			}
+			if !after.Created.Equal(before.Created) {
+				t.Errorf("Patch %s: expected created %v, got %v", name, before.Created, after.Created)
+			}
 		}
 	})
 

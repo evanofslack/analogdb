@@ -47,3 +47,6 @@ INSERT INTO colors (hex, css, html, percent, post_id) VALUES
 ('#8b0000', 'darkred', 'red', 0.1, 8),
 ('#ff7f50', 'coral', 'orange', 0.04, 8),
 ('#ffffff', 'white', 'white', 0.01, 8);
+
+-- created and updated default to now(), pin them so the golden file is stable
+UPDATE pictures SET created = to_timestamp(time), updated = to_timestamp(time);

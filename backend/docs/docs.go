@@ -1620,6 +1620,11 @@ const docTemplate = `{
                         "$ref": "#/definitions/analogdb.Color"
                     }
                 },
+                "created": {
+                    "description": "time the post was added to analogdb",
+                    "type": "string",
+                    "example": "2025-07-11T12:00:00Z"
+                },
                 "description": {
                     "type": "string",
                     "example": "My favorite camera and film combo on 35mm at f/2.0"
@@ -1683,6 +1688,11 @@ const docTemplate = `{
                 "title": {
                     "type": "string",
                     "example": "A day at the fields [Nikon FM2 | Portra 400]"
+                },
+                "updated": {
+                    "description": "time the post was last changed in analogdb",
+                    "type": "string",
+                    "example": "2025-07-11T12:00:00Z"
                 }
             }
         },
