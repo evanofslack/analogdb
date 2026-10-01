@@ -266,6 +266,10 @@ definitions:
         items:
           $ref: '#/definitions/analogdb.Color'
         type: array
+      created:
+        description: time the post was added to analogdb
+        example: "2025-07-11T12:00:00Z"
+        type: string
       description:
         example: My favorite camera and film combo on 35mm at f/2.0
         type: string
@@ -312,6 +316,10 @@ definitions:
         type: integer
       title:
         example: A day at the fields [Nikon FM2 | Portra 400]
+        type: string
+      updated:
+        description: time the post was last changed in analogdb
+        example: "2025-07-11T12:00:00Z"
         type: string
     type: object
   analogdb.PostExtraction:
