@@ -2,6 +2,7 @@
 
 import usePosts from "@hooks/usePosts";
 import { pickSeed } from "@lib/seed";
+import Link from "next/link";
 import FilterBar from "./filterBar";
 import Footer from "./footer";
 import styles from "./gallery.module.css";
@@ -78,7 +79,12 @@ export default function Gallery({
         <InfiniteGallery {...posts} initialColumns={initialColumns} />
         <ScrollTop />
       </div>
-      <Footer />
+      <Footer>
+        AnalogDB is a searchable collection of film photographs shared on
+        Reddit. Browse by camera, film stock, color or black and white.
+        Everything is available through a free, open{" "}
+        <Link href="/docs">API</Link>.
+      </Footer>
     </div>
   );
 }
