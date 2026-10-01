@@ -55,6 +55,15 @@ type rawPost struct {
 	rawCreatePost
 	colors   []byte
 	keywords []byte
+	created  goTime.Time
+	updated  goTime.Time
+}
+
+// insertedPost holds the values the DB sets when a post is inserted
+type insertedPost struct {
+	id      int64
+	created goTime.Time
+	updated goTime.Time
 }
 
 type PostService struct {
@@ -149,7 +158,7 @@ func (s *PostService) AllPostIDs(ctx context.Context) ([]int, error) {
 }
 
 // insertPost inserts a post into the DB and returns the post's ID
-func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*int64, error) {
+func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*insertedPost, error) {
 	db.logger.DebugContext(ctx, "Start insert post")
 	defer db.logger.DebugContext(ctx, "Finish insert post")
 
@@ -159,7 +168,7 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		return nil, err
 	}
 
-	var id int64
+	var inserted insertedPost
 
 	query := `
 	INSERT INTO pictures
@@ -167,12 +176,12 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
     (url, title, author, permalink, description, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight, camera_make, camera_model, film_make, film_type, film_speed, focal_length, aperture)
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
 	ON CONFLICT (permalink) DO NOTHING
-	RETURNING id
+	RETURNING id, created, updated
 	`
 
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
-		db.logger.ErrorContext(ctx, "Fail insert post", "error", err, "post_id", id)
+		db.logger.ErrorContext(ctx, "Fail insert post", "error", err, "post_id", inserted.id)
 		return nil, err
 	}
 
@@ -207,16 +216,16 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.filmType.ToSQLNullString(),
 		create.filmSpeed.ToSQLNullInt64(),
 		create.focalLength.ToSQLNullInt64(),
-		create.aperture.ToSQLNullString()).Scan(&id)
+		create.aperture.ToSQLNullString()).Scan(&inserted.id, &inserted.created, &inserted.updated)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, &analogdb.Error{Code: analogdb.ERRCONFLICT, Message: "post with permalink already exists"}
 	}
 	if err != nil {
-		db.logger.ErrorContext(ctx, "Fail insert post", "error", err, "post_id", id)
+		db.logger.ErrorContext(ctx, "Fail insert post", "error", err, "post_id", inserted.id)
 		return nil, err
 	}
-	db.logger.InfoContext(ctx, "Finish insert post", "post_id", id)
-	return &id, nil
+	db.logger.InfoContext(ctx, "Finish insert post", "post_id", inserted.id)
+	return &inserted, nil
 }
 
 // insertKeywords inserts a post's keywords into the DB
@@ -340,14 +349,15 @@ func (db *DB) deleteColors(ctx context.Context, tx *sql.Tx, id int64) error {
 func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreatePost) (*analogdb.Post, error) {
 	db.logger.DebugContext(ctx, "Start create post")
 
-	id, err := db.insertPost(ctx, tx, post)
+	inserted, err := db.insertPost(ctx, tx, post)
 	if err != nil {
 		return nil, err
 	}
+	id := inserted.id
 
 	// insert keywords if they are provided
 	if len(post.Keywords) != 0 {
-		err = db.insertKeywords(ctx, tx, post.Keywords, *id)
+		err = db.insertKeywords(ctx, tx, post.Keywords, id)
 		if err != nil {
 			return nil, err
 		}
@@ -355,7 +365,7 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 
 	// insert colors if they are provided
 	if len(post.Colors) != 0 {
-		err = db.insertColors(ctx, tx, post.Colors, *id)
+		err = db.insertColors(ctx, tx, post.Colors, id)
 		if err != nil {
 			return nil, err
 		}
@@ -364,7 +374,7 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	// commit transaction if all inserts are ok
 	err = tx.Commit()
 	if err != nil {
-		db.logger.ErrorContext(ctx, "Fail create post", "post_id", *id, "error", err)
+		db.logger.ErrorContext(ctx, "Fail create post", "post_id", id, "error", err)
 		return nil, err
 	}
 
@@ -378,6 +388,8 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		Nsfw:        post.Nsfw,
 		Grayscale:   post.Grayscale,
 		Time:        post.Time,
+		Created:     inserted.created.UTC(),
+		Updated:     inserted.updated.UTC(),
 		Sprocket:    post.Sprocket,
 		CameraMake:  post.CameraMake,
 		CameraModel: post.CameraModel,
@@ -392,11 +404,11 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	}
 
 	createdPost := &analogdb.Post{
-		Id:          int(*id),
+		Id:          int(id),
 		DisplayPost: displayPost,
 	}
 
-	db.logger.InfoContext(ctx, "Finish create post", "post_id", *id)
+	db.logger.InfoContext(ctx, "Finish create post", "post_id", id)
 	return createdPost, nil
 }
 
@@ -467,6 +479,8 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			p.film_speed,
 			p.focal_length,
 			p.aperture,
+			p.created,
+			p.updated,
 			c.colors,
 			k.keywords
 		FROM (
@@ -839,6 +853,12 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 		return err
 	}
 
+	// keyword and color patches skip the pictures row, so set updated here
+	if err := db.touchPost(ctx, tx, id); err != nil {
+		db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
+		return err
+	}
+
 	// always insert the updated timestamp
 	if err := db.insertPostUpdateTimes(ctx, tx, patch, id); err != nil {
 		db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
@@ -929,6 +949,19 @@ func (db *DB) updatePostGeneral(ctx context.Context, tx *sql.Tx, patch *analogdb
 		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "post not found"}
 	}
 	db.logger.InfoContext(ctx, "Finish update post", "post_id", id)
+	return nil
+}
+
+// touchPost sets a post's updated time to now
+func (db *DB) touchPost(ctx context.Context, tx *sql.Tx, id int) error {
+	db.logger.DebugContext(ctx, "Start touch post", "post_id", id)
+
+	query := "UPDATE pictures SET updated = CURRENT_TIMESTAMP WHERE id = $1"
+	if _, err := tx.ExecContext(ctx, query, id); err != nil {
+		db.logger.ErrorContext(ctx, "Fail touch post", "post_id", id, "error", err)
+		return err
+	}
+	db.logger.DebugContext(ctx, "Finish touch post", "post_id", id)
 	return nil
 }
 
@@ -1222,6 +1255,8 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 			Nsfw:        p.nsfw,
 			Grayscale:   p.grayscale,
 			Time:        p.time,
+			Created:     p.created.UTC(),
+			Updated:     p.updated.UTC(),
 			Sprocket:    p.sprocket,
 			CameraMake:  p.cameraMake.ToPtr(),
 			CameraModel: p.cameraModel.ToPtr(),
@@ -1270,6 +1305,8 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, error) {
 		&p.rawCreatePost.filmSpeed,
 		&p.rawCreatePost.focalLength,
 		&p.rawCreatePost.aperture,
+		&p.created,
+		&p.updated,
 		&p.colors,
 		&p.keywords); err != nil {
 		return nil, err

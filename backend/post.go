@@ -61,6 +61,8 @@ type DisplayPost struct {
 	Nsfw        bool      `json:"nsfw" example:"false"`
 	Grayscale   bool      `json:"grayscale" example:"false"`
 	Time        int       `json:"timestamp" example:"1752354541"`
+	Created     time.Time `json:"created" example:"2025-07-11T12:00:00Z"` // time the post was added to analogdb
+	Updated     time.Time `json:"updated" example:"2025-07-11T12:00:00Z"` // time the post was last changed in analogdb
 	Sprocket    bool      `json:"sprocket" example:"false"`
 	CameraMake  *string   `json:"camera_make,omitempty" example:"nikon"`
 	CameraModel *string   `json:"camera_model,omitempty" example:"fm2"`
