@@ -5,23 +5,10 @@
   padding-left: 2.5rem;
   padding-right: 3.5rem;
   font-size: 0.83rem;
-}
-
-.row {
+  /*margin-bottom: -4rem;*/
+  /*flex: 1;*/
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-}
-
-.about {
-  max-width: 60ch;
-  margin: 1rem auto 1.5rem;
-  text-align: center;
-  line-height: 1.6;
-  color: var(--adb-muted);
-}
-
-.about a {
-  text-decoration: underline;
 }
