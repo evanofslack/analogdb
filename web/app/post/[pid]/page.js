@@ -1,5 +1,6 @@
 import ImagePage from "@components/imagePage";
 import { authorized_fetch } from "@lib/client";
+import { authorName, jsonLd, postDescription } from "@lib/seo";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
@@ -25,17 +26,27 @@ const defaultImage = {
   alt: "AnalogDB",
 };
 
-function describe(post) {
-  const author = post.author.replace("u/", "");
-  const camera = [post.camera_make, post.camera_model]
-    .filter(Boolean)
-    .join(" ");
-  const film = [post.film_make, post.film_type].filter(Boolean).join(" ");
-
-  let description = "Shot";
-  if (camera) description += ` on ${camera}`;
-  if (film) description += ` with ${film}`;
-  return `${description} by ${author}`;
+function imageObject(post) {
+  const image = (resolution) =>
+    post.images?.find((img) => img.resolution === resolution)?.url;
+  const author = authorName(post);
+  return {
+    "@context": "https://schema.org",
+    "@type": "ImageObject",
+    contentUrl: image("high"),
+    thumbnailUrl: image("medium"),
+    name: post.title,
+    description: postDescription(post),
+    url: `https://analogdb.com/post/${post.id}`,
+    creator: {
+      "@type": "Person",
+      name: author,
+      url: `https://www.reddit.com/user/${author}`,
+    },
+    creditText: author,
+    copyrightNotice: author,
+    datePublished: new Date(post.timestamp * 1000).toISOString(),
+  };
 }
 
 export async function generateMetadata({ params }) {
@@ -57,7 +68,7 @@ export async function generateMetadata({ params }) {
             alt: post.title,
           }
         : defaultImage;
-    const description = describe(post);
+    const description = postDescription(post);
 
     return {
       title: post.title,
@@ -118,5 +129,15 @@ export default async function Post({ params }) {
   const { pid } = await params;
   const { post, similar } = await getPostData(pid);
 
-  return <ImagePage post={post} similar={similar} />;
+  return (
+    <>
+      {!post.nsfw && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: jsonLd(imageObject(post)) }}
+        />
+      )}
+      <ImagePage post={post} similar={similar} />
+    </>
+  );
 }
