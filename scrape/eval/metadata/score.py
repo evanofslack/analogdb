@@ -1,7 +1,6 @@
 """Run an extractor over the labeled set and write a report.
 
 uv run python -m eval.metadata.score --extractor stored
-uv run python -m eval.metadata.score --extractor current --tag baseline
 uv run python -m eval.metadata.score --extractor v2 --tag v2 --compare baseline
 uv run python -m eval.metadata.score --tag baseline --rescore   (no LLM calls, cached predictions)
 """
@@ -14,7 +13,9 @@ import time
 from datetime import datetime, timezone
 from typing import Callable, Dict, List, Optional, Tuple
 
-from scrape.metadata import MetadataExtractor
+from scrape.catalog_match import CatalogMatcher
+from scrape.metadata import EXTRACTOR_VERSION, MetadataExtractor
+from scrape.models import MetadataPost
 from scrape.normalize import normalize_key
 
 from .common import (
@@ -45,37 +46,48 @@ def run_stored(posts: List[Dict], catalog: Dict, args, usage: Usage) -> Dict:
     }
 
 
-def current_input(post: Dict) -> str:
-    """The same text the ingest sends today: title and description, no comments."""
-    text = f"title: {post['title']}"
-    if post.get("description") is not None:
-        text += f" description: {post['description']}"
-    return text
+def v2_post(post: Dict, comments: bool) -> MetadataPost:
+    return MetadataPost(
+        title=post["title"],
+        description=post.get("description"),
+        op_comments=(post.get("op_comments") or []) if comments else [],
+    )
 
 
-def run_current(posts: List[Dict], catalog: Dict, args, usage: Usage) -> Dict:
+def run_v2(posts: List[Dict], catalog: Dict, args, usage: Usage) -> Dict:
+    """With --from-run, re-matches that run's stored transcripts: no LLM calls."""
     cameras, films = catalog_models(catalog)
-    client = TrackedOpenAI(openrouter(), usage)
-    extractor = MetadataExtractor(client, args.model, args.batch_size or 25)
-    result = extractor.extract([current_input(p) for p in posts], films, cameras)
-    preds = {}
-    for p, m in zip(posts, result.metadata, strict=True):
+    inputs = [v2_post(p, not args.no_comments) for p in posts]
+    if args.from_run:
+        cached = read_json(RUNS / f"{args.from_run}.json")["predictions"]
+        matcher = CatalogMatcher(cameras, films)
+        results = [
+            matcher.match(cached[str(p["id"])].get("raw"), i)
+            for p, i in zip(posts, inputs)
+        ]
+    else:
+        client = TrackedOpenAI(openrouter(), usage)
+        extractor = MetadataExtractor(client, args.model, args.batch_size or 20)
+        results = extractor.extract(inputs, cameras, films)
+    preds: Dict = {}
+    for p, r in zip(posts, results, strict=True):
         preds[p["id"]] = {
-            "fields": {f: getattr(m, f) for f in FIELDS},
-            "unmatched": [],
-            "flags": [],
+            "fields": {f: getattr(r.proposed, f) for f in FIELDS},
+            "unmatched": [u.to_dict() for u in r.unmatched],
+            "flags": r.flags,
+            "raw": r.raw,
         }
-    preds["_failed"] = result.failed
+    preds["_failed"] = sum("llm_failed" in r.flags for r in results)
     return preds
 
 
 EXTRACTORS: Dict[str, Callable] = {
     "stored": run_stored,
-    "current": run_current,
+    "v2": run_v2,
 }
 
 # Extractors that report catalog misses, so unmatched recall means something
-REPORTS_UNMATCHED: set = set()
+REPORTS_UNMATCHED = {"v2"}
 
 
 def norm(field: str, v) -> Optional[object]:
@@ -481,7 +493,7 @@ def load_gold(source: str, which: str) -> List[Dict]:
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--extractor", choices=sorted(EXTRACTORS), default="current")
+    parser.add_argument("--extractor", choices=sorted(EXTRACTORS), default="v2")
     parser.add_argument("--model", default=None, help="default: OPENROUTER_MODEL")
     parser.add_argument("--batch-size", type=int, default=0)
     parser.add_argument(
@@ -494,6 +506,12 @@ def main():
     )
     parser.add_argument(
         "--rescore", action="store_true", help="reuse cached predictions"
+    )
+    parser.add_argument(
+        "--from-run", default=None, help="v2: re-match this run's transcripts"
+    )
+    parser.add_argument(
+        "--no-comments", action="store_true", help="v2: leave out OP comments"
     )
     args = parser.parse_args()
     load_env()
@@ -523,6 +541,8 @@ def main():
             "tag": tag,
             "extractor": args.extractor,
             "model": args.model if args.extractor != "stored" else None,
+            "version": EXTRACTOR_VERSION if args.extractor == "v2" else None,
+            "from_run": args.from_run,
             "created": int(datetime.now(timezone.utc).timestamp()),
             "failed": failed,
             "usage": usage.to_dict(),
