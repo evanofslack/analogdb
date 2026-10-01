@@ -3,29 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import styles from "./grid.module.css";
 import GridImage from "./gridImage";
+import { toColumns } from "@lib/masonry";
 
 const priorityCount = 6;
 
-function ratio(post) {
-  const image = post.images?.[0];
-  if (!image?.width || !image?.height) return 1;
-  return image.height / image.width;
-}
-
-// Each post goes in the shortest column, measured by image ratio, so the
-// server and the client build the same columns before any image loads
-function toColumns(posts, count) {
-  const columns = Array.from({ length: count }, () => []);
-  const heights = Array(count).fill(0);
-  posts.forEach((post, index) => {
-    const shortest = heights.indexOf(Math.min(...heights));
-    columns[shortest].push({ post, index });
-    heights[shortest] += ratio(post);
-  });
-  return columns;
-}
-
-export default function Grid({ posts, initialColumns = 4 }) {
+export default function Grid({ pages, initialColumns = 4 }) {
   const [numColumn, setNumColumn] = useState(initialColumns);
 
   useEffect(() => {
@@ -46,8 +28,8 @@ export default function Grid({ posts, initialColumns = 4 }) {
   }, []);
 
   const columns = useMemo(
-    () => toColumns(posts, numColumn),
-    [posts, numColumn]
+    () => toColumns(pages, numColumn),
+    [pages, numColumn]
   );
 
   return (

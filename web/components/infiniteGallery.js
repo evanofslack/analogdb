@@ -3,7 +3,7 @@
 import GallerySkeleton from "@components/gallerySkeleton";
 import Grid from "@components/grid";
 import { Button, Loader } from "@mantine/core";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import styles from "./infiniteGallery.module.css";
 
 export default function InfiniteGallery({
@@ -19,7 +19,11 @@ export default function InfiniteGallery({
   refetch,
 }) {
   const sentinelRef = useRef(null);
-  const posts = pages.flatMap((page) => page.posts ?? []);
+  const postPages = useMemo(
+    () => pages.map((page) => page.posts ?? []),
+    [pages]
+  );
+  const posts = postPages.flat();
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -81,7 +85,7 @@ export default function InfiniteGallery({
         </div>
       )}
       <div className={isPlaceholderData ? styles.dimmed : undefined}>
-        <Grid posts={posts} initialColumns={initialColumns} />
+        <Grid pages={postPages} initialColumns={initialColumns} />
       </div>
       {hasNextPage && <div ref={sentinelRef} aria-hidden />}
       {isFetchingNextPage && (
