@@ -127,12 +127,10 @@
 }
 
 .title {
+  margin: 0;
   font-size: 1.3rem;
   font-weight: 500;
   font-family: "Courier Prime", Courier, monospace;
-}
-.title:hover {
-  text-decoration: underline;
 }
 
 .author {

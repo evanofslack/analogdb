@@ -51,6 +51,8 @@
   flex-direction: row;
 }
 .iconText {
+  display: block;
+  font-size: 2em;
   margin-top: 0.15rem;
   margin-bottom: 0.1rem;
   margin-left: 0.75rem;

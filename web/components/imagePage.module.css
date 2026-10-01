@@ -1,35 +1,27 @@
 .fullscreen {
   width: 100vw;
-  height: 93vh;
+  height: 100vh;
+  height: 100svh;
+  padding-bottom: 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
 }
 
-.title {
-  line-height: 1.15;
-  font-size: 1.5rem;
-  text-align: left;
-  color: var(--adb-heading);
+.header {
+  width: 100%;
 }
 
 .imageContainer {
   width: 90%;
-  height: 90%;
+  flex: 1;
+  min-height: 0;
   position: relative;
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
   max-width: 1268px;
   max-height: 1268px;
-}
-
-.headerIcons {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  width: 90vw;
-  margin-top: 1rem;
 }
 
 .footerIcons {

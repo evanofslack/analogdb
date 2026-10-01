@@ -1,10 +1,12 @@
 "use client";
 
 import { baseURL } from "@lib/constants";
+import { postAlt } from "@lib/seo";
 import { Tooltip } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
 import {
   IconApi,
+  IconBrandReddit,
   IconCalendarWeek,
   IconCamera,
   IconMovie,
@@ -12,12 +14,10 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import styles from "./imageTag.module.css";
 import Keywords from "./keywords";
 
 export default function ImageTag(props) {
-  const router = useRouter();
   const clipboard = useClipboard({ timeout: 1000 });
 
   let post = props.post;
@@ -27,7 +27,8 @@ export default function ImageTag(props) {
   const redditUserURL = "https://www.reddit.com/user/";
   const author = post.author.replace("u/", "");
 
-  const date = new Date(post.timestamp * 1000).toLocaleDateString("en-US", {
+  const uploaded = new Date(post.timestamp * 1000);
+  const date = uploaded.toLocaleDateString("en-US", {
     timeZone: "UTC",
   });
 
@@ -41,21 +42,13 @@ export default function ImageTag(props) {
       ? `${post.film_make}, ${post.film_type}`
       : null;
 
-  const handleFilmClick = () => {
-    router.push(
-      `/?film_make=${encodeURIComponent(
-        post.film_make
-      )}&film_type=${encodeURIComponent(post.film_type)}`
-    );
-  };
+  const filmURL = `/?film_make=${encodeURIComponent(
+    post.film_make
+  )}&film_type=${encodeURIComponent(post.film_type)}`;
 
-  const handleCameraClick = () => {
-    router.push(
-      `/?camera_make=${encodeURIComponent(
-        post.camera_make
-      )}&camera_model=${encodeURIComponent(post.camera_model)}`
-    );
-  };
+  const cameraURL = `/?camera_make=${encodeURIComponent(
+    post.camera_make
+  )}&camera_model=${encodeURIComponent(post.camera_model)}`;
 
   let hexColors = new Array();
   post.colors.forEach(function (color) {
@@ -71,16 +64,14 @@ export default function ImageTag(props) {
   return (
     <div className={styles.container}>
       <div className={styles.containerMetadata}>
-        <a href={post.permalink} className={styles.title}>
-          {post.title}
-        </a>
+        <h1 className={styles.title}>{post.title}</h1>
         <div className={styles.containerSub}>
           <div className={styles.containerAuthor}>
             <div className={styles.infoItemCal}>
               <Tooltip label={"uploaded"} position="bottom" color="gray">
                 <IconCalendarWeek size={16} className={styles.icon} />
               </Tooltip>
-              {date}
+              <time dateTime={uploaded.toISOString()}>{date}</time>
             </div>
             <a href={redditUserURL + author} className={styles.author}>
               <Tooltip label={"author"} position="bottom" color="gray">
@@ -88,29 +79,31 @@ export default function ImageTag(props) {
               </Tooltip>
               {author}
             </a>
+            <a href={post.permalink} className={styles.author}>
+              <Tooltip label={"view on reddit"} position="bottom" color="gray">
+                <IconBrandReddit size={16} className={styles.icon} />
+              </Tooltip>
+              reddit
+            </a>
             {cameraInfo && (
-              <div
+              <Link
+                href={cameraURL}
+                prefetch={false}
                 className={styles.infoItem}
-                onClick={handleCameraClick}
-                style={{ cursor: "pointer" }}
               >
                 <Tooltip label={"camera"} position="bottom" color="gray">
                   <IconCamera size={16} className={styles.icon} />
                 </Tooltip>
                 {cameraInfo}
-              </div>
+              </Link>
             )}
             {filmInfo && (
-              <div
-                className={styles.infoItem}
-                onClick={handleFilmClick}
-                style={{ cursor: "pointer" }}
-              >
+              <Link href={filmURL} prefetch={false} className={styles.infoItem}>
                 <Tooltip label={"film"} position="bottom" color="gray">
                   <IconMovie size={16} className={styles.icon} />
                 </Tooltip>
                 {filmInfo}
-              </div>
+              </Link>
             )}
             <a href={api_endpoint + post.id} className={styles.id}>
               <Tooltip label={"api response"} position="bottom" color="gray">
@@ -162,7 +155,7 @@ export default function ImageTag(props) {
                       key={post.id}
                       style={{ objectFit: "cover" }}
                       src={post.images[1].url}
-                      alt={`image ${post.id} by ${post.author}`}
+                      alt={postAlt(post)}
                       sizes="(max-width: 720px) 50vw, 200px"
                       fill
                       quality={100}

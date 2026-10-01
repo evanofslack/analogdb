@@ -1,3 +1,4 @@
+import { postAlt } from "@lib/seo";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -24,7 +25,7 @@ export default function GridImage(props) {
           src={image.url}
           width={image.width}
           height={image.height}
-          alt={`image ${post.id} by ${post.author}`}
+          alt={postAlt(post)}
           sizes="(max-width: 720px) 50vw, (max-width: 1440px) 33vw, 25vw"
           priority={props.priority}
           fetchPriority={props.priority ? "high" : undefined}
