@@ -40,7 +40,6 @@ patch_scores_job = dg.define_asset_job(
     selection=[
         analogdb_posts,
         updated_post_scores,
-        patch_post_metadata,
         patch_post_scores,
     ],
 )
