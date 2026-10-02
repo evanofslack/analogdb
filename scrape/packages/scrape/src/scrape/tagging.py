@@ -23,14 +23,24 @@ Return JSON with a caption and tags.
 
 Caption: one plain sentence describing what is visible in the photo. Never mention the camera, film or lens.
 
-Tags: 5 to 15 tags, most important first. Lowercase, singular, mostly single words:
-- subjects: woman, dog, car, building, tree
-- setting: beach, street, forest, mountain, kitchen
-- time and weather: sunset, night, fog, snow, rain
-- notable colors or light: backlit, neon, golden hour, shadow
-- places named in the title or description, which may be several words: new york, tokyo, lake district
+Tags: 5 to 15 tags, most important first. Tag what makes this photo different from other photos. Be specific, not generic. Lowercase and singular.
 
-Only tag what is visible in the photo, plus places the author names. Never tag a camera, lens, film, brand or format, and never use the words photo, film, analog, picture or image.
+Include, when clearly visible or evident:
+- the main subject and its category: croissant and food, dog and animal, car and vehicle
+- people as specific nouns: woman, man, girl, boy, child, couple. Never "person".
+- the setting: beach, street, forest, mountain, kitchen
+- the genre: portrait, self-portrait, landscape, street, still life
+- the time of day only when it is specific: dawn, dusk, sunset, golden hour, night
+- atmosphere and weather: hazy, fog, rain, snow
+- notable light or color: backlit, neon, shadow
+- monochrome for black and white photos. Never write "black and white".
+- places named in the title or description: new york, tokyo, lake district
+
+Use single words. Use several words only for place names (new york) and fixed compound nouns that have no single word form (cowboy hat). Never combine an adjective with a noun: not "long hair", "white shirt" or "ruffled collar".
+
+Only tag what is visible in the photo, plus places the author names. Never tag the names of people, even when the title or description names them.
+
+Never use these tags: day, daytime, daylight, outdoor, outdoors, indoor, indoors, scene, view, background, foreground, object, thing, photo, film, analog, picture, image. Never tag a camera, lens, film, brand or format.
 
 Return JSON: {"caption": "...", "tags": ["...", "..."]}"""
 
@@ -68,6 +78,17 @@ SINGULAR_KEEP = {
     "wales",
 }
 SINGULAR_SKIP_ENDINGS = ("ss", "us", "is", "ics")
+
+MONOCHROME = "monochrome"
+MONOCHROME_ALIASES = {
+    "black and white",
+    "black-and-white",
+    "black white",
+    "b w",
+    "bw",
+    "grayscale",
+    "greyscale",
+}
 
 _inflect = inflect.engine()
 
@@ -157,6 +178,8 @@ def normalize_tags(
         if not isinstance(tag, str):
             continue
         tag = clean_tag(tag)
+        if tag in MONOCHROME_ALIASES:
+            tag = MONOCHROME
         if not tag or tag in blocked:
             continue
         if tag not in named:

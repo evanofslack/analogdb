@@ -35,3 +35,16 @@ cinestill
 polaroid
 instax
 lomography
+day
+daytime
+daylight
+outdoor
+outdoors
+indoor
+indoors
+scene
+view
+background
+foreground
+object
+thing

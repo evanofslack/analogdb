@@ -91,6 +91,13 @@ class TestNormalize:
     def test_missing_stoplist_is_empty(self, tmp_path):
         assert load_stoplist(str(tmp_path / "missing.txt")) == set()
 
+    def test_monochrome(self):
+        tags = ["Black and White", "black-and-white", "B&W", "bw", "grayscale"]
+        assert normalize_tags(tags + ["Greyscale", "women"], set()) == [
+            "monochrome",
+            "woman",
+        ]
+
     def test_dedupe_after_singular(self):
         assert normalize_tags(["dog", "dogs", "Dog", 3, None], set()) == ["dog"]
 
@@ -111,7 +118,12 @@ class TestNormalize:
     def test_real_stoplist_allows_common_tags(self):
         blocked = load_stoplist(str(STOPLIST))
         assert {"photo", "film", "camera", "kodak"} <= blocked
-        assert not {"people", "light", "day", "color", "place"} & blocked
+        assert {"day", "daylight", "outdoors", "indoor", "scene", "thing"} <= blocked
+        assert not {"people", "light", "color", "place", "monochrome"} & blocked
+        assert normalize_tags(["outdoors", "black and white", "dusk"], blocked) == [
+            "monochrome",
+            "dusk",
+        ]
 
 
 class TestWeights:
