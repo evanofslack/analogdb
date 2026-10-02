@@ -19,6 +19,9 @@ from analogdb_generated.models.analogdb_patch_post import (
     AnalogdbPatchPost as PostPatch,
 )
 from analogdb_generated.models.analogdb_post import AnalogdbPost as Post
+from analogdb_generated.models.analogdb_post_caption import (
+    AnalogdbPostCaption as PostCaption,
+)
 from analogdb_generated.models.analogdb_post_extraction import (
     AnalogdbPostExtraction as PostExtraction,
 )
@@ -32,6 +35,7 @@ __all__ = [
     "Image",
     "Keyword",
     "Post",
+    "PostCaption",
     "PostCreate",
     "PostExtraction",
     "PostPatch",
