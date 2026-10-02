@@ -32,6 +32,7 @@ Include, when clearly visible or evident:
 - the genre: portrait, self-portrait, landscape, street, still life
 - the time of day only when it is specific: dawn, dusk, sunset, golden hour, night
 - atmosphere and weather: hazy, fog, rain, snow
+- the season only when the image clearly shows it: winter (snow), autumn (autumn foliage), spring (blossoms), summer. Never guess a season. Write "autumn", never "fall".
 - notable light or color: backlit, neon, shadow
 - monochrome only when the entire image is a single hue: black and white, sepia, or an image that is all one color (all blue). Never for muted, faded, limited or two-color images. Never write "black and white".
 - places named in the title or description: new york, tokyo, lake district

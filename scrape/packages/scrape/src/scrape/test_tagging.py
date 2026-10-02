@@ -240,6 +240,12 @@ class TestTagger:
         assert len(calls) == 3
         assert all(p["type"] == "text" for p in calls[2]["messages"][1]["content"])
 
+    def test_prompt_asks_for_evident_season(self):
+        tagger, ai = self.tagger([reply()])
+        tagger.tag("https://cdn/m.jpg", "t", None)
+        system = ai.chat.completions.calls[0]["messages"][0]["content"]
+        assert "autumn" in system and "Never guess a season" in system
+
     def test_grayscale_forces_monochrome(self):
         tagger, _ = self.tagger([reply(), "no", "no", reply(tags=["street"])])
 
