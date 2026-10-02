@@ -1,0 +1,81 @@
+.main {
+  padding-bottom: 4rem;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.margin {
+  margin: 0 5vw;
+}
+
+.intro {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 2.4rem;
+  letter-spacing: 0.04em;
+  color: var(--adb-heading);
+}
+
+.text {
+  margin-top: 0.4rem;
+  margin-bottom: 1.5rem;
+  max-width: 40rem;
+  color: var(--adb-muted);
+}
+
+.filter {
+  max-width: 22rem;
+}
+
+.empty {
+  padding: 5rem 0;
+  text-align: center;
+  font-weight: 400;
+}
+
+.group {
+  margin-top: 2.5rem;
+}
+
+.groupTitle {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--adb-nav);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 1.5rem 1rem;
+}
+
+@media screen and (max-width: 1440px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .margin {
+    margin: 0 1rem;
+  }
+  .title {
+    font-size: 1.8rem;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem 0.75rem;
+  }
+}
