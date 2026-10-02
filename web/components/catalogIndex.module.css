@@ -6,6 +6,7 @@
 
 .margin {
   margin: 0 5vw;
+  padding-bottom: 6rem;
 }
 
 .intro {
@@ -70,6 +71,7 @@
 @media screen and (max-width: 720px) {
   .margin {
     margin: 0 1rem;
+    padding-bottom: 4rem;
   }
   .title {
     font-size: 1.8rem;
