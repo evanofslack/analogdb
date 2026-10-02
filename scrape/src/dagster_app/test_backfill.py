@@ -218,6 +218,7 @@ class FakeTagger:
         self.chunks = []
 
     def tag_all(self, inputs, concurrency):
+        self.grayscale = [i.grayscale for i in inputs]
         self.chunks.append([i.title for i in inputs])
         return [self.tag(i.title) for i in inputs]
 
@@ -303,6 +304,13 @@ class TestBackfillCaptions:
         self.run(client, tagger, retry_text_only=True)
 
         assert tagger.chunks == [["text", "fail"]]
+
+    def test_passes_grayscale(self):
+        posts = [medium_post(1), medium_post(2)]
+        posts[1].grayscale = True
+        tagger = FakeTagger()
+        self.run(FakeCaptionClient(posts), tagger)
+        assert tagger.grayscale == [False, True]
 
     def test_limit(self):
         tagger = FakeTagger()

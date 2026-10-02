@@ -150,7 +150,12 @@ def tag_post(tagger: ImageTagger, recorder: UsageRecorder, post: dict) -> Dict:
     started = time.monotonic()
     result: Dict = {}
     try:
-        tags = tagger.tag(post["url"], post["title"], post.get("description"))
+        tags = tagger.tag(
+            post["url"],
+            post["title"],
+            post.get("description"),
+            bool(post.get("grayscale")),
+        )
         result.update(
             caption=tags.caption, tags=tags.tags, version=tags.version, raw=tags.raw
         )

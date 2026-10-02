@@ -291,7 +291,12 @@ def backfill_post_captions(
                 context.log.warning(f"Failed to tag post, id={p.id}, no medium image")
                 continue
             inputs.append(
-                TagInput(image_url=url, title=p.title or "", description=p.description)
+                TagInput(
+                    image_url=url,
+                    title=p.title or "",
+                    description=p.description,
+                    grayscale=bool(p.grayscale),
+                )
             )
             tagged.append(p)
 

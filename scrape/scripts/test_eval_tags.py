@@ -91,6 +91,7 @@ def test_main_runs_models_and_renders(tmp_path):
     results = json.loads((tmp_path / "results.json").read_text())
     first = results["good"]["1"]
     assert first["tags"] == ["street"]
+    assert results["good"]["10"]["tags"] == ["street", "monochrome"]
     assert first["calls"][0]["image"] is True
     assert ai.chat.completions.calls[0]["extra_body"] == {"usage": {"include": True}}
     page = (tmp_path / "review.html").read_text()

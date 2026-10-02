@@ -258,7 +258,14 @@ def post_tags(
             status[id] = Status.FAILED
             errors[id] = str(e)
             continue
-        inputs.append(TagInput(image_url=url, title=p.title, description=p.selftext))
+        inputs.append(
+            TagInput(
+                image_url=url,
+                title=p.title,
+                description=p.selftext,
+                grayscale=post_images.data[id].grayscale,
+            )
+        )
         tagged.append(id)
 
     results = tagger_client.tag_all(inputs, tagger.concurrency)

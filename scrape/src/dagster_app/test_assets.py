@@ -292,6 +292,7 @@ class TestPostTags:
             result = run_post_tags(reddit_posts, medium_images(2), tagger)
 
         assert result.successful_count() == 2
+        assert [c.grayscale for c in tagger.calls] == [False, False]
         assert sorted(c.image_url for c in tagger.calls) == [
             "https://s3/0/1.jpg",
             "https://s3/1/1.jpg",
