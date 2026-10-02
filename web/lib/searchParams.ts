@@ -42,6 +42,34 @@ export const postsParsers = {
 
 export type PostsFilters = inferParserType<typeof postsParsers>;
 
+export const catalogParsers = {
+  sort: parseAsStringLiteral(sortOpts).withDefault("score"),
+  seed: parseAsInteger,
+};
+
+export type CatalogMatch = Pick<
+  PostsFilters,
+  "film_make" | "film_type" | "camera_make" | "camera_model"
+>;
+
+export function catalogFilters(match: Partial<CatalogMatch>): PostsFilters {
+  return {
+    sort: "score",
+    seed: null,
+    nsfw: "exclude",
+    bw: "include",
+    sprocket: "include",
+    color: null,
+    text: null,
+    ...postsLimits,
+    film_make: null,
+    film_type: null,
+    camera_make: null,
+    camera_model: null,
+    ...match,
+  };
+}
+
 const COLOR_MIN_VALUES: Record<string, number> = {
   gray: 0.8,
   black: 0.7,

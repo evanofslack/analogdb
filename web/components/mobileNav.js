@@ -37,6 +37,22 @@ export default function MobileNav() {
                   </div>
                 </div>
               </Link>
+              <Link href="/films" className={styles.link}>
+                <div className={styles.icon}>
+                  <div className={styles.check}>
+                    <span className={styles.iconText}>FILM</span>
+                    {pathname.startsWith("/films") && <BiCheck size="2rem" />}
+                  </div>
+                </div>
+              </Link>
+              <Link href="/cameras" className={styles.link}>
+                <div className={styles.icon}>
+                  <div className={styles.check}>
+                    <span className={styles.iconText}>CAMERAS</span>
+                    {pathname.startsWith("/cameras") && <BiCheck size="2rem" />}
+                  </div>
+                </div>
+              </Link>
               <Link href="/about" className={styles.link}>
                 <div className={styles.icon}>
                   <div className={styles.check}>

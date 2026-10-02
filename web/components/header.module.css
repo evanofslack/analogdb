@@ -72,6 +72,9 @@
   .description {
     display: none;
   }
+  .title {
+    font-size: 2.6rem;
+  }
 }
 @media screen and (max-width: 720px) {
   .main {

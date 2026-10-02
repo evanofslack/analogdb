@@ -1,0 +1,37 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  color: var(--adb-heading);
+}
+
+.cover {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background-color: var(--adb-surface-alt);
+}
+
+.cover img {
+  transition: transform 0.3s;
+}
+
+.card:hover .cover img {
+  transform: scale(1.03);
+}
+
+.name {
+  margin-top: 0.6rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.card:hover .name {
+  text-decoration: underline;
+}
+
+.count {
+  margin-top: 0.1rem;
+  font-size: 0.85rem;
+  color: var(--adb-muted);
+}

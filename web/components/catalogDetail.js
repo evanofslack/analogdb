@@ -1,0 +1,139 @@
+"use client";
+
+import usePosts from "@hooks/usePosts";
+import { catalogHref, catalogName } from "@lib/catalog";
+import { catalogParsers } from "@lib/searchParams";
+import { pickSeed } from "@lib/seed";
+import { SegmentedControl } from "@mantine/core";
+import { IconAperture, IconPalette, IconPhoto } from "@tabler/icons-react";
+import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import styles from "./catalogDetail.module.css";
+import Footer from "./footer";
+import Header from "./header";
+import InfiniteGallery from "./infiniteGallery";
+import ScrollTop from "./scrollTop";
+
+const factIcons = {
+  photos: IconPhoto,
+  speed: IconAperture,
+  color: IconPalette,
+};
+
+const sortData = [
+  { label: "top", value: "score" },
+  { label: "newest", value: "time" },
+  { label: "random", value: "random" },
+];
+
+export default function CatalogDetail({
+  kind,
+  entry,
+  facts,
+  related,
+  fixed,
+  initialPage,
+  initialFilters,
+  initialColumns,
+}) {
+  const { filters, setFilters, limits, ...posts } = usePosts(
+    initialPage,
+    initialFilters,
+    { parsers: catalogParsers, fixed }
+  );
+  const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+  const descriptionRef = useRef(null);
+
+  const setSort = (sort) => {
+    if (sort === "random") {
+      setFilters({ sort: sort, seed: pickSeed() });
+    } else {
+      setFilters({ sort: sort, seed: null });
+    }
+  };
+
+  const description = entry.description?.trim();
+
+  useEffect(() => {
+    const element = descriptionRef.current;
+    if (!element || expanded) return;
+    const measure = () =>
+      setOverflowing(element.scrollHeight > element.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [description, expanded]);
+
+  return (
+    <div className={styles.main}>
+      <Header compact />
+      <div className={styles.margin}>
+        <div className={styles.intro}>
+          <h1 className={styles.title}>{catalogName(entry)}</h1>
+          <ul className={styles.facts}>
+            {facts.map((fact) => {
+              const Icon = factIcons[fact.icon];
+              return (
+                <li key={fact.label} className={styles.fact}>
+                  <Icon size={16} className={styles.icon} />
+                  {fact.label}
+                </li>
+              );
+            })}
+          </ul>
+          {description && (
+            <div className={styles.descriptionBox}>
+              <p
+                ref={descriptionRef}
+                className={expanded ? styles.description : styles.clamped}
+              >
+                {description}
+              </p>
+              {(overflowing || expanded) && (
+                <button
+                  type="button"
+                  className={styles.more}
+                  onClick={() => setExpanded((value) => !value)}
+                >
+                  {expanded ? "less" : "more"}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        {related.length > 0 && (
+          <section className={styles.related}>
+            <h2 className={styles.relatedTitle}>
+              more from {entry.make.toUpperCase()}
+            </h2>
+            <div className={styles.relatedLinks}>
+              {related.map((other) => (
+                <Link
+                  key={other.slug}
+                  href={catalogHref(kind, other)}
+                  prefetch={false}
+                  className={styles.relatedLink}
+                >
+                  {catalogName(other)}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+        <div className={styles.sort}>
+          <SegmentedControl
+            value={filters.sort}
+            onChange={setSort}
+            data={sortData}
+            aria-label="sort"
+          />
+        </div>
+        <InfiniteGallery {...posts} initialColumns={initialColumns} />
+        <ScrollTop />
+      </div>
+      <Footer />
+    </div>
+  );
+}
