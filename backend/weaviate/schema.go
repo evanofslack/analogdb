@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/schema"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -14,31 +13,47 @@ func (ss SimilarityService) CreateSchemas(ctx context.Context) error {
 }
 
 func (db *DB) createSchemas(ctx context.Context) error {
-	err := db.createPictureSchema(ctx)
+	err := db.createPostImageSchema(ctx)
 	return err
 }
 
-func (db *DB) getSchema(ctx context.Context) (*schema.Dump, error) {
-	schema, err := db.db.Schema().Getter().Do(ctx)
+func (db *DB) createPostImageSchema(ctx context.Context) error {
+	db.logger.DebugContext(ctx, "Start create post image schema in vector db")
+
+	exists, err := db.db.Schema().ClassExistenceChecker().WithClassName(PostImageClass).Do(ctx)
 	if err != nil {
-		return nil, err
+		err = fmt.Errorf("check post image schema, %w", err)
+		db.logger.ErrorContext(ctx, "Fail check post image schema in vector db", "error", err)
+		return err
 	}
-	return schema, nil
+	if exists {
+		db.logger.DebugContext(ctx, "Found post image schema in vector db")
+		return nil
+	}
+
+	err = db.db.Schema().ClassCreator().WithClass(postImageClass()).Do(ctx)
+	if err != nil {
+		err = fmt.Errorf("create post image schema, %w", err)
+		db.logger.ErrorContext(ctx, "Fail create post image schema in vector db", "error", err)
+		return err
+	}
+
+	db.logger.InfoContext(ctx, "Created post image schema in vector db")
+	return nil
 }
 
-func (db *DB) createPictureSchema(ctx context.Context) error {
-	db.logger.DebugContext(ctx, "Start create picture schema in vector db")
-
-	classObj := &models.Class{
-		Class:       "Picture",
+func postImageClass() *models.Class {
+	searchable := true
+	return &models.Class{
+		Class:       PostImageClass,
 		Description: "Analog photographs",
 		ModuleConfig: map[string]any{
-			"img2vec-neural": map[string]any{
+			"multi2vec-clip": map[string]any{
 				"imageFields": []string{"image"},
 			},
 		},
 		VectorIndexType: "hnsw",
-		Vectorizer:      "img2vec-neural",
+		Vectorizer:      "multi2vec-clip",
 		VectorIndexConfig: map[string]any{
 			"distance":       "cosine",
 			"ef":             float64(128),
@@ -57,6 +72,27 @@ func (db *DB) createPictureSchema(ctx context.Context) error {
 				Description: "unique post_id",
 			},
 			{
+				Name:            "title",
+				DataType:        []string{"text"},
+				Description:     "post title",
+				IndexSearchable: &searchable,
+				Tokenization:    "word",
+			},
+			{
+				Name:            "caption",
+				DataType:        []string{"text"},
+				Description:     "post caption",
+				IndexSearchable: &searchable,
+				Tokenization:    "word",
+			},
+			{
+				Name:            "tags",
+				DataType:        []string{"text[]"},
+				Description:     "post tags",
+				IndexSearchable: &searchable,
+				Tokenization:    "word",
+			},
+			{
 				Name:        "grayscale",
 				DataType:    []string{"boolean"},
 				Description: "is post grayscale",
@@ -73,14 +109,4 @@ func (db *DB) createPictureSchema(ctx context.Context) error {
 			},
 		},
 	}
-
-	err := db.db.Schema().ClassCreator().WithClass(classObj).Do(ctx)
-	if err != nil {
-		err = fmt.Errorf("create picture schema, %w", err)
-		db.logger.ErrorContext(ctx, "Fail create picture schema in vector db", "error", err)
-		return err
-	}
-
-	db.logger.InfoContext(ctx, "Created picture schema in vector db")
-	return nil
 }

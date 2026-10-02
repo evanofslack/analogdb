@@ -6,16 +6,16 @@ import (
 	"fmt"
 
 	"github.com/evanofslack/analogdb"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/data/replication"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/filters"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/data/replication"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/filters"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 )
 
-const PictureClass = "Picture"
+const PostImageClass = "PostImage"
 
 // some posts have more than one picture object, so fetch extra
 // neighbors to still fill the limit after removing repeats
@@ -76,7 +76,7 @@ func (db *DB) deletePost(ctx context.Context, id int) error {
 		WithValueInt(int64(id))
 
 	result, err := db.db.Batch().ObjectsBatchDeleter().
-		WithClassName(PictureClass).
+		WithClassName(PostImageClass).
 		WithWhere(where).
 		WithOutput("minimal").
 		WithConsistencyLevel(replication.ConsistencyLevel.ALL). // default QUORUM
@@ -126,8 +126,6 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 	ctx, span := db.startTrace(ctx, "vector:get_similar_post_ids", trace.WithAttributes(attribute.Int("postID", postID)))
 	defer span.End()
 
-	// first make the query to lookup UUID associated with post's embedding
-
 	fields := []graphql.Field{
 		{Name: "post_id"},
 		{Name: "_additional", Fields: []graphql.Field{
@@ -136,39 +134,27 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 		}},
 	}
 
-	where := filters.Where().
-		WithPath([]string{"post_id"}).
-		WithOperator(filters.Equal).
-		WithValueInt(int64(postID))
-
-	result, err := db.db.GraphQL().Get().
-		WithClassName("Picture").
-		WithFields(fields...).
-		WithLimit(1).
-		WithWhere(where).
+	uuid := pictureID(postID).String()
+	exists, err := db.db.Data().Checker().
+		WithClassName(PostImageClass).
+		WithID(uuid).
 		Do(ctx)
 	if err != nil {
-		db.logger.ErrorContext(ctx, "Fail get similar posts from vector db", "post_id", postID, "error", err)
-		span.SetStatus(codes.Error, "Get embedding by postID failed")
+		db.logger.ErrorContext(ctx, "Fail check embedding exists in vector db", "post_id", postID, "error", err)
+		span.SetStatus(codes.Error, "Check embedding exists failed")
 		span.RecordError(err)
 		return ids, err
 	}
-	span.AddEvent("Got vector embedding by postID", trace.WithAttributes(attribute.Int("postID", postID)))
-
-	pics, err := unmarshallPicturesResp(result)
-	if err != nil {
-		db.logger.ErrorContext(ctx, "Fail unmarshall similar posts from vector db", "post_id", postID, "error", err)
-		span.SetStatus(codes.Error, "Unmarshall embedding failed")
-		span.RecordError(err)
+	if !exists {
+		db.logger.WarnContext(ctx, "Found no embedding in vector db", "post_id", postID)
+		span.SetStatus(codes.Error, "Embedding not found")
 		return ids, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: fmt.Sprintf("post %d has no similarity embedding", postID)}
 	}
-	uuid := pics[0].uuid
-	span.AddEvent("Unmarshalled embedding", trace.WithAttributes(attribute.Int("postID", postID), attribute.String("uuid", uuid)))
 
-	// then make query to find nearest neighbors
+	// find nearest neighbors
 
 	// this is where we narrow down the results
-	where, err = filterToWhere(filter)
+	where, err := filterToWhere(filter)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail convert similarity filter to where clause", "post_id", postID, "error", err)
 		span.SetStatus(codes.Error, "Similarity filter to where clause failed")
@@ -183,13 +169,17 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 	}
 
 	nearObject := db.db.GraphQL().NearObjectArgBuilder().WithID(uuid)
-	result, err = db.db.GraphQL().Get().
-		WithClassName(PictureClass).
+	query := db.db.GraphQL().Get().
+		WithClassName(PostImageClass).
 		WithFields(fields...).
-		WithLimit(fetchLimit(limit)).
-		WithWhere(where).
-		WithNearObject(nearObject).
-		Do(ctx)
+		WithNearObject(nearObject)
+	if limit > 0 {
+		query = query.WithLimit(fetchLimit(limit))
+	}
+	if where != nil {
+		query = query.WithWhere(where)
+	}
+	result, err := query.Do(ctx)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail find near embeddings in vector db", "post_id", postID, "error", err)
 		span.SetStatus(codes.Error, "Failed to find similar embeddings in vector DB")
@@ -198,7 +188,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 	}
 	span.AddEvent("Found similar embeddings", trace.WithAttributes(attribute.Int("postID", postID), attribute.String("uuid", uuid)))
 
-	pics, err = unmarshallPicturesResp(result)
+	pics, err := unmarshallPicturesResp(result)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail unmarshall post from vector db", "post_id", postID, "error", err)
 		span.SetStatus(codes.Error, "Unmarshall embedding failed")
@@ -279,6 +269,9 @@ func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder
 		}
 	}
 
+	if len(statements) == 0 {
+		return nil, nil
+	}
 	where := filters.Where().
 		WithOperator(filters.And).
 		WithOperands(statements)
@@ -288,34 +281,35 @@ func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder
 func unmarshallPicturesResp(result *models.GraphQLResponse) ([]pictureResponse, error) {
 	var picturesResponse []pictureResponse
 
-	data := result.Data["Get"].(map[string]interface{})
+	if result == nil {
+		return picturesResponse, errors.New("unmarshall pictures from vector DB: empty response")
+	}
+	if len(result.Errors) > 0 {
+		return picturesResponse, fmt.Errorf("unmarshall pictures from vector DB: %s", result.Errors[0].Message)
+	}
 
-	// dear god i hate this
-	if pictures, ok := data["Picture"].([]interface{}); ok {
-		for _, picture := range pictures {
+	data, ok := result.Data["Get"].(map[string]interface{})
+	if !ok {
+		return picturesResponse, errors.New("unmarshall pictures from vector DB: missing Get")
+	}
 
-			var pic pictureResponse
-
-			if fields, ok := picture.(map[string]interface{}); ok {
-				if postID, ok := fields["post_id"].(float64); ok {
-					pic.postID = int(postID)
+	pictures, _ := data[PostImageClass].([]interface{})
+	for _, picture := range pictures {
+		var pic pictureResponse
+		if fields, ok := picture.(map[string]interface{}); ok {
+			if postID, ok := fields["post_id"].(float64); ok {
+				pic.postID = int(postID)
+			}
+			if additional, ok := fields["_additional"].(map[string]interface{}); ok {
+				if distance, ok := additional["distance"].(float64); ok {
+					pic.distance = distance
 				}
-				if additional, ok := fields["_additional"].(map[string]interface{}); ok {
-					if distance, ok := additional["distance"].(float64); ok {
-						pic.distance = distance
-					}
-					if uuid, ok := additional["id"].(string); ok {
-						pic.uuid = uuid
-					}
+				if uuid, ok := additional["id"].(string); ok {
+					pic.uuid = uuid
 				}
 			}
-			picturesResponse = append(picturesResponse, pic)
 		}
+		picturesResponse = append(picturesResponse, pic)
 	}
-	if len(picturesResponse) > 0 {
-		return picturesResponse, nil
-	}
-
-	err := errors.New("unmarshall pictures from vector DB")
-	return picturesResponse, err
+	return picturesResponse, nil
 }

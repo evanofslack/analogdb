@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/evanofslack/analogdb"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate/graphql"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate/graphql"
 	"github.com/weaviate/weaviate/entities/models"
 )
 
@@ -16,7 +16,7 @@ var _ analogdb.VectorCounter = (*DB)(nil)
 func (db *DB) CountObjects(ctx context.Context) (int, error) {
 	meta := graphql.Field{Name: "meta", Fields: []graphql.Field{{Name: "count"}}}
 	result, err := db.db.GraphQL().Aggregate().
-		WithClassName(PictureClass).
+		WithClassName(PostImageClass).
 		WithFields(meta).
 		Do(ctx)
 	if err != nil {
@@ -43,9 +43,9 @@ func unmarshallCountResp(result *models.GraphQLResponse) (int, error) {
 	if err := json.Unmarshal(data, &resp); err != nil {
 		return 0, err
 	}
-	classes := resp.Aggregate[PictureClass]
+	classes := resp.Aggregate[PostImageClass]
 	if len(classes) == 0 {
-		return 0, fmt.Errorf("aggregate count: no result for class %s", PictureClass)
+		return 0, fmt.Errorf("aggregate count: no result for class %s", PostImageClass)
 	}
 	return classes[0].Meta.Count, nil
 }

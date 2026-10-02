@@ -9,7 +9,7 @@ import (
 
 func TestUnmarshallCountResp(t *testing.T) {
 	var result models.GraphQLResponse
-	body := `{"data":{"Aggregate":{"Picture":[{"meta":{"count":23410}}]}}}`
+	body := `{"data":{"Aggregate":{"PostImage":[{"meta":{"count":23410}}]}}}`
 	if err := json.Unmarshal([]byte(body), &result); err != nil {
 		t.Fatal(err)
 	}
@@ -22,7 +22,7 @@ func TestUnmarshallCountResp(t *testing.T) {
 	}
 
 	var empty models.GraphQLResponse
-	if err := json.Unmarshal([]byte(`{"data":{"Aggregate":{"Picture":[]}}}`), &empty); err != nil {
+	if err := json.Unmarshal([]byte(`{"data":{"Aggregate":{"PostImage":[]}}}`), &empty); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := unmarshallCountResp(&empty); err == nil {
