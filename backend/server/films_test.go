@@ -128,6 +128,61 @@ func TestParseToFilmFilter(t *testing.T) {
 			url:         "/films?include_counts=invalid",
 			expectError: true,
 		},
+		{
+			name:        "min count",
+			url:         "/films?min_count=5",
+			expectError: false,
+			checkFilter: func(f *analogdb.FilmFilter) bool {
+				return f.MinCount != nil && *f.MinCount == 5
+			},
+		},
+		{
+			name:        "no min count or top posts by default",
+			url:         "/films",
+			expectError: false,
+			checkFilter: func(f *analogdb.FilmFilter) bool {
+				return f.MinCount == nil && f.TopPosts == nil
+			},
+		},
+		{
+			name:        "invalid min count",
+			url:         "/films?min_count=invalid",
+			expectError: true,
+		},
+		{
+			name:        "zero min count",
+			url:         "/films?min_count=0",
+			expectError: true,
+		},
+		{
+			name:        "top posts",
+			url:         "/films?top_posts=6",
+			expectError: false,
+			checkFilter: func(f *analogdb.FilmFilter) bool {
+				return f.TopPosts != nil && *f.TopPosts == 6
+			},
+		},
+		{
+			name:        "top posts clamped to max",
+			url:         "/films?top_posts=50",
+			expectError: false,
+			checkFilter: func(f *analogdb.FilmFilter) bool {
+				return f.TopPosts != nil && *f.TopPosts == 10
+			},
+		},
+		{
+			name:        "top posts clamped to min",
+			url:         "/films?top_posts=0",
+			expectError: false,
+			checkFilter: func(f *analogdb.FilmFilter) bool {
+				return f.TopPosts != nil && *f.TopPosts == 1
+			},
+		},
+		{
+			name:        "invalid top posts",
+			url:         "/films?top_posts=invalid",
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {

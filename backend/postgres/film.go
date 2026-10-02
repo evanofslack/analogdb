@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/lib/pq"
 )
 
 type FilmService struct {
@@ -93,7 +94,7 @@ func (db *DB) findFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*an
 	var args []any
 	var where string
 	index := 1
-	where, args, _ = filterToWhereFilm(filter, index)
+	where, args, index = filterToWhereFilm(filter, index)
 
 	order := filterToOrderFilm(filter)
 	limit := formatLimitFilm(filter)
@@ -113,8 +114,9 @@ func (db *DB) findFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*an
 	    WHERE %s
 	    `, where) + order + limit
 
-	if counts := filter.IncludeCounts; counts != nil && *counts {
-		countWhere := filterToWhereCountFilm(filter)
+	if includeCountsFilm(filter) {
+		var countWhere string
+		countWhere, args = filterToWhereCountFilm(filter, index, args)
 		query = fmt.Sprintf(`
 			SELECT
 				f.id,
@@ -174,7 +176,57 @@ func (db *DB) findFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*an
 		return nil, err
 	}
 
+	if top := filter.TopPosts; top != nil && *top > 0 && len(films) > 0 {
+		if err := db.attachFilmTopPosts(ctx, films, *top); err != nil {
+			return nil, err
+		}
+	}
+
 	return films, nil
+}
+
+// attachFilmTopPosts adds the highest scoring non nsfw posts to each film
+func (db *DB) attachFilmTopPosts(ctx context.Context, films []*analogdb.Film, n int) error {
+	makes := make([]string, 0, len(films))
+	types := make([]string, 0, len(films))
+	for _, f := range films {
+		makes = append(makes, f.Make)
+		types = append(types, f.Type)
+	}
+
+	query := `
+		SELECT
+			film_make, film_type, id,
+			COALESCE(title, ''), COALESCE(score, 0),
+			COALESCE(lowurl, ''), COALESCE(lowwidth, 0), COALESCE(lowheight, 0),
+			COALESCE(medurl, ''), COALESCE(medwidth, 0), COALESCE(medheight, 0)
+		FROM (
+			SELECT
+				film_make, film_type, id, title, score, lowurl, lowwidth, lowheight, medurl, medwidth, medheight,
+				row_number() OVER (PARTITION BY film_make, film_type ORDER BY score DESC NULLS LAST, id DESC) AS rn
+			FROM pictures
+			WHERE nsfw = false
+			AND (film_make, film_type) IN (SELECT * FROM unnest($1::text[], $2::text[]))
+		) ranked
+		WHERE rn <= $3
+		ORDER BY film_make, film_type, rn`
+
+	top, err := db.findCatalogTopPosts(ctx, query, pq.Array(makes), pq.Array(types), n)
+	if err != nil {
+		db.logger.ErrorContext(ctx, "Find film top posts", "error", err)
+		return err
+	}
+	for _, f := range films {
+		f.TopPosts = top[catalogKey(f.Make, f.Type)]
+	}
+	return nil
+}
+
+func includeCountsFilm(filter *analogdb.FilmFilter) bool {
+	if counts := filter.IncludeCounts; counts != nil && *counts {
+		return true
+	}
+	return filter.MinCount != nil
 }
 
 func filterToWhereFilm(filter *analogdb.FilmFilter, startIndex int) (string, []any, int) {
@@ -224,14 +276,18 @@ func filterToWhereFilm(filter *analogdb.FilmFilter, startIndex int) (string, []a
 	return whereQuery, args, index
 }
 
-func filterToWhereCountFilm(filter *analogdb.FilmFilter) string {
+func filterToWhereCountFilm(filter *analogdb.FilmFilter, index int, args []any) (string, []any) {
 	where := []string{"1=1"}
 	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
 		if includeCounts := filter.IncludeCounts; includeCounts != nil && *includeCounts {
 			where = append(where, "COALESCE(p.post_count, 0) > 0")
 		}
 	}
-	return strings.Join(where, " AND ")
+	if minCount := filter.MinCount; minCount != nil {
+		where = append(where, fmt.Sprintf("COALESCE(p.post_count, 0) >= $%d", index))
+		args = append(args, *minCount)
+	}
+	return strings.Join(where, " AND "), args
 }
 
 // filterToOrderFilm converts film filter into an SQL "ORDER BY" statement

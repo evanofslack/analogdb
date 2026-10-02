@@ -120,6 +120,61 @@ func TestParseToCameraFilter(t *testing.T) {
 			url:         "/cameras?exclude_zero_counts=invalid",
 			expectError: true,
 		},
+		{
+			name:        "min count",
+			url:         "/cameras?min_count=5",
+			expectError: false,
+			checkFilter: func(f *analogdb.CameraFilter) bool {
+				return f.MinCount != nil && *f.MinCount == 5
+			},
+		},
+		{
+			name:        "no min count or top posts by default",
+			url:         "/cameras",
+			expectError: false,
+			checkFilter: func(f *analogdb.CameraFilter) bool {
+				return f.MinCount == nil && f.TopPosts == nil
+			},
+		},
+		{
+			name:        "invalid min count",
+			url:         "/cameras?min_count=invalid",
+			expectError: true,
+		},
+		{
+			name:        "zero min count",
+			url:         "/cameras?min_count=0",
+			expectError: true,
+		},
+		{
+			name:        "top posts",
+			url:         "/cameras?top_posts=6",
+			expectError: false,
+			checkFilter: func(f *analogdb.CameraFilter) bool {
+				return f.TopPosts != nil && *f.TopPosts == 6
+			},
+		},
+		{
+			name:        "top posts clamped to max",
+			url:         "/cameras?top_posts=50",
+			expectError: false,
+			checkFilter: func(f *analogdb.CameraFilter) bool {
+				return f.TopPosts != nil && *f.TopPosts == 10
+			},
+		},
+		{
+			name:        "top posts clamped to min",
+			url:         "/cameras?top_posts=0",
+			expectError: false,
+			checkFilter: func(f *analogdb.CameraFilter) bool {
+				return f.TopPosts != nil && *f.TopPosts == 1
+			},
+		},
+		{
+			name:        "invalid top posts",
+			url:         "/cameras?top_posts=invalid",
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {

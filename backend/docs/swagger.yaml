@@ -20,8 +20,31 @@ definitions:
       post_count:
         example: 50
         type: integer
+      slug:
+        example: nikon-fm2
+        type: string
+      top_posts:
+        items:
+          $ref: '#/definitions/analogdb.CatalogPost'
+        type: array
       updated:
         example: "2025-07-11T12:00:00Z"
+        type: string
+    type: object
+  analogdb.CatalogPost:
+    properties:
+      id:
+        example: 1
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/analogdb.Image'
+        type: array
+      score:
+        example: 150
+        type: integer
+      title:
+        example: Sunset over the lake
         type: string
     type: object
   analogdb.Color:
@@ -144,6 +167,7 @@ definitions:
   analogdb.Film:
     properties:
       color_type:
+        example: color
         type: string
       created:
         example: "2025-07-11T12:00:00Z"
@@ -160,9 +184,16 @@ definitions:
       post_count:
         example: 25
         type: integer
+      slug:
+        example: kodak-portra-400
+        type: string
       speed:
         example: 400
         type: integer
+      top_posts:
+        items:
+          $ref: '#/definitions/analogdb.CatalogPost'
+        type: array
       type:
         example: portra 400
         type: string
@@ -722,6 +753,14 @@ paths:
         in: query
         name: exclude_zero_counts
         type: boolean
+      - description: Only return entries with at least this many posts, implies include_counts
+        in: query
+        name: min_count
+        type: integer
+      - description: Attach this many top scoring posts to each entry (1 to 10)
+        in: query
+        name: top_posts
+        type: integer
       produces:
       - application/json
       responses:
@@ -906,6 +945,14 @@ paths:
         in: query
         name: exclude_zero_counts
         type: boolean
+      - description: Only return entries with at least this many posts, implies include_counts
+        in: query
+        name: min_count
+        type: integer
+      - description: Attach this many top scoring posts to each entry (1 to 10)
+        in: query
+        name: top_posts
+        type: integer
       produces:
       - application/json
       responses:

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/lib/pq"
 )
 
 type CameraService struct {
@@ -89,7 +90,7 @@ func (db *DB) findCameras(ctx context.Context, filter *analogdb.CameraFilter) ([
 	var args []any
 	var where string
 	index := 1
-	where, args, _ = filterToWhereCamera(filter, index)
+	where, args, index = filterToWhereCamera(filter, index)
 
 	order := filterToOrderCamera(filter)
 	limit := formatLimitCamera(filter)
@@ -107,8 +108,9 @@ func (db *DB) findCameras(ctx context.Context, filter *analogdb.CameraFilter) ([
 	    WHERE %s
 		`, where) + order + limit
 
-	if counts := filter.IncludeCounts; counts != nil && *counts {
-		countWhere := filterToWhereCountCamera(filter)
+	if includeCountsCamera(filter) {
+		var countWhere string
+		countWhere, args = filterToWhereCountCamera(filter, index, args)
 		query = fmt.Sprintf(`
 			SELECT
 				c.id,
@@ -170,7 +172,57 @@ func (db *DB) findCameras(ctx context.Context, filter *analogdb.CameraFilter) ([
 		}
 	}
 
+	if top := filter.TopPosts; top != nil && *top > 0 && len(cameras) > 0 {
+		if err := db.attachCameraTopPosts(ctx, cameras, *top); err != nil {
+			return nil, err
+		}
+	}
+
 	return cameras, nil
+}
+
+// attachCameraTopPosts adds the highest scoring non nsfw posts to each camera
+func (db *DB) attachCameraTopPosts(ctx context.Context, cameras []*analogdb.Camera, n int) error {
+	makes := make([]string, 0, len(cameras))
+	models := make([]string, 0, len(cameras))
+	for _, c := range cameras {
+		makes = append(makes, c.Make)
+		models = append(models, c.Model)
+	}
+
+	query := `
+		SELECT
+			camera_make, camera_model, id,
+			COALESCE(title, ''), COALESCE(score, 0),
+			COALESCE(lowurl, ''), COALESCE(lowwidth, 0), COALESCE(lowheight, 0),
+			COALESCE(medurl, ''), COALESCE(medwidth, 0), COALESCE(medheight, 0)
+		FROM (
+			SELECT
+				camera_make, camera_model, id, title, score, lowurl, lowwidth, lowheight, medurl, medwidth, medheight,
+				row_number() OVER (PARTITION BY camera_make, camera_model ORDER BY score DESC NULLS LAST, id DESC) AS rn
+			FROM pictures
+			WHERE nsfw = false
+			AND (camera_make, camera_model) IN (SELECT * FROM unnest($1::text[], $2::text[]))
+		) ranked
+		WHERE rn <= $3
+		ORDER BY camera_make, camera_model, rn`
+
+	top, err := db.findCatalogTopPosts(ctx, query, pq.Array(makes), pq.Array(models), n)
+	if err != nil {
+		db.logger.ErrorContext(ctx, "Find camera top posts", "error", err)
+		return err
+	}
+	for _, c := range cameras {
+		c.TopPosts = top[catalogKey(c.Make, c.Model)]
+	}
+	return nil
+}
+
+func includeCountsCamera(filter *analogdb.CameraFilter) bool {
+	if counts := filter.IncludeCounts; counts != nil && *counts {
+		return true
+	}
+	return filter.MinCount != nil
 }
 
 func filterCameraZeroCounts(cameras []*analogdb.Camera) []*analogdb.Camera {
@@ -220,14 +272,18 @@ func filterToWhereCamera(filter *analogdb.CameraFilter, startIndex int) (string,
 	return whereQuery, args, index
 }
 
-func filterToWhereCountCamera(filter *analogdb.CameraFilter) string {
+func filterToWhereCountCamera(filter *analogdb.CameraFilter, index int, args []any) (string, []any) {
 	where := []string{"1=1"}
 	if excludeZero := filter.ExcludeZeroCounts; excludeZero != nil && *excludeZero {
 		if includeCounts := filter.IncludeCounts; includeCounts != nil && *includeCounts {
 			where = append(where, "COALESCE(p.post_count, 0) > 0")
 		}
 	}
-	return strings.Join(where, " AND ")
+	if minCount := filter.MinCount; minCount != nil {
+		where = append(where, fmt.Sprintf("COALESCE(p.post_count, 0) >= $%d", index))
+		args = append(args, *minCount)
+	}
+	return strings.Join(where, " AND "), args
 }
 
 // filterToOrderCamera converts camera filter into an SQL "ORDER BY" statement

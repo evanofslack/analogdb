@@ -21,15 +21,17 @@ type CreateFilm struct {
 
 // Film represents a specific film type with post count
 type Film struct {
-	Id          int       `json:"id" example:"1"`
-	Make        string    `json:"make" example:"kodak"`
-	Type        string    `json:"type" example:"portra 400"`
-	Speed       int       `json:"speed" example:"400"`
-	ColorType   string    `json:"color_type" exawple:"color"`
-	Description string    `json:"description" example:"Kodak Portra 400 is professional color negative film with fine grain"`
-	Created     time.Time `json:"created" example:"2025-07-11T12:00:00Z"`
-	Updated     time.Time `json:"updated" example:"2025-07-11T12:00:00Z"`
-	PostCount   int       `json:"post_count" example:"25"`
+	Id          int           `json:"id" example:"1"`
+	Make        string        `json:"make" example:"kodak"`
+	Type        string        `json:"type" example:"portra 400"`
+	Speed       int           `json:"speed" example:"400"`
+	ColorType   string        `json:"color_type" example:"color"`
+	Description string        `json:"description" example:"Kodak Portra 400 is professional color negative film with fine grain"`
+	Created     time.Time     `json:"created" example:"2025-07-11T12:00:00Z"`
+	Updated     time.Time     `json:"updated" example:"2025-07-11T12:00:00Z"`
+	PostCount   int           `json:"post_count" example:"25"`
+	Slug        string        `json:"slug" example:"kodak-portra-400"`
+	TopPosts    []CatalogPost `json:"top_posts,omitempty"`
 }
 
 type FilmSort int
@@ -73,6 +75,8 @@ type FilmFilter struct {
 	ColorType         *string
 	IncludeCounts     *bool
 	ExcludeZeroCounts *bool
+	MinCount          *int
+	TopPosts          *int
 }
 
 func NewFilmFilter(limit *int, sort *FilmSort, ids *[]int, make *string, ty *string, speed *int, colortype *string, includeCounts *bool, excludeZeroCounts *bool) *FilmFilter {
@@ -117,6 +121,12 @@ func (filter *FilmFilter) String() string {
 	}
 	if excludeZeros := filter.ExcludeZeroCounts; excludeZeros != nil {
 		out = append(out, fmt.Sprintf("exclude_zero_counts: %t", *excludeZeros))
+	}
+	if minCount := filter.MinCount; minCount != nil {
+		out = append(out, fmt.Sprintf("min_count: %d", *minCount))
+	}
+	if topPosts := filter.TopPosts; topPosts != nil {
+		out = append(out, fmt.Sprintf("top_posts: %d", *topPosts))
 	}
 	return strings.Join(out, ", ")
 }
