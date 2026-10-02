@@ -1,6 +1,7 @@
 import { getCameraOptions } from "@app/actions/cameras";
 import { getFilmOptions } from "@app/actions/films";
 import { getFirstPosts } from "@app/actions/posts";
+import { firstPageSize, guessColumns, slim } from "@lib/firstPage";
 import { postsParsers, toPostsRequest } from "@lib/searchParams";
 import { isValidSeed, pickSeed } from "@lib/seed";
 import { jsonLd } from "@lib/seo";
@@ -10,8 +11,6 @@ import { createLoader } from "nuqs/server";
 import HomePage from "./home-page";
 
 const loadPosts = createLoader(postsParsers);
-
-const firstPageSize = 40;
 
 const title = "AnalogDB: film photography database and API";
 const description =
@@ -35,25 +34,6 @@ const website = {
     "query-input": "required name=search_term_string",
   },
 };
-
-function slim(response) {
-  return {
-    meta: response.meta,
-    posts: (response.posts ?? []).map((post) => ({
-      id: post.id,
-      author: post.author,
-      title: post.title,
-      images: (post.images ?? []).slice(0, 2),
-      colors: (post.colors ?? []).slice(0, 1),
-    })),
-  };
-}
-
-function guessColumns(device) {
-  if (device.type === "mobile") return 2;
-  if (device.type === "tablet") return 3;
-  return 4;
-}
 
 async function loadFirstPage(filters) {
   try {

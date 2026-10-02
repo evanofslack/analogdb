@@ -11,11 +11,21 @@ import { ServerPostResponse } from "analogdb-generated";
 import { useQueryStates } from "nuqs";
 import { useEffect, useMemo } from "react";
 
+type UsePostsOptions = {
+  parsers?: Partial<typeof postsParsers>;
+  fixed?: PostsFilters;
+};
+
 export default function usePosts(
   initialPage?: ServerPostResponse | null,
-  initialFilters?: PostsFilters
+  initialFilters?: PostsFilters,
+  { parsers = postsParsers, fixed }: UsePostsOptions = {}
 ) {
-  const [urlFilters, setFilters] = useQueryStates(postsParsers);
+  const [queryFilters, setFilters] = useQueryStates(parsers);
+  const urlFilters = useMemo(
+    () => (fixed ? { ...fixed, ...queryFilters } : queryFilters),
+    [fixed, queryFilters]
+  ) as PostsFilters;
 
   const missingSeed =
     urlFilters.sort === "random" && !isValidSeed(urlFilters.seed);
