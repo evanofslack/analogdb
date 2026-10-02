@@ -102,6 +102,14 @@ class Keyword:
 
 
 @dataclass
+class Caption:
+    caption: Optional[str]
+    model: str
+    version: str
+    raw: Dict
+
+
+@dataclass
 class S3Image:
     resolution: str
     url: str
@@ -141,6 +149,7 @@ class CreatePost:
     images: List[S3Image]
     keywords: List[Keyword]
     colors: List[Color]
+    caption: Optional[Caption] = None
 
 
 def new_post_create(
@@ -148,6 +157,7 @@ def new_post_create(
     metadata: PhotoMetadata,
     images: PostImages,
     keywords: List[Keyword],
+    caption: Optional[Caption] = None,
 ) -> CreatePost:
     if len(images.images) < 4:
         raise ValueError(f"Expected at least 4 images, got {len(images.images)}")
@@ -172,5 +182,6 @@ def new_post_create(
         images=images.images,
         keywords=keywords,
         colors=images.colors,
+        caption=caption,
     )
     return cp
