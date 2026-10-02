@@ -115,7 +115,7 @@ services:
       start_period: 15s
 
   weaviate:
-    image: cr.weaviate.io/semitechnologies/weaviate:1.18.3
+    image: cr.weaviate.io/semitechnologies/weaviate:1.39.8
     container_name: weaviate
     command:
       - --host
@@ -129,12 +129,12 @@ services:
       - 2112:2112
     restart: unless-stopped
     environment:
-      IMAGE_INFERENCE_API: "http://i2v-neural:8080"
+      CLIP_INFERENCE_API: "http://clip:8080"
       QUERY_DEFAULTS_LIMIT: 25
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
       PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
-      DEFAULT_VECTORIZER_MODULE: "img2vec-neural"
-      ENABLE_MODULES: "img2vec-neural"
+      DEFAULT_VECTORIZER_MODULE: "none"
+      ENABLE_MODULES: "multi2vec-clip,backup-s3"
       CLUSTER_HOSTNAME: "node1"
       PROMETHEUS_MONITORING_ENABLED: "true"
       PROMETHEUS_MONITORING_PORT: 2112
@@ -145,20 +145,21 @@ services:
       AWS_SECRET_ACCESS_KEY: ${WEAVIATE_AWS_SECRET_ACCESS_KEY}
       AWS_REGION: ${WEAVIATE_AWS_REGION}
     volumes:
-      - weaviate:/var/lib/weaviate
+      - weaviate_clip:/var/lib/weaviate
+    depends_on:
+      - clip
 
-  i2v-neural:
-    image: semitechnologies/img2vec-pytorch:resnet50
-    container_name: weaviate-i2v
-    ports:
-      - 8082:8080
+  clip:
+    build: ./clip
+    image: analogdb-clip:vit-l-14-laion2b
+    container_name: weaviate-clip
     restart: unless-stopped
     environment:
-      ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA}
+      ENABLE_CUDA: ${WEAVIATE_ENCODE_ENABLE_CUDA:-0}
 
 volumes:
   postgres:
-  weaviate:
+  weaviate_clip:
   # redis:
   kafka:
 
