@@ -1,3 +1,6 @@
+import { getCameraCatalog } from "@app/actions/cameras";
+import { getFilmCatalog } from "@app/actions/films";
+import { catalogHref } from "@lib/catalog";
 import { authorized_fetch } from "@lib/client";
 import { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
@@ -20,12 +23,24 @@ const getCachedIds = unstable_cache(fetchIds, ["sitemap-ids"], {
 });
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const ids = await getCachedIds();
+  const [ids, films, cameras] = await Promise.all([
+    getCachedIds(),
+    getFilmCatalog(),
+    getCameraCatalog(),
+  ]);
 
   return [
     { url: siteURL },
     { url: `${siteURL}/about` },
     { url: `${siteURL}/docs` },
+    { url: `${siteURL}/films` },
+    { url: `${siteURL}/cameras` },
+    ...films.map((film) => ({
+      url: `${siteURL}${catalogHref("films", film)}`,
+    })),
+    ...cameras.map((camera) => ({
+      url: `${siteURL}${catalogHref("cameras", camera)}`,
+    })),
     ...ids.map((id) => ({ url: `${siteURL}/post/${id}` })),
   ];
 }

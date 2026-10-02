@@ -133,7 +133,12 @@ export default function ImagePage(props) {
           </ActionIcon.Group>
         </div>
       </div>
-      <ImageTag post={post} similar={similar} />
+      <ImageTag
+        post={post}
+        similar={similar}
+        filmHref={props.filmHref}
+        cameraHref={props.cameraHref}
+      />
       {isAdmin && (
         <PostEditor
           post={post}

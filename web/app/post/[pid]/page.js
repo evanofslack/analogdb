@@ -1,4 +1,7 @@
+import { getCameraCatalog } from "@app/actions/cameras";
+import { getFilmCatalog } from "@app/actions/films";
 import ImagePage from "@components/imagePage";
+import { catalogHref, findByName } from "@lib/catalog";
 import { authorized_fetch } from "@lib/client";
 import { authorName, jsonLd, postDescription } from "@lib/seo";
 import { notFound } from "next/navigation";
@@ -125,9 +128,23 @@ async function getPostData(pid) {
   return { post, similar };
 }
 
+async function getCatalogHrefs(post) {
+  const [films, cameras] = await Promise.all([
+    getFilmCatalog(),
+    getCameraCatalog(),
+  ]);
+  const film = findByName(films, post.film_make, post.film_type);
+  const camera = findByName(cameras, post.camera_make, post.camera_model);
+  return {
+    filmHref: film ? catalogHref("films", film) : null,
+    cameraHref: camera ? catalogHref("cameras", camera) : null,
+  };
+}
+
 export default async function Post({ params }) {
   const { pid } = await params;
   const { post, similar } = await getPostData(pid);
+  const { filmHref, cameraHref } = await getCatalogHrefs(post);
 
   return (
     <>
@@ -137,7 +154,12 @@ export default async function Post({ params }) {
           dangerouslySetInnerHTML={{ __html: jsonLd(imageObject(post)) }}
         />
       )}
-      <ImagePage post={post} similar={similar} />
+      <ImagePage
+        post={post}
+        similar={similar}
+        filmHref={filmHref}
+        cameraHref={cameraHref}
+      />
     </>
   );
 }

@@ -42,13 +42,17 @@ export default function ImageTag(props) {
       ? `${post.film_make}, ${post.film_type}`
       : null;
 
-  const filmURL = `/?film_make=${encodeURIComponent(
-    post.film_make
-  )}&film_type=${encodeURIComponent(post.film_type)}`;
+  const filmURL =
+    props.filmHref ??
+    `/?film_make=${encodeURIComponent(
+      post.film_make
+    )}&film_type=${encodeURIComponent(post.film_type)}`;
 
-  const cameraURL = `/?camera_make=${encodeURIComponent(
-    post.camera_make
-  )}&camera_model=${encodeURIComponent(post.camera_model)}`;
+  const cameraURL =
+    props.cameraHref ??
+    `/?camera_make=${encodeURIComponent(
+      post.camera_make
+    )}&camera_model=${encodeURIComponent(post.camera_model)}`;
 
   let hexColors = new Array();
   post.colors.forEach(function (color) {
