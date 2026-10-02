@@ -4,20 +4,22 @@ The collection of film photography
 
 ### About
 
-[AnalogDB](https://analogdb.com) provides a large collection of curated analog photographs to users through a REST API interface. Beyond just returning photos, AnalogDB enables discovery of similar images, adds keyword labels, extracts dominant colors, and allows for filtering, sorting and searching across all images.
+[AnalogDB](https://analogdb.com) is a curated collection of 20k+ analog photographs, served through a REST API. Beyond just returning photos, AnalogDB tags each image with the camera and film it was shot on, finds visually similar images, adds keyword labels, extracts dominant colors, and allows for filtering, sorting and searching across the whole collection.
 
 ### Design
 
 AnalogDB makes use of several technologies and services to enable a full featured product.
 
-<img alt="analogdb-diagram" src="https://github.com/evanofslack/analogdb/assets/51209817/cd0f5de5-32be-44af-914e-4cdadb8b2bdf">
+<img alt="analogdb-diagram" src="docs/architecture.png">
 <br/><br/>
 
-Data is scraped from reddit and ingested with a python scraping service built on top of [praw](https://github.com/praw-dev/praw). In addition to scraping, this service is responsible for transforming raw images, extraction of keywords and colors, uploading to [AWS S3](https://aws.amazon.com/s3/), and creation of resources through the backend api. Images from S3 are served from [CloudFront CDN](https://aws.amazon.com/cloudfront/) for quick and reliable delievery.
+Data is scraped from r/analog with [praw](https://github.com/praw-dev/praw) and run through a pipeline orchestrated by [Dagster](https://github.com/dagster-io/dagster). Along the way an LLM reads each post title to pull out the camera, film and lens, images are resized, and keywords and dominant colors are extracted. Images are uploaded to [AWS S3](https://aws.amazon.com/s3/) and served from [CloudFront CDN](https://aws.amazon.com/cloudfront/) for quick and reliable delivery, and posts are created through the backend API with a generated Python client. Scheduled jobs keep scores and keywords fresh over time.
 
-The core backend application is written in Go and makes use of [chi](https://github.com/go-chi/chi) as the HTTP router. It exposes handlers that are responsible for parsing authentication headers, filtering incoming requests, querying databases, and returning JSON responses. Upon upload, all images are transformed with the [ResNet-50 CNN](https://datagen.tech/guides/computer-vision/resnet-50/) to create embeddings which are stored in a [Weaviate](https://github.com/weaviate/weaviate) vector database. The backend is packaged as several docker containers and hosted on a VPS.
+The core backend application is written in Go and makes use of [chi](https://github.com/go-chi/chi) as the HTTP router. It exposes versioned handlers under `/v1` that are responsible for parsing authentication headers, filtering incoming requests, querying databases, and returning JSON responses. Posts live in PostgreSQL, with [Redis](https://github.com/redis/redis) caching hot responses. Upon upload, all images are transformed with the [ResNet-50 CNN](https://datagen.tech/guides/computer-vision/resnet-50/) to create embeddings which are stored in a [Weaviate](https://github.com/weaviate/weaviate) vector database for similarity search. The backend is packaged as several docker containers and hosted on a VPS.
 
-The frontend web application is built with [Next.js](https://github.com/vercel/next.js/), making use of server-side rendering and incremental static regeneration for quick loading pages. [Zustand](https://github.com/pmndrs/zustand) is utilized for state management. All styles are built from scratch with [CSS Modules](https://github.com/css-modules/css-modules).
+The frontend web application is built with [Next.js](https://github.com/vercel/next.js/) using the App Router, with server-side rendering for quick loading pages. Components come from [Mantine](https://github.com/mantinedev/mantine) and styles are written with [CSS Modules](https://github.com/css-modules/css-modules). It talks to the backend through a TypeScript client generated from the OpenAPI spec.
+
+The backend also publishes analytics events to [Kafka](https://github.com/apache/kafka). A small Go consumer reads them off the topic and writes them into [ClickHouse](https://github.com/ClickHouse/ClickHouse) for querying later. Everything is instrumented with OpenTelemetry, with traces in Tempo, logs in Loki and metrics in Prometheus, all viewed through Grafana.
 
 ### API
 
@@ -26,93 +28,106 @@ Full documentation for the API: <https://api.analogdb.com/>
 ### Example
 
 ```bash
-curl https://api.analogdb.com/posts
+curl "https://api.analogdb.com/v1/posts?page_size=1"
 ```
 
-```yaml
+```json
 {
-   meta:{
-      total_posts:5842,
-      page_size:20,
-      next_page_id:1684684780,
-      next_page_url:"/posts?sort=latest&page_size=20&page_id=1684684780",
-   },
-   posts: [
-      {
-       id:7378,
-       title: A Forest on the Coast | Portra 400 | Canon 1V | 50mm,
-       author: navazuals,
-       permalink: https://www.reddit.com/r/analog/comments/13p9lme/a_forest_on_the_coast_portra_400_canon_1v_50mm/,
-       score: 89,
-       timestamp: 1684804283,
-       nsfw: false,
-       sprocket: false,
-       images: [
-       {
-         resolution: low,
-         url: https://d3i73ktnzbi69i.cloudfront.net/505e03d0-e6c2-4596-97d2-77d6831e802c.jpeg,
-         width: 477,
-         weight: 720,
-       },
-       {
-         resolution: medium,
-         url: https://d3i73ktnzbi69i.cloudfront.net/0149e7c5-cefe-4cfa-a731-c7696c067d98.jpeg,
-         width: 716,
-         height: 1080,
-       },
-       ...
-       ],
-       colors: [
-       {
-         hex: #5d5933
-         css: darkolivegreen
-         percent: 0.33687689
-       },
-       {
-         hex: #c6c5b1
-         css: silver
-         percent: 0.24639529
-       },
-       ],
-       ...
-       keywords: [
-       {
-         word: portra
-         weight: 0.2
-       },
-       {
-         word: forest
-         weight: 0.2
-       },
-       ...
+  "meta": {
+    "total_posts": 23403,
+    "page_size": 1,
+    "next_cursor": "eyJzIjoidGltZSIsInYiOjE3OTA3OTkzMTgsImlkIjo0MDEwOH0",
+    "next_page_url": "/posts?cursor=eyJzIjoidGltZSIsInYiOjE3OTA3OTkzMTgsImlkIjo0MDEwOH0&page_size=1&sort=time"
+  },
+  "posts": [
+    {
+      "id": 40108,
+      "title": "Coney [EOS1 + 24-70 + Ektacolor Pro 800]",
+      "author": "jaironaut",
+      "permalink": "https://www.reddit.com/r/analog/comments/1wufjt5/coney_eos1_2470_ektacolor_pro_800/",
+      "score": 945,
+      "timestamp": 1790799318,
+      "nsfw": false,
+      "grayscale": false,
+      "sprocket": false,
+      "camera_make": "canon",
+      "camera_model": "eos 1",
+      "film_make": "kodak",
+      "film_speed": 800,
+      "focal_length": 24,
+      "images": [
+        {
+          "resolution": "low",
+          "url": "https://d3i73ktnzbi69i.cloudfront.net/0cb48c8168dc5f67395fcdb4-low.jpeg",
+          "width": 480,
+          "height": 720
+        },
+        {
+          "resolution": "medium",
+          "url": "https://d3i73ktnzbi69i.cloudfront.net/0cb48c8168dc5f67395fcdb4-medium.jpeg",
+          "width": 720,
+          "height": 1080
+        }
       ],
-    },
-    ...
+      "colors": [
+        {
+          "hex": "#020202",
+          "css": "black",
+          "html": "black",
+          "percent": 0.25280361
+        },
+        {
+          "hex": "#e9d9a8",
+          "css": "palegoldenrod",
+          "html": "gray",
+          "percent": 0.20223035
+        }
+      ],
+      "keywords": [
+        { "word": "coney", "weight": 0.3200431 },
+        { "word": "eos1", "weight": 0.3200431 }
+      ]
+    }
   ]
 }
 ```
 
+The response has been truncated here, real posts come with four image sizes, five colors and more keywords.
+
 ### Deploying
 
-There are prebuilt docker images at `evanofslack/analogdb:latest`
+There are prebuilt docker images on Docker Hub:
 
-Please see [docker-compose.yaml](https://github.com/evanofslack/analogdb/blob/main/docker-compose.yml) for an example compose deployment with necessary variables and services.
+- `evanofslack/analogdb` for the backend API
+- `evanofslack/analogdb-web` for the frontend
+- `evanofslack/analogdb-dagster` for the scraping pipeline
+- `evanofslack/analogdb-consumer` for the analytics consumer
+
+Each service has its own `docker-compose.yaml` (in [backend](backend/docker-compose.yaml), [web](web/docker-compose.yaml), [scrape](scrape/docker-compose.yaml) and [consumer](consumer/docker-compose.yaml)) with the necessary variables and services for an example deployment.
 
 ### Developing
 
-Docker and docker-compose can be utilized for a consistent development experience.
+Tasks run through [just](https://github.com/casey/just), and running `just` on its own lists every recipe.
 
-To spin up the backend and database:
+To set up the docker network and install dependencies:
 
-`docker-compose -f docker-compose-dev.yaml up`
+`just setup`
 
-To run backend unit tests:
+To spin up the backend, consumer, web and infra containers:
 
-`go test ./...`
+`just up`
+
+To run all the tests:
+
+`just test`
 
 To serve the frontend locally:
 
-`cd web && npm run dev`
+`just web dev`
+
+To run the Dagster pipeline locally:
+
+`just scrape dev`
 
 ### Contributing
 
