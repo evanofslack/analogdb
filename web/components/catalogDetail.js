@@ -5,15 +5,20 @@ import { catalogHref, catalogName } from "@lib/catalog";
 import { catalogParsers } from "@lib/searchParams";
 import { pickSeed } from "@lib/seed";
 import { SegmentedControl } from "@mantine/core";
+import { IconAperture, IconPalette, IconPhoto } from "@tabler/icons-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./catalogDetail.module.css";
 import Footer from "./footer";
 import Header from "./header";
 import InfiniteGallery from "./infiniteGallery";
 import ScrollTop from "./scrollTop";
 
-const longDescription = 320;
+const factIcons = {
+  photos: IconPhoto,
+  speed: IconAperture,
+  color: IconPalette,
+};
 
 const sortData = [
   { label: "top", value: "score" },
@@ -37,6 +42,8 @@ export default function CatalogDetail({
     { parsers: catalogParsers, fixed }
   );
   const [expanded, setExpanded] = useState(false);
+  const [overflowing, setOverflowing] = useState(false);
+  const descriptionRef = useRef(null);
 
   const setSort = (sort) => {
     if (sort === "random") {
@@ -47,34 +54,44 @@ export default function CatalogDetail({
   };
 
   const description = entry.description?.trim();
-  const isLong = description?.length > longDescription;
+
+  useEffect(() => {
+    const element = descriptionRef.current;
+    if (!element || expanded) return;
+    const measure = () =>
+      setOverflowing(element.scrollHeight > element.clientHeight + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [description, expanded]);
 
   return (
     <div className={styles.main}>
       <Header compact />
       <div className={styles.margin}>
         <div className={styles.intro}>
-          <nav className={styles.crumbs} aria-label="breadcrumb">
-            <Link href={`/${kind}`}>
-              {kind === "films" ? "FILM" : "CAMERAS"}
-            </Link>
-          </nav>
           <h1 className={styles.title}>{catalogName(entry)}</h1>
           <ul className={styles.facts}>
-            {facts.map((fact) => (
-              <li key={fact}>{fact}</li>
-            ))}
+            {facts.map((fact) => {
+              const Icon = factIcons[fact.icon];
+              return (
+                <li key={fact.label} className={styles.fact}>
+                  <Icon size={16} className={styles.icon} />
+                  {fact.label}
+                </li>
+              );
+            })}
           </ul>
           {description && (
             <div className={styles.descriptionBox}>
               <p
-                className={
-                  isLong && !expanded ? styles.clamped : styles.description
-                }
+                ref={descriptionRef}
+                className={expanded ? styles.description : styles.clamped}
               >
                 {description}
               </p>
-              {isLong && (
+              {(overflowing || expanded) && (
                 <button
                   type="button"
                   className={styles.more}

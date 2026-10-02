@@ -71,12 +71,29 @@ export function entryMatch(
     : { camera_make: entry.make, camera_model: entry.name };
 }
 
-export function entryFacts(kind: CatalogKind, entry: CatalogEntry): string[] {
-  const facts = [`${entry.postCount.toLocaleString("en-US")} photos`];
+export type EntryFact = {
+  icon: "photos" | "speed" | "color";
+  label: string;
+};
+
+export function entryFacts(
+  kind: CatalogKind,
+  entry: CatalogEntry
+): EntryFact[] {
+  const facts: EntryFact[] = [
+    {
+      icon: "photos",
+      label: `${entry.postCount.toLocaleString("en-US")} photos`,
+    },
+  ];
   if (kind === "films") {
-    if (entry.speed) facts.push(`ISO ${entry.speed}`);
-    if (entry.colorType === "color") facts.push("color");
-    if (entry.colorType === "bw") facts.push("black & white");
+    if (entry.speed) facts.push({ icon: "speed", label: `ISO ${entry.speed}` });
+    if (entry.colorType === "color") {
+      facts.push({ icon: "color", label: "color" });
+    }
+    if (entry.colorType === "bw") {
+      facts.push({ icon: "color", label: "black & white" });
+    }
   }
   return facts;
 }

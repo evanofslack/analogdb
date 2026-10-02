@@ -9,24 +9,17 @@
 }
 
 .intro {
+  width: 90vw;
+  max-width: 800px;
   margin: 1.5rem auto 0;
-  max-width: 50rem;
-  text-align: center;
-}
-
-.crumbs {
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
-  color: var(--adb-muted);
-}
-
-.crumbs a:hover {
-  text-decoration: underline;
+  text-align: left;
 }
 
 .title {
-  margin: 0.4rem 0 0;
-  font-size: 2.4rem;
+  margin: 0;
+  font-family: "Courier Prime", Courier, monospace;
+  font-size: 1.8rem;
+  font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--adb-heading);
 }
@@ -34,13 +27,23 @@
 .facts {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 0.5rem 1.5rem;
+  justify-content: flex-start;
+  gap: 0.3rem 1.5rem;
   margin: 0.8rem 0 0;
   padding: 0;
   list-style: none;
   color: var(--adb-muted);
   font-family: "Courier Prime", Courier, monospace;
+}
+
+.fact {
+  display: flex;
+  align-items: center;
+}
+
+.icon {
+  margin-right: 0.5rem;
+  color: var(--adb-muted);
 }
 
 .descriptionBox {
@@ -80,9 +83,10 @@
 }
 
 .related {
+  width: 90vw;
+  max-width: 800px;
   margin: 1.8rem auto 0;
-  max-width: 60rem;
-  text-align: center;
+  text-align: left;
 }
 
 .relatedTitle {
@@ -96,7 +100,7 @@
 .relatedLinks {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.5rem;
 }
 
@@ -118,6 +122,6 @@
 
 @media screen and (max-width: 720px) {
   .title {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
   }
 }
