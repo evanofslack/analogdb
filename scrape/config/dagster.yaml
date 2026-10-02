@@ -50,6 +50,7 @@ run_launcher:
       - OPENROUTER_API_KEY
       - OPENROUTER_BASE_URL
       - OPENROUTER_MODEL
+      - OPENROUTER_VISION_MODEL
 
 run_coordinator:
   module: dagster._core.run_coordinator

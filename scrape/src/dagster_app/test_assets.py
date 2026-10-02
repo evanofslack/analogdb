@@ -10,20 +10,33 @@ from analogdb.client import Uploaded
 from analogdb_generated.exceptions import ApiException
 from dagster_aws.s3 import S3Resource
 from PIL import Image
-from scrape.models import Keyword, PhotoMetadata, PostImages, RedditPost, S3Image
+from scrape.models import (
+    Caption,
+    Keyword,
+    PhotoMetadata,
+    PostImages,
+    RedditPost,
+    S3Image,
+)
+from scrape.tagging import ImageTags, TaggingError
 
 from .assets import (
     final_posts,
     patch_post_scores,
     post_images,
+    post_tags,
     updated_reddit_comments,
     upload_posts,
 )
+from .convert import convert_create
 from .resources import (
     AnalogDBResource,
+    CamerasJsonResource,
+    FilmsJsonResource,
     ImageProcessorResource,
     RedditResource,
     StorageResource,
+    TaggerResource,
 )
 from .result import Result, Status
 
@@ -150,7 +163,21 @@ def make_post_images(count: int, image_count: int = 4) -> Result[PostImages]:
     return Result(data=data, status={id: Status.SUCCESS for id in data})
 
 
-def run_final_posts(post_images_result, keywords_result):
+def make_tags(word: str = "dog") -> ImageTags:
+    return ImageTags(
+        caption="A dog on a beach",
+        tags=[word, "beach"],
+        raw={"caption": "A dog on a beach", "tags": [word, "beach"]},
+        model="m",
+        version="v1",
+    )
+
+
+def no_tags(ids) -> Result[ImageTags]:
+    return Result(data={}, status={id: Status.FAILED for id in ids})
+
+
+def run_final_posts(post_images_result, tags_result):
     reddit_posts = make_reddit_posts(3)
     title_metadatas = Result(
         data={id: PhotoMetadata() for id in reddit_posts.data},
@@ -158,43 +185,137 @@ def run_final_posts(post_images_result, keywords_result):
     )
     context = dg.build_asset_context()
     return final_posts(
-        context, reddit_posts, title_metadatas, post_images_result, keywords_result
+        context, reddit_posts, title_metadatas, post_images_result, tags_result
     )
 
 
 class TestFinalPosts:
-    def test_missing_keywords_uploads_without_them(self):
+    def test_missing_tags_uploads_without_them(self):
         ids = list(make_reddit_posts(3).data)
         missing = ids[1]
-        keywords = Result(
-            data={
-                id: [Keyword(word="film", weight=1.0)] for id in ids if id != missing
-            },
+        tags = Result(
+            data={id: make_tags() for id in ids if id != missing},
             status={
                 id: Status.FAILED if id == missing else Status.SUCCESS for id in ids
             },
         )
 
-        result = run_final_posts(make_post_images(3), keywords)
+        result = run_final_posts(make_post_images(3), tags)
 
         assert result.successful_ids() == set(ids)
         assert result.data[missing].keywords == []
-        assert result.data[ids[0]].keywords == [Keyword(word="film", weight=1.0)]
+        assert result.data[missing].caption is None
+
+    def test_tags_and_caption_in_create_body(self):
+        ids = list(make_reddit_posts(3).data)
+        tags = Result(
+            data={id: make_tags() for id in ids},
+            status={id: Status.SUCCESS for id in ids},
+        )
+
+        result = run_final_posts(make_post_images(3), tags)
+        body = convert_create(result.data[ids[0]]).to_dict()
+
+        assert result.data[ids[0]].keywords == [
+            Keyword(word="dog", weight=1.0),
+            Keyword(word="beach", weight=0.5),
+        ]
+        assert result.data[ids[0]].caption == Caption(
+            caption="A dog on a beach",
+            model="m",
+            version="v1",
+            raw={"caption": "A dog on a beach", "tags": ["dog", "beach"]},
+        )
+        assert body["keywords"] == [
+            {"word": "dog", "weight": 1.0},
+            {"word": "beach", "weight": 0.5},
+        ]
+        assert body["caption"] == {
+            "caption": "A dog on a beach",
+            "model": "m",
+            "version": "v1",
+            "raw": {"caption": "A dog on a beach", "tags": ["dog", "beach"]},
+        }
 
     def test_too_few_images_fails(self):
         images = make_post_images(3)
         bad = next(iter(images.data))
         images.data[bad].images = images.data[bad].images[:3]
-        keywords = Result(
-            data={id: [] for id in images.data},
-            status={id: Status.SUCCESS for id in images.data},
-        )
 
-        result = run_final_posts(images, keywords)
+        result = run_final_posts(images, no_tags(images.data))
 
         assert result.status[bad] == Status.FAILED
         assert "4 images" in result.errors[bad]
         assert result.successful_ids() == set(images.data) - {bad}
+
+
+class FakeTagger:
+    def __init__(self, fail_titles=()):
+        self.fail_titles = set(fail_titles)
+        self.calls = []
+
+    def tag_all(self, inputs, concurrency):
+        self.calls.extend(inputs)
+        return [
+            TaggingError("refused") if i.title in self.fail_titles else make_tags()
+            for i in inputs
+        ]
+
+
+def run_post_tags(reddit_posts, images, tagger):
+    context = dg.build_asset_context()
+    with patch.object(TaggerResource, "client", return_value=tagger):
+        return post_tags(
+            context,
+            TaggerResource(),
+            CamerasJsonResource(file_path="unused"),
+            FilmsJsonResource(file_path="unused"),
+            reddit_posts,
+            images,
+        )
+
+
+def medium_images(count: int) -> Result[PostImages]:
+    images = make_post_images(count)
+    for p in images.data.values():
+        p.images[1].resolution = "medium"
+    return images
+
+
+class TestPostTags:
+    def test_tags_with_medium_image(self):
+        reddit_posts = make_reddit_posts(2)
+        tagger = FakeTagger()
+        with patch.object(CamerasJsonResource, "client", return_value=[]), patch.object(
+            FilmsJsonResource, "client", return_value=[]
+        ):
+            result = run_post_tags(reddit_posts, medium_images(2), tagger)
+
+        assert result.successful_count() == 2
+        assert [c.grayscale for c in tagger.calls] == [False, False]
+        assert sorted(c.image_url for c in tagger.calls) == [
+            "https://s3/0/1.jpg",
+            "https://s3/1/1.jpg",
+        ]
+
+    def test_failure_still_uploads(self):
+        reddit_posts = make_reddit_posts(3)
+        bad = list(reddit_posts.data)[1]
+        reddit_posts.data[bad].title = "refused"
+        images = medium_images(3)
+        images.data[list(images.data)[2]].images[1].resolution = "4"
+
+        with patch.object(CamerasJsonResource, "client", return_value=[]), patch.object(
+            FilmsJsonResource, "client", return_value=[]
+        ):
+            tags = run_post_tags(reddit_posts, images, FakeTagger({"refused"}))
+        finals = run_final_posts(images, tags)
+
+        assert tags.successful_count() == 1
+        assert tags.status[bad] == Status.FAILED
+        assert "refused" in tags.errors[bad]
+        assert finals.successful_ids() == set(images.data)
+        assert finals.data[bad].keywords == []
 
 
 def run_with_client(fn, client: MagicMock):
@@ -205,11 +326,7 @@ def run_with_client(fn, client: MagicMock):
 class TestUploadPosts:
     def test_failure_tries_every_post(self):
         images = make_post_images(3)
-        keywords = Result(
-            data={id: [] for id in images.data},
-            status={id: Status.SUCCESS for id in images.data},
-        )
-        finals = run_final_posts(images, keywords)
+        finals = run_final_posts(images, no_tags(images.data))
         bad = list(finals.data)[1]
 
         def upload(post):
@@ -232,11 +349,7 @@ class TestUploadPosts:
 
     def test_exists_counts_as_success(self):
         images = make_post_images(2)
-        keywords = Result(
-            data={id: [] for id in images.data},
-            status={id: Status.SUCCESS for id in images.data},
-        )
-        finals = run_final_posts(images, keywords)
+        finals = run_final_posts(images, no_tags(images.data))
         client = MagicMock()
         client.upload_post.return_value = Uploaded.EXISTS
         context = dg.build_asset_context()

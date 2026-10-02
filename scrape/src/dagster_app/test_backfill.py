@@ -7,8 +7,18 @@ import dagster as dg
 import pytest
 from dagster_aws.s3 import S3Resource
 from scrape.models import MatchResult, PhotoMetadata, RedditComment
+from scrape.tagging import ImageTags, TaggingError
 
-from .backfill import backfill_post_metadata, range_comments, rematch_post_metadata
+from . import backfill
+from .backfill import (
+    BackfillCaptionsConfig,
+    ReencodeVectorsConfig,
+    backfill_post_captions,
+    backfill_post_metadata,
+    range_comments,
+    reencode_post_vectors,
+    rematch_post_metadata,
+)
 from .resources import (
     AnalogDBResource,
     CamerasJsonResource,
@@ -16,6 +26,7 @@ from .resources import (
     MetadataResource,
     RedditResource,
     StorageResource,
+    TaggerResource,
 )
 from .test_metadata_flow import CAMERAS_JSON, LIVE_CAMERAS, post
 
@@ -183,3 +194,182 @@ class TestRematch:
         ]
         assert result.metadata["posts"] == 2
         assert result.metadata["unchanged"] == 1
+
+
+class FakeCaptionClient:
+    def __init__(self, posts):
+        self.posts = posts
+        self.versions = {}
+        self.patches = []
+
+    def get_missing_captions(self, version=None):
+        return [p.id for p in self.posts if self.versions.get(p.id) != version]
+
+    def get_posts_all(self, count, filter=None):
+        return self.posts
+
+    def patch_post(self, id, patch):
+        self.versions[id] = patch.caption.version
+        self.patches.append((id, patch))
+
+
+class FakeTagger:
+    def __init__(self):
+        self.chunks = []
+
+    def tag_all(self, inputs, concurrency):
+        self.grayscale = [i.grayscale for i in inputs]
+        self.chunks.append([i.title for i in inputs])
+        return [self.tag(i.title) for i in inputs]
+
+    def tag(self, title):
+        if title == "fail":
+            return TaggingError("refused")
+        text_only = title == "text"
+        return ImageTags(
+            caption=None if text_only else "A dog",
+            tags=["dog", "beach"],
+            raw={"tags": ["dog", "beach"]},
+            model="m",
+            version="v1-text" if text_only else "v1",
+        )
+
+
+def medium_post(id, title="t"):
+    images = [adb.Image(url=f"https://cdn/{id}.jpg", resolution="medium")]
+    return post(id, title=title, images=images)
+
+
+class TestBackfillCaptions:
+    def run(self, client, tagger, **config):
+        with (
+            patch.object(AnalogDBResource, "client", return_value=client),
+            patch.object(TaggerResource, "client", return_value=tagger),
+            patch.object(CamerasJsonResource, "client", return_value=[]),
+            patch.object(FilmsJsonResource, "client", return_value=[]),
+            patch.object(backfill, "BACKFILL_CHUNK", 2),
+        ):
+            return backfill_post_captions(
+                dg.build_asset_context(),
+                config=BackfillCaptionsConfig(**config),
+                analogdb=AnalogDBResource(),
+                tagger=TaggerResource(),
+                **resources(),
+            )
+
+    def posts(self):
+        titles = ["a", "b", "text", "fail", "c"]
+        return [medium_post(i, t) for i, t in enumerate(titles, start=1)]
+
+    def test_chunks_patches_and_counts(self):
+        client = FakeCaptionClient(self.posts())
+        tagger = FakeTagger()
+
+        result = self.run(client, tagger)
+
+        assert tagger.chunks == [["a", "b"], ["text", "fail"], ["c"]]
+        assert result.metadata["written"] == 4
+        assert result.metadata["text_only"] == 1
+        assert result.metadata["tag_failed"] == 1
+        id, first = client.patches[0]
+        assert id == 1
+        assert first.to_dict() == {
+            "caption": {
+                "caption": "A dog",
+                "model": "m",
+                "version": "v1",
+                "raw": {"tags": ["dog", "beach"]},
+            },
+            "keywords": [
+                {"word": "dog", "weight": 1.0},
+                {"word": "beach", "weight": 0.5},
+            ],
+        }
+
+    def test_rerun_picks_up_where_it_stopped(self):
+        client = FakeCaptionClient(self.posts())
+        self.run(client, FakeTagger())
+        tagger = FakeTagger()
+
+        result = self.run(client, tagger)
+
+        assert tagger.chunks == [["fail"]]
+        assert result.metadata["written"] == 0
+
+    def test_retry_text_only(self):
+        client = FakeCaptionClient(self.posts())
+        self.run(client, FakeTagger())
+        tagger = FakeTagger()
+
+        self.run(client, tagger, retry_text_only=True)
+
+        assert tagger.chunks == [["text", "fail"]]
+
+    def test_passes_grayscale(self):
+        posts = [medium_post(1), medium_post(2)]
+        posts[1].grayscale = True
+        tagger = FakeTagger()
+        self.run(FakeCaptionClient(posts), tagger)
+        assert tagger.grayscale == [False, True]
+
+    def test_limit(self):
+        tagger = FakeTagger()
+        self.run(FakeCaptionClient(self.posts()), tagger, limit=1)
+        assert tagger.chunks == [["a"]]
+
+    def test_patch_failure_raises(self):
+        client = FakeCaptionClient(self.posts()[:1])
+        client.patch_post = MagicMock(side_effect=RuntimeError("down"))
+        with pytest.raises(dg.Failure):
+            self.run(client, FakeTagger())
+
+
+class TestReencodeVectors:
+    def run(self, client, **config):
+        with (
+            patch.object(AnalogDBResource, "client", return_value=client),
+            dg.build_asset_context() as context,
+        ):
+            return reencode_post_vectors(
+                context,
+                config=ReencodeVectorsConfig(**config),
+                analogdb=AnalogDBResource(),
+            )
+
+    def test_failed_ids_retried_one_at_a_time(self):
+        client = MagicMock()
+        client.get_post_ids.return_value = [1, 2, 3, 4, 5]
+
+        def encode(ids, batch_size):
+            if ids == [3, 4]:
+                raise RuntimeError("timeout")
+            if ids == [1, 2]:
+                return [2]
+            return [4] if ids == [4] else []
+
+        client.encode_posts.side_effect = encode
+
+        with pytest.raises(dg.Failure) as e:
+            self.run(client, batch_size=2)
+
+        calls = [(c.args[0], c.args[1]) for c in client.encode_posts.call_args_list]
+        assert calls == [
+            ([1, 2], 2),
+            ([3, 4], 2),
+            ([5], 2),
+            ([2], 1),
+            ([3], 1),
+            ([4], 1),
+        ]
+        assert e.value.metadata["retried"].value == 3
+        assert e.value.metadata["failed"].value == 1
+
+    def test_config_ids_and_limit(self):
+        client = MagicMock()
+        client.encode_posts.return_value = []
+
+        result = self.run(client, ids=[7, 8, 9], limit=2)
+
+        client.get_post_ids.assert_not_called()
+        assert client.encode_posts.call_args.args == ([7, 8], 20)
+        assert result.metadata == {"posts": 2, "retried": 0, "failed": 0}

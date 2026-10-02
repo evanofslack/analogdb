@@ -3,9 +3,10 @@ from datetime import UTC, datetime
 import dagster as dg
 
 from .definitions import defs
-from .schedules import update_post_keywords_schedule, update_post_scores_schedule
+from .resources import TaggerResource
+from .schedules import update_post_comments_schedule, update_post_scores_schedule
 
-RETRY_ASSETS = {"reddit_posts", "post_images", "keywords", "upload_posts"}
+RETRY_ASSETS = {"reddit_posts", "post_images", "upload_posts"}
 
 
 def evaluate(schedule: dg.ScheduleDefinition) -> dg.RunRequest:
@@ -24,10 +25,10 @@ def test_update_post_scores_schedule():
     assert request.tags["partition"] == "2026-09-25"
 
 
-def test_update_post_keywords_schedule():
-    request = evaluate(update_post_keywords_schedule)
+def test_update_post_comments_schedule():
+    request = evaluate(update_post_comments_schedule)
     assert request.partition_key == "2026-09-25"
-    assert request.run_key == "keywords-2026-09-25"
+    assert request.run_key == "comments-2026-09-25"
     assert request.tags["partition"] == "2026-09-25"
 
 
@@ -38,6 +39,26 @@ def test_schedules_run_in_utc():
 
 def test_definitions_load():
     dg.Definitions.validate_loadable(defs)
+
+
+def test_tagger_defaults_to_flash():
+    assert TaggerResource().openai_model == "google/gemini-2.5-flash"
+
+
+def test_scrape_job_tags_posts():
+    job = defs.resolve_job_def("scrape_and_upload")
+    assert "post_tags" in job.graph.node_dict
+    assert "keywords" not in job.graph.node_dict
+
+
+def test_day_two_job_keeps_comments_and_metadata():
+    job = defs.resolve_job_def("update_post_comments")
+    assert set(job.graph.node_dict) == {
+        "analogdb_posts",
+        "updated_reddit_comments",
+        "reddit_comments_to_s3",
+        "patch_post_metadata",
+    }
 
 
 def test_retry_policies():

@@ -10,7 +10,12 @@ from analogdb_generated.api.film_api import FilmApi
 from analogdb_generated.api.films_api import FilmsApi
 from analogdb_generated.api.post_api import PostApi
 from analogdb_generated.api.posts_api import PostsApi
+from analogdb_generated.api.scrape_api import ScrapeApi
+from analogdb_generated.api.similarity_api import SimilarityApi
 from analogdb_generated.exceptions import ApiException
+from analogdb_generated.models.server_encode_posts_request import (
+    ServerEncodePostsRequest,
+)
 from analogdb_generated.models.server_extractions_request import (
     ServerExtractionsRequest,
 )
@@ -33,6 +38,7 @@ DEFAULT_PAGE_SIZE = 20
 DEFAULT_SORT = "time"
 USER_AGENT = f"analogdb-scraper/{version('analogdb')}"
 REQUEST_TIMEOUT = (10.0, 30.0)
+ENCODE_TIMEOUT = (10.0, 900.0)
 EXTRACTIONS_CHUNK = 200
 EXTRACTIONS_PAGE_SIZE = 500
 RETRIES = Retry(
@@ -76,6 +82,8 @@ class Client:
         self.cameras_api = CamerasApi(self.api_client)
         self.camera_api = CameraApi(self.api_client)
         self.extractions_api = ExtractionsApi(self.api_client)
+        self.scrape_api = ScrapeApi(self.api_client)
+        self.similarity_api = SimilarityApi(self.api_client)
 
     def get_posts(
         self,
@@ -128,6 +136,27 @@ class Client:
         if not patch.to_dict():
             return
         self._call(self.post_api.post_id_patch, id, post=patch)
+
+    def get_post_ids(self) -> List[int]:
+        return self._call(self.posts_api.ids_get).ids or []
+
+    def encode_posts(self, ids: List[int], batch_size: int = 20) -> List[int]:
+        """Encode the posts' image vectors, returning the ids that failed. The
+        route takes at most 100 per batch and has 15 minutes per request."""
+        if not ids:
+            return []
+        resp = self.similarity_api.encode_put(
+            request=ServerEncodePostsRequest(ids=ids, batch_size=batch_size),
+            _request_timeout=ENCODE_TIMEOUT,
+        )
+        return resp.failed_ids or []
+
+    def get_missing_captions(self, version: Optional[str] = None) -> List[int]:
+        """Ids of posts with no caption, or with a caption of another version."""
+        return (
+            self._call(self.scrape_api.scrape_captions_missing_get, version=version).ids
+            or []
+        )
 
     def get_films(self) -> List[Film]:
         return self._call(self.films_api.films_get).films or []

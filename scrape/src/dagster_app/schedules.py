@@ -2,7 +2,7 @@ from datetime import timedelta
 
 import dagster as dg
 
-from .jobs import patch_keywords_job, patch_scores_job, scrape_job
+from .jobs import patch_comments_job, patch_scores_job, scrape_job
 
 scrape_analog_schedule = dg.ScheduleDefinition(
     job=scrape_job,
@@ -35,17 +35,17 @@ def update_post_scores_schedule(context: dg.ScheduleEvaluationContext):
 
 
 @dg.schedule(
-    job=patch_keywords_job,
+    job=patch_comments_job,
     cron_schedule="30 1 * * *",
     execution_timezone="UTC",
-    name="update_post_keywords_schedule",
-    description="Daily update of post keywords for two days past partition",
+    name="update_post_comments_schedule",
+    description="Daily comments and metadata update for two days past partition",
 )
-def update_post_keywords_schedule(context: dg.ScheduleEvaluationContext):
+def update_post_comments_schedule(context: dg.ScheduleEvaluationContext):
     twodays = two_days_ago(context)
 
     return dg.RunRequest(
-        run_key=f"keywords-{twodays}",
+        run_key=f"comments-{twodays}",
         partition_key=twodays,
-        tags={"schedule": "daily_keywords_scores", "partition": twodays},
+        tags={"schedule": "daily_post_comments", "partition": twodays},
     )

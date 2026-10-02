@@ -14,6 +14,8 @@ from .client import REQUEST_TIMEOUT, Client, Uploaded
 from .models import (
     CameraCreate,
     FilmCreate,
+    Keyword,
+    PostCaption,
     PostCreate,
     PostExtraction,
     PostPatch,
@@ -390,3 +392,69 @@ class TestExtractions:
             e.post_id for e in client.iter_extractions(has_unmatched=True, full=True)
         ]
         assert got == [9, 8, 7]
+
+
+class TestScrapeRoutes:
+    def test_get_post_ids(self, client, httpserver: HTTPServer):
+        httpserver.expect_request("/v1/ids", method="GET").respond_with_json(
+            {"ids": [1, 2, 3]}
+        )
+
+        assert client.get_post_ids() == [1, 2, 3]
+
+    def test_encode_posts_returns_failed(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/encode",
+            method="PUT",
+            headers={"Authorization": AUTH},
+            json={"ids": [1, 2, 3], "batch_size": 20},
+        ).respond_with_json({"message": "ok", "failed_ids": [2]})
+
+        assert client.encode_posts([1, 2, 3], batch_size=20) == [2]
+
+    def test_encode_no_ids_is_skipped(self, client, httpserver: HTTPServer):
+        assert client.encode_posts([]) == []
+        assert len(httpserver.log) == 0
+
+    def test_get_missing_captions(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/scrape/captions/missing",
+            method="GET",
+            query_string={"version": "v1"},
+            headers={"Authorization": AUTH},
+        ).respond_with_json({"ids": [4, 5]})
+
+        assert client.get_missing_captions("v1") == [4, 5]
+
+    def test_get_missing_captions_null(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/scrape/captions/missing", query_string=""
+        ).respond_with_json({"ids": None})
+
+        assert client.get_missing_captions() == []
+
+    def test_patch_post_caption(self, client, httpserver: HTTPServer):
+        seen = {}
+
+        def handler(request: Request):
+            seen["body"] = json.loads(request.get_data(as_text=True))
+            return Response(json.dumps({"message": "ok"}), mimetype="application/json")
+
+        httpserver.expect_request("/v1/post/7", method="PATCH").respond_with_handler(
+            handler
+        )
+
+        client.patch_post(
+            7,
+            PostPatch(
+                caption=PostCaption(
+                    caption=None, model="m", version="v1-text", raw={"tags": ["dog"]}
+                ),
+                keywords=[Keyword(word="dog", weight=1.0)],
+            ),
+        )
+
+        assert seen["body"] == {
+            "caption": {"model": "m", "version": "v1-text", "raw": {"tags": ["dog"]}},
+            "keywords": [{"word": "dog", "weight": 1.0}],
+        }

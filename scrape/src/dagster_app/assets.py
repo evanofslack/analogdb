@@ -8,7 +8,6 @@ import dagster as dg
 from analogdb.client import Client, Uploaded
 from analogdb_generated.exceptions import ApiException
 from scrape.models import (
-    Keyword,
     MetadataPost,
     PhotoMetadata,
     PostImages,
@@ -16,6 +15,8 @@ from scrape.models import (
     RedditPost,
     new_post_create,
 )
+from scrape.s3 import upload_comments
+from scrape.tagging import ImageTags, TagInput, medium_url
 
 from .catalog import UploadPlan, camera_upload_plan, film_upload_plan
 from .constants import SUBREDDITS
@@ -26,11 +27,10 @@ from .resources import (
     CamerasJsonResource,
     FilmsJsonResource,
     ImageProcessorResource,
-    KeywordBlacklistResource,
-    KeywordExtractorResource,
     MetadataResource,
     RedditResource,
     StorageResource,
+    TaggerResource,
 )
 from .result import Result, ResultDagsterType, Status
 
@@ -232,47 +232,66 @@ def post_images(
     return result
 
 
-@dg.asset(
-    dagster_type=ResultDagsterType,
-    group_name="scrape",
-    retry_policy=dg.RetryPolicy(
-        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
-    ),
-)
-def keywords(
+@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
+def post_tags(
     context: dg.AssetExecutionContext,
-    keyword_extractor: KeywordExtractorResource,
-    reddit: RedditResource,
+    tagger: TaggerResource,
+    cameras_json: CamerasJsonResource,
+    films_json: FilmsJsonResource,
     reddit_posts,
-    keyword_blacklist: KeywordBlacklistResource,
-) -> Result[Keyword]:
+    post_images,
+) -> Result[ImageTags]:
+    ids = sorted(reddit_posts.successful_ids() & post_images.successful_ids())
+    tagger_client = tagger.client(cameras_json.client(), films_json.client())
+
     data = {}
     status = {}
     errors = {}
-    r = reddit.client()
-    kw = keyword_extractor.client()
-    blacklist = keyword_blacklist.client().blacklist
-
-    for id, p in reddit_posts.successful().items():
+    inputs = []
+    tagged = []
+    for id in ids:
+        p = reddit_posts.data[id]
         try:
-            comments = r.scrape_comments(p.permalink)
-            keywords = kw.post_keywords(
-                p.title,
-                p.score,
-                comments,
-                keyword_extractor.max_keywords,
-                blacklist,
-            )
-            data[id] = keywords
-            status[id] = Status.SUCCESS
-        except Exception as e:
-            context.log.error(f"Failed to extract keywords for {id}: {e}")
+            url = medium_url(post_images.data[id].images)
+        except ValueError as e:
+            context.log.warn(f"Failed to tag {id}, uploading without tags: {e}")
             status[id] = Status.FAILED
             errors[id] = str(e)
+            continue
+        inputs.append(
+            TagInput(
+                image_url=url,
+                title=p.title,
+                description=p.selftext,
+                grayscale=post_images.data[id].grayscale,
+            )
+        )
+        tagged.append(id)
+
+    results = tagger_client.tag_all(inputs, tagger.concurrency)
+    text_only = 0
+    for id, r in zip(tagged, results, strict=True):
+        if isinstance(r, Exception):
+            context.log.warn(f"Failed to tag {id}, uploading without tags: {r}")
+            status[id] = Status.FAILED
+            errors[id] = str(r)
+            continue
+        if r.text_only:
+            text_only += 1
+        data[id] = r
+        status[id] = Status.SUCCESS
 
     result = Result(data=data, status=status, errors=errors)
-    add_result_metadata(context, result)
-    context.log.info(f"Extracted keywords for {result.successful_count()} posts")
+    context.add_output_metadata(
+        {
+            "success": result.successful_count(),
+            "failed": result.failed_count(),
+            "text_only": text_only,
+        }
+    )
+    context.log.info(
+        f"Tagged {result.successful_count()} posts, {text_only} from the title only"
+    )
     return result
 
 
@@ -282,7 +301,7 @@ def final_posts(
     reddit_posts,
     title_metadatas,
     post_images,
-    keywords,
+    post_tags,
 ):
     ids = (
         reddit_posts.successful_ids()
@@ -294,19 +313,19 @@ def final_posts(
     data = {}
     status = {}
     errors = {}
-    post_keywords = keywords.successful()
+    tags = post_tags.successful()
 
     for id in ids:
         try:
-            kws = post_keywords.get(id)
-            if kws is None:
-                context.log.warn(f"Missing keywords for {id}, uploading without them")
-                kws = []
+            t = tags.get(id)
+            if t is None:
+                context.log.warn(f"Missing tags for {id}, uploading without them")
             final = new_post_create(
                 post=reddit_posts.data[id],
                 metadata=title_metadatas.data[id],
                 images=post_images.data[id],
-                keywords=kws,
+                keywords=t.keywords() if t else [],
+                caption=t.post_caption() if t else None,
             )
 
             data[id] = final
@@ -505,7 +524,6 @@ def patch_post_metadata(
 def reddit_comments_to_s3(
     context: dg.AssetExecutionContext,
     updated_reddit_comments: List[Tuple[adb.Post, List[RedditComment]]],
-    keyword_extractor: KeywordExtractorResource,
     storage: StorageResource,
 ) -> None:
     if not updated_reddit_comments:
@@ -514,65 +532,12 @@ def reddit_comments_to_s3(
         )
         return
 
-    extractor = keyword_extractor.client()
-
     for p, c in updated_reddit_comments:
-        extractor.upload_s3(p.id, c, storage)
+        upload_comments(storage, p.id, c)
 
     context.log.info(
         f"Uploaded {len(updated_reddit_comments)} reddit comments to s3 for partition {context.partition_key}"
     )
-
-
-@dg.asset(partitions_def=daily_partitions, group_name="backfill")
-def updated_post_keywords(
-    context: dg.AssetExecutionContext,
-    updated_reddit_comments: List[Tuple[adb.Post, List[RedditComment]]],
-    keyword_extractor: KeywordExtractorResource,
-    keyword_blacklist: KeywordBlacklistResource,
-) -> List[Tuple[int, adb.PostPatch]]:
-    patches: List[Tuple[int, adb.PostPatch]] = []
-    if not updated_reddit_comments:
-        context.log.info(
-            f"No updated post keywords for partition {context.partition_key}"
-        )
-        return patches
-
-    kw = keyword_extractor.client()
-    blacklist = keyword_blacklist.client().blacklist
-
-    for p, c in updated_reddit_comments:
-        adb_kws: List[adb.Keyword] = []
-        keywords = kw.post_keywords(
-            p.title,
-            p.score,
-            c,
-            keyword_extractor.max_keywords,
-            blacklist,
-        )
-        for k in keywords:
-            adb_kws.append(adb.Keyword(word=k.word, weight=k.weight))
-        patches.append((p.id, adb.PostPatch(keywords=adb_kws)))
-
-    context.log.info(
-        f"Created {len(patches)} updated post keywords for partition {context.partition_key}"
-    )
-    return patches
-
-
-@dg.asset(partitions_def=daily_partitions, group_name="backfill")
-def patch_post_keywords(
-    context: dg.AssetExecutionContext,
-    updated_post_keywords: List[Tuple[int, adb.PostPatch]],
-    analogdb: AnalogDBResource,
-) -> None:
-    if not updated_post_keywords:
-        context.log.info(
-            f"No patch post keywords for partition {context.partition_key}"
-        )
-        return
-
-    patch_posts(context, analogdb.client(), updated_post_keywords, "keywords")
 
 
 @dg.asset(group_name="scrape")
