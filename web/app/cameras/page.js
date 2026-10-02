@@ -30,7 +30,7 @@ export default async function Page() {
       <CatalogIndex
         kind="cameras"
         title="CAMERAS"
-        intro="See what people are shooting with every camera."
+        intro="See what people are shooting with every camera"
         placeholder="filter cameras..."
         groups={groupCameras(list)}
       />
