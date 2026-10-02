@@ -10,7 +10,7 @@ The collection of film photography
 
 AnalogDB makes use of several technologies and services to enable a full featured product.
 
-<img alt="analogdb-diagram" src="docs/architecture.svg">
+<img alt="analogdb-diagram" src="docs/architecture.png">
 <br/><br/>
 
 Data is scraped from r/analog with [praw](https://github.com/praw-dev/praw) and run through a pipeline orchestrated by [Dagster](https://github.com/dagster-io/dagster). Along the way an LLM reads each post title to pull out the camera, film and lens, images are resized, and keywords and dominant colors are extracted. Images are uploaded to [AWS S3](https://aws.amazon.com/s3/) and served from [CloudFront CDN](https://aws.amazon.com/cloudfront/) for quick and reliable delivery, and posts are created through the backend API with a generated Python client. Scheduled jobs keep scores and keywords fresh over time.
