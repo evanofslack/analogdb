@@ -1271,6 +1271,51 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/scrape/captions/missing": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "List ids of posts with no caption, or with a caption of another version when version is set (requires authentication)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scrape"
+                ],
+                "summary": "List posts missing a caption",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Caption version the posts should have",
+                        "name": "version",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.CaptionsMissingResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1421,6 +1466,9 @@ const docTemplate = `{
                 "camera_model": {
                     "type": "string",
                     "example": "fm2"
+                },
+                "caption": {
+                    "$ref": "#/definitions/analogdb.PostCaption"
                 },
                 "colors": {
                     "type": "array",
@@ -1603,6 +1651,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "ae-1"
                 },
+                "caption": {
+                    "$ref": "#/definitions/analogdb.PostCaption"
+                },
                 "clear": {
                     "description": "Clear sets these metadata fields to null",
                     "type": "array",
@@ -1681,6 +1732,10 @@ const docTemplate = `{
                 "camera_model": {
                     "type": "string",
                     "example": "fm2"
+                },
+                "caption": {
+                    "type": "string",
+                    "example": "A woman on a beach at sunset"
                 },
                 "colors": {
                     "type": "array",
@@ -1764,6 +1819,26 @@ const docTemplate = `{
                 }
             }
         },
+        "analogdb.PostCaption": {
+            "type": "object",
+            "properties": {
+                "caption": {
+                    "type": "string",
+                    "example": "A woman on a beach at sunset"
+                },
+                "model": {
+                    "type": "string",
+                    "example": "google/gemini-2.5-flash-lite"
+                },
+                "raw": {
+                    "type": "object"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "v1"
+                }
+            }
+        },
         "analogdb.PostExtraction": {
             "type": "object",
             "properties": {
@@ -1812,6 +1887,22 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/analogdb.Camera"
                     }
+                }
+            }
+        },
+        "server.CaptionsMissingResponse": {
+            "type": "object",
+            "properties": {
+                "ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        1,
+                        2,
+                        3
+                    ]
                 }
             }
         },

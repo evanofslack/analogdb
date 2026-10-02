@@ -48,5 +48,9 @@ INSERT INTO colors (hex, css, html, percent, post_id) VALUES
 ('#ff7f50', 'coral', 'orange', 0.04, 8),
 ('#ffffff', 'white', 'white', 0.01, 8);
 
+INSERT INTO post_captions (post_id, caption, model, version, raw) VALUES
+(4, 'A sandy beach under a clear sky', 'google/gemini-2.5-flash-lite', 'v1', '{"caption": "A sandy beach under a clear sky", "tags": ["beach", "sand"]}'),
+(6, NULL, 'google/gemini-2.5-flash-lite', 'v1', '{"refused": true}');
+
 -- created and updated default to now(), pin them so the golden file is stable
 UPDATE pictures SET created = to_timestamp(time), updated = to_timestamp(time);

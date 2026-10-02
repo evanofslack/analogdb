@@ -282,6 +282,10 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, r, err)
 		return
 	}
+	if err := validateCaption(createPost.Caption); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
 
 	// create the post in db
 	created, err := s.PostService.CreatePost(r.Context(), &createPost)
@@ -341,6 +345,10 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, r, err)
 		return
 	}
+	if err := validateCaption(patchPost.Caption); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
 
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := stringToInt(id); err == nil {
@@ -356,6 +364,19 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 			s.writeError(w, r, err)
 		}
 	}
+}
+
+func validateCaption(caption *analogdb.PostCaption) error {
+	if caption == nil {
+		return nil
+	}
+	if caption.Model == "" || caption.Version == "" {
+		return badRequest("caption: model and version are required")
+	}
+	if !jsonStartsWith(caption.Raw, '{') {
+		return badRequest("caption: raw must be a JSON object")
+	}
+	return nil
 }
 
 // @Summary Get all post IDs

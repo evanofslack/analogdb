@@ -108,3 +108,7 @@ type mockScrape struct{}
 func (mockScrape) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error) {
 	return []int{1}, nil
 }
+
+func (mockScrape) CaptionMissingPostIDs(ctx context.Context, version *string) ([]int, error) {
+	return []int{1}, nil
+}
