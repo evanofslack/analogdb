@@ -46,6 +46,8 @@ func (s *Server) mountCameraHandlers(r chi.Router) {
 // @Param id query int false "Filter by specific camera ID"
 // @Param include_counts query bool false "Include count data"
 // @Param exclude_zero_counts query bool false "Exclude zero counts"
+// @Param min_count query int false "Only return entries with at least this many posts, implies include_counts"
+// @Param top_posts query int false "Attach this many top scoring posts to each entry (1 to 10)"
 // @Success 200 {object} CamerasResponse
 // @Failure 400 {object} analogdb.Error "Invalid query parameters"
 // @Failure 500 {object} analogdb.Error "Internal server error"
@@ -74,7 +76,9 @@ func (s *Server) makeCameraResponse(r *http.Request, filter *analogdb.CameraFilt
 		return resp, err
 	}
 	for _, c := range cameras {
-		resp.Cameras = append(resp.Cameras, *c)
+		camera := *c
+		camera.Slug = analogdb.Slug(camera.Make, camera.Model)
+		resp.Cameras = append(resp.Cameras, camera)
 	}
 	return resp, nil
 }
@@ -174,6 +178,25 @@ func parseToCameraFilter(r *http.Request) (*analogdb.CameraFilter, error) {
 			return nil, err
 		} else {
 			filter.ExcludeZeroCounts = &val
+		}
+	}
+
+	if minCount := values.Get("min_count"); minCount != "" {
+		if val, err := stringToInt(minCount); err != nil {
+			return nil, err
+		} else if val < 1 {
+			return nil, badRequest("invalid min_count parameter %d, must be at least 1", val)
+		} else {
+			filter.MinCount = &val
+		}
+	}
+
+	if topPosts := values.Get("top_posts"); topPosts != "" {
+		if val, err := stringToInt(topPosts); err != nil {
+			return nil, err
+		} else {
+			val = clampLimit(val, 1, 1, maxTopPosts)
+			filter.TopPosts = &val
 		}
 	}
 

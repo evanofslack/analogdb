@@ -345,6 +345,18 @@ const docTemplate = `{
                         "description": "Exclude zero counts",
                         "name": "exclude_zero_counts",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Only return entries with at least this many posts, implies include_counts",
+                        "name": "min_count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Attach this many top scoring posts to each entry (1 to 10)",
+                        "name": "top_posts",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -626,6 +638,18 @@ const docTemplate = `{
                         "type": "boolean",
                         "description": "Exclude zero counts",
                         "name": "exclude_zero_counts",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Only return entries with at least this many posts, implies include_counts",
+                        "name": "min_count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Attach this many top scoring posts to each entry (1 to 10)",
+                        "name": "top_posts",
                         "in": "query"
                     }
                 ],
@@ -1277,9 +1301,42 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 50
                 },
+                "slug": {
+                    "type": "string",
+                    "example": "nikon-fm2"
+                },
+                "top_posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.CatalogPost"
+                    }
+                },
                 "updated": {
                     "type": "string",
                     "example": "2025-07-11T12:00:00Z"
+                }
+            }
+        },
+        "analogdb.CatalogPost": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.Image"
+                    }
+                },
+                "score": {
+                    "type": "integer",
+                    "example": 150
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Sunset over the lake"
                 }
             }
         },
@@ -1450,7 +1507,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "color_type": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "color"
                 },
                 "created": {
                     "type": "string",
@@ -1472,9 +1530,19 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 25
                 },
+                "slug": {
+                    "type": "string",
+                    "example": "kodak-portra-400"
+                },
                 "speed": {
                     "type": "integer",
                     "example": 400
+                },
+                "top_posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.CatalogPost"
+                    }
                 },
                 "type": {
                     "type": "string",

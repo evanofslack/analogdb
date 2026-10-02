@@ -19,13 +19,15 @@ type CreateCamera struct {
 
 // CameraModel represents a specific camera model with post count
 type Camera struct {
-	Id          int       `json:"id" example:"1"`
-	Make        string    `json:"make" example:"nikon"`
-	Model       string    `json:"model" example:"fm2"`
-	Description string    `json:"description" example:"Nikon FM2 is a dependable SLR camera"`
-	Created     time.Time `json:"created" example:"2025-07-11T12:00:00Z"`
-	Updated     time.Time `json:"updated" example:"2025-07-11T12:00:00Z"`
-	PostCount   int       `json:"post_count" example:"50"`
+	Id          int           `json:"id" example:"1"`
+	Make        string        `json:"make" example:"nikon"`
+	Model       string        `json:"model" example:"fm2"`
+	Description string        `json:"description" example:"Nikon FM2 is a dependable SLR camera"`
+	Created     time.Time     `json:"created" example:"2025-07-11T12:00:00Z"`
+	Updated     time.Time     `json:"updated" example:"2025-07-11T12:00:00Z"`
+	PostCount   int           `json:"post_count" example:"50"`
+	Slug        string        `json:"slug" example:"nikon-fm2"`
+	TopPosts    []CatalogPost `json:"top_posts,omitempty"`
 }
 
 type CameraSort int
@@ -67,6 +69,8 @@ type CameraFilter struct {
 	Model             *string
 	IncludeCounts     *bool
 	ExcludeZeroCounts *bool
+	MinCount          *int
+	TopPosts          *int
 }
 
 func NewCameraFilter(limit *int, sort *CameraSort, ids *[]int, make *string, model *string, speed *int, colortype *string, includeCounts *bool, excludeZeroCounts *bool) *CameraFilter {
@@ -103,6 +107,12 @@ func (filter *CameraFilter) String() string {
 	}
 	if excludeZeros := filter.ExcludeZeroCounts; excludeZeros != nil {
 		out = append(out, fmt.Sprintf("exclude_zero_counts: %t", *excludeZeros))
+	}
+	if minCount := filter.MinCount; minCount != nil {
+		out = append(out, fmt.Sprintf("min_count: %d", *minCount))
+	}
+	if topPosts := filter.TopPosts; topPosts != nil {
+		out = append(out, fmt.Sprintf("top_posts: %d", *topPosts))
 	}
 	return strings.Join(out, ", ")
 }
