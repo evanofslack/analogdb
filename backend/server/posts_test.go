@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
@@ -283,12 +284,18 @@ func FuzzParseToPostFilter(f *testing.F) {
 type mockPostService struct {
 	analogdb.PostService
 	created []*analogdb.Post
+	patched []int
 }
 
 func (m *mockPostService) CreatePost(ctx context.Context, post *analogdb.CreatePost) (*analogdb.Post, error) {
 	created := &analogdb.Post{Id: len(m.created) + 1, DisplayPost: analogdb.DisplayPost{Title: post.Title}}
 	m.created = append(m.created, created)
 	return created, nil
+}
+
+func (m *mockPostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, id int) error {
+	m.patched = append(m.patched, id)
+	return nil
 }
 
 type mockFailSimilarityService struct {
@@ -332,5 +339,98 @@ func TestCreatePostEncodeFailure(t *testing.T) {
 
 	if got := testutil.ToFloat64(s.stats.postEncodeFailures); got != 1 {
 		t.Errorf("want 1 encode failure, got %v", got)
+	}
+}
+
+type mockRecordSimilarityService struct {
+	analogdb.SimilarityService
+	encoded []int
+	fail    bool
+}
+
+func (m *mockRecordSimilarityService) BatchEncodePosts(ctx context.Context, ids []int, batchSize int) ([]int, error) {
+	m.encoded = append(m.encoded, ids...)
+	if m.fail {
+		return ids, nil
+	}
+	return nil, nil
+}
+
+func patchRequest(t *testing.T, s *Server, id string, body string) *httptest.ResponseRecorder {
+	t.Helper()
+	r := httptest.NewRequest(http.MethodPatch, "/post/"+id, bytes.NewReader([]byte(body)))
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("id", id)
+	r = r.WithContext(context.WithValue(r.Context(), chi.RouteCtxKey, rctx))
+	w := httptest.NewRecorder()
+	s.patchPost(w, r)
+	return w
+}
+
+func TestPatchPostEncodes(t *testing.T) {
+	caption := `{"caption":{"caption":"a dog","model":"m","version":"v1","raw":{}}}`
+	tests := []struct {
+		name   string
+		body   string
+		encode bool
+	}{
+		{"nsfw", `{"nsfw":true}`, true},
+		{"grayscale", `{"grayscale":false}`, true},
+		{"sprocket", `{"sprocket":true}`, true},
+		{"keywords", `{"keywords":[{"word":"dog","weight":0.5}]}`, true},
+		{"empty keywords", `{"keywords":[]}`, true},
+		{"caption", caption, true},
+		{"score", `{"score":12}`, false},
+		{"camera", `{"camera_make":"canon","camera_model":"ae-1"}`, false},
+		{"film", `{"film_make":"kodak","clear":["film_speed"]}`, false},
+		{"colors", `{"colors":[{"hex":"#ffffff","css":"white","html":"white","percent":0.5}]}`, false},
+		{"description", `{"description":"new"}`, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := mustOpen(t)
+			defer mustClose(t, s)
+
+			postService := &mockPostService{}
+			similarity := &mockRecordSimilarityService{}
+			s.PostService = postService
+			s.SimilarityService = similarity
+
+			w := patchRequest(t, s, "42", tt.body)
+			if w.Code != http.StatusOK {
+				t.Fatalf("want status 200, got %d: %s", w.Code, w.Body.String())
+			}
+			if !reflect.DeepEqual(postService.patched, []int{42}) {
+				t.Errorf("want post 42 patched, got %v", postService.patched)
+			}
+			var want []int
+			if tt.encode {
+				want = []int{42}
+			}
+			if !reflect.DeepEqual(similarity.encoded, want) {
+				t.Errorf("want encoded %v, got %v", want, similarity.encoded)
+			}
+		})
+	}
+}
+
+func TestPatchPostEncodeFailure(t *testing.T) {
+	for _, similarity := range []analogdb.SimilarityService{
+		&mockFailSimilarityService{},
+		&mockRecordSimilarityService{fail: true},
+	} {
+		s := mustOpen(t)
+		s.PostService = &mockPostService{}
+		s.SimilarityService = similarity
+
+		w := patchRequest(t, s, "7", `{"nsfw":true}`)
+		if w.Code != http.StatusOK {
+			t.Errorf("want status 200, got %d", w.Code)
+		}
+		if got := testutil.ToFloat64(s.stats.postEncodeFailures); got != 1 {
+			t.Errorf("want 1 encode failure, got %v", got)
+		}
+		mustClose(t, s)
 	}
 }
