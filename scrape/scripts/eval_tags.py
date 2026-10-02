@@ -368,6 +368,11 @@ def main(
     parser.add_argument(
         "--render-only", action="store_true", help="rebuild the page from saved results"
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="ignore saved results for the selected models and run them again",
+    )
     args = parser.parse_args(argv)
 
     work = Path(args.work_dir)
@@ -399,6 +404,8 @@ def main(
         ) | load_stoplist(str(ROOT / "data" / "tag_stoplist.txt"))
         lock = threading.Lock()
         for model in args.models:
+            if args.force:
+                results[model] = {}
 
             def save(id: str, result: Dict, model: str = model) -> None:
                 with lock:

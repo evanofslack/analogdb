@@ -101,6 +101,18 @@ def test_main_runs_models_and_renders(tmp_path):
     eval_tags.main(argv, fetch=fake_fetch, openai=ai)
     assert len(ai.chat.completions.calls) == calls
 
+    results["good"]["1"]["tags"] = ["stale"]
+    (tmp_path / "results.json").write_text(json.dumps(results))
+    eval_tags.main(
+        argv[:-4] + ["good", "--concurrency", "2", "--force"],
+        fetch=fake_fetch,
+        openai=ai,
+    )
+    assert len(ai.chat.completions.calls) == calls + 4
+    rerun = json.loads((tmp_path / "results.json").read_text())
+    assert rerun["good"]["1"]["tags"] == ["street"]
+    assert rerun["nsfw-refuser"] == results["nsfw-refuser"]
+
 
 def test_sample_only_makes_no_calls(tmp_path):
     ai = SimpleNamespace(chat=SimpleNamespace(completions=FakeCompletions()))
