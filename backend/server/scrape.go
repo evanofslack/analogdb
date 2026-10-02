@@ -10,14 +10,22 @@ type keywordsUpdatedResponse struct {
 	Ids []int `json:"ids"`
 }
 
+type CaptionsMissingResponse struct {
+	Ids []int `json:"ids" example:"1,2,3"`
+}
+
 const (
 	scrapePath          = "/scrape"
 	keywordsUpdatedPath = scrapePath + "/keywords/updated"
+	captionsMissingPath = scrapePath + "/captions/missing"
 )
 
 func (s *Server) mountScrapeHandlers(r chi.Router) {
 	r.Route(keywordsUpdatedPath, func(r chi.Router) {
 		r.With(s.auth).Get("/", s.getKeywordUpdatedPosts)
+	})
+	r.Route(captionsMissingPath, func(r chi.Router) {
+		r.With(s.auth).Get("/", s.getCaptionMissingPosts)
 	})
 }
 
@@ -28,6 +36,34 @@ func (s *Server) getKeywordUpdatedPosts(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	response := keywordsUpdatedResponse{
+		Ids: ids,
+	}
+	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+// @Summary List posts missing a caption
+// @Description List ids of posts with no caption, or with a caption of another version when version is set (requires authentication)
+// @Tags scrape
+// @Produce json
+// @Param version query string false "Caption version the posts should have"
+// @Success 200 {object} CaptionsMissingResponse
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Security BasicAuth
+// @Router /scrape/captions/missing [get]
+func (s *Server) getCaptionMissingPosts(w http.ResponseWriter, r *http.Request) {
+	var version *string
+	if v := r.URL.Query().Get("version"); v != "" {
+		version = &v
+	}
+	ids, err := s.ScrapeService.CaptionMissingPostIDs(r.Context(), version)
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	response := CaptionsMissingResponse{
 		Ids: ids,
 	}
 	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {

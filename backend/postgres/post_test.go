@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -79,6 +80,45 @@ func TestPostService_CreatePost(t *testing.T) {
 		}
 		if !found.Created.Equal(post.Created) || !found.Updated.Equal(post.Updated) {
 			t.Errorf("Expected found times %v %v, got %v %v", post.Created, post.Updated, found.Created, found.Updated)
+		}
+	})
+
+	t.Run("creation with caption", func(t *testing.T) {
+		text := "A dog on a beach"
+		createPost := &analogdb.CreatePost{
+			Title:     "Captioned Post",
+			Author:    "u/testuser",
+			Permalink: "test_post_captioned",
+			Images: []analogdb.Image{
+				{Label: "low", Url: "http://example.com/captioned_low.jpg"},
+				{Label: "medium", Url: "http://example.com/captioned_med.jpg"},
+				{Label: "high", Url: "http://example.com/captioned_high.jpg"},
+				{Label: "raw", Url: "http://example.com/captioned_raw.jpg"},
+			},
+			Colors:  make([]analogdb.Color, 1),
+			Caption: &analogdb.PostCaption{Caption: &text, Model: "m", Version: "v1", Raw: json.RawMessage(`{"tags": ["dog"]}`)},
+		}
+
+		post, err := service.CreatePost(ctx, createPost)
+		if err != nil {
+			t.Fatalf("CreatePost failed: %v", err)
+		}
+		if post.Caption == nil || *post.Caption != text {
+			t.Errorf("Expected caption %q, got %v", text, post.Caption)
+		}
+		found, err := service.FindPostByID(ctx, post.Id)
+		if err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if found.Caption == nil || *found.Caption != text {
+			t.Errorf("Expected found caption %q, got %v", text, found.Caption)
+		}
+		var model, version, raw string
+		if err := db.db.QueryRow("SELECT model, version, raw::text FROM post_captions WHERE post_id = $1", post.Id).Scan(&model, &version, &raw); err != nil {
+			t.Fatal(err)
+		}
+		if model != "m" || version != "v1" || raw != `{"tags": ["dog"]}` {
+			t.Errorf("Unexpected stored caption %q %q %q", model, version, raw)
 		}
 	})
 
@@ -468,12 +508,55 @@ func TestPostService_PatchPost(t *testing.T) {
 		}
 	})
 
+	t.Run("patch caption", func(t *testing.T) {
+		post, err := service.FindPostByID(ctx, 3)
+		if err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if post.Caption != nil {
+			t.Fatalf("Expected no caption, got %q", *post.Caption)
+		}
+
+		first := "A portrait in a studio"
+		patch := &analogdb.PatchPost{Caption: &analogdb.PostCaption{Caption: &first, Model: "m", Version: "v1", Raw: json.RawMessage(`{}`)}}
+		if err := service.PatchPost(ctx, patch, 3); err != nil {
+			t.Fatalf("PatchPost insert failed: %v", err)
+		}
+		if post, err = service.FindPostByID(ctx, 3); err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if post.Caption == nil || *post.Caption != first {
+			t.Errorf("Expected caption %q, got %v", first, post.Caption)
+		}
+
+		patch = &analogdb.PatchPost{Caption: &analogdb.PostCaption{Model: "m2", Version: "v2", Raw: json.RawMessage(`{"refused": true}`)}}
+		if err := service.PatchPost(ctx, patch, 3); err != nil {
+			t.Fatalf("PatchPost update failed: %v", err)
+		}
+		if post, err = service.FindPostByID(ctx, 3); err != nil {
+			t.Fatalf("FindPostByID failed: %v", err)
+		}
+		if post.Caption != nil {
+			t.Errorf("Expected caption cleared, got %q", *post.Caption)
+		}
+		var count int
+		var version string
+		if err := db.db.QueryRow("SELECT count(*), max(version) FROM post_captions WHERE post_id = 3").Scan(&count, &version); err != nil {
+			t.Fatal(err)
+		}
+		if count != 1 || version != "v2" {
+			t.Errorf("Expected one v2 caption row, got %d %q", count, version)
+		}
+	})
+
 	t.Run("patch sets updated", func(t *testing.T) {
 		score := 500
 		keywords := []analogdb.Keyword{{Word: "touched", Weight: 0.5}}
+		caption := "touched"
 		patches := map[string]*analogdb.PatchPost{
 			"score":    {Score: &score},
 			"keywords": {Keywords: &keywords},
+			"caption":  {Caption: &analogdb.PostCaption{Caption: &caption, Model: "m", Version: "v1", Raw: json.RawMessage(`{}`)}},
 		}
 		for name, patch := range patches {
 			before, err := service.FindPostByID(ctx, 2)
@@ -575,6 +658,24 @@ func TestPostService_DeletePost(t *testing.T) {
 		_, err = service.FindPostByID(ctx, 1)
 		if err == nil {
 			t.Error("Post should not exist after deletion")
+		}
+	})
+
+	t.Run("delete removes caption", func(t *testing.T) {
+		caption := "gone soon"
+		patch := &analogdb.PatchPost{Caption: &analogdb.PostCaption{Caption: &caption, Model: "m", Version: "v1", Raw: json.RawMessage(`{}`)}}
+		if err := service.PatchPost(ctx, patch, 2); err != nil {
+			t.Fatalf("PatchPost failed: %v", err)
+		}
+		if err := service.DeletePost(ctx, 2); err != nil {
+			t.Fatalf("DeletePost failed: %v", err)
+		}
+		var count int
+		if err := db.db.QueryRow("SELECT count(*) FROM post_captions WHERE post_id = 2").Scan(&count); err != nil {
+			t.Fatal(err)
+		}
+		if count != 0 {
+			t.Errorf("Expected caption deleted with post, got %d rows", count)
 		}
 	})
 

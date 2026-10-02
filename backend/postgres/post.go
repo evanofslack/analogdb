@@ -53,6 +53,7 @@ type rawCreatePost struct {
 type rawPost struct {
 	id int
 	rawCreatePost
+	caption  NullString
 	colors   []byte
 	keywords []byte
 	created  goTime.Time
@@ -371,6 +372,15 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		}
 	}
 
+	// insert caption if provided
+	var caption *string
+	if post.Caption != nil {
+		if err := db.upsertCaption(ctx, tx, post.Caption, int(id)); err != nil {
+			return nil, err
+		}
+		caption = post.Caption.Caption
+	}
+
 	// commit transaction if all inserts are ok
 	err = tx.Commit()
 	if err != nil {
@@ -384,6 +394,7 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		Author:      post.Author,
 		Permalink:   post.Permalink,
 		Description: post.Description,
+		Caption:     caption,
 		Score:       post.Score,
 		Nsfw:        post.Nsfw,
 		Grayscale:   post.Grayscale,
@@ -481,6 +492,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			p.aperture,
 			p.created,
 			p.updated,
+			pc.caption,
 			c.colors,
 			k.keywords
 		FROM (
@@ -504,6 +516,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			FROM keywords
 			WHERE post_id = p.id
 		) k ON true
+		LEFT JOIN post_captions pc ON pc.post_id = p.id
 		%s
 	`, postWhere, subqueryOrder, limit, mainOrder)
 
@@ -847,13 +860,22 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 		}
 	}
 
+	// if the patch includes a caption
+	if patch.Caption != nil {
+		hasPatchFields = true
+		if err := db.upsertCaption(ctx, tx, patch.Caption, id); err != nil {
+			db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
+			return err
+		}
+	}
+
 	if !hasPatchFields {
 		err := &analogdb.Error{Code: analogdb.ERRBADREQUEST, Message: "must include patch parameters"}
 		db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
 		return err
 	}
 
-	// keyword and color patches skip the pictures row, so set updated here
+	// keyword, color and caption patches skip the pictures row, so set updated here
 	if err := db.touchPost(ctx, tx, id); err != nil {
 		db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
 		return err
@@ -949,6 +971,29 @@ func (db *DB) updatePostGeneral(ctx context.Context, tx *sql.Tx, patch *analogdb
 		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "post not found"}
 	}
 	db.logger.InfoContext(ctx, "Finish update post", "post_id", id)
+	return nil
+}
+
+// upsertCaption creates or replaces a post's caption
+func (db *DB) upsertCaption(ctx context.Context, tx *sql.Tx, caption *analogdb.PostCaption, id int) error {
+	db.logger.DebugContext(ctx, "Start upsert post caption", "post_id", id)
+
+	query := `
+		INSERT INTO post_captions (post_id, caption, model, version, raw)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (post_id) DO UPDATE SET
+			caption = EXCLUDED.caption,
+			model = EXCLUDED.model,
+			version = EXCLUDED.version,
+			raw = EXCLUDED.raw,
+			updated = NOW()`
+
+	text := NewNullStringFromPtr(caption.Caption).ToSQLNullString()
+	if _, err := tx.ExecContext(ctx, query, id, text, caption.Model, caption.Version, []byte(caption.Raw)); err != nil {
+		db.logger.ErrorContext(ctx, "Fail upsert post caption", "post_id", id, "error", err)
+		return err
+	}
+	db.logger.InfoContext(ctx, "Finish upsert post caption", "post_id", id)
 	return nil
 }
 
@@ -1251,6 +1296,7 @@ func rawPostToPost(p rawPost) (*analogdb.Post, error) {
 			Author:      p.author,
 			Permalink:   p.permalink,
 			Description: p.description.ToPtr(),
+			Caption:     p.caption.ToPtr(),
 			Score:       p.score,
 			Nsfw:        p.nsfw,
 			Grayscale:   p.grayscale,
@@ -1307,6 +1353,7 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, error) {
 		&p.rawCreatePost.aperture,
 		&p.created,
 		&p.updated,
+		&p.caption,
 		&p.colors,
 		&p.keywords); err != nil {
 		return nil, err
