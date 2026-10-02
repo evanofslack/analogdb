@@ -26,12 +26,10 @@ COPY scrape/packages/ packages/
 
 RUN uv sync --frozen --no-install-project
 
-RUN uv run --no-sync python -m spacy download en_core_web_lg
-
 COPY scrape/src/ src/
 COPY scrape/data/ data/
 
-RUN uv sync --frozen --inexact
+RUN uv sync --frozen
 
 ENV PATH="/app/.venv/bin:$PATH"
 

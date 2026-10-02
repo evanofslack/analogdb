@@ -1,3 +1,5 @@
+import os
+
 import dagster as dg
 from dagster_aws.s3 import S3Resource
 from dotenv import load_dotenv
@@ -5,10 +7,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from dagster_app.constants import (
-    BLACKLIST_PATH,
     CAMERAS_PATH,
+    DEFAULT_VISION_MODEL,
     FILMS_PATH,
-    KEYWORD_LIMIT,
+    TAG_STOPLIST_PATH,
 )
 from dagster_app.iomanager import io_manager
 
@@ -17,29 +19,34 @@ from .assets import (
     analogdb_posts,
     debug_posts,
     final_posts,
-    keywords,
     patch_post_descriptions,
-    patch_post_keywords,
     patch_post_metadata,
     patch_post_scores,
     post_images,
+    post_tags,
     reddit_comments_to_s3,
     reddit_posts,
     title_metadatas,
     updated_post_descriptions,
-    updated_post_keywords,
     updated_post_scores,
     updated_reddit_comments,
     upload_cameras,
     upload_films,
     upload_posts,
 )
-from .backfill import backfill_post_metadata, rematch_post_metadata
+from .backfill import (
+    backfill_post_captions,
+    backfill_post_metadata,
+    reencode_post_vectors,
+    rematch_post_metadata,
+)
 from .jobs import (
+    backfill_captions_job,
     backfill_metadata_job,
+    patch_comments_job,
     patch_descriptions_job,
-    patch_keywords_job,
     patch_scores_job,
+    reencode_vectors_job,
     rematch_metadata_job,
     scrape_job,
 )
@@ -48,37 +55,36 @@ from .resources import (
     CamerasJsonResource,
     FilmsJsonResource,
     ImageProcessorResource,
-    KeywordBlacklistResource,
-    KeywordExtractorResource,
     MetadataResource,
     RedditResource,
     StorageResource,
+    TaggerResource,
 )
 from .schedules import (
     scrape_analog_schedule,
-    update_post_keywords_schedule,
+    update_post_comments_schedule,
     update_post_scores_schedule,
 )
 
 defs = dg.Definitions(
     assets=[
+        backfill_post_captions,
         backfill_post_metadata,
+        reencode_post_vectors,
         rematch_post_metadata,
         analogdb_permalinks,
         analogdb_posts,
         debug_posts,
         final_posts,
-        keywords,
         patch_post_descriptions,
-        patch_post_keywords,
         patch_post_metadata,
         patch_post_scores,
         post_images,
+        post_tags,
         reddit_comments_to_s3,
         reddit_posts,
         title_metadatas,
         updated_post_descriptions,
-        updated_post_keywords,
         updated_post_scores,
         updated_reddit_comments,
         upload_cameras,
@@ -110,23 +116,31 @@ defs = dg.Definitions(
                 region_name=dg.EnvVar("AWS_REGION"),
             )
         ),
-        "keyword_extractor": KeywordExtractorResource(max_keywords=KEYWORD_LIMIT),
-        "keyword_blacklist": KeywordBlacklistResource(file_path=BLACKLIST_PATH),
+        "tagger": TaggerResource(
+            openai_url=dg.EnvVar("OPENROUTER_BASE_URL"),
+            openai_key=dg.EnvVar("OPENROUTER_API_KEY"),
+            openai_model=os.environ.get(
+                "OPENROUTER_VISION_MODEL", DEFAULT_VISION_MODEL
+            ),
+            stoplist_path=TAG_STOPLIST_PATH,
+        ),
         "films_json": FilmsJsonResource(file_path=FILMS_PATH),
         "cameras_json": CamerasJsonResource(file_path=CAMERAS_PATH),
         "io_manager": io_manager(),
     },
     jobs=[
+        backfill_captions_job,
         backfill_metadata_job,
+        reencode_vectors_job,
         rematch_metadata_job,
         scrape_job,
         patch_descriptions_job,
         patch_scores_job,
-        patch_keywords_job,
+        patch_comments_job,
     ],
     schedules=[
         scrape_analog_schedule,
-        update_post_keywords_schedule,
+        update_post_comments_schedule,
         update_post_scores_schedule,
     ],
 )

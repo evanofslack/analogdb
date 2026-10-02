@@ -7,9 +7,11 @@ from dagster import ConfigurableResource
 from dagster_aws.s3 import S3Resource
 from openai import OpenAI
 from scrape.image import ImageProcessor
-from scrape.keywords import KeywordBlacklist, KeywordExtractor
 from scrape.metadata import MetadataExtractor
 from scrape.reddit import RedditScraper
+from scrape.tagging import ImageTagger, catalog_words, load_stoplist
+
+from .constants import DEFAULT_VISION_MODEL
 
 
 class AnalogDBResource(ConfigurableResource):
@@ -62,6 +64,28 @@ class MetadataResource(ConfigurableResource):
         return MetadataExtractor(ai, self.openai_model, self.batch_size)
 
 
+class TaggerResource(ConfigurableResource):
+    openai_url: str = ""
+    openai_key: str = ""
+    openai_model: str = DEFAULT_VISION_MODEL
+    concurrency: int = 8
+    stoplist_path: str = ""
+
+    def client(
+        self, cameras: List[Dict[str, Any]], films: List[Dict[str, Any]]
+    ) -> ImageTagger:
+        ai = OpenAI(
+            base_url=self.openai_url,
+            api_key=self.openai_key,
+        )
+        return ImageTagger(
+            ai,
+            self.openai_model,
+            catalog_words(cameras, films),
+            load_stoplist(self.stoplist_path),
+        )
+
+
 class StorageResource(ConfigurableResource):
     s3_resource: S3Resource
 
@@ -78,20 +102,6 @@ class StorageResource(ConfigurableResource):
         self.s3_resource.get_client().put_object(
             Bucket=bucket, Key=key, Body=body, ContentType=content_type
         )
-
-
-class KeywordExtractorResource(ConfigurableResource):
-    max_keywords: int
-
-    def client(self) -> KeywordExtractor:
-        return KeywordExtractor()
-
-
-class KeywordBlacklistResource(ConfigurableResource):
-    file_path: str
-
-    def client(self) -> KeywordBlacklist:
-        return KeywordBlacklist(self.file_path)
 
 
 class FilmsJsonResource(ConfigurableResource):

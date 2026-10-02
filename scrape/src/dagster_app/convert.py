@@ -23,6 +23,7 @@ def convert_create(p: scrape.CreatePost) -> analog.PostCreate:
         images=[convert_image(i) for i in p.images],
         keywords=[convert_keyword(k) for k in p.keywords],
         colors=[convert_color(c) for c in p.colors],
+        caption=convert_caption(p.caption) if p.caption else None,
     )
 
 
@@ -38,3 +39,9 @@ def convert_color(c: scrape.Color) -> analog.Color:
 
 def convert_keyword(k: scrape.Keyword) -> analog.Keyword:
     return analog.Keyword(word=k.word, weight=k.weight)
+
+
+def convert_caption(c: scrape.Caption) -> analog.PostCaption:
+    return analog.PostCaption(
+        caption=c.caption, model=c.model, version=c.version, raw=c.raw
+    )

@@ -20,10 +20,6 @@ fmt:
     uv run ruff check --fix .
     uv run black .
 
-# Download the spacy model
-spacy:
-    uv run -- spacy download en_core_web_lg
-
 # Start the Dagster containers
 up:
     docker compose up -d
