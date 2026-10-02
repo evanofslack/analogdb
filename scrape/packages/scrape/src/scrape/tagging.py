@@ -33,7 +33,7 @@ Include, when clearly visible or evident:
 - the time of day only when it is specific: dawn, dusk, sunset, golden hour, night
 - atmosphere and weather: hazy, fog, rain, snow
 - notable light or color: backlit, neon, shadow
-- monochrome for black and white photos. Never write "black and white".
+- monochrome only when the entire image is a single hue: black and white, sepia, or an image that is all one color (all blue). Never for muted, faded, limited or two-color images. Never write "black and white".
 - places named in the title or description: new york, tokyo, lake district
 
 Use single words. Use several words only for place names (new york) and fixed compound nouns that have no single word form (cowboy hat). Never combine an adjective with a noun: not "long hair", "white shirt" or "ruffled collar".
@@ -123,6 +123,15 @@ class TagInput:
     image_url: str
     title: str
     description: Optional[str] = None
+    grayscale: bool = False
+
+
+def with_monochrome(tags: List[str], grayscale: bool) -> List[str]:
+    """Grayscale posts always end with monochrome, replacing the last tag when
+    the list is full."""
+    if not grayscale or MONOCHROME in tags:
+        return tags
+    return tags[: MAX_TAGS - 1] + [MONOCHROME]
 
 
 def tag_keywords(tags: Sequence[str]) -> List[Keyword]:
@@ -280,7 +289,13 @@ class ImageTagger:
         self.blocked = set(catalog_words) | set(stoplist or ())
         self.use_schema = True
 
-    def tag(self, image_url: str, title: str, description: Optional[str]) -> ImageTags:
+    def tag(
+        self,
+        image_url: str,
+        title: str,
+        description: Optional[str],
+        grayscale: bool = False,
+    ) -> ImageTags:
         text = post_text(title, description)
         named = named_in(f"{title}\n{description or ''}")
         image = [
@@ -292,7 +307,7 @@ class ImageTagger:
             data, tags = found
             return ImageTags(
                 caption=caption_text(data),
-                tags=tags,
+                tags=with_monochrome(tags, grayscale),
                 raw=data,
                 model=self.model,
                 version=TAGGER_VERSION,
@@ -306,7 +321,7 @@ class ImageTagger:
         data, tags = found
         return ImageTags(
             caption=None,
-            tags=tags,
+            tags=with_monochrome(tags, grayscale),
             raw=data,
             model=self.model,
             version=TAGGER_VERSION + TEXT_ONLY_SUFFIX,
@@ -319,7 +334,7 @@ class ImageTagger:
 
         def run(i: TagInput) -> ImageTags | Exception:
             try:
-                return self.tag(i.image_url, i.title, i.description)
+                return self.tag(i.image_url, i.title, i.description, i.grayscale)
             except Exception as e:
                 return e
 

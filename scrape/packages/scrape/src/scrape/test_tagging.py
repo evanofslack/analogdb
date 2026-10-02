@@ -19,6 +19,7 @@ from .tagging import (
     parse_tags,
     post_text,
     tag_keywords,
+    with_monochrome,
 )
 from .test_metadata import FakeCompletions, bad_request
 
@@ -126,6 +127,30 @@ class TestNormalize:
         ]
 
 
+class TestMonochrome:
+    def test_added_last_for_grayscale(self):
+        assert with_monochrome(["woman", "street"], True) == [
+            "woman",
+            "street",
+            "monochrome",
+        ]
+
+    def test_not_added_for_color(self):
+        assert with_monochrome(["woman"], False) == ["woman"]
+
+    def test_deduped(self):
+        assert with_monochrome(["monochrome", "woman"], True) == [
+            "monochrome",
+            "woman",
+        ]
+
+    def test_replaces_last_when_full(self):
+        tags = [f"tag{i}" for i in range(MAX_TAGS)]
+        got = with_monochrome(tags, True)
+        assert len(got) == MAX_TAGS
+        assert got == tags[:-1] + ["monochrome"]
+
+
 class TestWeights:
     def test_linear_from_one_to_half(self):
         assert tag_keywords(["a", "b", "c"]) == [
@@ -214,6 +239,25 @@ class TestTagger:
         calls = ai.chat.completions.calls
         assert len(calls) == 3
         assert all(p["type"] == "text" for p in calls[2]["messages"][1]["content"])
+
+    def test_grayscale_forces_monochrome(self):
+        tagger, _ = self.tagger([reply(), "no", "no", reply(tags=["street"])])
+
+        image = tagger.tag("https://cdn/m.jpg", "t", None, grayscale=True)
+        text = tagger.tag("https://cdn/m.jpg", "t", None, grayscale=True)
+
+        assert image.tags == ["dog", "beach", "monochrome"]
+        assert text.version == "v1-text"
+        assert text.tags == ["street", "monochrome"]
+
+    def test_tag_all_passes_grayscale(self):
+        tagger, _ = self.tagger([reply()])
+
+        results = tagger.tag_all(
+            [TagInput("https://cdn/1.jpg", "a", grayscale=True)], concurrency=1
+        )
+
+        assert results[0].tags[-1] == "monochrome"
 
     def test_empty_after_normalizing_retries(self):
         tagger, _ = self.tagger([reply(tags=["photo"]), reply(tags=["dog"])])
