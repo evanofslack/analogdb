@@ -15,6 +15,21 @@
 .linkOn {
   font-weight: 600;
 }
+@media screen and (max-width: 1024px) {
+  .linkOn,
+  .linkOff {
+    margin: 0.6rem 0.2rem;
+    font-size: 1.05rem;
+  }
+}
+@media screen and (max-width: 872px) {
+  .linkOn,
+  .linkOff {
+    padding: 0.25rem 0.3rem;
+    margin: 0.6rem 0;
+    font-size: 0.9rem;
+  }
+}
 @media screen and (max-width: 720px) {
   .linkOn,
   .linkOff {

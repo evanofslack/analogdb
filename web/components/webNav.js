@@ -19,6 +19,22 @@ export default function WebNav() {
           GALLERY
         </Link>
         <Link
+          href="/films"
+          className={
+            pathname.startsWith("/films") ? styles.linkOn : styles.linkOff
+          }
+        >
+          FILM
+        </Link>
+        <Link
+          href="/cameras"
+          className={
+            pathname.startsWith("/cameras") ? styles.linkOn : styles.linkOff
+          }
+        >
+          CAMERAS
+        </Link>
+        <Link
           href="/about"
           className={pathname == "/about" ? styles.linkOn : styles.linkOff}
         >
