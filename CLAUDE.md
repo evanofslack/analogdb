@@ -39,7 +39,7 @@ just nuke                  # Delete all containers, volumes and the network (ask
 ### Backend
 ```bash
 just backend up            # Start all backend containers
-just backend infra         # Start just PostgreSQL, Weaviate, and multi2vec-clip (SigLIP2)
+just backend infra         # Start just PostgreSQL, Weaviate, and multi2vec-clip (OpenCLIP ViT-B/16)
 just backend db            # Start just PostgreSQL
 just backend run           # Run the API on the host
 just backend test          # go test -race, sets colima testcontainers env when present
