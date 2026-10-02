@@ -150,8 +150,7 @@ services:
       - clip
 
   clip:
-    build: ./clip
-    image: analogdb-clip:vit-l-14-laion2b
+    image: cr.weaviate.io/semitechnologies/multi2vec-clip:google-siglip2-so400m-patch16-384-1.5.1
     container_name: weaviate-clip
     restart: unless-stopped
     environment:
