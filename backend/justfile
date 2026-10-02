@@ -31,9 +31,9 @@ logs *service:
 db:
     docker compose up -d postgres
 
-# Start postgres, weaviate and i2v-neural
+# Start postgres, weaviate and clip
 infra:
-    docker compose up -d postgres weaviate i2v-neural
+    docker compose up -d postgres weaviate clip
 
 # Run the API on the host
 run:

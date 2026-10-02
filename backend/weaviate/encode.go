@@ -104,7 +104,7 @@ func (db *DB) postToPictureObject(ctx context.Context, post *analogdb.Post) (*mo
 		err = fmt.Errorf("failed to download post image: %w", err)
 		return nil, err
 	}
-	pictureObject := newPictureObject(image, post.Id, post.Grayscale, post.Nsfw, post.Sprocket)
+	pictureObject := newPictureObject(post, image)
 	return pictureObject, nil
 }
 
@@ -114,8 +114,10 @@ func (db *DB) uploadObject(ctx context.Context, obj *models.Object) error {
 	ctx, span := db.startTrace(ctx, "vector:upload_object")
 	defer span.End()
 
-	batcher := db.db.Batch().ObjectsBatcher()
-	_, err := batcher.WithObjects(obj).Do(ctx)
+	failed, err := db.batchUploadObjects(ctx, []*models.Object{obj})
+	if err == nil && len(failed) != 0 {
+		err = fmt.Errorf("vector DB rejected object %s", obj.ID)
+	}
 	if err != nil {
 		err = fmt.Errorf("failed to upload to vector DB: %w", err)
 		db.logger.ErrorContext(ctx, "Fail upload object", "error", err)

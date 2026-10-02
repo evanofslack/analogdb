@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-openapi/strfmt"
@@ -75,14 +76,43 @@ func (db *DB) batchUploadObjects(ctx context.Context, objects []*models.Object) 
 	}
 
 	var failed []strfmt.UUID
-	for _, r := range resp {
-		if r.Result == nil || r.Result.Errors == nil {
-			continue
-		}
-		db.logger.ErrorContext(ctx, "Fail upload object to vector db", "id", r.ID, "error", r.Result.Errors)
-		failed = append(failed, r.ID)
+	for _, objErr := range batchObjectErrors(resp) {
+		db.logger.ErrorContext(ctx, "Fail upload object to vector db", "id", objErr.id, "error", objErr.message)
+		failed = append(failed, objErr.id)
 	}
 	return failed, nil
+}
+
+type objectError struct {
+	id      strfmt.UUID
+	message string
+}
+
+// batchObjectErrors returns the objects of a batch response that failed
+func batchObjectErrors(resp []models.ObjectsGetResponse) []objectError {
+	var errs []objectError
+	for _, r := range resp {
+		if r.Result == nil {
+			continue
+		}
+		var messages []string
+		if r.Result.Errors != nil {
+			for _, item := range r.Result.Errors.Error {
+				if item != nil {
+					messages = append(messages, item.Message)
+				}
+			}
+		}
+		failed := r.Result.Status != nil && *r.Result.Status == models.ObjectsGetResponseAO2ResultStatusFAILED
+		if len(messages) == 0 && !failed {
+			continue
+		}
+		if len(messages) == 0 {
+			messages = append(messages, "status failed")
+		}
+		errs = append(errs, objectError{id: r.ID, message: strings.Join(messages, ", ")})
+	}
+	return errs
 }
 
 type encodeResult struct {
@@ -122,7 +152,7 @@ func (db *DB) postsToPictureObjects(ctx context.Context, posts []*analogdb.Post)
 			failedIDs = append(failedIDs, post.Id)
 			continue
 		}
-		pictureObject := newPictureObject(result.image, post.Id, post.Grayscale, post.Nsfw, post.Sprocket)
+		pictureObject := newPictureObject(post, result.image)
 		pictureObjects = append(pictureObjects, pictureObject)
 	}
 
@@ -143,16 +173,27 @@ func missingIDs(ids []int, posts []*analogdb.Post) []int {
 	return missing
 }
 
-func newPictureObject(image string, postID int, grayscale bool, nsfw bool, sprocket bool) *models.Object {
+func newPictureObject(post *analogdb.Post, image string) *models.Object {
+	caption := ""
+	if post.Caption != nil {
+		caption = *post.Caption
+	}
+	tags := make([]string, 0, len(post.Keywords))
+	for _, keyword := range post.Keywords {
+		tags = append(tags, keyword.Word)
+	}
 	object := models.Object{
-		Class: PictureClass,
-		ID:    pictureID(postID),
+		Class: PostImageClass,
+		ID:    pictureID(post.Id),
 		Properties: map[string]interface{}{
 			"image":     image,
-			"post_id":   postID,
-			"grayscale": grayscale,
-			"nsfw":      nsfw,
-			"sprocket":  sprocket,
+			"post_id":   post.Id,
+			"title":     post.Title,
+			"caption":   caption,
+			"tags":      tags,
+			"grayscale": post.Grayscale,
+			"nsfw":      post.Nsfw,
+			"sprocket":  post.Sprocket,
 		},
 	}
 	return &object

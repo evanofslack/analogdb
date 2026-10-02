@@ -7,7 +7,7 @@ import (
 
 	"github.com/evanofslack/analogdb/logger"
 	"github.com/evanofslack/analogdb/tracer"
-	"github.com/weaviate/weaviate-go-client/v4/weaviate"
+	"github.com/weaviate/weaviate-go-client/v5/weaviate"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -70,17 +70,9 @@ func (db *DB) Open() error {
 func (db *DB) Migrate(ctx context.Context) error {
 	db.logger.Debug("Starting vector DB migration")
 
-	schema, err := db.getSchema(ctx)
-	if err != nil {
-		err = fmt.Errorf("get weaviate schema: %w", err)
+	if err := db.createSchemas(ctx); err != nil {
+		err = fmt.Errorf("create schema: %w", err)
 		return err
-	}
-	// if no classes, create schemas
-	if len(schema.Classes) == 0 {
-		if err := db.createSchemas(ctx); err != nil {
-			err = fmt.Errorf("get create schema: %w", err)
-			return err
-		}
 	}
 	db.logger.Info("Completed vector DB migration")
 	return nil

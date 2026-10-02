@@ -57,6 +57,7 @@ func TestPostCaptionValidation(t *testing.T) {
 	defer mustClose(t, s)
 	posts := &mockPatchPostService{}
 	s.PostService = posts
+	s.SimilarityService = &mockRecordSimilarityService{}
 
 	patch := func(body string) int {
 		r := httptest.NewRequest(http.MethodPatch, "/v1/post/1", strings.NewReader(body))

@@ -294,22 +294,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// check if encoding is disabled
-	encode := r.Context().Value(analogdb.EncodeContextKey)
-	doEncode, _ := encode.(bool)
-
-	// if there is no context value or context value is true, do encode
-	if encode == nil || doEncode {
-		toEncode := []int{created.Id}
-		failedIDs, err := s.SimilarityService.BatchEncodePosts(r.Context(), toEncode, 1)
-		if err == nil && len(failedIDs) != 0 {
-			err = fmt.Errorf("failed to encode post ids %v", failedIDs)
-		}
-		if err != nil {
-			s.logger.ErrorContext(r.Context(), "Fail encode created post", "error", err, "post_id", created.Id)
-			s.stats.postEncodeFailures.Inc()
-		}
-	}
+	s.encodePost(r, created.Id, "Fail encode created post")
 
 	createdResponse := CreatePostResponse{
 		Message: "Success, post created",
@@ -353,6 +338,9 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
 		if identify, err := stringToInt(id); err == nil {
 			if err := s.PostService.PatchPost(r.Context(), &patchPost, identify); err == nil {
+				if patchChangesVector(&patchPost) {
+					s.encodePost(r, identify, "Fail encode patched post")
+				}
 				success := PatchResponse{Message: "Success, post patched"}
 				if err := encodeResponse(w, r, http.StatusOK, success); err != nil {
 					s.writeError(w, r, err)
@@ -363,6 +351,29 @@ func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
 		} else {
 			s.writeError(w, r, err)
 		}
+	}
+}
+
+// patchChangesVector reports whether a patch touches fields stored in the vector DB
+func patchChangesVector(patch *analogdb.PatchPost) bool {
+	return patch.Nsfw != nil || patch.Grayscale != nil || patch.Sprocket != nil ||
+		patch.Keywords != nil || patch.Caption != nil
+}
+
+// encodePost writes the post to the vector DB, logging failures without failing the request
+func (s *Server) encodePost(r *http.Request, id int, failMsg string) {
+	// skip when the context disables encoding
+	encode := r.Context().Value(analogdb.EncodeContextKey)
+	if doEncode, _ := encode.(bool); encode != nil && !doEncode {
+		return
+	}
+	failedIDs, err := s.SimilarityService.BatchEncodePosts(r.Context(), []int{id}, 1)
+	if err == nil && len(failedIDs) != 0 {
+		err = fmt.Errorf("failed to encode post ids %v", failedIDs)
+	}
+	if err != nil {
+		s.logger.ErrorContext(r.Context(), failMsg, "error", err, "post_id", id)
+		s.stats.postEncodeFailures.Inc()
 	}
 }
 

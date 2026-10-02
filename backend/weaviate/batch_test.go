@@ -14,6 +14,7 @@ import (
 
 	"github.com/evanofslack/analogdb"
 	"github.com/evanofslack/analogdb/logger"
+	"github.com/weaviate/weaviate/entities/models"
 )
 
 func TestBatchBy(t *testing.T) {
@@ -143,8 +144,8 @@ func TestDownloadAndEncodePostsEmpty(t *testing.T) {
 }
 
 func TestPictureIDDeterministic(t *testing.T) {
-	a := newPictureObject("a", 42, false, false, false)
-	b := newPictureObject("b", 42, true, true, true)
+	a := newPictureObject(&analogdb.Post{Id: 42}, "a")
+	b := newPictureObject(&analogdb.Post{Id: 42, DisplayPost: analogdb.DisplayPost{Nsfw: true, Grayscale: true, Sprocket: true}}, "b")
 	if a.ID == "" || a.ID != b.ID {
 		t.Errorf("want same non-empty ID, got %q and %q", a.ID, b.ID)
 	}
@@ -156,6 +157,76 @@ func TestPictureIDDeterministic(t *testing.T) {
 func TestMissingIDs(t *testing.T) {
 	posts := []*analogdb.Post{{Id: 1}, {Id: 3}}
 	if got, want := missingIDs([]int{1, 2, 3, 4}, posts), []int{2, 4}; !reflect.DeepEqual(got, want) {
+		t.Errorf("want %v, got %v", want, got)
+	}
+}
+
+func TestNewPictureObject(t *testing.T) {
+	caption := "a dog on a beach"
+	post := &analogdb.Post{
+		Id: 7,
+		DisplayPost: analogdb.DisplayPost{
+			Title:     "Beach day [Pentax K1000 | Portra 400]",
+			Caption:   &caption,
+			Nsfw:      true,
+			Grayscale: false,
+			Sprocket:  true,
+			Keywords:  []analogdb.Keyword{{Word: "new york", Weight: 0.9}, {Word: "dog", Weight: 0.5}, {Word: "beach", Weight: 0.1}},
+		},
+	}
+
+	obj := newPictureObject(post, "aW1hZ2U=")
+	if obj.Class != PostImageClass {
+		t.Errorf("want class %s, got %s", PostImageClass, obj.Class)
+	}
+	if obj.ID != pictureID(7) {
+		t.Errorf("want id %s, got %s", pictureID(7), obj.ID)
+	}
+	want := map[string]interface{}{
+		"image":     "aW1hZ2U=",
+		"post_id":   7,
+		"title":     "Beach day [Pentax K1000 | Portra 400]",
+		"caption":   "a dog on a beach",
+		"tags":      []string{"new york", "dog", "beach"},
+		"grayscale": false,
+		"nsfw":      true,
+		"sprocket":  true,
+	}
+	if got := obj.Properties.(map[string]interface{}); !reflect.DeepEqual(got, want) {
+		t.Errorf("want properties %v, got %v", want, got)
+	}
+}
+
+func TestNewPictureObjectEmptyCaptionAndTags(t *testing.T) {
+	obj := newPictureObject(&analogdb.Post{Id: 1}, "aW1hZ2U=")
+	props := obj.Properties.(map[string]interface{})
+	if caption, ok := props["caption"].(string); !ok || caption != "" {
+		t.Errorf("want empty caption string, got %#v", props["caption"])
+	}
+	if tags, ok := props["tags"].([]string); !ok || tags == nil || len(tags) != 0 {
+		t.Errorf("want empty tags, got %#v", props["tags"])
+	}
+}
+
+func TestBatchObjectErrors(t *testing.T) {
+	failed := models.ObjectsGetResponseAO2ResultStatusFAILED
+	success := models.ObjectsGetResponseAO2ResultStatusSUCCESS
+	resp := []models.ObjectsGetResponse{
+		{Object: models.Object{ID: pictureID(1)}, Result: &models.ObjectsGetResponseAO2Result{Status: &success}},
+		{Object: models.Object{ID: pictureID(2)}, Result: &models.ObjectsGetResponseAO2Result{Errors: &models.ErrorResponse{
+			Error: []*models.ErrorResponseErrorItems0{{Message: "vectorize image"}, {Message: "timeout"}},
+		}}},
+		{Object: models.Object{ID: pictureID(3)}},
+		{Object: models.Object{ID: pictureID(4)}, Result: &models.ObjectsGetResponseAO2Result{Status: &failed}},
+		{Object: models.Object{ID: pictureID(5)}, Result: &models.ObjectsGetResponseAO2Result{Errors: &models.ErrorResponse{}}},
+	}
+
+	got := batchObjectErrors(resp)
+	want := []objectError{
+		{id: pictureID(2), message: "vectorize image, timeout"},
+		{id: pictureID(4), message: "status failed"},
+	}
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("want %v, got %v", want, got)
 	}
 }
