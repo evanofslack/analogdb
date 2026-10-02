@@ -3,6 +3,7 @@ from datetime import UTC, datetime
 import dagster as dg
 
 from .definitions import defs
+from .resources import TaggerResource
 from .schedules import update_post_comments_schedule, update_post_scores_schedule
 
 RETRY_ASSETS = {"reddit_posts", "post_images", "upload_posts"}
@@ -38,6 +39,10 @@ def test_schedules_run_in_utc():
 
 def test_definitions_load():
     dg.Definitions.validate_loadable(defs)
+
+
+def test_tagger_defaults_to_flash():
+    assert TaggerResource().openai_model == "google/gemini-2.5-flash"
 
 
 def test_scrape_job_tags_posts():
