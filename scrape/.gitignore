@@ -43,3 +43,5 @@ dagster_storage/
 
 grayscale-calibration/
 grayscale-review.html
+
+eval/tags/data/
