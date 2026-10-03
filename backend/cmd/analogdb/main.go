@@ -174,6 +174,7 @@ func main() {
 	var scrapeService analogdb.ScrapeService
 	var keywordService analogdb.KeywordService
 	var similarityService analogdb.SimilarityService
+	var searchService analogdb.SearchService
 
 	// create service implementations
 	postService = postgres.NewPostService(db)
@@ -193,10 +194,12 @@ func main() {
 	}
 
 	similarityService = weaviate.NewSimilarityService(dbVec, postService)
+	searchService = weaviate.NewSearchService(dbVec)
 
 	// if cache enabled, replace the with cache implementation
 	if cfg.App.CacheEnabled {
 		similarityService = redis.NewCacheSimilarityService(rdb, similarityService, postService)
+		searchService = redis.NewCacheSearchService(rdb, searchService)
 	}
 
 	server.PostService = postService
@@ -207,6 +210,7 @@ func main() {
 	server.ScrapeService = scrapeService
 	server.KeywordService = keywordService
 	server.SimilarityService = similarityService
+	server.SearchService = searchService
 	server.EventService = eventService
 	server.VectorReadyService = dbVec
 	server.VectorCounter = dbVec

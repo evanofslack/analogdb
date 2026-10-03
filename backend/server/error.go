@@ -18,6 +18,7 @@ var codes = map[string]int{
 	analogdb.ERRBADREQUEST:    http.StatusBadRequest,
 	analogdb.ERRCONFLICT:      http.StatusConflict,
 	errCodeTooLarge:           http.StatusRequestEntityTooLarge,
+	errCodeUnsupportedMedia:   http.StatusUnsupportedMediaType,
 }
 
 func errorStatusCode(code string) int {
