@@ -25,3 +25,6 @@ dev
 # generated openapi
 .openapi-generator/
 api/clients/
+
+# local search quality check
+backend/search-eval/
