@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/lib/pq"
 )
 
 // ensure interface is implemented
@@ -212,7 +213,11 @@ var missingWhere = map[analogdb.MissingField]string{
 	analogdb.MissingDescription: `NULLIF(p.description, '') IS NULL`,
 	analogdb.MissingKeywords:    `NOT EXISTS (SELECT 1 FROM keywords k WHERE k.post_id = p.id)`,
 	analogdb.MissingColors:      `NOT EXISTS (SELECT 1 FROM colors c WHERE c.post_id = p.id)`,
+	analogdb.MissingCaption:     `NOT EXISTS (SELECT 1 FROM post_captions c WHERE c.post_id = p.id)`,
 }
+
+const adminPostColumns = `p.id, p.title, p.author, p.time, p.lowurl,
+			p.camera_make, p.camera_model, p.film_make, p.film_type, p.film_speed`
 
 func (s *AdminService) MissingPosts(ctx context.Context, filter *analogdb.MissingPostsFilter) ([]*analogdb.AdminPost, error) {
 	s.db.logger.DebugContext(ctx, "Starting admin missing posts", "field", filter.Field)
@@ -230,8 +235,7 @@ func (s *AdminService) MissingPosts(ctx context.Context, filter *analogdb.Missin
 	}
 
 	query := `
-		SELECT p.id, p.title, p.author, p.time, p.lowurl,
-			p.camera_make, p.camera_model, p.film_make, p.film_type, p.film_speed
+		SELECT ` + adminPostColumns + `
 		FROM pictures p
 		WHERE ` + where + `
 		ORDER BY p.id DESC
@@ -241,7 +245,27 @@ func (s *AdminService) MissingPosts(ctx context.Context, filter *analogdb.Missin
 		return nil, err
 	}
 	defer rows.Close()
+	return scanAdminPosts(rows)
+}
 
+func (s *AdminService) PostsByIDs(ctx context.Context, ids []int) ([]*analogdb.AdminPost, error) {
+	s.db.logger.DebugContext(ctx, "Starting admin posts by ids", "count", len(ids))
+	defer s.db.logger.DebugContext(ctx, "Finished admin posts by ids")
+
+	query := `
+		SELECT ` + adminPostColumns + `
+		FROM pictures p
+		WHERE p.id = ANY($1)
+		ORDER BY p.id DESC`
+	rows, err := s.db.db.QueryContext(ctx, query, pq.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return scanAdminPosts(rows)
+}
+
+func scanAdminPosts(rows *sql.Rows) ([]*analogdb.AdminPost, error) {
 	posts := make([]*analogdb.AdminPost, 0)
 	for rows.Next() {
 		var p analogdb.AdminPost

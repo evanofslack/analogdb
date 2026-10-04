@@ -34,19 +34,20 @@ const (
 )
 
 type Server struct {
-	server         *http.Server
-	router         *chi.Mux
-	healthy        atomic.Bool
-	logger         *logger.Logger
-	metrics        *metrics.Metrics
-	config         *config.Config
-	stats          *httpStats
-	hostname       string
-	trustedProxies []*net.IPNet
-	startedAt      time.Time
-	imageSlots     chan struct{}
-	imageWait      time.Duration
-	tagCountCache  tagCountCache
+	server             *http.Server
+	router             *chi.Mux
+	healthy            atomic.Bool
+	logger             *logger.Logger
+	metrics            *metrics.Metrics
+	config             *config.Config
+	stats              *httpStats
+	hostname           string
+	trustedProxies     []*net.IPNet
+	startedAt          time.Time
+	imageSlots         chan struct{}
+	imageWait          time.Duration
+	tagCountCache      tagCountCache
+	missingVectorCache missingVectorCache
 
 	PostService       analogdb.PostService
 	FilmService       analogdb.FilmService
@@ -61,6 +62,7 @@ type Server struct {
 	ExtractionService analogdb.ExtractionService
 	AnalyticsService  analogdb.AnalyticsService
 	VectorCounter     analogdb.VectorCounter
+	VectorLister      analogdb.VectorLister
 	SearchService     analogdb.SearchService
 
 	CacheReadyService  analogdb.ReadyService

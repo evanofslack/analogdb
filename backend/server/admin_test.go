@@ -29,6 +29,14 @@ func (mockAdmin) MissingPosts(ctx context.Context, filter *analogdb.MissingPosts
 	return posts, nil
 }
 
+func (mockAdmin) PostsByIDs(ctx context.Context, ids []int) ([]*analogdb.AdminPost, error) {
+	posts := make([]*analogdb.AdminPost, 0, len(ids))
+	for _, id := range ids {
+		posts = append(posts, &analogdb.AdminPost{ID: id})
+	}
+	return posts, nil
+}
+
 type mockAnalytics struct {
 	err error
 }
@@ -76,6 +84,7 @@ func TestAdminRequiresAuth(t *testing.T) {
 		"/v1/admin/overview",
 		"/v1/admin/quality",
 		"/v1/admin/posts/missing?field=camera",
+		"/v1/admin/posts/missing?field=caption",
 		"/v1/admin/traffic",
 		"/v1/admin/audit",
 	} {

@@ -143,7 +143,7 @@ func (s *Server) getAdminMissingPosts(w http.ResponseWriter, r *http.Request) {
 
 	field := analogdb.MissingField(query.Get("field"))
 	if !field.Valid() {
-		s.writeError(w, r, badRequest("invalid field %q, want camera, film, description, keywords or colors", field))
+		s.writeError(w, r, badRequest("invalid field %q, want camera, film, description, keywords, colors, caption or vector", field))
 		return
 	}
 
@@ -167,6 +167,11 @@ func (s *Server) getAdminMissingPosts(w http.ResponseWriter, r *http.Request) {
 		filter.BeforeID = &val
 	}
 
+	if field == analogdb.MissingVector {
+		s.getAdminMissingVectors(w, r, filter)
+		return
+	}
+
 	posts, err := s.AdminService.MissingPosts(r.Context(), filter)
 	if err != nil {
 		s.writeError(w, r, err)
@@ -176,6 +181,44 @@ func (s *Server) getAdminMissingPosts(w http.ResponseWriter, r *http.Request) {
 	response := adminMissingResponse{Posts: posts}
 	if len(posts) == limit {
 		next := posts[len(posts)-1].ID
+		response.NextBeforeID = &next
+	}
+	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+// getAdminMissingVectors pages the cached missing vector ids, newest first
+func (s *Server) getAdminMissingVectors(w http.ResponseWriter, r *http.Request, filter *analogdb.MissingPostsFilter) {
+	missing, _, err := s.missingVectors(r.Context())
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+
+	ids := make([]int, 0, filter.Limit)
+	for _, id := range missing {
+		if filter.BeforeID != nil && id >= *filter.BeforeID {
+			continue
+		}
+		ids = append(ids, id)
+		if len(ids) == filter.Limit {
+			break
+		}
+	}
+
+	posts := []*analogdb.AdminPost{}
+	if len(ids) > 0 {
+		posts, err = s.AdminService.PostsByIDs(r.Context(), ids)
+		if err != nil {
+			s.writeError(w, r, err)
+			return
+		}
+	}
+
+	response := adminMissingResponse{Posts: posts}
+	if len(ids) == filter.Limit {
+		next := ids[len(ids)-1]
 		response.NextBeforeID = &next
 	}
 	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
