@@ -45,6 +45,7 @@ CAMERA_MAKE_ALIASES = {
     "asahipentax": "pentax",
     "fuji": "fujifilm",
     "fujica": "fujifilm",
+    "nikkormat": "nikon",
     "rolleicord": "rollei",
     "rolleiflex": "rollei",
     "zenza": "bronica",
@@ -59,9 +60,63 @@ FILM_MAKE_ALIASES = {
     "fujichrome": "fujifilm",
     "fujicolor": "fujifilm",
     "harman": "harmon",
+    "jch": "japan camera hunter",
     "lomo": "lomography",
     "orwo": "original wolfen",
+    "reflexlab": "reflx labs",
+    "reflexlabs": "reflx labs",
+    "reflxlab": "reflx labs",
+    "santa": "santafilm",
+    "silbersalz": "silbersalz35",
     "wolfen": "original wolfen",
+}
+
+# Makes that sell under both names: Agfa APX is agfaphoto in the catalog
+FILM_MAKE_FAMILIES = {"agfa": ["agfaphoto"], "agfaphoto": ["agfa"]}
+
+# Product lines written as the make: "Nikkormat EL" is nikon "nikkormat el", "Nikonos V"
+# is nikonos "v". The flag says whether the line word stays on the model.
+CAMERA_LINES = {
+    "canonet": ("canon", True),
+    "nikkormat": ("nikon", True),
+    "nikonos": ("nikonos", False),
+    "rolleicord": ("rollei", True),
+    "rolleiflex": ("rollei", True),
+}
+
+# Makes the LLM writes when there isn't one
+NO_MAKE = {"na", "none", "null", "unknown"}
+
+# Words in make names that don't say which make: "China Lucky Film" is written "Lucky"
+MAKE_FILLER_WORDS = {
+    "camera",
+    "china",
+    "film",
+    "inc",
+    "industries",
+    "original",
+    "project",
+}
+
+# Mentions that aren't a product, left out of the unmatched report
+PLACEHOLDERS = {
+    "blackandwhitefilm",
+    "bwfilm",
+    "colorfilm",
+    "disposable",
+    "expired",
+    "expiredfilm",
+    "film",
+    "mix",
+    "mixed",
+    "mixedfilm",
+    "slidefilm",
+    "unknown",
+    "unknownfilm",
+    "unknownfilmtype",
+    "various",
+    "variousfilm",
+    "variousfilms",
 }
 
 # Words dropped from film types on both sides, so "Pro 400H" meets "fujicolor pro 400h"
@@ -142,6 +197,12 @@ def _has_digit(key: str) -> bool:
 
 def _digits(key: str) -> List[str]:
     return re.findall(r"\d+", key)
+
+
+def _without_no_make(mention: Dict) -> Dict:
+    if _key(mention.get("make")) in NO_MAKE:
+        return {**mention, "make": None}
+    return mention
 
 
 @dataclass
@@ -361,14 +422,14 @@ class CatalogMatcher:
         if len({_key(f"{c.get('make')} {c.get('model')}") for c in cameras}) > 1:
             result.flags.append("multiple_cameras")
         if cameras:
-            hit = self.match_camera(cameras[0])
+            hit = self._retry_unwritten_make("camera", cameras[0], squashed, tokens)
             self._apply(result, hit, "camera", squashed, tokens, cameras[0])
 
         films = [f for f in raw.get("films") or [] if isinstance(f, dict)]
         if len({_key(f"{f.get('make')} {f.get('type')}") for f in films}) > 1:
             result.flags.append("multiple_films")
         if films:
-            hit = self.match_film(films[0])
+            hit = self._retry_unwritten_make("film", films[0], squashed, tokens)
             self._apply(result, hit, "film", squashed, tokens, films[0])
 
         for lens in raw.get("lenses") or []:
@@ -381,6 +442,49 @@ class CatalogMatcher:
             if result.proposed.aperture is None:
                 result.proposed.aperture = valid_aperture(lens.get("aperture"))
         return result
+
+    def _retry_unwritten_make(
+        self, kind: str, mention: Dict, squashed: str, tokens: set
+    ) -> _Hit:
+        """Match the mention, and again without its make when that didn't match and
+        the post never wrote the make: the LLM's guess ("Ilford" for Tri-X) is kept
+        only when something else fits what the post wrote."""
+        if kind == "camera":
+            match_one, makes = self.match_camera, self.camera_makes
+        else:
+            match_one, makes = self.match_film, self.film_makes
+        hit = match_one(mention)
+        raw_make = mention.get("make")
+        if not hit.unmatched or _key(raw_make) in NO_MAKE | {""}:
+            return hit
+        if self._make_written(raw_make, hit.make, makes, squashed):
+            return hit
+        if kind == "camera":
+            # From the text the LLM copied: "Eos500" is not a Ricoh 500
+            text = mention.get("text") or mention.get("model")
+            retry = match_one({**mention, "make": None, "model": text})
+        else:
+            retry = match_one({**mention, "make": None})
+            # The film's own name must be in the post, or without its speed as a word:
+            # "Plus-X" is not Film Washi "X", "Kodachrome" is not Flic Film "Chrome 100"
+            if retry.name:
+                name = film_type_key(retry.name, self.film_make_words)
+                base = name.removesuffix(str(retry.speed or ""))
+                if not (len(name) >= 3 and name in squashed) and not (
+                    len(base) >= 3 and base in tokens
+                ):
+                    return hit
+        if retry.name and not retry.unmatched:
+            return retry
+        return hit
+
+    def _make_written(
+        self, raw_make: str, make: Optional[str], makes: Dict[str, str], squashed: str
+    ) -> bool:
+        keys = {_key(raw_make)} | {k for k, m in makes.items() if m == make}
+        words = normalize_tokens(raw_make) + normalize_tokens(make or "")
+        keys |= {w for w in words if w not in MAKE_FILLER_WORDS}
+        return any(len(k) >= 4 and k in squashed for k in keys)
 
     def _apply(
         self,
@@ -407,13 +511,17 @@ class CatalogMatcher:
             p.film_speed = hit.speed
 
     def match_camera(self, mention: Dict) -> _Hit:
+        mention = _without_no_make(mention)
         raw_make = mention.get("make") or ""
         raw_model = mention.get("model") or ""
         make_key, model_key = _key(raw_make), _key(raw_model)
         make = self.camera_makes.get(make_key)
 
         if make is None and not make_key:
-            for key, m in self.camera_makes.items():
+            # Longest first, so "Nikonos V" is nikonos and not nikon "osv"
+            for key, m in sorted(
+                self.camera_makes.items(), key=lambda km: len(km[0]), reverse=True
+            ):
                 if (
                     len(key) >= 4
                     and model_key.startswith(key)
@@ -442,9 +550,13 @@ class CatalogMatcher:
             words[-1] in CAMERA_TRAILING_WORDS or re.fullmatch(r"\d+x\d+", words[-1])
         ):
             words = words[:-1]
+        full_key = model_key
         if words and _key(raw_model) != "".join(words):
             model_key = "".join(words)
         keys = camera_model_variants(model_key, make)
+        if full_key != model_key:
+            # "Rolleiflex TLR" is a catalog name, not a Rolleiflex
+            keys.insert(0, full_key)
         for key in self.camera_makes:
             if (
                 len(key) >= 4
@@ -454,6 +566,16 @@ class CatalogMatcher:
                 keys += camera_model_variants(model_key[len(key) :], make)
         if make and make_key != _key(make):
             keys += [make_key + k for k in list(keys)]
+
+        # Line keys go first, but only as exact or prefix matches: fuzzy, "rolleiflex28e"
+        # is one letter from "rolleiflex28f"
+        unmatched_key = model_key
+        line = self._camera_line(mention, make)
+        if line:
+            word, make, keep = line
+            rest = model_key[len(word) :] if model_key.startswith(word) else model_key
+            unmatched_key = word + rest if keep else rest
+            keys = camera_model_variants(unmatched_key, make) + keys
 
         if make:
             models = self.models.get(make, {})
@@ -493,7 +615,24 @@ class CatalogMatcher:
             if len(hits) > 1:
                 return _Hit(flag="ambiguous_camera")
 
-        return self._camera_unmatched(mention, make, make_key, model_key)
+        return self._camera_unmatched(mention, make, make_key, unmatched_key)
+
+    def _camera_line(self, mention: Dict, make: Optional[str]):
+        """The product line the mention names, with its make, when it fits the make."""
+        words = (
+            _tokens(mention.get("make"))
+            + _tokens(mention.get("model"))
+            + _tokens(mention.get("text"))
+        )
+        for word in words:
+            if word not in CAMERA_LINES:
+                continue
+            line_make, keep = CAMERA_LINES[word]
+            if line_make in self.models and (
+                make is None or line_make.startswith(make)
+            ):
+                return word, line_make, keep
+        return None
 
     def _camera_hit(self, c: Camera) -> _Hit:
         return _Hit(make=c.make.lower().strip(), name=c.model.lower().strip())
@@ -501,6 +640,8 @@ class CatalogMatcher:
     def _camera_unmatched(
         self, mention: Dict, make: Optional[str], make_key: str, model_key: str
     ) -> _Hit:
+        if model_key in PLACEHOLDERS:
+            return _Hit(make=make, flag="catalog_make_only" if make else None)
         raw = mention.get("text") or " ".join(
             p for p in (mention.get("make"), mention.get("model")) if p
         )
@@ -518,6 +659,7 @@ class CatalogMatcher:
         )
 
     def match_film(self, mention: Dict) -> _Hit:
+        mention = _without_no_make(mention)
         raw_make = mention.get("make") or ""
         raw_type = mention.get("type") or ""
         make = self.film_makes.get(_key(raw_make))
@@ -538,9 +680,15 @@ class CatalogMatcher:
             if raw_make:
                 return self._film_unmatched(mention, None, tkey, speed)
             return _Hit(speed=speed)
+        if not make and not raw_make and tkey.isdigit() and valid_speed(tkey):
+            # "400" alone is a speed, not a film
+            return _Hit(speed=speed)
 
         if make:
-            types = self.types.get(make, {})
+            types = dict(self.types.get(make, {}))
+            for sibling in FILM_MAKE_FAMILIES.get(make, []):
+                for k, fs in self.types.get(sibling, {}).items():
+                    types.setdefault(k, fs)
         elif (not raw_make or not self._is_other_make(raw_make)) and (
             len(tkey) >= 3 or _has_digit(tkey)
         ):
@@ -553,7 +701,7 @@ class CatalogMatcher:
             if hits:
                 break
             hits = _unique(types.get(k, []))
-        if not hits and not _has_digit(tkey):
+        if not hits and not _has_digit(tkey) and len(tkey) >= 2:
             hits = _unique(
                 f for k, fs in types.items() if k.startswith(tkey) for f in fs
             )
@@ -591,6 +739,10 @@ class CatalogMatcher:
     def _film_unmatched(
         self, mention: Dict, make: Optional[str], tkey: str, speed: Optional[int]
     ) -> _Hit:
+        if tkey in PLACEHOLDERS or _key(mention.get("type")) in PLACEHOLDERS:
+            return _Hit(
+                make=make, speed=speed, flag="catalog_make_only" if make else None
+            )
         raw = mention.get("text") or " ".join(
             p for p in (mention.get("make"), mention.get("type")) if p
         )
@@ -625,9 +777,15 @@ class CatalogMatcher:
         ]
         if not scores or scores[0][0] < FUZZY_MIN:
             return None
-        if len(scores) > 1 and scores[0][0] - scores[1][0] < FUZZY_GAP:
-            return "ambiguous"
         entries = _unique(index[scores[0][1]])
+        # A close runner-up only counts when it's another entry, not an alias of this one
+        close = [
+            k
+            for score, k in scores[1:]
+            if scores[0][0] - score < FUZZY_GAP and _unique(index[k]) != entries
+        ]
+        if close:
+            return "ambiguous"
         return entries[0] if len(entries) == 1 else "ambiguous"
 
 

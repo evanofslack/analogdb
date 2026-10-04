@@ -146,7 +146,7 @@ def backfill_post_metadata(
             f"Metadata backfill progress: {stats.posts} of {len(posts)} posts"
         )
 
-    return finish(context, "backfill metadata", stats)
+    return finish(context, "backfill metadata", stats, context.partition_key_range)
 
 
 @dg.asset(group_name="backfill")
@@ -204,11 +204,19 @@ def rematch_post_metadata(
 
 
 def finish(
-    context: dg.AssetExecutionContext, name: str, stats: WriteStats
+    context: dg.AssetExecutionContext,
+    name: str,
+    stats: WriteStats,
+    keys: Optional[dg.PartitionKeyRange] = None,
 ) -> dg.MaterializeResult:
     metadata = stats.metadata()
+    if keys is not None:
+        # A single run backfill puts the same metadata on every partition, so say
+        # these are the run's totals and for which days
+        metadata["range"] = f"{keys.start} to {keys.end}"
+        metadata["partitions"] = len(daily_partitions.get_partition_keys_in_range(keys))
     context.log.info(
-        f"Finished {name}: posts={stats.posts}, patched={stats.patched}, "
+        f"Finished {name}, run totals: posts={stats.posts}, patched={stats.patched}, "
         f"unchanged={stats.unchanged}, llm_failed={stats.llm_failed}, "
         f"patch_failed={stats.patch_failed}, extractions_stored={stats.stored}"
     )
