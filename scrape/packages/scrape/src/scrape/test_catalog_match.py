@@ -401,3 +401,160 @@ def test_helpers():
     assert valid_aperture("1:2.8") == "f/2.8"
     assert valid_aperture("f/2") == "f/2"
     assert valid_aperture("0.2") is None
+
+
+@pytest.fixture(scope="module")
+def refined():
+    cameras = [
+        Camera(id=i, make=m, model=n, description="")
+        for i, (m, n) in enumerate(
+            [
+                ("canon", "ae-1"),
+                ("fujifilm", "gw690"),
+                ("intrepid camera", "4x5"),
+                ("mamiya", "7"),
+                ("nikon", "el2"),
+                ("nikon", "nikkormat el"),
+                ("nikonos", "v"),
+                ("ricoh", "500"),
+                ("rollei", "rolleiflex 2.8f"),
+                ("rollei", "rolleiflex tlr"),
+                ("toyo", "45a"),
+            ]
+        )
+    ]
+    films = [
+        Film(id=i, make=m, type=t, speed=s, color_type="color", description="")
+        for i, (m, t, s) in enumerate(
+            [
+                ("agfa", "optima 100", 100),
+                ("agfaphoto", "apx 400", 400),
+                ("china lucky film", "shd 100", 100),
+                ("cinestill", "800t", 800),
+                ("flic film", "chrome 100", 100),
+                ("film washi", "x", 400),
+                ("fujifilm", "fujicolor c200", 200),
+                ("ilford", "hp5 plus", 400),
+                ("kodak", "double-x", 200),
+                ("kodak", "portra 400", 400),
+                ("kodak", "tri-x 400", 400),
+                ("silbersalz35", "250d", 250),
+            ]
+        )
+    ]
+    aliases = [
+        CatalogAlias("film", "cinestill", "800t", "800"),
+        CatalogAlias("film", "kodak", "double-x", "xx"),
+        CatalogAlias("film", "kodak", "tri-x 400", "tx400"),
+    ]
+    return CatalogMatcher(cameras, films, aliases)
+
+
+def _camera(r):
+    return (r.proposed.camera_make, r.proposed.camera_model)
+
+
+def _film(r):
+    return (r.proposed.film_make, r.proposed.film_type)
+
+
+@pytest.mark.parametrize(
+    "make,model,text,expected",
+    [
+        ("Rollei", "TLR", "Rolleiflex TLR", ("rollei", "rolleiflex tlr")),
+        ("Rollei", "Rolleiflex TLR", "Rolleiflex TLR", ("rollei", "rolleiflex tlr")),
+        ("Nikon", "EL", "Nikkormat EL", ("nikon", "nikkormat el")),
+        ("Nikkormat", "EL", "Nikkormat EL", ("nikon", "nikkormat el")),
+        ("Nikon", "EL2", "Nikkormat EL2", ("nikon", "el2")),
+        ("Nikon", "V", "Nikonos V", ("nikonos", "v")),
+        (None, "Nikonos V", "Nikonos V", ("nikonos", "v")),
+        ("null", "AE-1", "AE-1", ("canon", "ae-1")),
+        # A line key is never a fuzzy match: 2.8E is not a 2.8F
+        ("Rollei", "2.8E", "Rolleiflex 2.8E", ("rollei", None)),
+    ],
+)
+def test_camera_lines_and_no_make(refined, make, model, text, expected):
+    assert _camera(cam(refined, make, model, text)) == expected
+
+
+def test_camera_line_unmatched_key_keeps_the_line(refined):
+    r = cam(refined, "Nikon", "FTn", "Nikkormat FTn")
+    assert [u.key for u in r.unmatched] == ["nikonnikkormatftn"]
+    r = cam(refined, "Rollei", "2.8E", "Rolleiflex 2.8E")
+    assert [u.key for u in r.unmatched] == ["rolleirolleiflex28e"]
+
+
+@pytest.mark.parametrize(
+    "make,model,text,expected",
+    [
+        # The post never wrote Mamiya, the GW690 is a Fujifilm
+        ("Mamiya", "GW690", "GW690", ("fujifilm", "gw690")),
+        # The LLM's copy says Eos500, which is not a Ricoh 500
+        ("Canon", "500", "Eos500", ("canon", None)),
+        # A format is not a camera
+        ("Toyo", "4x5", "Nagaoka 4x5", ("toyo", None)),
+        # A make the post wrote is kept
+        ("Mamiya", "GW690", "Mamiya GW690", ("mamiya", None)),
+    ],
+)
+def test_camera_retry_without_unwritten_make(refined, make, model, text, expected):
+    assert _camera(cam(refined, make, model, text)) == expected
+
+
+@pytest.mark.parametrize(
+    "make,type,speed,text,expected",
+    [
+        ("Ilford", "Trix400", 400, "Trix400", ("kodak", "tri-x 400")),
+        ("Ilford", "Trix", None, "shot on trix", ("kodak", "tri-x 400")),
+        # Ilford is written, so the make stays and nothing matches
+        ("Ilford", "Trix400", 400, "Ilford Trix400", ("ilford", None)),
+        # Lucky is written: China Lucky C200 is not Fujicolor C200
+        ("China Lucky Film", "C200", 200, "Lucky C200", ("china lucky film", None)),
+        # The retried film's own name must be in the post
+        ("Kodak", "Plus-X", None, "Plus-X", ("kodak", None)),
+        ("Kodak", "chrome", None, "Kodachrome", ("kodak", None)),
+        ("null", "Portra 400", 400, "Portra 400", ("kodak", "portra 400")),
+    ],
+)
+def test_film_retry_without_unwritten_make(refined, make, type, speed, text, expected):
+    assert _film(film(refined, make, type, speed, text)) == expected
+
+
+@pytest.mark.parametrize(
+    "make,type,speed,expected",
+    [
+        ("Agfa", "APX 400", 400, ("agfaphoto", "apx 400")),
+        ("Agfa", "Optima 100", 100, ("agfa", "optima 100")),
+        ("Silbersalz", "250D", 250, ("silbersalz35", "250d")),
+        ("Cinestill", "800", 800, ("cinestill", "800t")),
+        ("Kodak", "XX", None, ("kodak", "double-x")),
+        # One letter is not a prefix of anything
+        ("Kodak", "Plus-X", None, ("kodak", None)),
+        # Close to the name and to an alias of the same film is not ambiguous
+        ("Kodak", "TRX 400", 400, ("kodak", "tri-x 400")),
+        # A speed alone is not a film, even with a bare speed alias
+        (None, "800", 800, (None, None)),
+    ],
+)
+def test_film_makes_aliases_and_guards(refined, make, type, speed, expected):
+    assert _film(film(refined, make, type, speed)) == expected
+
+
+@pytest.mark.parametrize(
+    "kind,make,name,expected_make",
+    [
+        ("film", None, "various films", None),
+        ("film", None, "unknown film", None),
+        ("film", "Kodak", "Unknown", "kodak"),
+        ("film", None, "slide film", None),
+        ("camera", "Fujifilm", "Disposable", "fujifilm"),
+    ],
+)
+def test_placeholders_are_not_unmatched(refined, kind, make, name, expected_make):
+    if kind == "film":
+        r = film(refined, make, name)
+        assert r.proposed.film_make == expected_make
+    else:
+        r = cam(refined, make, name)
+        assert r.proposed.camera_make == expected_make
+    assert r.unmatched == []

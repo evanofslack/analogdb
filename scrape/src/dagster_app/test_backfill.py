@@ -126,6 +126,8 @@ class TestBackfillPostMetadata:
         assert {r.model for r in stored} == {"model-x"}
         assert result.metadata["patched"] == 2
         assert result.metadata["camera_patches"] == 2
+        assert result.metadata["range"] == "2024-01-01 to 2024-01-31"
+        assert result.metadata["partitions"] == 31
 
 
 class TestRematch:
