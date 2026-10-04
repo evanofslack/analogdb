@@ -433,6 +433,22 @@ class TestScrapeRoutes:
 
         assert client.get_missing_captions() == []
 
+    def test_get_missing_vectors(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/scrape/vectors/missing",
+            method="GET",
+            headers={"Authorization": AUTH},
+        ).respond_with_json({"ids": [4, 9], "extra": 1})
+
+        assert client.get_missing_vectors() == [4, 9]
+
+    def test_get_missing_vectors_null(self, client, httpserver: HTTPServer):
+        httpserver.expect_request("/v1/scrape/vectors/missing").respond_with_json(
+            {"ids": None, "extra": 0}
+        )
+
+        assert client.get_missing_vectors() == []
+
     def test_patch_post_caption(self, client, httpserver: HTTPServer):
         seen = {}
 

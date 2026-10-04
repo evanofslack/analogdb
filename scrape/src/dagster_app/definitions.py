@@ -61,6 +61,7 @@ from .resources import (
     TaggerResource,
 )
 from .schedules import (
+    encode_missing_vectors_schedule,
     scrape_analog_schedule,
     update_post_comments_schedule,
     update_post_scores_schedule,
@@ -139,6 +140,7 @@ defs = dg.Definitions(
         patch_comments_job,
     ],
     schedules=[
+        encode_missing_vectors_schedule,
         scrape_analog_schedule,
         update_post_comments_schedule,
         update_post_scores_schedule,

@@ -2,7 +2,12 @@ from datetime import timedelta
 
 import dagster as dg
 
-from .jobs import patch_comments_job, patch_scores_job, scrape_job
+from .jobs import (
+    patch_comments_job,
+    patch_scores_job,
+    reencode_vectors_job,
+    scrape_job,
+)
 
 scrape_analog_schedule = dg.ScheduleDefinition(
     job=scrape_job,
@@ -10,6 +15,21 @@ scrape_analog_schedule = dg.ScheduleDefinition(
     execution_timezone="UTC",
     name="scrape_analog_schedule",
     description="Daily scrape of posts",
+)
+
+encode_missing_vectors_schedule = dg.ScheduleDefinition(
+    job=reencode_vectors_job,
+    cron_schedule="0 3 * * *",
+    execution_timezone="UTC",
+    name="encode_missing_vectors_schedule",
+    description="Daily encode of posts missing an image vector",
+    run_config={
+        "ops": {
+            "reencode_post_vectors": {
+                "config": {"missing_only": True, "fail_on_error": False}
+            }
+        }
+    },
 )
 
 
