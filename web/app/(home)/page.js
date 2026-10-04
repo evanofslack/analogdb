@@ -1,6 +1,7 @@
 import { getCameraOptions } from "@app/actions/cameras";
 import { getFilmOptions } from "@app/actions/films";
 import { getFirstPosts } from "@app/actions/posts";
+import { getSearchSuggestions } from "@app/actions/search";
 import { firstPageSize, guessColumns, slim } from "@lib/firstPage";
 import { postsParsers, toPostsRequest } from "@lib/searchParams";
 import { isValidSeed, pickSeed } from "@lib/seed";
@@ -55,11 +56,13 @@ export default async function Page({ searchParams }) {
 
   const { device } = userAgent({ headers: await headers() });
 
-  const [initialPage, filmOptions, cameraOptions] = await Promise.all([
-    loadFirstPage(filters),
-    getFilmOptions(),
-    getCameraOptions(),
-  ]);
+  const [initialPage, filmOptions, cameraOptions, searchSuggestions] =
+    await Promise.all([
+      loadFirstPage(filters),
+      getFilmOptions(),
+      getCameraOptions(),
+      getSearchSuggestions(),
+    ]);
 
   return (
     <>
@@ -73,6 +76,7 @@ export default async function Page({ searchParams }) {
         initialColumns={guessColumns(device)}
         filmOptions={filmOptions}
         cameraOptions={cameraOptions}
+        searchSuggestions={searchSuggestions}
       />
     </>
   );
