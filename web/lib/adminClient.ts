@@ -88,6 +88,8 @@ export const missingFields = [
   "description",
   "keywords",
   "colors",
+  "caption",
+  "vector",
 ] as const;
 export type MissingField = (typeof missingFields)[number];
 
