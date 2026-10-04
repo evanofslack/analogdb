@@ -1,0 +1,76 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  min-width: 0;
+  height: 2.75rem;
+  padding: 0 0.3rem 0 0.9rem;
+  border: 1px solid var(--adb-border);
+  border-radius: 999px;
+  background: var(--adb-surface);
+}
+
+.bar:focus-within {
+  border-color: var(--adb-muted);
+}
+
+.large {
+  height: 3.4rem;
+  padding-left: 1.2rem;
+}
+
+.icon {
+  flex: none;
+  color: var(--adb-muted);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--adb-heading);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.input::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.input::placeholder {
+  color: var(--adb-muted);
+}
+
+.visual {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.thumb {
+  position: relative;
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--adb-surface-alt);
+}
+
+.visualLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--adb-heading);
+}
+
+.dropdown {
+  max-height: min(70vh, 34rem);
+  overflow-y: auto;
+}

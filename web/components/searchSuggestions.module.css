@@ -1,0 +1,156 @@
+.dropdown {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.5rem 0.25rem;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  max-width: 56rem;
+  margin: 2rem auto 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--adb-muted);
+}
+
+.clear {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--adb-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.clear:hover {
+  color: var(--adb-heading);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.chip {
+  border: 1.5px solid var(--adb-pill-border);
+  border-radius: 9px;
+  background-color: var(--adb-pill-bg);
+  color: var(--adb-pill-fg);
+  padding: 0.15rem 0.7rem 0.2rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: var(--adb-pill-hover-fg);
+  background-color: var(--adb-pill-hover-bg);
+  border-color: var(--adb-pill-hover-bg);
+}
+
+.topics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.page .topics {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.topic {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1px solid var(--adb-border-soft);
+  border-radius: 8px;
+  background: var(--adb-surface);
+  padding: 0.3rem;
+  font: inherit;
+  color: var(--adb-heading);
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+
+.topic:hover {
+  background: var(--adb-surface-hover);
+  border-color: var(--adb-border);
+}
+
+.cover {
+  position: relative;
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 5px;
+  overflow: hidden;
+  background-color: var(--adb-surface-alt);
+}
+
+.topicLabel {
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page .topic {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  padding: 0.4rem;
+}
+
+.page .cover {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+
+.page .topicLabel {
+  padding: 0 0.2rem 0.1rem;
+}
+
+@media (max-width: 900px) {
+  .page .topics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .topics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .page .topics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
