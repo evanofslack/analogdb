@@ -214,6 +214,7 @@ func main() {
 	server.EventService = eventService
 	server.VectorReadyService = dbVec
 	server.VectorCounter = dbVec
+	server.VectorLister = dbVec
 	server.AdminService = postgres.NewAdminService(db)
 	server.ExtractionService = postgres.NewExtractionService(db)
 	if analytics != nil {

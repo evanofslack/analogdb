@@ -83,11 +83,13 @@ const (
 	MissingDescription MissingField = "description"
 	MissingKeywords    MissingField = "keywords"
 	MissingColors      MissingField = "colors"
+	MissingCaption     MissingField = "caption"
+	MissingVector      MissingField = "vector"
 )
 
 func (f MissingField) Valid() bool {
 	switch f {
-	case MissingCamera, MissingFilm, MissingDescription, MissingKeywords, MissingColors:
+	case MissingCamera, MissingFilm, MissingDescription, MissingKeywords, MissingColors, MissingCaption, MissingVector:
 		return true
 	}
 	return false
@@ -116,9 +118,15 @@ type AdminService interface {
 	Stats(ctx context.Context) (*AdminStats, error)
 	Quality(ctx context.Context) (*AdminQuality, error)
 	MissingPosts(ctx context.Context, filter *MissingPostsFilter) ([]*AdminPost, error)
+	PostsByIDs(ctx context.Context, ids []int) ([]*AdminPost, error)
 }
 
 // VectorCounter reports how many objects the vector database holds
 type VectorCounter interface {
 	CountObjects(ctx context.Context) (int, error)
+}
+
+// VectorLister lists the post ids that have an object in the vector database
+type VectorLister interface {
+	VectorPostIDs(ctx context.Context) ([]int, error)
 }

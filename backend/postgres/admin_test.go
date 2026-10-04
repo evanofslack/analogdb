@@ -80,7 +80,8 @@ func TestAdminMissingPosts(t *testing.T) {
 	ctx := context.Background()
 	s := NewAdminService(db)
 
-	if _, err := db.db.ExecContext(ctx, `UPDATE pictures SET camera_make = NULL WHERE id = 1; DELETE FROM keywords WHERE post_id IN (1, 3)`); err != nil {
+	if _, err := db.db.ExecContext(ctx, `UPDATE pictures SET camera_make = NULL WHERE id = 1; DELETE FROM keywords WHERE post_id IN (1, 3);
+		INSERT INTO post_captions (post_id, caption, model, version, raw) VALUES (2, 'a sunset', 'm', 'v1', '{}')`); err != nil {
 		t.Fatal(err)
 	}
 
@@ -95,6 +96,8 @@ func TestAdminMissingPosts(t *testing.T) {
 		{field: analogdb.MissingKeywords, want: []int{3, 1}},
 		{field: analogdb.MissingKeywords, beforeID: intPtr(3), want: []int{1}},
 		{field: analogdb.MissingColors, want: []int{}},
+		{field: analogdb.MissingCaption, want: []int{3, 1}},
+		{field: analogdb.MissingCaption, beforeID: intPtr(3), want: []int{1}},
 	}
 	for _, tt := range tests {
 		posts, err := s.MissingPosts(ctx, &analogdb.MissingPostsFilter{Field: tt.field, Limit: 10, BeforeID: tt.beforeID})
@@ -119,6 +122,34 @@ func TestAdminMissingPosts(t *testing.T) {
 
 	if _, err := s.MissingPosts(ctx, &analogdb.MissingPostsFilter{Field: "title", Limit: 10}); analogdb.ErrorCode(err) != analogdb.ERRBADREQUEST {
 		t.Errorf("want bad request for invalid field, got %v", err)
+	}
+}
+
+func TestAdminPostsByIDs(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+	defer mustClose(t, db)
+	ctx := context.Background()
+	s := NewAdminService(db)
+
+	posts, err := s.PostsByIDs(ctx, []int{1, 3, 99})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(posts) != 2 || posts[0].ID != 3 || posts[1].ID != 1 {
+		t.Fatalf("want posts 3 and 1, got %+v", posts)
+	}
+	p := posts[1]
+	if p.Title != "Sunset Photography" || p.Author != "u/photographer1" || p.Time != 1640995200 || p.LowURL == "" {
+		t.Errorf("unexpected post %+v", p)
+	}
+	if p.CameraMake == nil || p.FilmSpeed == nil {
+		t.Errorf("want camera and film fields, got %+v", p)
+	}
+
+	posts, err = s.PostsByIDs(ctx, []int{})
+	if err != nil || len(posts) != 0 {
+		t.Errorf("want no posts, got %v, %v", posts, err)
 	}
 }
 

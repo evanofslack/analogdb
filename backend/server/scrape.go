@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -14,10 +15,16 @@ type CaptionsMissingResponse struct {
 	Ids []int `json:"ids" example:"1,2,3"`
 }
 
+type VectorsMissingResponse struct {
+	Ids   []int `json:"ids" example:"1,2,3"`
+	Extra int   `json:"extra" example:"0"`
+}
+
 const (
 	scrapePath          = "/scrape"
 	keywordsUpdatedPath = scrapePath + "/keywords/updated"
 	captionsMissingPath = scrapePath + "/captions/missing"
+	vectorsMissingPath  = scrapePath + "/vectors/missing"
 )
 
 func (s *Server) mountScrapeHandlers(r chi.Router) {
@@ -26,6 +33,9 @@ func (s *Server) mountScrapeHandlers(r chi.Router) {
 	})
 	r.Route(captionsMissingPath, func(r chi.Router) {
 		r.With(s.auth).Get("/", s.getCaptionMissingPosts)
+	})
+	r.Route(vectorsMissingPath, func(r chi.Router) {
+		r.With(s.auth).Get("/", s.getVectorMissingPosts)
 	})
 }
 
@@ -65,6 +75,33 @@ func (s *Server) getCaptionMissingPosts(w http.ResponseWriter, r *http.Request) 
 	}
 	response := CaptionsMissingResponse{
 		Ids: ids,
+	}
+	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+// @Summary List posts missing a vector
+// @Description List ids of posts with no object in the vector database, oldest first, and how many objects belong to deleted posts (requires authentication)
+// @Tags scrape
+// @Produce json
+// @Success 200 {object} VectorsMissingResponse
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 503 {object} analogdb.Error "Vector database unavailable"
+// @Security BasicAuth
+// @Router /scrape/vectors/missing [get]
+func (s *Server) getVectorMissingPosts(w http.ResponseWriter, r *http.Request) {
+	missing, extra, err := s.missingVectors(r.Context())
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	ids := slices.Clone(missing)
+	slices.Reverse(ids)
+	response := VectorsMissingResponse{
+		Ids:   ids,
+		Extra: extra,
 	}
 	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
 		s.writeError(w, r, err)

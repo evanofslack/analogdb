@@ -590,6 +590,20 @@ definitions:
         example: 499
         type: integer
     type: object
+  server.VectorsMissingResponse:
+    properties:
+      extra:
+        example: 0
+        type: integer
+      ids:
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+    type: object
   server.encodePostsRequest:
     properties:
       batch_size:
@@ -1505,6 +1519,34 @@ paths:
       security:
       - BasicAuth: []
       summary: List posts missing a caption
+      tags:
+      - scrape
+  /scrape/vectors/missing:
+    get:
+      description: List ids of posts with no object in the vector database, oldest
+        first, and how many objects belong to deleted posts (requires authentication)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.VectorsMissingResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "503":
+          description: Vector database unavailable
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: List posts missing a vector
       tags:
       - scrape
   /search:

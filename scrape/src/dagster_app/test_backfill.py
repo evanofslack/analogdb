@@ -338,7 +338,7 @@ class TestReencodeVectors:
 
     def test_failed_ids_retried_one_at_a_time(self):
         client = MagicMock()
-        client.get_post_ids.return_value = [1, 2, 3, 4, 5]
+        client.get_missing_vectors.return_value = [1, 2, 3, 4, 5]
 
         def encode(ids, batch_size):
             if ids == [3, 4]:
@@ -373,3 +373,40 @@ class TestReencodeVectors:
         client.get_post_ids.assert_not_called()
         assert client.encode_posts.call_args.args == ([7, 8], 20)
         assert result.metadata == {"posts": 2, "retried": 0, "failed": 0}
+
+    def test_id_source_order(self):
+        client = MagicMock()
+        client.get_missing_vectors.return_value = [3, 4]
+        client.get_post_ids.return_value = [1, 2, 3, 4]
+        client.encode_posts.return_value = []
+
+        self.run(client, ids=[9])
+        assert client.encode_posts.call_args.args == ([9], 20)
+        client.get_missing_vectors.assert_not_called()
+
+        self.run(client)
+        assert client.encode_posts.call_args.args == ([3, 4], 20)
+        client.get_post_ids.assert_not_called()
+
+        result = self.run(client, missing_only=False, limit=3)
+        assert client.encode_posts.call_args.args == ([1, 2, 3], 20)
+        assert result.metadata == {"posts": 3, "retried": 0, "failed": 0}
+
+    def test_nothing_missing_is_noop(self):
+        client = MagicMock()
+        client.get_missing_vectors.return_value = []
+
+        result = self.run(client)
+
+        client.encode_posts.assert_not_called()
+        assert result.metadata == {"posts": 0}
+
+    def test_fail_on_error_off_does_not_raise(self):
+        client = MagicMock()
+        client.get_missing_vectors.return_value = [1, 2]
+        client.encode_posts.side_effect = lambda ids, size: list(ids)
+
+        result = self.run(client, fail_on_error=False)
+
+        assert result.metadata["failed"] == 2
+        assert result.metadata["failed_ids"] == "[1, 2]"

@@ -341,6 +341,20 @@ class ReencodeVectorsConfig(dg.Config):
     batch_size: int = 20
     ids: Optional[List[int]] = None
     limit: Optional[int] = None
+    missing_only: bool = True
+    fail_on_error: bool = True
+
+
+def reencode_ids(config: ReencodeVectorsConfig, client: Client) -> List[int]:
+    if config.ids is not None:
+        ids = config.ids
+    elif config.missing_only:
+        ids = client.get_missing_vectors()
+    else:
+        ids = client.get_post_ids()
+    if config.limit is not None:
+        ids = ids[: config.limit]
+    return ids
 
 
 def encode_batch(
@@ -361,12 +375,14 @@ def reencode_post_vectors(
     config: ReencodeVectorsConfig,
     analogdb: AnalogDBResource,
 ) -> dg.MaterializeResult:
-    """Encode the image vectors of every post again (or of the configured ids).
-    Failed ids are retried once on their own."""
+    """Encode the image vectors of posts missing one, or of every post when
+    missing_only is off, or of the configured ids. Failed ids are retried once
+    on their own. Remaining failures fail the run unless fail_on_error is off."""
     client = analogdb.client()
-    ids = config.ids if config.ids is not None else client.get_post_ids()
-    if config.limit is not None:
-        ids = ids[: config.limit]
+    ids = reencode_ids(config, client)
+    if not ids:
+        context.log.info("No posts missing a vector")
+        return dg.MaterializeResult(metadata={"posts": 0})
     context.log.info(f"Encoding {len(ids)} posts in batches of {config.batch_size}")
 
     failed: List[int] = []
@@ -393,8 +409,11 @@ def reencode_post_vectors(
     context.log.info(f"Finished reencode vectors: {metadata}")
     if remaining:
         context.log.error(f"Failed to encode posts: {remaining}")
-        raise dg.Failure(
-            description=f"reencode vectors: {len(remaining)} of {len(ids)} posts failed",
-            metadata={**metadata, "failed_ids": str(remaining)},
-        )
+        failed_metadata = {**metadata, "failed_ids": str(remaining)}
+        if config.fail_on_error:
+            raise dg.Failure(
+                description=f"reencode vectors: {len(remaining)} of {len(ids)} posts failed",
+                metadata=failed_metadata,
+            )
+        return dg.MaterializeResult(metadata=failed_metadata)
     return dg.MaterializeResult(metadata=metadata)

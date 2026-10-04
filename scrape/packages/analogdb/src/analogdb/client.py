@@ -158,6 +158,10 @@ class Client:
             or []
         )
 
+    def get_missing_vectors(self) -> List[int]:
+        """Ids of posts with no image vector, oldest first."""
+        return self._call(self.scrape_api.scrape_vectors_missing_get).ids or []
+
     def get_films(self) -> List[Film]:
         return self._call(self.films_api.films_get).films or []
 
