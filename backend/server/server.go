@@ -44,6 +44,9 @@ type Server struct {
 	hostname       string
 	trustedProxies []*net.IPNet
 	startedAt      time.Time
+	imageSlots     chan struct{}
+	imageWait      time.Duration
+	tagCountCache  tagCountCache
 
 	PostService       analogdb.PostService
 	FilmService       analogdb.FilmService
@@ -58,6 +61,7 @@ type Server struct {
 	ExtractionService analogdb.ExtractionService
 	AnalyticsService  analogdb.AnalyticsService
 	VectorCounter     analogdb.VectorCounter
+	SearchService     analogdb.SearchService
 
 	CacheReadyService  analogdb.ReadyService
 	VectorReadyService analogdb.ReadyService
@@ -71,12 +75,14 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 			WriteTimeout:      writeTimeout,
 			IdleTimeout:       idleTimeout,
 		},
-		router:    chi.NewRouter(),
-		logger:    logger,
-		metrics:   metrics,
-		config:    config,
-		hostname:  "localhost",
-		startedAt: time.Now(),
+		router:     chi.NewRouter(),
+		logger:     logger,
+		metrics:    metrics,
+		config:     config,
+		hostname:   "localhost",
+		startedAt:  time.Now(),
+		imageSlots: make(chan struct{}, searchImageSlots),
+		imageWait:  searchImageWait,
 	}
 
 	if s.config.Auth.Username == "" && s.config.Auth.Password == "" {
@@ -149,6 +155,7 @@ func (s *Server) mountResourceHandlers() {
 	s.mountScrapeHandlers(v1)
 	s.mountKeywordHandlers(v1)
 	s.mountAdminHandlers(v1)
+	s.mountSearchHandlers(v1)
 	s.router.Mount("/v1", v1)
 
 	// Mount legacy routes with deprecation

@@ -698,6 +698,53 @@
                 }
             }
         },
+        "/keywords/summary": {
+            "get": {
+                "description": "Most common keywords with their post counts, optionally only from posts created in the last days",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keywords"
+                ],
+                "summary": "Get keyword summary",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of keywords to return",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Only count keywords of posts created in the last days, 1 to 90",
+                        "name": "days",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.KeywordsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/post": {
             "post": {
                 "security": [
@@ -1310,6 +1357,165 @@
                     }
                 }
             }
+        },
+        "/search": {
+            "get": {
+                "description": "Hybrid search over image vectors, tags, captions and titles. Related keywords are returned on the first page only",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Search posts by text",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search text, 1 to 200 characters",
+                        "name": "q",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of posts per page",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Opaque cursor from next_cursor for the next page",
+                        "name": "cursor",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by NSFW (true=only, false=exclude)",
+                        "name": "nsfw",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by black and white (true=only, false=exclude)",
+                        "name": "grayscale",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by sprocketshots (true=only, false=exclude)",
+                        "name": "sprocket",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.SearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/search/image": {
+            "post": {
+                "description": "Find posts that look like an uploaded JPEG, PNG or WebP image of at most 5 MB. Returns one page",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Search posts by image",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Image to search with",
+                        "name": "image",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of posts to return",
+                        "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by NSFW (true=only, false=exclude)",
+                        "name": "nsfw",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by black and white (true=only, false=exclude)",
+                        "name": "grayscale",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by sprocketshots (true=only, false=exclude)",
+                        "name": "sprocket",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.SearchResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "413": {
+                        "description": "Image too large",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "415": {
+                        "description": "Unsupported image type",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many image searches",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -1623,6 +1829,19 @@
                 "weight": {
                     "type": "number",
                     "example": 0.43
+                },
+                "word": {
+                    "type": "string",
+                    "example": "baseball"
+                }
+            }
+        },
+        "analogdb.KeywordSummary": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 207
                 },
                 "word": {
                     "type": "string",
@@ -2000,6 +2219,17 @@
                 }
             }
         },
+        "server.KeywordsResponse": {
+            "type": "object",
+            "properties": {
+                "keywords": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.KeywordSummary"
+                    }
+                }
+            }
+        },
         "server.Meta": {
             "type": "object",
             "properties": {
@@ -2051,6 +2281,49 @@
                     "items": {
                         "$ref": "#/definitions/analogdb.Post"
                     }
+                }
+            }
+        },
+        "server.SearchMeta": {
+            "type": "object",
+            "properties": {
+                "next_cursor": {
+                    "description": "Opaque cursor for the next page, empty at the end",
+                    "type": "string",
+                    "example": "eyJvIjo1MH0"
+                },
+                "next_page_url": {
+                    "type": "string",
+                    "example": "/search?cursor=eyJvIjo1MH0\u0026page_size=50\u0026q=girl+at+sunset"
+                },
+                "page_size": {
+                    "type": "integer",
+                    "example": 50
+                }
+            }
+        },
+        "server.SearchResponse": {
+            "type": "object",
+            "properties": {
+                "meta": {
+                    "$ref": "#/definitions/server.SearchMeta"
+                },
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.Post"
+                    }
+                },
+                "related_keywords": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "beach",
+                        "silhouette",
+                        "dusk"
+                    ]
                 }
             }
         },

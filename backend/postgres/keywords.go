@@ -18,11 +18,11 @@ func NewKeywordService(db *DB) *KeywordService {
 	return &KeywordService{db: db}
 }
 
-func (s *KeywordService) GetKeywordSummary(ctx context.Context, limit int) (*[]analogdb.KeywordSummary, error) {
+func (s *KeywordService) GetKeywordSummary(ctx context.Context, filter *analogdb.KeywordFilter) (*[]analogdb.KeywordSummary, error) {
 	s.db.logger.DebugContext(ctx, "Start find keyword summary")
 	defer s.db.logger.DebugContext(ctx, "Finish find keyword summary")
 
-	summary, err := getKeywordSummary(ctx, s.db.db, limit)
+	summary, err := getKeywordSummary(ctx, s.db.db, filter)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,14 @@ func (s *KeywordService) GetKeywordSummary(ctx context.Context, limit int) (*[]a
 	return summary, nil
 }
 
-func getKeywordSummary(ctx context.Context, db *sql.DB, limit int) (*[]analogdb.KeywordSummary, error) {
+func (s *KeywordService) TagCounts(ctx context.Context) (map[string]int, int, error) {
+	s.db.logger.DebugContext(ctx, "Start find tag counts")
+	defer s.db.logger.DebugContext(ctx, "Finish find tag counts")
+
+	return getTagCounts(ctx, s.db.db)
+}
+
+func getKeywordSummary(ctx context.Context, db *sql.DB, filter *analogdb.KeywordFilter) (*[]analogdb.KeywordSummary, error) {
 	query := `
 			SELECT
 				word,
@@ -42,9 +49,29 @@ func getKeywordSummary(ctx context.Context, db *sql.DB, limit int) (*[]analogdb.
 			LIMIT $1
 	`
 
-	arg := limit
+	var limit *int
+	if filter != nil {
+		limit = filter.Limit
+	}
+	args := []any{limit}
 
-	rows, err := db.QueryContext(ctx, query, arg)
+	if filter != nil && filter.Days != nil {
+		query = `
+			SELECT
+				k.word,
+				count(k.word) as count,
+				COUNT(*) OVER() as total
+			FROM keywords k
+			JOIN pictures p ON p.id = k.post_id
+			WHERE p.created >= now() - make_interval(days => $2)
+			GROUP BY k.word
+			ORDER BY count DESC
+			LIMIT $1
+	`
+		args = append(args, *filter.Days)
+	}
+
+	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,4 +90,31 @@ func getKeywordSummary(ctx context.Context, db *sql.DB, limit int) (*[]analogdb.
 		return nil, err
 	}
 	return &keywords, nil
+}
+
+func getTagCounts(ctx context.Context, db *sql.DB) (map[string]int, int, error) {
+	rows, err := db.QueryContext(ctx, `SELECT word, count(DISTINCT post_id) FROM keywords GROUP BY word`)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	counts := make(map[string]int)
+	for rows.Next() {
+		var word string
+		var count int
+		if err := rows.Scan(&word, &count); err != nil {
+			return nil, 0, err
+		}
+		counts[word] = count
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	var total int
+	if err := db.QueryRowContext(ctx, `SELECT count(DISTINCT post_id) FROM keywords`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	return counts, total, nil
 }

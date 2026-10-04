@@ -24,6 +24,8 @@ type httpStats struct {
 	unknownJSONFields  *prometheus.CounterVec
 	legacyRequests     *prometheus.CounterVec
 	deprecatedParams   *prometheus.CounterVec
+	searchRequests     *prometheus.CounterVec
+	searchDuration     *prometheus.HistogramVec
 }
 
 func newHttpStats() *httpStats {
@@ -114,6 +116,26 @@ func newHttpStats() *httpStats {
 		[]string{"param", "client"},
 	)
 
+	searchRequests := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.SearchSubsystem,
+			Name:      "requests_total",
+			Help:      "Number of search requests by kind and result",
+		},
+		[]string{"kind", "result"},
+	)
+
+	searchDuration := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.SearchSubsystem,
+			Name:      "duration_seconds",
+			Help:      "Latencies for search requests",
+		},
+		[]string{"kind"},
+	)
+
 	stats := &httpStats{
 		requestsTotal:      requestsTotal,
 		requestDuration:    requestDuration,
@@ -124,6 +146,8 @@ func newHttpStats() *httpStats {
 		unknownJSONFields:  unknownJSONFields,
 		legacyRequests:     legacyRequests,
 		deprecatedParams:   deprecatedParams,
+		searchRequests:     searchRequests,
+		searchDuration:     searchDuration,
 	}
 
 	return stats
@@ -139,6 +163,8 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 	registerer.MustRegister(stats.unknownJSONFields)
 	registerer.MustRegister(stats.legacyRequests)
 	registerer.MustRegister(stats.deprecatedParams)
+	registerer.MustRegister(stats.searchRequests)
+	registerer.MustRegister(stats.searchDuration)
 	return nil
 }
 

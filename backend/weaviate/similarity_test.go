@@ -3,6 +3,7 @@ package weaviate
 import (
 	"encoding/json"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/evanofslack/analogdb"
@@ -94,15 +95,14 @@ func TestUnmarshallPicturesResp(t *testing.T) {
 	}
 }
 
-func TestFilterToWhere(t *testing.T) {
+func TestFlagsWhere(t *testing.T) {
 	nsfw := false
 	grayscale := true
 	exclude := []int{3, 4}
-	filter := &analogdb.PostSimilarityFilter{Nsfw: &nsfw, Grayscale: &grayscale, ExcludeIDs: &exclude}
 
-	where, err := filterToWhere(filter)
-	if err != nil {
-		t.Fatal(err)
+	where := flagsWhere(&nsfw, &grayscale, nil, &exclude)
+	if where == nil {
+		t.Fatal("want where clause")
 	}
 	built := where.Build()
 	if built.Operator != "And" {
@@ -127,12 +127,8 @@ func TestFilterToWhere(t *testing.T) {
 	}
 }
 
-func TestFilterToWhereEmpty(t *testing.T) {
-	where, err := filterToWhere(&analogdb.PostSimilarityFilter{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if where != nil {
+func TestFlagsWhereEmpty(t *testing.T) {
+	if where := flagsWhere(nil, nil, nil, nil); where != nil {
 		t.Errorf("want no where clause, got %s", where.String())
 	}
 }
@@ -170,5 +166,52 @@ func TestPostImageClass(t *testing.T) {
 		if types[name] != dataType {
 			t.Errorf("want %s of type %s, got %q", name, dataType, types[name])
 		}
+	}
+}
+
+func TestUnmarshallSearchResp(t *testing.T) {
+	var result models.GraphQLResponse
+	body := `{"data":{"Get":{"PostImage":[
+		{"post_id":7,"tags":["beach","dusk"],"_additional":{"score":"0.9"}},
+		{"post_id":9,"tags":null,"_additional":{"score":"0.5"}},
+		{"post_id":11,"_additional":{"score":"0.4"}},
+		{"tags":["orphan"]}
+	]}}}`
+	if err := json.Unmarshal([]byte(body), &result); err != nil {
+		t.Fatal(err)
+	}
+	hits, err := unmarshallSearchResp(&result)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(hits) != 3 {
+		t.Fatalf("want 3 hits, got %+v", hits)
+	}
+	if hits[0].PostID != 7 || !slices.Equal(hits[0].Tags, []string{"beach", "dusk"}) {
+		t.Errorf("unexpected hit %+v", hits[0])
+	}
+	for _, hit := range hits[1:] {
+		if hit.Tags == nil || len(hit.Tags) != 0 {
+			t.Errorf("want empty tags, got %+v", hit)
+		}
+	}
+
+	var failed models.GraphQLResponse
+	if err := json.Unmarshal([]byte(`{"errors":[{"message":"no such class"}]}`), &failed); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := unmarshallSearchResp(&failed); err == nil || !strings.Contains(err.Error(), "no such class") {
+		t.Errorf("want graphql error surfaced, got %v", err)
+	}
+	if _, err := unmarshallSearchResp(nil); err == nil {
+		t.Error("want error for empty response")
+	}
+}
+
+func TestTrimHits(t *testing.T) {
+	hits := []analogdb.SearchHit{{PostID: 1}, {PostID: 2}, {PostID: 1}, {PostID: 3}}
+	got := trimHits(hits, 2)
+	if len(got) != 2 || got[0].PostID != 1 || got[1].PostID != 2 {
+		t.Errorf("unexpected hits %+v", got)
 	}
 }

@@ -154,13 +154,7 @@ func (db *DB) getSimilarPostIDs(ctx context.Context, filter *analogdb.PostSimila
 	// find nearest neighbors
 
 	// this is where we narrow down the results
-	where, err := filterToWhere(filter)
-	if err != nil {
-		db.logger.ErrorContext(ctx, "Fail convert similarity filter to where clause", "post_id", postID, "error", err)
-		span.SetStatus(codes.Error, "Similarity filter to where clause failed")
-		span.RecordError(err)
-		return ids, err
-	}
+	where := flagsWhere(filter.Nsfw, filter.Grayscale, filter.Sprocket, filter.ExcludeIDs)
 
 	// and set the limit
 	var limit int
@@ -231,10 +225,12 @@ func similarPostIDs(pics []pictureResponse, postID int, limit int) []int {
 	return ids
 }
 
-func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder, error) {
+// flagsWhere builds the where clause shared by similar and search, nil when
+// there is nothing to filter since weaviate rejects an And with no operands
+func flagsWhere(nsfw, grayscale, sprocket *bool, exclude *[]int) *filters.WhereBuilder {
 	statements := []*filters.WhereBuilder{}
 
-	if nsfw := filter.Nsfw; nsfw != nil {
+	if nsfw != nil {
 		statements = append(statements,
 			filters.Where().
 				WithPath([]string{"nsfw"}).
@@ -242,7 +238,7 @@ func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder
 				WithValueBoolean(*nsfw),
 		)
 	}
-	if sprocket := filter.Sprocket; sprocket != nil {
+	if sprocket != nil {
 		statements = append(statements,
 			filters.Where().
 				WithPath([]string{"sprocket"}).
@@ -250,7 +246,7 @@ func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder
 				WithValueBoolean(*sprocket),
 		)
 	}
-	if grayscale := filter.Grayscale; grayscale != nil {
+	if grayscale != nil {
 		statements = append(statements,
 			filters.Where().
 				WithPath([]string{"grayscale"}).
@@ -258,7 +254,7 @@ func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder
 				WithValueBoolean(*grayscale),
 		)
 	}
-	if exclude := filter.ExcludeIDs; exclude != nil {
+	if exclude != nil {
 		for _, excludeID := range *exclude {
 			statements = append(statements,
 				filters.Where().
@@ -270,12 +266,11 @@ func filterToWhere(filter *analogdb.PostSimilarityFilter) (*filters.WhereBuilder
 	}
 
 	if len(statements) == 0 {
-		return nil, nil
+		return nil
 	}
-	where := filters.Where().
+	return filters.Where().
 		WithOperator(filters.And).
 		WithOperands(statements)
-	return where, nil
 }
 
 func unmarshallPicturesResp(result *models.GraphQLResponse) ([]pictureResponse, error) {

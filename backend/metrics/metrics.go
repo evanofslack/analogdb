@@ -21,6 +21,7 @@ const (
 	RedisSubsystem    = "redis"
 	PostSubsystem     = "post"
 	EventsSubsystem   = "events"
+	SearchSubsystem   = "search"
 )
 
 // track stats from cache
