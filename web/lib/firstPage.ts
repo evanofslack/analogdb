@@ -9,6 +9,7 @@ export function slim(response: ServerPostResponse): ServerPostResponse {
       id: post.id,
       author: post.author,
       title: post.title,
+      caption: post.caption,
       images: (post.images ?? []).slice(0, 2),
       colors: (post.colors ?? []).slice(0, 1),
     })),

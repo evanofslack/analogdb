@@ -3,6 +3,7 @@ type Keyword = { word?: string };
 export type SeoPost = {
   id?: number;
   title?: string;
+  caption?: string;
   author?: string;
   camera_make?: string;
   camera_model?: string;
@@ -48,6 +49,8 @@ function shotOn(post: SeoPost): string {
 }
 
 export function postAlt(post: SeoPost): string {
+  const caption = post.caption?.trim();
+  if (caption) return caption;
   const title = post.title?.trim();
   if (!title) {
     const author = authorName(post);
