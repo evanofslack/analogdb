@@ -66,57 +66,19 @@
   border-color: var(--adb-pill-hover-bg);
 }
 
-.topics {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.75rem;
+.keywordGrid {
+  margin-top: 0.75rem;
 }
 
-.topic {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 0;
-  padding: 0.5rem;
-  border: 1px solid var(--adb-border-soft);
-  border-radius: 8px;
-  background: var(--adb-surface);
+.noKeywords {
+  margin: 2rem 0 3rem;
+}
+
+.searchFor {
   color: var(--adb-heading);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
+  text-decoration: underline;
 }
 
-.topic:hover {
-  background: var(--adb-surface-hover);
-  border-color: var(--adb-border);
-}
-
-.cover {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  border-radius: 5px;
-  overflow: hidden;
-  background-color: var(--adb-surface-alt);
-}
-
-.topicLabel {
-  padding: 0 0.25rem 0.15rem;
-  font-size: 1rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@media (max-width: 1024px) {
-  .topics {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 520px) {
-  .topics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+.searchFor:hover {
+  color: var(--adb-muted);
 }

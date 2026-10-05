@@ -1,8 +1,21 @@
 "use client";
 
-import { IconClock, IconCompass, IconSparkles } from "@tabler/icons-react";
-import Image from "next/image";
+import { keywordHref, keywordLabel } from "@lib/keywords";
+import { TextInput } from "@mantine/core";
+import {
+  IconClock,
+  IconSearch,
+  IconSparkles,
+  IconTags,
+} from "@tabler/icons-react";
+import Link from "next/link";
+import { useState } from "react";
+import CatalogGrid from "./catalogGrid";
+import catalogStyles from "./catalogIndex.module.css";
 import styles from "./searchSuggestions.module.css";
+
+const iconSize = 16;
+const priorityCount = 4;
 
 function Section({ icon, title, action, children }) {
   return (
@@ -42,11 +55,9 @@ export default function SearchSuggestions({
   recent = [],
   onClearRecent,
   onSearch,
-  showTopics = true,
+  catalog,
 }) {
   const keywords = suggestions?.keywords ?? [];
-  const topics = suggestions?.topics ?? [];
-  const iconSize = 16;
 
   return (
     <div className={styles.suggestions}>
@@ -77,39 +88,62 @@ export default function SearchSuggestions({
           <KeywordChips words={keywords} onSearch={onSearch} />
         </Section>
       )}
-      {showTopics && topics.length > 0 && (
-        <Section
-          icon={<IconCompass size={iconSize} stroke={1.5} />}
-          title="explore"
-        >
-          <div className={styles.topics}>
-            {topics.map((topic) => (
-              <button
-                type="button"
-                key={topic.word}
-                className={styles.topic}
-                onClick={() => onSearch(topic.word)}
-              >
-                <span
-                  className={styles.cover}
-                  style={{ backgroundColor: topic.cover?.hex }}
-                >
-                  {topic.cover && (
-                    <Image
-                      src={topic.cover.url}
-                      alt=""
-                      fill
-                      sizes="(max-width: 520px) 50vw, 260px"
-                      style={{ objectFit: "cover" }}
-                    />
-                  )}
-                </span>
-                <span className={styles.topicLabel}>{topic.word}</span>
-              </button>
-            ))}
-          </div>
-        </Section>
-      )}
+      {catalog && <KeywordBrowser catalog={catalog} onSearch={onSearch} />}
     </div>
+  );
+}
+
+export function KeywordBrowser({ catalog, onSearch }) {
+  const [query, setQuery] = useState("");
+  const text = query.trim();
+  const needle = text.toLowerCase();
+
+  if (!catalog || catalog.length === 0) return null;
+
+  const shown = needle
+    ? catalog.filter((entry) => entry.make.includes(needle))
+    : catalog;
+
+  return (
+    <Section
+      icon={<IconTags size={iconSize} stroke={1.5} />}
+      title="browse by keyword"
+    >
+      <TextInput
+        className={catalogStyles.filter}
+        value={query}
+        onChange={(event) => setQuery(event.currentTarget.value)}
+        placeholder="filter keywords"
+        aria-label="filter keywords"
+        leftSection={<IconSearch size={16} stroke={1.5} />}
+      />
+      {shown.length > 0 ? (
+        <div className={styles.keywordGrid}>
+          <CatalogGrid
+            entries={shown}
+            hrefFor={(entry) => keywordHref(entry.make)}
+            labelFor={(entry) => keywordLabel(entry.make)}
+            altFor={(entry) =>
+              `${entry.cover?.title || entry.make}, tagged ${entry.make}`
+            }
+            priorityCount={priorityCount}
+          />
+        </div>
+      ) : (
+        <p className={styles.noKeywords}>
+          <Link
+            href={`/search?q=${encodeURIComponent(text)}`}
+            prefetch={false}
+            className={styles.searchFor}
+            onClick={(event) => {
+              event.preventDefault();
+              onSearch(text);
+            }}
+          >
+            search for &ldquo;{text}&rdquo;
+          </Link>
+        </p>
+      )}
+    </Section>
   );
 }
