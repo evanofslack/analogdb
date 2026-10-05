@@ -40,6 +40,26 @@
     "description": "The Bronica S2, released in 1965, was a 6x6 focal plane SLR that succeeded the Bronica S and introduced a key innovation: a removable helical focusing mount that could accommodate lenses from 40mm to 200mm. The camera featured a vertical-traveling cloth focal plane shutter with speeds from 1 to 1/1000s, supported both 120 and 220 roll film through an improved film back design, and operated entirely mechanically without requiring batteries. The S2A revision in 1969 maintained identical specifications but improved the film advance gear mechanism to reduce jamming issues and featured a smaller advance dial. Both models were typically bundled with the 75mm f/2.8 Nikkor P lens and offered chrome or black finishes, continuing production until 1977 when they were superseded by the electronic Bronica EC series."
   },
   {
+    "make": "bronica",
+    "model": "etrsi",
+    "description": "The Bronica ETRSi is an improved version of the ETRS, based on its second revision. It features a mirror lockup switch, TTL flash metering with an OTF flash exposure feature, and a red indicator in the viewfinder when multiple exposure mode is enabled. A traditional bulb mode shutter setting is available, though it consumes power. The film advance gearing mechanism has been improved, and the lower half of the body has enhanced grip areas. The lens release has been moved back to the front of the camera, and the film back holder EI has an improved locking dark slide system."
+  },
+  {
+    "make": "bronica",
+    "model": "sq-ai",
+    "description": "The Bronica SQ-Ai is a 6x6 medium format SLR camera, announced at the 1990 Photokina and available in the US from early 1991. It is an updated version of the SQ-A, featuring the ability to use a motor drive specifically designed for the Ai model. The camera also supports OTF metering and TTL automatic flash with SCA flash adapters. It includes a longer shutter speed of 16 seconds and a traditional bulb mode, though these do not work with ME or MF finders. The SQ-Ai uses 4x LR44 batteries for power. Production of this model, along with its lenses and accessories, ceased in September 2003."
+  },
+  {
+    "make": "bronica",
+    "model": "s2a",
+    "description": "The Bronica S2A, released in 1969, is a medium format SLR and the successor to the S2. It shares nearly identical specifications and outer appearance with the S2. The primary difference is an improved film advance gear mechanism, which is known to reduce jams. Additionally, the film advance and cocking dial on the S2A is smaller than that of its predecessor. Early S2A models can be identified by \"S2A\" appearing after the serial number, while later models produced after 1973 (after serial number 150037) lack this designation and feature wingless camera strap lugs."
+  },
+  {
+    "make": "bronica",
+    "model": "sq",
+    "description": "The Bronica SQ series is a line of 6x6 medium format SLR camera systems, introduced in 1980, with production of the last SQ-Ai model concluding in September 2003. The Bronica SQ, released in August 1980, replaced the Bronica EC as their 6x6 format camera. Similar to the earlier 6x4.5 ETR series, the SQ uses a leaf shutter based lens design, which is not compatible with older focal plane shutter cameras. Its lens system features a Seiko-manufactured electronic shutter with speeds from 8 seconds to 1/500 second, plus T mode, and includes a focusing helicoid built into each lens. A key feature of this leaf shutter system is flash synchronization at all speeds. The camera also incorporates an interchangeable back system that can use 120 or 220 film, with ISO speed dials on the backs that couple with metered finders. The SQ-A, released in 1982, added mirror lockup and a new viewfinder system supporting auto exposure. The SQ-Am, introduced in January 1983, was an integrated motor-drive-only version of the SQ-A. The SQ-Ai, announced at Photokina 1990, was an updated SQ-A with motor drive capability, OTF metering, and TTL automatic flash support. The SQ-B, made in 1996, is a simplified version of the SQ-A."
+  },
+  {
     "make": "canon",
     "model": "a-1",
     "description": "The Canon A-1 is a popular 35mm SLR film camera that was introduced by Canon in 1978. It is part of Canon's A-series of cameras and is known for its advanced features and versatility. The A-1 features a fully automatic program mode, as well as aperture priority, shutter priority, and manual exposure modes, giving photographers a wide range of creative control. It has a durable and well-built body, with a comfortable grip and intuitive controls. The A-1 also has a bright and clear viewfinder, allowing for easy framing and focusing. It uses Canon's FD lens mount, which offers a wide selection of high-quality lenses to choose from. Overall, the Canon A-1 is a reliable and capable camera that is suitable for both beginners and experienced photographers."
@@ -147,6 +167,12 @@
   {
     "make": "canon",
     "model": "eos 5",
+    "aliases": [
+      "a2",
+      "eos a2",
+      "a2e",
+      "eos a2e"
+    ],
     "description": "The Canon EOS 5, also known as the Canon EOS A2, is a 35mm autofocus SLR camera that was introduced by Canon in 1992. It is part of Canon's EOS series and features a sleek and ergonomic design. The EOS 5 offers advanced autofocus capabilities with its 45-point autofocus system, making it ideal for capturing fast-moving subjects. It also has a built-in motor drive, allowing for continuous shooting at up to 5 frames per second. The camera has a bright and clear viewfinder, making it easy to compose your shots. It also has a variety of exposure modes, including aperture priority, shutter priority, and program mode, giving you flexibility in your shooting. The Canon EOS 5 is a reliable and versatile camera that is suitable for both beginners and experienced photographers."
   },
   {
@@ -166,15 +192,6 @@
   },
   {
     "make": "canon",
-    "model": "eos rebel g",
-    "aliases": [
-      "eos 500n",
-      "500n"
-    ],
-    "description": "The Canon EOS Rebel G is a 35mm film SLR camera that was introduced in 2000. It is part of Canon's popular Rebel series and is known for its user-friendly design and affordable price. The camera features a built-in flash, autofocus system, and multiple shooting modes, including full auto, program, aperture priority, and manual. It has a 7-point autofocus system and a 35-zone metering system for accurate exposure. The Rebel G also has a built-in motor drive for advancing and rewinding the film, making it convenient to use. It is compatible with Canon EF lenses and has a wide range of accessories available, including a battery grip and remote control. Overall, the Canon EOS Rebel G is a reliable and versatile film camera that is suitable for beginners and enthusiasts alike."
-  },
-  {
-    "make": "canon",
     "model": "fx",
     "description": "The Canon FX is a 35mm single-lens reflex (SLR) camera introduced by Canon Inc. in April 1964. It was the first Canon camera to use the FL lens mount, following the earlier R mount system. The FX features a built-in CdS lightmeter located on the camera body (not through-the-lens) with selectable sensitivity ranges for different lighting conditions and supports film speeds from ISO 10 to 800. Its focal plane shutter offers speeds from 1 second to 1/1000 second in full-stop increments, and X-sync flash functionality is provided via a PC socket at 1/55 second. The viewfinder uses a glass pentaprism, providing approximately 90% vertical and 93% horizontal frame coverage at 0.9× magnification with a standard 50mm lens. Available historically in both silver and extremely rare all-black finishes, the FX remains a notable milestone in Canon’s transition toward modern SLR systems."
   },
@@ -186,11 +203,18 @@
   {
     "make": "canon",
     "model": "ftb",
+    "aliases": [
+      "ftb ql"
+    ],
     "description": "The Canon FTb is a 35mm single-lens reflex (SLR) film camera introduced by Canon in 1971. It is a manual focus camera that offers full manual control over exposure and focus. The FTb features a rugged and durable metal body, making it suitable for use in various shooting conditions. It has a built-in light meter that provides accurate exposure readings through the viewfinder. The camera uses Canon FD mount lenses, which are known for their excellent optical quality. The FTb also has a vertical-travel, metal-bladed focal plane shutter with speeds ranging from 1/1000 to 1 second, as well as a bulb mode for long exposures. With its reliable performance and classic design, the Canon FTb is a popular choice among film photography enthusiasts."
   },
   {
     "make": "canon",
     "model": "new f-1",
+    "aliases": [
+      "f-1n",
+      "f-1 new"
+    ],
     "description": "The Canon New F-1 is a professional-grade 35mm SLR film camera that was introduced by Canon in 1981. It is the successor to the original Canon F-1, and it was designed to meet the demands of professional photographers. The New F-1 features a rugged and durable construction, with a metal body and a large, comfortable grip. It has a bright viewfinder with a high-eyepoint design, which allows for easy and accurate framing of the subject. The camera offers a wide range of advanced features, including a through-the-lens (TTL) metering system, multiple exposure capability, and interchangeable focusing screens. It is compatible with a wide range of Canon FD lenses, giving photographers a versatile system to work with. The Canon New F-1 is highly regarded for its reliability, durability, and exceptional image quality."
   },
   {
@@ -209,17 +233,114 @@
   },
   {
     "make": "canon",
-    "model": "rebel ti",
-    "aliases": [
-      "eos rebel ti",
-      "eos 300v"
-    ],
-    "description": "The Canon Rebel Ti, also known as the Canon EOS 300V, is a 35mm film SLR camera that was released in 2002. It is part of Canon's popular Rebel series and is designed for amateur photographers. The Rebel Ti features a lightweight and compact body, making it easy to carry around for everyday shooting. It has a 7-point autofocus system, which ensures sharp and accurate focus on the subject. The camera also has a built-in pop-up flash for low-light situations. With a maximum shutter speed of 1/4000s, it allows for capturing fast-moving subjects with ease. The Rebel Ti offers various shooting modes, including program, aperture priority, shutter priority, and manual, giving users flexibility and control over their photography. It uses Canon's EF lens mount, which means it is compatible with a wide range of lenses. Overall, the Canon Rebel Ti is a reliable and user-friendly film camera that is perfect for beginners or photographers looking for a compact and affordable option."
+    "model": "t90",
+    "description": "The Canon T90 is a professional 35mm SLR film camera that was introduced by Canon in 1986. It was the last high-end manual focus camera produced by Canon before the transition to autofocus. The T90 features a rugged and durable body made of metal and plastic, with a comfortable grip for extended use. It has a bright and clear viewfinder with a 0.75x magnification, allowing for precise framing and focusing. The camera offers a wide range of exposure modes, including aperture priority, shutter priority, and manual mode, giving photographers full control over their images. It also has a built-in motor drive, capable of shooting up to 4.5 frames per second, making it suitable for action photography. The T90 is compatible with Canon FD lenses, providing a wide selection of high-quality optics. Overall, the Canon T90 is a reliable and versatile camera for professional photographers."
   },
   {
     "make": "canon",
-    "model": "t90",
-    "description": "The Canon T90 is a professional 35mm SLR film camera that was introduced by Canon in 1986. It was the last high-end manual focus camera produced by Canon before the transition to autofocus. The T90 features a rugged and durable body made of metal and plastic, with a comfortable grip for extended use. It has a bright and clear viewfinder with a 0.75x magnification, allowing for precise framing and focusing. The camera offers a wide range of exposure modes, including aperture priority, shutter priority, and manual mode, giving photographers full control over their images. It also has a built-in motor drive, capable of shooting up to 4.5 frames per second, making it suitable for action photography. The T90 is compatible with Canon FD lenses, providing a wide selection of high-quality optics. Overall, the Canon T90 is a reliable and versatile camera for professional photographers."
+    "model": "canonet ql17",
+    "description": "The Canonet QL 17 GIII is the final, high-end version of Canon's Canonet compact rangefinder series. It features shutter-priority auto-exposure and parallax compensation with its 40mm f/1.7 lens. The camera is small and dense, with rounded corners and a black leatherette. It was available in brushed nickel or solid black. Film advance, exposure counter, shutter release, rewind crank, and the hot shoe are located on the top plate. It uses one 1.35V M20 mercury battery or a modern equivalent and has a hot shoe with a proprietary contact for Canolite D, as well as a PC socket. The camera weighs 620g."
+  },
+  {
+    "make": "canon",
+    "model": "t70",
+    "description": "The Canon T70 is a 35mm SLR film camera that was released by Canon in April 1984. It was the second camera in Canon's T-series and was often sold with either an FD 35-70mm f/3.5-4.5 lens or an FD 28-55mm f/3.5-4.5 lens. The T70 features a vertical-traveling, electronic focal plane shutter with speeds ranging from 2 seconds to 1/1000th of a second. It includes a built-in auto winder and a large LCD panel with key-touch buttons, which influenced subsequent 35mm SLR camera designs. The camera offers shutter-priority TTL auto exposure, TTL multi-program AE, and preset aperture AE, along with a dual metering system providing center-weighted averaging and partial metering. It is powered by two AA batteries and supports film speeds from 12 to 1600 ISO. The T70 received the Good Design Award and the European Camera of the Year Award in 1984."
+  },
+  {
+    "make": "canon",
+    "model": "eos 500",
+    "aliases": [
+      "rebel xs",
+      "eos rebel xs"
+    ],
+    "description": "The Canon EOS 500 is an entry-level 35mm autofocus SLR camera introduced by Canon in 1993. It was also known as the EOS Rebel XS in North America and the EOS Kiss in Japan. A similar model without a built-in flash was available as the EOS Rebel X. It features an electronic vertical travel focal plane shutter with speeds from 30 seconds to 1/2000th of a second and a built-in pop-up flash with a guide number of 12. The metering system uses a silicon photo diode with evaluative, central partial, and center-weighted average modes, and supports film speeds from 6 to 6400 ISO. Exposure modes include aperture priority, shutter priority, depth of field AE, manual exposure, and a program mode with scene selections. Film loading is automatic, prewinding the film onto the take-up spool, and it advances up to 3 frames per second. It is powered by two 3V CR123A lithium batteries."
+  },
+  {
+    "make": "canon",
+    "model": "tx",
+    "description": "The Canon TX is a 35mm SLR film camera that was released by Canon in 1975. It was a stripped-down version of the FTb, intended for export overseas and never sold in Japan. It features a center-weighted averaging light meter that is constantly active, a horizontal-travel cloth focal-plane shutter with a top speed of 1/500th, and a hot shoe with a single auto-switching FP and X flash sync PC terminal. Unlike the FTb, it lacks a metering switch, battery check, lockable stop-down lever, Quick Load system, mirror lock-up, and lockable shutter release. It was preceded by the similar TLb, which omitted the hot shoe."
+  },
+  {
+    "make": "canon",
+    "model": "at-1",
+    "description": "The Canon AT-1 is a 35mm SLR film camera introduced by Canon in late 1976 as an export-only model. It shares the FD lens mount and many accessories with the AE-1 but is a match-needle, manual-exposure camera. Its viewfinder displays an analog needle for scene brightness, which the user aligns with an EV \"lollipop\" by adjusting aperture or shutter speed. The AT-1 uses an electronically timed shutter and is battery-dependent. It features a 10-second self-timer with an LED indicator. The AT-1 offers access to inexpensive, used FD-mount lenses in a body without extraneous features."
+  },
+  {
+    "make": "canon",
+    "model": "eos 620",
+    "description": "The Canon EOS 620 is a 35mm auto focus SLR camera introduced by Canon in 1987, shortly after the EOS 650. It shares many features with the EOS 650 but includes several improvements. The EOS 620 offers a faster maximum shutter speed of 1/4,000s, compared to the 1/2000s of the EOS 650. Its flash synchronization speed is also faster at 1/250s, an improvement over the 1/125s of the EOS 650. Additionally, the EOS 620 features an illuminated LCD screen. However, it does not include the automatic depth-of-field mode found on the EOS 650."
+  },
+  {
+    "make": "canon",
+    "model": "eos 630",
+    "aliases": [
+      "eos 600"
+    ],
+    "description": "The Canon EOS 630, known as the EOS 600 in some markets, is an autofocus SLR camera introduced by Canon in 1989. It features motorized film advance and rewind, capable of reaching 5 frames per second in one-shot AF mode. The camera's shutter speeds range from 30 seconds to 1/2000 second, including a Bulb mode, and it has an X-sync speed of 1/125 second. It is powered by a single 6V 2CR5 lithium battery. The EOS 630 was also available with a quartz date back in some regions."
+  },
+  {
+    "make": "canon",
+    "model": "ex auto",
+    "description": "The Canon EX Auto is a 35mm SLR camera produced by Canon in 1972. It features a unique design where the rear lens group is fixed to the camera body, and various front lens groups can be attached via a screw fitting. This model is an improvement over the earlier EXEE, offering through-the-lens metering and shutter-priority automatic exposure. Unlike its predecessor, the EX Auto automatically detects the maximum aperture of the attached front lens groups. Shutter speed is set on a dial near the release button, while aperture is controlled by a dial around the rewind crank, with settings from f/1.8 to f/16, as well as 'Auto' and 'Off' positions. The camera has a horizontal cloth focal plane shutter with speeds from 1/8 to 1/500 second plus 'B', and X-synchronization for flash at 1/60 second. It also includes Canon's QL (Quick Load) feature for simplified film loading."
+  },
+  {
+    "make": "canon",
+    "model": "eos 300x",
+    "aliases": [
+      "eos kiss 7",
+      "rebel t2",
+      "eos rebel t2"
+    ],
+    "description": "The Canon EOS 300X is an autofocus 35mm SLR camera manufactured by Canon and released in September 2004. It is known as the Rebel T2 in the US and the EOS Kiss 7 in Japan. This camera is the successor to the EOS 300V, Rebel Ti, and EOS Kiss 5. It features an EF lens mount, a focal plane shutter with speeds ranging from 30 seconds to 1/4000th of a second, and an optical TTL viewfinder. The EOS 300X supports DX coded film from 25-5000 ISO and manual settings from 6-6400 ISO. It has an E-TTL II flash hotshoe, 35-zone exposure metering, and offers manual, aperture priority, and shutter priority exposure modes. Focusing is handled by a 7-point autofocus system with One Shot, AI, and AI Servo modes. It can shoot continuously at 3 frames per second and has a motorized film advance. The camera is powered by two CR2 lithium batteries."
+  },
+  {
+    "make": "canon",
+    "model": "t50",
+    "description": "The Canon T50 is a 35mm SLR camera introduced by Canon in March 1983. It was the first model in Canon's \"T-series\" of cameras. The T50 features powered film winding and programmed automatic exposure, and it is compatible with Canon FD mount lenses. Its vertical traveling electronic shutter operates at speeds from 2 seconds to 1/1000 second in automatic mode. The camera uses a TTL SPD photocell for metering, with an exposure value range of 1 to 18 EV at ISO 100. It supports film speeds from 50 to 1600 ISO. The T50 is powered by two AA/LR6 batteries, which provide enough power for approximately 50 rolls of 36-exposure film."
+  },
+  {
+    "make": "canon",
+    "model": "eos 3000n",
+    "description": "The Canon EOS 3000N is a 35mm film consumer SLR camera that was released by Canon in 2002. It was one of Canon's last 35mm film SLR bodies designed for Canon EF autofocus system lenses. This model is also known as the EOS Rebel XS N, EOS Rebel GII, and EOS 66 in other markets. It replaced the Canon EOS 3000 in the product line. The camera is noted for being lightweight and operating quietly. It features a range of operation modes, including fully automatic, semi-automatic, scene modes, and TTL flash modes. The EOS 3000N was later succeeded by the EOS 3000V."
+  },
+  {
+    "make": "canon",
+    "model": "eos 1000f",
+    "description": "The Canon EOS 1000F is a 35mm film SLR camera that was manufactured in Taiwan between 1991 and 1993. It is known as the EOS Rebel S in the Americas and the EOS 1000F in Europe and other regions, and features a built-in flash. This prosumer camera offers both auto-focus and auto-exposure capabilities. It includes a range of automatic, manual, and scene modes, such as sports, people, animals, landscapes, and macro. The EOS 1000F utilizes lenses with the EOS EF mount and was commonly sold with a 35-80mm f4-5.6 zoom lens. Its vertical-travel, focal-plane electronic shutter operates from 30 seconds to 1/1000 second plus Bulb, with X-sync up to 1/90 second via a hot shoe for Canon's TTL auto-exposure flash. Power is supplied by a 2CR5 6V battery."
+  },
+  {
+    "make": "canon",
+    "model": "canonet 28",
+    "description": "The Canon Canonet 28 is a 35mm rangefinder camera that was introduced by Canon in 1971. It features a fixed 40mm f/2.8 Canon lens and has fully programmed auto exposure with shutter speeds from 1/30 to 1/600. It also offers manual control of f-stops for flash. The camera uses a Copal leaf shutter and has a coupled rangefinder. It was manufactured in Taiwan and marketed until 1976. The Canonet 28 had a brief moment of Hollywood stardom, used by the title character of the 1998 John Waters film Pecker."
+  },
+  {
+    "make": "canon",
+    "model": "eos 3000",
+    "description": "The Canon EOS 3000 is an autofocus SLR camera for 35mm film that was introduced by Canon in 1999. It was also sold as the EOS 88 in Asia. This model was not sold in the US. To keep it a lower-cost model, it features a pentamirror viewfinder and a manually-activated popup flash. It includes a full range of autoexposure modes, as well as off-the-film flash exposure setting. The camera has motorized film transport and requires two 3-volt CR123 lithium batteries to operate."
+  },
+  {
+    "make": "canon",
+    "model": "wp-1",
+    "description": "The Canon WP-1, also known as the Sure Shot A-1 or Prima AS-1, is a compact camera that was released in April 1994. It was marketed as the world's smallest and lightest underwater camera that could also be used on land. This fully automatic camera features a 32mm f/3.5 lens and a programmed shutter with speeds ranging from 1/250s to 1/60s. It incorporates 3-point smart autofocus for distances from 1-3m and a fixed focus macro mode for underwater shots as close as 45cm, which uses a forced flash. The camera is completely weather-sealed and robust, designed to be waterproof to five meters using rubber seals and O-rings. It has a large and bright viewfinder suitable for use with swimming goggles, an automatic flash that can be disabled, and automatic film winding. The WP-1 is powered by one 3V CR123A battery."
+  },
+  {
+    "make": "canon",
+    "model": "eos 300v",
+    "aliases": [
+      "rebel ti",
+      "eos rebel ti"
+    ],
+    "description": "The Canon EOS 300V, also known as the Canon Rebel Ti, is a 35mm SLR film camera released in 2002 as an upgrade to Canon's EOS Rebel series. It is known for having the fastest autofocus and most advanced autoexposure in its class at the time of its release. The camera features a stainless steel lens mount, replacing the less durable plastic mounts of previous EOS Rebel cameras. It uses a TTL CMOS sensor with 7 AF points for autofocus and a TTL 35 zone SpD sensor for exposure, with a metering range of 1 to 20 EV. The electronic shutter offers speeds from 30 seconds to 1/2000 in 1/2 stop, plus bulb mode, and an X sync of 1/90s. It has a built-in flash with a guide number of 12 (ISO 100) and is powered by two 3V CR2 batteries."
+  },
+  {
+    "make": "canon",
+    "model": "eos 500n",
+    "aliases": [
+      "eos rebel g",
+      "rebel g",
+      "500n"
+    ],
+    "description": "The Canon EOS 500N is a 35mm SLR camera produced by Canon from 1996 to 1999. It is also known as the EOS Rebel G in the Americas and the New EOS Kiss or EOS Kiss 2 in Japan. This model replaced the EOS 500 and features a focal plane shutter with a range of 30 seconds to 1/2000th of a second, plus Bulb mode. It uses a Canon EF mount for lenses and has an optical pentaprism viewfinder. The camera is powered by two CR123A batteries and supports an ISO range of 6-6400 (25-5000 DX). Improvements over its predecessor include ETTL flash compatibility, an AF assist light, and Auto Exposure Bracketing (AEB) from -2 to +2 in 1/2 stop increments. It also features an easier-to-access night scene mode on the command dial and is compatible with the BP-8 vertical grip."
   },
   {
     "make": "chamonix",
@@ -253,6 +374,9 @@
   {
     "make": "contax",
     "model": "139 quartz",
+    "aliases": [
+      "139q"
+    ],
     "description": "The Contax 139 Quartz is a 35mm SLR film camera manufactured by Yashica/Kyocera under the Contax brand, first released in 1979. It features a quartz-timed electronically controlled vertical-travel metal focal plane shutter with speeds from 11 seconds to 1/1000 second plus Bulb. The camera uses the Contax/Yashica bayonet lens mount, supporting a wide range of Carl Zeiss T* lenses. It offers aperture-priority automatic exposure as well as full manual control, with through-the-lens (TTL) center-weighted metering. Notable features include a compact and lightweight body, electronic self-timer, and a viewfinder with LED exposure information. The Contax 139 Quartz is powered by two SR44 or LR44 batteries and includes a hot shoe for flash use."
   },
   {
@@ -304,6 +428,21 @@
     "make": "contax",
     "model": "tvs",
     "description": "The Contax TVS is a premium 35mm compact zoom camera introduced by Kyocera under the Contax brand in 1994, during a period of intense competition in the luxury compact camera market. Notable for its titanium body, the TVS features a Carl Zeiss Vario-Sonnar 28-56mm f/3.5–6.5 zoom lens, providing high-quality optics and a versatile focal range suitable for everyday, travel, and street photography. The camera offers a blend of manual controls—including physical dials for exposure compensation and focus, and an aperture ring on the lens—alongside electronic LCD displays showing key settings in both the viewfinder and on the camera top plate. Autofocus operation is fast and accurate, with manual focus options available; exposure metering is center-weighted, with a spot meter in manual mode and an override dial allowing up to ±5 stops of compensation. The TVS is powered by a single CR123 battery and accepts 30.5mm filters (metering is not TTL, so exposure compensation may be needed when using filters). Distinctive for its tactile zoom control (via a physical lens barrel tab, which also serves as the on/off switch), the TVS balances electronic features with user-friendly ergonomics. The overall build is robust at just over 400 grams loaded, and it includes practical details such as a traditional lens cap, a panoramic mode, and a bright viewfinder with parallax compensation. Image quality is recognized for high contrast, low distortion, and accurate color rendition, with best sharpness found at mid-zoom and moderate apertures. Reliability concerns are noted, particularly regarding the internal ribbon cable connecting the lens—an electronic point of failure common to Contax compacts of this era, which may be challenging to repair due to age and complexity. The Contax TVS remains a notable example of high-end compact film camera design, valued for its combination of portability, precise controls, and optical performance."
+  },
+  {
+    "make": "contax",
+    "model": "aria",
+    "description": "The Contax Aria is a manual focus 35mm SLR camera produced by Kyocera/Yashica in 1998. It utilizes the Contax/Yashica MM lens mount. The camera features a vertical traveling focal-plane shutter with speeds ranging from 30 seconds to 1/4000 second, including a Bulb mode, with specific speed ranges depending on the shooting mode. It offers five exposure modes: Program, aperture-priority, shutter-priority, metered manual, and flash/TTL auto flash. Metering options include evaluative (Matrix), center-weighted, and spot metering. The Aria has a motorized film transport with automatic loading and mid-roll rewind capability, and two drive modes allowing for continuous shooting up to 3 frames per second. It supports DX coded film from 25 to 5000 ISO, and manual ISO settings from 6 to 6400. Power is supplied by two 3V CR2 batteries. A limited edition \"70 Years\" version was released in 2002."
+  },
+  {
+    "make": "contax",
+    "model": "rx",
+    "description": "The Contax RX is a 35mm single-lens reflex camera body with auto exposure modes and the Contax/Yashica MM lens mount. It was manufactured by Kyocera in 1994. The camera features an electromechanical shutter with speeds from 16 seconds to 1/4000 seconds. It supports aperture-priority, shutter speed-priority, programmed auto exposure, and manual exposure, along with TTL and manual flash control. Its TTL-metering is switchable between center-weighted and spot. The RX also includes a built-in TTL phase difference detection system for focusing, automatic film handling, a status LCD, AE-lock, and a 10-second self-timer. It offers continuous shooting at three images per second."
+  },
+  {
+    "make": "contax",
+    "model": "t",
+    "description": "The Contax T is a high-quality, compact 35mm rangefinder camera introduced in 1984 and manufactured by Kyocera in Japan. It features a manually focused Carl Zeiss Sonnar 38mm f/2.8 lens that retracts into the camera body and is covered by a hinged lens cover. The camera utilizes an electronic between-the-lens shutter with speeds from 8 seconds to 1/500th, automatically set by its aperture priority exposure system. Designed by F.A. Porsche, the body incorporates titanium, and it features a synthetic ruby shutter release. It came with a dedicated Contax T14 electronic flash unit that attaches to the side. Film advance is manual, and it has an electronic frame counter with an LCD display. The Contax T has gained a cult status and was available in silver or black."
   },
   {
     "make": "exakta",
@@ -419,6 +558,46 @@
     "description": "The Fujifilm TX-1 is a 35mm film rangefinder camera introduced in 1998, developed in collaboration with Hasselblad (where it was also sold as the XPan). It features a unique dual-format capability, allowing photographers to switch between standard 24x36mm and panoramic 24x65mm frames on standard 35mm film. The camera uses interchangeable lenses with a dedicated lens mount and offers manual focus operation. It is equipped with an electronically controlled, vertical-travel focal plane shutter with speeds from 8s to 1/1000s plus Bulb mode. The TX-1 includes aperture-priority auto exposure and manual exposure modes, with through-the-lens (TTL) metering. Its robust titanium body and panoramic capabilities make it notable among film rangefinders."
   },
   {
+    "make": "fujifilm",
+    "model": "gs645s",
+    "description": "The Fuji GS645S Professional Wide60 is a medium format rangefinder camera released on October 1, 1984. It features a newly-designed EBC Fujinon W 60mm f/4 Orthometar-type lens, which is comprised of 7 elements in 5 groups and is mounted in a mechanical Copal 00 shutter. This 60mm lens is equivalent to a 35mm lens in 35mm format and has a 49mm filter thread. The camera's lens is protected by a circular \"cow bar.\" It has a built-in light meter with a measuring range of 4 to 18 EV, and ISO can be set from 25 to 1600 in 1/3 stops. The finder contains a coupled double image rangefinder for focusing, offering 0.5x magnification with a 40mm baseline, resulting in a 20mm effective baseline. The GS645S uses 120 and 220 film in a 6x4.5 format and is known for its sharp lenses."
+  },
+  {
+    "make": "fujifilm",
+    "model": "g617",
+    "description": "The Fujica Panorama G617 is a medium format roll film panorama camera introduced by Fuji in 1983. A renamed model, the Fuji Panorama G617, was released in 1985. It captures photos in a 6x17cm format onto 120 or 220 film, yielding 4 or 8 exposures respectively. The camera features an EBC Fujinon SW 105mm f/8 lens with a 77mm filter thread. The manually cocked Seiko shutter, located within the lens, offers speeds from 1 second to 1/500th of a second, plus a bulb mode. It has a sync connector for flash, with electronic flash sync available at all shutter speeds. The camera includes a four-stroke film advance lever, two shutter releases, two accessory shoes, and a spirit level. Strap connectors allow for horizontal or vertical carrying."
+  },
+  {
+    "make": "fujifilm",
+    "model": "gf670",
+    "description": "The Fujifilm GF670, also known as the Voigtländer Bessa III, is a folding camera that takes 6x6cm or 6x7cm exposures on 120 or 220 film. It was jointly developed by Fujifilm and Cosina. This camera features a Fujinon or Heliar 80/3.5 lens, a coupled rangefinder, and offers aperture-priority automatic and manual exposure modes, along with an exposure compensator. Film is advanced via a knob, and it includes a hot shoe and a PC synch socket. The design of its front standard is similar to 1950s Voigtländer models."
+  },
+  {
+    "make": "fujifilm",
+    "model": "gl690",
+    "description": "The Fujica GL690 Professional is a medium-format, interchangeable-lens, leaf-shutter rangefinder camera released by Fuji Photo Film Co. in January 1974. It features a second shutter button on the front for vertical shooting and adds short-roll 120 film capability. The viewfinder magnification was increased from 84% to 92%, and the eyepiece was changed to a circular form, allowing the use of standard diopter lenses and other accessories. Cosmetic changes include the addition of \"Professional\" on top and a large stylized \"G\" on the lens mount. The focusing grips on the lenses are now rubber. A 50mm lens, a faster 65mm lens, and an autoexposure 100mm f/3.5 lens were released concurrently with the GL690."
+  },
+  {
+    "make": "fujifilm",
+    "model": "st605n",
+    "description": "The Fujica ST605N is a 35mm SLR camera made in Japan by Fuji, released in 1978. It is an updated version of the ST605, with the shutter speed setting indicated by a viewfinder pointer. It accepts Praktica/Pentax screwmount lenses and features a rubberized silk curtain focal plane shutter with speeds from 1/2 to 1/700s, plus B. It has stopped-down TTL center-weighted averaging metering via two Silicon photo-cell receptors coupled to a FET circuit, and a viewfinder center-the-needle exposure setting system. Focusing is via a central split image rangefinder, with a surrounding micro-prism area and ground glass. DOF preview is available via stop-down metering."
+  },
+  {
+    "make": "fujifilm",
+    "model": "gs645",
+    "description": "The Fujica GS645 Professional is a folding rangefinder camera released in March 1983. It features an EBC Fujinon S 75mm f/3.4 lens with 5 elements and a closest focus distance of 1m. The camera uses a bellows for focusing and has a coupled double image rangefinder. Its light meter has a measuring range of 3.5 to 18 EV and can be set from 25 to 1600 ISO. The GS645 takes 120 and 220 film in a 6x4.5 format and is known for its sharp lenses. When folded, its depth is 56mm, and it weighs 820g without batteries."
+  },
+  {
+    "make": "fujifilm",
+    "model": "dl-100",
+    "description": "The Fujifilm DL-100, also known as the Discovery S100 in America, is a basic autofocus camera released by Fuji in 2002. It features a Fujinon 32mm f/4.5 lens and a built-in flash. The camera operates on two AA alkaline batteries and includes motor wind and rewind for film transport. It is noted for its extra-large viewfinder, a common feature among its competitors. The autofocus system, paired with its wide and slow lens, can be inconsistent. This model should not be confused with the earlier Fujica DL-100. It was positioned as a budget-friendly option in the market."
+  },
+  {
+    "make": "fujifilm",
+    "model": "gw680iii",
+    "description": "The Fuji GW680III Professional is a medium-format rangefinder camera that uses 120/220 film. It is part of a series of cameras that succeeded Fuji's interchangeable-lens Fujica GL690 and GM670 Professional models. The GW680III, along with other models in the series, features a fixed lens, a design choice made to reduce weight and increase reliability, as sales of other focal lengths were low. The camera has a redesigned exterior with curves and rubberized coatings, and includes a small spirit level embedded in the top. It also features a push-button spool release. The GW680III differs from the GW690III only in having a smaller film gate and different gearing and numbering for the film advance mechanism."
+  },
+  {
     "make": "graflex",
     "model": "pacemaker 45 crown graphic",
     "aliases": [
@@ -475,6 +654,31 @@
     "description": "The Hasselblad Xpan is a unique panoramic film camera that was introduced in 1998. It features a dual-format system, allowing photographers to switch between standard 35mm format and panoramic format by simply rotating the film back. The camera is equipped with a high-quality 45mm f/4 lens, providing sharp and detailed images. It also has a built-in light meter for accurate exposure control. The Xpan offers a range of manual controls, including aperture and shutter speed settings, allowing photographers to have full creative control over their shots. With its sleek and compact design, the Xpan is a versatile camera that is perfect for capturing breathtaking panoramic landscapes and wide-angle scenes."
   },
   {
+    "make": "hasselblad",
+    "model": "503cw",
+    "description": "The Hasselblad 503CW is a 6x6 SLR medium format film camera introduced in 1996. It was the final model in a series that began with the 1957 Hasselblad 500 C. This fully mechanical camera is compatible with C, CF, CB, CFI, and CFE lenses, which feature leaf shutters. These lens shutters offer speeds ranging from 1 second to 1/500th, as well as a bulb mode. While it uses a traditional manual film advance, automatic film advance can be achieved with the optional Winder CW."
+  },
+  {
+    "make": "hasselblad",
+    "model": "501c",
+    "description": "The Hasselblad 501 C is a medium format film camera that was produced from 1994 to 1997. It is a leaf shutter model within the Hasselblad V-system. The camera was sold in a kit with a Zeiss C Planar f/2.8 80 mm lens."
+  },
+  {
+    "make": "hasselblad",
+    "model": "201f",
+    "description": "The Hasselblad 201F is a medium format film camera produced by Hasselblad from 1994 to 1997. It is one of the models compatible with the TTL flash system. It features a focal plane shutter and is compatible with leaf shutter lenses."
+  },
+  {
+    "make": "hasselblad",
+    "model": "2000fcw",
+    "description": "The Hasselblad 2000FCW is a 6x6 medium format SLR system camera that was released in 1984. It is an updated version of the 2000FC/M, featuring compatibility with a film winder. This camera marked Hasselblad's return to manufacturing focal-plane shutter-based cameras after more than 20 years. It features an electronic titanium shutter with speeds from 1 to 1/2000 of a second. The 2000FCW has a modular design, allowing for interchangeable lenses, finders, focusing screens, and backs. It is compatible with both F series lenses (without shutters) and C series lenses (with built-in leaf shutters). The camera requires a 6V PX28 battery for operation."
+  },
+  {
+    "make": "hasselblad",
+    "model": "500el",
+    "description": "The Hasselblad 500 EL is a medium format film camera introduced in 1965. It is essentially a 500 C with a permanently integrated motor drive in the baseplate, which was a helpful feature for quick shooting due to the 500 C's lack of an instant-return mirror. The camera body includes settings for normal operation, automatic continuous mode at 1 fps, and various speed modes for continuous mirror-up operation. The 500 EL was famously adapted by NASA for the Apollo moon program, with some units remaining on the lunar surface. It was succeeded by the 500 EL/M in 1971."
+  },
+  {
     "make": "holga",
     "model": "120n",
     "description": "The Holga 120N is a medium format toy camera known for its simple plastic construction and iconic lo-fi image characteristics, such as soft focus, heavy vignetting, and occasional light leaks. It uses 120 roll film and includes masks for shooting either 6x6cm (12 exposures) or 6x4.5cm (16 exposures) formats per roll. The camera features a fixed 60mm f/8 plastic lens, a zone focusing system that allows focusing from 3 feet to infinity, and selectable aperture settings (f/8 or f/11) for cloudy or sunny conditions. Shutter speed options include a fixed 1/100 second and a bulb mode for long exposures, with film advanced manually using a winding knob and frame count viewed through the rear red window. The body has a standard 1/4-20 tripod mount for stability during long exposure shots and a hot shoe mount for attaching electronic flash units. Designed for ease of use and experimentation, the Holga 120N is widely regarded as a classic among toy cameras, producing distinctive, creative photographs."
@@ -482,12 +686,41 @@
   {
     "make": "intrepid camera",
     "model": "4x5",
+    "aliases": [
+      "4x5 mk5"
+    ],
     "description": "The Intrepid 4x5 is a large format film camera that allows photographers to capture stunning, high-resolution images. It features a lightweight and compact design, making it perfect for outdoor photography. The camera is made from high-quality materials, ensuring durability and longevity. It has a bellows system that allows for flexible focusing and perspective control. The Intrepid 4x5 also offers interchangeable lens boards, giving photographers the freedom to use a variety of lenses. With its precise movements and intuitive controls, this camera is a great choice for photographers who want to explore the world of large format photography."
+  },
+  {
+    "make": "intrepid camera",
+    "model": "5x7",
+    "description": "The Intrepid 5x7 is a large format field camera made by Intrepid Camera, a company founded in 2015. This model features an aluminum base and plywood panels, available with black, red, blue, or green bellows. It is part of a range of moderately-priced cameras, with its cost kept low through material choices. The 5x7 model, like other later Intrepid cameras, allows for rear tilt movements."
   },
   {
     "make": "kiev",
     "model": "88",
     "description": "The Kiev 88 is a medium format film camera that was manufactured in the Soviet Union. It is a clone of the Hasselblad 1600F and offers a similar modular design. The camera features a 6x6cm square format and uses interchangeable lenses and film backs. It has a focal plane shutter with speeds ranging from 1/2s to 1/1000s, as well as a bulb mode for long exposures. The Kiev 88 has a waist-level viewfinder for composing images and a built-in light meter for accurate exposure. It is a sturdy and reliable camera, known for its affordability and compatibility with Hasselblad accessories. However, it can be quite heavy and bulky to carry around. Overall, the Kiev 88 is a popular choice among medium format film photographers."
+  },
+  {
+    "make": "kiev",
+    "model": "60",
+    "description": "The Kiev 60 is a medium format SLR film camera manufactured by Arsenal Factory in Kiev, Ukraine, from 1984 to 1999. It is a 6x6cm camera that uses 120 roll film and is inspired by the Pentacon Six, sharing the same lens bayonet mount. The Kiev 60 features an interchangeable 80mm f/2.8 Volna-3 MC lens with an automatic diaphragm. It has a curtain-type cloth focal plane shutter with speeds from 2 to 1/1000 seconds, plus a bulb mode. The camera includes an eye-level SLR pentaprism finder, which is interchangeable with a waist-level finder, and a full-aperture TTL CdS cell exposure meter in the prism. The Kiev 60 is known for its affordability and for handling like an oversized 35mm SLR, making it a choice for amateur medium format photography."
+  },
+  {
+    "make": "kiev",
+    "model": "4",
+    "aliases": [
+      "4a"
+    ],
+    "description": "The Kiev 4 is a 35mm rangefinder camera produced by Arsenal in Kiev, Ukraine, from 1956 to 1987. It is a development of the Kiev II and III, which were copies of the Contax II and III. The camera features a Contax mount for lenses and a vertical blade shutter with speeds from B to 1/1250. It is known for its long 9 cm rangefinder base, which allows for accurate focusing, and its combined viewfinder and rangefinder window. Some models, like the Kiev 4, include a selenium cell exposure meter, while the Kiev 4A is a non-metered variant."
+  },
+  {
+    "make": "kiev",
+    "model": "6s",
+    "aliases": [
+      "6c"
+    ],
+    "description": "The Kiev 6S, also known as the Kiev 6C, is a medium format SLR camera produced in Ukraine by the Arsenal factory during the Soviet era. Its design is closely based on the Pentacon Six. This fully manual camera features TTL metering within its removable prism and accepts both 120 and 220 roll film. It utilizes a cloth focal plane shutter with speeds ranging from 1/1000 to 1/2 second, plus a bulb setting. The Kiev 6S uses interchangeable lenses with the Pentacon Six mount. Original lenses for this model were uncoated. A distinguishing feature of the Kiev 6S is its left-hand shutter button."
   },
   {
     "make": "kodak",
@@ -498,6 +731,16 @@
     "make": "kodak",
     "model": "retina iii",
     "description": "The Kodak Retina III is a 35mm rangefinder camera manufactured by Kodak AG in Germany and introduced in 1954. It uses standard 35mm film and features a coupled rangefinder and viewfinder for precise focusing. The Retina III is equipped with a Synchro-Compur leaf shutter offering speeds from 1 second to 1/500 second, and typically comes with a Schneider-Kreuznach Retina-Xenon 50mm f/2 lens. Notable features include a built-in selenium light meter (in the Retina IIIC and IIIS variants) and interchangeable front lens elements on some models. The camera is known for its compact folding design and high-quality optics. It was part of the well-regarded Retina series, popular among enthusiasts for its portability and performance."
+  },
+  {
+    "make": "kodak",
+    "model": "retina iiic",
+    "description": "The Kodak Retina IIIc (Type 021 Model I) is a 35mm camera introduced at Photokina Cologne in 1954. It features an f/2 50mm Xenon or Heligon lens and a coupled rangefinder. This model includes an uncoupled exposure meter that reads in Light Values. The Retina IIIc has a Synchro-Compur shutter with speeds from 1 second to 1/500, and its lens assembly slides forward, providing more rigidity than earlier Retina models. It also has a film advance lever on the camera base and supports interchangeable front lens components."
+  },
+  {
+    "make": "kodak",
+    "model": "star ef",
+    "description": "The Kodak Star EF is a 35mm viewfinder camera. It was made in China and features a built-in flash. This model also includes a sliding lens cover."
   },
   {
     "make": "konica",
@@ -533,6 +776,21 @@
     "make": "konica",
     "model": "t4",
     "description": "The Konica T4 is a classic 35mm film camera known for its compact and lightweight design. It was first introduced in 1984 as an upgrade to the popular Konica T3. The T4 features a sleek black body with a built-in flash and a fixed 35mm f/3.5 lens. It has a fully automatic exposure system with a range of shutter speeds from 1/8 to 1/500 seconds. The camera also offers a self-timer and a hot shoe for external flash. With its simple operation and reliable performance, the Konica T4 is a great choice for beginners and enthusiasts alike."
+  },
+  {
+    "make": "konica",
+    "model": "autoreflex t",
+    "description": "The Konica Autoreflex T, introduced in 1968, was the first focal plane shutter 35mm SLR to combine auto-exposure and TTL metering in one body. Known as the FT A in Japan and Revue Autoreflex TTL in Germany, this model marked a shift to a non-hyphenated \"Autoreflex\" name. It is a fully mechanical camera featuring shutter-priority auto exposure. Its CdS light meter requires two PX 675 type mercury batteries. The camera offers a shutter speed range from 1s to 1/1000s and Bulb. A special version, the Autoreflex W, included a timing back to imprint exposure times on film."
+  },
+  {
+    "make": "konica",
+    "model": "autoreflex tc",
+    "description": "The Konica Autoreflex TC, introduced in 1976, was designed as an entry-level SLR camera, replacing the A3 model. It is a scaled-down, more compact camera compared to earlier Autoreflex models, reflecting a trend in the photographic industry towards smaller SLR cameras. The Autoreflex TC features shutter speeds ranging from 1/8 to 1/1000s, plus a Bulb setting. In Japan, this model was marketed as the Acom-1. While the Acom-1 was offered with a Date Back option in 1978, the Autoreflex TC never included this feature. Both the TC and the T4, a similar but more advanced model, utilized a plastic top plate but retained a metal frame for durability."
+  },
+  {
+    "make": "konica",
+    "model": "c35 ef",
+    "description": "The Konica C35 EF, nicknamed \"Pikkari\" in Japan, is a compact camera introduced in 1974. It was the first 35mm compact camera to feature a built-in electronic flash, accommodating all necessary components within its compact body. The camera is equipped with a Konica Hexanon 38mm f/2.8 lens and utilizes zone focusing by selecting preset distances on the rotating lens barrel. It features auto-exposure via a CdS metering cell and has shutter speeds of 1/60 and 1/125. The integrated auto-flash automatically adjusts aperture based on ambient light and focus distance. Film speed can be manually set from ASA/ISO 25-400. The C35 EF requires a 1.3V PX675 mercury battery for the light meter and two AA alkaline batteries for the flash."
   },
   {
     "make": "kowa",
@@ -595,6 +853,26 @@
     "description": "The Leica R6.2 is a 35mm SLR film camera that was introduced by Leica in 1992 as an upgraded version of the original R6. It is a manual focus camera that offers a robust and reliable build quality, making it a popular choice among professional photographers. The R6.2 features a bright viewfinder with a 0.72x magnification, allowing for accurate composition and focusing. It has a shutter speed range from 1s to 1/2000s, with a flash sync speed of 1/100s. The camera supports both manual and aperture-priority exposure modes, giving photographers full control over their shots. With its durable construction and precise mechanics, the Leica R6.2 is a reliable tool for capturing high-quality images."
   },
   {
+    "make": "leica",
+    "model": "m-a",
+    "description": "The Leica M-A (Typ 127) is a purely mechanical 35mm rangefinder camera released by Leica Camera AG in 2014. It has no exposure meter, no electronic control, and requires no battery to operate. The camera is Leica's first purely mechanical camera since the Leica M4-P in 1981. Its specifications are similar to the Leica M4-P, with exterior features resembling the Leica M2. The M-A is noticeably slimmer than its digital counterparts and is enclosed in all-metal using chromed brass top and bottom covers. It comes in black or silver chrome finish. The camera allows full manual control and is compatible with M-mount lenses from 16 to 135mm. A lever allows changing framing lines for different lens pairs: 28/90mm, 35/135mm, and 50/75mm."
+  },
+  {
+    "make": "leica",
+    "model": "m4-2",
+    "description": "The Leica M4-2 is a 35mm rangefinder system camera produced by Leica from 1977 to 1983. It is a reintroduction of the M4, manufactured in Canada, with some detail differences and simplified, largely mechanized production. The M4-2 features a Leica M lens mount, a focal plane shutter with speeds from 1/1000 to 1 second, and a reverse Galilean viewfinder with 0.72x magnification. It has a coupled rangefinder for manual focusing and provides manual exposure control. For the first time, provision was made for a motor winder. The camera is all mechanical and does not have a built-in exposure meter. It includes a fixed hotshoe for flash synchronization."
+  },
+  {
+    "make": "leica",
+    "model": "minilux",
+    "description": "The Leica Minilux is a compact 35mm camera produced by Panasonic for Leica, first introduced in 1995. It features a Leica Summarit 1:2.4/40mm lens with 6 elements in 4 groups. The camera offers shutter speeds from 1 to 1/400 seconds, plus a bulb mode, and has an optical viewfinder with 0.35x magnification. It supports film speeds from ISO 25 to ISO 5000. Exposure modes include program and aperture priority, with center-weighted metering. Focusing is handled by an overrideable active infrared autofocus system. The Minilux has fully automatic film advance and a small top LCD monitor for status display. It is powered by a CR123A lithium battery."
+  },
+  {
+    "make": "leica",
+    "model": "mini zoom",
+    "description": "The Leica Mini Zoom is a 35mm compact rangefinder point-and-shoot camera produced in the mid-1990s. It features a Vario Elmar 35-70mm f/4.0-7.6 zoom lens. The camera includes several program modes such as bulb, infinity focus, and exposure override. Its shutter speed range is from 1/4 to 1/300 second. The longest automatic exposure is 1/4 second at f/4.0. In limited light, if the camera cannot use its longest exposure value in manual modes, it resorts to bulb mode. The Mini Zoom was advertised for candid images, but it has a significant shutter lag."
+  },
+  {
     "make": "linhof",
     "model": "master technika",
     "description": "The Linhof Master Technika is a large format film camera that offers exceptional versatility and precision. It is widely regarded as one of the best field cameras ever made. With its compact and lightweight design, it is perfect for outdoor photography and on-location shoots. The camera features a bellows system that allows for extensive movements, including tilt, swing, and shift, giving photographers full control over perspective and focus. The Master Technika supports a wide range of film formats, from 4x5 to 8x10 inches, allowing photographers to capture stunning detail and clarity. Its robust construction ensures durability and reliability, making it a favorite among professional photographers. The Linhof Master Technika is a timeless classic that continues to be cherished by film enthusiasts and photographers who appreciate the art of large format photography."
@@ -605,6 +883,11 @@
     "description": "The Lomography Sprocket Rocket is a 35mm panoramic film camera introduced by Lomography in 2011. It is notable for exposing the entire width of the film, including the sprocket holes, resulting in unique panoramic images. The camera features a 30mm wide-angle lens with a fixed aperture of f/10.8 and two shutter speed settings: 1/100s and bulb mode. Focusing is zone-based, with settings for 0.6m, 1m, and infinity. The Sprocket Rocket includes a rewind knob for multiple exposures and creative film rewinding. Its simple plastic construction and manual controls make it popular for experimental and creative analog photography."
   },
   {
+    "make": "lomography",
+    "model": "lc-a+",
+    "description": "The LOMO LC-A+ is a 35mm compact camera produced by Lomography in 2006, based on the original LOMO LC-A. Manufactured in China, it features improvements over its predecessor, including multiple exposure capabilities, support for film speeds up to 1600 ISO, a cable release compatible shutter button, and front threading for accessories. Early versions of the LC-A+ came with the Russian-made Minitar lens, while models released from 2007 onwards typically featured Chinese-made lenses. The camera has a 3-element 32mm 1:2.8 Minitar lens with a 63-degree angle of view and zone focus settings at 0.8m, 1.5m, 3m, and infinity. It offers shutter speeds from 1/500 to unlimited and an X-synchronized hotshoe mount for flash. The LC-A+ lacks the zone focus markers in the viewfinder and the aperture setting option found in the original LC-A."
+  },
+  {
     "make": "mamiya",
     "model": "6",
     "description": "The Mamiya 6 is a medium format rangefinder camera that was introduced in 1989. It is known for its compact and lightweight design, making it a popular choice among photographers who value portability. The camera features a collapsible lens system, allowing it to be easily stored and carried. It uses 120 or 220 roll film, which allows for 12 or 24 exposures, respectively. The Mamiya 6 offers interchangeable lenses, providing photographers with versatility in their shooting. It has a built-in light meter for accurate exposure readings and a rangefinder focusing system for precise focusing. The camera also has a variety of exposure modes, including aperture priority, manual, and bulb. Overall, the Mamiya 6 is a reliable and versatile medium format camera that delivers high-quality images."
@@ -613,7 +896,8 @@
     "make": "mamiya",
     "model": "645",
     "aliases": [
-      "m645"
+      "m645",
+      "645m"
     ],
     "description": "The Mamiya 645 is a medium format film camera that was first introduced in 1975. It is known for its modular design and versatility, making it a popular choice among professional photographers. The camera features a 6x4.5cm format, which is larger than 35mm but smaller than traditional 6x6cm medium format cameras. It has a built-in light meter and a waist-level viewfinder, as well as interchangeable lenses and film backs. The Mamiya 645 offers excellent image quality and is suitable for a wide range of photography genres, including portrait, landscape, and commercial photography."
   },
@@ -645,6 +929,10 @@
   {
     "make": "mamiya",
     "model": "c330",
+    "aliases": [
+      "c330f",
+      "c330s"
+    ],
     "description": "The Mamiya C330 is a medium format twin-lens reflex (TLR) camera that was first introduced in 1969. It is known for its exceptional build quality and versatility, making it a popular choice among professional photographers. The C330 features interchangeable lenses, allowing photographers to choose from a wide range of focal lengths to suit their needs. It also has a unique bellows focusing system, which enables close-up and macro photography. The camera has a waist-level viewfinder, which provides a bright and clear image for composing shots. The C330 has a reliable and accurate light meter, making it easy to achieve proper exposure. It uses 120 and 220 roll film, allowing for both square and rectangular formats. Overall, the Mamiya C330 is a reliable and versatile camera that delivers high-quality images."
   },
   {
@@ -680,6 +968,9 @@
   {
     "make": "mamiya",
     "model": "rz67 pro ii",
+    "aliases": [
+      "rz67 ii"
+    ],
     "description": "The Mamiya RZ67 Pro II is a medium format film camera that was released in 1995 as an upgrade to the original RZ67 Pro. It is widely regarded as one of the best professional medium format cameras ever made. The RZ67 Pro II features a modular design, allowing for interchangeable lenses, viewfinders, and film backs. It uses a bellows focusing system, which provides precise control over focus and allows for close-up photography. The camera has a large and bright waist-level viewfinder, as well as a built-in metering system. It also has a built-in motor drive, which enables continuous shooting at a rate of 1.2 frames per second. The RZ67 Pro II is known for its exceptional image quality, thanks to its high-quality lenses and the large 6x7cm negative size. It is a favorite among professional photographers for its versatility, durability, and superb image quality."
   },
   {
@@ -691,6 +982,57 @@
     "make": "mamiya",
     "model": "super 23",
     "description": "The Mamiya Super 23 is a medium-format rangefinder press camera introduced in August 1967 as a major revision to the Mamiya Press series, primarily aimed at professional press photographers. It features a redesigned body and retains a rear bellows system, which allows for swing and shift movements of the film plane, enhancing perspective and focus control. The Super 23 has a large viewfinder with switchable brightlines for 100mm, 150mm, and 250mm lenses, and improved rangefinder precision with 0.72× magnification and a 61.2 mm effective baseline. It uses modular film backs, with compatibility for both M-type and, via an adaptor, G-type back interfaces, supporting a range of formats including 6×9 cm, 6×7 cm, 6×6 cm, and 645, on 120 or 220 rollfilm, as well as pack film and cut sheet film. The standard lens is 100mm, but a variety of lenses and wide-angle finders were available. The system lacks an internal dark slide, requiring external slides to change lenses or backs, and offers multiple focusing aids such as ground glass backs and focusing hoods. Accessories included sports finders and a variety of film holders, making the Super 23 a highly adaptable and modular camera for professional use during its production era."
+  },
+  {
+    "make": "mamiya",
+    "model": "645 1000s",
+    "aliases": [
+      "m645 1000s"
+    ],
+    "description": "The Mamiya M645 1000S is a medium format SLR camera that was introduced in 1976. It is an upgrade to the original M645 model, featuring a faster top shutter speed of 1/1000th of a second, a self-timer, and a depth of field preview button. The camera uses 120 or 220 film, offering 15 or 30 exposures respectively. It has an interchangeable finder system, allowing for various prism and waist-level viewfinders, and interchangeable focusing screens. The M645 1000S utilizes a moving coil electronic focal plane shutter and has an instant return, automatic mirror system with mirror lock-up. It is powered by a 6V silver-oxide PX28 battery."
+  },
+  {
+    "make": "mamiya",
+    "model": "6 mf",
+    "description": "The Mamiya 6 MF is a medium format rangefinder camera that was released in 1993 as a revision of the New Mamiya 6. It is known for its multi-format support, offering 6x6 and 6x4.5 formats with a masking insert, and also accommodating 35mm film with a panoramic adapter for 24x54mm images."
+  },
+  {
+    "make": "mamiya",
+    "model": "645 pro",
+    "description": "The Mamiya 645 Pro is a medium-format SLR camera introduced in April 1992 by Mamiya in Japan. It makes fifteen 6x4.5 cm images on 120 roll film and features a polycarbonate body. Unlike its predecessor, the 645 Pro lacks a mechanically-timed shutter speed, meaning it requires battery power to operate. It uses the same bayonet lens mount as earlier M645 models, and film inserts are interchangeable. The camera's manual highlights several features, including a 'T' exposure when using the self-timer with the shutter dial set to 'B', and automatic setting of the camera's focal-plane shutter to 1/8 second when using leaf-shutter lenses."
+  },
+  {
+    "make": "mamiya",
+    "model": "645 pro tl",
+    "description": "The Mamiya 645 Pro TL is a medium-format SLR camera made in Japan by Mamiya, part of a series that began in the mid-1980s. It makes fifteen 6x4.5 cm images on 120 roll film. Unlike Mamiya's 6x7 SLR cameras, it relies on helical focusing in the lenses rather than bellows. The camera body is made mainly from polycarbonate, a departure from the metal bodies of earlier M645 models. It shares the same bayonet lens mount and interchangeable film inserts with earlier M645 cameras, though viewfinders are not interchangeable between the series. The 645 Pro TL was eventually replaced by the auto-focus 645 AF series from late 1999."
+  },
+  {
+    "make": "mamiya",
+    "model": "645e",
+    "description": "The Mamiya 645E is a medium-format SLR camera made in Japan by Mamiya, introduced in March 2000. It makes fifteen 6x4.5 cm images on 120 roll film. This model is a simplified version of other cameras in its series, featuring a fixed metering prism finder with a Keplerian magnifier/dioptric correction eyepiece and a fixed film chamber that uses film inserts like the original M645. The shutter speed dial is located on the left side of the body, and the hot shoe is on top of the prism. The 645E uses the same bayonet lens mount as earlier Mamiya 645 cameras."
+  },
+  {
+    "make": "mamiya",
+    "model": "c33",
+    "description": "The Mamiya C33 is a medium format Twin Lens Reflex (TLR) camera that was released in 1965 as part of the Mamiya C series. It is an improved version of the Mamiya C3 and features an automatic shutter cocking mechanism during film winding. The camera uses a film advance crank that automatically stops after turning clockwise and requires a counter-clockwise return. It includes a dedicated lens distance scale window on the right side of the body, providing scales for 65mm and 80mm focal lengths, with additional scales on the left side bellows plate for 105mm, 135mm, and 180mm lenses. Some models also have scales for 55mm and 250mm lenses. The lens parallax selection knob on the left side has settings for 80mm, 105mm, 135mm, and 180mm lenses. The C33 primarily uses 120 film, with some variations supporting 220 film backs. It features a proprietary Mamiya covering with a raised 'M' instead of leatherette."
+  },
+  {
+    "make": "mamiya",
+    "model": "645 afd",
+    "description": "The Mamiya 645 AFD is a medium format SLR camera that was released in December 2001 by Mamiya, following the 645 AF. It is an auto-focus camera and was designed to be compatible with certain digital backs, though these were not produced by Mamiya at the time. This model, along with its successors the 645 AFDII and 645 AFDIII, retains the ability to use either film or a digital back, allowing for quick switching between the two, even mid-roll. The camera features a new bayonet lens mount with electrical contacts to support AF lenses. Unlike the previous M645 Super/Pro series which had polycarbonate bodies, the 645 AF series, including the AFD, features aluminum bodies. Many features from Mamiya's earlier 4.5x6cm SLR cameras are retained, but the 645 AFD is not as modular, with a built-in power film winder and AE prism viewfinder."
+  },
+  {
+    "make": "mamiya",
+    "model": "universal press",
+    "aliases": [
+      "universal"
+    ],
+    "description": "The Mamiya Universal Press is a medium format rangefinder camera system introduced in 1969. It is a revision of the Mamiya Super 23, featuring a similar body but with the ability to use Mamiya, Graflex, and Land Polaroid backs. This was achieved through a native Press back that accepted P-adapters for M-Type (Mamiya) or G-Type (Graflex) film holders. Unlike the Super 23, it eliminated the rear bellows device. A similar model, the Polaroid 600SE, was marketed, though its lens and film back mounts were not interchangeable with Mamiya models. The Mamiya Universal Press was available in silver and black."
+  },
+  {
+    "make": "mamiya",
+    "model": "zm",
+    "description": "The Mamiya ZM is a 35mm camera released in October 1982. It was the last Mamiya 35mm camera produced. Designed by Tsuneaki Munakata, it is an advanced version of the ZE-2, incorporating some features from the ZE-X. The ZM has an aperture-priority automatic time control, which is based on center-weighted TTL readings. It features a metal electronically controlled automatic shutter-speed range from four seconds to 1/1000, and a manual range from two seconds to 1/1000, plus Bulb mode. The camera is powered by two 1.5v LR44/SR44 coin-type batteries."
   },
   {
     "make": "minolta",
@@ -750,6 +1092,9 @@
   {
     "make": "minolta",
     "model": "srt-101",
+    "aliases": [
+      "srt-101b"
+    ],
     "description": "The Minolta SRT-101 is a classic 35mm single-lens reflex (SLR) film camera that was introduced in 1966. It was the first camera in the SRT series and quickly became popular among photography enthusiasts. The SRT-101 features a rugged and durable metal body, making it suitable for both amateur and professional use. It has a manual focus system with a bright viewfinder, allowing for precise composition and focusing. The camera offers a wide range of shutter speeds from 1 to 1/1000 seconds, as well as a bulb mode for long exposures. It has a built-in light meter that provides accurate exposure readings, and the user can adjust the aperture and shutter speed accordingly. The SRT-101 uses a standard M42 screw mount, which allows for compatibility with a wide range of lenses. Overall, the Minolta SRT-101 is a reliable and versatile camera that is highly regarded for its excellent build quality and performance."
   },
   {
@@ -820,8 +1165,75 @@
     "description": "The Minolta XG-1 is a 35mm SLR film camera introduced by Minolta in 1977. It uses the Minolta SR bayonet lens mount, compatible with a wide range of Minolta manual focus lenses. The camera features aperture-priority automatic exposure as well as full manual exposure control. Shutter speeds range from 1/1000 to 1 second, plus Bulb mode, and it uses a horizontal cloth focal plane shutter. The XG-1 includes through-the-lens (TTL) center-weighted metering and an electronically controlled shutter, requiring batteries for operation. Notable features include a hot shoe for flash, self-timer, and a bright viewfinder with LED exposure indicators."
   },
   {
+    "make": "minolta",
+    "model": "x-300",
+    "aliases": [
+      "x-370"
+    ],
+    "description": "The Minolta X-300 is a 35mm manual focus SLR camera produced by Minolta between 1984 and 1990, also marketed as the X-370 in the U.S. and Canada. It features an electronically-controlled cloth-curtain focal plane shutter with manual speeds from 1 to 1/1000 second, and stepless speeds up to four seconds in aperture-priority mode. The camera has a center-weighted average light meter mounted in the pentaprism, a 10-second self-timer, and AE lock. It supports an ISO range of 12-3200 and uses two AG13/LR44 batteries. The X-300 was a less expensive alternative to the X-500, with a nearly identical body but fewer features, such as the absence of OTF flash mode, a DOF preview button, PC connection, and interchangeable screens. It became the basis for many other cameras from China after Minolta's autofocus Maxxum line was introduced."
+  },
+  {
+    "make": "minolta",
+    "model": "dynax 5",
+    "description": "The Minolta Dynax 5, also known as Maxxum 5 in the Americas, α-Sweet II in Japan, and α-5 in China, is a 35mm autofocus SLR camera introduced around 2002. It features an electronically controlled vertical-travel focal-plane shutter with speeds from 30 seconds to 1/4000 second, plus bulb mode, and a flash sync of 1/125 second. The exposure system uses a 14-segment honeycomb silicon photo diode for TTL metering, offering a range of 1 to 20 EV, and includes PASM modes (Program, Aperture priority, Shutter priority, Manual), along with scene modes. It has a built-in auto pop-up flash with a guide number of 12. The TTL autofocus system has a range of -1 to 18 EV, with single or continuous modes and an AF illuminator. The camera supports DX-coded film from 25 to 5000 ISO, with manual settings from 6 to 6400 ISO. It features motorized film transport with single or continuous advance up to 3 frames per second, automatic and mid-roll manual rewinding, and an eye-start feature that automatically sets exposure and focus when the camera is brought to the eye. The Dynax 5 is powered by two CR2 batteries."
+  },
+  {
+    "make": "minolta",
+    "model": "xg-m",
+    "description": "The Minolta XG-M, introduced in 1981, was the flagship model of the Minolta XG series of 35mm SLRs. It featured a completely new design and was available in chrome only, replacing the XG 9 in its markets. The Japanese version was known as the X-70. The XG-M corrected a major limitation of earlier XG models by allowing the light meter to function in manual exposure mode. It included all the features of the XG-S, such as a stop-down button and the brighter \"Acute Matte\" focusing screen. The ASA setting and exposure adjustment were moved to the rewind crank, and it could be mounted on the 3.5-fps Motor Drive 1."
+  },
+  {
+    "make": "minolta",
+    "model": "cl",
+    "description": "The Leica CL is a 35mm compact rangefinder camera with interchangeable M-mount lenses, developed in collaboration with Minolta, who also manufactured it. It was first released in April 1973, with a Japanese market version, the Leitz Minolta CL, appearing in November 1973. Both versions were produced in a Minolta factory in Osaka. The camera features a vertical-running focal plane shutter with cloth curtains, offering speeds from ½ to 1/1000 second. It includes a through-the-lens CdS exposure meter mounted on a pivoting arm, similar to the Leica M5, and provides manual exposure with a mechanical shutter. Shutter speeds are visible in the viewfinder, which has framelines for 40mm, 50mm, and 90mm lenses. The CL was sold with specially designed Leitz Summicron-C 40mm f:2 and Leitz Elmar-C 90mm f:4 lenses, which were also branded as Minolta M-Rokkor lenses for the Leitz Minolta CL. It is known for its compact size and affordability as a platform for M-mount lenses, though its rangefinder is less precise than those of Leica M bodies."
+  },
+  {
+    "make": "minolta",
+    "model": "dynax 9",
+    "aliases": [
+      "a9"
+    ],
+    "description": "The Minolta Dynax 9 is an autofocus 35mm SLR camera produced by Minolta around 1999. It was also marketed as the Maxxum 9 in the USA and the Alpha 9 (α-9) in Japan. This model succeeded the 9xi and 800si and features a Minolta A-type bayonet lens mount. The camera is known for its robust construction, including rubberized and weatherproof controls. A rare variant, the Dynax 9Ti, was later released with a titanium body. The Dynax 9 shares similar controls with the 600si. It is equipped with a focal plane shutter offering speeds from 30 seconds to 1/12000 second, with flash synchronization at 1/300 second, and includes a built-in flash. The Minolta α-9 received the Japan Camera Grand Prix award in 1999."
+  },
+  {
+    "make": "minolta",
+    "model": "xg-7",
+    "description": "The Minolta XG 7, also known as the XG-E in some markets, was the first model in the Minolta XG series of 35mm SLRs, introduced in 1977. This series was designed as a budget-friendly line of small, lightweight, and easy-to-use electronic SLRs with an automatic exposure mode. The XG 7 features a center-weighted metering system with two CdS cells and a matte-fresnel-field focusing screen with a horizontal split-image spot. Its viewfinder displays automatic shutter times from 1s to 1/1000s via LEDs. It is considerably smaller and lighter than Minolta's preceding cameras and was available in both chrome and black finishes."
+  },
+  {
+    "make": "minolta",
+    "model": "dynax 500si",
+    "description": "The Minolta Dynax 500si Super is a 35mm autofocus SLR camera produced by Minolta around 1995. It was also marketed as the Maxxum 500si in the American market, and as the Maxxum 530si RZ and Maxxum 550si with additional features. The Japanese version was known as the α-303si Super. It features an electronically controlled focal-plane shutter with speeds from 30 seconds to 1/2000 second and a flash sync of 1/90. The camera offers five program exposure modes, including portrait, landscape, close-up, sport, and night portrait. Its TTL metering system uses an 8-segment honeycomb silicon photocell with a range of 1 to 20 EV, and it supports DX-encoded films from 25 to 5000 ISO. Film transport is motorized, with single or continuous drive up to 1fps, and automatic or manual rewind. It includes a built-in flash with a guide number of 12 and an AF illuminator for low-light focusing. The camera is powered by a 2CR5 battery."
+  },
+  {
+    "make": "minolta",
+    "model": "dynax 505si",
+    "description": "The Minolta Dynax 505si, also known as the Maxxum HTsi Plus, is a 35mm autofocus SLR camera body released in 1998. Compared with the later Dynax 505si Super, it lacks Eye Start focus and the film leader out custom function, and limits multiple exposures to two. The camera features a plastic lens mount, reducing its weight by 25g. It was the first Minolta SLR to combine a central cross autofocus sensor with two vertically placed sensors. The Dynax 505si offers five programmed modes, a fully automatic mode, shutter-preferred, aperture-preferred, and manual modes. It has a shutter speed range from 30 seconds to 1/4000 second, a built-in flash with a guide number of 12."
+  },
+  {
+    "make": "minolta",
+    "model": "dynax 9xi",
+    "description": "The Minolta Dynax 9xi, also known as the Maxxum 9xi or α-9xi, was Minolta's flagship 35mm film SLR from its third generation of autofocus system cameras. Introduced in the early 1990s, it featured a data setting thumb wheel near the shutter release and an LCD display under the focusing screen for exposure manipulation. Designed for professionals, particularly in sports photography, it boasted a fast focal plane shutter capable of 4.5 frames per second and speeds up to 1/12000 second, with a maximum flash sync of 1/300 second. Its intelligent autofocus system could predict movements in three dimensions, powered by a 16-bit 20MHz microprocessor utilizing \"fuzzy logic\" algorithms with data from a 14-field metering sensor. The camera also supported an image lock mode for series photography with automatic zoom adjustment and was compatible with the new Minolta 5400xi system flash, which could be remote-controlled for TTL flash photography. Special chip cards were available to simplify the use of its advanced features."
+  },
+  {
+    "make": "minolta",
+    "model": "srt 102",
+    "aliases": [
+      "srt super"
+    ],
+    "description": "The Minolta SR-T 102 is a 35mm SLR camera that is essentially a Minolta SR-T 101 with several enhancements. It features a hot shoe for flash synchronization, a focusing screen equipped with a split-image rangefinder for precise focusing, and the capability for multiple exposures. Additionally, the selected aperture value is visible within the viewfinder, providing convenient exposure information to the photographer. This model was known as the SR-T Super in some markets and the SR-T 303 in others."
+  },
+  {
+    "make": "minolta",
+    "model": "xe-5",
+    "description": "The Minolta XE-5 is a 35mm SLR camera introduced in 1975, positioned as a less advanced sibling to the Minolta XE series, and was not sold in the Japanese home market. It features a fixed finder, a vertical-running metal blade shutter, and a bright viewfinder with an exposure meter scale for both manual and automatic operation. The camera offers meter-assisted manual or aperture-priority automatic exposure settings. Its electronically controlled shutter provides speeds from 4 seconds to 1/1000 second, with a mechanical backup speed of 1/90 second and Bulb. Standard features include a hot-shoe, a self-timer, and a PC X sync contact. The XE-5 operates on a 3V silver battery or two 1.5V SR44 batteries, and it typically comes with an MC Rokkor-X PF 1:1.7 f=50mm lens. The camera's prism housing is entirely black, distinguishing it from other models in the series."
+  },
+  {
     "make": "minox",
     "model": "35 gt-x",
+    "aliases": [
+      "35 gt"
+    ],
     "description": "The Minox 35 GT-X is a compact 35mm film camera that was introduced by Minox in 1981. It is part of the Minox 35 series, known for their small size and high-quality optics. The GT-X features a fixed 35mm f/2.8 lens, which produces sharp and detailed images. It has a fully automatic exposure system, with a built-in light meter that measures the ambient light and sets the aperture and shutter speed accordingly. The camera also has a manual override option, allowing the user to adjust the exposure settings manually. The GT-X has a range of shutter speeds from 1/500 to 30 seconds, making it suitable for various shooting conditions. It has a built-in flash, with both automatic and manual flash modes. The camera has a sturdy metal body and a compact design, making it easy to carry around. Overall, the Minox 35 GT-X is a reliable and versatile camera that delivers excellent image quality in a compact package."
   },
   {
@@ -917,11 +1329,6 @@
   },
   {
     "make": "nikon",
-    "model": "f90s",
-    "description": "The Nikon F90s is a professional-grade 35mm film SLR camera that was introduced by Nikon in 1994. It is part of Nikon's renowned F-series of cameras and is highly regarded for its advanced features and robust build quality. The F90s features a durable and weather-sealed magnesium alloy body, making it suitable for use in various shooting conditions. It has a comfortable and ergonomic design, with a large and bright viewfinder that offers 94% frame coverage. The camera boasts a fast and accurate autofocus system with 3D Matrix Metering, which ensures accurate exposure in a wide range of lighting conditions. It also has a built-in motor drive that allows for continuous shooting at a rate of up to 4.2 frames per second. The N90s offers a wide range of exposure modes, including program, aperture priority, shutter priority, and manual. It has a versatile ISO range of 25 to 5000, allowing for shooting in various lighting conditions. The camera is compatible with a wide range of Nikon F-mount lenses, providing photographers with a vast selection of options. Overall, the Nikon F90s is a reliable and versatile camera that is suitable for professional photographers and enthusiasts alike."
-  },
-  {
-    "make": "nikon",
     "model": "fa",
     "description": "The Nikon FA is a 35mm SLR film camera that was introduced by Nikon in 1983. It is known for its advanced features and versatility, making it a popular choice among professional photographers. The FA features a durable metal body with a classic design, providing a comfortable grip and easy handling. It is equipped with a Nikon F lens mount, allowing users to interchange a wide range of high-quality lenses. The camera offers a wide range of exposure modes, including aperture priority, shutter priority, and manual mode, giving photographers full control over their shots. It also has a built-in light meter that provides accurate exposure readings, ensuring well-exposed images. Additionally, the FA features a motor drive option, allowing for continuous shooting at up to 3.2 frames per second. Overall, the Nikon FA is a reliable and versatile film camera that delivers exceptional image quality and performance."
   },
@@ -968,12 +1375,10 @@
   {
     "make": "nikon",
     "model": "l35af",
+    "aliases": [
+      "l35af2"
+    ],
     "description": "The Nikon L35AF is a compact 35mm point-and-shoot film camera introduced in the 1983, notable for being Nikon’s first autofocus camera. It features a sharp 35mm f/2.8 lens with excellent optical quality, built around Nikon’s well-regarded Sonnar-inspired design. Autofocus is quick and reliable, and the built-in metering system is accurate even in challenging lighting conditions, with a front-facing lever for backlight compensation. The camera is fully automatic, including film advance and rewind, making it easy to use for both beginners and experienced photographers. Its compact form factor and sturdy construction make it ideal for travel and street photography. Powered by two AA batteries, the L35AF remains a sought-after model for its simplicity, image quality, and ease of use."
-  },
-  {
-    "make": "nikon",
-    "model": "n2000",
-    "description": "The Nikon N2000, also known as the F-301 in some markets, is a 35mm SLR film camera introduced by Nikon in 1985. It was Nikon's first SLR to feature integrated motorized film advance, allowing automatic winding at up to 2.5 frames per second. The camera uses the Nikon F-mount, supporting a wide range of Nikkor lenses. It offers both Programmed Auto-Exposure (AE) and Manual exposure modes, with a built-in TTL center-weighted light meter. The N2000 is powered by four AAA batteries and features a top shutter speed of 1/2000 second. Notably, it does not include a built-in flash but provides a hot shoe for external flash units."
   },
   {
     "make": "nikon",
@@ -999,6 +1404,85 @@
     "make": "nikon",
     "model": "sp",
     "description": "The Nikon SP is a professional 35mm rangefinder camera manufactured by Nikon and introduced in 1957. It uses standard 35mm film and features a focal plane shutter with speeds from 1 to 1/1000 second plus bulb. The camera is notable for its advanced viewfinder system, which includes a parallax-corrected main finder with selectable bright-line frames for six different focal lengths. The Nikon SP offers interchangeable lenses via the Nikon S-mount and supports a wide range of Nikkor lenses. It also features a self-timer, flash synchronization, and a robust all-metal construction. The SP is regarded as one of the most advanced and versatile rangefinder cameras of its era."
+  },
+  {
+    "make": "nikon",
+    "model": "f75",
+    "description": "The Nikon F75, also known as the N75 in North America and U2 in Japan, is a 35mm autofocus SLR camera released by Nikon in 2003. It was one of the last consumer 35mm autofocus SLRs marketed by Nikon and was available in both silver and black finishes. The F75 was discontinued in 2006. This camera was the replacement for the F65. The F75 can only use DX coded film, setting non-DX film at 100 ISO, and infrared films cannot be used. It features a prewind film transport system, where the entire roll is offloaded onto the take-up spool upon loading and then wound back into the canister as film advances after exposure. This system ensures that exposed shots are not ruined if the camera back is opened. The camera counts down the number of available shots. Power is supplied by two CR2 batteries."
+  },
+  {
+    "make": "nikon",
+    "model": "35ti",
+    "description": "The Nikon 35Ti is a compact camera introduced in 1993, featuring a 35mm f/2.8 Nikkor lens. It utilizes an infrared autofocus system, with manual focus also available. The camera includes a built-in electronic flash and offers various operational modes selected via switches and buttons. Its construction incorporates a titanium body, providing both lightness and durability. The 35Ti employs matrix metering and offers exposure compensation. It also provides a cropped panorama mode for 35mm film and a Quartz Date function. A distinctive feature is the top-mounted window displaying four analog scales with \"clock hands\" to indicate exposure number, aperture, distance, and under/over-exposure compensation. The camera is powered by a 3V CR123A lithium battery."
+  },
+  {
+    "make": "nikon",
+    "model": "f801",
+    "description": "The Nikon F-801, known as the Nikon N8008 in the USA, is a 35mm film SLR autofocus electronic camera manufactured by Nikon Corporation in Japan between 1988 and 1991. It features both autofocus and manual focus modes with an electronic rangefinder, utilizing a TTL phase detection system (Nikon Advanced AM200 module). The camera is equipped with an electromagnetically controlled vertical-travel focal-plane metal shutter, offering speeds from 30 to 1/8000 seconds plus Bulb. It supports multiple exposure modes including programmed auto-multi, shutter priority auto, aperture priority auto, and manual. The F-801 incorporates matrix metering and center-weighted metering, with a film speed range of 6-6400 ASA. Its body includes a fixed eyelevel SLR pentaprism viewfinder and an LCD panel displaying various settings. An updated version, the F-801S (N8008S), was released in 1991 with improved focusing and spot metering."
+  },
+  {
+    "make": "nikon",
+    "model": "fm10",
+    "description": "The Nikon FM10 is a 35mm SLR camera introduced by Nikon in 1995. It is a manual focus, manual film transport model, manufactured by Cosina and derived from the Cosina CT1 Super. The FM10 accepts Nikon F-mount lenses and features a vertically moving metal focal plane shutter with speeds from 1 to 1/2000 second, plus Bulb. It includes a TTL center-weighted full aperture exposure measuring system with a metering range of EV2-19. The camera also offers a mechanical self-timer, multiple exposure option, and a depth-of-field preview lever. Its viewfinder covers 92% of the field of view and has a magnification of 0.84X. The FM10 was designed as an amateur model and remained on the market into 2015 due to its back-to-basics appeal for traditionalists and students of film photography."
+  },
+  {
+    "make": "nikon",
+    "model": "nikkormat ftn",
+    "aliases": [
+      "ftn",
+      "nikomat ftn"
+    ],
+    "description": "The Nikkormat FTN is a 35mm SLR camera introduced in 1967 by Nippon Kōgaku, and was a successful iteration of the Nikkormat FT series. It is built on the same chassis as the FT but features center-weighted metering instead of whole-frame average metering, a shutter-speed display in the viewfinder, and a simplified lens mounting process. The FTN was produced until 1976 and represents the most common of the FT series Nikkormats. It improved upon its predecessor's user experience by replacing the fully-manual lens indexing with a simpler film speed setting and a \"double twist\" method for attaching the lens, which automatically indexes the aperture. The Nikkormat series was Nikon's budget range, taking F-mount lenses, and the FTN was considered an update rather than a new model."
+  },
+  {
+    "make": "nikon",
+    "model": "f55",
+    "description": "The Nikon F55, known as the N55 in the United States, is an entry-level 35mm film SLR camera first released in 2002. This lightweight, mostly-plastic autofocus camera offers P/S/A/M exposure modes. It provides full autofocus and metering capabilities with G-type lenses, and is compatible with screw-type AF and AF-D lenses, though AF lenses without D default to non-3D matrix metering. It does not support autofocus with AF-S and AF-I lenses, nor does it meter with most manual-focus lenses, except for AI-P lenses. The F55 features a built-in flash with TTL metering, but external flashes do not offer this function. It lacks a depth of field preview button and manual ISO setting, automatically setting non-DX coded film to ISO 100. A notable feature is its reverse film loading mechanism, where the entire roll is spooled onto the take-up reel upon loading and rewound into the canister as photos are taken, preventing accidental exposure of already-shot frames if the camera back is opened. The camera is powered by two CR2 batteries, with date back variations also using a CR2025 coin battery. Production of the F55 ceased in 2006."
+  },
+  {
+    "make": "nikon",
+    "model": "f70",
+    "description": "The Nikon F70, also known as the N70 in the US, is a 35mm SLR camera with autofocus, introduced by Nikon in 1994. It features an electronic shutter with speeds ranging from 1/4000 to 30 seconds, plus a Bulb setting, and offers matrix, center-weighted, and spot metering modes. The camera has a built-in TTL flash and a motorized film transport capable of advancing film at up to 3.7 frames per second in high continuous mode. Its interface is characterized by an unusual design that requires holding buttons on one side while operating a thumb dial on the opposite side, with settings displayed on a circular LCD screen. The F70 is compatible with Nikon F-mount lenses, with full functionality for AF, AF-D, AF-S, and AF-I lenses, and partial compatibility with AI, AI-S, and G lenses."
+  },
+  {
+    "make": "nikon",
+    "model": "af600",
+    "description": "The Nikon AF600, also known as the Lite•Touch AF, is an autofocus, auto-exposure, compact camera for 35mm film, introduced by Nikon in 1993. At the time of its introduction, it was the world's smallest and lightest AF/AE camera. It features a fixed 28mm f/3.5 wide-angle lens, composed of 3 elements in 3 groups, with an aperture range of f/16 to f/3.5 and a focus distance from 0.35m to infinity. The lens has an automatic cover that opens and closes with power cycling. The camera offers a panorama mode, which captures images at 12.3 x 36 mm, and a self-timer with a two-shot mode. It is compatible with DX-encoded films at 100, 200, 400, and 1000 ISO, with non-coded film set to 100 ISO."
+  },
+  {
+    "make": "nikon",
+    "model": "f50",
+    "description": "The Nikon F50, known as the N50 in the United States, is an entry-level 35mm film SLR camera introduced by Nikon in 1994. It features autofocus, Through-the-lens light metering, and various program modes ranging from manual operation to a highly-automated point-and-shoot mode. The F50 body is constructed from polycarbonate and metal, and was available in both \"champagne silver\" and black. A variant, the F50D/N50D, included a date/time-imprinting facility and a panoramic mode. The camera utilizes a Nikon F mount and an electronically controlled vertical-travel focal-plane shutter with speeds from 1/2000 to 30 seconds. It supports ISO 25 to 5000 for DX coded film and ISO 6 to 6400 for non-DX coded films in Advanced mode. The F50 was replaced by the F60/N60 in 1998."
+  },
+  {
+    "make": "nikon",
+    "model": "nikkormat ft",
+    "aliases": [
+      "nikomat ft"
+    ],
+    "description": "The Nikkormat FT, known as the Nikomat FT in Japan, was introduced in 1965. This original Nikkormat body features averaging metering, similar to the Nikon F Photomic T. Its viewfinder does not display the shutter speed, and the meter needle brackets are thin without \"+\" and \"-\" markings. The meter requires manual indexing against the film speed. The FT was later superseded by the FTN."
+  },
+  {
+    "make": "nikon",
+    "model": "28ti",
+    "description": "The Nikon 28Ti is a 135 film autofocus camera released in 1994, distinguished by its 28mm f/2.8 Nikkor lens and titanium body. Its most notable feature is the analog display on the top, which uses four needle-style dials to show focusing distance, aperture, frame number, and exposure correction. This allows users to operate the camera from the waist. The camera features a seven-element blade shutter with speeds ranging from 2 seconds to 1/500 second, which are automatically selected by the exposure modes. The 28Ti was designed as a premium, easy-to-transport offering for photography enthusiasts, though it was discontinued in 1998 due to poor sales."
+  },
+  {
+    "make": "nikon",
+    "model": "f90x",
+    "aliases": [
+      "f90s",
+      "n90s"
+    ],
+    "description": "The Nikon F90X, known as the N90s in the United States, is a 35mm autofocus SLR camera introduced in 1994 and discontinued in 2001. It uses Nikon's F lens mount and was designed for advanced amateur photographers. Key features include a bright viewfinder with 92% coverage, a top LCD display for settings, and an ASA range of 6-6400 with DX-enabled film reading. It offers shutter speeds up to 1/8000 second, various exposure modes including program, aperture-priority, and shutter-priority, and 3D Matrix metering. The F90X is compatible with nearly all Nikkor F-mount lenses and SB series speedlights, and it was also used as the base for the Kodak DCS 400 series of digital SLRs."
+  },
+  {
+    "make": "nikon",
+    "model": "f301",
+    "aliases": [
+      "n2000"
+    ],
+    "description": "The Nikon F-301, introduced in 1985, is a manual focus 35mm SLR camera with motorized film advance and an automatic programmed exposure system controlled by TTL metering. Known as the N2000 in the US market, it was Nikon's first SLR without a film advance lever and featured easy-load, motorized film transport for continuous shooting up to 2.5 fps. It was also the first Nikon camera with DX recognition for film speeds and the first with polycarbonate construction. The F-301 offers shutter speeds from 1 to 1/2000 second, as well as P/PHi and A modes where speeds are electronically controlled. It uses TTL metering for compatible flashes and an electronic shutter release cable. Film rewind is manual, with a lever that also incorporates an ISO selector and exposure compensation dial."
   },
   {
     "make": "nikonos",
@@ -1053,6 +1537,9 @@
   {
     "make": "olympus",
     "model": "af-1",
+    "aliases": [
+      "af-1 super"
+    ],
     "description": "The Olympus AF-1, released in 1986 and also known as the Infinity (US) or “Nurepika” (Japan), is notable for being the world’s first weatherproof, fully automatic 35mm compact camera. Manufactured in Japan, it features a 35mm f/2.8 Zuiko lens with four elements in four groups, autofocus with a ‘focus lock’ option, and fully automatic film loading, advancing, and rewinding. Its built-in automatic flash is powered by a CR-P2 lithium battery and has a recycling time of approximately 1–1.5 seconds. Additional features include a 12-second electronic self-timer, automatic exposure with shutter speeds ranging from 1/30 to 1/750 seconds, and a sliding lens cover for protection. Weighing approximately 225g without battery, the AF-1 stands out for its ease of use, making it popular among both beginners and experienced photographers seeking convenience. Its robust weatherproof design and reliable lens contribute to consistently sharp images with balanced tones, making the Olympus AF-1 a significant model in the history of point-and-shoot film cameras."
   },
   {
@@ -1120,6 +1607,10 @@
   {
     "make": "olympus",
     "model": "om-4",
+    "aliases": [
+      "om-4ti",
+      "om-4t"
+    ],
     "description": "The Olympus OM-4 is a 35mm SLR film camera that was introduced by Olympus in 1983. It is part of the highly regarded OM series of cameras, known for their compact size and excellent build quality. The OM-4 features a full manual exposure control, as well as aperture-priority and program modes. It has a built-in light meter that uses a unique multi-spot system, which allows for precise metering even in challenging lighting conditions. The camera has a rugged metal body with a comfortable grip, making it easy to handle and carry. It also has a bright and clear viewfinder, with a split-image focusing screen and a microprism collar for accurate focusing. The OM-4 is compatible with a wide range of Olympus OM lenses, making it a versatile choice for photographers. Overall, the Olympus OM-4 is a reliable and high-performing camera that is well-suited for both beginners and advanced photographers."
   },
   {
@@ -1171,6 +1662,29 @@
     "make": "olympus",
     "model": "xa4",
     "description": "The Olympus XA4 is a compact 35mm rangefinder camera that was introduced by Olympus in 1985. It is part of the highly regarded XA series of cameras known for their small size and high-quality optics. The XA4 features a fixed 28mm f/3.5 lens, which provides a wide field of view and is great for capturing landscapes and group shots. The camera also has a built-in flash with automatic exposure control, making it convenient for low-light situations. The XA4 has a unique multi-spot metering system that allows you to take precise exposure readings from multiple areas of the frame. It also offers manual focus control and a self-timer function. The camera is compact and lightweight, making it a perfect choice for travel and everyday photography. With its reliable performance and excellent image quality, the Olympus XA4 is a versatile camera that is loved by both beginners and experienced photographers."
+  },
+  {
+    "make": "olympus",
+    "model": "pen ee-3",
+    "description": "The Olympus Pen EE-3 is a half-frame camera produced from 1973 to 1983. It features a flashmatic system, which, when used with a matching GN14 flash, allows the user to obtain a corrected aperture value by manually setting the aperture ring to one of the estimated distances (1-4m)."
+  },
+  {
+    "make": "olympus",
+    "model": "om-20",
+    "aliases": [
+      "om-g"
+    ],
+    "description": "The Olympus OM20, also known as the OM G in some markets, is a 35mm SLR camera released by Olympus in 1983. It is similar to the OM10 but features a built-in manual shutter speed ring around the lens, eliminating the need for a manual adapter. Other advancements include a PC-sync flash connection, backlit shutter speeds and warnings in the viewfinder, built-in manual metering, and a flocked mirror chamber. The OM20 also offers a 'Lumi-Micron Matte' viewscreen, which is marketed as being one f-stop brighter than the previous model. A removable grip is included with the camera to improve handling. It was available in both chrome and black finishes."
+  },
+  {
+    "make": "olympus",
+    "model": "om-30",
+    "description": "The Olympus OM30, also known as the OM F in some markets, was released in 1983 and was Olympus's initial venture into autofocus SLR cameras. It was available in both chrome and black finishes. The camera featured true autofocus capability with a specific 35-70mm AF zoom lens that had a motorized focusing ring powered by three AAA batteries. For other OM-mount lenses, focusing was assisted by an indicator in the viewfinder. The OM30 included focusing aid LEDs in the viewfinder, an F2/F4 switch for the focus system, and an In-Focus trigger cord socket, which allowed for automatic picture taking once focus was achieved. It did not feature a PC flash socket or an exposure compensation warning. The camera was powered by five SR44 batteries, housed in a compartment on the left front side, with a switch to disable the beeper located where the normal battery compartment would be."
+  },
+  {
+    "make": "olympus",
+    "model": "pen fv",
+    "description": "The Olympus Pen FV is a half-frame single lens reflex camera launched in 1967. It is a variant of the Pen FT, produced without a built-in light meter, but retaining the single-stroke film advance lever and self-timer introduced with the FT model. The Pen FV features a bayonet mount for interchangeable lenses and a focal plane shutter that uses a rotating metal disc, offering synchronization at all speeds up to 1/500 second. Its design includes an unusual viewfinder that avoids the traditional SLR prism bulge by employing a sideways-flipping reflex mirror, contributing to its compact size. Approximately 45,000 units of the Pen FV were manufactured, making it the least common of the three Pen F series models."
   },
   {
     "make": "pentax",
@@ -1271,6 +1785,44 @@
     "description": "The Pentax ZXM is a 35mm SLR film camera that was introduced by Pentax in 1998. It is a fully manual camera with a robust build quality, making it suitable for both amateur and professional photographers. The ZXM features a pentaprism viewfinder with a 0.85x magnification, providing a bright and clear view of the scene. It has a shutter speed range from 1/2000 to 30 seconds, allowing for versatile exposure control. The camera also has a built-in light meter, which helps in achieving accurate exposures. With its interchangeable lens system, the ZXM offers a wide range of lens options, allowing photographers to capture various types of images. Overall, the Pentax ZXM is a reliable and versatile film camera that delivers excellent image quality and is a great choice for photographers who prefer manual control."
   },
   {
+    "make": "pentax",
+    "model": "645n",
+    "description": "The Pentax 645N is an autofocus medium format SLR film camera released by Pentax in Japan on December 6, 1997, and introduced in the US in February 1998. It is based on the earlier manual focus Pentax 645 model, inheriting its basic design concept. The 645N was the first medium format autofocus SLR system available, utilizing the Pentax SAFOX IV phase-matching predictive autofocus system. It features automatic film advance with a motor drive and is compatible with Pentax-FA (autofocus) and Pentax-A (manual focus) lenses. The camera is powered by 6x AA batteries."
+  },
+  {
+    "make": "pentax",
+    "model": "me",
+    "description": "The Pentax ME is a 35mm SLR camera produced by Pentax between 1977 and 1979. It was introduced alongside the MX as Pentax's response to the trend of more compact SLR cameras. The ME is known for being among the smallest 24x36mm format SLRs ever made, weighing approximately 460g without a lens. It features an aperture-priority automatic exposure mode with an electronic focal plane shutter, offering speeds from 8 seconds to 1/1000th of a second, and a flash synchronization speed of 1/100th of a second. The camera utilizes a TTL open-aperture, center-weighted exposure meter and has a fixed hot shoe for flash. It uses the Pentax K lens mount and can be fitted with an external winder."
+  },
+  {
+    "make": "pentax",
+    "model": "sp1000",
+    "aliases": [
+      "spotmatic sp1000"
+    ],
+    "description": "The Pentax SP1000 is an entry-level camera that is virtually identical to the original Spotmatic SP, but without a self-timer. It was introduced in 1974 and was not sold in Japan; many units were assembled in Hong Kong. It uses the M42 x1mm lens mount, allowing it to use a wide range of lenses from various manufacturers. The SP1000 was offered with a Super-Takumar or SMC 55mm f/2 lens. Like the SP, it came in black and chrome Asahi, and black and chrome Honeywell variants. The SP1000, along with the SP500, maintained a line of cameras identical to the original Spotmatic as entry-level models."
+  },
+  {
+    "make": "pentax",
+    "model": "645nii",
+    "description": "The Pentax 645NII is a medium format SLR film camera, released in 2001 as a revision of the Pentax 645N. It supports mirror lockup and offers an expanded set of custom function settings for various camera operations. The data imprinting feature has been enhanced to include auto bracketing, AE lock, flash, focus mode, AF mode, AF area, and ISO speed. The ISO setting is now integrated into the exposure compensation dial, rather than a separate ring. It is part of the 4.5x6 format cameras."
+  },
+  {
+    "make": "pentax",
+    "model": "spotmatic f",
+    "description": "The Pentax Spotmatic F is a 35mm SLR camera that was part of the Spotmatic series, known for bringing Through-the-Lens (TTL) metering to a wide audience. This model introduced fully open light metering, a significant improvement over earlier Spotmatics. It uses a focal plane shutter with speeds from 1 to 1/1000 second and an M42 screwmount for lenses. The Spotmatic F features CdS TTL average metering and was available in both black Asahi Pentax and black and chrome Honeywell Pentax versions. It weighs 640g without a lens."
+  },
+  {
+    "make": "pentax",
+    "model": "p30",
+    "description": "The Pentax P30, known as the Pentax P3 in the US, is a 35mm film SLR camera released by Pentax in 1985. It features a plastic body and uses the KA-mount bayonet, allowing for Program mode with KA-mount lenses. It has a classic manual film advance lever and offers program, manual, X, and B exposure modes with shutter speeds from 1 to 1/1000 sec. The camera uses DX Encoding for film speeds from 25 to 1600 ISO and has a center-weighted meter. It is powered by two 1.5v SR44 or LR44 button batteries."
+  },
+  {
+    "make": "pentax",
+    "model": "espio mini",
+    "description": "The Pentax Espio Mini is a pocketable 35mm compact camera with autofocus and a wide-angle prime lens. It was also known as the Pentax UC-1 in the US. It was available in black, champagne, or silver and is one of the more collectible cameras in the Espio range. The camera features a Pentax 32mm, f/3.5 lens and a Pentax phase-matching autofocus system with focus lock. It has a programmed AE electric shutter with speeds from approximately 1/400s to 2 seconds, and a Bulb mode from 1/2 second to 5 minutes. The Espio Mini automatically sets film speed with DX-coded film from ISO 25 to 3200. The UC-1 model includes a date function, while the Espio Mini has a panorama or normal function indicator on its display."
+  },
+  {
     "make": "petri",
     "model": "7s ii",
     "description": "The Petri 7s II is a 35mm film rangefinder camera produced by Petri in the 1960s. It is an upgraded version of the original Petri 7s, featuring a built-in light meter for more accurate exposure control. The camera has a sleek and compact design, making it portable and easy to carry around. It has a fixed 45mm f/2.8 lens, which produces sharp and detailed images. The rangefinder system allows for precise focusing, ensuring that your subjects are always in focus. The Petri 7s II offers both manual and automatic exposure modes, giving you the flexibility to choose the best settings for your shooting conditions. With its reliable performance and user-friendly controls, the Petri 7s II is a great choice for both beginners and experienced photographers."
@@ -1291,6 +1843,11 @@
     "description": "The Polaroid SX-70 is a folding instant film camera that was first introduced in 1972. It is known for its iconic design and innovative features. The camera uses Polaroid's SX-70 integral film, which produces square instant prints. The SX-70 has a manual focus lens with a range from 10.4 inches to infinity, allowing for versatile shooting. It also has an automatic exposure system that adjusts the shutter speed and aperture based on the available light. The camera features a collapsible body, making it compact and portable. It has a built-in electronic flash for low-light conditions and a self-timer for capturing self-portraits. The SX-70 is a classic camera that offers a unique and nostalgic instant photography experience."
   },
   {
+    "make": "polaroid",
+    "model": "600 se",
+    "description": "The Polaroid 600 SE is a professional-grade instant film camera, considered a flagship model in Polaroid's range. It is based on the Mamiya Press and utilizes Mamiya lenses, known for producing crisp images. The 600 SE is fully manual and features interchangeable lenses, with a standard 127mm f/4.7 Mamiya lens, and optional 75mm wide-angle and 150mm portrait lenses. It has variable aperture and shutter settings, a bright-image coincidence type rangefinder for focus, and a sturdy diecast aluminum body. The camera supports removable and exchangeable film backs, including Polaroid 3 ¼ × 4 ¼ instant pack films and, with an adapter, 120 film backs. Its shutter offers speeds from 1/500s to B with X-synch for flash."
+  },
+  {
     "make": "praktica",
     "model": "bms",
     "description": "The Praktica BMS is a 35mm SLR camera produced by Pentacon in East Germany from 1985 to 1989. It is a compact and lightweight camera that is easy to use, making it a popular choice for beginners. The BMS features a metal body and a sturdy construction, ensuring durability and reliability. It has a manual focus system and a built-in light meter, allowing users to accurately adjust the exposure settings. The camera also has a range of shutter speeds from 1s to 1/1000s, providing flexibility in capturing different types of scenes. The BMS is compatible with a wide range of M42 screw-mount lenses, giving photographers a variety of options for different types of photography. Overall, the Praktica BMS is a reliable and affordable SLR camera that is suitable for photographers of all skill levels."
@@ -1304,6 +1861,26 @@
     "make": "praktica",
     "model": "ltl3",
     "description": "The Praktica LTL3 is a manual focus 35mm SLR camera that was produced by the East German manufacturer Pentacon from 1975 to 1984. It is a sturdy and reliable camera that was popular among amateur photographers. The LTL3 features a cloth focal plane shutter with speeds ranging from 1s to 1/1000s, as well as a built-in light meter for easy exposure control. It has a M42 screw mount, which allows for a wide range of interchangeable lenses. The camera also has a self-timer, multiple exposure capability, and a hot shoe for attaching an external flash. With its robust construction and user-friendly features, the Praktica LTL3 is a great choice for anyone looking to explore film photography."
+  },
+  {
+    "make": "praktica",
+    "model": "mtl 5b",
+    "description": "The Praktica MTL 5 B is a 35mm SLR camera manufactured by Pentacon in Dresden, East Germany, between 1985 and 1989. It is an upgrade from the Praktica MTL 5, featuring TTL exposure metering activated by a stop-down button next to the front-mounted shutter release. A match-needle display in the viewfinder indicates exposure. The camera uses a metal-curtained focal plane shutter with speeds from 1s to 1/1000s, plus B, and includes a self-timer. It has a flash synchronization speed of 1/125 second. The MTL 5 B uses interchangeable lenses with the M42 screw mount, commonly found with the Pentacon auto 1.8/50mm multi-coated lens. The viewfinder has a split-prism/microprism focusing aid with a diagonal split. Approximately 567,000 units were produced, and it was also sold as the Revue ML by Foto-Quelle."
+  },
+  {
+    "make": "praktica",
+    "model": "ltl",
+    "description": "The Praktica LTL is an East German 35mm SLR camera manufactured by Pentacon from December 1970 to November 1975. It features interchangeable M42 screw-mount lenses and stop-down TTL metering. The camera has a vertical-travel focal plane shutter with speeds from 1s to 1/1000 + B, and a 10-second self-timer. Its meter is activated by a paddle that also functions as a depth-of-field preview. Focusing is achieved via a Fresnel lens with a central micro-prism spot and ground glass outer collar. The LTL includes a hot shoe for flash and a shutter release lock. It requires a PX625 mercury battery for the meter, but the camera itself is entirely mechanical."
+  },
+  {
+    "make": "praktica",
+    "model": "mtl 3",
+    "description": "The Praktica MTL 3 is an East German SLR camera manufactured by Pentacon between 1978 and 1984. It utilizes the 42mm screw mount and was produced in large quantities. The camera is noted for its solid construction, combining both basic and advanced features. It is equipped with a vertical travel metal curtain shutter, offering speeds from 1 to 1/1000 second, plus a Bulb setting and a dedicated electronic flash sync speed around 1/125 second. The MTL 3 features a through-the-lens metering system integrated into the mirror, which is the only battery-dependent component, using a 1.35v PX 625 mercury cell. A needle in the viewfinder indicates exposure. The standard lens supplied with the camera was typically a multicoated Pentacon 50mm f/1.8 with a 49mm filter thread, featuring an auto/manual switch for aperture control."
+  },
+  {
+    "make": "praktica",
+    "model": "mtl 50",
+    "description": "The Praktica MTL 50 is a 35mm SLR camera produced by KW from 1985 to 1989. It features a 42mm screw mount and shutter speeds ranging from B to 1/1000th of a second. The camera has an ASA range of 12-1600 and includes a self-timer. Its exposure guide uses LEDs and it has a front-mounted shutter release. The MTL 50 also offers a depth of field and aperture preview lever."
   },
   {
     "make": "ricoh",
@@ -1323,17 +1900,33 @@
   {
     "make": "ricoh",
     "model": "gr1s",
+    "aliases": [
+      "gr1"
+    ],
     "description": "The Ricoh GR1s is a compact film camera that was introduced in 2001 as an upgraded version of the original GR1. It is known for its exceptional image quality and compact size, making it a popular choice among street photographers. The camera features a 28mm f/2.8 lens, which is renowned for its sharpness and wide-angle perspective. It has a built-in flash and a variety of shooting modes, including aperture priority and manual exposure. The GR1s also has a highly accurate autofocus system, allowing for quick and precise focusing. With its sturdy build and sleek design, the Ricoh GR1s is a reliable and stylish camera for film enthusiasts."
   },
   {
     "make": "ricoh",
     "model": "kr-5 super ii",
+    "aliases": [
+      "kr-5 super"
+    ],
     "description": "The Ricoh KR-5 Super II is a 35mm film SLR camera that was introduced by Ricoh in 1982. It is an upgraded version of the original KR-5 Super, featuring a few improvements and added features. The camera has a rugged and durable construction, with a metal body and a comfortable grip. It is compatible with a wide range of Pentax K-mount lenses, allowing users to choose from a variety of focal lengths and apertures. The KR-5 Super II offers manual exposure control, with a built-in light meter that provides accurate exposure readings. It also has a built-in self-timer and a hot shoe for attaching an external flash. The camera uses a mechanical shutter, which can operate at speeds ranging from 1/1000 to 1 second, as well as a bulb mode for long exposures. Overall, the Ricoh KR-5 Super II is a reliable and versatile camera that is suitable for both beginners and experienced photographers."
   },
   {
     "make": "ricoh",
     "model": "xr-2",
     "description": "The Ricoh XR-2 is a 35mm single-lens reflex (SLR) camera introduced in 1977 as one of Ricoh’s first models to feature the K-mount lens bayonet, significantly expanding lens compatibility. Designed for both manual and aperture-priority autoexposure, it is equipped with an electronically-timed Copal shutter offering speeds from 1/1000 to 4 seconds plus Bulb (B), and X-sync for flash at 1/125 second. The camera’s front window displays the aperture setting above the viewfinder, and the film wind lever must be pulled out to activate the metering circuit, helping prevent accidental battery drain. Powered by two 1.5V LR44 or SR44 batteries, it allows only limited speeds (1/90 second and B) when batteries are depleted. Features include a viewfinder exposure indicator activated by a half-press of the shutter, battery check via a collar twist around the release, and controls for multiple exposures and an eyepiece blind. The XR-2s model released in 1979 adds compatibility with a power winder, a slightly altered material composition, and additional lockout for multiple exposure functionality."
+  },
+  {
+    "make": "ricoh",
+    "model": "500 g",
+    "description": "The Ricoh 500 G is a compact coupled rangefinder camera introduced by Ricoh in 1972. It features a fixed-mount Rikenon 40mm f/2.8 lens and offers both automatic shutter priority exposure and fully manual control. The camera's mechanical shutter provides speeds from B to 1/500 second. A projected viewfinder needle pointer indicates the aperture setting. It has a focusing range from 0.9m to infinity and an aperture range of f/2.8 to f/16. The 500 G includes a hot shoe and PC sync for flash. It was also sold as the Sears 35|RF."
+  },
+  {
+    "make": "ricoh",
+    "model": "ricohflex",
+    "description": "The Ricohflex refers to a series of Twin Lens Reflex (TLR) cameras manufactured by the Riken Research Institute, also known as Ricoh. This line encompasses several distinct camera models, including the original Ricohflex, the pre-war Ricohflex B, and the Ricohflex (geared lens) series. Additionally, the Ricohflex name was used for cameras featuring lensboard focusing, such as the Ricohflex Dia, Ricohflex Dia M, Ricohflex New Dia, Ricohflex New Dia 2, and Ricohflex Dia L (which is also known as the Ricoh Diacord L). The Ricohflex VI is another model within the geared lens series. The Ricohflex series is known for its range of TLR cameras produced by Ricoh."
   },
   {
     "make": "rollei",
@@ -1378,6 +1971,9 @@
   {
     "make": "rollei",
     "model": "rolleicord v",
+    "aliases": [
+      "rolleicord vb"
+    ],
     "description": "The Rolleicord V is a medium format twin-lens reflex camera produced by Franke & Heidecke from 1954 to 1976. It is a simplified version of the renowned Rolleiflex TLR cameras, designed to be more affordable and accessible to amateur photographers. The camera features a sturdy metal body with a leatherette covering, a waist-level viewfinder, and a built-in light meter. It uses 120 roll film, producing square 6x6 cm negatives. The Rolleicord V is equipped with a Schneider Kreuznach Xenar lens, known for its sharpness and excellent image quality. It has a fixed focal length of 75mm and a maximum aperture of f/3.5. The camera offers a wide range of shutter speeds from 1 to 1/500 seconds, allowing for versatile shooting in various lighting conditions. With its reliable build and simple operation, the Rolleicord V is a popular choice among vintage camera enthusiasts and photographers looking to explore the world of medium format photography."
   },
   {
@@ -1421,6 +2017,36 @@
     "description": "The Rollei SLE35E is a compact and lightweight 35mm film camera that was introduced by Rollei in the 1970s. It features a sleek and modern design, with a metal body and a built-in light meter. The camera is equipped with a high-quality 40mm f/2.8 Tessar lens, known for its sharpness and clarity. It offers both automatic and manual exposure modes, allowing photographers to have full control over their shots. The SLE35E also has a range of shutter speeds from 1/8 to 1/500 second, as well as a bulb mode for long exposures. This camera is perfect for street photography, travel, and everyday shooting."
   },
   {
+    "make": "rollei",
+    "model": "rolleiflex 2.8e",
+    "description": "The Rolleiflex 2.8E, model K7E, was produced from 1956 to 1959, with approximately 44,000 units made. This model is similar to its predecessor but introduced an uncoupled selenium cell exposure meter, which could be adjusted on the focusing knob. The 2.8E could be purchased with or without this meter."
+  },
+  {
+    "make": "rollei",
+    "model": "35 se",
+    "description": "The Rollei 35 SE is a compact 35mm film camera produced in Singapore from 1979 to 1981. It is similar to the Rollei 35 TE but features a high-end Carl Zeiss Sonnar 1:2.8 f=40mm lens, which was made by Rollei under license and is HFT coated. The camera includes a coupled CdS photo element light meter with exposure information displayed via three LEDs in the viewfinder: two red for over/under exposure warnings and one green for correct exposure. It uses a PX27 mercury battery and has a film sensitivity range of 25 to 1600 ASA. The Rollei 35 SE was available in black, chrome, or aluminum finishes and weighs 335 grams, or 310 grams with aluminum covers."
+  },
+  {
+    "make": "rollei",
+    "model": "rolleiflex 3.5b",
+    "description": "The Rolleiflex 3.5 B (type K4B) is a twin-lens reflex camera produced by Franke & Heidecke from 1954 to 1956, with approximately 94,000 units manufactured. It features a Synchro-Compur MX CR00 leaf shutter with speeds from 1 to 1/500 sec. and B, and a Heidosmat 1:2.8 f=75mm coated viewing lens. This model introduced an Exposure Value Scale (EVS) for exposure adjustments and a switch to overrule the Double Exposure Prevention. It also includes a memo disc on the focus knob and allows for the use of a Rolleifix tripod attachment. The camera weighs 980 grams and has dimensions of 99 x 96 x 146 mm."
+  },
+  {
+    "make": "rollei",
+    "model": "rolleiflex 2.8c",
+    "description": "The Rolleiflex 2.8C, model K7C, is a twin-lens reflex camera released by Rollei at the end of 1952, with production continuing until 1955, totaling approximately 30,150 units. Early versions of this camera were equipped with a Schneider Xenotar 2.8/80mm taking lens, while later models from 1954 onwards also offered a Zeiss Planar 2.8/80mm lens. A notable feature of the 2.8C is the ability to disable the double exposure prevention mechanism. It utilizes a Synchro-Compur MXV CR0 leaf shutter, providing speeds from 1 to 1/500 second and B. The camera weighs 1140 grams and accepts 120 film."
+  },
+  {
+    "make": "rollei",
+    "model": "rolleiflex 2.8d",
+    "description": "The Rolleiflex 2.8D, model K7D, was produced from 1955 to 1956, with approximately 20,100 units made. It is similar to the previous model, utilizing the same Schneider Xenotar 2.8/80mm and Zeiss Planar 2.8/80mm taking lenses. A notable feature of this model is the incorporation of the EV system for aperture and shutter exposure settings, with EV numbers (3 to 18 EV) displayed on the shutter speed dial knob. It includes an arrow indicator that can be coupled to the aperture dial, and uncoupled by pressing a button on top of the aperture dial. The shutter release lock guard also received a larger, redesigned form."
+  },
+  {
+    "make": "rollei",
+    "model": "rolleiflex t",
+    "description": "The Rolleiflex T is a medium format Twin Lens Reflex (TLR) camera manufactured by Franke & Heidecke and later by Rollei, first introduced in 1958. It was designed to fill a price gap between the Rolleicord and the Rolleiflex. To reduce costs, it abandoned the automatic film start sense mechanism in favor of a start marker alongside the film gate, and its front mechanisms were simplified. The camera uses 120 type rollfilm for 12 exposures of 6x6 cm, and can be adapted for 16 images of 4x4 or 4x5.5cm with a special mask set. It features a Carl Zeiss Oberkochen Tessar 1:3.5 f=75mm taking lens and a Synchro-Compur leaf shutter with speeds from 1 to 1/500 sec."
+  },
+  {
     "make": "samsung",
     "model": "ecx 1",
     "description": "The Samsing ECX 1 is a compact auto focus point and shoot 35mm film camera designed by Porsche Design and introduced by Samsung in 1994. It features a 38 to 140mm zoom lens at f/3.8 to f/10.5 with 11 elements in 9 groups. When zooming the large LCD displays the focal length from 38 to 140mm. It has a double self-timer function that takes another picture 2 seconds after the first shot. It also offers the option to focus manually."
@@ -1434,6 +2060,11 @@
     "make": "topcon",
     "model": "super dm",
     "description": "The Topcon Super DM is a 35mm single-lens reflex (SLR) camera manufactured by Tokyo Kogaku and introduced in 1972. It features a robust, all-metal body with interchangeable viewfinders and focusing screens, catering to professional photographers. The camera uses the Exakta bayonet lens mount and offers through-the-lens (TTL) full-aperture metering with a CdS cell. Shutter speeds range from 1 to 1/1000 second plus bulb, utilizing a vertical-travel, metal focal-plane shutter. The Super DM is notable for its motor drive capability and interchangeable backs, making it suitable for demanding photographic applications. It requires a 1.35V mercury battery to power the metering system."
+  },
+  {
+    "make": "topcon",
+    "model": "re super",
+    "description": "The Topcon RE Super is a 35mm SLR camera manufactured by Tokyo Optical Company, launched in 1963 and produced until 1971. It is historically significant for being the first SLR with a through-the-lens (TTL) metering system, utilizing CdS photocells located behind a specially silvered reflex mirror. The camera features a focal plane shutter with speeds from 1 to 1/1000 second plus bulb, and an instant-return mirror. It uses the Exakta lens mount and offers interchangeable reflex finder heads and focusing screens. The RE Super requires a mercury battery for its whole-scene averaging meter, which has a sensitivity of 2 to 16 EV and supports film speeds from 25 to 1600 ASA."
   },
   {
     "make": "toyo",
@@ -1524,6 +2155,11 @@
     "description": "The Voigtländer Vitessa is a compact and stylish 35mm rangefinder camera that was produced by the German manufacturer Voigtländer in the 1950s. It features a unique folding design that allows it to be easily carried in a pocket or bag. The camera is equipped with a high-quality Voigtländer Ultron lens, which produces sharp and detailed images. The Vitessa also has a built-in light meter, making it easy to determine the correct exposure settings. It has a fast and accurate rangefinder mechanism, allowing for precise focusing. The camera has a sturdy construction and a smooth operation, making it a reliable choice for both amateur and professional photographers."
   },
   {
+    "make": "voigtländer",
+    "model": "bessa r",
+    "description": "The Voigtländer Bessa R is a 35mm rangefinder camera that was introduced in 2000, manufactured in Japan by Cosina as a revival of the Voigtländer brand name. It features a Leica screw mount and a parallax-corrected bright-frame finder with manually selectable frame lines for 75mm, 50mm, and paired 35mm & 90mm lens focal lengths. The camera has a vertically-traveling metal focal plane shutter with speeds ranging from 1 to 1/2000s and bulb (B), with flash sync at 1/125s via hot-shoe or PC terminal. It includes TTL exposure metering and manual exposure. The body's top housing, baseplate, and film door are made of polycarbonate plastics. The Bessa R was available in black or silver, and later in navy blue or olive."
+  },
+  {
     "make": "wista",
     "model": "45",
     "description": "The Wista 45 series consists of metal-bodied, folding-bed technical cameras designed for 4x5-inch large format photography and manufactured in Japan since 1972. They feature double extension bellows that allow for a wide range of camera movements and accommodate lenses from 65 mm to 300 mm with the standard bellows. The modular design supports various accessories, such as extension beds, interchangeable bellows, and an optional 5x7-inch back. There are three main models: the 45VX (base model with geared front rise and multiple movement options), the 45SP (similar to the VX but with an additional geared micro-swing on the rear standard), and the 45RF (features a coupled rangefinder, Albada viewfinder, and lens coupling cams for select focal lengths). All models have a revolving back, use Linhof-type lens panels and international film holders, and include a mechanism to stop down the lens when a film holder is inserted. Each camera weighs approximately 3 kg and is finished in black."
@@ -1554,6 +2190,10 @@
   {
     "make": "yashica",
     "model": "fx-3 super 2000",
+    "aliases": [
+      "fx-2000 super",
+      "fx super 2000"
+    ],
     "description": "The Yashica FX-3 Super 2000 is a 35mm manual-focus single-lens reflex (SLR) film camera released in 1986 and produced until 2002. Manufactured by Cosina, it features a vertical metal-bladed focal plane shutter with speeds ranging from 1 second to 1/2000 second, and has a built-in, battery-powered light meter with a three-LED viewfinder display. The camera body weighs approximately 450 grams (one pound) and is compatible with all manual-focus Yashica/Contax bayonet-mount lenses, including the renowned Carl Zeiss T* lenses. The FX-3 Super 2000 improved upon earlier FX-3 models by including a handgrip, a flash-ready indicator in the viewfinder, a relocated meter switch integrated with the shutter release, a wider ISO range from 25-3200, and a faster maximum shutter speed. Metering operation requires two LR44 (or equivalent 1.5V) batteries, but otherwise, the camera is fully mechanical and can operate without batteries if the meter is not needed. Due to its extended production run, the camera is widely available and remains a popular option for both collectors and those learning manual film photography."
   },
   {
@@ -1570,6 +2210,58 @@
     "make": "yashica",
     "model": "t5",
     "description": "The Yashica T5 is a compact 35mm film camera known for its exceptional image quality and ease of use. It features a high-quality Carl Zeiss T* Tessar 35mm f/3.5 lens, which delivers sharp and detailed images with excellent contrast. The camera has a fully automatic exposure system, making it suitable for both beginners and experienced photographers. It also offers a built-in flash with red-eye reduction and multiple shooting modes, including a self-timer and a continuous shooting mode. The Yashica T5 has a sleek and stylish design, with a durable metal body and a comfortable grip. It is powered by a single CR123A battery, which provides long-lasting performance. Overall, the Yashica T5 is a reliable and versatile camera that delivers impressive results."
+  },
+  {
+    "make": "yashica",
+    "model": "d",
+    "aliases": [
+      "yashica-d"
+    ],
+    "description": "The Yashica-D is a twin-lens reflex (TLR) camera that is part of Yashica's knob-wind series of 6x6cm cameras. This model is considered to have more advanced shutters and controls compared to many other knob-wind Yashica TLRs, which often feature more basic shutters and lenses. The Yashica-D, along with the Yashica 635, holds a more intermediate place in the lineup, offering features comparable to some Rolleicord models. All knob-wind Yashica TLRs, including the D, feature front-standard focusing operated by a wheel on the side of the body."
+  },
+  {
+    "make": "yashica",
+    "model": "mat-124",
+    "description": "The Yashica Mat-124 is a twin-lens reflex camera produced by Yashica until 1970. It maintains many characteristics of the Yashica-24 and Yashica-12, but uniquely allows selection between 12 and 24 exposures by adjusting the film-pressure plate. This model features a four-element, 80mm f/3.5 Yashinon taking lens and a Copal SV shutter with speeds from 1 to 1/500 second, plus Bulb mode. It includes a self-timer and flash sync for both electronic X and bulb M modes. Focusing is achieved via a ground glass screen with a 3x diopter loupe and a sports finder. The Mat-124 also has a coupled match-needle exposure meter."
+  },
+  {
+    "make": "yashica",
+    "model": "a",
+    "aliases": [
+      "yashica-a"
+    ],
+    "description": "The Yashica-A is a 6x6cm twin-lens reflex (TLR) camera that uses 120 roll film. It is one of the knob-wind models in Yashica's line of TLR cameras, which were produced as a budget option compared to their crank-advance counterparts. The Yashica-A typically features a basic shutter with a maximum speed of 1/300s, and it does not include a built-in light meter or thumbwheels. It utilizes front-standard focusing, operated by a wheel on the side of the camera body. This model is known for its simplicity and is considered a basic TLR."
+  },
+  {
+    "make": "yashica",
+    "model": "mat",
+    "aliases": [
+      "yashica-mat"
+    ],
+    "description": "The Yashica-Mat is a 6x6 twin-lens reflex (TLR) camera released by Yashica in 1957. It was the first Yashica TLR to feature crank advance, distinguishing it from earlier models that used knob advance. The camera was branded \"Yashica Mat\" to indicate its automatic film advance, in contrast to simpler cameras that relied on a red window. Early models were equipped with a 75mm f/3.5 Lumaxar taking lens and a 75mm f/3.2 Lumaxar viewing lens, which were later succeeded by 80mm lenses with the same specifications. The Lumaxar lens, a four-element Tessar-type design, was subsequently renamed Yashinon. The Yashica-Mat utilized either a Copal MX or Copal MXV shutter, offering speeds from 1 second to 1/500 second. Shutter speeds and aperture settings are adjusted via wheels on the front plate, with the cable release employing a \"Leica nipple\" style."
+  },
+  {
+    "make": "yashica",
+    "model": "c",
+    "aliases": [
+      "yashica-c"
+    ],
+    "description": "The Yashica-C is a 6x6cm twin-lens reflex (TLR) camera that is part of Yashica's knob-wind series of cameras. These models were designed as a budget line, retaining many features of the earliest Yashica models. The Yashica-C, like most knob-wind models, features a basic shutter with a maximum speed of 1/300s, lacks a thumbwheel and a built-in meter, and uses fairly basic Tessar lenses. It utilizes front-standard focusing, operated by a wheel on the side of the camera body."
+  },
+  {
+    "make": "yashica",
+    "model": "t3",
+    "description": "The Yashica T3, also known as the Kyocera T Scope, is a 35mm compact camera from Kyocera. It features autofocus, auto-exposure, and an integrated flash. This model is equipped with a Carl Zeiss T* (coated) 35mm f/2.8 lens, which is faster than other lenses in the T series. A notable feature is its viewing window, or \"New Angle Scope,\" located on the top of the camera body, allowing for waist-level viewing."
+  },
+  {
+    "make": "yashica",
+    "model": "fx-1",
+    "description": "The Yashica FX-1 is a 35mm film, mechanically operated, single-lens reflex camera introduced in 1975. It was the first Yashica SLR to feature the Contax/Yashica common bayonet mount, allowing it to use both Yashica and Contax/Carl Zeiss T* lenses. This camera has a horizontal traveling electronic focal plane cloth shutter, offering speeds from 2 seconds to 1/1000 second in auto mode, and 1 second to 1/1000 second plus Bulb in manual mode. It incorporates a CdS light meter powered by a 6V PX28 battery, with a sensitivity range of 0 to 18 EV and an ASA range of 12 to 3200. The viewfinder includes a micro prism spot for focusing, a match needle shutter display, and an aperture display. The film advance lever supports multiple smaller strokes."
+  },
+  {
+    "make": "yashica",
+    "model": "lm",
+    "description": "The Yashica-Mat LM is a twin-lens reflex camera introduced by Yashica in 1958. The \"LM\" in its name signifies \"Light Meter,\" referring to the uncoupled selenium cell light meter positioned in front of the viewfinder, which does not require a battery. This camera is entirely mechanical and is noted for its robust construction and ease of use. It utilizes 120 roll film to produce 6x6 cm images. The Yashica-Mat LM features an 80mm f/3.5 Yashinon taking lens and a Copal shutter offering speeds from 1 second to 1/500 second, plus Bulb mode, with flash synchronization at all speeds. The viewing lens is a 3.2 Yashinon. Both lenses accept Bayonet I filters. The camera has a metal body covered in black leather, weighs approximately 1.2 kg, and uses a crank for film advance and shutter cocking. The focusing screen includes a Fresnel lens with a red grid and a magnifying loupe for precise focusing."
   },
   {
     "make": "zeiss ikon",
@@ -1607,8 +2299,16 @@
     "description": "The Zeiss Ikon ZM is a high-quality 35mm rangefinder camera that was introduced by Zeiss Ikon in 2004. It is designed for photographers who appreciate the precision and craftsmanship of traditional film cameras. The ZM features a durable metal body with a classic design, reminiscent of the iconic Leica M cameras. It is compatible with Leica M-mount lenses, allowing photographers to take advantage of the excellent optics available in the Leica lens lineup. The camera has a bright and clear viewfinder with a built-in rangefinder for accurate focusing. It offers manual exposure control, allowing photographers to have full creative control over their images. The ZM also has a built-in light meter for convenient exposure metering. Overall, the Zeiss Ikon ZM is a reliable and versatile camera that combines the best of traditional craftsmanship with modern functionality."
   },
   {
+    "make": "zeiss ikon",
+    "model": "super ikonta 532/16",
+    "description": "The Super Ikonta 532/16 is a folding camera produced by the German company Zeiss Ikon from 1937 to 1955. It is part of the Ikonta line and takes 11 6x6 cm images on 120 type rollfilm. This model was an upgrade from its predecessor, the Super Ikonta 530/16, and was designed to resolve frame overlapping issues. It features a coupled rangefinder, with the rangefinder and viewfinder windows combined. The 532/16 was generally sold as the Super Ikonta I 6x6 cm or Super Ikonta I 2 1/4 x 2 1/4. It came equipped with an 8cm f2.8 Tessar lens in a Compur-Rapid shutter and included an automatic film stop and frame counting mechanism. Post-war models could also feature a Synchro-Compur shutter with X-synchronization and M-synchronization, and had a self-timer. The camera also included double exposure prevention and an accessory shoe for items like the Contameter and Albada finder."
+  },
+  {
     "make": "zenit",
     "model": "12",
+    "aliases": [
+      "12xp"
+    ],
     "description": "The Zenit 12 is a 35mm single-lens reflex (SLR) camera produced by KMZ in Russia from 1983 to 1994. It is an improved version of the earlier Zenit TTL, featuring updates for greater reliability and construction quality. The Zenit 12SD variant includes a restyled shutter speed dial, with later 12SD models featuring a redesigned top plate and pentaprism housing. The Zenit 12XP is closely related to the 12SD, but replaces the traditional meter needle with LED exposure indicators in the viewfinder. Additionally, a version of the Zenit 12XP was manufactured in Brazil by BMA INDÚSTRIA E COMÉRCIO LTDA. All models in the Zenit 12 series are known for their mechanical simplicity and use of the M42 lens mount."
   },
   {
@@ -1630,5 +2330,63 @@
     "make": "zorki",
     "model": "4",
     "description": "The Zorki 4 is a popular 35mm rangefinder camera that was introduced by Zorki in 1956. It is a fully manual camera, and does not have a lightmeter. An additional lightmeter may be added by the cold shoe. The early bodies have a vulcanite body covering, engraved shutter speeds, and strap lugs. As with other Soviet-era rangefinders, the shutter speed selector rotates when the shutter is released, and should not be changed until after the shutter has been cocked."
+  },
+  {
+    "make": "plaubel",
+    "model": "makina 67",
+    "description": "The Plaubel Makina 67 is a 6x7 strut folding camera with a coupled rangefinder, released in March 1979. It was developed by Plaubel after the company was acquired by the Japanese company Doi in 1975. The camera features a lens designed by Nikon and its exterior design was influenced by professor Udo M. Geissler and lead designer Yasuo Uchida. It has a Nikkor 80mm f/2.8 lens."
+  },
+  {
+    "make": "pentacon",
+    "model": "six",
+    "aliases": [
+      "six tl"
+    ],
+    "description": "The Pentacon Six mount, also known as P6 or Б in Cyrillic, is a medium format lens mount that was likely introduced by KW in collaboration with Carl Zeiss Jena. It is characterized by an external bayonet coupling. This mount is utilized across a variety of cameras, including the Praktisix, Pentacon Six, Exakta 66, Kiev 6C, Kiev 60, Kiev 88CM, Hartblei, and Arax. Lenses for this mount were produced by manufacturers such as Schneider in West Germany, Carl Zeiss Jena in East Germany, and the Arsenal factory in Kiev, Ukraine. The Arsenal factory continues to produce lenses for this mount, with its Arsat 30mm fisheye being particularly recognized for its quality. Hartblei in the Czech Republic and Arax in Ukraine also update and refine these lenses, notably producing a range of tilt-shift lenses with independently rotatable tilt and shift axes."
+  },
+  {
+    "make": "tachihara",
+    "model": "4x5",
+    "description": "The Tachihara 4x5 is a traditional field camera produced by Tachihara Camera Works, a Japanese manufacturer based in Kita-ku, Tokyo, until at least 2013. These cameras are known for their moderate price and high quality, offering extensive lens board and image plane movements. They were available in various sizes, including 4x5, and came in cherry wood finishes (natural or 'rose-mahogany' varnished) or black-painted, with brass fittings in gold-color or chrome. Models included double- and triple-extension options, as well as a 'super-wide' version with short extension and bellows. The most common model, the Fiel Stand 45, sometimes featured a rear-focus mechanism, allowing the rear standard to move forward for close-up focusing or to accommodate wide-angle lenses without the bed appearing in the view. Tachihara cameras were also sold by Zone VI."
+  },
+  {
+    "make": "gowland",
+    "model": "gowlandflex",
+    "description": "The Gowlandflex is a large-format twin-lens reflex (TLR) camera, most notably the 4x5 Glamour Camera, designed by California photographer Peter Gowland. Gowland, known for his glamour and celebrity photography, created the Gowlandflex to combine the mobility and continuous viewing of 6x6cm TLRs with the 4x5-inch negative format preferred for magazine-cover and pinup work. Constructed in Gowland's home workshop from lightweight aluminum, the 8-pound camera was designed to be handheld. Later models incorporated a ramp-shaped cam to correct parallax error by raising and lowering the viewing lensboard. Gowland claimed to have sold 1,500 cameras across his designs, with 600 being the popular 4x5 TLR model. Other variants included an 8x10 version and a Wide Angle Gowlandflex."
+  },
+  {
+    "make": "nishika",
+    "model": "n8000",
+    "description": "The Nishika 3-D N8000 is a variant of the Nimslo 3D, manufactured by the USA company Nishika in 1989. This camera is equipped with four 30mm lenses, designed to produce negatives on 35mm film. These negatives are intended for creating autostereoscopic prints."
+  },
+  {
+    "make": "seagull",
+    "model": "4a",
+    "description": "The Seagull 4A is a 6x6 TLR camera for 120 roll film, manufactured in Shanghai, China, by the Shanghai Camera Factory. Introduced in the late 1960s as a complement to the 1964 Seagull 4, it is known to have been in production for at least 40 years. This camera features a right-hand wind-on crank with an automatic frame counter and is considered a Rolleiflex copy, though it has 34mm filter threads. It includes a fixed finder hood with a built-in action finder and a critical focusing magnifier. The taking optic is a HAIOU-31 SA 1:3.5/75 coated lens, while the finder optic is a nameless 1:2.8/75 lens. A depth-of-field scale is integrated into the focusing knob. The five-bladed, fully synchronized leaf shutter offers speeds from B to 1/300 second. The camera also includes a PC sync contact, a threaded release button, and a self-timer lever."
+  },
+  {
+    "make": "widelux",
+    "model": "f7",
+    "description": "The Widelux F7 is a swing-lens panorama camera manufactured by Panon Camera Shoko in Tokyo between 1979 and 1988. It is part of the Widelux F-series, which uses 35mm film and provides a horizontal coverage of approximately 126° and a vertical coverage of 55°, resulting in a 24 x 59mm image size. The camera operates on a principle where a lens swivels through a horizontal arc, projecting an image onto a cylindrical film gate. This design is similar to other panoramic cameras like the Noblex and Horizont. The Widelux F7 is known for producing characteristic banding in images due to uneven movement of the lens turret, often caused by dust and grime in the gears. Approximately 20,000 total 35mm Widelux cameras were produced across all F-series models."
+  },
+  {
+    "make": "revue",
+    "model": "ml",
+    "description": "The Revue ML is a 35mm SLR camera, also known as the Praktica MTL 5 B, manufactured by Pentacon in Dresden, East Germany, between 1985 and 1989. It features TTL exposure metering, activated by a stop-down button, with a match-needle display in the viewfinder indicating exposure levels. The camera's meter is powered by a battery, which was a PX25 mercury battery in early models and an LR44 alkaline battery in later versions, though metering is optional. Film speed is set via the shutter speed dial. It is equipped with a metal-curtained focal plane shutter offering speeds from 1s to 1/1000s, plus Bulb mode, and includes a self-timer. Flash synchronization is available at 1/125 second. The Revue ML uses interchangeable M42 screw mount lenses, commonly found with the Meyer-designed Pentacon auto 1.8/50mm multi-coated lens. The viewfinder incorporates a split-prism/microprism focusing aid with a diagonal split."
+  },
+  {
+    "make": "agfa",
+    "model": "isolette iii",
+    "description": "The Agfa Isolette III is a compact horizontal-folding camera produced by Agfa Kamerawerk AG from 1952 to 1958. It is notable for being the best-specified Isolette model, featuring an uncoupled rangefinder operated by a thumb-wheel. The camera uses 120 film for twelve 6x6 cm pictures and has front-element focusing. It was equipped with either an 85mm f/4.5 Apotar lens with a Pronto or Prontor SV/SVS shutter, or an 85mm f/4.5 Solinar lens with a Synchro-Compur shutter, or a 75mm f/3.5 Solinar lens with a Prontor SVS or Synchro-Compur (MX/MXV) shutter. Some later models included a film reminder dial. It was also sold in the USA as the Ansco Speedex Special R."
+  },
+  {
+    "make": "sinar",
+    "model": "p",
+    "description": "The Sinar P is a 4x5 monorail view camera introduced in 1970 by Sinar. It is part of the Sinar camera line, which began with the original Sinar model, patented in 1947. Carl Hans Koch launched the fully modular Sinar system in 1948."
+  },
+  {
+    "make": "smena",
+    "model": "8m",
+    "description": "The LOMO Smena 8m is an entry-level 35mm camera from the 1970s Soviet Union. It is a fully manual camera with a plastic body. The Smena 8m features a 40mm f/4 T-43 Triplet coated glass lens, which provides contrast and saturation. It has a leaf shutter and a PC sync socket, allowing for flash synchronization at any shutter speed. Focus is set by estimating the distance to the subject and adjusting the lens accordingly. The shutter release requires manual cocking before each shot. The Smena 8m is known for being one of the most produced 35mm film cameras, with over 21 million units produced between 1963 and 1995, including its predecessor, the Smena 8."
   }
 ]
