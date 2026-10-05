@@ -30,8 +30,12 @@ export default function CatalogDetail({
   kind,
   entry,
   facts,
-  related,
+  related = [],
   fixed,
+  title,
+  titleLink,
+  relatedTitle,
+  relatedLinks,
   initialPage,
   initialFilters,
   initialColumns,
@@ -54,6 +58,13 @@ export default function CatalogDetail({
   };
 
   const description = entry.description?.trim();
+  const heading = title ?? catalogName(entry);
+  const links =
+    relatedLinks ??
+    related.map((other) => ({
+      href: catalogHref(kind, other),
+      label: catalogName(other),
+    }));
 
   useEffect(() => {
     const element = descriptionRef.current;
@@ -71,7 +82,20 @@ export default function CatalogDetail({
       <Header compact />
       <div className={styles.margin}>
         <div className={styles.intro}>
-          <h1 className={styles.title}>{catalogName(entry)}</h1>
+          {titleLink ? (
+            <div className={styles.titleRow}>
+              <h1 className={styles.title}>{heading}</h1>
+              <Link
+                href={titleLink.href}
+                prefetch={false}
+                className={styles.titleLink}
+              >
+                {titleLink.label}
+              </Link>
+            </div>
+          ) : (
+            <h1 className={styles.title}>{heading}</h1>
+          )}
           <ul className={styles.facts}>
             {facts.map((fact) => {
               const Icon = factIcons[fact.icon];
@@ -103,20 +127,20 @@ export default function CatalogDetail({
             </div>
           )}
         </div>
-        {related.length > 0 && (
+        {links.length > 0 && (
           <section className={styles.related}>
             <h2 className={styles.relatedTitle}>
-              more from {entry.make.toUpperCase()}
+              {relatedTitle ?? `more from ${entry.make.toUpperCase()}`}
             </h2>
             <div className={styles.relatedLinks}>
-              {related.map((other) => (
+              {links.map((link) => (
                 <Link
-                  key={other.slug}
-                  href={catalogHref(kind, other)}
+                  key={link.href}
+                  href={link.href}
                   prefetch={false}
                   className={styles.relatedLink}
                 >
-                  {catalogName(other)}
+                  {link.label}
                 </Link>
               ))}
             </div>

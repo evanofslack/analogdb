@@ -24,6 +24,23 @@
   color: var(--adb-heading);
 }
 
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 1rem;
+}
+
+.titleLink {
+  font-size: 0.9rem;
+  color: var(--adb-muted);
+  text-decoration: underline;
+}
+
+.titleLink:hover {
+  color: var(--adb-heading);
+}
+
 .facts {
   display: flex;
   flex-wrap: wrap;
