@@ -4,7 +4,7 @@ import { catalogHref, catalogName } from "@lib/catalog";
 import { TextInput } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
 import { useState } from "react";
-import CatalogCard from "./catalogCard";
+import CatalogGrid from "./catalogGrid";
 import styles from "./catalogIndex.module.css";
 import Footer from "./footer";
 import Header from "./header";
@@ -56,21 +56,21 @@ export default function CatalogIndex({
         {shown.length === 0 && (
           <h3 className={styles.empty}>nothing matches :(</h3>
         )}
-        {shown.map((group) => (
-          <section key={group.label} className={styles.group}>
-            <h2 className={styles.groupTitle}>{group.label}</h2>
-            <div className={styles.grid}>
-              {group.entries.map((entry) => (
-                <CatalogCard
-                  key={entry.slug}
-                  entry={entry}
-                  href={catalogHref(kind, entry)}
-                  priority={index++ < priorityCount}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
+        {shown.map((group) => {
+          const offset = index;
+          index += group.entries.length;
+          return (
+            <section key={group.label} className={styles.group}>
+              <h2 className={styles.groupTitle}>{group.label}</h2>
+              <CatalogGrid
+                entries={group.entries}
+                hrefFor={(entry) => catalogHref(kind, entry)}
+                priorityCount={priorityCount}
+                offset={offset}
+              />
+            </section>
+          );
+        })}
         <ScrollTop />
       </div>
       <Footer />
