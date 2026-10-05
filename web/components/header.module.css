@@ -49,6 +49,17 @@
   display: none;
 }
 
+.actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.search {
+  padding-top: 0.7rem;
+}
+
 .description {
   margin-top: 0.3rem;
   line-height: 1.5;
@@ -103,6 +114,9 @@
   }
   .webNav {
     display: none;
+  }
+  .search {
+    padding-top: 0;
   }
   .mobileNav {
     display: block;
