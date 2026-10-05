@@ -1,7 +1,6 @@
 import Link from "next/link";
 import styles from "./header.module.css";
 import MobileNav from "./mobileNav";
-import SearchButton from "./searchButton";
 import WebNav from "./webNav";
 
 export default function Header({ compact = false }) {
@@ -21,16 +20,11 @@ export default function Header({ compact = false }) {
           </p>
         </div>
       )}
-      <div className={styles.actions}>
-        <div className={styles.search}>
-          <SearchButton />
-        </div>
-        <div className={styles.webNav}>
-          <WebNav />
-        </div>
-        <div className={styles.mobileNav}>
-          <MobileNav />
-        </div>
+      <div className={styles.webNav}>
+        <WebNav />
+      </div>
+      <div className={styles.mobileNav}>
+        <MobileNav />
       </div>
     </header>
   );

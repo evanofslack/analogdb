@@ -10,14 +10,12 @@ import {
   Stack,
 } from "@mantine/core";
 import { useDebouncedCallback } from "@mantine/hooks";
-import { useSearchModal } from "@providers/search";
 import {
   IconAdjustmentsHorizontal,
   IconArrowAutofitWidth,
   IconArrowsSort,
   IconCamera,
   IconMovie,
-  IconSearch,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import ColorFilter from "./colorFilter";
@@ -67,7 +65,6 @@ export default function FilterBar({
   ratioMinLimit,
   ratioMaxLimit,
 }) {
-  const searchModal = useSearchModal();
   const iconSize = 18;
 
   const sizes = {
@@ -448,16 +445,6 @@ export default function FilterBar({
               </div>
             </Menu.Dropdown>
           </Menu>
-
-          <Button
-            variant="outline"
-            color="gray"
-            leftSection={<IconSearch size={iconSize} stroke={1.5} />}
-            onClick={() => searchModal.open({ text })}
-            classNames={buttonClassNames}
-          >
-            <span className={styles.label}>search</span>
-          </Button>
         </div>
       </div>
     </>
