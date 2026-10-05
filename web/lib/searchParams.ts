@@ -45,7 +45,6 @@ export type PostsFilters = inferParserType<typeof postsParsers>;
 export const searchParsers = {
   q: parseAsString,
   similar: parseAsInteger,
-  image: parseAsString,
   nsfw: parseAsStringLiteral(filterOpts).withDefault("exclude"),
   bw: parseAsStringLiteral(filterOpts).withDefault("include"),
   sprocket: parseAsStringLiteral(filterOpts).withDefault("include"),

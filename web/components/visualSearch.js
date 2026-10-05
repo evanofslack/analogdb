@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  imageAccept,
-  imageMaxSize,
-  rejectMessage,
-} from "@lib/imageSearchStore";
+import { imageAccept, imageMaxSize, rejectMessage } from "@lib/imageSearch";
 import { Dropzone } from "@mantine/dropzone";
 import { IconPhotoScan, IconPhotoX, IconUpload } from "@tabler/icons-react";
 import Image from "next/image";

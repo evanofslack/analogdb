@@ -6,24 +6,23 @@ import galleryStyles from "@components/gallery.module.css";
 import Header from "@components/header";
 import InfiniteGallery from "@components/infiniteGallery";
 import ScrollTop from "@components/scrollTop";
-import { SearchBarButton } from "@components/searchBar";
-import { KeywordChips } from "@components/searchSuggestions";
+import SearchBar from "@components/searchBar";
+import SearchSuggestions, { KeywordChips } from "@components/searchSuggestions";
+import useRecentSearches from "@hooks/useRecentSearches";
 import useSearch, { useSimilar } from "@hooks/useSearch";
 import {
-  getImageSearch,
   imageAccept,
   imageMaxSize,
   postImageSearch,
   rejectMessage,
-  updateImageSearch,
-} from "@lib/imageSearchStore";
+} from "@lib/imageSearch";
+import { resizeImage } from "@lib/resizeImage";
 import { searchParsers, toSearchFlags } from "@lib/searchParams";
 import { Button, Menu, SegmentedControl } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
-import { useSearchModal } from "@providers/search";
 import { IconAdjustmentsHorizontal, IconPhotoScan } from "@tabler/icons-react";
 import { useQueryStates } from "nuqs";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./search.module.css";
 
 const filterData = [
@@ -107,7 +106,6 @@ export default function SearchPage({
   initialKey,
   initialColumns,
 }) {
-  const searchModal = useSearchModal();
   const [filters, setFilters] = useQueryStates(searchParsers);
   const { nsfw, bw, sprocket } = filters;
   const flags = useMemo(
@@ -117,10 +115,13 @@ export default function SearchPage({
   const flagsKey = JSON.stringify(flags);
   const q = filters.q?.trim() || null;
   const similar = !q && filters.similar > 0 ? filters.similar : null;
-  const token = !q && !similar ? filters.image : null;
 
-  const [image, setImage] = useState(undefined);
-  const [imagePending, setImagePending] = useState(false);
+  const { recent, add, clear } = useRecentSearches();
+  const [panel, setPanel] = useState(null);
+  const [upload, setUpload] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadPending, setUploadPending] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
 
   const text = useSearch(q, flags, initialPage, initialKey);
   const similarResults = useSimilar(
@@ -134,75 +135,145 @@ export default function SearchPage({
   let mode = "empty";
   if (q) mode = "text";
   else if (similar) mode = "similar";
-  else if (token) mode = "image";
+  else if (upload) mode = "upload";
 
-  const { open, showError } = searchModal;
+  const replaceUpload = (next) =>
+    setUpload((previous) => {
+      if (previous && previous.thumb !== next?.thumb) {
+        URL.revokeObjectURL(previous.thumb);
+      }
+      return next;
+    });
 
-  useEffect(() => {
-    setImage(token ? getImageSearch(token) : undefined);
-  }, [token]);
+  const showError = (message) => {
+    setUploadError(message);
+    setPanel("visual");
+  };
 
-  useEffect(() => {
-    if (mode === "empty") open();
-  }, [mode, open]);
-
-  useEffect(() => {
-    if (mode === "image" && image === null) {
-      showError("that image is no longer here, upload it again");
+  const searchImage = async (file) => {
+    if (!imageAccept.includes(file.type)) {
+      showError("use a JPEG, PNG or WebP image");
+      return;
     }
-  }, [mode, image, showError]);
+    if (file.size > imageMaxSize) {
+      showError("that image is over 10 MB");
+      return;
+    }
+    setPanel("visual");
+    setUploading(true);
+    setUploadError(null);
+    try {
+      const blob = await resizeImage(file);
+      const response = await postImageSearch(blob, flags);
+      replaceUpload({
+        blob,
+        thumb: URL.createObjectURL(blob),
+        flagsKey,
+        response,
+      });
+      if (q || similar) {
+        setFilters({ q: null, similar: null }, { history: "push" });
+      }
+      setPanel(null);
+      window.scrollTo({ top: 0 });
+    } catch (error) {
+      setUploadError(error.message || "image search failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const searchImageRef = useRef(searchImage);
+  searchImageRef.current = searchImage;
+
+  const handleSearch = (query) => {
+    add(query);
+    setPanel(null);
+    setFilters({ q: query, similar: null }, { history: "push" });
+    window.scrollTo({ top: 0 });
+  };
+
+  const handleExample = (id) => {
+    setPanel(null);
+    setUploadError(null);
+    setFilters({ q: null, similar: id }, { history: "push" });
+    window.scrollTo({ top: 0 });
+  };
 
   useEffect(() => {
-    if (!token || !image || image.flagsKey === flagsKey) return;
+    if (!q && !similar) return;
+    setUpload((previous) => {
+      if (previous) URL.revokeObjectURL(previous.thumb);
+      return null;
+    });
+  }, [q, similar]);
+
+  useEffect(() => {
+    if (!upload || upload.flagsKey === flagsKey) return;
     let active = true;
-    setImagePending(true);
-    postImageSearch(image.blob, flags)
+    setUploadPending(true);
+    postImageSearch(upload.blob, flags)
       .then((response) => {
-        if (!active) return;
-        const next = { ...image, flagsKey, response };
-        updateImageSearch(token, next);
-        setImage(next);
+        if (active)
+          setUpload((prev) => prev && { ...prev, flagsKey, response });
       })
       .catch(() => {
-        if (active) setImage({ ...image, flagsKey });
+        if (active) setUpload((prev) => prev && { ...prev, flagsKey });
       })
       .finally(() => {
-        if (active) setImagePending(false);
+        if (active) setUploadPending(false);
       });
     return () => {
       active = false;
     };
-  }, [token, image, flags, flagsKey]);
+  }, [upload, flags, flagsKey]);
 
-  let bar = { label: q ?? "" };
+  useEffect(() => {
+    const onPaste = (event) => {
+      const item = Array.from(event.clipboardData?.items ?? []).find(
+        (entry) => entry.kind === "file" && entry.type.startsWith("image/")
+      );
+      const file = item?.getAsFile();
+      if (!file) return;
+      event.preventDefault();
+      searchImageRef.current(file);
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, []);
+
+  let visual = null;
   let results = null;
   let chips = [];
   if (mode === "text") {
     results = text;
     chips = text.relatedKeywords;
   } else if (mode === "similar") {
-    bar = {
-      label: `similar to #${similar}`,
+    visual = {
       thumb: similarResults.source?.image?.url,
+      label: `similar to #${similar}`,
+      onClear: () => setFilters({ similar: null }, { history: "push" }),
     };
     results = similarResults;
     chips = similarKeywords(similarResults.pages, bw === "only");
-  } else if (mode === "image") {
-    bar = { label: "your image", thumb: image?.thumb };
-    if (image) {
-      results = {
-        pages: [image.response],
-        isLoading: false,
-        isError: false,
-        isPlaceholderData: imagePending,
-        hasNextPage: false,
-        isFetchingNextPage: false,
-        isFetchNextPageError: false,
-        fetchNextPage: () => {},
-        refetch: () => {},
-      };
-      chips = image.response.relatedKeywords ?? [];
-    }
+  } else if (mode === "upload") {
+    visual = {
+      thumb: upload.thumb,
+      label: "your image",
+      onClear: () => replaceUpload(null),
+    };
+    results = {
+      pages: [upload.response],
+      isLoading: false,
+      isError: false,
+      isPlaceholderData: uploadPending,
+      hasNextPage: false,
+      isFetchingNextPage: false,
+      isFetchNextPageError: false,
+      fetchNextPage: () => {},
+      refetch: () => {},
+    };
+    chips = upload.response.relatedKeywords ?? [];
   }
 
   const noMatches =
@@ -217,11 +288,11 @@ export default function SearchPage({
       <Header />
       <div className={galleryStyles.margin}>
         <Dropzone.FullScreen
-          active={!searchModal.opened}
+          active={panel !== "visual" && !uploading}
           accept={imageAccept}
           maxSize={imageMaxSize}
           multiple={false}
-          onDrop={(files) => files[0] && searchModal.searchImage(files[0])}
+          onDrop={(files) => files[0] && searchImage(files[0])}
           onReject={(rejections) => showError(rejectMessage(rejections))}
         >
           <div className={styles.fullscreen}>
@@ -232,31 +303,43 @@ export default function SearchPage({
 
         <div className={styles.top}>
           <div className={styles.bar}>
-            <SearchBarButton
-              label={bar.label}
-              thumb={bar.thumb}
-              onOpen={() => open({ text: q ?? "" })}
-              onVisual={() => open({ panel: "visual" })}
+            <SearchBar
+              value={q ?? ""}
+              onSearch={handleSearch}
+              visual={visual}
+              suggestions={suggestions}
+              recent={recent}
+              onClearRecent={clear}
+              panel={panel}
+              onPanelChange={setPanel}
+              suggestionsDropdown={mode !== "empty"}
+              visualProps={{
+                loading: uploading,
+                error: uploadError,
+                onImage: searchImage,
+                onError: setUploadError,
+                onExample: handleExample,
+              }}
             />
           </div>
           <FlagsMenu filters={filters} setFilters={setFilters} />
         </div>
 
-        <KeywordChips
-          words={chips}
-          onSearch={searchModal.search}
-          className={styles.related}
-        />
-
-        {mode === "image" && image === null && (
-          <div className={styles.noMatches}>
-            <h3 className={styles.noMatchesTitle}>
-              that image is no longer here
-            </h3>
-            <Button variant="default" onClick={() => open({ panel: "visual" })}>
-              upload again
-            </Button>
+        {mode === "empty" ? (
+          <div className={styles.suggestions}>
+            <SearchSuggestions
+              suggestions={suggestions}
+              recent={recent}
+              onClearRecent={clear}
+              onSearch={handleSearch}
+            />
           </div>
+        ) : (
+          <KeywordChips
+            words={chips}
+            onSearch={handleSearch}
+            className={styles.related}
+          />
         )}
         {noMatches && (
           <div className={styles.noMatches}>
@@ -265,7 +348,7 @@ export default function SearchPage({
             </h3>
             <KeywordChips
               words={suggestions?.keywords}
-              onSearch={searchModal.search}
+              onSearch={handleSearch}
               className={styles.noMatchesChips}
             />
           </div>

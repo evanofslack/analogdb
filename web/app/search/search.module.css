@@ -20,10 +20,16 @@
   border-color: var(--adb-border);
 }
 
+.suggestions {
+  max-width: 44rem;
+  margin: 2rem 0 0;
+}
+
 .related {
   display: flex;
   gap: 0.5rem;
-  margin: 1rem 0 1.5rem;
+  margin: 1.75rem 0 2.25rem;
+  padding: 0.1rem 0;
   overflow-x: auto;
   scrollbar-width: none;
 }

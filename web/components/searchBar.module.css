@@ -43,22 +43,6 @@
   color: var(--adb-muted);
 }
 
-.open {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  height: 100%;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: text;
-}
-
 .thumb {
   position: relative;
   flex: none;
@@ -78,6 +62,15 @@
   font-size: 1rem;
 }
 
-.placeholder {
-  color: var(--adb-muted);
+.visual {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.dropdown {
+  max-height: min(70vh, 36rem);
+  overflow-y: auto;
 }

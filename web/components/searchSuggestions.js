@@ -42,6 +42,7 @@ export default function SearchSuggestions({
   recent = [],
   onClearRecent,
   onSearch,
+  showTopics = true,
 }) {
   const keywords = suggestions?.keywords ?? [];
   const topics = suggestions?.topics ?? [];
@@ -76,7 +77,7 @@ export default function SearchSuggestions({
           <KeywordChips words={keywords} onSearch={onSearch} />
         </Section>
       )}
-      {topics.length > 0 && (
+      {showTopics && topics.length > 0 && (
         <Section
           icon={<IconCompass size={iconSize} stroke={1.5} />}
           title="explore"
