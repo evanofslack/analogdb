@@ -156,6 +156,7 @@ func (s *Server) mountResourceHandlers() {
 	s.mountSimilarityHandlers(v1)
 	s.mountScrapeHandlers(v1)
 	s.mountKeywordHandlers(v1)
+	s.mountKeywordDetailHandlers(v1)
 	s.mountAdminHandlers(v1)
 	s.mountSearchHandlers(v1)
 	s.router.Mount("/v1", v1)
