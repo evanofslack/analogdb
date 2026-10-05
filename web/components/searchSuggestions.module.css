@@ -1,0 +1,116 @@
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--adb-muted);
+}
+
+.clear {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--adb-muted);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.clear:hover {
+  color: var(--adb-heading);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.chip {
+  border: 1.5px solid var(--adb-pill-border);
+  border-radius: 9px;
+  background-color: var(--adb-pill-bg);
+  color: var(--adb-pill-fg);
+  padding: 0.35rem 0.9rem 0.4rem;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: var(--adb-pill-hover-fg);
+  background-color: var(--adb-pill-hover-bg);
+  border-color: var(--adb-pill-hover-bg);
+}
+
+.topics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.topic {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--adb-border-soft);
+  border-radius: 8px;
+  background: var(--adb-surface);
+  color: var(--adb-heading);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.topic:hover {
+  background: var(--adb-surface-hover);
+  border-color: var(--adb-border);
+}
+
+.cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 5px;
+  overflow: hidden;
+  background-color: var(--adb-surface-alt);
+}
+
+.topicLabel {
+  padding: 0 0.25rem 0.15rem;
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .topics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

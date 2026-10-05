@@ -3,7 +3,6 @@
 import {
   Button,
   Menu,
-  Modal,
   NumberInput,
   Radio,
   SegmentedControl,
@@ -17,12 +16,10 @@ import {
   IconArrowsSort,
   IconCamera,
   IconMovie,
-  IconSearch,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import ColorFilter from "./colorFilter";
 import styles from "./filterBar.module.css";
-import Search from "./search";
 
 export default function FilterBar({
   // State values
@@ -68,7 +65,6 @@ export default function FilterBar({
   ratioMinLimit,
   ratioMaxLimit,
 }) {
-  const [searchModalOpen, setSearchModalOpen] = useState(false);
   const iconSize = 18;
 
   const sizes = {
@@ -449,37 +445,8 @@ export default function FilterBar({
               </div>
             </Menu.Dropdown>
           </Menu>
-
-          <Button
-            variant="outline"
-            color="gray"
-            leftSection={<IconSearch size={iconSize} stroke={1.5} />}
-            onClick={() => setSearchModalOpen(true)}
-            classNames={buttonClassNames}
-          >
-            <span className={styles.label}>search</span>
-          </Button>
         </div>
       </div>
-
-      <Modal
-        opened={searchModalOpen}
-        onClose={() => setSearchModalOpen(false)}
-        size="lg"
-        centered
-        title="search"
-        overlayProps={{
-          backgroundOpacity: 0.4,
-          blur: 2,
-        }}
-      >
-        <Search
-          text={text}
-          textPlaceholder={textPlaceholder}
-          onSearch={setText}
-          onClose={() => setSearchModalOpen(false)}
-        />
-      </Modal>
     </>
   );
 }

@@ -144,7 +144,16 @@ export default function ImageTag(props) {
       </div>
       {similarPosts && (
         <div className={styles.similar}>
-          <h2 className={styles.similarTitle}>discover similar</h2>
+          <div className={styles.similarHeader}>
+            <h2 className={styles.similarTitle}>discover similar</h2>
+            <Link
+              href={`/search?similar=${post.id}`}
+              prefetch={false}
+              className={styles.findSimilar}
+            >
+              find similar
+            </Link>
+          </div>
           <div className={styles.similarContainer}>
             {similarPosts.map((post) => {
               return (

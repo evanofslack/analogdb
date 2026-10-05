@@ -42,6 +42,46 @@ export const postsParsers = {
 
 export type PostsFilters = inferParserType<typeof postsParsers>;
 
+export const searchParsers = {
+  q: parseAsString,
+  similar: parseAsInteger,
+  nsfw: parseAsStringLiteral(filterOpts).withDefault("exclude"),
+  bw: parseAsStringLiteral(filterOpts).withDefault("include"),
+  sprocket: parseAsStringLiteral(filterOpts).withDefault("include"),
+};
+
+export type SearchFilters = inferParserType<typeof searchParsers>;
+
+export type SearchFlags = {
+  nsfw?: boolean;
+  grayscale?: boolean;
+  sprocket?: boolean;
+};
+
+export function toSearchFlags(
+  filters: Pick<SearchFilters, "nsfw" | "bw" | "sprocket">
+): SearchFlags {
+  const flags: SearchFlags = {};
+  if (filters.nsfw === "exclude") flags.nsfw = false;
+  if (filters.nsfw === "only") flags.nsfw = true;
+  if (filters.bw === "exclude") flags.grayscale = false;
+  if (filters.bw === "only") flags.grayscale = true;
+  if (filters.sprocket === "exclude") flags.sprocket = false;
+  if (filters.sprocket === "only") flags.sprocket = true;
+  return flags;
+}
+
+export const searchPageSize = 40;
+export const similarPageSize = 50;
+
+export function searchKey(
+  mode: string,
+  value: string | number,
+  flags: SearchFlags
+): string {
+  return JSON.stringify([mode, value, flags]);
+}
+
 export const catalogParsers = {
   sort: parseAsStringLiteral(sortOpts).withDefault("score"),
   seed: parseAsInteger,

@@ -4,8 +4,10 @@ import {
   CamerasApi,
   Configuration,
   FilmsApi,
+  KeywordsApi,
   PostApi,
   PostsApi,
+  SearchApi,
 } from "analogdb-generated";
 import pkg from "../package.json";
 import { baseURL } from "./constants";
@@ -42,6 +44,8 @@ export const postApi: PostApi = new PostApi(config);
 export const postsApi: PostsApi = new PostsApi(config);
 export const filmsApi: FilmsApi = new FilmsApi(config);
 export const camerasApi: CamerasApi = new CamerasApi(config);
+export const searchApi: SearchApi = new SearchApi(config);
+export const keywordsApi: KeywordsApi = new KeywordsApi(config);
 
 export async function authorized_fetch(
   route: string,

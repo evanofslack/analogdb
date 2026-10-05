@@ -1,0 +1,88 @@
+.top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  max-width: 44rem;
+  padding: 0.5rem 0 0;
+}
+
+.bar {
+  flex: 1;
+  min-width: 0;
+}
+
+.filterButton {
+  flex: none;
+  height: 2.75rem;
+  color: var(--adb-heading);
+  font-weight: 400;
+  border-color: var(--adb-border);
+}
+
+.suggestions {
+  max-width: 44rem;
+  margin: 2rem 0 0;
+}
+
+.related {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.75rem 0 2.25rem;
+  padding: 0.1rem 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.related::-webkit-scrollbar {
+  display: none;
+}
+
+.noMatches {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 6rem 0;
+  text-align: center;
+}
+
+.noMatchesTitle {
+  margin: 0;
+  font-weight: 400;
+}
+
+.noMatchesChips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  max-width: 40rem;
+}
+
+.fullscreen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  height: 100%;
+  font-size: 1.2rem;
+  color: var(--adb-heading);
+  pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .filterLabel {
+    display: none;
+  }
+
+  .filterButton {
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+
+  .filterButton [data-position="left"] {
+    margin-inline-end: 0;
+  }
+}

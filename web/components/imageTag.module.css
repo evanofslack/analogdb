@@ -167,6 +167,29 @@
   max-width: 800px;
 }
 
+.similarHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 800px;
+}
+
+.similarHeader .similarTitle {
+  width: auto;
+}
+
+.findSimilar {
+  font-size: 1rem;
+  color: var(--adb-muted);
+  white-space: nowrap;
+}
+
+.findSimilar:hover {
+  color: var(--adb-heading);
+  text-decoration: underline;
+}
+
 .similarContainer {
   display: flex;
   flex-wrap: wrap;

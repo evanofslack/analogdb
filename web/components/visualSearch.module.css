@@ -1,0 +1,82 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--adb-heading);
+}
+
+.zone {
+  border-width: 1.5px;
+}
+
+.zoneInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 1.5rem 0.5rem;
+  color: var(--adb-muted);
+  text-align: center;
+  pointer-events: none;
+}
+
+.zoneText {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--adb-heading);
+}
+
+.zoneHint {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.browse {
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--adb-danger-fg);
+}
+
+.examplesTitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--adb-muted);
+}
+
+.examples {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.example {
+  position: relative;
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 6px;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  background-color: var(--adb-surface-alt);
+}
+
+.example:hover {
+  opacity: 0.85;
+}
+
+.example:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
