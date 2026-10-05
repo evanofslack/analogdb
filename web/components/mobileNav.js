@@ -41,7 +41,7 @@ export default function MobileNav() {
                 <div className={styles.icon}>
                   <div className={styles.check}>
                     <span className={styles.iconText}>SEARCH</span>
-                    {pathname === "/search" && <BiCheck size="2rem" />}
+                    {pathname.startsWith("/search") && <BiCheck size="2rem" />}
                   </div>
                 </div>
               </Link>
