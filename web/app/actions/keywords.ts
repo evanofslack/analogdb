@@ -1,6 +1,6 @@
 "use server";
 
-import { CatalogEntry, pickCover } from "@lib/catalog";
+import { CatalogEntry, pickCover, pickDistinctCovers } from "@lib/catalog";
 import { keywordsApi } from "@lib/client";
 import { KeywordsSummaryGetRequest, ResponseError } from "analogdb-generated";
 import { unstable_cache } from "next/cache";
@@ -18,7 +18,7 @@ export interface KeywordDetail {
 const catalogParams: KeywordsSummaryGetRequest = {
   pageSize: 300,
   minCount: 100,
-  topPosts: 3,
+  topPosts: 8,
 };
 
 const maxWordLength = 100;
@@ -26,16 +26,18 @@ const maxWordLength = 100;
 const getKeywordCatalogCached = unstable_cache(
   async (): Promise<CatalogEntry[]> => {
     const response = await keywordsApi.keywordsSummaryGet(catalogParams);
-    return (response.keywords ?? [])
+    const keywords = (response.keywords ?? [])
       .filter((k) => k.word)
-      .map((k) => ({
-        slug: k.word,
-        make: k.word,
-        name: "",
-        postCount: k.count ?? 0,
-        description: "",
-        cover: pickCover(k.topPosts),
-      }));
+      .sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
+    const covers = pickDistinctCovers(keywords.map((k) => k.topPosts ?? []));
+    return keywords.map((k, i) => ({
+      slug: k.word,
+      make: k.word,
+      name: "",
+      postCount: k.count ?? 0,
+      description: "",
+      cover: covers[i],
+    }));
   },
   ["keyword-catalog"],
   { revalidate: 3600, tags: ["catalog"] }
