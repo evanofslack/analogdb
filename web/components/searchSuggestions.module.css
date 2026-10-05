@@ -65,20 +65,3 @@
   background-color: var(--adb-pill-hover-bg);
   border-color: var(--adb-pill-hover-bg);
 }
-
-.keywordGrid {
-  margin-top: 0.75rem;
-}
-
-.noKeywords {
-  margin: 2rem 0 3rem;
-}
-
-.searchFor {
-  color: var(--adb-heading);
-  text-decoration: underline;
-}
-
-.searchFor:hover {
-  color: var(--adb-muted);
-}
