@@ -1,20 +1,14 @@
 "use client";
 
-import { Dropzone, MIME_TYPES } from "@mantine/dropzone";
+import {
+  imageAccept,
+  imageMaxSize,
+  rejectMessage,
+} from "@lib/imageSearchStore";
+import { Dropzone } from "@mantine/dropzone";
 import { IconPhotoScan, IconPhotoX, IconUpload } from "@tabler/icons-react";
 import Image from "next/image";
 import styles from "./visualSearch.module.css";
-
-export const imageAccept = [MIME_TYPES.jpeg, MIME_TYPES.png, MIME_TYPES.webp];
-export const imageMaxSize = 10 * 1024 * 1024;
-
-export function rejectMessage(rejections) {
-  const code = rejections?.[0]?.errors?.[0]?.code;
-  if (code === "file-too-large") return "that image is over 10 MB";
-  if (code === "file-invalid-type") return "use a JPEG, PNG or WebP image";
-  if (code === "too-many-files") return "drop one image at a time";
-  return "couldn't use that file";
-}
 
 export default function VisualSearch({
   examples = [],

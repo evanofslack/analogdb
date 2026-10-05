@@ -1,7 +1,6 @@
 import { PostsGetRequest } from "analogdb-generated";
 import {
   inferParserType,
-  parseAsBoolean,
   parseAsFloat,
   parseAsInteger,
   parseAsString,
@@ -46,7 +45,7 @@ export type PostsFilters = inferParserType<typeof postsParsers>;
 export const searchParsers = {
   q: parseAsString,
   similar: parseAsInteger,
-  visual: parseAsBoolean,
+  image: parseAsString,
   nsfw: parseAsStringLiteral(filterOpts).withDefault("exclude"),
   bw: parseAsStringLiteral(filterOpts).withDefault("include"),
   sprocket: parseAsStringLiteral(filterOpts).withDefault("include"),

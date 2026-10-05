@@ -15,7 +15,6 @@ export default function Gallery({
   initialColumns,
   filmOptions,
   cameraOptions,
-  searchSuggestions,
 }) {
   const { filters, setFilters, limits, ...posts } = usePosts(
     initialPage,
@@ -68,7 +67,6 @@ export default function Gallery({
           }
           filmOptions={filmOptions}
           cameraOptions={cameraOptions}
-          searchSuggestions={searchSuggestions}
           textPlaceholder={textPlaceholder}
           widthMinLimit={limits.widthMin}
           widthMaxLimit={limits.widthMax}

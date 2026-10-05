@@ -1,43 +1,44 @@
 "use client";
 
-import useRecentSearches from "@hooks/useRecentSearches";
-import { useRouter } from "next/navigation";
 import styles from "./search.module.css";
 import SearchBar from "./searchBar";
 import SearchSuggestions from "./searchSuggestions";
+import VisualSearch from "./visualSearch";
 
-export default function Search({ text, suggestions, onClose }) {
-  const router = useRouter();
-  const { recent, add, clear } = useRecentSearches();
-
-  const handleSearch = (query) => {
-    add(query);
-    onClose();
-    router.push(`/search?q=${encodeURIComponent(query)}`);
-  };
-
-  const handleVisual = () => {
-    onClose();
-    router.push("/search?visual=1");
-  };
+export default function Search({
+  text,
+  panel,
+  setPanel,
+  suggestions,
+  recent,
+  onClearRecent,
+  onSearch,
+  visualProps,
+}) {
+  const visual = panel === "visual";
 
   return (
     <div className={styles.searchContainer}>
       <div className={styles.searchInput}>
         <SearchBar
           value={text}
-          onSearch={handleSearch}
-          onVisual={handleVisual}
-          dropdown={false}
-          autoFocus
+          onSearch={onSearch}
+          onVisual={() => setPanel(visual ? "suggestions" : "visual")}
+          visualActive={visual}
+          onFocus={() => setPanel("suggestions")}
+          autoFocus={!visual}
         />
       </div>
-      <SearchSuggestions
-        suggestions={suggestions}
-        recent={recent}
-        onClearRecent={clear}
-        onSearch={handleSearch}
-      />
+      {visual ? (
+        <VisualSearch examples={suggestions?.examples} {...visualProps} />
+      ) : (
+        <SearchSuggestions
+          suggestions={suggestions}
+          recent={recent}
+          onClearRecent={onClearRecent}
+          onSearch={onSearch}
+        />
+      )}
     </div>
   );
 }

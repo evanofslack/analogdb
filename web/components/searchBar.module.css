@@ -5,19 +5,17 @@
   width: 100%;
   min-width: 0;
   height: 2.75rem;
-  padding: 0 0.3rem 0 0.9rem;
+  padding: 0 0.3rem 0 0.8rem;
   border: 1px solid var(--adb-border);
-  border-radius: 999px;
+  border-radius: var(--mantine-radius-default);
   background: var(--adb-surface);
+  color: var(--adb-heading);
+  font: inherit;
+  text-align: left;
 }
 
 .bar:focus-within {
   border-color: var(--adb-muted);
-}
-
-.large {
-  height: 3.4rem;
-  padding-left: 1.2rem;
 }
 
 .icon {
@@ -45,12 +43,20 @@
   color: var(--adb-muted);
 }
 
-.visual {
+.open {
   display: flex;
   flex: 1;
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: text;
 }
 
 .thumb {
@@ -58,19 +64,20 @@
   flex: none;
   width: 2rem;
   height: 2rem;
-  border-radius: 5px;
+  border-radius: var(--mantine-radius-default);
   overflow: hidden;
   background: var(--adb-surface-alt);
 }
 
-.visualLabel {
+.label {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--adb-heading);
+  font-size: 1rem;
 }
 
-.dropdown {
-  max-height: min(70vh, 34rem);
-  overflow-y: auto;
+.placeholder {
+  color: var(--adb-muted);
 }

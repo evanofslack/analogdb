@@ -9,6 +9,7 @@ import {
 } from "@mantine/core";
 import { CodeHighlightProvider } from "@providers/codehighlight";
 import { QueryProvider } from "@providers/query";
+import { SearchProvider } from "@providers/search";
 import { theme } from "@providers/theme";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
@@ -39,7 +40,9 @@ export default function RootLayout({ children }) {
         <MantineProvider theme={theme} defaultColorScheme="light">
           <CodeHighlightProvider>
             <NuqsAdapter>
-              <QueryProvider>{children}</QueryProvider>
+              <QueryProvider>
+                <SearchProvider>{children}</SearchProvider>
+              </QueryProvider>
             </NuqsAdapter>
           </CodeHighlightProvider>
         </MantineProvider>

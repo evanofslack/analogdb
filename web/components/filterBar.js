@@ -56,7 +56,6 @@ export default function FilterBar({
 
   filmOptions,
   cameraOptions,
-  searchSuggestions,
 
   // UI state
   textPlaceholder,
@@ -476,7 +475,8 @@ export default function FilterBar({
       >
         <Search
           text={text}
-          suggestions={searchSuggestions}
+          textPlaceholder={textPlaceholder}
+          onSearch={setText}
           onClose={() => setSearchModalOpen(false)}
         />
       </Modal>
