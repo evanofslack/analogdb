@@ -53,11 +53,14 @@ jobs:
           TESTCONTAINERS_RYUK_DISABLED: false
 
       - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
+        continue-on-error: true
         with:
-          file: ./backend/coverage.out
+          files: ./backend/coverage.out
           flags: unittests
           name: codecov-umbrella
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
 
       - name: Clean up Docker resources
         if: always()
