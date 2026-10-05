@@ -191,6 +191,7 @@ func main() {
 		authorService = redis.NewCacheAuthorService(rdb, authorService)
 		filmService = redis.NewCacheFilmService(rdb, filmService)
 		cameraService = redis.NewCacheCameraService(rdb, cameraService)
+		keywordService = redis.NewCacheKeywordService(rdb, keywordService)
 	}
 
 	similarityService = weaviate.NewSimilarityService(dbVec, postService)

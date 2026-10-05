@@ -232,6 +232,10 @@ definitions:
       count:
         example: 207
         type: integer
+      top_posts:
+        items:
+          $ref: '#/definitions/analogdb.CatalogPost'
+        type: array
       word:
         example: baseball
         type: string
@@ -495,6 +499,23 @@ definitions:
         items:
           type: integer
         type: array
+    type: object
+  server.KeywordResponse:
+    properties:
+      count:
+        example: 1204
+        type: integer
+      related:
+        items:
+          $ref: '#/definitions/analogdb.KeywordSummary'
+        type: array
+      top_posts:
+        items:
+          $ref: '#/definitions/analogdb.CatalogPost'
+        type: array
+      word:
+        example: beach
+        type: string
     type: object
   server.KeywordsResponse:
     properties:
@@ -1082,10 +1103,54 @@ paths:
       summary: Get all post IDs
       tags:
       - posts
+  /keyword/{word}:
+    get:
+      description: Post count, top scoring non nsfw posts and related keywords of
+        one keyword. Related keywords share posts with the keyword, ranked by smoothed
+        lift, and their count is the number of shared posts
+      parameters:
+      - description: Keyword, URL encoded
+        in: path
+        name: word
+        required: true
+        type: string
+      - default: 6
+        description: Number of top scoring posts (1 to 10)
+        in: query
+        name: top_posts
+        type: integer
+      - default: 12
+        description: Number of related keywords (0 to 30)
+        in: query
+        name: related
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.KeywordResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Keyword not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Get keyword
+      tags:
+      - keywords
   /keywords/summary:
     get:
       description: Most common keywords with their post counts, optionally only from
-        posts created in the last days
+        posts created in the last days. Top posts are the highest scoring non nsfw
+        posts of all time, also with days
       parameters:
       - default: 50
         description: Number of keywords to return
@@ -1095,6 +1160,14 @@ paths:
       - description: Only count keywords of posts created in the last days, 1 to 90
         in: query
         name: days
+        type: integer
+      - description: Only return keywords on at least this many posts
+        in: query
+        name: min_count
+        type: integer
+      - description: Attach this many top scoring posts to each keyword (1 to 10)
+        in: query
+        name: top_posts
         type: integer
       produces:
       - application/json

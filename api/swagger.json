@@ -698,9 +698,70 @@
                 }
             }
         },
+        "/keyword/{word}": {
+            "get": {
+                "description": "Post count, top scoring non nsfw posts and related keywords of one keyword. Related keywords share posts with the keyword, ranked by smoothed lift, and their count is the number of shared posts",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "keywords"
+                ],
+                "summary": "Get keyword",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Keyword, URL encoded",
+                        "name": "word",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 6,
+                        "description": "Number of top scoring posts (1 to 10)",
+                        "name": "top_posts",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 12,
+                        "description": "Number of related keywords (0 to 30)",
+                        "name": "related",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.KeywordResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Keyword not found",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/keywords/summary": {
             "get": {
-                "description": "Most common keywords with their post counts, optionally only from posts created in the last days",
+                "description": "Most common keywords with their post counts, optionally only from posts created in the last days. Top posts are the highest scoring non nsfw posts of all time, also with days",
                 "produces": [
                     "application/json"
                 ],
@@ -720,6 +781,18 @@
                         "type": "integer",
                         "description": "Only count keywords of posts created in the last days, 1 to 90",
                         "name": "days",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Only return keywords on at least this many posts",
+                        "name": "min_count",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Attach this many top scoring posts to each keyword (1 to 10)",
+                        "name": "top_posts",
                         "in": "query"
                     }
                 ],
@@ -1886,6 +1959,12 @@
                     "type": "integer",
                     "example": 207
                 },
+                "top_posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.CatalogPost"
+                    }
+                },
                 "word": {
                     "type": "string",
                     "example": "baseball"
@@ -2259,6 +2338,31 @@
                         4,
                         5
                     ]
+                }
+            }
+        },
+        "server.KeywordResponse": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 1204
+                },
+                "related": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.KeywordSummary"
+                    }
+                },
+                "top_posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.CatalogPost"
+                    }
+                },
+                "word": {
+                    "type": "string",
+                    "example": "beach"
                 }
             }
         },
