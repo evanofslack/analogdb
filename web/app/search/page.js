@@ -22,10 +22,11 @@ const loadSearch = createLoader(searchParsers);
 const robots = { index: false, follow: true };
 
 export async function generateMetadata({ searchParams }) {
-  const { q, similar } = loadSearch(await searchParams);
+  const { q, similar, image } = loadSearch(await searchParams);
   let title = "Search · AnalogDB";
   if (q) title = `"${q}" photos · AnalogDB`;
   else if (similar) title = "Similar photos · AnalogDB";
+  else if (image) title = "Visual search · AnalogDB";
   return {
     title: { absolute: title },
     description: "Search film photographs by words or by image.",
@@ -100,7 +101,6 @@ export default async function Page({ searchParams }) {
       initialSimilar={initialSimilar}
       initialSource={initialSource}
       initialKey={initialKey}
-      initialVisual={Boolean(filters.visual)}
       initialColumns={guessColumns(device)}
     />
   );
