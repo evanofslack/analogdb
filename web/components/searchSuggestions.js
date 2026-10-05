@@ -42,14 +42,13 @@ export default function SearchSuggestions({
   recent = [],
   onClearRecent,
   onSearch,
-  layout = "dropdown",
 }) {
   const keywords = suggestions?.keywords ?? [];
   const topics = suggestions?.topics ?? [];
   const iconSize = 16;
 
   return (
-    <div className={layout === "page" ? styles.page : styles.dropdown}>
+    <div className={styles.suggestions}>
       {recent.length > 0 && (
         <Section
           icon={<IconClock size={iconSize} stroke={1.5} />}
@@ -72,7 +71,7 @@ export default function SearchSuggestions({
       {keywords.length > 0 && (
         <Section
           icon={<IconSparkles size={iconSize} stroke={1.5} />}
-          title="new this week"
+          title="trending this week"
         >
           <KeywordChips words={keywords} onSearch={onSearch} />
         </Section>
@@ -99,7 +98,7 @@ export default function SearchSuggestions({
                       src={topic.cover.url}
                       alt=""
                       fill
-                      sizes="160px"
+                      sizes="(max-width: 520px) 50vw, 260px"
                       style={{ objectFit: "cover" }}
                     />
                   )}

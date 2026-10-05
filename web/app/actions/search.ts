@@ -40,7 +40,7 @@ export interface SearchSource {
 
 const maxPageSize = 100;
 const maxQueryLength = 200;
-const keywordPageSize = 12;
+const keywordPageSize = 20;
 const minKeywords = 8;
 const topicWords = [
   "portrait",
