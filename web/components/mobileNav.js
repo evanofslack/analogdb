@@ -37,6 +37,14 @@ export default function MobileNav() {
                   </div>
                 </div>
               </Link>
+              <Link href="/search" className={styles.link}>
+                <div className={styles.icon}>
+                  <div className={styles.check}>
+                    <span className={styles.iconText}>SEARCH</span>
+                    {pathname === "/search" && <BiCheck size="2rem" />}
+                  </div>
+                </div>
+              </Link>
               <Link href="/films" className={styles.link}>
                 <div className={styles.icon}>
                   <div className={styles.check}>
