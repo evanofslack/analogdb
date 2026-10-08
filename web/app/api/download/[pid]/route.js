@@ -1,4 +1,6 @@
-import { baseURL } from "@lib/constants";
+import { postApi } from "@lib/client";
+import { limit } from "@lib/rateLimit";
+import { ResponseError } from "analogdb-generated";
 import { NextResponse } from "next/server";
 
 const imageHost = "d3i73ktnzbi69i.cloudfront.net";
@@ -10,6 +12,14 @@ const extensions = {
 };
 
 export async function GET(request, { params }) {
+  const limited = await limit("download");
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many downloads, try again in a minute" },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfter) } }
+    );
+  }
+
   const { pid } = await params;
   const id = Number(pid);
 
@@ -18,15 +28,16 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const postResponse = await fetch(`${baseURL}/post/${id}`);
-    if (postResponse.status === 404) {
-      return NextResponse.json({ error: "Post not found" }, { status: 404 });
-    }
-    if (!postResponse.ok) {
-      throw new Error(`Failed to fetch post: ${postResponse.status}`);
+    let post;
+    try {
+      post = await postApi.postIdGet({ id });
+    } catch (error) {
+      if (error instanceof ResponseError && error.response.status === 404) {
+        return NextResponse.json({ error: "Post not found" }, { status: 404 });
+      }
+      throw error;
     }
 
-    const post = await postResponse.json();
     const imageUrl = new URL(post.images[3].url);
     if (imageUrl.protocol !== "https:" || imageUrl.hostname !== imageHost) {
       throw new Error("Unexpected image host");
