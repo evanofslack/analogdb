@@ -13,8 +13,7 @@ func (server *Server) addRatelimiter() {
 	}
 
 	// rate limit by IP with json response
-	rateLimiter := httprate.Limit(rateLimit, rateLimitPeriod,
-		httprate.WithKeyFuncs(keyByClientIP),
+	rateLimiter := httprate.LimitBy(rateLimit, rateLimitPeriod, keyByClientIP,
 		httprate.WithLimitHandler(func(w http.ResponseWriter, r *http.Request) {
 			server.stats.rateLimited.Inc()
 			w.Header().Set("Content-Type", "application/json")
