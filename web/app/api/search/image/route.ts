@@ -1,29 +1,10 @@
-import { clientIp } from "@lib/auth";
 import { searchApi } from "@lib/client";
+import { limit } from "@lib/rateLimit";
 import { NextResponse } from "next/server";
 
 const maxBytes = 5 * 1024 * 1024;
 const imageTypes = ["image/jpeg", "image/png", "image/webp"];
 const pageSize = 50;
-const searchLimit = 10;
-const searchWindowMs = 60 * 1000;
-const searches = new Map<string, { count: number; resetAt: number }>();
-
-function consumeSearch(ip: string): boolean {
-  const now = Date.now();
-  if (searches.size > 10000) {
-    searches.forEach((entry, key) => {
-      if (entry.resetAt <= now) searches.delete(key);
-    });
-  }
-  const entry = searches.get(ip);
-  if (!entry || entry.resetAt <= now) {
-    searches.set(ip, { count: 1, resetAt: now + searchWindowMs });
-    return true;
-  }
-  entry.count += 1;
-  return entry.count <= searchLimit;
-}
 
 function flag(value: string | null): boolean | undefined {
   if (value === "true") return true;
@@ -31,13 +12,16 @@ function flag(value: string | null): boolean | undefined {
   return undefined;
 }
 
-function error(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status });
+function error(message: string, status: number, init: ResponseInit = {}) {
+  return NextResponse.json({ error: message }, { ...init, status });
 }
 
 export async function POST(request: Request) {
-  if (!consumeSearch(await clientIp())) {
-    return error("Too many searches, try again in a minute", 429);
+  const limited = await limit("imageSearch");
+  if (!limited.ok) {
+    return error("Too many searches, try again in a minute", 429, {
+      headers: { "Retry-After": String(limited.retryAfter) },
+    });
   }
 
   const contentType = request.headers.get("content-type") ?? "";
