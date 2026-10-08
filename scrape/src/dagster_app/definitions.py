@@ -37,6 +37,7 @@ from .assets import (
 from .backfill import (
     backfill_post_captions,
     backfill_post_metadata,
+    prune_catalog,
     reencode_post_vectors,
     rematch_post_metadata,
 )
@@ -71,6 +72,7 @@ defs = dg.Definitions(
     assets=[
         backfill_post_captions,
         backfill_post_metadata,
+        prune_catalog,
         reencode_post_vectors,
         rematch_post_metadata,
         analogdb_permalinks,

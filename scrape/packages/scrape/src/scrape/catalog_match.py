@@ -526,6 +526,7 @@ class CatalogMatcher:
         make_key, model_key = _key(raw_make), _key(raw_model)
         make = self.camera_makes.get(make_key)
 
+        unstripped = None
         if make is None and not make_key:
             # Longest first, so "Nikonos V" is nikonos and not nikon "osv"
             for key, m in sorted(
@@ -536,6 +537,7 @@ class CatalogMatcher:
                     and model_key.startswith(key)
                     and len(model_key) > len(key)
                 ):
+                    unstripped = model_key
                     make, make_key, model_key = m, key, model_key[len(key) :]
                     break
         if make is None and make_key:
@@ -566,6 +568,9 @@ class CatalogMatcher:
         if full_key != model_key:
             # "Rolleiflex TLR" is a catalog name, not a Rolleiflex
             keys.insert(0, full_key)
+        if unstripped:
+            # The make can be part of the model's name: Gowland "Gowlandflex"
+            keys.append(unstripped)
         for key in self.camera_makes:
             if (
                 len(key) >= 4

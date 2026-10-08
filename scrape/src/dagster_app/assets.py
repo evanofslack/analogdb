@@ -557,7 +557,7 @@ def debug_posts(context: dg.AssetExecutionContext, final_posts) -> None:
     logger.info("Saved all posts to debug_posts.json")
 
 
-@dg.asset(group_name="scrape")
+@dg.asset(group_name="catalog")
 def upload_films(
     context: dg.AssetExecutionContext,
     films_json: FilmsJsonResource,
@@ -590,7 +590,7 @@ def upload_films(
     return upload_result(context, "films", plan, failed)
 
 
-@dg.asset(group_name="scrape")
+@dg.asset(group_name="catalog")
 def upload_cameras(
     context: dg.AssetExecutionContext,
     cameras_json: CamerasJsonResource,

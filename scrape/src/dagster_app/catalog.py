@@ -31,6 +31,63 @@ class MatchingCatalog:
     not_in_json: List[str] = field(default_factory=list)
 
 
+def live_alias_targets(
+    camera_entries: List[Entry],
+    film_entries: List[Entry],
+    live_cameras: List[adb.Camera],
+    live_films: List[adb.Film],
+) -> Tuple[Dict[Tuple[str, str], Entry], Dict[Tuple[str, str], Entry]]:
+    """Every JSON alias of a live entry, as (make, alias) to that entry with the alias
+    as written under "alias", for cameras and for films."""
+    live_camera_keys = {camera_key(c.make, c.model) for c in live_cameras}
+    live_film_keys = {film_key(f.make, f.type, f.speed) for f in live_films}
+    cameras: Dict[Tuple[str, str], Entry] = {}
+    films: Dict[Tuple[str, str], Entry] = {}
+    for e in camera_entries:
+        if camera_key(e["make"], e["model"]) in live_camera_keys:
+            for alias in e.get("aliases") or []:
+                cameras[camera_key(e["make"], alias)] = {**e, "alias": alias}
+    for e in film_entries:
+        if film_key(e["make"], e["type"], e["speed"]) in live_film_keys:
+            for alias in e.get("aliases") or []:
+                films[(_clean(e["make"]), _clean(alias))] = {**e, "alias": alias}
+    return cameras, films
+
+
+@dataclass
+class Retired:
+    """A live entry that the JSON lists as an alias of another: a renamed or merged
+    name whose posts belong to the target."""
+
+    kind: str
+    id: int
+    make: str
+    name: str
+    target: Entry
+
+
+def retired_entries(
+    camera_entries: List[Entry],
+    film_entries: List[Entry],
+    live_cameras: List[adb.Camera],
+    live_films: List[adb.Film],
+) -> List[Retired]:
+    camera_aliases, film_aliases = live_alias_targets(
+        camera_entries, film_entries, live_cameras, live_films
+    )
+    retired = [
+        Retired("camera", c.id, _clean(c.make), _clean(c.model), camera_aliases[key])
+        for c in live_cameras
+        if (key := camera_key(c.make, c.model)) in camera_aliases
+    ]
+    retired += [
+        Retired("film", f.id, _clean(f.make), _clean(f.type), film_aliases[key])
+        for f in live_films
+        if (key := (_clean(f.make), _clean(f.type))) in film_aliases
+    ]
+    return retired
+
+
 def catalog_for_matching(
     camera_entries: List[Entry],
     film_entries: List[Entry],
@@ -45,28 +102,21 @@ def catalog_for_matching(
     json_films = {film_key(e["make"], e["type"], e["speed"]): e for e in film_entries}
     live_camera_keys = {camera_key(c.make, c.model) for c in live_cameras}
     live_film_keys = {film_key(f.make, f.type, f.speed) for f in live_films}
+    camera_aliases, film_aliases = live_alias_targets(
+        camera_entries, film_entries, live_cameras, live_films
+    )
 
     aliases: List[CatalogAlias] = []
-    merged_cameras = set()
-    merged_films = set()
-    for key, e in json_cameras.items():
-        if key not in live_camera_keys:
-            continue
-        for alias in e.get("aliases") or []:
-            aliases.append(CatalogAlias("camera", key[0], key[1], alias))
-            merged_cameras.add(camera_key(key[0], alias))
-    for key, e in json_films.items():
-        if key not in live_film_keys:
-            continue
-        for alias in e.get("aliases") or []:
-            aliases.append(CatalogAlias("film", key[0], key[1], alias))
-            merged_films.add((key[0], _clean(alias)))
+    for (make, alias), e in camera_aliases.items():
+        aliases.append(CatalogAlias("camera", make, _clean(e["model"]), e["alias"]))
+    for (make, alias), e in film_aliases.items():
+        aliases.append(CatalogAlias("film", make, _clean(e["type"]), e["alias"]))
 
     cameras = [
-        c for c in live_cameras if camera_key(c.make, c.model) not in merged_cameras
+        c for c in live_cameras if camera_key(c.make, c.model) not in camera_aliases
     ]
     films = [
-        f for f in live_films if (_clean(f.make), _clean(f.type)) not in merged_films
+        f for f in live_films if (_clean(f.make), _clean(f.type)) not in film_aliases
     ]
 
     not_live = [" ".join(k) for k in json_cameras if k not in live_camera_keys]

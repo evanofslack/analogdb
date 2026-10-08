@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import analogdb.models as adb
 import dagster as dg
 import pytest
+from analogdb.client import Deleted
 from dagster_aws.s3 import S3Resource
 from scrape.models import MatchResult, PhotoMetadata, RedditComment
 from scrape.tagging import ImageTags, TaggingError
@@ -12,9 +13,11 @@ from scrape.tagging import ImageTags, TaggingError
 from . import backfill
 from .backfill import (
     BackfillCaptionsConfig,
+    PruneCatalogConfig,
     ReencodeVectorsConfig,
     backfill_post_captions,
     backfill_post_metadata,
+    prune_catalog,
     range_comments,
     reencode_post_vectors,
     rematch_post_metadata,
@@ -412,3 +415,119 @@ class TestReencodeVectors:
 
         assert result.metadata["failed"] == 2
         assert result.metadata["failed_ids"] == "[1, 2]"
+
+
+PRUNE_CAMERAS_JSON = [
+    {"make": "nikon", "model": "f501", "aliases": ["n2020"], "description": "d"},
+    {"make": "nikon", "model": "f90x", "aliases": ["f90s"], "description": "d"},
+]
+PRUNE_FILMS_JSON = [
+    {
+        "make": "kodak",
+        "type": "colorplus 200",
+        "speed": 200,
+        "color_type": "color",
+        "aliases": ["kodacolor 200"],
+        "description": "d",
+    }
+]
+
+
+def prune_client():
+    client = MagicMock()
+    client.get_cameras.return_value = [
+        adb.Camera(id=1, make="nikon", model="f501", description="d"),
+        adb.Camera(id=2, make="nikon", model="n2020", description="d"),
+        adb.Camera(id=3, make="nikon", model="f90x", description="d"),
+        adb.Camera(id=4, make="nikon", model="f90s", description="d"),
+        adb.Camera(id=5, make="pentax", model="k1000", description="d"),
+    ]
+    client.get_films.return_value = [
+        adb.Film(
+            id=1,
+            make="kodak",
+            type="colorplus 200",
+            speed=200,
+            color_type="color",
+            description="d",
+        ),
+        adb.Film(
+            id=2,
+            make="kodak",
+            type="kodacolor 200",
+            speed=200,
+            color_type="color",
+            description="d",
+        ),
+    ]
+    client.get_posts_all.return_value = [
+        post(1, camera_make="nikon", camera_model="n2020"),
+        post(2, camera_make="nikon", camera_model="f501"),
+        post(3, film_make="Kodak", film_type="Kodacolor 200"),
+    ]
+    client.delete_camera.side_effect = lambda id: (
+        Deleted.IN_USE if id == 4 else Deleted.DELETED
+    )
+    client.delete_film.return_value = Deleted.DELETED
+    return client
+
+
+def run_prune(client, dry_run, cameras=PRUNE_CAMERAS_JSON, films=PRUNE_FILMS_JSON):
+    with (
+        patch.object(AnalogDBResource, "client", return_value=client),
+        patch.object(CamerasJsonResource, "client", return_value=cameras),
+        patch.object(FilmsJsonResource, "client", return_value=films),
+    ):
+        return prune_catalog(
+            dg.build_asset_context(),
+            config=PruneCatalogConfig(dry_run=dry_run),
+            analogdb=AnalogDBResource(),
+            **resources(),
+        )
+
+
+class TestPruneCatalog:
+    def test_dry_run_reports_without_writing(self):
+        client = prune_client()
+        result = run_prune(client, dry_run=True)
+        client.patch_post.assert_not_called()
+        client.delete_camera.assert_not_called()
+        client.delete_film.assert_not_called()
+        assert result.metadata["retired"] == 3
+        assert result.metadata["posts_moved_camera"] == 1
+        assert result.metadata["posts_moved_film"] == 1
+        assert "nikon n2020" in result.metadata["retired_entries"].value
+        assert "pentax k1000" in result.metadata["unknown_entries"].value
+
+    def test_real_run_moves_posts_then_deletes(self):
+        client = prune_client()
+        result = run_prune(client, dry_run=False)
+        patches = {c.args[0]: c.args[1] for c in client.patch_post.call_args_list}
+        assert patches[1] == adb.PostPatch(camera_make="nikon", camera_model="f501")
+        assert patches[3] == adb.PostPatch(
+            film_make="kodak", film_type="colorplus 200", film_speed=200
+        )
+        assert set(patches) == {1, 3}
+        assert sorted(c.args[0] for c in client.delete_camera.call_args_list) == [2, 4]
+        client.delete_film.assert_called_once_with(2)
+        assert result.metadata["deleted"] == 2
+        assert result.metadata["in_use"] == 1
+        assert "in_use" in result.metadata["retired_entries"].value
+
+    def test_unknown_entries_are_never_deleted(self):
+        client = prune_client()
+        run_prune(client, dry_run=False)
+        assert 5 not in [c.args[0] for c in client.delete_camera.call_args_list]
+        assert 1 not in [c.args[0] for c in client.delete_camera.call_args_list]
+
+    def test_nothing_retired_skips_posts(self):
+        client = prune_client()
+        run_prune(client, dry_run=False, cameras=[], films=[])
+        client.get_posts_all.assert_not_called()
+        client.delete_camera.assert_not_called()
+
+    def test_failures_raise(self):
+        client = prune_client()
+        client.patch_post.side_effect = RuntimeError("down")
+        with pytest.raises(dg.Failure):
+            run_prune(client, dry_run=False)

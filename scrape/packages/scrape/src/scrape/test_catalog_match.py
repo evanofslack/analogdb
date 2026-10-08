@@ -603,3 +603,19 @@ def test_nikomat_is_a_nikkormat():
         ("Nikon", "FTn", "Nikkormat FTn"),
     ]:
         assert _camera(cam(m, make, model, text)) == ("nikon", "nikkormat ftn")
+
+
+def test_model_named_after_its_make():
+    cameras = [
+        Camera(id=1, make="gowland", model="gowlandflex", description=""),
+        Camera(id=2, make="nikon", model="f3", description=""),
+        Camera(id=3, make="nikonos", model="v", description=""),
+    ]
+    m = CatalogMatcher(cameras, [])
+    for make, model, expected in [
+        (None, "Gowlandflex", ("gowland", "gowlandflex")),
+        ("Gowland", "Gowlandflex", ("gowland", "gowlandflex")),
+        (None, "Nikon F3", ("nikon", "f3")),
+        (None, "Nikonos V", ("nikonos", "v")),
+    ]:
+        assert _camera(cam(m, make, model)) == expected, model
