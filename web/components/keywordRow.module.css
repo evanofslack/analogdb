@@ -21,22 +21,23 @@
   outline-offset: 2px;
 }
 
-.fadeRight {
-  mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
+.fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 4rem;
+  pointer-events: none;
 }
 
 .fadeLeft {
-  mask-image: linear-gradient(to left, black calc(100% - 4rem), transparent);
+  left: 0;
+  background: linear-gradient(to right, var(--mantine-color-body), transparent);
 }
 
-.fadeBoth {
-  mask-image: linear-gradient(
-    to right,
-    transparent,
-    black 4rem,
-    black calc(100% - 4rem),
-    transparent
-  );
+.fadeRight {
+  right: 0;
+  background: linear-gradient(to left, var(--mantine-color-body), transparent);
 }
 
 .item {
@@ -70,7 +71,7 @@
 .arrow {
   position: absolute;
   top: 50%;
-  z-index: 1;
+  z-index: 2;
   transform: translateY(-50%);
 }
 

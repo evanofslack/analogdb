@@ -44,13 +44,14 @@ export default function KeywordRow({
     });
   };
 
-  let fade = styles.row;
-  if (canLeft && canRight) fade = `${styles.row} ${styles.fadeBoth}`;
-  else if (canLeft) fade = `${styles.row} ${styles.fadeLeft}`;
-  else if (canRight) fade = `${styles.row} ${styles.fadeRight}`;
-
   return (
     <div className={className ? `${styles.wrap} ${className}` : styles.wrap}>
+      {canLeft && (
+        <div className={`${styles.fade} ${styles.fadeLeft}`} aria-hidden />
+      )}
+      {canRight && (
+        <div className={`${styles.fade} ${styles.fadeRight}`} aria-hidden />
+      )}
       {canLeft && (
         <ActionIcon
           variant="default"
@@ -65,7 +66,7 @@ export default function KeywordRow({
       )}
       <div
         ref={rowRef}
-        className={fade}
+        className={styles.row}
         onScroll={measure}
         role="list"
         aria-label={label}
