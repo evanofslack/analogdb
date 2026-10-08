@@ -118,6 +118,13 @@
     "description": "Agfa Vista Plus 400 offers a higher ISO than its 200-speed counterpart, providing more flexibility in lower light conditions or for fast-action shooting. Its moderate grain structure and warm color reproduction make it a versatile choice for various photographic applications."
   },
   {
+    "type": "portrait 160",
+    "make": "agfa",
+    "speed": 160,
+    "color_type": "color",
+    "description": "Agfa Agfacolor Portrait 160 is an ISO 160 professional color negative film produced from around 1990 to 2005. It was designed for portrait, wedding, and fashion photography, known for its subtle saturation. It was part of the Agfa \"Triade\" and also sold as \"Agfacolor Portrait XPS 160.\""
+  },
+  {
     "type": "edu ultra 100",
     "make": "arista",
     "speed": 100,
@@ -136,6 +143,9 @@
     "make": "arista",
     "speed": 400,
     "color_type": "bw",
+    "aliases": [
+      "edu 400"
+    ],
     "description": "Arista's EDU Ultra 400 Black and White Negative Film is a traditional panchromatic film that is optimized for use in a range of shooting conditions. It has a fine grain with high sharpness as well as a wide exposure latitude that make is a useful film for most environments. It has a nominal sensitivity of ISO 400/27° when developed in standard black and white chemistry, and responds well to push processing. EDU Ultra is a flexible film type that is ideally suited for use in general photographic applications."
   },
   {
@@ -250,6 +260,10 @@
     "make": "china lucky film",
     "speed": 200,
     "color_type": "color",
+    "aliases": [
+      "c200",
+      "200"
+    ],
     "description": "This highly anticipated new C-41 color negative film has been a long time coming. It is produced by Chinese company Lucky Film, which has historically been a major film producer in the region with investment from Kodak. The new film is on the cheaper side, is 200 ISO, and has cyan tint."
   },
   {
@@ -662,6 +676,13 @@
     "description": "Foma RETROPAN 320 soft is a panchromatic black and white negative film characterized by its fine grain structure along with good resolution and edge sharpness. Offering a wide tonal range and classic appearance, this film is particularly well-suited for conventional enlarging applications, and its softer, mild contrast values are ideal for still lives, architectural, landscape, and portrait photography. Its nominal sensitivity is ISO 320/26° when processed in standard black and white chemistry or the recommended Retro Special Developer, however its wide exposure latitude permits rating the film at one stop of over (EI 160) or two stops under (EI 1250) with good results."
   },
   {
+    "type": "ortho 400",
+    "make": "foma",
+    "speed": 400,
+    "color_type": "bw",
+    "description": "Foma Ortho 400 is a fine-grained, high-speed orthochromatic film. It is available in 135, 120, and sheet film formats. This film is also available in 35mm bulk rolls in lengths of 30.5 m."
+  },
+  {
     "type": "200",
     "make": "fujifilm",
     "speed": 200,
@@ -694,6 +715,9 @@
     "make": "fujifilm",
     "speed": 100,
     "color_type": "color",
+    "aliases": [
+      "provia"
+    ],
     "description": "Fujichrome Provia 100F Professional RDP-III from Fujifilm is a daylight-balanced color transparency film that exhibits a super-fine grain structure with vivid and naturally appearing colors and rich tonal rendition. It has a medium-speed nominal sensitivity of ISO 100/21° when processed in E-6, CR-56, or C6R processes and can effectively be pulled one half stop or pushed two stops with minimal variations in color balance and gradation. Excellent reciprocity characteristics also make this film highly suitable for use during long exposures and ensures consistent film speeds and coloring across multiple and extended exposures. Medium overall contrast and saturation make this film ideal for use in a wide range of photographic applications and is especially well-suited for use in product, landscape, nature, portraiture, and fashion photography."
   },
   {
@@ -708,6 +732,9 @@
     "make": "fujifilm",
     "speed": 100,
     "color_type": "color",
+    "aliases": [
+      "rvp100"
+    ],
     "description": "Fujichrome Velvia 100 Professional RVP 100 Color Reversal Film from Fujifilm is a daylight-balanced color transparency film that exhibits incredibly high color saturation reproduction along with a super-fine grain structure to render imagery cleanly and clearly. It has a medium-speed nominal sensitivity of ISO 100/21° when processed in E-6 or CR-56 processes and can effectively be pulled one half stop or pushed one stop with Minimal variations in color balance and gradation. The introduction of new-generation cyan, magenta, and yellow couplers gives this film its uniquely saturated look and also offers anti-fading characteristics for ensured color image storage permanence. High overall contrast and vivid color reproduction make this film ideal for use in a wide range of photographic applications and is especially well-suited for use in scenic and nature photography."
   },
   {
@@ -820,6 +847,9 @@
     "make": "fujifilm",
     "speed": 100,
     "color_type": "bw",
+    "aliases": [
+      "acros"
+    ],
     "description": "Fujifilm Neopan Acros 100 II is an orthopanchromatic black and white negative film characterized by its extremely fine grain structure and wide tonal range. Super Fine-Σ Grain Technology is employed to deliver the distinct tight grain structure and alignment along with high acutance and smooth tonal rendering to suit both scanning and enlarging applications. Its medium-speed ISO 100 nominal sensitivity suits working in a variety of outdoor conditions and enhanced reciprocity characteristics also benefit working with longer exposure times. Additionally, Acros II incorporates P.I.D.C. Technology (Precision Iodine Distribution Control), which provides stable processing results when manually developing the film in small tanks or automatically in larger processors."
   },
   {
@@ -828,6 +858,101 @@
     "speed": 100,
     "color_type": "color",
     "description": "Fujifilm Reala 100 was a medium format (120) color negative film that expired in April 2005, distinct from the 35mm Superia Reala 100 variant. The film delivered excellent color reproduction with fine grain and good sharpness, maintaining quality even when shot 17 years past its expiration date at a reduced speed of EI 50. Known for producing true-to-life, earthy colors rather than the typical 'candylike' saturation of other Fujifilm emulsions, Reala 100 was particularly favored as a portrait film. The discontinuation of this emulsion represents one of many quality films lost during the early digital transition that are unlikely to return to production."
+  },
+  {
+    "type": "fujicolor superia 200",
+    "make": "fujifilm",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Fujifilm Superia 200 is a general-purpose ISO 200/24° daylight color negative film. It was designed for flexibility and ease of use, working well outdoors in daylight or indoors with flash. It offered enhanced color reproduction, sharpness, and smooth, fine grain. It was available in 110 and 135 formats."
+  },
+  {
+    "type": "neopan 100 acros ii",
+    "make": "fujifilm",
+    "speed": 100,
+    "color_type": "bw",
+    "aliases": [
+      "acros ii",
+      "acros 100 ii",
+      "acros ii 100",
+      "neopan acros ii",
+      "neopan acros 100 ii"
+    ],
+    "description": "Fujifilm Neopan 100 ACROS II is a black and white print film introduced in November 2019. It is a gelatin-silver process film with a speed of 100/21°. This film is available in 135 and 120 formats and is suitable for general purpose, sports, and daylight applications."
+  },
+  {
+    "type": "fujicolor superia premium 400",
+    "make": "fujifilm",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Fujifilm Fujicolor Superia Premium 400 is a daylight-balanced color negative film, a Japanese market variant of Superia X-tra 400 consumer film. Launched in 2009, it features improved exposure latitude and is optimized for the reproduction of Japanese skin tones. It is officially distributed in Japan only."
+  },
+  {
+    "type": "fujichrome provia 400x",
+    "make": "fujifilm",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Fujichrome Provia 400X [RXP] was a professional-quality, daylight-balanced color reversal film produced by Fujifilm with a speed of ISO 400/27°. It was developed to replace Provia 400F [RHP III], improving color image storage permanence and fading resistance. Known for its ability to be pushed/pulled from −1/2 stop to +2 stops, it was discontinued in 2013."
+  },
+  {
+    "type": "fujicolor pro 160ns",
+    "make": "fujifilm",
+    "speed": 160,
+    "color_type": "color",
+    "description": "Fujifilm Fujicolor Pro 160NS is a professional ISO 160 daylight-type color negative film, originally Pro 160S, renamed in 2010 with no emulsion change. It features optimized skin tone reproduction, soft contrast, and neutral gray balance. It was discontinued in 2021."
+  },
+  {
+    "type": "fujichrome velvia 100f",
+    "make": "fujifilm",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Fujifilm Fujichrome Velvia 100F is a daylight-balanced color reversal film introduced in 2002. It has an ISO 100 speed and is known for its high saturation and accurate color rendition, with the exception of yellow, which it exaggerates. It was discontinued in 2012 in most formats and markets."
+  },
+  {
+    "type": "neopan 400",
+    "make": "fujifilm",
+    "speed": 400,
+    "color_type": "bw",
+    "description": "Fujifilm Neopan 400 was a general purpose, gelatin-silver black and white print film with a speed of 400/27°. Introduced in 1978, it was available in 135 and 120 formats, and was discontinued in 2013. It was known for sports and low light applications."
+  },
+  {
+    "type": "fujichrome sensia 100",
+    "make": "fujifilm",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Fujichrome Sensia 100 was a general purpose consumer, daylight-type color reversal film made by Fujifilm from 1994 to 1997. It offered faithful color reproduction and fine grain (RA). It was made in Japan and was available in 135 format."
+  },
+  {
+    "type": "eterna 250d",
+    "make": "fujifilm",
+    "speed": 250,
+    "color_type": "color",
+    "description": "Fujifilm Eterna 250D 8563/8663 is a color motion picture film introduced in 2006 as part of the Eterna series, which was produced from 2004 to 2013."
+  },
+  {
+    "type": "eterna 500t",
+    "make": "fujifilm",
+    "speed": 500,
+    "color_type": "color",
+    "description": "Fujifilm Eterna 500T 8573/8673 is a color motion picture film introduced in 2004. It was part of the Eterna line of films produced by Fujifilm."
+  },
+  {
+    "type": "fujicolor npz 800",
+    "make": "fujifilm",
+    "speed": 800,
+    "color_type": "color",
+    "aliases": [
+      "npz800",
+      "pro 800z"
+    ],
+    "description": "Fujicolor NPZ 800 was a daylight-balanced color negative film introduced in 2002. It was renamed Pro 800Z in 2004, with no change to the emulsion, to align with the new Pro 160 line of films. It featured a fourth color layer on a triacetate base and was available in 135, 120, and 220 formats. NPZ 800/Pro 800Z was discontinued in 2009/2010."
+  },
+  {
+    "type": "fujicolor superia 100",
+    "make": "fujifilm",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Fujicolor Superia 100 is a general purpose ISO 100 daylight color negative film introduced around 1998, primarily aimed at the consumer market. It was designed for flexibility and ease of use, offering sharp, accurate, and vibrant colors. A key feature was its '4th' cyan color layer for improved color reproduction under fluorescent lighting. It was available in 135 and 120 formats and was discontinued around 2009."
   },
   {
     "type": "autumn 200",
@@ -900,6 +1025,9 @@
     "make": "ilford",
     "speed": 3200,
     "color_type": "bw",
+    "aliases": [
+      "3200"
+    ],
     "description": "Ilford's Delta 3200 Professional is a high-speed black and white negative film for producing prints using a traditional black and white process. The film exhibits a nominal sensitivity of ISO 3200/36°, making it ideal for use in difficult lighting conditions, indoor scenes, and for fast-moving subjects. Standard development in black and white chemistry yields an unobtrusive grain texture with rich tonality and the film also responds exceptionally well to under/over exposure and push/pull development."
   },
   {
@@ -1018,12 +1146,16 @@
     "make": "kodak",
     "speed": 100,
     "color_type": "color",
+    "aliases": [
+      "aerocolor iv"
+    ],
     "description": "Kodak Aerocolor IV 2460 is a medium-speed, very fine-grain color negative aerial film. This film has a wide exposure latitude and is specifically designed for processing to a color negative only. Since this film does not have integral color masking, direct interpretation can be made from the negative. Objects are recorded in colors complementary to their natural colors"
   },
   {
     "type": "colorplus 200",
     "aliases": [
-      "kodacolor 200"
+      "kodacolor 200",
+      "colourplus"
     ],
     "make": "kodak",
     "speed": 200,
@@ -1048,7 +1180,8 @@
     "speed": 100,
     "color_type": "color",
     "aliases": [
-      "e100"
+      "e100",
+      "ektachrome"
     ],
     "description": "Kodak Professional Ektachrome E100 is a daylight-balanced color transparency film characterized by its extremely fine grain structure, vibrant color rendering, and overall low contrast profile. The lower contrast values contribute to a wide dynamic range and a neutral tonal scale for greater color accuracy, and a low D-min helps to ensure brighter, whiter whites. It has a medium-speed nominal sensitivity of ISO 100/21° when developed in E-6 process and the smooth grain profile pairs with a micro-structure optimized T-GRAIN emulsion to make it especially well-suited to scanning applications."
   },
@@ -1064,6 +1197,11 @@
     "make": "kodak",
     "speed": 200,
     "color_type": "color",
+    "aliases": [
+      "gold 120",
+      "200 gold",
+      "gold"
+    ],
     "description": "Kodak Gold 200 is a popular consumer-grade film known for rendering warm and slightly vintage hues. Its fine grain and moderate contrast make it a versatile choice for a wide variety of lighting situations. It is a popular choice for everyday photography, capturing scenes with a nostalgic and pleasing color palette."
   },
   {
@@ -1120,6 +1258,9 @@
     "make": "kodak",
     "speed": 400,
     "color_type": "color",
+    "aliases": [
+      "portrait 400"
+    ],
     "description": "Kodak Professional Portra 400 is a high-speed daylight-balanced color negative film offering a smooth and natural color palette that is balanced with vivid saturation and low contrast for accurate skin tones and consistent results. Utilizing the cinematic Vision Film technology, this film also exhibits a fine grain structure with very high sharpness and edge detail. A micro-structure optimized T-GRAIN emulsion makes it especially well-suited for scanning applications, and advanced development accelerators offer extended versatility when enlarging. This film has a nominal sensitivity of ISO 400/27° and is particularly well-suited to portrait and wedding photography, as well as nature, travel, and outdoor shooting with moving subjects, or when the lighting cannot be controlled."
   },
   {
@@ -1155,6 +1296,9 @@
     "make": "kodak",
     "speed": 400,
     "color_type": "bw",
+    "aliases": [
+      "400 tmax"
+    ],
     "description": "Kodak T-MAX 400 is a versatile black and white film with a fine grain structure despite its high speed, making it ideal for capturing sharp images with great detail. Its wide exposure latitude allows for excellent detail retention in various lighting situations. The film's fine grain and moderate contrast make it an excellent choice for a range of photography styles including street, landscape, and portrait photography."
   },
   {
@@ -1225,6 +1369,83 @@
       "5219"
     ],
     "description": "Kodak Vision3 500T is motion picture film with carbon based Rem Jet. It uses advanced Dye Layering Technology (DLT) to create excellent image quality with noticeably reduced grain in shadows. To deliver high image-quality in low-light scenes, Vision3 500T Film yields higher signal-to-noise ratios and the extended highlight latitude the film provides gives greater flexibility to pull even more detail out of highlights when lighting extreme situations."
+  },
+  {
+    "type": "gold 400",
+    "make": "kodak",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Kodak Gold 400, produced by Kodak from 1988 to 1997, was a general-purpose consumer color film. It was available in 135 and 120 formats."
+  },
+  {
+    "type": "portra 400nc",
+    "make": "kodak",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Kodak Portra 400NC was a professional color film produced from 1998 to 2010. It was known for its 'Natural Color' rendition, providing subtle color and natural skin tones, and was designed for use in low light or with flash. It was available in 135, 120, 220, and sheet film formats."
+  },
+  {
+    "type": "kodacolor 100",
+    "make": "kodak",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Kodacolor 100 is a general purpose color negative film announced by Kodak in October 2025. It is part of the Kodacolor line, which has been associated with various color negative films since 1942."
+  },
+  {
+    "type": "portra 400vc",
+    "make": "kodak",
+    "speed": 400,
+    "color_type": "color",
+    "description": "Kodak Portra 400VC was a professional color film produced by Kodak from 1998 to 2010. It was known for its 'Vivid Color' characteristics, offering vibrant colors and slightly higher contrast, designed to enhance images in flat or overcast lighting conditions. It was available in 135, 120, and 220 formats."
+  },
+  {
+    "type": "portra 160nc",
+    "make": "kodak",
+    "speed": 160,
+    "color_type": "color",
+    "description": "Kodak Portra 160NC was a professional color film produced from 1998 to 2011. Known as 'Natural Color,' it was designed for subtle color and natural skin tones, particularly in controlled lighting situations."
+  },
+  {
+    "type": "ektachrome e200",
+    "make": "kodak",
+    "speed": 200,
+    "color_type": "color",
+    "description": "Kodak Ektachrome E200 was a general-purpose daylight-balanced color transparency film with moderate contrast and the \"look\" of a lower speed film. It was push-processing capable to an E.I. of 800 and featured a 'T' Grain emulsion. This film was discontinued in March 2011."
+  },
+  {
+    "type": "gold 100",
+    "make": "kodak",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Kodak Gold 100 was a general purpose consumer color film produced by Kodak from 1988 to 1997. It was available in 135 and 120 formats."
+  },
+  {
+    "type": "portra 100t",
+    "make": "kodak",
+    "speed": 100,
+    "color_type": "color",
+    "description": "Kodak Portra 100T was a professional color film produced until 2006. It was known for its outstanding color accuracy under tungsten lighting (3200K) and improved long exposure performance. This film was suitable for advertising, architecture photography, and art reproduction."
+  },
+  {
+    "type": "portra 160vc",
+    "make": "kodak",
+    "speed": 160,
+    "color_type": "color",
+    "description": "Kodak Portra 160VC was a professional color film produced from 1998 to 2011. It was known for its 'Vivid Color' characteristics, offering vibrant colors and slightly higher contrast, making it suitable for controlled lighting situations. It was available in 135, 120, 220, and sheet film formats."
+  },
+  {
+    "type": "verichrome pan",
+    "make": "kodak",
+    "speed": 125,
+    "color_type": "bw",
+    "description": "Kodak Verichrome Pan was a general purpose medium-speed panchromatic film produced by Kodak from 1956 to 2002. It featured extremely fine grain, excellent gradation, and wide exposure latitude. This film had characteristics similar to Kodak Plus-X Pan Professional Film, but without retouching surfaces."
+  },
+  {
+    "type": "vision2 500t",
+    "make": "kodak",
+    "speed": 500,
+    "color_type": "color",
+    "description": "Kodak Vision2 500T (5218/7218) was a color negative film introduced in 2002 and discontinued in 2009. It was available in 35mm, 16mm, and 8mm formats. This film was processed using the ECN-2 process."
   },
   {
     "type": "alien 200",
@@ -1851,6 +2072,13 @@
     "speed": 200,
     "color_type": "bw",
     "description": "Rollei/Agfa's Superpan 200 is a medium-speed panchromatic black and white negative film based on Agfa's AVI PAN aerial film, and exhibits a nominal sensitivity of ISO 200/24°. It has extended sensitivity near the infrared range, up to 750nm, and well-controlled contrast in order to cut through haze, fog, and other atmospheric conditions. Its very fine grain structure also contributes to high overall sharpness and this film is particularly well-suited to technical, industrial, and aerial photography applications. Additionally, its wide exposure latitude enables rating the film at EI 125 with consistent results and controlled tonal values."
+  },
+  {
+    "type": "retro 400s",
+    "make": "rollei",
+    "speed": 400,
+    "color_type": "bw",
+    "description": "Rollei Retro 400S is a super-panchromatic black and white film with extended red sensitivity, based on Agfa-Gevaert Aviphot Pan 400. It is available in 135-36 and 120 formats and features a polyester base."
   },
   {
     "type": "santacolor 100",

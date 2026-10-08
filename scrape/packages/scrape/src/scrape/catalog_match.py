@@ -46,6 +46,8 @@ CAMERA_MAKE_ALIASES = {
     "fuji": "fujifilm",
     "fujica": "fujifilm",
     "nikkormat": "nikon",
+    "nikomat": "nikon",
+    "plubel": "plaubel",
     "rolleicord": "rollei",
     "rolleiflex": "rollei",
     "zenza": "bronica",
@@ -62,7 +64,9 @@ FILM_MAKE_ALIASES = {
     "harman": "harmon",
     "jch": "japan camera hunter",
     "lomo": "lomography",
+    "lucky": "china lucky film",
     "orwo": "original wolfen",
+    "phoenix": "harmon",
     "reflexlab": "reflx labs",
     "reflexlabs": "reflx labs",
     "reflxlab": "reflx labs",
@@ -70,6 +74,10 @@ FILM_MAKE_ALIASES = {
     "silbersalz": "silbersalz35",
     "wolfen": "original wolfen",
 }
+
+# Product lines that name their make wherever they're written: a "Fujifilm Phoenix 200"
+# is a Harman Phoenix 200
+FILM_LINES = {"phoenix": "harmon"}
 
 # Makes that sell under both names: Agfa APX is agfaphoto in the catalog
 FILM_MAKE_FAMILIES = {"agfa": ["agfaphoto"], "agfaphoto": ["agfa"]}
@@ -79,6 +87,7 @@ FILM_MAKE_FAMILIES = {"agfa": ["agfaphoto"], "agfaphoto": ["agfa"]}
 CAMERA_LINES = {
     "canonet": ("canon", True),
     "nikkormat": ("nikon", True),
+    "nikomat": ("nikon", True),
     "nikonos": ("nikonos", False),
     "rolleicord": ("rollei", True),
     "rolleiflex": ("rollei", True),
@@ -668,6 +677,11 @@ class CatalogMatcher:
                 if word in self.film_makes:
                     make = self.film_makes[word]
                     break
+        for word in normalize_tokens(raw_type):
+            line_make = FILM_LINES.get(word)
+            if line_make and line_make in self.types:
+                make = line_make
+                break
         speed = valid_speed(mention.get("box_speed"))
         tkey = film_type_key(raw_type, self.film_make_words)
 

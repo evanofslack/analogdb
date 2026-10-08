@@ -558,3 +558,48 @@ def test_placeholders_are_not_unmatched(refined, kind, make, name, expected_make
         r = cam(refined, make, name)
         assert r.proposed.camera_make == expected_make
     assert r.unmatched == []
+
+
+def test_film_lines_written_as_the_make():
+    films = [
+        Film(id=i, make=m, type=t, speed=s, color_type="color", description="")
+        for i, (m, t, s) in enumerate(
+            [
+                ("harmon", "phoenix 200", 200),
+                ("harmon", "phoenix 200 II", 200),
+                ("harmon", "red 125", 125),
+                ("china lucky film", "lucky color 200", 200),
+            ]
+        )
+    ]
+    m = CatalogMatcher(
+        [],
+        films,
+        [
+            CatalogAlias("film", "harmon", "phoenix 200 II", "phoenix ii"),
+            CatalogAlias("film", "china lucky film", "lucky color 200", "c200"),
+        ],
+    )
+    for make, type, expected in [
+        ("Phoenix", "200", ("harmon", "phoenix 200")),
+        ("Harman", "Phoenix 200", ("harmon", "phoenix 200")),
+        (None, "Phoenix 200", ("harmon", "phoenix 200")),
+        (None, "Phoenix II", ("harmon", "phoenix 200 ii")),
+        ("Harman", "Red 125", ("harmon", "red 125")),
+        ("Fujifilm", "Phoenix 200", ("harmon", "phoenix 200")),
+        ("Lucky", "C200", ("china lucky film", "lucky color 200")),
+    ]:
+        assert _film(film(m, make, type, None)) == expected, (make, type)
+
+
+def test_nikomat_is_a_nikkormat():
+    cameras = [Camera(id=1, make="nikon", model="nikkormat ftn", description="")]
+    m = CatalogMatcher(
+        cameras, [], [CatalogAlias("camera", "nikon", "nikkormat ftn", "nikomat ftn")]
+    )
+    for make, model, text in [
+        ("Nikon", "FTn", "Nikomat FTn"),
+        ("Nikomat", "FTn", "Nikomat FTn"),
+        ("Nikon", "FTn", "Nikkormat FTn"),
+    ]:
+        assert _camera(cam(m, make, model, text)) == ("nikon", "nikkormat ftn")

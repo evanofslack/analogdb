@@ -45,3 +45,6 @@ grayscale-calibration/
 grayscale-review.html
 
 eval/tags/data/
+
+# Catalog drafting data, see scripts/draft_catalog.py
+drafts/
