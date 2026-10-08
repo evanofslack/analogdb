@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./keywordRow.module.css";
 
+const step = 2;
+
 export default function KeywordRow({
   words,
   links,
@@ -38,10 +40,18 @@ export default function KeywordRow({
 
   const scroll = (direction) => {
     const row = rowRef.current;
-    row?.scrollBy({
-      left: direction * row.clientWidth * 0.8,
-      behavior: "smooth",
-    });
+    if (!row) return;
+    const offsets = [...row.children].map((child) => child.offsetLeft);
+    const first = row.children[0]?.offsetLeft ?? 0;
+    const current = offsets.findIndex(
+      (left) => left - first >= row.scrollLeft - 1
+    );
+    const start = current === -1 ? offsets.length - 1 : current;
+    const target = Math.min(
+      Math.max(start + direction * step, 0),
+      offsets.length - 1
+    );
+    row.scrollTo({ left: offsets[target] - first, behavior: "smooth" });
   };
 
   return (
