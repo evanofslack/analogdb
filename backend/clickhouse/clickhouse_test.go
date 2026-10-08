@@ -67,7 +67,7 @@ func mustOpen(t *testing.T) *DB {
 	if err != nil {
 		t.Fatal(err)
 	}
-	db, err := NewDB(host, port.Int(), "analytics", "test", "test", "", l)
+	db, err := NewDB(host, int(port.Num()), "analytics", "test", "test", "", l)
 	if err != nil {
 		t.Fatal(err)
 	}

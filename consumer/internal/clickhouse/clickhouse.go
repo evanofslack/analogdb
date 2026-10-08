@@ -115,7 +115,7 @@ func (c *Client) Insert(ctx context.Context, events []*v1.Event) error {
 	}
 
 	start := time.Now()
-	defer c.metrics.ObserveClickHouseInsertDuration(c.table, time.Since(start))
+	defer func() { c.metrics.ObserveClickHouseInsertDuration(c.table, time.Since(start)) }()
 	c.logger.Debug("Start insert events", "count", len(events))
 
 	// Explicitly specify the columns you're inserting
