@@ -1,5 +1,6 @@
 import "server-only";
 import { rateLimitKey, resolveClientIp } from "@lib/clientIp";
+import { Limited } from "@lib/rateLimited";
 import { headers } from "next/headers";
 
 export type Bucket = "browse" | "search" | "imageSearch" | "download" | "login";
@@ -68,4 +69,11 @@ export async function limit(bucket: Bucket): Promise<RateLimitResult> {
     console.warn("rate limited", { bucket, ip, forwardedFor });
   }
   return result;
+}
+
+export async function limitAction(bucket: Bucket): Promise<Limited | null> {
+  const result = await limit(bucket);
+  return result.ok
+    ? null
+    : { rateLimited: true, retryAfter: result.retryAfter };
 }

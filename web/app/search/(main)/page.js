@@ -6,6 +6,7 @@ import {
   searchPosts,
 } from "@lib/data/search";
 import { guessColumns, slim } from "@lib/firstPage";
+import { limit } from "@lib/rateLimit";
 import {
   searchKey,
   searchPageSize,
@@ -82,6 +83,10 @@ export default async function Page({ searchParams }) {
 
   const { device } = userAgent({ headers: await headers() });
 
+  let allowed = true;
+  if (q) allowed = (await limit("search")).ok;
+  else if (similar) allowed = (await limit("browse")).ok;
+
   const [
     suggestions,
     keywordCatalog,
@@ -91,9 +96,9 @@ export default async function Page({ searchParams }) {
   ] = await Promise.all([
     getSearchSuggestions(),
     !q && !similar ? getKeywordCatalog() : null,
-    q ? loadText(q, flags) : null,
-    similar ? loadSimilar(similar, flags) : null,
-    similar ? getSearchSource(similar) : null,
+    q && allowed ? loadText(q, flags) : null,
+    similar && allowed ? loadSimilar(similar, flags) : null,
+    similar && allowed ? getSearchSource(similar) : null,
   ]);
 
   let initialKey = null;

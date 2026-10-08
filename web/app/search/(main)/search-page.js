@@ -18,6 +18,7 @@ import {
   postImageSearch,
   rejectMessage,
 } from "@lib/imageSearch";
+import { retryUnlessLimited, unwrap } from "@lib/rateLimited";
 import { resizeImage } from "@lib/resizeImage";
 import { searchParsers, toSearchFlags } from "@lib/searchParams";
 import { Button, Menu, SegmentedControl } from "@mantine/core";
@@ -282,10 +283,11 @@ export default function SearchPage({
 
   const catalog = useQuery({
     queryKey: ["keyword-catalog"],
-    queryFn: () => getKeywordCatalog(),
+    queryFn: async () => unwrap(await getKeywordCatalog()),
     initialData: keywordCatalog ?? undefined,
     staleTime: Infinity,
     enabled: mode === "empty",
+    retry: retryUnlessLimited,
   });
 
   const noMatches =

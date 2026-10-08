@@ -1,4 +1,5 @@
 import { getPosts } from "@app/actions/posts";
+import { retryUnlessLimited, unwrap } from "@lib/rateLimited";
 import {
   PostsFilters,
   postsLimits,
@@ -62,12 +63,14 @@ export default function usePosts(
 
   const query = useInfiniteQuery({
     queryKey: ["posts", request],
-    queryFn: ({ pageParam }) => getPosts({ ...request, cursor: pageParam }),
+    queryFn: async ({ pageParam }) =>
+      unwrap(await getPosts({ ...request, cursor: pageParam })),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (response) => response.meta?.nextCursor || undefined,
     initialData,
     placeholderData: keepPreviousData,
     enabled: !needsSeed,
+    retry: retryUnlessLimited,
   });
 
   const pages = query.data?.pages ?? [];
@@ -80,6 +83,7 @@ export default function usePosts(
     totalPosts: pages[0]?.meta?.totalPosts ?? 0,
     isLoading: query.isPending,
     isError: query.isError,
+    error: query.error,
     isPlaceholderData: query.isPlaceholderData,
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,

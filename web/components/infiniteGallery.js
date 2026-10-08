@@ -2,6 +2,7 @@
 
 import GallerySkeleton from "@components/gallerySkeleton";
 import Grid from "@components/grid";
+import { RateLimitedError } from "@lib/rateLimited";
 import { Button, Loader } from "@mantine/core";
 import { useEffect, useMemo, useRef } from "react";
 import styles from "./infiniteGallery.module.css";
@@ -11,6 +12,7 @@ export default function InfiniteGallery({
   pages,
   isLoading,
   isError,
+  error,
   isPlaceholderData,
   hasNextPage,
   isFetchingNextPage,
@@ -24,6 +26,7 @@ export default function InfiniteGallery({
     [pages]
   );
   const posts = postPages.flat();
+  const limited = error instanceof RateLimitedError;
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -57,7 +60,9 @@ export default function InfiniteGallery({
   if (isError && pages.length === 0) {
     return (
       <div className={styles.noResultsContainer}>
-        <h3 className={styles.noResults}>couldn&apos;t load posts</h3>
+        <h3 className={styles.noResults}>
+          {limited ? "too many requests, wait a moment" : "couldn't load posts"}
+        </h3>
         <Button variant="default" onClick={() => refetch()}>
           retry
         </Button>
@@ -96,7 +101,9 @@ export default function InfiniteGallery({
       {isFetchNextPageError && !isFetchingNextPage && (
         <div className={styles.loading}>
           <Button variant="default" onClick={() => fetchNextPage()}>
-            couldn&apos;t load more · retry
+            {limited
+              ? "too many requests · retry"
+              : "couldn't load more · retry"}
           </Button>
         </div>
       )}

@@ -1,6 +1,8 @@
 "use server";
 
 import * as data from "@lib/data/posts";
+import { limitAction } from "@lib/rateLimit";
+import { Limited } from "@lib/rateLimited";
 import {
   PostIdSimilarGetRequest,
   PostsGetRequest,
@@ -10,12 +12,12 @@ import {
 
 export async function getPosts(
   params: PostsGetRequest
-): Promise<ServerPostResponse> {
-  return data.getPosts(params);
+): Promise<ServerPostResponse | Limited> {
+  return (await limitAction("browse")) ?? data.getPosts(params);
 }
 
 export async function getPostsSimilar(
   params: PostIdSimilarGetRequest
-): Promise<ServerSimilarPostsResponse> {
-  return data.getPostsSimilar(params);
+): Promise<ServerSimilarPostsResponse | Limited> {
+  return (await limitAction("browse")) ?? data.getPostsSimilar(params);
 }
