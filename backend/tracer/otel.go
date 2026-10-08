@@ -110,7 +110,7 @@ func (tracer *Tracer) StartExporter() error {
 
 	// create named tracer to be used by this library
 	tracer.logger.Debug("Creating new internal tracer", "name", tracerName)
-	tracer.Tracer = tracerProvider.Tracer(tracerName, trace.WithInstrumentationVersion(contrib.SemVersion()))
+	tracer.Tracer = tracerProvider.Tracer(tracerName, trace.WithInstrumentationVersion(contrib.Version()))
 	tracer.logger.Info("Started tracing exporter", "endpoint", endpoint)
 	return nil
 }

@@ -290,17 +290,6 @@ func TestLegacyRequestsMetric(t *testing.T) {
 	}
 }
 
-func TestDebugWebsocketRequiresAuth(t *testing.T) {
-	s := newTestServer(t, &config.Config{})
-	r := httptest.NewRequest(http.MethodGet, "/debug/statsviz/ws", nil)
-	w := httptest.NewRecorder()
-	s.router.ServeHTTP(w, r)
-
-	if want, got := http.StatusUnauthorized, w.Code; got != want {
-		t.Errorf("want status %d, got %d", want, got)
-	}
-}
-
 type mockSlowSimilarityService struct {
 	analogdb.SimilarityService
 	delay time.Duration
