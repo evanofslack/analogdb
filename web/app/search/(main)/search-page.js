@@ -1,10 +1,12 @@
 "use client";
 
+import { getKeywordCatalog } from "@app/actions/keywords";
 import filterStyles from "@components/filterBar.module.css";
 import Footer from "@components/footer";
 import galleryStyles from "@components/gallery.module.css";
 import Header from "@components/header";
 import InfiniteGallery from "@components/infiniteGallery";
+import KeywordRow from "@components/keywordRow";
 import ScrollTop from "@components/scrollTop";
 import SearchBar from "@components/searchBar";
 import SearchSuggestions, { KeywordChips } from "@components/searchSuggestions";
@@ -21,6 +23,7 @@ import { searchParsers, toSearchFlags } from "@lib/searchParams";
 import { Button, Menu, SegmentedControl } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { IconAdjustmentsHorizontal, IconPhotoScan } from "@tabler/icons-react";
+import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./search.module.css";
@@ -100,6 +103,7 @@ function FlagsMenu({ filters, setFilters }) {
 
 export default function SearchPage({
   suggestions,
+  keywordCatalog,
   initialPage,
   initialSimilar,
   initialSource,
@@ -276,6 +280,14 @@ export default function SearchPage({
     chips = upload.response.relatedKeywords ?? [];
   }
 
+  const catalog = useQuery({
+    queryKey: ["keyword-catalog"],
+    queryFn: () => getKeywordCatalog(),
+    initialData: keywordCatalog ?? undefined,
+    staleTime: Infinity,
+    enabled: mode === "empty",
+  });
+
   const noMatches =
     mode === "text" &&
     !results.isLoading &&
@@ -332,12 +344,15 @@ export default function SearchPage({
               recent={recent}
               onClearRecent={clear}
               onSearch={handleSearch}
+              catalog={catalog.data}
+              trendingRow
             />
           </div>
         ) : (
-          <KeywordChips
+          <KeywordRow
             words={chips}
-            onSearch={handleSearch}
+            onSelect={handleSearch}
+            label="related keywords"
             className={styles.related}
           />
         )}

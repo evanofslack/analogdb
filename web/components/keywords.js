@@ -1,3 +1,4 @@
+import { keywordHref } from "@lib/keywords";
 import Link from "next/link";
 import styles from "./keywords.module.css";
 
@@ -10,7 +11,7 @@ export default function Keywords({ keywords, maxKeywords = 15 }) {
     <div className={styles.containerKeywords}>
       {keywords.slice(0, maxKeywords).map((item) => (
         <Link
-          href={`/search?q=${encodeURIComponent(item.word)}`}
+          href={keywordHref(item.word)}
           prefetch={false}
           className={styles.keyword}
           key={item.word}

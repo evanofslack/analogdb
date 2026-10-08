@@ -1,3 +1,4 @@
+import { getKeywordCatalog } from "@app/actions/keywords";
 import { getPostsSimilar } from "@app/actions/posts";
 import {
   getSearchSource,
@@ -81,13 +82,19 @@ export default async function Page({ searchParams }) {
 
   const { device } = userAgent({ headers: await headers() });
 
-  const [suggestions, initialPage, initialSimilar, initialSource] =
-    await Promise.all([
-      getSearchSuggestions(),
-      q ? loadText(q, flags) : null,
-      similar ? loadSimilar(similar, flags) : null,
-      similar ? getSearchSource(similar) : null,
-    ]);
+  const [
+    suggestions,
+    keywordCatalog,
+    initialPage,
+    initialSimilar,
+    initialSource,
+  ] = await Promise.all([
+    getSearchSuggestions(),
+    !q && !similar ? getKeywordCatalog() : null,
+    q ? loadText(q, flags) : null,
+    similar ? loadSimilar(similar, flags) : null,
+    similar ? getSearchSource(similar) : null,
+  ]);
 
   let initialKey = null;
   if (q) initialKey = searchKey("q", q, flags);
@@ -96,6 +103,7 @@ export default async function Page({ searchParams }) {
   return (
     <SearchPage
       suggestions={suggestions}
+      keywordCatalog={keywordCatalog}
       initialPage={initialPage}
       initialSimilar={initialSimilar}
       initialSource={initialSource}

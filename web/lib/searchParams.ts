@@ -89,7 +89,7 @@ export const catalogParsers = {
 
 export type CatalogMatch = Pick<
   PostsFilters,
-  "film_make" | "film_type" | "camera_make" | "camera_model"
+  "film_make" | "film_type" | "camera_make" | "camera_model" | "text"
 >;
 
 export function catalogFilters(match: Partial<CatalogMatch>): PostsFilters {

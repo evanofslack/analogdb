@@ -81,17 +81,24 @@ function ratioDistance(cover: CatalogCover): number {
   return Math.abs(Math.log(cover.width / cover.height / cardRatio));
 }
 
-export function pickCover(topPosts: CatalogPost[] = []): CatalogCover | null {
-  const covers = [...topPosts]
+function coverCandidates(topPosts: CatalogPost[] = []): CatalogCover[] {
+  return [...topPosts]
     .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
     .map(toCover)
     .filter(Boolean);
+}
 
-  const good = covers.find(
-    (cover) =>
-      Math.abs(cover.width / cover.height / cardRatio - 1) <= ratioTolerance &&
-      cover.width >= minCoverWidth
+function isGoodCover(cover: CatalogCover): boolean {
+  return (
+    Math.abs(cover.width / cover.height / cardRatio - 1) <= ratioTolerance &&
+    cover.width >= minCoverWidth
   );
+}
+
+export function pickCover(topPosts: CatalogPost[] = []): CatalogCover | null {
+  const covers = coverCandidates(topPosts);
+
+  const good = covers.find(isGoodCover);
   if (good) return good;
 
   let best: CatalogCover | null = null;
@@ -99,6 +106,20 @@ export function pickCover(topPosts: CatalogPost[] = []): CatalogCover | null {
     if (!best || ratioDistance(cover) < ratioDistance(best)) best = cover;
   }
   return best;
+}
+
+export function pickDistinctCovers(
+  lists: CatalogPost[][]
+): (CatalogCover | null)[] {
+  const used = new Set<number>();
+  return lists.map((topPosts) => {
+    const unused = coverCandidates(topPosts).filter(
+      (cover) => !used.has(cover.id)
+    );
+    const cover = unused.find(isGoodCover) ?? unused[0] ?? pickCover(topPosts);
+    if (cover) used.add(cover.id);
+    return cover;
+  });
 }
 
 export function sameMake(

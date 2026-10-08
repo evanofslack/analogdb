@@ -15,6 +15,7 @@ import {
   catalogFilters,
   CatalogMatch,
   catalogParsers,
+  PostsFilters,
   toPostsRequest,
 } from "@lib/searchParams";
 import { isValidSeed, pickSeed } from "@lib/seed";
@@ -76,16 +77,18 @@ export type EntryFact = {
   label: string;
 };
 
+function photosFact(entry: CatalogEntry): EntryFact {
+  return {
+    icon: "photos",
+    label: `${entry.postCount.toLocaleString("en-US")} photos`,
+  };
+}
+
 export function entryFacts(
   kind: CatalogKind,
   entry: CatalogEntry
 ): EntryFact[] {
-  const facts: EntryFact[] = [
-    {
-      icon: "photos",
-      label: `${entry.postCount.toLocaleString("en-US")} photos`,
-    },
-  ];
+  const facts: EntryFact[] = [photosFact(entry)];
   if (kind === "films") {
     if (entry.speed) facts.push({ icon: "speed", label: `ISO ${entry.speed}` });
     if (entry.colorType === "color") {
@@ -132,13 +135,10 @@ export function detailMetadata(
   };
 }
 
-export async function loadDetail(
-  kind: CatalogKind,
-  entry: CatalogEntry,
-  list: CatalogEntry[],
+async function loadFirstPage(
+  fixed: PostsFilters,
   searchParams: Record<string, string | string[] | undefined>
 ) {
-  const fixed = catalogFilters(entryMatch(kind, entry));
   let filters = { ...fixed, ...loadSort(searchParams) };
   if (filters.sort === "random" && !isValidSeed(filters.seed)) {
     filters = { ...filters, seed: pickSeed() };
@@ -160,8 +160,31 @@ export async function loadDetail(
     initialFilters: filters,
     initialPage,
     initialColumns: guessColumns(device),
+  };
+}
+
+export async function loadDetail(
+  kind: CatalogKind,
+  entry: CatalogEntry,
+  list: CatalogEntry[],
+  searchParams: Record<string, string | string[] | undefined>
+) {
+  const fixed = catalogFilters(entryMatch(kind, entry));
+  return {
+    ...(await loadFirstPage(fixed, searchParams)),
     facts: entryFacts(kind, entry),
     related: sameMake(list, entry).slice(0, maxRelated),
+  };
+}
+
+export async function loadKeywordDetail(
+  entry: CatalogEntry,
+  searchParams: Record<string, string | string[] | undefined>
+) {
+  const fixed = catalogFilters({ text: entry.make });
+  return {
+    ...(await loadFirstPage(fixed, searchParams)),
+    facts: [photosFact(entry)],
   };
 }
 

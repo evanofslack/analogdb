@@ -1,8 +1,13 @@
 "use client";
 
-import { IconClock, IconCompass, IconSparkles } from "@tabler/icons-react";
-import Image from "next/image";
+import { keywordHref, keywordLabel } from "@lib/keywords";
+import { IconClock, IconSparkles, IconTags } from "@tabler/icons-react";
+import CatalogGrid from "./catalogGrid";
+import KeywordRow from "./keywordRow";
 import styles from "./searchSuggestions.module.css";
+
+const iconSize = 16;
+const priorityCount = 4;
 
 function Section({ icon, title, action, children }) {
   return (
@@ -42,11 +47,10 @@ export default function SearchSuggestions({
   recent = [],
   onClearRecent,
   onSearch,
-  showTopics = true,
+  catalog,
+  trendingRow = false,
 }) {
   const keywords = suggestions?.keywords ?? [];
-  const topics = suggestions?.topics ?? [];
-  const iconSize = 16;
 
   return (
     <div className={styles.suggestions}>
@@ -74,42 +78,36 @@ export default function SearchSuggestions({
           icon={<IconSparkles size={iconSize} stroke={1.5} />}
           title="trending this week"
         >
-          <KeywordChips words={keywords} onSearch={onSearch} />
+          {trendingRow ? (
+            <KeywordRow
+              words={keywords}
+              onSelect={onSearch}
+              label="trending this week"
+            />
+          ) : (
+            <KeywordChips words={keywords} onSearch={onSearch} />
+          )}
         </Section>
       )}
-      {showTopics && topics.length > 0 && (
-        <Section
-          icon={<IconCompass size={iconSize} stroke={1.5} />}
-          title="explore"
-        >
-          <div className={styles.topics}>
-            {topics.map((topic) => (
-              <button
-                type="button"
-                key={topic.word}
-                className={styles.topic}
-                onClick={() => onSearch(topic.word)}
-              >
-                <span
-                  className={styles.cover}
-                  style={{ backgroundColor: topic.cover?.hex }}
-                >
-                  {topic.cover && (
-                    <Image
-                      src={topic.cover.url}
-                      alt=""
-                      fill
-                      sizes="(max-width: 520px) 50vw, 260px"
-                      style={{ objectFit: "cover" }}
-                    />
-                  )}
-                </span>
-                <span className={styles.topicLabel}>{topic.word}</span>
-              </button>
-            ))}
-          </div>
-        </Section>
-      )}
+      {catalog && <KeywordBrowser catalog={catalog} />}
     </div>
+  );
+}
+
+export function KeywordBrowser({ catalog }) {
+  if (!catalog || catalog.length === 0) return null;
+
+  return (
+    <Section icon={<IconTags size={iconSize} stroke={1.5} />} title="keywords">
+      <CatalogGrid
+        entries={catalog}
+        hrefFor={(entry) => keywordHref(entry.make)}
+        labelFor={(entry) => keywordLabel(entry.make)}
+        altFor={(entry) =>
+          `${entry.cover?.title || entry.make}, tagged ${entry.make}`
+        }
+        priorityCount={priorityCount}
+      />
+    </Section>
   );
 }

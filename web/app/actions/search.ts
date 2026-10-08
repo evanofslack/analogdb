@@ -15,11 +15,6 @@ export interface SearchImage {
   hex?: string;
 }
 
-export interface SearchTopic {
-  word: string;
-  cover: SearchImage | null;
-}
-
 export interface SearchExample {
   id: number;
   title: string;
@@ -28,7 +23,6 @@ export interface SearchExample {
 
 export interface SearchSuggestions {
   keywords: string[];
-  topics: SearchTopic[];
   examples: SearchExample[];
 }
 
@@ -42,14 +36,6 @@ const maxPageSize = 100;
 const maxQueryLength = 200;
 const keywordPageSize = 20;
 const minKeywords = 8;
-const topicWords = [
-  "portrait",
-  "landscape",
-  "street",
-  "night",
-  "beach",
-  "monochrome",
-];
 const exampleIds = [32768, 34336, 35099, 38512];
 
 function sanitizeSearch(params: SearchGetRequest): SearchGetRequest {
@@ -125,52 +111,35 @@ const getKeywordsCached = unstable_cache(
   { revalidate: 3600 }
 );
 
-const getCoversCached = unstable_cache(
-  async (): Promise<Omit<SearchSuggestions, "keywords">> => {
-    const [topics, examples] = await Promise.all([
-      Promise.all(
-        topicWords.map(async (word) => {
-          const response = await searchApi.searchGet({
-            q: word,
-            pageSize: 1,
-            nsfw: false,
-          });
-          const post = response.posts?.[0];
-          return { word, cover: post ? mediumImage(post) : null };
-        })
-      ),
-      Promise.all(exampleIds.map((id) => postApi.postIdGet({ id }))),
-    ]);
-    return {
-      topics,
-      examples: examples
-        .map((post) => ({
-          id: post.id,
-          title: post.title ?? "",
-          image: mediumImage(post),
-        }))
-        .filter((example) => example.image),
-    };
+const getExamplesCached = unstable_cache(
+  async (): Promise<SearchExample[]> => {
+    const examples = await Promise.all(
+      exampleIds.map((id) => postApi.postIdGet({ id }))
+    );
+    return examples
+      .map((post) => ({
+        id: post.id,
+        title: post.title ?? "",
+        image: mediumImage(post),
+      }))
+      .filter((example) => example.image);
   },
-  ["search-covers"],
+  ["search-examples"],
   { revalidate: 86400 }
 );
 
 export async function getSearchSuggestions(): Promise<SearchSuggestions> {
-  const [keywords, covers] = await Promise.all([
+  const [keywords, examples] = await Promise.all([
     getKeywordsCached().catch((error) => {
       console.error("get search keywords request failed:", error);
       return [] as string[];
     }),
-    getCoversCached().catch((error) => {
-      console.error("get search covers request failed:", error);
-      return {
-        topics: topicWords.map((word) => ({ word, cover: null })),
-        examples: [] as SearchExample[],
-      };
+    getExamplesCached().catch((error) => {
+      console.error("get search examples request failed:", error);
+      return [] as SearchExample[];
     }),
   ]);
-  return { keywords, ...covers };
+  return { keywords, examples };
 }
 
 const getSearchSourceCached = unstable_cache(

@@ -20,7 +20,9 @@ export default function WebNav() {
         </Link>
         <Link
           href="/search"
-          className={pathname == "/search" ? styles.linkOn : styles.linkOff}
+          className={
+            pathname.startsWith("/search") ? styles.linkOn : styles.linkOff
+          }
         >
           SEARCH
         </Link>

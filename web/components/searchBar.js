@@ -123,7 +123,6 @@ export default function SearchBar({
             recent={recent}
             onClearRecent={onClearRecent}
             onSearch={search}
-            showTopics={false}
           />
         )}
       </Popover.Dropdown>
