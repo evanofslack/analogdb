@@ -17,13 +17,14 @@ from typing import Dict, Iterator, List, Optional, Sequence
 
 import analogdb.models as adb
 import dagster as dg
-from analogdb.client import Client
+from analogdb.client import Client, Deleted
 from scrape.constants import AWS_BUCKET_COMMENTS
 from scrape.models import RedditComment
 from scrape.s3 import upload_comments
 from scrape.tagging import TAGGER_VERSION, TEXT_ONLY_SUFFIX, TagInput, medium_url
 
-from .assets import daily_partitions, error_detail
+from .assets import daily_partitions, error_detail, upload_cameras, upload_films
+from .catalog import Retired, camera_key, catalog_for_matching, retired_entries
 from .convert import convert_caption, convert_keyword
 from .metadata_flow import (
     WriteStats,
@@ -149,7 +150,7 @@ def backfill_post_metadata(
     return finish(context, "backfill metadata", stats, context.partition_key_range)
 
 
-@dg.asset(group_name="backfill")
+@dg.asset(group_name="backfill", deps=[upload_cameras, upload_films])
 def rematch_post_metadata(
     context: dg.AssetExecutionContext,
     analogdb: AnalogDBResource,
@@ -223,6 +224,136 @@ def finish(
     if stats.failures():
         raise dg.Failure(
             description=f"{name}: {stats.patch_failed} patches and {stats.store_failed} extractions failed",
+            metadata=metadata,
+        )
+    return dg.MaterializeResult(metadata=metadata)
+
+
+class PruneCatalogConfig(dg.Config):
+    dry_run: bool = True
+
+
+@dataclass
+class Move:
+    post_id: int
+    retired: Retired
+    patch: adb.PostPatch
+
+
+def straggler_moves(
+    posts: Sequence[adb.Post], retired: Sequence[Retired]
+) -> List[Move]:
+    """Posts still on a retired name, each with the patch to its target. These are
+    posts the rematch can't move: the extraction didn't mention a camera or film."""
+    by_name = {(r.kind, r.make, r.name): r for r in retired}
+    moves = []
+    for p in posts:
+        camera = by_name.get(
+            ("camera", *camera_key(p.camera_make or "", p.camera_model or ""))
+        )
+        if camera:
+            t = camera.target
+            patch = adb.PostPatch(
+                camera_make=t["make"].lower(), camera_model=t["model"].lower()
+            )
+            moves.append(Move(p.id, camera, patch))
+        film = by_name.get(("film", *camera_key(p.film_make or "", p.film_type or "")))
+        if film:
+            t = film.target
+            patch = adb.PostPatch(
+                film_make=t["make"].lower(),
+                film_type=t["type"].lower(),
+                film_speed=t["speed"],
+            )
+            moves.append(Move(p.id, film, patch))
+    return moves
+
+
+def _retired_table(rows: Sequence[Retired], results: Dict[int, str]) -> str:
+    if not rows:
+        return "None."
+    lines = ["| kind | name | alias of | result |", "|---|---|---|---|"]
+    for r in rows:
+        target = f"{r.target['make']} {r.target.get('model') or r.target.get('type')}"
+        result = results.get(id(r), "dry run")
+        lines.append(f"| {r.kind} | {r.make} {r.name} | {target} | {result} |")
+    return "\n".join(lines)
+
+
+@dg.asset(group_name="catalog", deps=[rematch_post_metadata])
+def prune_catalog(
+    context: dg.AssetExecutionContext,
+    config: PruneCatalogConfig,
+    analogdb: AnalogDBResource,
+    cameras_json: CamerasJsonResource,
+    films_json: FilmsJsonResource,
+) -> dg.MaterializeResult:
+    """Retire renamed and merged catalog names: live entries the JSON lists as an
+    alias of another. Moves posts still on them to the target, then deletes them.
+    Live entries the JSON doesn't know are listed, never deleted. Dry run by default."""
+    client = analogdb.client()
+    camera_entries, film_entries = cameras_json.client(), films_json.client()
+    live_cameras, live_films = client.get_cameras(), client.get_films()
+    retired = retired_entries(camera_entries, film_entries, live_cameras, live_films)
+    unknown = catalog_for_matching(
+        camera_entries, film_entries, live_cameras, live_films
+    ).not_in_json
+    context.log.info(f"Found {len(retired)} retired and {len(unknown)} unknown entries")
+
+    moves: List[Move] = []
+    if retired:
+        moves = straggler_moves(client.get_posts_all(count=MAX_POSTS), retired)
+
+    results: Dict[int, str] = {}
+    counts = {
+        "deleted": 0,
+        "in_use": 0,
+        "missing": 0,
+        "patch_failed": 0,
+        "delete_failed": 0,
+    }
+    if not config.dry_run:
+        for m in moves:
+            try:
+                client.patch_post(m.post_id, m.patch)
+            except Exception as e:
+                counts["patch_failed"] += 1
+                context.log.error(
+                    f"Failed to move post off retired name, id={m.post_id}, {error_detail(e)}"
+                )
+        for r in retired:
+            delete = client.delete_camera if r.kind == "camera" else client.delete_film
+            try:
+                result = delete(r.id)
+            except Exception as e:
+                counts["delete_failed"] += 1
+                results[id(r)] = "failed"
+                context.log.error(
+                    f"Failed to delete {r.kind} {r.make} {r.name}, {error_detail(e)}"
+                )
+                continue
+            results[id(r)] = result.value
+            key = {Deleted.DELETED: "deleted", Deleted.IN_USE: "in_use"}.get(
+                result, "missing"
+            )
+            counts[key] += 1
+
+    metadata = {
+        "dry_run": config.dry_run,
+        "retired": len(retired),
+        "posts_moved_camera": sum(1 for m in moves if m.retired.kind == "camera"),
+        "posts_moved_film": sum(1 for m in moves if m.retired.kind == "film"),
+        **counts,
+        "retired_entries": dg.MetadataValue.md(_retired_table(retired, results)),
+        "unknown_entries": dg.MetadataValue.md(
+            "\n".join(f"- {name}" for name in unknown) or "None."
+        ),
+    }
+    context.log.info(f"Finished prune catalog: {metadata}")
+    if counts["patch_failed"] or counts["delete_failed"]:
+        raise dg.Failure(
+            description=f"prune catalog: {counts['patch_failed']} patches and "
+            f"{counts['delete_failed']} deletes failed",
             metadata=metadata,
         )
     return dg.MaterializeResult(metadata=metadata)

@@ -12,6 +12,7 @@ from .catalog import (
     camera_upload_plan,
     catalog_for_matching,
     film_upload_plan,
+    retired_entries,
     validate_aliases,
 )
 from .constants import CAMERAS_PATH, FILMS_PATH
@@ -101,6 +102,28 @@ class TestCatalogForMatching:
             "kodak",
             "colorplus 200",
         )
+
+
+class TestRetiredEntries:
+    def test_live_aliases_are_retired(self):
+        live_films = LIVE_FILMS + [film(2, "Kodak", "Kodacolor 200", 200)]
+        retired = retired_entries(
+            CAMERA_ENTRIES, FILM_ENTRIES, LIVE_CAMERAS, live_films
+        )
+        assert [(r.kind, r.id, r.make, r.name) for r in retired] == [
+            ("camera", 2, "nikon", "n2020"),
+            ("film", 2, "kodak", "kodacolor 200"),
+        ]
+        assert retired[0].target["model"] == "f501"
+        assert retired[1].target["type"] == "colorplus 200"
+
+    def test_target_not_live_is_not_retired(self):
+        live = [camera(2, "nikon", "n2020"), camera(3, "nikon", "fm")]
+        assert retired_entries(CAMERA_ENTRIES, [], live, []) == []
+
+    def test_entries_and_unknown_rows_are_not_retired(self):
+        live = [camera(1, "nikon", "f501"), camera(4, "pentax", "k1000")]
+        assert retired_entries(CAMERA_ENTRIES, FILM_ENTRIES, live, LIVE_FILMS) == []
 
 
 class TestValidateAliases:

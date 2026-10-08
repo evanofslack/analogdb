@@ -55,6 +55,12 @@ class Uploaded(str, Enum):
     EXISTS = "exists"
 
 
+class Deleted(str, Enum):
+    DELETED = "deleted"
+    IN_USE = "in_use"
+    MISSING = "missing"
+
+
 class Client:
     def __init__(
         self,
@@ -173,6 +179,24 @@ class Client:
 
     def upload_camera(self, camera: CameraCreate) -> None:
         self._call(self.camera_api.camera_post, camera=camera)
+
+    def delete_film(self, id: int) -> Deleted:
+        return self._delete(self.film_api.film_id_delete, id)
+
+    def delete_camera(self, id: int) -> Deleted:
+        return self._delete(self.camera_api.camera_id_delete, id)
+
+    def _delete(self, fn, id: int) -> Deleted:
+        """Delete a catalog entry. The API refuses one that posts still use."""
+        try:
+            self._call(fn, id)
+        except ApiException as e:
+            if e.status == 409:
+                return Deleted.IN_USE
+            if e.status == 404:
+                return Deleted.MISSING
+            raise
+        return Deleted.DELETED
 
     def upsert_extractions(
         self, extractions: List[PostExtraction], chunk_size: int = EXTRACTIONS_CHUNK

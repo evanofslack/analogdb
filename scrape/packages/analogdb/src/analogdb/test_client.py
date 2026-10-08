@@ -10,7 +10,7 @@ from urllib3 import Retry
 from urllib3.exceptions import HTTPError
 from werkzeug import Request, Response
 
-from .client import REQUEST_TIMEOUT, Client, Uploaded
+from .client import REQUEST_TIMEOUT, Client, Deleted, Uploaded
 from .models import (
     CameraCreate,
     FilmCreate,
@@ -213,6 +213,28 @@ class TestRequests:
         assert e.value.status == 422
         assert "bad" in e.value.body
         assert len(httpserver.log) == 1
+
+    @pytest.mark.parametrize(
+        "status,expected",
+        [(200, Deleted.DELETED), (409, Deleted.IN_USE), (404, Deleted.MISSING)],
+    )
+    def test_delete_camera(self, client, httpserver: HTTPServer, status, expected):
+        httpserver.expect_request(
+            "/v1/camera/7", method="DELETE", headers={"Authorization": AUTH}
+        ).respond_with_json({"message": "m"}, status=status)
+
+        assert client.delete_camera(7) == expected
+        httpserver.check_assertions()
+
+    def test_delete_film_error_raises(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/film/3", method="DELETE", headers={"Authorization": AUTH}
+        ).respond_with_json({"error": "bad"}, status=400)
+
+        with pytest.raises(ApiException) as e:
+            client.delete_film(3)
+
+        assert e.value.status == 400
 
     def test_upload_post(self, client, httpserver: HTTPServer):
         post = PostCreate(title="t", permalink="/r/analog/1", timestamp=1, images=[])
