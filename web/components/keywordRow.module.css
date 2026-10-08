@@ -70,9 +70,10 @@
 
 .arrow {
   position: absolute;
-  top: 50%;
+  top: 0;
+  bottom: 0;
   z-index: 2;
-  transform: translateY(-50%);
+  margin-block: auto;
 }
 
 .left {
