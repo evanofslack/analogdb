@@ -120,4 +120,5 @@ func (filter *CameraFilter) String() string {
 type CameraService interface {
 	FindCameras(ctx context.Context, filter *CameraFilter) ([]*Camera, error)
 	CreateCamera(ctx context.Context, film *CreateCamera) (*CreateCamera, error)
+	DeleteCamera(ctx context.Context, id int) error
 }

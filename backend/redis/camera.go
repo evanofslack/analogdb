@@ -47,6 +47,14 @@ func (s *CameraService) CreateCamera(ctx context.Context, camera *analogdb.Creat
 	return created, nil
 }
 
+func (s *CameraService) DeleteCamera(ctx context.Context, id int) error {
+	if err := s.dbService.DeleteCamera(ctx, id); err != nil {
+		return err
+	}
+	s.rdb.bumpGen(ctx, camerasEntity)
+	return nil
+}
+
 func (s *CameraService) FindCameras(ctx context.Context, filter *analogdb.CameraFilter) ([]*analogdb.Camera, error) {
 	s.rdb.logger.DebugContext(ctx, "Start find cameras with cache", "instance", s.cameraCache.instance)
 	defer s.rdb.logger.DebugContext(ctx, "Finish find cameras with cache", "instance", s.cameraCache.instance)

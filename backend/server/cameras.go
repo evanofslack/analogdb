@@ -31,6 +31,7 @@ func (s *Server) mountCameraHandlers(r chi.Router) {
 	r.Route(cameraPath, func(r chi.Router) {
 		r.With(s.auth).Put("/", s.createCamera)
 		r.With(s.auth).Post("/", s.createCamera)
+		r.With(s.auth).Delete("/{id}", s.deleteCamera)
 	})
 }
 
@@ -115,6 +116,34 @@ func (s *Server) createCamera(w http.ResponseWriter, r *http.Request) {
 		Camera:  *created,
 	}
 	if err := encodeResponse(w, r, http.StatusCreated, createdResponse); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+// @Summary Delete a camera
+// @Description Delete a catalog camera by ID (requires authentication). Refused while any post still uses it.
+// @Tags camera
+// @Produce json
+// @Param id path int true "Camera ID to delete"
+// @Success 200 {object} DeleteResponse
+// @Failure 400 {object} analogdb.Error "Invalid ID"
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 404 {object} analogdb.Error "Not found"
+// @Failure 409 {object} analogdb.Error "Still used by posts"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Security BasicAuth
+// @Router /camera/{id} [delete]
+func (s *Server) deleteCamera(w http.ResponseWriter, r *http.Request) {
+	id, err := stringToInt(chi.URLParam(r, "id"))
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if err := s.CameraService.DeleteCamera(r.Context(), id); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if err := encodeResponse(w, r, http.StatusOK, DeleteResponse{Message: "Success, camera deleted"}); err != nil {
 		s.writeError(w, r, err)
 	}
 }

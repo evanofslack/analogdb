@@ -286,6 +286,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/camera/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Delete a catalog camera by ID (requires authentication). Refused while any post still uses it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "camera"
+                ],
+                "summary": "Delete a camera",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Camera ID to delete",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.DeleteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Still used by posts",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/cameras": {
             "get": {
                 "description": "Retrieve cameras with optional query parameters for filtering and sorting",
@@ -555,6 +619,70 @@ const docTemplate = `{
                     },
                     "422": {
                         "description": "Unprocessable entity",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/film/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Delete a catalog film by ID (requires authentication). Refused while any post still uses it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "film"
+                ],
+                "summary": "Delete a film",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Film ID to delete",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.DeleteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ID",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Not found",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "409": {
+                        "description": "Still used by posts",
                         "schema": {
                             "$ref": "#/definitions/analogdb.Error"
                         }

@@ -134,4 +134,5 @@ func (filter *FilmFilter) String() string {
 type FilmService interface {
 	FindFilms(ctx context.Context, filter *FilmFilter) ([]*Film, error)
 	CreateFilm(ctx context.Context, film *CreateFilm) (*CreateFilm, error)
+	DeleteFilm(ctx context.Context, id int) error
 }

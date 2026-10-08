@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -35,6 +36,49 @@ func (s *FilmService) CreateFilm(ctx context.Context, film *analogdb.CreateFilm)
 		return nil, err
 	}
 	return created, nil
+}
+
+// DeleteFilm deletes a catalog film. It refuses while any post still uses its
+// make and type, so a delete never leaves posts on a name the catalog lacks.
+func (s *FilmService) DeleteFilm(ctx context.Context, id int) error {
+	tx, err := s.db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var make, name string
+	err = tx.QueryRowContext(ctx,
+		`SELECT film_make, film_type FROM films WHERE id = $1 FOR UPDATE`, id,
+	).Scan(&make, &name)
+	if errors.Is(err, sql.ErrNoRows) {
+		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "film not found"}
+	} else if err != nil {
+		return err
+	}
+
+	var posts int
+	err = tx.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM pictures WHERE film_make = $1 AND film_type = $2`, make, name,
+	).Scan(&posts)
+	if err != nil {
+		return err
+	}
+	if posts > 0 {
+		return &analogdb.Error{
+			Code:    analogdb.ERRCONFLICT,
+			Message: fmt.Sprintf("film %s %s is used by %d posts", make, name, posts),
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `DELETE FROM films WHERE id = $1`, id); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	s.db.logger.InfoContext(ctx, "Deleted film", "film_id", id, "make", make, "name", name)
+	return nil
 }
 
 func (db *DB) createFilm(ctx context.Context, tx *sql.Tx, film *analogdb.CreateFilm) (*analogdb.CreateFilm, error) {
