@@ -1,0 +1,89 @@
+.wrap {
+  position: relative;
+  min-width: 0;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  padding: 0.1rem 0;
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--adb-border);
+  outline-offset: 2px;
+}
+
+.fadeRight {
+  mask-image: linear-gradient(to right, black calc(100% - 4rem), transparent);
+}
+
+.fadeLeft {
+  mask-image: linear-gradient(to left, black calc(100% - 4rem), transparent);
+}
+
+.fadeBoth {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 4rem,
+    black calc(100% - 4rem),
+    transparent
+  );
+}
+
+.item {
+  flex: none;
+  scroll-snap-align: start;
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 5rem;
+  height: 2.75rem;
+  padding: 0 1.1rem;
+  border: 1px solid var(--adb-border);
+  border-radius: var(--mantine-radius-default);
+  background-color: var(--adb-surface);
+  color: var(--adb-heading);
+  font: inherit;
+  font-size: 0.95rem;
+  text-transform: lowercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background-color: var(--adb-surface-hover);
+  border-color: var(--adb-muted);
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+.left {
+  left: 0;
+}
+
+.right {
+  right: 0;
+}
+
+@media (hover: none) {
+  .arrow {
+    display: none;
+  }
+}
