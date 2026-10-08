@@ -3,6 +3,7 @@
 import { keywordHref, keywordLabel } from "@lib/keywords";
 import { IconClock, IconSparkles, IconTags } from "@tabler/icons-react";
 import CatalogGrid from "./catalogGrid";
+import KeywordRow from "./keywordRow";
 import styles from "./searchSuggestions.module.css";
 
 const iconSize = 16;
@@ -47,6 +48,7 @@ export default function SearchSuggestions({
   onClearRecent,
   onSearch,
   catalog,
+  trendingRow = false,
 }) {
   const keywords = suggestions?.keywords ?? [];
 
@@ -76,7 +78,15 @@ export default function SearchSuggestions({
           icon={<IconSparkles size={iconSize} stroke={1.5} />}
           title="trending this week"
         >
-          <KeywordChips words={keywords} onSearch={onSearch} />
+          {trendingRow ? (
+            <KeywordRow
+              words={keywords}
+              onSelect={onSearch}
+              label="trending this week"
+            />
+          ) : (
+            <KeywordChips words={keywords} onSearch={onSearch} />
+          )}
         </Section>
       )}
       {catalog && <KeywordBrowser catalog={catalog} />}

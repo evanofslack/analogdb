@@ -6,6 +6,7 @@ import Footer from "@components/footer";
 import galleryStyles from "@components/gallery.module.css";
 import Header from "@components/header";
 import InfiniteGallery from "@components/infiniteGallery";
+import KeywordRow from "@components/keywordRow";
 import ScrollTop from "@components/scrollTop";
 import SearchBar from "@components/searchBar";
 import SearchSuggestions, { KeywordChips } from "@components/searchSuggestions";
@@ -344,12 +345,14 @@ export default function SearchPage({
               onClearRecent={clear}
               onSearch={handleSearch}
               catalog={catalog.data}
+              trendingRow
             />
           </div>
         ) : (
-          <KeywordChips
+          <KeywordRow
             words={chips}
-            onSearch={handleSearch}
+            onSelect={handleSearch}
+            label="related keywords"
             className={styles.related}
           />
         )}
