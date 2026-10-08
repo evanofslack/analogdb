@@ -462,3 +462,59 @@ func TestCameraService_CreateCamera(t *testing.T) {
 		}
 	})
 }
+
+func TestCameraService_DeleteCamera(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewCameraService(db)
+	ctx := context.Background()
+
+	create := func(t *testing.T, make, model string) int {
+		t.Helper()
+		created, err := service.CreateCamera(ctx, &analogdb.CreateCamera{Make: make, Model: model, Description: "d"})
+		if err != nil {
+			t.Fatalf("CreateCamera failed: %v", err)
+		}
+		return created.Id
+	}
+	exists := func(t *testing.T, id int) bool {
+		t.Helper()
+		var n int
+		if err := db.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM cameras WHERE id = $1`, id).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n == 1
+	}
+
+	t.Run("deletes an unused camera", func(t *testing.T) {
+		id := create(t, "nikon", "f90s")
+		if err := service.DeleteCamera(ctx, id); err != nil {
+			t.Fatalf("DeleteCamera failed: %v", err)
+		}
+		if exists(t, id) {
+			t.Error("camera still exists after delete")
+		}
+	})
+
+	t.Run("refuses a camera posts still use", func(t *testing.T) {
+		id := create(t, "nikon", "n2000")
+		if _, err := db.db.ExecContext(ctx, `UPDATE pictures SET camera_make = 'nikon', camera_model = 'n2000' WHERE id = 1`); err != nil {
+			t.Fatal(err)
+		}
+		err := service.DeleteCamera(ctx, id)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRCONFLICT {
+			t.Fatalf("want conflict, got %v", err)
+		}
+		if !exists(t, id) {
+			t.Error("camera was deleted while in use")
+		}
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		err := service.DeleteCamera(ctx, 999999)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRNOTFOUND {
+			t.Fatalf("want not found, got %v", err)
+		}
+	})
+}

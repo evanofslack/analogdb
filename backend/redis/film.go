@@ -47,6 +47,14 @@ func (s *FilmService) CreateFilm(ctx context.Context, film *analogdb.CreateFilm)
 	return created, nil
 }
 
+func (s *FilmService) DeleteFilm(ctx context.Context, id int) error {
+	if err := s.dbService.DeleteFilm(ctx, id); err != nil {
+		return err
+	}
+	s.rdb.bumpGen(ctx, filmsEntity)
+	return nil
+}
+
 func (s *FilmService) FindFilms(ctx context.Context, filter *analogdb.FilmFilter) ([]*analogdb.Film, error) {
 	s.rdb.logger.DebugContext(ctx, "Start find films with cache", "instance", s.filmCache.instance)
 	defer s.rdb.logger.DebugContext(ctx, "Finish find films with cache", "instance", s.filmCache.instance)

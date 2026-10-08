@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -35,6 +36,49 @@ func (s *CameraService) CreateCamera(ctx context.Context, camera *analogdb.Creat
 		return nil, err
 	}
 	return created, nil
+}
+
+// DeleteCamera deletes a catalog camera. It refuses while any post still uses its
+// make and model, so a delete never leaves posts on a name the catalog lacks.
+func (s *CameraService) DeleteCamera(ctx context.Context, id int) error {
+	tx, err := s.db.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var make, name string
+	err = tx.QueryRowContext(ctx,
+		`SELECT camera_make, camera_model FROM cameras WHERE id = $1 FOR UPDATE`, id,
+	).Scan(&make, &name)
+	if errors.Is(err, sql.ErrNoRows) {
+		return &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "camera not found"}
+	} else if err != nil {
+		return err
+	}
+
+	var posts int
+	err = tx.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM pictures WHERE camera_make = $1 AND camera_model = $2`, make, name,
+	).Scan(&posts)
+	if err != nil {
+		return err
+	}
+	if posts > 0 {
+		return &analogdb.Error{
+			Code:    analogdb.ERRCONFLICT,
+			Message: fmt.Sprintf("camera %s %s is used by %d posts", make, name, posts),
+		}
+	}
+
+	if _, err := tx.ExecContext(ctx, `DELETE FROM cameras WHERE id = $1`, id); err != nil {
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	s.db.logger.InfoContext(ctx, "Deleted camera", "camera_id", id, "make", make, "name", name)
+	return nil
 }
 
 func (db *DB) createCamera(ctx context.Context, tx *sql.Tx, camera *analogdb.CreateCamera) (*analogdb.CreateCamera, error) {

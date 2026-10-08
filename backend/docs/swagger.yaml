@@ -828,6 +828,48 @@ paths:
       summary: Create a new camera
       tags:
       - camera
+  /camera/{id}:
+    delete:
+      description: Delete a catalog camera by ID (requires authentication). Refused
+        while any post still uses it.
+      parameters:
+      - description: Camera ID to delete
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.DeleteResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "409":
+          description: Still used by posts
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Delete a camera
+      tags:
+      - camera
   /cameras:
     get:
       consumes:
@@ -1010,6 +1052,48 @@ paths:
       security:
       - BasicAuth: []
       summary: Create a new film
+      tags:
+      - film
+  /film/{id}:
+    delete:
+      description: Delete a catalog film by ID (requires authentication). Refused
+        while any post still uses it.
+      parameters:
+      - description: Film ID to delete
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.DeleteResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "409":
+          description: Still used by posts
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Delete a film
       tags:
       - film
   /films:

@@ -37,6 +37,7 @@ func (s *Server) mountFilmHandlers(r chi.Router) {
 	r.Route(filmPath, func(r chi.Router) {
 		r.With(s.auth).Put("/", s.createFilm)
 		r.With(s.auth).Post("/", s.createFilm)
+		r.With(s.auth).Delete("/{id}", s.deleteFilm)
 	})
 }
 
@@ -123,6 +124,34 @@ func (s *Server) createFilm(w http.ResponseWriter, r *http.Request) {
 		Film:    *created,
 	}
 	if err := encodeResponse(w, r, http.StatusCreated, createdResponse); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+// @Summary Delete a film
+// @Description Delete a catalog film by ID (requires authentication). Refused while any post still uses it.
+// @Tags film
+// @Produce json
+// @Param id path int true "Film ID to delete"
+// @Success 200 {object} DeleteResponse
+// @Failure 400 {object} analogdb.Error "Invalid ID"
+// @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 404 {object} analogdb.Error "Not found"
+// @Failure 409 {object} analogdb.Error "Still used by posts"
+// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Security BasicAuth
+// @Router /film/{id} [delete]
+func (s *Server) deleteFilm(w http.ResponseWriter, r *http.Request) {
+	id, err := stringToInt(chi.URLParam(r, "id"))
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if err := s.FilmService.DeleteFilm(r.Context(), id); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if err := encodeResponse(w, r, http.StatusOK, DeleteResponse{Message: "Success, film deleted"}); err != nil {
 		s.writeError(w, r, err)
 	}
 }

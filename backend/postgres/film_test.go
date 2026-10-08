@@ -510,3 +510,61 @@ func TestFilmService_CreateFilm(t *testing.T) {
 		}
 	})
 }
+
+func TestFilmService_DeleteFilm(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewFilmService(db)
+	ctx := context.Background()
+
+	create := func(t *testing.T, make, ty string, speed int) int {
+		t.Helper()
+		created, err := service.CreateFilm(ctx, &analogdb.CreateFilm{
+			Make: make, Type: ty, Speed: speed, ColorType: "color", Description: "d",
+		})
+		if err != nil {
+			t.Fatalf("CreateFilm failed: %v", err)
+		}
+		return created.Id
+	}
+	exists := func(t *testing.T, id int) bool {
+		t.Helper()
+		var n int
+		if err := db.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM films WHERE id = $1`, id).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n == 1
+	}
+
+	t.Run("deletes an unused film", func(t *testing.T) {
+		id := create(t, "kodak", "ektacolor 400", 400)
+		if err := service.DeleteFilm(ctx, id); err != nil {
+			t.Fatalf("DeleteFilm failed: %v", err)
+		}
+		if exists(t, id) {
+			t.Error("film still exists after delete")
+		}
+	})
+
+	t.Run("refuses a film posts still use", func(t *testing.T) {
+		id := create(t, "kodak", "gold 100", 100)
+		if _, err := db.db.ExecContext(ctx, `UPDATE pictures SET film_make = 'kodak', film_type = 'gold 100' WHERE id = 1`); err != nil {
+			t.Fatal(err)
+		}
+		err := service.DeleteFilm(ctx, id)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRCONFLICT {
+			t.Fatalf("want conflict, got %v", err)
+		}
+		if !exists(t, id) {
+			t.Error("film was deleted while in use")
+		}
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		err := service.DeleteFilm(ctx, 999999)
+		if code := analogdb.ErrorCode(err); code != analogdb.ERRNOTFOUND {
+			t.Fatalf("want not found, got %v", err)
+		}
+	})
+}
