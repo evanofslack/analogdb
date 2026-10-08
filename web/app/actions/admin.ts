@@ -11,6 +11,8 @@ import {
   PostPatch,
 } from "@lib/adminClient";
 import { checkAdminAuth } from "@lib/auth";
+import { CameraOption, getCameraOptions } from "@lib/data/cameras";
+import { FilmOption, getFilmOptions } from "@lib/data/films";
 import { revalidatePath, revalidateTag } from "next/cache";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
@@ -122,6 +124,18 @@ export async function loadPost(
   if ("error" in result) return fail(result.error);
   if (!post) return fail("post not found");
   return { ok: true, post };
+}
+
+export async function loadCatalogOptions(): Promise<{
+  cameras: CameraOption[];
+  films: FilmOption[];
+}> {
+  if (!(await checkAdminAuth())) return { cameras: [], films: [] };
+  const [cameras, films] = await Promise.all([
+    getCameraOptions(),
+    getFilmOptions(),
+  ]);
+  return { cameras, films };
 }
 
 export async function removePost(id: number): Promise<ActionResult> {

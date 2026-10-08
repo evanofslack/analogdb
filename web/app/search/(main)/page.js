@@ -1,10 +1,10 @@
-import { getKeywordCatalog } from "@app/actions/keywords";
-import { getPostsSimilar } from "@app/actions/posts";
+import { getKeywordCatalog } from "@lib/data/keywords";
+import { getPostsSimilar } from "@lib/data/posts";
 import {
   getSearchSource,
   getSearchSuggestions,
   searchPosts,
-} from "@app/actions/search";
+} from "@lib/data/search";
 import { guessColumns, slim } from "@lib/firstPage";
 import {
   searchKey,

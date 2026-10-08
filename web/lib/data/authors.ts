@@ -1,3 +1,5 @@
+import "server-only";
+
 import { authorized_fetch } from "@lib/client";
 
 interface AuthorsResponse {

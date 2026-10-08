@@ -1,5 +1,5 @@
-import { getCameraCatalog } from "@app/actions/cameras";
-import { getFilmCatalog } from "@app/actions/films";
+import { getCameraCatalog } from "@lib/data/cameras";
+import { getFilmCatalog } from "@lib/data/films";
 import { catalogHref } from "@lib/catalog";
 import { authorized_fetch } from "@lib/client";
 import { MetadataRoute } from "next";

@@ -1,9 +1,6 @@
 import { getPostsSimilar } from "@app/actions/posts";
-import {
-  getSearchSource,
-  searchPosts,
-  SearchSource,
-} from "@app/actions/search";
+import { getSearchSource, searchPosts } from "@app/actions/search";
+import type { SearchSource } from "@lib/data/search";
 import {
   SearchFlags,
   searchKey,
