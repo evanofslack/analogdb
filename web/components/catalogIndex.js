@@ -1,9 +1,10 @@
 "use client";
 
 import { catalogHref, catalogName } from "@lib/catalog";
+import { catalogFilterParsers } from "@lib/searchParams";
 import { TextInput } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
-import { useState } from "react";
+import { useQueryStates } from "nuqs";
 import CatalogGrid from "./catalogGrid";
 import styles from "./catalogIndex.module.css";
 import Footer from "./footer";
@@ -23,7 +24,7 @@ export default function CatalogIndex({
   placeholder,
   groups,
 }) {
-  const [query, setQuery] = useState("");
+  const [{ q: query }, setFilter] = useQueryStates(catalogFilterParsers);
   const needle = query.trim().toLowerCase();
 
   const shown = groups
@@ -47,7 +48,9 @@ export default function CatalogIndex({
           <TextInput
             className={styles.filter}
             value={query}
-            onChange={(event) => setQuery(event.currentTarget.value)}
+            onChange={(event) =>
+              setFilter({ q: event.currentTarget.value || null })
+            }
             placeholder={placeholder}
             aria-label={placeholder}
             leftSection={<IconSearch size={16} stroke={1.5} />}

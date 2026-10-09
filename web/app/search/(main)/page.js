@@ -82,31 +82,18 @@ export default async function Page({ searchParams }) {
 
   const { device } = userAgent({ headers: await headers() });
 
-  const [
-    suggestions,
-    keywordCatalog,
-    initialPage,
-    initialSimilar,
-    initialSource,
-  ] = await Promise.all([
-    getSearchSuggestions(),
-    !q && !similar ? getKeywordCatalog() : null,
-    q ? loadText(q, flags) : null,
-    similar ? loadSimilar(similar, flags) : null,
-    similar ? getSearchSource(similar) : null,
-  ]);
-
   let initialKey = null;
   if (q) initialKey = searchKey("q", q, flags);
   else if (similar) initialKey = searchKey("similar", similar, flags);
 
   return (
     <SearchPage
-      suggestions={suggestions}
-      keywordCatalog={keywordCatalog}
-      initialPage={initialPage}
-      initialSimilar={initialSimilar}
-      initialSource={initialSource}
+      suggestionsPromise={getSearchSuggestions()}
+      catalogPromise={!q && !similar ? getKeywordCatalog() : null}
+      textPromise={q ? loadText(q, flags) : null}
+      similarPromise={similar ? loadSimilar(similar, flags) : null}
+      sourcePromise={similar ? getSearchSource(similar) : null}
+      sourceId={similar}
       initialKey={initialKey}
       initialColumns={guessColumns(device)}
     />

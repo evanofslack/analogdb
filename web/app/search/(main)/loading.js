@@ -1,13 +1,16 @@
 import styles from "@components/gallery.module.css";
-import GallerySkeleton from "@components/gallerySkeleton";
 import Header from "@components/header";
+import { SearchBarSkeleton } from "@components/searchSkeletons";
+import searchStyles from "./search.module.css";
 
 export default function Loading() {
   return (
     <div className={styles.main}>
       <Header />
       <div className={styles.margin}>
-        <GallerySkeleton />
+        <div className={searchStyles.top}>
+          <SearchBarSkeleton />
+        </div>
       </div>
     </div>
   );
