@@ -151,7 +151,7 @@ export default function ImageTag(props) {
               prefetch={false}
               className={styles.findSimilar}
             >
-              find similar
+              see more...
             </Link>
           </div>
           <div className={styles.similarContainer}>

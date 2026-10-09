@@ -180,7 +180,7 @@
 }
 
 .findSimilar {
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: var(--adb-muted);
   white-space: nowrap;
 }
