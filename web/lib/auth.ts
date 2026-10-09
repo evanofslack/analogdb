@@ -1,14 +1,9 @@
 import "server-only";
-
 import { createHash, createHmac, timingSafeEqual } from "crypto";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 
 export const adminCookieName = "admin-token";
 export const sessionMaxAge = 60 * 60 * 24 * 7;
-
-const loginLimit = 5;
-const loginWindowMs = 15 * 60 * 1000;
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
 function adminConfig() {
   const username = process.env.ADMIN_USERNAME;
@@ -58,29 +53,4 @@ export async function checkAdminAuth(): Promise<boolean> {
   const token = (await cookies()).get(adminCookieName)?.value;
   if (!token) return false;
   return verifySessionToken(token, config.secret);
-}
-
-export async function clientIp(): Promise<string> {
-  const forwarded = (await headers()).get("x-forwarded-for");
-  return forwarded?.split(",")[0].trim() || "unknown";
-}
-
-export function consumeLoginAttempt(ip: string): boolean {
-  const now = Date.now();
-  if (loginAttempts.size > 10000) {
-    loginAttempts.forEach((entry, key) => {
-      if (entry.resetAt <= now) loginAttempts.delete(key);
-    });
-  }
-  const entry = loginAttempts.get(ip);
-  if (!entry || entry.resetAt <= now) {
-    loginAttempts.set(ip, { count: 1, resetAt: now + loginWindowMs });
-    return true;
-  }
-  entry.count += 1;
-  return entry.count <= loginLimit;
-}
-
-export function resetLoginAttempts(ip: string): void {
-  loginAttempts.delete(ip);
 }

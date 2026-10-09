@@ -228,8 +228,8 @@ async function adminFetch(
 ): Promise<Response> {
   const requestHeaders: Record<string, string> = { "User-Agent": userAgent };
 
-  const username = process.env.AUTH_USERNAME;
-  const password = process.env.AUTH_PASSWORD;
+  const username = process.env.API_ADMIN_USERNAME;
+  const password = process.env.API_ADMIN_PASSWORD;
   if (username && password) {
     const auth = Buffer.from(`${username}:${password}`).toString("base64");
     requestHeaders["Authorization"] = `Basic ${auth}`;

@@ -1,4 +1,4 @@
-import { getKeyword } from "@app/actions/keywords";
+import { getKeyword } from "@lib/data/keywords";
 import CatalogDetail from "@components/catalogDetail";
 import { loadKeywordDetail } from "@lib/catalogPage";
 import {

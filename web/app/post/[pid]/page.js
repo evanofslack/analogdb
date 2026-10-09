@@ -1,5 +1,5 @@
-import { getCameraCatalog } from "@app/actions/cameras";
-import { getFilmCatalog } from "@app/actions/films";
+import { getCameraCatalog } from "@lib/data/cameras";
+import { getFilmCatalog } from "@lib/data/films";
 import ImagePage from "@components/imagePage";
 import { catalogHref, findByName } from "@lib/catalog";
 import { authorized_fetch } from "@lib/client";

@@ -1,7 +1,6 @@
 "use client";
 
 import { getKeywordCatalog } from "@app/actions/keywords";
-import { getSearchSuggestions } from "@app/actions/search";
 import filterStyles from "@components/filterBar.module.css";
 import Footer from "@components/footer";
 import galleryStyles from "@components/gallery.module.css";
@@ -23,6 +22,7 @@ import {
   postImageSearch,
   rejectMessage,
 } from "@lib/imageSearch";
+import { retryUnlessLimited, unwrap } from "@lib/rateLimited";
 import { resizeImage } from "@lib/resizeImage";
 import { searchParsers, toSearchFlags } from "@lib/searchParams";
 import { Button, Menu, SegmentedControl } from "@mantine/core";
@@ -134,9 +134,10 @@ function EmptyBody({
   const initialCatalog = catalogPromise ? use(catalogPromise) : null;
   const catalog = useQuery({
     queryKey: ["keyword-catalog"],
-    queryFn: () => getKeywordCatalog(),
+    queryFn: async () => unwrap(await getKeywordCatalog()),
     initialData: initialCatalog ?? undefined,
     staleTime: Infinity,
+    retry: retryUnlessLimited,
   });
 
   return (
@@ -246,7 +247,7 @@ export default function SearchPage({
 
   const { data: suggestions } = useQuery({
     queryKey: ["search-suggestions"],
-    queryFn: () => suggestionsPromise ?? getSearchSuggestions(),
+    queryFn: () => suggestionsPromise,
     staleTime: Infinity,
   });
   const source = useSearchSource(similar, sourceId, sourcePromise);

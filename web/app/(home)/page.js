@@ -1,6 +1,6 @@
-import { getCameraOptions } from "@app/actions/cameras";
-import { getFilmOptions } from "@app/actions/films";
-import { getFirstPosts } from "@app/actions/posts";
+import { getCameraOptions } from "@lib/data/cameras";
+import { getFilmOptions } from "@lib/data/films";
+import { getFirstPosts } from "@lib/data/posts";
 import { firstPageSize, guessColumns, slim } from "@lib/firstPage";
 import { postsParsers, toPostsRequest } from "@lib/searchParams";
 import { isValidSeed, pickSeed } from "@lib/seed";

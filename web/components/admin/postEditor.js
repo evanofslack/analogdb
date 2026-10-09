@@ -1,8 +1,6 @@
 "use client";
 
-import { updatePost } from "@app/actions/admin";
-import { getCameraOptions } from "@app/actions/cameras";
-import { getFilmOptions } from "@app/actions/films";
+import { loadCatalogOptions, updatePost } from "@app/actions/admin";
 import {
   Alert,
   Autocomplete,
@@ -76,8 +74,10 @@ export default function PostEditor({ post, opened, onClose, onSaved }) {
     if (!opened) return;
     setValues(initial);
     setError(null);
-    getCameraOptions().then(setCameras);
-    getFilmOptions().then(setFilms);
+    loadCatalogOptions().then((options) => {
+      setCameras(options.cameras);
+      setFilms(options.films);
+    });
   }, [opened, initial]);
 
   const set = (key) => (value) =>

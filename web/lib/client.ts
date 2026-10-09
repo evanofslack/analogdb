@@ -1,5 +1,4 @@
 import "server-only";
-
 import {
   CamerasApi,
   Configuration,
@@ -12,17 +11,22 @@ import {
 import pkg from "../package.json";
 import { baseURL } from "./constants";
 
-const username = process.env.AUTH_USERNAME;
-const password = process.env.AUTH_PASSWORD;
+const username = process.env.API_WEB_USERNAME;
+const password = process.env.API_WEB_PASSWORD;
 const userAgent = `analogdb-web/${pkg.version}`;
-const auth = Buffer.from(`${username}:${password}`).toString("base64");
+const authHeaders: Record<string, string> =
+  username && password
+    ? {
+        Authorization: `Basic ${Buffer.from(`${username}:${password}`).toString(
+          "base64"
+        )}`,
+      }
+    : {};
 
 const config = new Configuration({
   basePath: baseURL,
-  username: username,
-  password: password,
   headers: {
-    Authorization: `Basic ${auth}`, // add auth headers for all requests to bypass rate limit
+    ...authHeaders,
     "User-Agent": userAgent,
   },
   middleware:
@@ -53,12 +57,10 @@ export async function authorized_fetch(
   revalidate: number = 60
 ): Promise<Response> {
   const url = `${baseURL}${route}`;
-  let headers: Record<string, string> = { "User-Agent": userAgent };
-
-  if (username && password) {
-    const auth = Buffer.from(`${username}:${password}`).toString("base64");
-    headers["Authorization"] = `Basic ${auth}`;
-  }
+  const headers: Record<string, string> = {
+    ...authHeaders,
+    "User-Agent": userAgent,
+  };
 
   const response = await fetch(url, {
     method: method,

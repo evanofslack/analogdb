@@ -1,7 +1,7 @@
 import "server-only";
-import { getCameraCatalog } from "@app/actions/cameras";
-import { getFilmCatalog } from "@app/actions/films";
-import { getFirstPosts } from "@app/actions/posts";
+import { getCameraCatalog } from "@lib/data/cameras";
+import { getFilmCatalog } from "@lib/data/films";
+import { getFirstPosts } from "@lib/data/posts";
 import {
   CatalogEntry,
   catalogHref,

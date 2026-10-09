@@ -1,11 +1,12 @@
-import { getKeywordCatalog } from "@app/actions/keywords";
-import { getPostsSimilar } from "@app/actions/posts";
+import { getKeywordCatalog } from "@lib/data/keywords";
+import { getPostsSimilar } from "@lib/data/posts";
 import {
   getSearchSource,
   getSearchSuggestions,
   searchPosts,
-} from "@app/actions/search";
+} from "@lib/data/search";
 import { guessColumns, slim } from "@lib/firstPage";
+import { limit } from "@lib/rateLimit";
 import {
   searchKey,
   searchPageSize,
@@ -82,6 +83,10 @@ export default async function Page({ searchParams }) {
 
   const { device } = userAgent({ headers: await headers() });
 
+  let allowed = true;
+  if (q) allowed = (await limit("search")).ok;
+  else if (similar) allowed = (await limit("browse")).ok;
+
   let initialKey = null;
   if (q) initialKey = searchKey("q", q, flags);
   else if (similar) initialKey = searchKey("similar", similar, flags);
@@ -90,9 +95,9 @@ export default async function Page({ searchParams }) {
     <SearchPage
       suggestionsPromise={getSearchSuggestions()}
       catalogPromise={!q && !similar ? getKeywordCatalog() : null}
-      textPromise={q ? loadText(q, flags) : null}
-      similarPromise={similar ? loadSimilar(similar, flags) : null}
-      sourcePromise={similar ? getSearchSource(similar) : null}
+      textPromise={q && allowed ? loadText(q, flags) : null}
+      similarPromise={similar && allowed ? loadSimilar(similar, flags) : null}
+      sourcePromise={similar && allowed ? getSearchSource(similar) : null}
       sourceId={similar}
       initialKey={initialKey}
       initialColumns={guessColumns(device)}

@@ -1,9 +1,7 @@
 import { getPostsSimilar } from "@app/actions/posts";
-import {
-  getSearchSource,
-  searchPosts,
-  SearchSource,
-} from "@app/actions/search";
+import { getSearchSource, searchPosts } from "@app/actions/search";
+import type { SearchSource } from "@lib/data/search";
+import { retryUnlessLimited, unwrap } from "@lib/rateLimited";
 import {
   SearchFlags,
   searchKey,
@@ -33,13 +31,21 @@ export default function useSearch(
 
   const query = useInfiniteQuery({
     queryKey: ["search", q, flags],
-    queryFn: ({ pageParam }) =>
-      searchPosts({ q, pageSize: searchPageSize, cursor: pageParam, ...flags }),
+    queryFn: async ({ pageParam }) =>
+      unwrap(
+        await searchPosts({
+          q,
+          pageSize: searchPageSize,
+          cursor: pageParam,
+          ...flags,
+        })
+      ),
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (response) => response.meta?.nextCursor || undefined,
     initialData,
     placeholderData: keepPreviousData,
     enabled: Boolean(q),
+    retry: retryUnlessLimited,
   });
 
   const pages = query.data?.pages ?? [];
@@ -49,6 +55,7 @@ export default function useSearch(
     relatedKeywords: pages[0]?.relatedKeywords ?? [],
     isLoading: query.isPending,
     isError: query.isError,
+    error: query.error,
     isPlaceholderData: query.isPlaceholderData,
     hasNextPage: query.hasNextPage,
     isFetchingNextPage: query.isFetchingNextPage,
@@ -68,16 +75,21 @@ export function useSimilar(
 
   const query = useQuery({
     queryKey: ["similar", id, flags],
-    queryFn: () => getPostsSimilar({ id, pageSize: similarPageSize, ...flags }),
+    queryFn: async () =>
+      unwrap(
+        await getPostsSimilar({ id, pageSize: similarPageSize, ...flags })
+      ),
     initialData: matches && initialPage ? initialPage : undefined,
     placeholderData: keepPreviousData,
     enabled: Boolean(id),
+    retry: retryUnlessLimited,
   });
 
   return {
     pages: query.data ? [query.data] : [],
     isLoading: query.isPending,
     isError: query.isError,
+    error: query.error,
     isPlaceholderData: query.isPlaceholderData,
     hasNextPage: false,
     isFetchingNextPage: false,
@@ -94,9 +106,12 @@ export function useSearchSource(
 ) {
   const source = useQuery({
     queryKey: ["search-source", id],
-    queryFn: () =>
-      initialSource && id === initialId ? initialSource : getSearchSource(id),
+    queryFn: async () =>
+      initialSource && id === initialId
+        ? initialSource
+        : unwrap(await getSearchSource(id)),
     enabled: Boolean(id),
+    retry: retryUnlessLimited,
   });
   return source.data ?? null;
 }

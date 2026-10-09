@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import { CatalogEntry, minPosts, pickCover } from "@lib/catalog";
 import { filmsApi } from "@lib/client";

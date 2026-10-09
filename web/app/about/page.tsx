@@ -1,9 +1,9 @@
-import { getAuthorsTotalCount } from "@app/actions/authors";
+import { getAuthorsTotalCount } from "@lib/data/authors";
 import {
   getPosts,
   getPostsSimilar,
   getPostsTotalCount,
-} from "@app/actions/posts";
+} from "@lib/data/posts";
 import About, { AboutImage } from "@components/about";
 import styles from "@components/gallery.module.css";
 import Header from "@components/header";

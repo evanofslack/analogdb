@@ -3,12 +3,11 @@
 import {
   adminCookieName,
   checkCredentials,
-  clientIp,
-  consumeLoginAttempt,
   createSessionToken,
-  resetLoginAttempts,
   sessionMaxAge,
 } from "@lib/auth";
+import { clientIp, rateLimitKey } from "@lib/clientIp";
+import { consume, reset } from "@lib/rateLimit";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -29,8 +28,8 @@ const hintOptions = {
 };
 
 export async function loginAction(formData: FormData): Promise<void> {
-  const ip = await clientIp();
-  if (!consumeLoginAttempt(ip)) {
+  const key = rateLimitKey(await clientIp());
+  if (!consume("login", key).ok) {
     redirect("/admin?error=invalid");
   }
 
@@ -46,7 +45,7 @@ export async function loginAction(formData: FormData): Promise<void> {
     redirect("/admin?error=invalid");
   }
 
-  resetLoginAttempts(ip);
+  reset("login", key);
   const cookieStore = await cookies();
   cookieStore.set(adminCookieName, token, {
     ...cookieOptions,
