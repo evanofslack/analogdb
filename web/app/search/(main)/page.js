@@ -87,31 +87,18 @@ export default async function Page({ searchParams }) {
   if (q) allowed = (await limit("search")).ok;
   else if (similar) allowed = (await limit("browse")).ok;
 
-  const [
-    suggestions,
-    keywordCatalog,
-    initialPage,
-    initialSimilar,
-    initialSource,
-  ] = await Promise.all([
-    getSearchSuggestions(),
-    !q && !similar ? getKeywordCatalog() : null,
-    q && allowed ? loadText(q, flags) : null,
-    similar && allowed ? loadSimilar(similar, flags) : null,
-    similar && allowed ? getSearchSource(similar) : null,
-  ]);
-
   let initialKey = null;
   if (q) initialKey = searchKey("q", q, flags);
   else if (similar) initialKey = searchKey("similar", similar, flags);
 
   return (
     <SearchPage
-      suggestions={suggestions}
-      keywordCatalog={keywordCatalog}
-      initialPage={initialPage}
-      initialSimilar={initialSimilar}
-      initialSource={initialSource}
+      suggestionsPromise={getSearchSuggestions()}
+      catalogPromise={!q && !similar ? getKeywordCatalog() : null}
+      textPromise={q && allowed ? loadText(q, flags) : null}
+      similarPromise={similar && allowed ? loadSimilar(similar, flags) : null}
+      sourcePromise={similar && allowed ? getSearchSource(similar) : null}
+      sourceId={similar}
       initialKey={initialKey}
       initialColumns={guessColumns(device)}
     />

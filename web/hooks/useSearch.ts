@@ -69,7 +69,6 @@ export function useSimilar(
   id: number | null,
   flags: SearchFlags,
   initialPage?: ServerSimilarPostsResponse | null,
-  initialSource?: SearchSource | null,
   initialKey?: string | null
 ) {
   const matches = id && initialKey === searchKey("similar", id, flags);
@@ -86,17 +85,7 @@ export function useSimilar(
     retry: retryUnlessLimited,
   });
 
-  const source = useQuery({
-    queryKey: ["search-source", id],
-    queryFn: async () => unwrap(await getSearchSource(id)),
-    initialData:
-      initialSource && initialSource.id === id ? initialSource : undefined,
-    enabled: Boolean(id),
-    retry: retryUnlessLimited,
-  });
-
   return {
-    source: source.data ?? null,
     pages: query.data ? [query.data] : [],
     isLoading: query.isPending,
     isError: query.isError,
@@ -108,4 +97,21 @@ export function useSimilar(
     fetchNextPage: () => {},
     refetch: query.refetch,
   };
+}
+
+export function useSearchSource(
+  id: number | null,
+  initialId?: number | null,
+  initialSource?: Promise<SearchSource | null> | null
+) {
+  const source = useQuery({
+    queryKey: ["search-source", id],
+    queryFn: async () =>
+      initialSource && id === initialId
+        ? initialSource
+        : unwrap(await getSearchSource(id)),
+    enabled: Boolean(id),
+    retry: retryUnlessLimited,
+  });
+  return source.data ?? null;
 }

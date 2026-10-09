@@ -1,0 +1,36 @@
+.pills {
+  display: flex;
+  gap: 0.5rem;
+  overflow: hidden;
+  padding: 0.1rem 0;
+}
+
+.bar {
+  flex: 0 1 40rem;
+  min-width: 0;
+}
+
+.filter {
+  flex: none;
+  width: 6.5rem;
+}
+
+.cover {
+  aspect-ratio: 4 / 5;
+  height: auto;
+  border-radius: 0;
+}
+
+.name {
+  margin-top: 0.6rem;
+}
+
+.count {
+  margin-top: 0.4rem;
+}
+
+@media (max-width: 720px) {
+  .filter {
+    width: 2.75rem;
+  }
+}

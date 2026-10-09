@@ -9,9 +9,13 @@ import InfiniteGallery from "@components/infiniteGallery";
 import KeywordRow from "@components/keywordRow";
 import ScrollTop from "@components/scrollTop";
 import SearchBar from "@components/searchBar";
+import {
+  ResultsSkeleton,
+  SuggestionsSkeleton,
+} from "@components/searchSkeletons";
 import SearchSuggestions, { KeywordChips } from "@components/searchSuggestions";
 import useRecentSearches from "@hooks/useRecentSearches";
-import useSearch, { useSimilar } from "@hooks/useSearch";
+import useSearch, { useSearchSource, useSimilar } from "@hooks/useSearch";
 import {
   imageAccept,
   imageMaxSize,
@@ -26,7 +30,7 @@ import { Dropzone } from "@mantine/dropzone";
 import { IconAdjustmentsHorizontal, IconPhotoScan } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./search.module.css";
 
 const filterData = [
@@ -102,12 +106,125 @@ function FlagsMenu({ filters, setFilters }) {
   );
 }
 
-export default function SearchPage({
+function Results({ results, chips, onSearch, noMatches, initialColumns }) {
+  return (
+    <>
+      <KeywordRow
+        words={chips}
+        onSelect={onSearch}
+        label="related keywords"
+        className={styles.related}
+      />
+      {noMatches}
+      {!noMatches && (
+        <InfiniteGallery {...results} initialColumns={initialColumns} />
+      )}
+    </>
+  );
+}
+
+function EmptyBody({
+  suggestionsPromise,
+  catalogPromise,
+  recent,
+  onClearRecent,
+  onSearch,
+}) {
+  const suggestions = use(suggestionsPromise);
+  const initialCatalog = catalogPromise ? use(catalogPromise) : null;
+  const catalog = useQuery({
+    queryKey: ["keyword-catalog"],
+    queryFn: async () => unwrap(await getKeywordCatalog()),
+    initialData: initialCatalog ?? undefined,
+    staleTime: Infinity,
+    retry: retryUnlessLimited,
+  });
+
+  return (
+    <div className={styles.suggestions}>
+      <SearchSuggestions
+        suggestions={suggestions}
+        recent={recent}
+        onClearRecent={onClearRecent}
+        onSearch={onSearch}
+        catalog={catalog.data}
+        trendingRow
+      />
+    </div>
+  );
+}
+
+function TextResults({
+  q,
+  flags,
+  textPromise,
+  initialKey,
   suggestions,
-  keywordCatalog,
-  initialPage,
-  initialSimilar,
-  initialSource,
+  onSearch,
+  initialColumns,
+}) {
+  const initialPage = textPromise ? use(textPromise) : null;
+  const results = useSearch(q, flags, initialPage, initialKey);
+
+  const empty =
+    !results.isLoading &&
+    !results.isError &&
+    !results.isPlaceholderData &&
+    results.pages.every((page) => (page.posts ?? []).length === 0);
+
+  return (
+    <Results
+      results={results}
+      chips={results.relatedKeywords}
+      onSearch={onSearch}
+      initialColumns={initialColumns}
+      noMatches={
+        empty && (
+          <div className={styles.noMatches}>
+            <h3 className={styles.noMatchesTitle}>
+              no matches for &ldquo;{q}&rdquo;
+            </h3>
+            <KeywordChips
+              words={suggestions?.keywords}
+              onSearch={onSearch}
+              className={styles.noMatchesChips}
+            />
+          </div>
+        )
+      }
+    />
+  );
+}
+
+function SimilarResults({
+  similar,
+  flags,
+  similarPromise,
+  initialKey,
+  grayscaleOnly,
+  onSearch,
+  initialColumns,
+}) {
+  const initialPage = similarPromise ? use(similarPromise) : null;
+  const results = useSimilar(similar, flags, initialPage, initialKey);
+
+  return (
+    <Results
+      results={results}
+      chips={similarKeywords(results.pages, grayscaleOnly)}
+      onSearch={onSearch}
+      initialColumns={initialColumns}
+    />
+  );
+}
+
+export default function SearchPage({
+  suggestionsPromise,
+  catalogPromise,
+  textPromise,
+  similarPromise,
+  sourcePromise,
+  sourceId,
   initialKey,
   initialColumns,
 }) {
@@ -128,14 +245,12 @@ export default function SearchPage({
   const [uploadPending, setUploadPending] = useState(false);
   const [uploadError, setUploadError] = useState(null);
 
-  const text = useSearch(q, flags, initialPage, initialKey);
-  const similarResults = useSimilar(
-    similar,
-    flags,
-    initialSimilar,
-    initialSource,
-    initialKey
-  );
+  const { data: suggestions } = useQuery({
+    queryKey: ["search-suggestions"],
+    queryFn: () => suggestionsPromise,
+    staleTime: Infinity,
+  });
+  const source = useSearchSource(similar, sourceId, sourcePromise);
 
   let mode = "empty";
   if (q) mode = "text";
@@ -248,54 +363,83 @@ export default function SearchPage({
   }, []);
 
   let visual = null;
-  let results = null;
-  let chips = [];
-  if (mode === "text") {
-    results = text;
-    chips = text.relatedKeywords;
+  let body = null;
+  if (mode === "empty") {
+    body = (
+      <Suspense key="empty" fallback={<SuggestionsSkeleton />}>
+        <EmptyBody
+          suggestionsPromise={suggestionsPromise}
+          catalogPromise={catalogPromise}
+          recent={recent}
+          onClearRecent={clear}
+          onSearch={handleSearch}
+        />
+      </Suspense>
+    );
+  } else if (mode === "text") {
+    body = (
+      <Suspense
+        key="text"
+        fallback={<ResultsSkeleton className={styles.related} />}
+      >
+        <TextResults
+          q={q}
+          flags={flags}
+          textPromise={textPromise}
+          initialKey={initialKey}
+          suggestions={suggestions}
+          onSearch={handleSearch}
+          initialColumns={initialColumns}
+        />
+      </Suspense>
+    );
   } else if (mode === "similar") {
     visual = {
-      thumb: similarResults.source?.image?.url,
+      thumb: source?.image?.url,
       label: `similar to #${similar}`,
       onClear: () => setFilters({ similar: null }, { history: "push" }),
     };
-    results = similarResults;
-    chips = similarKeywords(similarResults.pages, bw === "only");
+    body = (
+      <Suspense
+        key="similar"
+        fallback={<ResultsSkeleton className={styles.related} />}
+      >
+        <SimilarResults
+          similar={similar}
+          flags={flags}
+          similarPromise={similarPromise}
+          initialKey={initialKey}
+          grayscaleOnly={bw === "only"}
+          onSearch={handleSearch}
+          initialColumns={initialColumns}
+        />
+      </Suspense>
+    );
   } else if (mode === "upload") {
     visual = {
       thumb: upload.thumb,
       label: "your image",
       onClear: () => replaceUpload(null),
     };
-    results = {
-      pages: [upload.response],
-      isLoading: false,
-      isError: false,
-      isPlaceholderData: uploadPending,
-      hasNextPage: false,
-      isFetchingNextPage: false,
-      isFetchNextPageError: false,
-      fetchNextPage: () => {},
-      refetch: () => {},
-    };
-    chips = upload.response.relatedKeywords ?? [];
+    body = (
+      <Results
+        results={{
+          pages: [upload.response],
+          isLoading: false,
+          isError: false,
+          isPlaceholderData: uploadPending,
+          hasNextPage: false,
+          isFetchingNextPage: false,
+          isFetchNextPageError: false,
+          fetchNextPage: () => {},
+          refetch: () => {},
+        }}
+        chips={upload.response.relatedKeywords ?? []}
+        onSearch={handleSearch}
+        initialColumns={initialColumns}
+      />
+    );
   }
-
-  const catalog = useQuery({
-    queryKey: ["keyword-catalog"],
-    queryFn: async () => unwrap(await getKeywordCatalog()),
-    initialData: keywordCatalog ?? undefined,
-    staleTime: Infinity,
-    enabled: mode === "empty",
-    retry: retryUnlessLimited,
-  });
-
-  const noMatches =
-    mode === "text" &&
-    !results.isLoading &&
-    !results.isError &&
-    !results.isPlaceholderData &&
-    results.pages.every((page) => (page.posts ?? []).length === 0);
 
   return (
     <div className={galleryStyles.main}>
@@ -339,40 +483,7 @@ export default function SearchPage({
           <FlagsMenu filters={filters} setFilters={setFilters} />
         </div>
 
-        {mode === "empty" ? (
-          <div className={styles.suggestions}>
-            <SearchSuggestions
-              suggestions={suggestions}
-              recent={recent}
-              onClearRecent={clear}
-              onSearch={handleSearch}
-              catalog={catalog.data}
-              trendingRow
-            />
-          </div>
-        ) : (
-          <KeywordRow
-            words={chips}
-            onSelect={handleSearch}
-            label="related keywords"
-            className={styles.related}
-          />
-        )}
-        {noMatches && (
-          <div className={styles.noMatches}>
-            <h3 className={styles.noMatchesTitle}>
-              no matches for &ldquo;{q}&rdquo;
-            </h3>
-            <KeywordChips
-              words={suggestions?.keywords}
-              onSearch={handleSearch}
-              className={styles.noMatchesChips}
-            />
-          </div>
-        )}
-        {results && !noMatches && (
-          <InfiniteGallery {...results} initialColumns={initialColumns} />
-        )}
+        {body}
         <ScrollTop />
       </div>
       <Footer />

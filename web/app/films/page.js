@@ -2,8 +2,7 @@ import CatalogIndex from "@components/catalogIndex";
 import { groupFilms } from "@lib/catalog";
 import { getCatalog, indexJsonLd } from "@lib/catalogPage";
 import { jsonLd } from "@lib/seo";
-
-export const revalidate = 3600;
+import { connection } from "next/server";
 
 const title = "Film stocks";
 const description =
@@ -17,6 +16,7 @@ export const metadata = {
 };
 
 export default async function Page() {
+  await connection();
   const list = await getCatalog("films");
 
   return (
