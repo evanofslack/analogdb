@@ -82,6 +82,12 @@ export function searchKey(
   return JSON.stringify([mode, value, flags]);
 }
 
+export const catalogFilterParsers = {
+  q: parseAsString
+    .withDefault("")
+    .withOptions({ history: "replace", throttleMs: 300 }),
+};
+
 export const catalogParsers = {
   sort: parseAsStringLiteral(sortOpts).withDefault("score"),
   seed: parseAsInteger,
