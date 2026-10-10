@@ -51,6 +51,7 @@ type Server struct {
 	tagCountCache      tagCountCache
 	missingVectorCache missingVectorCache
 	reportLimit        func(http.Handler) http.Handler
+	ui                 *uiEvents
 
 	PostService       analogdb.PostService
 	FilmService       analogdb.FilmService
@@ -61,6 +62,8 @@ type Server struct {
 	KeywordService    analogdb.KeywordService
 	SimilarityService analogdb.SimilarityService
 	EventService      analogdb.EventService
+	UiEventService    analogdb.UiEventService
+	SaltService       analogdb.SaltService
 	AdminService      analogdb.AdminService
 	ExtractionService analogdb.ExtractionService
 	ReportService     analogdb.ReportService
@@ -91,6 +94,7 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 		imageWait:  searchImageWait,
 		textSlots:  make(chan struct{}, searchTextSlots),
 		textWait:   searchTextWait,
+		ui:         newUiEvents(),
 	}
 
 	s.logCredentials()
@@ -159,6 +163,7 @@ func (s *Server) mountResourceHandlers() {
 	s.mountKeywordDetailHandlers(v1)
 	s.mountAdminHandlers(v1)
 	s.mountSearchHandlers(v1)
+	s.mountEventHandlers(v1)
 	s.router.Mount("/v1", v1)
 
 	// Mount legacy routes with deprecation

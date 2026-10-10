@@ -152,6 +152,9 @@ func TestProtectedRoutes(t *testing.T) {
 		"POST /v1/post/1/report": true,
 		"POST /post/1/report":    true,
 	}
+	webAllowed := map[string]bool{
+		"POST /v1/events": true,
+	}
 	err := chi.Walk(s.router, func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
 		if strings.Contains(route, "*") || method == http.MethodOptions || method == http.MethodHead {
 			return nil
@@ -168,8 +171,12 @@ func TestProtectedRoutes(t *testing.T) {
 		if w := roleRequest(s, method, path, nil, ""); w.Code != http.StatusUnauthorized {
 			t.Errorf("%s %s: want 401 without credentials, got %d", method, route, w.Code)
 		}
-		if w := roleRequest(s, method, path, &webPair, ""); w.Code != http.StatusForbidden {
-			t.Errorf("%s %s: want 403 for web, got %d", method, route, w.Code)
+		forbidden := &webPair
+		if webAllowed[method+" "+path] {
+			forbidden = &scraperPair
+		}
+		if w := roleRequest(s, method, path, forbidden, ""); w.Code != http.StatusForbidden {
+			t.Errorf("%s %s: want 403 for %s, got %d", method, route, forbidden.username, w.Code)
 		}
 		return nil
 	})

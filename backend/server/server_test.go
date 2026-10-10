@@ -44,6 +44,7 @@ func mustOpen(t *testing.T) *Server {
 
 	s.ReadyService = &mockReady{}
 	s.EventService = events.NewNoop(logger)
+	s.UiEventService = events.NewNoopUi(logger)
 
 	return s
 }

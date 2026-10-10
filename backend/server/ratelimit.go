@@ -7,7 +7,10 @@ import (
 	"github.com/go-chi/httprate"
 )
 
-const webRateLimitKey = "role:web"
+const (
+	webRateLimitKey       = "role:web"
+	webEventsRateLimitKey = "role:web:events"
+)
 
 func (server *Server) addRatelimiter() {
 	if !server.config.App.RateLimitEnabled {
@@ -34,17 +37,32 @@ func (server *Server) addRatelimiter() {
 		server.logger.Info("Web rate limit off")
 	}
 
+	// web event batches get their own bucket so analytics never limits the site
+	var webEvents func(http.Handler) http.Handler
+	if perMinute := server.config.App.RateLimitEventsPerMinute; perMinute > 0 {
+		webEvents = httprate.LimitBy(perMinute, time.Minute, keyWebEvents, limited("web_events"))
+		server.logger.Info("Added web events rate limit", "per_minute", perMinute)
+	} else {
+		server.logger.Info("Web events rate limit off")
+	}
+
 	server.router.Use(func(next http.Handler) http.Handler {
 		anonymousNext := anonymous(next)
 		webNext := next
 		if web != nil {
 			webNext = web(next)
 		}
+		webEventsNext := next
+		if webEvents != nil {
+			webEventsNext = webEvents(next)
+		}
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			p := principalFrom(r)
 			switch {
 			case p == nil:
 				anonymousNext.ServeHTTP(w, r)
+			case p.role == roleWeb && r.URL.Path == eventsRoute:
+				webEventsNext.ServeHTTP(w, r)
 			case p.role == roleWeb:
 				webNext.ServeHTTP(w, r)
 			default:
@@ -61,4 +79,8 @@ func keyByClientIP(r *http.Request) (string, error) {
 
 func keyWeb(r *http.Request) (string, error) {
 	return webRateLimitKey, nil
+}
+
+func keyWebEvents(r *http.Request) (string, error) {
+	return webEventsRateLimitKey, nil
 }
