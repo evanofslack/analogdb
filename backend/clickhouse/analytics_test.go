@@ -2,8 +2,10 @@ package clickhouse
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -32,7 +34,7 @@ var uiRows = []uiRow{
 	{ago: time.Hour, id: "00000000-0000-0000-0000-000000000001", name: "page_view", visitor: "v1", path: "/post/12", route: "/post/[id]", referrer: "news.ycombinator.com", source: "reddit", campaign: "launch", device: "desktop", browser: "Firefox", postID: 12},
 	{ago: time.Hour, id: "00000000-0000-0000-0000-000000000001", name: "page_view", visitor: "v1", path: "/post/12", route: "/post/[id]", referrer: "news.ycombinator.com", source: "reddit", campaign: "launch", device: "desktop", browser: "Firefox", postID: 12},
 	{ago: 2 * time.Hour, id: "00000000-0000-0000-0000-000000000002", name: "page_view", visitor: "v1", path: "/", route: "/", referrer: "analogdb.com", device: "desktop", browser: "Firefox", country: "NL"},
-	{ago: 3 * time.Hour, id: "00000000-0000-0000-0000-000000000003", name: "page_view", visitor: "v2", path: "/post/12", route: "/post/[id]", referrer: "www.analogdb.com", device: "mobile", browser: "Safari"},
+	{ago: 3 * time.Hour, id: "00000000-0000-0000-0000-000000000003", name: "page_view", visitor: "v2", path: "/post/12", route: "/post/[id]", referrer: "www.analogdb.com", device: "mobile", browser: "Safari", postID: 12},
 	{ago: time.Hour, id: "00000000-0000-0000-0000-000000000004", name: "page_view", visitor: "v3", path: "/", route: "/", device: "desktop", browser: "Chrome", bot: true},
 	{ago: 10 * time.Minute, id: "00000000-0000-0000-0000-000000000005", name: "page_view", visitor: "v1", path: "/films", route: "/films", device: "desktop", browser: "Firefox"},
 	{ago: 25 * time.Hour, id: "00000000-0000-0000-0000-000000000006", name: "page_view", visitor: "v1", path: "/", route: "/", device: "desktop", browser: "Firefox"},
@@ -90,12 +92,8 @@ func TestAnalytics(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("missing table", func(t *testing.T) {
-		analytics, err := db.Analytics(ctx, analogdb.TrafficDay)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if analytics.Available || analytics.Series == nil || analytics.Posts == nil {
-			t.Errorf("want unavailable with empty lists, got %+v", analytics)
+		if _, err := db.Analytics(ctx, analogdb.TrafficDay); err == nil {
+			t.Error("want an error before the table exists")
 		}
 	})
 
@@ -108,22 +106,25 @@ func TestAnalytics(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !analytics.Available || analytics.Bucket != "hour" {
-			t.Fatalf("want available hour buckets, got %v %s", analytics.Available, analytics.Bucket)
+		if analytics.Bucket != "hour" {
+			t.Fatalf("want hour buckets, got %s", analytics.Bucket)
 		}
 
-		totals := analytics.Totals
-		if totals.PageViews != 4 {
-			t.Errorf("want 4 page views without bots and duplicates, got %d", totals.PageViews)
+		summary := analytics.Summary
+		if summary.Current.PageViews != 4 {
+			t.Errorf("want 4 page views without bots and duplicates, got %d", summary.Current.PageViews)
 		}
-		if want := wantVisitorDays(now, day, 0); totals.VisitorDays != want {
-			t.Errorf("want %d visitor days, got %d", want, totals.VisitorDays)
+		if want := wantVisitorDays(now, day, 0); summary.Current.Visitors != want {
+			t.Errorf("want %d visitor days, got %d", want, summary.Current.Visitors)
 		}
-		if totals.BotShare != 0.2 {
-			t.Errorf("want bot share 0.2, got %f", totals.BotShare)
+		if summary.Current.BotViews != 1 {
+			t.Errorf("want 1 bot view, got %d", summary.Current.BotViews)
 		}
-		if analytics.Previous.PageViews != 1 || analytics.Previous.VisitorDays != 1 {
-			t.Errorf("want one page view in the previous day, got %+v", analytics.Previous)
+		if summary.Previous.PageViews != 1 || summary.Previous.Visitors != 1 || summary.Previous.BotViews != 0 {
+			t.Errorf("want one page view in the previous day, got %+v", summary.Previous)
+		}
+		if summary.Live != (analogdb.ViewCounts{PageViews: 1, Visitors: 1}) {
+			t.Errorf("want one live view, got %+v", summary.Live)
 		}
 
 		var views int64
@@ -133,30 +134,29 @@ func TestAnalytics(t *testing.T) {
 		if views != 4 {
 			t.Errorf("want 4 page views in series, got %d", views)
 		}
-		if analytics.Live != (analogdb.AnalyticsLive{PageViews: 1, Visitors: 1}) {
-			t.Errorf("want one live view, got %+v", analytics.Live)
-		}
 
-		if len(analytics.Pages) != 3 || analytics.Pages[0].Name != "/post/[id]" || analytics.Pages[0].PageViews != 2 || analytics.Pages[0].Visitors != 2 {
-			t.Errorf("unexpected pages %+v", analytics.Pages)
+		top := analytics.Top
+		one := analogdb.ViewCounts{PageViews: 1, Visitors: 1}
+		if len(top.Pages) != 3 || top.Pages[0].Name != "/post/[id]" || top.Pages[0].ViewCounts != (analogdb.ViewCounts{PageViews: 2, Visitors: 2}) {
+			t.Errorf("unexpected pages %+v", top.Pages)
 		}
 		if len(analytics.Posts) != 1 || analytics.Posts[0].PostID != 12 || analytics.Posts[0].PageViews != 2 {
-			t.Errorf("want post 12 by id and by path, got %+v", analytics.Posts)
+			t.Errorf("want post 12 with 2 views, got %+v", analytics.Posts)
 		}
-		if len(analytics.Referrers) != 1 || analytics.Referrers[0].Name != "news.ycombinator.com" {
-			t.Errorf("want only the external referrer, got %+v", analytics.Referrers)
+		if len(top.Referrers) != 1 || top.Referrers[0].Name != "news.ycombinator.com" {
+			t.Errorf("want only the external referrer, got %+v", top.Referrers)
 		}
-		if len(analytics.Campaigns) != 1 || analytics.Campaigns[0] != (analogdb.AnalyticsCampaign{Source: "reddit", Campaign: "launch", PageViews: 1, Visitors: 1}) {
-			t.Errorf("unexpected campaigns %+v", analytics.Campaigns)
+		if len(top.Sources) != 1 || top.Sources[0] != (analogdb.AnalyticsCount{Name: "reddit", ViewCounts: one}) {
+			t.Errorf("unexpected sources %+v", top.Sources)
 		}
-		if len(analytics.Devices) != 2 || analytics.Devices[0].Name != "desktop" || analytics.Devices[0].PageViews != 3 {
-			t.Errorf("unexpected devices %+v", analytics.Devices)
+		if len(top.Campaigns) != 1 || top.Campaigns[0] != (analogdb.AnalyticsCount{Name: "launch", ViewCounts: one}) {
+			t.Errorf("unexpected campaigns %+v", top.Campaigns)
 		}
-		if len(analytics.Browsers) != 2 || analytics.Browsers[0].Name != "Firefox" {
-			t.Errorf("unexpected browsers %+v", analytics.Browsers)
+		if len(top.Devices) != 2 || top.Devices[0].Name != "desktop" || top.Devices[0].PageViews != 3 {
+			t.Errorf("unexpected devices %+v", top.Devices)
 		}
-		if len(analytics.Countries) != 1 || analytics.Countries[0].Name != "NL" {
-			t.Errorf("unexpected countries %+v", analytics.Countries)
+		if len(top.Browsers) != 2 || top.Browsers[0].Name != "Firefox" {
+			t.Errorf("unexpected browsers %+v", top.Browsers)
 		}
 
 		if len(analytics.Vitals) != 1 {
@@ -179,14 +179,45 @@ func TestAnalytics(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if analytics.Bucket != "day" || analytics.Totals.PageViews != 6 {
-			t.Errorf("want 6 page views in day buckets, got %d in %s", analytics.Totals.PageViews, analytics.Bucket)
+		current := analytics.Summary.Current
+		if analytics.Bucket != "day" || current.PageViews != 6 {
+			t.Errorf("want 6 page views in day buckets, got %d in %s", current.PageViews, analytics.Bucket)
 		}
-		if want := wantVisitorDays(now, 7*day, 0); analytics.Totals.VisitorDays != want || want < 4 {
-			t.Errorf("want %d visitor days, got %d", want, analytics.Totals.VisitorDays)
+		if want := wantVisitorDays(now, 7*day, 0); current.Visitors != want || want < 4 {
+			t.Errorf("want %d visitor days, got %d", want, current.Visitors)
 		}
-		if analytics.Previous.PageViews != 1 {
-			t.Errorf("want one page view in the previous week, got %d", analytics.Previous.PageViews)
+		if analytics.Summary.Previous.PageViews != 1 {
+			t.Errorf("want one page view in the previous week, got %d", analytics.Summary.Previous.PageViews)
+		}
+	})
+
+	t.Run("shape", func(t *testing.T) {
+		analytics, err := db.Analytics(ctx, analogdb.TrafficDay)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := json.Marshal(analytics)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var body map[string]json.RawMessage
+		if err := json.Unmarshal(data, &body); err != nil {
+			t.Fatal(err)
+		}
+		var top map[string]json.RawMessage
+		if err := json.Unmarshal(body["top"], &top); err != nil {
+			t.Fatal(err)
+		}
+		if got := sortedKeys(body); !slices.Equal(got, []string{"bucket", "posts", "range", "series", "summary", "top", "vitals"}) {
+			t.Errorf("unexpected top level keys %v", got)
+		}
+		if got := sortedKeys(top); !slices.Equal(got, []string{"browsers", "campaigns", "devices", "pages", "referrers", "sources"}) {
+			t.Errorf("unexpected top keys %v", got)
+		}
+		for key, raw := range top {
+			if string(raw) == "null" {
+				t.Errorf("want an empty list for %s, got null", key)
+			}
 		}
 	})
 
@@ -195,4 +226,13 @@ func TestAnalytics(t *testing.T) {
 			t.Errorf("want bad request, got %v", err)
 		}
 	})
+}
+
+func sortedKeys(m map[string]json.RawMessage) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+	return keys
 }

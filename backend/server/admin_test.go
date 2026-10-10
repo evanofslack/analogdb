@@ -46,8 +46,8 @@ func (m mockAnalytics) Traffic(ctx context.Context, r analogdb.TrafficRange) (*a
 }
 
 func (m mockAnalytics) Analytics(ctx context.Context, r analogdb.TrafficRange) (*analogdb.Analytics, error) {
-	posts := []analogdb.AnalyticsPost{{PostID: 12, PageViews: 5}, {PostID: 404, PageViews: 2}}
-	return &analogdb.Analytics{Range: r, Available: true, Posts: posts}, m.err
+	posts := []analogdb.AnalyticsPost{{PostID: 12, ViewCounts: analogdb.ViewCounts{PageViews: 5}}, {PostID: 404, ViewCounts: analogdb.ViewCounts{PageViews: 2}}}
+	return &analogdb.Analytics{Range: r, Posts: posts}, m.err
 }
 
 func (m mockAnalytics) Audit(ctx context.Context, filter *analogdb.AuditFilter) ([]*analogdb.AuditEntry, error) {
@@ -225,7 +225,7 @@ func TestAdminAnalyticsPosts(t *testing.T) {
 	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
 		t.Fatal(err)
 	}
-	if resp.Range != analogdb.TrafficDay || !resp.Available || len(resp.Posts) != 2 {
+	if resp.Range != analogdb.TrafficDay || len(resp.Posts) != 2 {
 		t.Fatalf("unexpected analytics %+v", resp)
 	}
 	if resp.Posts[0].Title != "Harbour" || resp.Posts[0].LowURL == "" {

@@ -243,13 +243,21 @@ func (s *Server) analyticsUnavailable(w http.ResponseWriter, r *http.Request) bo
 	return true
 }
 
-func (s *Server) getAdminTraffic(w http.ResponseWriter, r *http.Request) {
+func parseRange(r *http.Request) (analogdb.TrafficRange, error) {
 	rng := analogdb.TrafficWeek
 	if str := r.URL.Query().Get("range"); str != "" {
 		rng = analogdb.TrafficRange(str)
 	}
 	if _, ok := rng.Duration(); !ok {
-		s.writeError(w, r, badRequest("invalid range %q, want 24h, 7d or 30d", rng))
+		return "", badRequest("invalid range %q, want 24h, 7d or 30d", rng)
+	}
+	return rng, nil
+}
+
+func (s *Server) getAdminTraffic(w http.ResponseWriter, r *http.Request) {
+	rng, err := parseRange(r)
+	if err != nil {
+		s.writeError(w, r, err)
 		return
 	}
 	if s.analyticsUnavailable(w, r) {
@@ -267,12 +275,9 @@ func (s *Server) getAdminTraffic(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getAdminAnalytics(w http.ResponseWriter, r *http.Request) {
-	rng := analogdb.TrafficWeek
-	if str := r.URL.Query().Get("range"); str != "" {
-		rng = analogdb.TrafficRange(str)
-	}
-	if _, ok := rng.Duration(); !ok {
-		s.writeError(w, r, badRequest("invalid range %q, want 24h, 7d or 30d", rng))
+	rng, err := parseRange(r)
+	if err != nil {
+		s.writeError(w, r, err)
 		return
 	}
 	if s.analyticsUnavailable(w, r) {

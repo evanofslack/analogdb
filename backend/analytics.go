@@ -95,43 +95,47 @@ type Traffic struct {
 	Errors     []TrafficError  `json:"errors"`
 }
 
-type AnalyticsTotals struct {
-	PageViews       int64   `json:"page_views"`
-	VisitorDays     int64   `json:"visitor_days"`
-	ViewsPerVisitor float64 `json:"views_per_visitor"`
-	BotShare        float64 `json:"bot_share"`
-}
-
-type AnalyticsBucket struct {
-	Time      time.Time `json:"time"`
-	PageViews int64     `json:"page_views"`
-	Visitors  int64     `json:"visitors"`
-}
-
-type AnalyticsLive struct {
+// ViewCounts holds page views and visitor-days, visitor ids rotate daily
+type ViewCounts struct {
 	PageViews int64 `json:"page_views"`
 	Visitors  int64 `json:"visitors"`
 }
 
-type AnalyticsPost struct {
-	PostID    int64  `json:"post_id"`
-	Title     string `json:"title"`
-	LowURL    string `json:"low_url"`
-	PageViews int64  `json:"page_views"`
-	Visitors  int64  `json:"visitors"`
+type AnalyticsTotals struct {
+	ViewCounts
+	BotViews int64 `json:"bot_views"`
+}
+
+type AnalyticsSummary struct {
+	Current  AnalyticsTotals `json:"current"`
+	Previous AnalyticsTotals `json:"previous"`
+	Live     ViewCounts      `json:"live"`
+}
+
+type AnalyticsBucket struct {
+	Time time.Time `json:"time"`
+	ViewCounts
 }
 
 type AnalyticsCount struct {
-	Name      string `json:"name"`
-	PageViews int64  `json:"page_views"`
-	Visitors  int64  `json:"visitors"`
+	Name string `json:"name"`
+	ViewCounts
 }
 
-type AnalyticsCampaign struct {
-	Source    string `json:"source"`
-	Campaign  string `json:"campaign"`
-	PageViews int64  `json:"page_views"`
-	Visitors  int64  `json:"visitors"`
+type AnalyticsTop struct {
+	Pages     []AnalyticsCount `json:"pages"`
+	Referrers []AnalyticsCount `json:"referrers"`
+	Sources   []AnalyticsCount `json:"sources"`
+	Campaigns []AnalyticsCount `json:"campaigns"`
+	Devices   []AnalyticsCount `json:"devices"`
+	Browsers  []AnalyticsCount `json:"browsers"`
+}
+
+type AnalyticsPost struct {
+	PostID int64  `json:"post_id"`
+	Title  string `json:"title"`
+	LowURL string `json:"low_url"`
+	ViewCounts
 }
 
 // AnalyticsVital holds p75 web vitals for a route, nil when a metric has no samples
@@ -143,23 +147,15 @@ type AnalyticsVital struct {
 	Samples int64    `json:"samples"`
 }
 
-// Analytics is product traffic from UI events, Available is false until the table exists
+// Analytics is product traffic from UI events
 type Analytics struct {
-	Range     TrafficRange        `json:"range"`
-	Bucket    string              `json:"bucket"`
-	Available bool                `json:"available"`
-	Totals    AnalyticsTotals     `json:"totals"`
-	Previous  AnalyticsTotals     `json:"previous"`
-	Series    []AnalyticsBucket   `json:"series"`
-	Live      AnalyticsLive       `json:"live"`
-	Pages     []AnalyticsCount    `json:"pages"`
-	Posts     []AnalyticsPost     `json:"posts"`
-	Referrers []AnalyticsCount    `json:"referrers"`
-	Campaigns []AnalyticsCampaign `json:"campaigns"`
-	Devices   []AnalyticsCount    `json:"devices"`
-	Browsers  []AnalyticsCount    `json:"browsers"`
-	Countries []AnalyticsCount    `json:"countries"`
-	Vitals    []AnalyticsVital    `json:"vitals"`
+	Range   TrafficRange      `json:"range"`
+	Bucket  string            `json:"bucket"`
+	Summary AnalyticsSummary  `json:"summary"`
+	Series  []AnalyticsBucket `json:"series"`
+	Top     AnalyticsTop      `json:"top"`
+	Posts   []AnalyticsPost   `json:"posts"`
+	Vitals  []AnalyticsVital  `json:"vitals"`
 }
 
 type AuditFilter struct {
