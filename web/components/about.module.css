@@ -1,16 +1,18 @@
 .title {
   margin: 0;
-  font-size: 3rem;
+  font-size: 2.5rem;
+  line-height: 1.15;
   color: var(--adb-heading);
   font-weight: 600;
 }
 
 .subtitle {
-  font-size: 1.2rem;
-  color: var(--adb-heading);
+  font-size: 1.1rem;
+  line-height: 1.5;
+  color: var(--adb-muted);
   font-weight: 400;
   max-width: 20rem;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .container {
@@ -295,18 +297,36 @@
   }
 }
 
+/* sections link with an arrow, only the hero gets a button */
 .link {
   display: inline-block;
   font-size: 1rem;
+  color: var(--adb-heading);
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.link::after {
+  content: " →";
+}
+
+.link:hover {
+  opacity: 0.7;
+}
+
+.link.primary {
   color: var(--adb-cta-fg);
   font-weight: 400;
   background-color: var(--adb-cta-bg);
   padding: 0.5rem 1rem;
   border-radius: var(--mantine-radius-default);
-  transition: opacity 0.2s;
 }
 
-.link:hover {
+.link.primary::after {
+  content: none;
+}
+
+.link.primary:hover {
   opacity: 0.85;
 }
 
@@ -370,7 +390,7 @@
 .apiCodeTall {
   font-size: 0.75rem;
   max-width: 40vw;
-  max-height: 70vh;
+  max-height: 60vh;
 }
 
 .githubIcon {
@@ -488,28 +508,6 @@
   .visual {
     order: 1;
     margin-top: 1.25rem;
-  }
-
-  .link {
-    padding: 0;
-    background: none;
-    color: var(--adb-heading);
-    font-weight: 500;
-  }
-
-  .link::after {
-    content: " →";
-  }
-
-  .link.primary {
-    padding: 0.5rem 1rem;
-    background-color: var(--adb-cta-bg);
-    color: var(--adb-cta-fg);
-    font-weight: 400;
-  }
-
-  .link.primary::after {
-    content: none;
   }
 
   .stats {

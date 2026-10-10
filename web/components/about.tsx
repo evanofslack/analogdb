@@ -338,7 +338,7 @@ export default function About(props: AboutProps) {
           <div className={styles.band}>
             <div className={`${styles.split} ${styles.hero}`}>
               <div>
-                <h1 className={styles.title}>Film for all</h1>
+                <h1 className={styles.title}>Film for All</h1>
                 <p className={styles.subtitle}>
                   AnalogDB is a curated database of over{" "}
                   {(Math.floor(numPosts / 1000) * 1000).toLocaleString()} film
@@ -497,7 +497,7 @@ export default function About(props: AboutProps) {
           <div className={styles.band}>
             <div className={styles.split}>
               <div>
-                <h2 className={styles.title}>Open-source</h2>
+                <h2 className={styles.title}>Open Source</h2>
                 <p className={styles.subtitle}>
                   All code made publicly available on Github with flexible
                   licensing. AnalogDB is an open community where all
