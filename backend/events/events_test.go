@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"sync"
 	"testing"
@@ -158,5 +159,40 @@ func TestCloseDeadline(t *testing.T) {
 	}
 	if got := testutil.ToFloat64(es.stats.writeErrors); got != 5 {
 		t.Errorf("want 5 write errors, got %v", got)
+	}
+}
+
+func TestUiStreamWritesJSON(t *testing.T) {
+	l, err := logger.New("error", "debug", "analogdb-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	registry := prometheus.NewRegistry()
+	requests, err := NewWithWriter(l, registry, &fakeWriter{}, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = requests.Close() }()
+
+	writer := &fakeWriter{}
+	ui, err := NewUiWithWriter(l, registry, writer, Options{QueueSize: 10, BatchSize: 10, BatchTimeout: time.Hour})
+	if err != nil {
+		t.Fatalf("want both streams on one registry, got %v", err)
+	}
+	if err := ui.Write(context.Background(), &v1.UiEvent{EventId: "id", VisitorId: "visitor", PostId: 7, PropsJson: "{}"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := ui.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if writer.count() != 1 {
+		t.Fatalf("want 1 written, got %d", writer.count())
+	}
+	var got map[string]any
+	if err := json.Unmarshal(writer.written[0].Value, &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["visitor_id"] != "visitor" || got["props_json"] != "{}" || got["post_id"] != float64(7) {
+		t.Errorf("want snake case json, got %v", got)
 	}
 }

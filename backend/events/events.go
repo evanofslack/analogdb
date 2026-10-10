@@ -13,6 +13,7 @@ import (
 
 	v1 "github.com/evanofslack/analogdb/internal/gen/proto/analytics/v1"
 	"github.com/evanofslack/analogdb/logger"
+	"github.com/evanofslack/analogdb/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/segmentio/kafka-go"
 )
@@ -54,8 +55,8 @@ func (o *Options) setDefaults() {
 	}
 }
 
-// EventStream queues events in memory and writes them to kafka in the background
-type EventStream struct {
+// Stream queues messages in memory and writes them to kafka in the background
+type Stream[T any] struct {
 	logger  *logger.Logger
 	writer  MessageWriter
 	topic   string
@@ -63,7 +64,7 @@ type EventStream struct {
 	opts    Options
 	stats   *eventStats
 
-	queue  chan *v1.Event
+	queue  chan T
 	done   chan struct{}
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -74,7 +75,21 @@ type EventStream struct {
 	lastErrorLog time.Time
 }
 
+// EventStream carries the request log
+type EventStream = Stream[*v1.Event]
+
+// UiEventStream carries events from the web UI
+type UiEventStream = Stream[*v1.UiEvent]
+
 func New(logger *logger.Logger, registerer prometheus.Registerer, topic string, brokers []string, opts Options) (*EventStream, error) {
+	return newStream[*v1.Event](logger, registerer, metrics.EventsSubsystem, topic, brokers, opts)
+}
+
+func NewUi(logger *logger.Logger, registerer prometheus.Registerer, topic string, brokers []string, opts Options) (*UiEventStream, error) {
+	return newStream[*v1.UiEvent](logger, registerer, metrics.UiEventsSubsystem, topic, brokers, opts)
+}
+
+func newStream[T any](logger *logger.Logger, registerer prometheus.Registerer, subsystem string, topic string, brokers []string, opts Options) (*Stream[T], error) {
 	if len(brokers) == 0 {
 		return nil, fmt.Errorf("no kafka brokers provided")
 	}
@@ -98,31 +113,40 @@ func New(logger *logger.Logger, registerer prometheus.Registerer, topic string, 
 		Async:        false,
 	}
 
-	es, err := NewWithWriter(logger, registerer, writer, opts)
+	es, err := newStreamWithWriter[T](logger, registerer, subsystem, writer, opts)
 	if err != nil {
 		return nil, err
 	}
 	es.topic = topic
 	es.brokers = brokers
 
-	logger.Info("Initialized kafka event stream", "brokers", brokers, "addr", addr.String(), "queue_size", opts.QueueSize, "batch_size", opts.BatchSize, "batch_timeout", opts.BatchTimeout)
+	logger.Info("Initialized kafka event stream", "topic", topic, "brokers", brokers, "addr", addr.String(), "queue_size", opts.QueueSize, "batch_size", opts.BatchSize, "batch_timeout", opts.BatchTimeout)
 	return es, nil
 }
 
 // NewWithWriter creates an event stream on top of any message writer and starts the background worker
 func NewWithWriter(logger *logger.Logger, registerer prometheus.Registerer, writer MessageWriter, opts Options) (*EventStream, error) {
+	return newStreamWithWriter[*v1.Event](logger, registerer, metrics.EventsSubsystem, writer, opts)
+}
+
+// NewUiWithWriter creates a UI event stream on top of any message writer and starts the background worker
+func NewUiWithWriter(logger *logger.Logger, registerer prometheus.Registerer, writer MessageWriter, opts Options) (*UiEventStream, error) {
+	return newStreamWithWriter[*v1.UiEvent](logger, registerer, metrics.UiEventsSubsystem, writer, opts)
+}
+
+func newStreamWithWriter[T any](logger *logger.Logger, registerer prometheus.Registerer, subsystem string, writer MessageWriter, opts Options) (*Stream[T], error) {
 	opts.setDefaults()
 
-	es := &EventStream{
+	es := &Stream[T]{
 		logger: logger,
 		writer: writer,
 		opts:   opts,
-		queue:  make(chan *v1.Event, opts.QueueSize),
+		queue:  make(chan T, opts.QueueSize),
 		done:   make(chan struct{}),
 	}
 	es.ctx, es.cancel = context.WithCancel(context.Background())
 
-	es.stats = newEventStats(func() float64 { return float64(len(es.queue)) })
+	es.stats = newEventStats(subsystem, func() float64 { return float64(len(es.queue)) })
 	if err := es.stats.register(registerer); err != nil {
 		es.cancel()
 		return nil, fmt.Errorf("register event metrics: %w", err)
@@ -133,7 +157,7 @@ func NewWithWriter(logger *logger.Logger, registerer prometheus.Registerer, writ
 }
 
 // Write enqueues the event without blocking. If the queue is full the event is dropped.
-func (es *EventStream) Write(_ context.Context, e *v1.Event) error {
+func (es *Stream[T]) Write(_ context.Context, e T) error {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
@@ -152,7 +176,7 @@ func (es *EventStream) Write(_ context.Context, e *v1.Event) error {
 	}
 }
 
-func (es *EventStream) run() {
+func (es *Stream[T]) run() {
 	defer close(es.done)
 
 	ticker := time.NewTicker(es.opts.BatchTimeout)
@@ -190,7 +214,7 @@ func (es *EventStream) run() {
 	}
 }
 
-func (es *EventStream) writeBatch(batch []kafka.Message) {
+func (es *Stream[T]) writeBatch(batch []kafka.Message) {
 	if es.ctx.Err() != nil {
 		es.stats.writeErrors.Add(float64(len(batch)))
 		return
@@ -217,7 +241,7 @@ func (es *EventStream) writeBatch(batch []kafka.Message) {
 }
 
 // Close stops accepting events, drains the queue and closes the kafka writer
-func (es *EventStream) Close() error {
+func (es *Stream[T]) Close() error {
 	es.mu.Lock()
 	if es.closed {
 		es.mu.Unlock()

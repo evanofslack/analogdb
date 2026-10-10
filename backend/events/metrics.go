@@ -13,35 +13,35 @@ type eventStats struct {
 	writeDuration prometheus.Histogram
 }
 
-func newEventStats(depth func() float64) *eventStats {
+func newEventStats(subsystem string, depth func() float64) *eventStats {
 	return &eventStats{
 		enqueued: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metrics.AnalogdbNamespace,
-			Subsystem: metrics.EventsSubsystem,
+			Subsystem: subsystem,
 			Name:      "enqueued_total",
 			Help:      "Number of events added to the queue",
 		}),
 		dropped: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metrics.AnalogdbNamespace,
-			Subsystem: metrics.EventsSubsystem,
+			Subsystem: subsystem,
 			Name:      "dropped_total",
 			Help:      "Number of events dropped because the queue was full or closed",
 		}),
 		writeErrors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metrics.AnalogdbNamespace,
-			Subsystem: metrics.EventsSubsystem,
+			Subsystem: subsystem,
 			Name:      "write_errors_total",
 			Help:      "Number of events that failed to write to kafka",
 		}),
 		queueDepth: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Namespace: metrics.AnalogdbNamespace,
-			Subsystem: metrics.EventsSubsystem,
+			Subsystem: subsystem,
 			Name:      "queue_depth",
 			Help:      "Number of events waiting in the queue",
 		}, depth),
 		writeDuration: prometheus.NewHistogram(prometheus.HistogramOpts{
 			Namespace: metrics.AnalogdbNamespace,
-			Subsystem: metrics.EventsSubsystem,
+			Subsystem: subsystem,
 			Name:      "write_duration_seconds",
 			Help:      "Duration of batch writes to kafka",
 		}),
