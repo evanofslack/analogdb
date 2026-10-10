@@ -5,26 +5,29 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"net"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/segmentio/kafka-go"
 
-	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
 	"github.com/evanofslack/analogdb-consumer/internal/metrics"
 )
 
-type Client struct {
+type Client[T any] struct {
 	logger        *slog.Logger
 	metrics       *metrics.Metrics
 	reader        *kafka.Reader
+	brokers       []string
 	consumerGroup string
 	topic         string
 	batchSize     int
 	timeout       time.Duration
 }
 
-func New(logger *slog.Logger, metrics *metrics.Metrics, brokers []string, topic, consumerGroup string, batchSize int, timeout time.Duration) *Client {
-	logger = logger.With("brokers", brokers, "consumer_group", consumerGroup, "batch_size", batchSize, "timeout", timeout)
+func New[T any](logger *slog.Logger, metrics *metrics.Metrics, brokers []string, topic, consumerGroup string, batchSize int, timeout time.Duration) *Client[T] {
+	logger = logger.With("brokers", brokers, "topic", topic, "consumer_group", consumerGroup, "batch_size", batchSize, "timeout", timeout)
 	logger.Debug("Start create new kafka client")
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:          brokers,
@@ -44,10 +47,11 @@ func New(logger *slog.Logger, metrics *metrics.Metrics, brokers []string, topic,
 	})
 
 	logger.Info("Finish create new kafka client")
-	return &Client{
+	return &Client[T]{
 		logger:        logger,
 		metrics:       metrics,
 		reader:        reader,
+		brokers:       brokers,
 		consumerGroup: consumerGroup,
 		topic:         topic,
 		batchSize:     batchSize,
@@ -55,17 +59,17 @@ func New(logger *slog.Logger, metrics *metrics.Metrics, brokers []string, topic,
 	}
 }
 
-func (c *Client) Read(ctx context.Context) ([]*v1.Event, []kafka.Message, error) {
-	var events []*v1.Event
+func (c *Client[T]) Read(ctx context.Context) ([]*T, []kafka.Message, error) {
+	var events []*T
 	var messages []kafka.Message
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 
-	for len(events) < c.batchSize {
+	for len(messages) < c.batchSize {
 		select {
 		case <-timeoutCtx.Done():
-			if len(events) > 0 {
+			if len(messages) > 0 {
 				c.logger.Debug("Batch timeout reached", "count", len(events))
 				return events, messages, nil
 			}
@@ -76,7 +80,7 @@ func (c *Client) Read(ctx context.Context) ([]*v1.Event, []kafka.Message, error)
 		msg, err := c.reader.FetchMessage(timeoutCtx)
 		if err != nil {
 			c.metrics.IncrementEventsRead(1, c.consumerGroup, c.topic, err)
-			if len(events) > 0 {
+			if len(messages) > 0 {
 				c.logger.Debug("Fetch error with partial batch", "error", err, "count", len(events))
 				return events, messages, nil
 			}
@@ -84,43 +88,40 @@ func (c *Client) Read(ctx context.Context) ([]*v1.Event, []kafka.Message, error)
 		}
 		c.metrics.IncrementEventsRead(1, c.consumerGroup, c.topic, nil)
 
+		messages = append(messages, msg)
 		event, err := c.deserializeEvent(msg.Value)
 		if err != nil {
 			c.logger.Error("Deserialize event", "error", err, "offset", msg.Offset)
-			if err := c.reader.CommitMessages(ctx, msg); err != nil {
-				c.logger.Error("Commit bad message", "error", err)
-			}
+			c.metrics.IncrementEventsDropped(1, c.topic, "decode")
 			continue
 		}
-
 		events = append(events, event)
-		messages = append(messages, msg)
 	}
 
 	c.logger.Debug("Batch read complete", "count", len(events))
 	return events, messages, nil
 }
 
-func (c *Client) Commit(ctx context.Context, msgs []kafka.Message) error {
+func (c *Client[T]) Commit(ctx context.Context, msgs []kafka.Message) error {
 	if len(msgs) == 0 {
 		return nil
 	}
 
 	if err := c.reader.CommitMessages(ctx, msgs...); err != nil {
-		c.metrics.IncrementEventsCommitted(1, c.consumerGroup, c.topic, err)
+		c.metrics.IncrementEventsCommitted(len(msgs), c.consumerGroup, c.topic, err)
 		return fmt.Errorf("commit messages: %w", err)
 	}
 
-	c.metrics.IncrementEventsCommitted(1, c.consumerGroup, c.topic, nil)
+	c.metrics.IncrementEventsCommitted(len(msgs), c.consumerGroup, c.topic, nil)
 	c.logger.Debug("Committed messages", "count", len(msgs))
 	return nil
 }
 
-func (c *Client) Close() error {
+func (c *Client[T]) Close() error {
 	return c.reader.Close()
 }
 
-func (c *Client) HealthCheck(ctx context.Context) error {
+func (c *Client[T]) HealthCheck(ctx context.Context) error {
 	stats := c.reader.Stats()
 	if stats.Partition == "" {
 		return fmt.Errorf("kafka consumer not initialized")
@@ -128,10 +129,64 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	return nil
 }
 
-func (c *Client) deserializeEvent(data []byte) (*v1.Event, error) {
-	event := &v1.Event{}
+func (c *Client[T]) deserializeEvent(data []byte) (*T, error) {
+	event := new(T)
 	if err := json.Unmarshal(data, event); err != nil {
 		return nil, fmt.Errorf("unmarshal json: %w", err)
 	}
 	return event, nil
+}
+
+func (c *Client[T]) EnsureTopic(ctx context.Context) error {
+	if len(c.brokers) == 0 {
+		return fmt.Errorf("no kafka brokers")
+	}
+	var dialer kafka.Dialer
+	conn, err := dialer.DialContext(ctx, "tcp", c.brokers[0])
+	if err != nil {
+		return fmt.Errorf("dial kafka: %w", err)
+	}
+	defer func() { _ = conn.Close() }()
+	if deadline, ok := ctx.Deadline(); ok {
+		_ = conn.SetDeadline(deadline)
+	}
+
+	partitions, err := conn.ReadPartitions(c.topic)
+	if err == nil && len(partitions) > 0 {
+		c.logger.Debug("Kafka topic already exists", "partitions", len(partitions))
+		return nil
+	}
+
+	controller, err := conn.Controller()
+	if err != nil {
+		return fmt.Errorf("get controller: %w", err)
+	}
+	controllerConn, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
+	if err != nil {
+		return fmt.Errorf("connect to controller broker: %w", err)
+	}
+	defer func() { _ = controllerConn.Close() }()
+	if deadline, ok := ctx.Deadline(); ok {
+		_ = controllerConn.SetDeadline(deadline)
+	}
+
+	err = controllerConn.CreateTopics(kafka.TopicConfig{
+		Topic:             c.topic,
+		NumPartitions:     1,
+		ReplicationFactor: 1,
+		ConfigEntries: []kafka.ConfigEntry{
+			{ConfigName: "retention.ms", ConfigValue: "604800000"},
+			{ConfigName: "cleanup.policy", ConfigValue: "delete"},
+		},
+	})
+	if err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			c.logger.Debug("Kafka topic already exists")
+			return nil
+		}
+		return fmt.Errorf("create topic: %w", err)
+	}
+
+	c.logger.Info("Created kafka topic")
+	return nil
 }
