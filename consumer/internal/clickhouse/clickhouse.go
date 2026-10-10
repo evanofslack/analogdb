@@ -38,7 +38,7 @@ type Client struct {
 func New(logger *slog.Logger, metrics *metrics.Metrics, host string, port int, database, username, password, table string, appName, appVersion string, migrationEnabled bool, migrationPath string) (*Client, error) {
 	addr := fmt.Sprintf("%s:%d", host, port)
 	dsn := fmt.Sprintf("clickhouse://%s:%s@%s:%d/%s", username, password, host, port, database)
-	logger = logger.With("addr", addr, "dsn", dsn, "table", table)
+	logger = logger.With("addr", addr, "database", database, "table", table)
 	logger.Debug("Start init clickhouse instance", "migration_path", migrationPath, "migration_enabled", migrationEnabled)
 
 	client := &Client{
