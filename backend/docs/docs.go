@@ -83,25 +83,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid query parameters",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -144,31 +144,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid extractions",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -199,19 +199,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -256,31 +256,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -323,31 +323,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -387,37 +387,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid ID",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Still used by posts",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -449,7 +449,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Number of results to return",
+                        "description": "Number of results to return, 1 to 1000",
                         "name": "page_size",
                         "in": "query"
                     },
@@ -506,13 +506,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid query parameters",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -557,31 +557,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -632,25 +632,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid batch",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "413": {
                         "description": "Batch too large",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -695,31 +695,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -762,31 +762,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -826,37 +826,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid ID",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Still used by posts",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -888,7 +888,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Number of results to return",
+                        "description": "Number of results to return, 1 to 1000",
                         "name": "page_size",
                         "in": "query"
                     },
@@ -957,13 +957,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid query parameters",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -992,7 +992,7 @@ const docTemplate = `{
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1041,19 +1041,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Keyword not found",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1106,13 +1106,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1157,37 +1157,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Post with permalink already exists",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1195,11 +1195,6 @@ const docTemplate = `{
         },
         "/post/{id}": {
             "get": {
-                "security": [
-                    {
-                        "BasicAuth": []
-                    }
-                ],
                 "description": "Get a post by ID from database",
                 "consumes": [
                     "application/json"
@@ -1230,31 +1225,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1295,31 +1278,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1369,37 +1352,37 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "422": {
                         "description": "Unprocessable entity",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1446,25 +1429,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid report",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Post not found",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "429": {
                         "description": "Too many reports",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1494,25 +1477,25 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 12,
-                        "description": "Maximum number of similar posts to return",
+                        "description": "Maximum number of similar posts to return, 1 to 50",
                         "name": "page_size",
                         "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "Include nsfw posts in query",
+                        "description": "Filter by NSFW (true=only, false=exclude)",
                         "name": "nsfw",
                         "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "Include b\u0026w posts in query",
+                        "description": "Filter by black and white (true=only, false=exclude)",
                         "name": "grayscale",
                         "in": "query"
                     },
                     {
                         "type": "boolean",
-                        "description": "Include sprocketshot posts in query",
+                        "description": "Filter by sprocketshots (true=only, false=exclude)",
                         "name": "sprocket",
                         "in": "query"
                     }
@@ -1527,19 +1510,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "Not found",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1562,7 +1545,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 20,
-                        "description": "Number of posts per page",
+                        "description": "Number of posts per page, 1 to 200",
                         "name": "page_size",
                         "in": "query"
                     },
@@ -1763,13 +1746,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request body",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1808,19 +1791,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1851,25 +1834,25 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "Vector database unavailable",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1896,7 +1879,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 50,
-                        "description": "Number of posts per page",
+                        "description": "Number of posts per page, 1 to 100",
                         "name": "page_size",
                         "in": "query"
                     },
@@ -1935,13 +1918,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "503": {
+                        "description": "Too many searches",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -1971,7 +1960,7 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 50,
-                        "description": "Number of posts to return",
+                        "description": "Number of posts to return, 1 to 100",
                         "name": "page_size",
                         "in": "query"
                     },
@@ -2004,31 +1993,31 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid request",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "413": {
                         "description": "Image too large",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "415": {
                         "description": "Unsupported image type",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     },
                     "503": {
                         "description": "Too many image searches",
                         "schema": {
-                            "$ref": "#/definitions/analogdb.Error"
+                            "$ref": "#/definitions/server.ErrorResponse"
                         }
                     }
                 }
@@ -2207,7 +2196,7 @@ const docTemplate = `{
                 },
                 "film_type": {
                     "type": "string",
-                    "example": "color"
+                    "example": "portra 400"
                 },
                 "focal_length": {
                     "type": "integer",
@@ -2280,19 +2269,6 @@ const docTemplate = `{
                         }
                     ],
                     "example": "takedown"
-                }
-            }
-        },
-        "analogdb.Error": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string",
-                    "example": "not_found"
-                },
-                "message": {
-                    "type": "string",
-                    "example": "not found"
                 }
             }
         },
@@ -2526,7 +2502,7 @@ const docTemplate = `{
                 },
                 "film_type": {
                     "type": "string",
-                    "example": "color"
+                    "example": "portra 400"
                 },
                 "focal_length": {
                     "type": "integer",
@@ -2738,6 +2714,15 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Success, post deleted"
+                }
+            }
+        },
+        "server.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "not found"
                 }
             }
         },

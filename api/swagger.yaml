@@ -122,7 +122,7 @@ definitions:
         example: 400
         type: integer
       film_type:
-        example: color
+        example: portra 400
         type: string
       focal_length:
         example: 35
@@ -175,15 +175,6 @@ definitions:
         - not_film
         - other
         example: takedown
-    type: object
-  analogdb.Error:
-    properties:
-      code:
-        example: not_found
-        type: string
-      message:
-        example: not found
-        type: string
     type: object
   analogdb.Film:
     properties:
@@ -350,7 +341,7 @@ definitions:
         example: 400
         type: integer
       film_type:
-        example: color
+        example: portra 400
         type: string
       focal_length:
         example: 35
@@ -500,6 +491,12 @@ definitions:
     properties:
       message:
         example: Success, post deleted
+        type: string
+    type: object
+  server.ErrorResponse:
+    properties:
+      error:
+        example: not found
         type: string
     type: object
   server.EventBatch:
@@ -796,19 +793,19 @@ paths:
         "400":
           description: Invalid query parameters
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: List post metadata extractions
@@ -836,23 +833,23 @@ paths:
         "400":
           description: Invalid extractions
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "422":
           description: Unprocessable entity
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Store post metadata extractions
@@ -872,15 +869,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: List removed post permalinks
@@ -908,23 +905,23 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "422":
           description: Unprocessable entity
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Create a new camera
@@ -951,23 +948,23 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "422":
           description: Unprocessable entity
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Create a new camera
@@ -993,27 +990,27 @@ paths:
         "400":
           description: Invalid ID
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "409":
           description: Still used by posts
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Delete a camera
@@ -1033,7 +1030,7 @@ paths:
         in: query
         name: sort
         type: string
-      - description: Number of results to return
+      - description: Number of results to return, 1 to 1000
         in: query
         name: page_size
         type: integer
@@ -1075,11 +1072,11 @@ paths:
         "400":
           description: Invalid query parameters
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Get cameras with optional filtering
       tags:
       - cameras
@@ -1106,23 +1103,23 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "422":
           description: Unprocessable entity
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Encode posts for similarity matching
@@ -1155,19 +1152,19 @@ paths:
         "400":
           description: Invalid batch
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "413":
           description: Batch too large
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Record UI events
@@ -1195,23 +1192,23 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "422":
           description: Unprocessable entity
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Create a new film
@@ -1238,23 +1235,23 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "422":
           description: Unprocessable entity
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Create a new film
@@ -1280,27 +1277,27 @@ paths:
         "400":
           description: Invalid ID
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "409":
           description: Still used by posts
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Delete a film
@@ -1320,7 +1317,7 @@ paths:
         in: query
         name: sort
         type: string
-      - description: Number of results to return
+      - description: Number of results to return, 1 to 1000
         in: query
         name: page_size
         type: integer
@@ -1370,11 +1367,11 @@ paths:
         "400":
           description: Invalid query parameters
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Get films with optional filtering
       tags:
       - films
@@ -1393,7 +1390,7 @@ paths:
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Get all post IDs
       tags:
       - posts
@@ -1428,15 +1425,15 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "404":
           description: Keyword not found
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Get keyword
       tags:
       - keywords
@@ -1473,11 +1470,11 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Get keyword summary
       tags:
       - keywords
@@ -1504,27 +1501,27 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "409":
           description: Post with permalink already exists
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "422":
           description: Unprocessable entity
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Create a new post
@@ -1551,23 +1548,23 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Delete a post
@@ -1593,25 +1590,15 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/analogdb.Error'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
-      security:
-      - BasicAuth: []
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Get a post
       tags:
       - post
@@ -1641,27 +1628,27 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "422":
           description: Unprocessable entity
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: Update a post
@@ -1695,19 +1682,19 @@ paths:
         "400":
           description: Invalid report
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "404":
           description: Post not found
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "429":
           description: Too many reports
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Report a post
       tags:
       - post
@@ -1723,19 +1710,19 @@ paths:
         required: true
         type: integer
       - default: 12
-        description: Maximum number of similar posts to return
+        description: Maximum number of similar posts to return, 1 to 50
         in: query
         name: page_size
         type: integer
-      - description: Include nsfw posts in query
+      - description: Filter by NSFW (true=only, false=exclude)
         in: query
         name: nsfw
         type: boolean
-      - description: Include b&w posts in query
+      - description: Filter by black and white (true=only, false=exclude)
         in: query
         name: grayscale
         type: boolean
-      - description: Include sprocketshot posts in query
+      - description: Filter by sprocketshots (true=only, false=exclude)
         in: query
         name: sprocket
         type: boolean
@@ -1749,15 +1736,15 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "404":
           description: Not found
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Find similar posts
       tags:
       - post
@@ -1769,7 +1756,7 @@ paths:
         camera, film, keywords, etc. Supports pagination
       parameters:
       - default: 20
-        description: Number of posts per page
+        description: Number of posts per page, 1 to 200
         in: query
         name: page_size
         type: integer
@@ -1911,11 +1898,11 @@ paths:
         "400":
           description: Invalid request body
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Get posts with optional filtering and pagination
       tags:
       - posts
@@ -1938,15 +1925,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: List posts missing a caption
@@ -1966,19 +1953,19 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "503":
           description: Vector database unavailable
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       security:
       - BasicAuth: []
       summary: List posts missing a vector
@@ -1995,7 +1982,7 @@ paths:
         required: true
         type: string
       - default: 50
-        description: Number of posts per page
+        description: Number of posts per page, 1 to 100
         in: query
         name: page_size
         type: integer
@@ -2025,11 +2012,15 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
+        "503":
+          description: Too many searches
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Search posts by text
       tags:
       - search
@@ -2046,7 +2037,7 @@ paths:
         required: true
         type: file
       - default: 50
-        description: Number of posts to return
+        description: Number of posts to return, 1 to 100
         in: query
         name: page_size
         type: integer
@@ -2072,23 +2063,23 @@ paths:
         "400":
           description: Invalid request
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "413":
           description: Image too large
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "415":
           description: Unsupported image type
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
         "503":
           description: Too many image searches
           schema:
-            $ref: '#/definitions/analogdb.Error'
+            $ref: '#/definitions/server.ErrorResponse'
       summary: Search posts by image
       tags:
       - search

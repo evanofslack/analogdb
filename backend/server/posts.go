@@ -96,7 +96,7 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Tags posts
 // @Accept json
 // @Produce json
-// @Param page_size query int false "Number of posts per page" default(20)
+// @Param page_size query int false "Number of posts per page, 1 to 200" default(20)
 // @Param cursor query string false "Opaque cursor from next_cursor for the next page"
 // @Param page_id query int false "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random"
 // @Param sort query string false "Sort order" Enums(time,score,random) default(time)
@@ -126,8 +126,8 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Param ratio_min query number false "Minimum picture aspect ratio"
 // @Param ratio_max query number false "Maximum picture aspect ratio"
 // @Success 200 {object} PostResponse
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /posts [get]
 func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Get("page_id") != "" {
@@ -157,14 +157,14 @@ func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Post ID to find similar posts for"
-// @Param page_size query int false "Maximum number of similar posts to return" default(12)
-// @Param nsfw query bool false "Include nsfw posts in query"
-// @Param grayscale query bool false "Include b&w posts in query"
-// @Param sprocket query bool false "Include sprocketshot posts in query"
+// @Param page_size query int false "Maximum number of similar posts to return, 1 to 50" default(12)
+// @Param nsfw query bool false "Filter by NSFW (true=only, false=exclude)"
+// @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
+// @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
 // @Success 200 {object} SimilarPostsResponse
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 404 {object} analogdb.Error "Not found"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 404 {object} ErrorResponse "Not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /post/{id}/similar [get]
 func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 	resp := SimilarPostsResponse{}
@@ -194,12 +194,9 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Post ID to get"
 // @Success 200 {object} analogdb.Post
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 404 {object} analogdb.Error "Not found"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 500 {object} analogdb.Error "Internal server error"
-// @Security BasicAuth
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 404 {object} ErrorResponse "Not found"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /post/{id} [get]
 func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 	if id := chi.URLParam(r, "id"); id != "" {
@@ -224,11 +221,11 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Post ID to delete"
 // @Success 200 {object} DeleteResponse
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 404 {object} analogdb.Error "Not found"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 404 {object} ErrorResponse "Not found"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /post/{id} [delete]
 func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
@@ -272,12 +269,12 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param post body analogdb.CreatePost true "Post data to create"
 // @Success 201 {object} CreatePostResponse
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 409 {object} analogdb.Error "Post with permalink already exists"
-// @Failure 422 {object} analogdb.Error "Unprocessable entity"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 409 {object} ErrorResponse "Post with permalink already exists"
+// @Failure 422 {object} ErrorResponse "Unprocessable entity"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /post [post]
 func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
@@ -317,12 +314,12 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 // @Param id path int true "Post ID to update"
 // @Param post body analogdb.PatchPost true "Post fields to update"
 // @Success 200 {object} PatchResponse
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 404 {object} analogdb.Error "Not found"
-// @Failure 422 {object} analogdb.Error "Unprocessable entity"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Not found"
+// @Failure 422 {object} ErrorResponse "Unprocessable entity"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /post/{id} [patch]
 func (s *Server) patchPost(w http.ResponseWriter, r *http.Request) {
@@ -401,7 +398,7 @@ func validateCaption(caption *analogdb.PostCaption) error {
 // @Accept json
 // @Produce json
 // @Success 200 {object} IDsResponse
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /ids [get]
 func (s *Server) allPostIDs(w http.ResponseWriter, r *http.Request) {
 	ids, err := s.PostService.AllPostIDs(r.Context())

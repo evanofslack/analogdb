@@ -45,11 +45,11 @@ func (s *Server) mountExtractionHandlers(r chi.Router) {
 // @Produce json
 // @Param extractions body ExtractionsRequest true "extractions to store, at most 500"
 // @Success 200 {object} UpsertExtractionsResponse
-// @Failure 400 {object} analogdb.Error "Invalid extractions"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 422 {object} analogdb.Error "Unprocessable entity"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid extractions"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 422 {object} ErrorResponse "Unprocessable entity"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /admin/extractions [post]
 func (s *Server) upsertExtractions(w http.ResponseWriter, r *http.Request) {
@@ -114,10 +114,10 @@ func jsonStartsWith(raw json.RawMessage, first byte) bool {
 // @Param before_id query int false "Only post ids below this, for paging"
 // @Param limit query int false "Number of results, at most 500" default(100)
 // @Success 200 {object} ExtractionsResponse
-// @Failure 400 {object} analogdb.Error "Invalid query parameters"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid query parameters"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /admin/extractions [get]
 func (s *Server) getExtractions(w http.ResponseWriter, r *http.Request) {

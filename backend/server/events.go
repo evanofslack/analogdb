@@ -139,10 +139,10 @@ func (s *Server) mountEventHandlers(r chi.Router) {
 // @Param X-Analogdb-Visitor-IP header string false "Visitor IP, only read for the web role"
 // @Param X-Analogdb-Visitor-UA header string false "Visitor user agent, only read for the web role"
 // @Success 204
-// @Failure 400 {object} analogdb.Error "Invalid batch"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 413 {object} analogdb.Error "Batch too large"
+// @Failure 400 {object} ErrorResponse "Invalid batch"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 413 {object} ErrorResponse "Batch too large"
 // @Security BasicAuth
 // @Router /events [post]
 func (s *Server) createEvents(w http.ResponseWriter, r *http.Request) {

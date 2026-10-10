@@ -162,14 +162,15 @@ func searchValues(filter *analogdb.SearchFilter, q string) url.Values {
 // @Tags search
 // @Produce json
 // @Param q query string true "Search text, 1 to 200 characters"
-// @Param page_size query int false "Number of posts per page" default(50)
+// @Param page_size query int false "Number of posts per page, 1 to 100" default(50)
 // @Param cursor query string false "Opaque cursor from next_cursor for the next page"
 // @Param nsfw query bool false "Filter by NSFW (true=only, false=exclude)"
 // @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
 // @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
 // @Success 200 {object} SearchResponse
-// @Failure 400 {object} analogdb.Error "Invalid request"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Failure 503 {object} ErrorResponse "Too many searches"
 // @Router /search [get]
 func (s *Server) searchText(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
@@ -232,16 +233,16 @@ func (s *Server) searchText(w http.ResponseWriter, r *http.Request) {
 // @Accept multipart/form-data
 // @Produce json
 // @Param image formData file true "Image to search with"
-// @Param page_size query int false "Number of posts to return" default(50)
+// @Param page_size query int false "Number of posts to return, 1 to 100" default(50)
 // @Param nsfw query bool false "Filter by NSFW (true=only, false=exclude)"
 // @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
 // @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
 // @Success 200 {object} SearchResponse
-// @Failure 400 {object} analogdb.Error "Invalid request"
-// @Failure 413 {object} analogdb.Error "Image too large"
-// @Failure 415 {object} analogdb.Error "Unsupported image type"
-// @Failure 500 {object} analogdb.Error "Internal server error"
-// @Failure 503 {object} analogdb.Error "Too many image searches"
+// @Failure 400 {object} ErrorResponse "Invalid request"
+// @Failure 413 {object} ErrorResponse "Image too large"
+// @Failure 415 {object} ErrorResponse "Unsupported image type"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Failure 503 {object} ErrorResponse "Too many image searches"
 // @Router /search/image [post]
 func (s *Server) searchImage(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
