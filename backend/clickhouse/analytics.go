@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -18,7 +19,7 @@ const (
 
 // visitor_id rotates daily, so a visitor on two days counts as two visitor-days
 const (
-	uiTimeExpr   = `received_ts`
+	uiTimeExpr   = `toDateTime(received_ts, 'UTC')`
 	uiWindow     = `received_ts >= fromUnixTimestamp64Milli(toInt64(?), 'UTC') AND received_ts < fromUnixTimestamp64Milli(toInt64(?), 'UTC')`
 	pageViewCond = `event_name = 'page_view' AND NOT is_bot AND ` + uiWindow
 	viewsExpr    = `uniqExact(event_id)`
@@ -41,11 +42,14 @@ func (db *DB) Analytics(ctx context.Context, r analogdb.TrafficRange) (*analogdb
 	live := now.Add(-liveWindow).UnixMilli()
 	bucketName, bucketExpr := bucketFor(r, uiTimeExpr)
 
+	fill := fillFor(r)
+
 	analytics := &analogdb.Analytics{Range: r, Bucket: bucketName}
 	top := &analytics.Top
+	g, gctx := errgroup.WithContext(ctx)
 	counts := func(dst *[]analogdb.AnalyticsCount, column, filter string, limit int) func() error {
 		return func() (err error) {
-			*dst, err = db.analyticsCounts(ctx, column, filter, limit, since, until)
+			*dst, err = db.analyticsCounts(gctx, column, filter, limit, since, until)
 			return
 		}
 	}
@@ -54,22 +58,33 @@ func (db *DB) Analytics(ctx context.Context, r analogdb.TrafficRange) (*analogdb
 		name string
 		run  func() error
 	}{
-		{"summary", func() error { return db.analyticsSummary(ctx, before, since, live, until, &analytics.Summary) }},
-		{"series", func() (err error) { analytics.Series, err = db.analyticsSeries(ctx, since, until, bucketExpr); return }},
+		{"summary", func() error { return db.analyticsSummary(gctx, before, since, live, until, &analytics.Summary) }},
+		{"series", func() (err error) {
+			analytics.Series, err = db.analyticsSeries(gctx, since, until, bucketExpr, fill)
+			return
+		}},
 		{"pages", counts(&top.Pages, "route", "", topLimit)},
 		{"referrers", counts(&top.Referrers, "referrer_host", referrerCond, topLimit)},
 		{"sources", counts(&top.Sources, "utm_source", "utm_source != ''", topLimit)},
 		{"campaigns", counts(&top.Campaigns, "utm_campaign", "utm_campaign != ''", topLimit)},
 		{"devices", counts(&top.Devices, "device_type", "", topLimit)},
 		{"browsers", counts(&top.Browsers, "browser", "", browsersLimit)},
-		{"posts", func() (err error) { analytics.Posts, err = db.analyticsPosts(ctx, since, until); return }},
-		{"vitals", func() (err error) { analytics.Vitals, err = db.analyticsVitals(ctx, since, until); return }},
+		{"posts", func() (err error) { analytics.Posts, err = db.analyticsPosts(gctx, since, until); return }},
+		{"vitals", func() (err error) { analytics.Vitals, err = db.analyticsVitals(gctx, since, until); return }},
 	}
 	for _, step := range steps {
-		if err := step.run(); err != nil {
-			db.logger.ErrorContext(ctx, "Fail analytics query", "step", step.name, "error", err)
-			return nil, fmt.Errorf("analytics %s: %w", step.name, err)
-		}
+		g.Go(func() error {
+			if err := step.run(); err != nil {
+				if gctx.Err() == nil {
+					db.logger.ErrorContext(ctx, "Fail analytics query", "step", step.name, "error", err)
+				}
+				return fmt.Errorf("analytics %s: %w", step.name, err)
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 	return analytics, nil
 }
@@ -110,14 +125,14 @@ func (db *DB) analyticsSummary(ctx context.Context, before, since, live, until i
 	return rows.Err()
 }
 
-func (db *DB) analyticsSeries(ctx context.Context, from, to int64, bucketExpr string) ([]analogdb.AnalyticsBucket, error) {
+func (db *DB) analyticsSeries(ctx context.Context, from, to int64, bucketExpr, fill string) ([]analogdb.AnalyticsBucket, error) {
 	query := fmt.Sprintf(`
 		SELECT %s AS bucket, toInt64(%s), toInt64(%s)
 		FROM %s
 		WHERE %s
 		GROUP BY bucket
-		ORDER BY bucket`, bucketExpr, viewsExpr, visitorsExpr, uiTable, pageViewCond)
-	rows, done, err := db.query(ctx, query, from, to)
+		ORDER BY bucket %s`, bucketExpr, viewsExpr, visitorsExpr, uiTable, pageViewCond, fill)
+	rows, done, err := db.query(ctx, query, from, to, from, to)
 	if err != nil {
 		return nil, err
 	}

@@ -127,6 +127,7 @@ func TestAnalytics(t *testing.T) {
 			t.Errorf("want one live view, got %+v", summary.Live)
 		}
 
+		mustFilled(t, analyticsTimes(analytics.Series), time.Hour, 24)
 		var views int64
 		for _, b := range analytics.Series {
 			views += b.PageViews
@@ -180,9 +181,10 @@ func TestAnalytics(t *testing.T) {
 			t.Fatal(err)
 		}
 		current := analytics.Summary.Current
-		if analytics.Bucket != "day" || current.PageViews != 6 {
-			t.Errorf("want 6 page views in day buckets, got %d in %s", current.PageViews, analytics.Bucket)
+		if analytics.Bucket != "hour" || current.PageViews != 6 {
+			t.Errorf("want 6 page views in hour buckets, got %d in %s", current.PageViews, analytics.Bucket)
 		}
+		mustFilled(t, analyticsTimes(analytics.Series), time.Hour, 7*24)
 		if want := wantVisitorDays(now, 7*day, 0); current.Visitors != want || want < 4 {
 			t.Errorf("want %d visitor days, got %d", want, current.Visitors)
 		}
@@ -226,6 +228,14 @@ func TestAnalytics(t *testing.T) {
 			t.Errorf("want bad request, got %v", err)
 		}
 	})
+}
+
+func analyticsTimes(series []analogdb.AnalyticsBucket) []time.Time {
+	times := make([]time.Time, len(series))
+	for i, b := range series {
+		times[i] = b.Time
+	}
+	return times
 }
 
 func sortedKeys(m map[string]json.RawMessage) []string {

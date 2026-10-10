@@ -3,9 +3,11 @@ package clickhouse
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/evanofslack/analogdb"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -14,23 +16,43 @@ const (
 )
 
 var clientExpr = fmt.Sprintf(
-	`multiIf(startsWith(user_agent, '%s'), 'web', startsWith(user_agent, '%s'), 'scraper', 'other')`,
+	`multiIf(startsWith(user_agent, '%s'), 'web', startsWith(user_agent, '%s'), 'scraper', 'direct')`,
 	analogdb.WebUserAgentPrefix, analogdb.ScraperUserAgentPrefix,
 )
 
 // no ? in these, the driver treats it as a bind parameter
 const (
-	routeExpr  = `replaceRegexpAll(path, '/[0-9]+', '/{id}')`
-	postIDExpr = `toInt64OrZero(extract(replaceRegexpOne(path, '^/v1/', '/'), '^/post/([0-9]+)'))`
-	legacyExpr = `match(path, '^/(posts|post|ids|films|film|cameras|camera|authors|keywords|scrape|encode)(/|$)')`
-	timeExpr   = `toDateTime(intDiv(start_time, 1000), 'UTC')`
+	routeExpr    = `replaceRegexpAll(path, '/[0-9]+', '/{id}')`
+	timeExpr     = `toDateTime(intDiv(start_time, 1000), 'UTC')`
+	boundExpr    = `toDateTime(intDiv(toInt64(?), 1000), 'UTC')`
+	botTokenExpr = `extract(lower(user_agent), '([a-z0-9._-]*(bot|crawler|spider|externalagent|externalhit)[a-z0-9._-]*)')`
+	toolExpr     = `match(lower(user_agent), '^(python|curl|wget|go-http-client|axios|node-fetch|node|undici|okhttp|java|scrapy|httpx|aiohttp|libwww-perl|apache-httpclient|postmanruntime|insomnia|ruby|php|dart|reqwest|deno|bun)')`
+)
+
+// bots are named by their token in the user agent, tools by the token before the first slash
+var (
+	callerKindExpr = fmt.Sprintf(
+		`multiIf(user_agent = '', 'empty', %s != '', 'bot', %s, 'tool', 'browser')`,
+		botTokenExpr, toolExpr,
+	)
+	callerNameExpr = fmt.Sprintf(
+		`multiIf(%[1]s = 'bot', substring(user_agent, positionCaseInsensitive(user_agent, %[2]s), length(%[2]s)), %[1]s = 'tool', extract(user_agent, '^([^/ ]+)'), user_agent)`,
+		callerKindExpr, botTokenExpr,
+	)
 )
 
 func bucketFor(r analogdb.TrafficRange, expr string) (string, string) {
-	if r == analogdb.TrafficDay {
-		return "hour", "toStartOfHour(" + expr + ")"
+	if r == analogdb.TrafficMonth {
+		return "day", "toStartOfDay(" + expr + ")"
 	}
-	return "day", "toStartOfDay(" + expr + ")"
+	return "hour", "toStartOfHour(" + expr + ")"
+}
+
+// fillFor zero fills buckets from since up to until, both bound as unix milliseconds
+func fillFor(r analogdb.TrafficRange) string {
+	name, bound := bucketFor(r, boundExpr)
+	unit := strings.ToUpper(name)
+	return fmt.Sprintf(`WITH FILL FROM %s TO %s + INTERVAL 1 %s STEP INTERVAL 1 %s`, bound, bound, unit, unit)
 }
 
 func (db *DB) Traffic(ctx context.Context, r analogdb.TrafficRange) (*analogdb.Traffic, error) {
@@ -41,47 +63,136 @@ func (db *DB) Traffic(ctx context.Context, r analogdb.TrafficRange) (*analogdb.T
 	if !ok {
 		return nil, &analogdb.Error{Code: analogdb.ERRBADREQUEST, Message: fmt.Sprintf("invalid range: %s", r)}
 	}
-	since := time.Now().Add(-window).UnixMilli()
+	now := time.Now()
+	until := now.UnixMilli()
+	since := now.Add(-window).UnixMilli()
+	before := now.Add(-2 * window).UnixMilli()
 	bucketName, bucketExpr := bucketFor(r, timeExpr)
+	fill := fillFor(r)
 
 	traffic := &analogdb.Traffic{Range: r, Bucket: bucketName}
+	summary := &traffic.Summary
+	g, gctx := errgroup.WithContext(ctx)
 
 	steps := []struct {
 		name string
 		run  func() error
 	}{
-		{"series", func() (err error) { traffic.Series, err = db.trafficSeries(ctx, since, bucketExpr); return }},
-		{"totals", func() error { return db.trafficTotals(ctx, since, &traffic.Totals) }},
-		{"routes", func() (err error) { traffic.Routes, err = db.trafficRoutes(ctx, since); return }},
-		{"posts", func() (err error) { traffic.Posts, err = db.trafficPosts(ctx, since); return }},
-		{"legacy", func() (err error) { traffic.Legacy, err = db.trafficLegacy(ctx, since); return }},
-		{"params", func() (err error) { traffic.Params, err = db.trafficParams(ctx, since); return }},
-		{"user agents", func() (err error) { traffic.UserAgents, err = db.trafficUserAgents(ctx, since); return }},
-		{"ips", func() (err error) { traffic.IPs, err = db.trafficIPs(ctx, since); return }},
-		{"errors", func() (err error) { traffic.Errors, err = db.trafficErrors(ctx, since); return }},
+		{"summary", func() error { return db.trafficSummary(gctx, before, since, until, summary) }},
+		{"page views", func() error { return db.trafficPageViews(gctx, before, since, until, summary) }},
+		{"series", func() (err error) {
+			traffic.Series, err = db.trafficSeries(gctx, since, until, bucketExpr, fill)
+			return
+		}},
+		{"callers", func() (err error) { traffic.Callers, err = db.trafficCallers(gctx, since, until); return }},
+		{"routes", func() (err error) { traffic.Routes, err = db.trafficRoutes(gctx, since, until); return }},
+		{"errors by status", func() (err error) {
+			traffic.Errors.ByStatus, err = db.trafficErrorsByStatus(gctx, since, until)
+			return
+		}},
+		{"errors", func() (err error) { traffic.Errors.Recent, err = db.trafficErrors(gctx, since, until); return }},
 	}
 	for _, step := range steps {
-		if err := step.run(); err != nil {
-			db.logger.ErrorContext(ctx, "Fail traffic query", "step", step.name, "error", err)
-			return nil, fmt.Errorf("traffic %s: %w", step.name, err)
-		}
+		g.Go(func() error {
+			if err := step.run(); err != nil {
+				if gctx.Err() == nil {
+					db.logger.ErrorContext(ctx, "Fail traffic query", "step", step.name, "error", err)
+				}
+				return fmt.Errorf("traffic %s: %w", step.name, err)
+			}
+			return nil
+		})
+	}
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 	return traffic, nil
 }
 
-func (db *DB) trafficSeries(ctx context.Context, since int64, bucketExpr string) ([]analogdb.TrafficBucket, error) {
+// trafficSummary reads the current window and the one before it in one pass
+func (db *DB) trafficSummary(ctx context.Context, before, since, until int64, s *analogdb.TrafficSummary) error {
+	query := fmt.Sprintf(`
+		SELECT
+			toInt64(countIf(cur)),
+			toInt64(countIf(cur AND client = 'web')),
+			toInt64(countIf(cur AND client = 'scraper')),
+			toInt64(countIf(cur AND client = 'direct')),
+			toInt64(countIf(cur AND client = 'direct' AND kind = 'bot')),
+			toInt64(countIf(cur AND response_code >= 400 AND response_code < 500)),
+			toInt64(countIf(cur AND response_code >= 500)),
+			ifNotFinite(quantileIf(0.95)(request_time_ms, cur), 0),
+			toInt64(countIf(NOT cur)),
+			toInt64(countIf(NOT cur AND client = 'web')),
+			toInt64(countIf(NOT cur AND client = 'scraper')),
+			toInt64(countIf(NOT cur AND client = 'direct')),
+			toInt64(countIf(NOT cur AND client = 'direct' AND kind = 'bot')),
+			toInt64(countIf(NOT cur AND response_code >= 400 AND response_code < 500)),
+			toInt64(countIf(NOT cur AND response_code >= 500)),
+			ifNotFinite(quantileIf(0.95)(request_time_ms, NOT cur), 0)
+		FROM (
+			SELECT
+				start_time >= toInt64(?) AS cur,
+				%s AS client,
+				%s AS kind,
+				response_code,
+				request_time_ms
+			FROM %s
+			WHERE start_time >= ? AND start_time < ?
+		)`, clientExpr, callerKindExpr, db.table)
+	rows, done, err := db.query(ctx, query, since, before, until)
+	if err != nil {
+		return err
+	}
+	defer done()
+
+	cur, prev := &s.Current, &s.Previous
+	if rows.Next() {
+		if err := rows.Scan(
+			&cur.Requests, &cur.Web, &cur.Scraper, &cur.Direct, &cur.Bots, &cur.Status4, &cur.Status5, &cur.P95Ms,
+			&prev.Requests, &prev.Web, &prev.Scraper, &prev.Direct, &prev.Bots, &prev.Status4, &prev.Status5, &prev.P95Ms,
+		); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
+}
+
+// trafficPageViews counts human page views from UI events in the current and previous window
+func (db *DB) trafficPageViews(ctx context.Context, before, since, until int64, s *analogdb.TrafficSummary) error {
+	query := fmt.Sprintf(`
+		WITH fromUnixTimestamp64Milli(toInt64(?), 'UTC') AS since_ts
+		SELECT
+			toInt64(uniqExactIf(event_id, received_ts >= since_ts)),
+			toInt64(uniqExactIf(event_id, received_ts < since_ts))
+		FROM %s
+		WHERE %s`, uiTable, pageViewCond)
+	rows, done, err := db.query(ctx, query, since, before, until)
+	if err != nil {
+		return err
+	}
+	defer done()
+
+	if rows.Next() {
+		if err := rows.Scan(&s.Current.PageViews, &s.Previous.PageViews); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
+}
+
+func (db *DB) trafficSeries(ctx context.Context, since, until int64, bucketExpr, fill string) ([]analogdb.TrafficBucket, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			%s AS bucket,
 			toInt64(countIf(client = 'web')),
 			toInt64(countIf(client = 'scraper')),
-			toInt64(countIf(client = 'other')),
+			toInt64(countIf(client = 'direct')),
 			toInt64(countIf(response_code >= 400 AND response_code < 500)),
 			toInt64(countIf(response_code >= 500))
-		FROM (SELECT start_time, response_code, %s AS client FROM %s WHERE start_time >= ?)
+		FROM (SELECT start_time, response_code, %s AS client FROM %s WHERE start_time >= ? AND start_time < ?)
 		GROUP BY bucket
-		ORDER BY bucket`, bucketExpr, clientExpr, db.table)
-	rows, done, err := db.query(ctx, query, since)
+		ORDER BY bucket %s`, bucketExpr, clientExpr, db.table, fill)
+	rows, done, err := db.query(ctx, query, since, until, since, until)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +201,7 @@ func (db *DB) trafficSeries(ctx context.Context, since int64, bucketExpr string)
 	series := make([]analogdb.TrafficBucket, 0)
 	for rows.Next() {
 		var b analogdb.TrafficBucket
-		if err := rows.Scan(&b.Time, &b.Web, &b.Scraper, &b.Other, &b.Status4, &b.Status5); err != nil {
+		if err := rows.Scan(&b.Time, &b.Web, &b.Scraper, &b.Direct, &b.Status4, &b.Status5); err != nil {
 			return nil, err
 		}
 		series = append(series, b)
@@ -98,45 +209,51 @@ func (db *DB) trafficSeries(ctx context.Context, since int64, bucketExpr string)
 	return series, rows.Err()
 }
 
-func (db *DB) trafficTotals(ctx context.Context, since int64, t *analogdb.TrafficTotals) error {
+// trafficCallers groups direct requests, bots and tools by family and browsers by full user agent
+func (db *DB) trafficCallers(ctx context.Context, since, until int64) ([]analogdb.TrafficCaller, error) {
 	query := fmt.Sprintf(`
-		SELECT
-			toInt64(count()),
-			toInt64(uniq(remote_ip)),
-			toInt64(countIf(response_code >= 200 AND response_code < 300)),
-			toInt64(countIf(response_code >= 300 AND response_code < 400)),
-			toInt64(countIf(response_code >= 400 AND response_code < 500)),
-			toInt64(countIf(response_code >= 500))
-		FROM %s
-		WHERE start_time >= ?`, db.table)
-	rows, done, err := db.query(ctx, query, since)
+		SELECT name, kind, toInt64(count()) AS requests, toInt64(uniq(remote_ip))
+		FROM (
+			SELECT %s AS kind, %s AS name, remote_ip
+			FROM %s
+			WHERE start_time >= ? AND start_time < ? AND %s = 'direct'
+		)
+		GROUP BY kind, name
+		ORDER BY requests DESC, kind, name
+		LIMIT ?`, callerKindExpr, callerNameExpr, db.table, clientExpr)
+	rows, done, err := db.query(ctx, query, since, until, topLimit)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer done()
 
-	if rows.Next() {
-		if err := rows.Scan(&t.Requests, &t.UniqueIPs, &t.Status2, &t.Status3, &t.Status4, &t.Status5); err != nil {
-			return err
+	callers := make([]analogdb.TrafficCaller, 0)
+	for rows.Next() {
+		var c analogdb.TrafficCaller
+		if err := rows.Scan(&c.Name, &c.Kind, &c.Requests, &c.IPs); err != nil {
+			return nil, err
 		}
+		callers = append(callers, c)
 	}
-	return rows.Err()
+	return callers, rows.Err()
 }
 
-func (db *DB) trafficRoutes(ctx context.Context, since int64) ([]analogdb.TrafficRoute, error) {
+func (db *DB) trafficRoutes(ctx context.Context, since, until int64) ([]analogdb.TrafficRoute, error) {
 	query := fmt.Sprintf(`
 		SELECT
 			%s AS route,
-			toInt64(count()) AS requests,
+			toInt64(count()),
+			toInt64(sum(request_time_ms)) AS total_ms,
 			quantile(0.5)(request_time_ms),
 			quantile(0.95)(request_time_ms),
+			toInt64(countIf(response_code >= 400 AND response_code < 500)),
 			toInt64(countIf(response_code >= 500))
 		FROM %s
-		WHERE start_time >= ?
+		WHERE start_time >= ? AND start_time < ?
 		GROUP BY route
-		ORDER BY requests DESC, route
+		ORDER BY total_ms DESC, route
 		LIMIT ?`, routeExpr, db.table)
-	rows, done, err := db.query(ctx, query, since, topLimit)
+	rows, done, err := db.query(ctx, query, since, until, topLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +262,7 @@ func (db *DB) trafficRoutes(ctx context.Context, since int64) ([]analogdb.Traffi
 	routes := make([]analogdb.TrafficRoute, 0)
 	for rows.Next() {
 		var route analogdb.TrafficRoute
-		if err := rows.Scan(&route.Route, &route.Requests, &route.P50Ms, &route.P95Ms, &route.Errors); err != nil {
+		if err := rows.Scan(&route.Route, &route.Requests, &route.TotalMs, &route.P50Ms, &route.P95Ms, &route.Status4, &route.Status5); err != nil {
 			return nil, err
 		}
 		routes = append(routes, route)
@@ -153,118 +270,39 @@ func (db *DB) trafficRoutes(ctx context.Context, since int64) ([]analogdb.Traffi
 	return routes, rows.Err()
 }
 
-func (db *DB) trafficPosts(ctx context.Context, since int64) ([]analogdb.TrafficPost, error) {
+func (db *DB) trafficErrorsByStatus(ctx context.Context, since, until int64) ([]analogdb.TrafficStatus, error) {
 	query := fmt.Sprintf(`
-		SELECT %s AS post_id, toInt64(count()) AS requests
+		SELECT response_code, %s AS route, toInt64(count()) AS requests
 		FROM %s
-		WHERE start_time >= ? AND post_id > 0
-		GROUP BY post_id
-		ORDER BY requests DESC, post_id
-		LIMIT ?`, postIDExpr, db.table)
-	rows, done, err := db.query(ctx, query, since, topLimit)
+		WHERE start_time >= ? AND start_time < ? AND response_code >= 400
+		GROUP BY response_code, route
+		ORDER BY requests DESC, response_code, route
+		LIMIT ?`, routeExpr, db.table)
+	rows, done, err := db.query(ctx, query, since, until, topLimit)
 	if err != nil {
 		return nil, err
 	}
 	defer done()
 
-	posts := make([]analogdb.TrafficPost, 0)
+	statuses := make([]analogdb.TrafficStatus, 0)
 	for rows.Next() {
-		var p analogdb.TrafficPost
-		if err := rows.Scan(&p.PostID, &p.Requests); err != nil {
+		var s analogdb.TrafficStatus
+		if err := rows.Scan(&s.Status, &s.Route, &s.Requests); err != nil {
 			return nil, err
 		}
-		posts = append(posts, p)
+		statuses = append(statuses, s)
 	}
-	return posts, rows.Err()
+	return statuses, rows.Err()
 }
 
-func (db *DB) trafficLegacy(ctx context.Context, since int64) ([]analogdb.TrafficLegacy, error) {
-	query := fmt.Sprintf(`
-		SELECT %s AS client, toInt64(count()), toInt64(countIf(%s))
-		FROM %s
-		WHERE start_time >= ?
-		GROUP BY client
-		ORDER BY client`, clientExpr, legacyExpr, db.table)
-	rows, done, err := db.query(ctx, query, since)
-	if err != nil {
-		return nil, err
-	}
-	defer done()
-
-	legacy := make([]analogdb.TrafficLegacy, 0)
-	for rows.Next() {
-		var l analogdb.TrafficLegacy
-		if err := rows.Scan(&l.Client, &l.Requests, &l.Legacy); err != nil {
-			return nil, err
-		}
-		legacy = append(legacy, l)
-	}
-	return legacy, rows.Err()
-}
-
-func (db *DB) trafficParams(ctx context.Context, since int64) ([]analogdb.TrafficCount, error) {
-	query := fmt.Sprintf(`
-		SELECT arrayJoin(extractURLParameterNames(url)) AS param, toInt64(count()) AS requests
-		FROM %s
-		WHERE start_time >= ? AND path IN ('/v1/posts', '/posts')
-		GROUP BY param
-		ORDER BY requests DESC, param
-		LIMIT ?`, db.table)
-	return db.trafficCounts(ctx, query, false, since, topLimit)
-}
-
-func (db *DB) trafficUserAgents(ctx context.Context, since int64) ([]analogdb.TrafficCount, error) {
-	query := fmt.Sprintf(`
-		SELECT user_agent, %s AS client, toInt64(count()) AS requests
-		FROM %s
-		WHERE start_time >= ?
-		GROUP BY user_agent, client
-		ORDER BY requests DESC, user_agent
-		LIMIT ?`, clientExpr, db.table)
-	return db.trafficCounts(ctx, query, true, since, topLimit)
-}
-
-func (db *DB) trafficIPs(ctx context.Context, since int64) ([]analogdb.TrafficCount, error) {
-	query := fmt.Sprintf(`
-		SELECT remote_ip, 'other' AS client, toInt64(count()) AS requests
-		FROM %s
-		WHERE start_time >= ? AND %s = 'other'
-		GROUP BY remote_ip
-		ORDER BY requests DESC, remote_ip
-		LIMIT ?`, db.table, clientExpr)
-	return db.trafficCounts(ctx, query, true, since, topLimit)
-}
-
-func (db *DB) trafficCounts(ctx context.Context, query string, withClient bool, args ...any) ([]analogdb.TrafficCount, error) {
-	rows, done, err := db.query(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer done()
-
-	counts := make([]analogdb.TrafficCount, 0)
-	for rows.Next() {
-		var c analogdb.TrafficCount
-		dest := []any{&c.Name, &c.Requests}
-		if withClient {
-			dest = []any{&c.Name, &c.Client, &c.Requests}
-		}
-		if err := rows.Scan(dest...); err != nil {
-			return nil, err
-		}
-		counts = append(counts, c)
-	}
-	return counts, rows.Err()
-}
-
-func (db *DB) trafficErrors(ctx context.Context, since int64) ([]analogdb.TrafficError, error) {
+func (db *DB) trafficErrors(ctx context.Context, since, until int64) ([]analogdb.TrafficError, error) {
 	query := fmt.Sprintf(`
 		SELECT %s, method, path, response_code, request_id
 		FROM %s
-		WHERE start_time >= ? AND response_code >= 500
+		WHERE start_time >= ? AND start_time < ? AND response_code >= 500
 		ORDER BY start_time DESC
 		LIMIT ?`, timeExpr, db.table)
-	rows, done, err := db.query(ctx, query, since, errorsLimit)
+	rows, done, err := db.query(ctx, query, since, until, errorsLimit)
 	if err != nil {
 		return nil, err
 	}

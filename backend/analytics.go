@@ -34,42 +34,50 @@ type TrafficBucket struct {
 	Time    time.Time `json:"time"`
 	Web     int64     `json:"web"`
 	Scraper int64     `json:"scraper"`
-	Other   int64     `json:"other"`
+	Direct  int64     `json:"direct"`
 	Status4 int64     `json:"status_4xx"`
 	Status5 int64     `json:"status_5xx"`
 }
 
+// TrafficTotals counts API requests, direct is neither web nor scraper
 type TrafficTotals struct {
-	Requests  int64 `json:"requests"`
-	UniqueIPs int64 `json:"unique_ips"`
-	Status2   int64 `json:"status_2xx"`
-	Status3   int64 `json:"status_3xx"`
-	Status4   int64 `json:"status_4xx"`
-	Status5   int64 `json:"status_5xx"`
+	Requests  int64   `json:"requests"`
+	Web       int64   `json:"web"`
+	Scraper   int64   `json:"scraper"`
+	Direct    int64   `json:"direct"`
+	Bots      int64   `json:"bots"`
+	Status4   int64   `json:"status_4xx"`
+	Status5   int64   `json:"status_5xx"`
+	P95Ms     float64 `json:"p95_ms"`
+	PageViews int64   `json:"page_views"`
+}
+
+type TrafficSummary struct {
+	Current  TrafficTotals `json:"current"`
+	Previous TrafficTotals `json:"previous"`
+}
+
+// TrafficCaller groups direct requests by caller, kind is bot, tool, browser or empty
+type TrafficCaller struct {
+	Name     string `json:"name"`
+	Kind     string `json:"kind"`
+	Requests int64  `json:"requests"`
+	IPs      int64  `json:"ips"`
 }
 
 type TrafficRoute struct {
 	Route    string  `json:"route"`
 	Requests int64   `json:"requests"`
+	TotalMs  int64   `json:"total_ms"`
 	P50Ms    float64 `json:"p50_ms"`
 	P95Ms    float64 `json:"p95_ms"`
-	Errors   int64   `json:"errors"`
+	Status4  int64   `json:"status_4xx"`
+	Status5  int64   `json:"status_5xx"`
 }
 
-type TrafficPost struct {
-	PostID   int64 `json:"post_id"`
-	Requests int64 `json:"requests"`
-}
-
-type TrafficLegacy struct {
-	Client   string `json:"client"`
-	Requests int64  `json:"requests"`
-	Legacy   int64  `json:"legacy"`
-}
-
-type TrafficCount struct {
-	Name     string `json:"name"`
-	Client   string `json:"client,omitempty"`
+type TrafficStatus struct {
+	Status   int32  `json:"status"`
+	Route    string `json:"route"`
 	Requests int64  `json:"requests"`
 }
 
@@ -81,18 +89,20 @@ type TrafficError struct {
 	RequestID string    `json:"request_id"`
 }
 
+type TrafficErrors struct {
+	ByStatus []TrafficStatus `json:"by_status"`
+	Recent   []TrafficError  `json:"recent"`
+}
+
+// Traffic is API load from request logs
 type Traffic struct {
-	Range      TrafficRange    `json:"range"`
-	Bucket     string          `json:"bucket"`
-	Series     []TrafficBucket `json:"series"`
-	Totals     TrafficTotals   `json:"totals"`
-	Routes     []TrafficRoute  `json:"routes"`
-	Posts      []TrafficPost   `json:"posts"`
-	Legacy     []TrafficLegacy `json:"legacy"`
-	Params     []TrafficCount  `json:"params"`
-	UserAgents []TrafficCount  `json:"user_agents"`
-	IPs        []TrafficCount  `json:"ips"`
-	Errors     []TrafficError  `json:"errors"`
+	Range   TrafficRange    `json:"range"`
+	Bucket  string          `json:"bucket"`
+	Summary TrafficSummary  `json:"summary"`
+	Series  []TrafficBucket `json:"series"`
+	Callers []TrafficCaller `json:"callers"`
+	Routes  []TrafficRoute  `json:"routes"`
+	Errors  TrafficErrors   `json:"errors"`
 }
 
 // ViewCounts holds page views and visitor-days, visitor ids rotate daily
