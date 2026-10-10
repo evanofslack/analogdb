@@ -8,6 +8,7 @@ import {
   SegmentedControl,
   Select,
   Stack,
+  VisuallyHidden,
 } from "@mantine/core";
 import { useDebouncedCallback } from "@mantine/hooks";
 import {
@@ -16,6 +17,7 @@ import {
   IconArrowsSort,
   IconCamera,
   IconMovie,
+  IconX,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import ColorFilter from "./colorFilter";
@@ -64,6 +66,11 @@ export default function FilterBar({
   heightMaxLimit,
   ratioMinLimit,
   ratioMaxLimit,
+
+  active = {},
+  onClear,
+  resultCount,
+  resultPending,
 }) {
   const iconSize = 18;
 
@@ -141,10 +148,35 @@ export default function FilterBar({
     section: styles.buttonSection,
   };
 
+  const activeProps = (key) => (active[key] ? { "data-active": true } : {});
+  const activeText = (key) =>
+    active[key] && <VisuallyHidden>, filter on</VisuallyHidden>;
+
   return (
     <>
       <div className={styles.query}>
+        <p
+          className={`${styles.count} ${resultPending ? styles.pending : ""}`}
+          aria-live="polite"
+        >
+          {resultCount != null &&
+            `${resultCount.toLocaleString("en-US")} ${
+              resultCount === 1 ? "photo" : "photos"
+            }`}
+        </p>
         <div className={styles.filterButtons}>
+          {onClear && (
+            <Button
+              variant="subtle"
+              color="gray"
+              leftSection={<IconX size={iconSize} stroke={1.5} />}
+              classNames={{ ...buttonClassNames, root: styles.clear }}
+              onClick={onClear}
+              aria-label="Clear filters"
+            >
+              clear
+            </Button>
+          )}
           <Menu shadow="md" width={220}>
             <Menu.Target>
               <Button
@@ -152,8 +184,10 @@ export default function FilterBar({
                 color="gray"
                 leftSection={<IconCamera size={iconSize} stroke={1.5} />}
                 classNames={buttonClassNames}
+                {...activeProps("camera")}
               >
                 <span className={styles.label}>camera</span>
+                {activeText("camera")}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -193,8 +227,10 @@ export default function FilterBar({
                 color="gray"
                 leftSection={<IconMovie size={iconSize} stroke={1.5} />}
                 classNames={buttonClassNames}
+                {...activeProps("film")}
               >
                 <span className={styles.label}>film</span>
+                {activeText("film")}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -232,6 +268,7 @@ export default function FilterBar({
             setColor={setColor}
             buttonClassNames={buttonClassNames}
             labelClassName={styles.label}
+            active={active.color}
           />
           <Menu shadow="md" width={170} onClose={() => commitSizes.flush()}>
             <Menu.Target>
@@ -242,8 +279,10 @@ export default function FilterBar({
                   <IconArrowAutofitWidth size={iconSize} stroke={1.6} />
                 }
                 classNames={buttonClassNames}
+                {...activeProps("size")}
               >
                 <span className={styles.label}>size</span>
+                {activeText("size")}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -352,44 +391,6 @@ export default function FilterBar({
             </Menu.Dropdown>
           </Menu>
 
-          <Menu shadow="md" width={125}>
-            <Menu.Target>
-              <Button
-                variant="outline"
-                color="gray"
-                leftSection={<IconArrowsSort size={iconSize} stroke={1.5} />}
-                classNames={buttonClassNames}
-              >
-                <span className={styles.label}>sort</span>
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>sort by</Menu.Label>
-              <div className={styles.radio}>
-                <Radio.Group value={sort} onChange={setSort} name="Sort">
-                  <Stack gap="xs">
-                    <Radio
-                      value="time"
-                      label="time"
-                      className={styles.radioButton}
-                    />
-                    <Radio
-                      value="score"
-                      label="score"
-                      className={styles.radioButton}
-                    />
-                    <Radio
-                      value="random"
-                      label="random"
-                      className={styles.radioButton}
-                      onClick={() => sort === "random" && setSort("random")}
-                    />
-                  </Stack>
-                </Radio.Group>
-              </div>
-            </Menu.Dropdown>
-          </Menu>
-
           <Menu shadow="md" width={250}>
             <Menu.Target>
               <Button
@@ -399,8 +400,10 @@ export default function FilterBar({
                   <IconAdjustmentsHorizontal size={iconSize} stroke={1.5} />
                 }
                 classNames={buttonClassNames}
+                {...activeProps("flags")}
               >
-                <span className={styles.label}>filter</span>
+                <span className={styles.label}>filters</span>
+                {activeText("flags")}
               </Button>
             </Menu.Target>
             <Menu.Dropdown>
@@ -442,6 +445,46 @@ export default function FilterBar({
                     ]}
                   />
                 </div>
+              </div>
+            </Menu.Dropdown>
+          </Menu>
+
+          <span className={styles.divider} aria-hidden="true" />
+
+          <Menu shadow="md" width={125}>
+            <Menu.Target>
+              <Button
+                variant="outline"
+                color="gray"
+                leftSection={<IconArrowsSort size={iconSize} stroke={1.5} />}
+                classNames={buttonClassNames}
+              >
+                <span className={styles.label}>sort</span>
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Label>sort by</Menu.Label>
+              <div className={styles.radio}>
+                <Radio.Group value={sort} onChange={setSort} name="Sort">
+                  <Stack gap="xs">
+                    <Radio
+                      value="time"
+                      label="time"
+                      className={styles.radioButton}
+                    />
+                    <Radio
+                      value="score"
+                      label="score"
+                      className={styles.radioButton}
+                    />
+                    <Radio
+                      value="random"
+                      label="random"
+                      className={styles.radioButton}
+                      onClick={() => sort === "random" && setSort("random")}
+                    />
+                  </Stack>
+                </Radio.Group>
               </div>
             </Menu.Dropdown>
           </Menu>

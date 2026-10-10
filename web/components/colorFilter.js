@@ -1,4 +1,4 @@
-import { Button, Checkbox, Menu, Tooltip } from "@mantine/core";
+import { Button, Checkbox, Menu, Tooltip, VisuallyHidden } from "@mantine/core";
 import { IconPalette } from "@tabler/icons-react";
 import styles from "./colorFilter.module.css";
 
@@ -7,6 +7,7 @@ export default function ColorFilter({
   setColor,
   buttonClassNames,
   labelClassName,
+  active,
 }) {
   const handleColorClick = (event) => {
     let clickedColor = event.target.id;
@@ -134,8 +135,10 @@ export default function ColorFilter({
           color="gray"
           leftSection={<IconPalette size={18} stroke={1.5} />}
           classNames={buttonClassNames}
+          data-active={active || undefined}
         >
           <span className={labelClassName}>color</span>
+          {active && <VisuallyHidden>, filter on</VisuallyHidden>}
         </Button>
       </Menu.Target>
       <Menu.Dropdown>

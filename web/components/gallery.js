@@ -1,6 +1,7 @@
 "use client";
 
 import usePosts from "@hooks/usePosts";
+import { activePostsFilters, clearedPostsFilters } from "@lib/searchParams";
 import { pickSeed } from "@lib/seed";
 import FilterBar from "./filterBar";
 import Footer from "./footer";
@@ -22,6 +23,8 @@ export default function Gallery({
   );
 
   const textPlaceholder = "search pictures...";
+  const active = activePostsFilters(filters);
+  const anyActive = Object.values(active).some(Boolean);
 
   const setSort = (sort) => {
     if (sort === "random") {
@@ -74,6 +77,12 @@ export default function Gallery({
           heightMaxLimit={limits.heightMax}
           ratioMinLimit={limits.ratioMin}
           ratioMaxLimit={limits.ratioMax}
+          active={active}
+          onClear={
+            anyActive ? () => setFilters(clearedPostsFilters) : undefined
+          }
+          resultCount={anyActive ? posts.totalPosts : null}
+          resultPending={posts.isPlaceholderData}
         />
         <InfiniteGallery {...posts} initialColumns={initialColumns} />
         <ScrollTop />

@@ -1,10 +1,31 @@
 .query {
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   width: 100%;
   padding-bottom: 2rem;
+}
+
+.count {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--adb-muted);
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.pending {
+  opacity: 0.5;
+}
+
+.divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1.5rem;
+  margin: 0 0.25rem;
+  background-color: var(--adb-divider);
 }
 
 .radio {
@@ -90,6 +111,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
   position: relative;
 }
 
@@ -108,42 +131,75 @@
   box-shadow: 0 2px 8px var(--adb-shadow-overlay);
 }
 
-.query .button {
-  margin-right: 10px;
-  margin-left: 2px;
-  padding-left: 10px;
-  padding-right: 10px;
-  color: var(--adb-heading);
+.query .button,
+.query .clear {
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 0.9rem;
+  border-radius: 999px;
   font-weight: 400;
+}
+
+.query .button {
+  color: var(--adb-heading);
   border-color: var(--adb-border);
 }
 
-.query .button .buttonSection {
-  margin-right: 5px;
+.query .buttonSection {
+  margin-right: 6px;
 }
 
 .query .button:not([data-disabled]):hover {
   background-color: var(--adb-surface-hover);
 }
 
+.query .button[data-active],
+.query .button[data-active]:not([data-disabled]):hover {
+  color: var(--adb-cta-fg);
+  background-color: var(--adb-cta-bg);
+  border-color: var(--adb-cta-bg);
+}
+
+.query .clear {
+  order: 99;
+  color: var(--adb-muted);
+}
+
 @media (max-width: 720px) {
-  .query .button {
-    margin-right: 2px;
-    padding-left: 6px;
-    padding-right: 0;
-    border-color: transparent;
+  .query {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+    padding-bottom: 1.25rem;
   }
 
-  .query .button svg {
-    width: 24px;
-    height: 24px;
+  .count {
+    order: 2;
   }
 
-  .query .button:not([data-disabled]):hover {
-    background-color: transparent;
+  .filterButtons {
+    margin: 0 -1.2rem;
+    padding: 0.25rem 1.2rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black calc(100% - 2rem),
+      transparent
+    );
+    mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
   }
 
-  .label {
+  .filterButtons::-webkit-scrollbar {
     display: none;
+  }
+
+  .query .button,
+  .query .clear {
+    height: 40px;
+  }
+
+  .query .clear {
+    order: -1;
   }
 }
