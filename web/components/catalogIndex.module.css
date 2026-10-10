@@ -15,9 +15,8 @@
 
 .title {
   margin: 0;
-  font-family: "Courier Prime", Courier, monospace;
   font-size: 1.8rem;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--adb-heading);
 }
