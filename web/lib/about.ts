@@ -5,7 +5,6 @@ export interface AboutPhoto {
   width?: number;
   height?: number;
   alt: string;
-  caption?: string;
   camera?: string;
   film?: string;
   lens?: string;

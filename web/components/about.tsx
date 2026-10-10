@@ -27,6 +27,11 @@ interface AboutProps {
   data: AboutData;
 }
 
+// how far the similar photos reach past the center photo
+const CLUSTER_REACH = { left: 170, right: 195, top: 160, bottom: 165 };
+const CLUSTER_CENTER_HEIGHT = 420;
+const CLUSTER_SIMILAR_HEIGHT = 180;
+
 const COLOR_ROW_SIZE = 16;
 const MOBILE_ROW_SIZE = 8;
 
@@ -50,7 +55,6 @@ export default function About(props: AboutProps) {
     props.data.allSimilarityData
   );
 
-  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   const [shuffled, setShuffled] = useState(false);
 
   // images render only after the shuffle, so the unshuffled server picks never download
@@ -60,16 +64,17 @@ export default function About(props: AboutProps) {
     setShuffled(true);
   }, [props.data]);
 
-  useEffect(() => {
-    setViewportWidth(window.innerWidth);
-  }, []);
-
   const [currentSimilarityIndex, setCurrentSimilarityIndex] =
     useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const similarityRef = useRef<HTMLDivElement | null>(null);
   const [isSimilarityVisible, setIsSimilarityVisible] = useState(false);
   const [isSimilarityHovered, setIsSimilarityHovered] = useState(false);
+  const clusterAreaRef = useRef<HTMLDivElement | null>(null);
+  const [clusterArea, setClusterArea] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   const currentSimilarityData = allSimilarityData[currentSimilarityIndex] || {
     centerPost: null,
@@ -85,6 +90,25 @@ export default function About(props: AboutProps) {
     observer.observe(node);
     return () => observer.disconnect();
   }, []);
+
+  // the cluster scales down to fit the space beside the text
+  useEffect(() => {
+    const node = clusterAreaRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setClusterArea({
+        width: entry.contentRect.width,
+        height: entry.contentRect.height,
+      })
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // a photo can leave while the pointer is on it, so a new cluster starts unpaused
+  useEffect(() => {
+    setIsSimilarityHovered(false);
+  }, [currentSimilarityIndex]);
 
   useEffect(() => {
     if (
@@ -107,7 +131,7 @@ export default function About(props: AboutProps) {
           setIsTransitioning(false);
         }, 50);
       }, 250);
-    }, 7000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [allSimilarityData, isSimilarityVisible, isSimilarityHovered]);
@@ -224,8 +248,6 @@ export default function About(props: AboutProps) {
     )
       return null;
 
-    const clusterPosition = { left: "50%", top: "20%" };
-
     const similarPositions = [
       { top: "-160px", left: "-40px" },
       { top: "-130px", right: "-120px" },
@@ -239,46 +261,54 @@ export default function About(props: AboutProps) {
 
     const similarPosts = currentSimilarityData.similarPosts;
 
-    const centerWidth = centerImage.width || 400;
-    const centerHeight = centerImage.height || 400;
-    const centerAspectRatio = centerWidth / centerHeight;
-    const centerMaxHeight = Math.min(
-      viewportWidth ? viewportWidth * 0.35 : 420,
-      420
-    );
-    const centerContainerWidth = centerMaxHeight * centerAspectRatio;
+    const centerAspectRatio =
+      (centerImage.width || 400) / (centerImage.height || 400);
+    const centerHeight = CLUSTER_CENTER_HEIGHT;
+    const centerWidth = centerHeight * centerAspectRatio;
+
+    const stageWidth = centerWidth + CLUSTER_REACH.left + CLUSTER_REACH.right;
+    const stageHeight = centerHeight + CLUSTER_REACH.top + CLUSTER_REACH.bottom;
+    const scale = clusterArea
+      ? Math.min(
+          1,
+          clusterArea.width / stageWidth,
+          clusterArea.height / stageHeight
+        )
+      : 1;
+    const fade = isTransitioning ? styles.transitioning : "";
 
     return (
-      <div className={`${styles.clustersContainer} ${styles.desktopOnly}`}>
+      <div
+        className={styles.clusterStage}
+        style={{
+          width: `${stageWidth}px`,
+          height: `${stageHeight}px`,
+          transform: `translate(-50%, -50%) scale(${scale})`,
+        }}
+      >
         <div
           key={centerImage.id}
           className={styles.clusterContainer}
-          style={clusterPosition}
+          style={{
+            left: `${CLUSTER_REACH.left}px`,
+            top: `${CLUSTER_REACH.top}px`,
+            width: `${centerWidth}px`,
+            height: `${centerHeight}px`,
+          }}
         >
           <AboutPhoto
             photo={centerImage}
             fill
-            sizes="(max-width: 768px) 200px, 420px"
-            className={`${styles.clusterCenterContainer} ${
-              isTransitioning ? styles.transitioning : ""
-            }`}
-            style={{
-              width: `${centerContainerWidth}px`,
-              height: `${centerMaxHeight}px`,
-            }}
+            sizes="420px"
+            className={`${styles.clusterCenterContainer} ${fade}`}
+            style={{ width: "100%", height: "100%" }}
+            onHover={setIsSimilarityHovered}
           />
 
           {similarPosts.slice(0, 6).map((image, index) => {
             if (!similarPositions[index]) return null;
 
-            const width = image.width || 200;
-            const height = image.height || 200;
-            const aspectRatio = width / height;
-            const maxHeight = Math.min(
-              viewportWidth ? viewportWidth * 0.15 : 180,
-              180
-            );
-            const containerWidth = maxHeight * aspectRatio;
+            const aspectRatio = (image.width || 200) / (image.height || 200);
 
             return (
               <AboutPhoto
@@ -286,15 +316,14 @@ export default function About(props: AboutProps) {
                 photo={image}
                 small
                 fill
-                sizes="(max-width: 768px) 90px, 180px"
-                className={`${styles.clusterSimilarContainer} ${
-                  isTransitioning ? styles.transitioning : ""
-                }`}
+                sizes="180px"
+                className={`${styles.clusterSimilarContainer} ${fade}`}
                 style={{
                   ...similarPositions[index],
-                  width: `${containerWidth}px`,
-                  height: `${maxHeight}px`,
+                  width: `${CLUSTER_SIMILAR_HEIGHT * aspectRatio}px`,
+                  height: `${CLUSTER_SIMILAR_HEIGHT}px`,
                 }}
+                onHover={setIsSimilarityHovered}
               />
             );
           })}
@@ -319,9 +348,10 @@ export default function About(props: AboutProps) {
               <div>
                 <h1 className={styles.title}>Film for all</h1>
                 <p className={styles.subtitle}>
-                  AnalogDB is a curated database of {numPosts.toLocaleString()}{" "}
-                  film photos, each one analyzed for color, gear and content.
-                  New photos are added every day.
+                  AnalogDB is a curated database of over{" "}
+                  {(Math.floor(numPosts / 1000) * 1000).toLocaleString()} film
+                  photos, each one analyzed for color, gear and content. New
+                  photos are added every day.
                 </p>
                 <Link href="/" className={styles.link}>
                   view latest
@@ -363,10 +393,10 @@ export default function About(props: AboutProps) {
 
           {props.data.films.length > 0 && (
             <div className={styles.band}>
-              <div className={styles.stacked}>
-                <div>
+              <div className={`${styles.split} ${styles.wide}`}>
+                <div className={styles.text}>
                   <h2 className={styles.title}>Film Stocks</h2>
-                  <p className={`${styles.subtitle} ${styles.wideSubtitle}`}>
+                  <p className={styles.subtitle}>
                     Camera, lens and film are read from every post, so you can
                     browse by film stock and see what each one looks like.
                   </p>
@@ -374,7 +404,7 @@ export default function About(props: AboutProps) {
                     browse film
                   </Link>
                 </div>
-                <div className={styles.visualFirst}>
+                <div className={`${styles.visualFirst} ${styles.filmVisual}`}>
                   <AboutFilms films={props.data.films} />
                 </div>
               </div>
@@ -401,16 +431,9 @@ export default function About(props: AboutProps) {
             </div>
           )}
 
-          <div
-            className={styles.band}
-            ref={similarityRef}
-            onMouseEnter={() => setIsSimilarityHovered(true)}
-            onMouseLeave={() => setIsSimilarityHovered(false)}
-          >
-            <div className={styles.similaritySection}>
-              {renderSimilarityClusters()}
-              {renderMobileSimilarity()}
-              <div className={styles.similarityTextOverlay}>
+          <div className={styles.band} ref={similarityRef}>
+            <div className={`${styles.split} ${styles.wide}`}>
+              <div className={styles.text}>
                 <h2 className={styles.title}>Vector Similarity</h2>
                 <p className={styles.subtitle}>
                   Every photo is embedded with CLIP, one vector space shared by
@@ -420,6 +443,15 @@ export default function About(props: AboutProps) {
                 <Link href="/search" className={styles.link}>
                   find similar
                 </Link>
+              </div>
+              <div
+                ref={clusterAreaRef}
+                className={`${styles.clusterArea} ${styles.desktopOnly}`}
+              >
+                {renderSimilarityClusters()}
+              </div>
+              <div className={`${styles.visualFirst} ${styles.mobileOnly}`}>
+                {renderMobileSimilarity()}
               </div>
             </div>
           </div>

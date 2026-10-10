@@ -34,7 +34,7 @@ export default function AboutFilms({ films }: { films: FilmSet[] }) {
                 photo={photo}
                 small
                 fill
-                sizes="(max-width: 720px) 35vw, 120px"
+                sizes="(max-width: 720px) 35vw, 130px"
                 className={styles.tile}
               />
             ))}

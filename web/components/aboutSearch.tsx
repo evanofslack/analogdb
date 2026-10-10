@@ -9,12 +9,15 @@ import styles from "./aboutSearch.module.css";
 import KeywordRow from "./keywordRow";
 
 const TYPE_MS = 50;
-const HOLD_MS = 6000;
+const DELETE_MS = 30;
+const HOLD_MS = 4000;
+const PAUSE_MS = 300;
 
 export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
   const [order, setOrder] = useState<SearchDemo[] | null>(null);
   const [index, setIndex] = useState(0);
   const [typed, setTyped] = useState(0);
+  const [deleting, setDeleting] = useState(false);
   const [reduced, setReduced] = useState(false);
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
@@ -38,24 +41,34 @@ export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
 
   const current = order?.[index];
   const length = current?.query.length ?? 0;
-  const done = Boolean(current) && (reduced || typed >= length);
+  const done = Boolean(current) && (reduced || (!deleting && typed >= length));
 
   // the last finished query stays on screen while the next one types
   useEffect(() => {
-    if (done) setShownIndex(index);
+    if (done) {
+      setShownIndex(index);
+      setHovered(false);
+    }
   }, [done, index]);
 
-  // type the query, hold the results, then move on, only while on screen
+  // type the query, hold the results, delete it, then type the next one
   useEffect(() => {
     if (!order || !current || reduced || !visible || hovered) return;
-    const timer = done
-      ? setTimeout(() => {
-          setIndex((i) => (i + 1) % order.length);
-          setTyped(0);
-        }, HOLD_MS)
-      : setTimeout(() => setTyped((n) => n + 1), TYPE_MS);
+    let timer: ReturnType<typeof setTimeout>;
+    if (done) {
+      timer = setTimeout(() => setDeleting(true), HOLD_MS);
+    } else if (!deleting) {
+      timer = setTimeout(() => setTyped((n) => n + 1), TYPE_MS);
+    } else if (typed > 0) {
+      timer = setTimeout(() => setTyped((n) => n - 1), DELETE_MS);
+    } else {
+      timer = setTimeout(() => {
+        setDeleting(false);
+        setIndex((i) => (i + 1) % order.length);
+      }, PAUSE_MS);
+    }
     return () => clearTimeout(timer);
-  }, [order, current, reduced, visible, hovered, done, typed]);
+  }, [order, current, reduced, visible, hovered, done, deleting, typed]);
 
   if (!order || !current) return null;
 
@@ -67,12 +80,7 @@ export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
   }));
 
   return (
-    <div
-      ref={ref}
-      className={styles.demo}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+    <div ref={ref} className={styles.demo}>
       <Link
         href={`/search?q=${encodeURIComponent(current.query)}`}
         prefetch={false}
@@ -95,6 +103,7 @@ export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
               fill
               sizes="(max-width: 720px) 33vw, 180px"
               className={styles.tile}
+              onHover={setHovered}
             />
           ))}
         </div>

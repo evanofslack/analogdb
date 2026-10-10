@@ -30,23 +30,13 @@ interface AboutPhotoProps {
   imageClassName?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
-}
-
-function hasDetails(photo: Photo): boolean {
-  return Boolean(
-    photo.caption ||
-      photo.camera ||
-      photo.film ||
-      photo.lens ||
-      photo.keywords.length ||
-      photo.colors.length
-  );
+  onHover?: (hovering: boolean) => void;
 }
 
 function PhotoDetails({ photo }: { photo: Photo }) {
   return (
     <div className={styles.card}>
-      {photo.caption && <p className={styles.caption}>{photo.caption}</p>}
+      <span className={styles.id}>#{photo.id}</span>
       {(photo.camera || photo.lens || photo.film) && (
         <div className={styles.meta}>
           {photo.camera && (
@@ -102,6 +92,7 @@ export default function AboutPhoto({
   imageClassName,
   style,
   children,
+  onHover,
 }: AboutPhotoProps) {
   // touch screens skip the card, a tap just opens the post
   const canHover = useContext(CanHover);
@@ -132,13 +123,13 @@ export default function AboutPhoto({
 
   return (
     <HoverCard
-      width={280}
+      width={240}
       shadow="md"
       openDelay={150}
       closeDelay={100}
       position="top"
       withinPortal
-      disabled={!canHover || !hasDetails(photo)}
+      disabled={!canHover}
     >
       <HoverCard.Target>
         <Link
@@ -146,6 +137,8 @@ export default function AboutPhoto({
           prefetch={false}
           className={className ? `${styles.link} ${className}` : styles.link}
           style={style}
+          onMouseEnter={onHover && (() => onHover(true))}
+          onMouseLeave={onHover && (() => onHover(false))}
         >
           {image}
           {children}

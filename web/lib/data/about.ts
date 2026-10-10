@@ -77,7 +77,7 @@ const FILM_SET_SIZE = 4;
 
 const QUERIES = [
   "man in black",
-  "neon at night",
+  "neon street signs",
   "cat in window",
   "red flowers",
   "foggy forest",
@@ -108,7 +108,6 @@ function toPhoto(post: AnalogdbPost): AboutPhoto | null {
     width: image.width,
     height: image.height,
     alt: postAlt(post),
-    caption: post.caption || undefined,
     camera: cameraName(post) ?? undefined,
     film: filmName(post) ?? undefined,
     lens: lensName(post),

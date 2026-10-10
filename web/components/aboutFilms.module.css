@@ -1,9 +1,8 @@
 .sets {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem 1.5rem;
   width: 100%;
-  margin-top: 3rem;
 }
 
 .set {
@@ -48,12 +47,6 @@
 
 .count {
   white-space: nowrap;
-}
-
-@media (max-width: 1100px) {
-  .sets {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 720px) {
