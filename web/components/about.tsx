@@ -1,55 +1,37 @@
 "use client";
 
+import {
+  AboutData,
+  ColorData,
+  AboutPhoto as Photo,
+  shuffle,
+  SimilarityData,
+} from "@lib/about";
 import { CodeHighlight } from "@mantine/code-highlight";
-import { IconPolaroid, IconUsers } from "@tabler/icons-react";
-import Image from "next/image";
+import {
+  IconBrandGithub,
+  IconCamera,
+  IconMovie,
+  IconPolaroid,
+  IconUsers,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./about.module.css";
+import AboutFilms from "./aboutFilms";
+import AboutPhoto, { AboutPhotoProvider } from "./aboutPhoto";
+import AboutSearch from "./aboutSearch";
 import Footer from "./footer";
 
-export interface AboutImage {
-  id: number;
-  url: string;
-  smallUrl?: string;
-  width?: number;
-  height?: number;
-}
-
-interface ColorData {
-  red: AboutImage[];
-  navy: AboutImage[];
-  olive: AboutImage[];
-}
-
-interface SimilarityData {
-  centerPost: AboutImage;
-  similarPosts: AboutImage[];
-}
-
 interface AboutProps {
-  data: {
-    numPosts: number;
-    numAuthors: number;
-    colorData: ColorData;
-    allSimilarityData: SimilarityData[];
-  };
+  data: AboutData;
 }
 
 const COLOR_ROW_SIZE = 16;
 const MOBILE_ROW_SIZE = 8;
 
-function shuffle<T>(items: T[]): T[] {
-  const result = [...items];
-  for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
 function pickColorRows(colorData: ColorData, random: boolean): ColorData {
-  const pick = (images: AboutImage[]) =>
+  const pick = (images: Photo[]) =>
     (random ? shuffle(images) : images).slice(0, COLOR_ROW_SIZE);
   return {
     red: pick(colorData.red),
@@ -59,7 +41,7 @@ function pickColorRows(colorData: ColorData, random: boolean): ColorData {
 }
 
 export default function About(props: AboutProps) {
-  const { numPosts, numAuthors } = props.data;
+  const { numPosts, numAuthors, numCameras, numFilms, apiSample } = props.data;
 
   const [colorData, setColorData] = useState<ColorData>(() =>
     pickColorRows(props.data.colorData, false)
@@ -87,6 +69,7 @@ export default function About(props: AboutProps) {
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
   const similarityRef = useRef<HTMLDivElement | null>(null);
   const [isSimilarityVisible, setIsSimilarityVisible] = useState(false);
+  const [isSimilarityHovered, setIsSimilarityHovered] = useState(false);
 
   const currentSimilarityData = allSimilarityData[currentSimilarityIndex] || {
     centerPost: null,
@@ -104,7 +87,12 @@ export default function About(props: AboutProps) {
   }, []);
 
   useEffect(() => {
-    if (allSimilarityData.length <= 1 || !isSimilarityVisible) return;
+    if (
+      allSimilarityData.length <= 1 ||
+      !isSimilarityVisible ||
+      isSimilarityHovered
+    )
+      return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
     const interval = setInterval(() => {
@@ -122,85 +110,10 @@ export default function About(props: AboutProps) {
     }, 7000);
 
     return () => clearInterval(interval);
-  }, [allSimilarityData, isSimilarityVisible]);
-
-  const apiQuery: string = "curl https://api.analogdb.com/v1/posts";
-
-  const apiResponse: string = `
-"meta":{
-  "total_posts":18233,
-  "page_size":20,
-  "next_cursor":"eyJzIjoidGltZSIsInYiOjE2NzIyNTE2NDcsImlkIjo1MTA4fQ",
-  "next_page_url":"/posts?cursor=eyJzIjoidGltZSIsInYiOjE2NzIyNTE2NDcsImlkIjo1MTA4fQ&page_size=20&sort=time"
-},
-"posts":[
-  {
-    "id":5127,
-    "title":"Exam | Olympus OM-2n | 50mm 1.8 | Vision3 250D",
-    "author":"Crazylyric",
-    "permalink":"https://www.reddit.com/r/analog/comments/zyk2sp/exam_olympus_om2n_50mm_18_vision3_250d/",
-    "score":163,
-    "nsfw":false,
-    "grayscale":false,
-    "timestamp":1672356457,
-    "sprocket":false
-    "images":[
-      {
-        "resolution":"low",
-        "url":"https://d3i73ktnzbi69i.cloudfront.net/8ed69a77-83fc-4a82-8994-935f82cada2e.jpeg",
-        "width":720,
-        "height":477
-      },
-      {
-        "resolution":"medium",
-        "url":"https://d3i73ktnzbi69i.cloudfront.net/d3ed07e5-b094-452f-b567-6d24b7d93f39.jpeg"
-        "width":720,
-        "height":477
-      },
-      {
-        "resolution":"high",
-        "url":"https://d3i73ktnzbi69i.cloudfront.net/b68bb45b-e723-4010-81d7-2c1a38cdffe1.jpeg"
-        "width":1440,
-        "height":955
-      },
-      {
-        "resolution":"raw",
-        "url":"https://d3i73ktnzbi69i.cloudfront.net/de6a9627-5127-4920-b6f4-d1078e7d3c35.jpeg"
-        "width":3089,
-        "height":2048
-      }
-     ],
-  },
-  ...
-]`;
-
-  const apiResponseShort: string = `
-"meta":{
-  "total_posts":18233,
-  "page_size":20,
-  "next_cursor":"eyJzIjoidGltZSIsInYiOjE2NzIyNTE2NDcsImlkIjo1MTA4fQ"
-},
-"posts":[
-  {
-    "id":5127,
-    "title":"Exam | Olympus OM-2n | 50mm 1.8 | Vision3 250D",
-    "author":"Crazylyric",
-    "score":163,
-    "images":[
-      {
-        "resolution":"low",
-        "url":"https://d3i73ktnzbi69i.cloudfront.net/8ed69a77-83fc-4a82-8994-935f82cada2e.jpeg",
-        "width":720,
-        "height":477
-      },
-      ...
-    ]
-  },
-  ...
-]`;
+  }, [allSimilarityData, isSimilarityVisible, isSimilarityHovered]);
 
   const renderMobileColorRows = (): React.ReactElement | null => {
-    const rows: [AboutImage[], "left" | "right"][] = [
+    const rows: [Photo[], "left" | "right"][] = [
       [colorData.red.slice(0, MOBILE_ROW_SIZE), "right"],
       [colorData.navy.slice(0, MOBILE_ROW_SIZE), "left"],
     ];
@@ -218,18 +131,13 @@ export default function About(props: AboutProps) {
               >
                 {(shuffled ? [...images, ...images] : []).map(
                   (image, index) => (
-                    <div
+                    <AboutPhoto
                       key={`${image.id}-${index}`}
+                      photo={image}
+                      small
                       className={styles.colorImageContainer}
-                    >
-                      <Image
-                        src={image.smallUrl ?? image.url}
-                        alt={`image ${image.id}`}
-                        width={image.width}
-                        height={image.height}
-                        className={styles.mobileColorImage}
-                      />
-                    </div>
+                      imageClassName={styles.mobileColorImage}
+                    />
                   )
                 )}
               </div>
@@ -248,36 +156,28 @@ export default function About(props: AboutProps) {
     return (
       <div className={styles.mobileOnly}>
         <div className={styles.mobileSimilarity}>
-          <div
+          <AboutPhoto
+            photo={centerPost}
+            small
+            fill
+            sizes="100vw"
             className={`${styles.mobileSimilarCenter} ${fade}`}
             style={{
               aspectRatio: `${centerPost.width || 4} / ${
                 centerPost.height || 3
               }`,
             }}
-          >
-            <Image
-              src={centerPost.smallUrl ?? centerPost.url}
-              alt={`image ${centerPost.id}`}
-              fill
-              sizes="100vw"
-              style={{ objectFit: "cover" }}
-            />
-          </div>
+          />
           <div className={styles.mobileSimilarGrid}>
             {similarPosts.slice(0, 6).map((image) => (
-              <div
+              <AboutPhoto
                 key={image.id}
+                photo={image}
+                small
+                fill
+                sizes="33vw"
                 className={`${styles.mobileSimilarTile} ${fade}`}
-              >
-                <Image
-                  src={image.smallUrl ?? image.url}
-                  alt={`image ${image.id}`}
-                  fill
-                  sizes="33vw"
-                  style={{ objectFit: "cover" }}
-                />
-              </div>
+              />
             ))}
           </div>
         </div>
@@ -286,7 +186,7 @@ export default function About(props: AboutProps) {
   };
 
   const renderColorRow = (
-    images: AboutImage[],
+    images: Photo[],
     direction: "left" | "right",
     delay: number = 0
   ): React.ReactElement | null => {
@@ -302,22 +202,15 @@ export default function About(props: AboutProps) {
           }`}
           style={{ animationDelay: `${delay}s` }}
         >
-          {duplicatedImages.map((image, index) => {
-            return (
-              <div
-                key={`${image.id}-${index}`}
-                className={styles.colorImageContainer}
-              >
-                <Image
-                  src={image.smallUrl ?? image.url}
-                  alt={`image ${image.id}`}
-                  width={image.width}
-                  height={image.height}
-                  className={styles.colorImage}
-                />
-              </div>
-            );
-          })}
+          {duplicatedImages.map((image, index) => (
+            <AboutPhoto
+              key={`${image.id}-${index}`}
+              photo={image}
+              small
+              className={styles.colorImageContainer}
+              imageClassName={styles.colorImage}
+            />
+          ))}
         </div>
       </div>
     );
@@ -362,7 +255,10 @@ export default function About(props: AboutProps) {
           className={styles.clusterContainer}
           style={clusterPosition}
         >
-          <div
+          <AboutPhoto
+            photo={centerImage}
+            fill
+            sizes="(max-width: 768px) 200px, 420px"
             className={`${styles.clusterCenterContainer} ${
               isTransitioning ? styles.transitioning : ""
             }`}
@@ -370,16 +266,7 @@ export default function About(props: AboutProps) {
               width: `${centerContainerWidth}px`,
               height: `${centerMaxHeight}px`,
             }}
-          >
-            <Image
-              src={centerImage.url}
-              alt={`image ${centerImage.id}`}
-              fill
-              sizes="(max-width: 768px) 200px, 420px"
-              className={styles.clusterCenterImage}
-              style={{ objectFit: "cover" }}
-            />
-          </div>
+          />
 
           {similarPosts.slice(0, 6).map((image, index) => {
             if (!similarPositions[index]) return null;
@@ -394,8 +281,12 @@ export default function About(props: AboutProps) {
             const containerWidth = maxHeight * aspectRatio;
 
             return (
-              <div
+              <AboutPhoto
                 key={image.id}
+                photo={image}
+                small
+                fill
+                sizes="(max-width: 768px) 90px, 180px"
                 className={`${styles.clusterSimilarContainer} ${
                   isTransitioning ? styles.transitioning : ""
                 }`}
@@ -404,17 +295,7 @@ export default function About(props: AboutProps) {
                   width: `${containerWidth}px`,
                   height: `${maxHeight}px`,
                 }}
-              >
-                <div className={styles.clusterConnectionLine} />
-                <Image
-                  src={image.smallUrl ?? image.url}
-                  alt={`image ${image.id}`}
-                  fill
-                  sizes="(max-width: 768px) 90px, 180px"
-                  className={styles.clusterSimilarImage}
-                  style={{ objectFit: "cover" }}
-                />
-              </div>
+              />
             );
           })}
         </div>
@@ -422,178 +303,202 @@ export default function About(props: AboutProps) {
     );
   };
 
+  const stats = [
+    { icon: IconPolaroid, count: numPosts, label: "photos" },
+    { icon: IconUsers, count: numAuthors, label: "photographers" },
+    { icon: IconCamera, count: numCameras, label: "cameras" },
+    { icon: IconMovie, count: numFilms, label: "films" },
+  ];
+
   return (
-    <main>
-      <div className={styles.container}>
-        <div className={styles.sectionOne}>
-          <div className={styles.subSection}>
-            <div className={styles.title}>Film for all</div>
-            <p className={styles.subtitle}>
-              AnalogDB is a curated database featuring thousands of film
-              photographs. And it is always growing, with new pictures added
-              every day.
-            </p>
-            <Link href="/" className={styles.link}>
-              view latest
-            </Link>
-          </div>
-          <div className={styles.stats}>
-            <div className={styles.statRow}>
-              <IconPolaroid
-                size={40}
-                color="#cacaca"
-                stroke={1.1}
-                className={styles.statIcon}
-              />
-              <div className={styles.statCol}>
-                <p className={styles.statNum}>{numPosts.toLocaleString()}</p>
-                <p className={styles.statTitle}>photos</p>
+    <AboutPhotoProvider>
+      <main>
+        <div className={styles.container}>
+          <div className={styles.band}>
+            <div className={`${styles.split} ${styles.hero}`}>
+              <div>
+                <h1 className={styles.title}>Film for all</h1>
+                <p className={styles.subtitle}>
+                  AnalogDB is a curated database of {numPosts.toLocaleString()}{" "}
+                  film photos, each one analyzed for color, gear and content.
+                  New photos are added every day.
+                </p>
+                <Link href="/" className={styles.link}>
+                  view latest
+                </Link>
               </div>
-            </div>
-
-            <div className={styles.statRow}>
-              <IconUsers
-                size={36}
-                color="#cacaca"
-                stroke={1.5}
-                className={styles.statIcon}
-              />
-              <div className={styles.statCol}>
-                <p className={styles.statNum}>{numAuthors.toLocaleString()}</p>
-                <p className={styles.statTitle}>photographers</p>
+              <div className={styles.stats}>
+                {stats.map(({ icon: Icon, count, label }) => (
+                  <div key={label} className={styles.statRow}>
+                    <Icon size={36} stroke={1.2} className={styles.statIcon} />
+                    <div className={styles.statCol}>
+                      <p className={styles.statNum}>{count.toLocaleString()}</p>
+                      <p className={styles.statTitle}>{label}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
-        </div>
 
-        <div className={styles.sectionTwoBg}>
-          <div className={styles.colorSection}>
-            {renderColorRow(colorData.red, "right", 0)}
-            {renderColorRow(colorData.navy, "left", 0)}
-            {renderColorRow(colorData.olive, "right", 0)}
-            {renderMobileColorRows()}
-            <div className={styles.colorTextOverlay}>
-              <div className={styles.title}>Color Intelligence</div>
-              <p className={styles.subtitle}>
-                Dominant colors are extracted from every photo, allowing you to
-                discover images by their visual palette. Search and analyze
-                images by their distinct colors.
-              </p>
-              <Link href="/?color=red" className={styles.link}>
-                explore colors
-              </Link>
+          <div className={styles.band}>
+            <div className={styles.colorSection}>
+              {renderColorRow(colorData.red, "right", 0)}
+              {renderColorRow(colorData.navy, "left", 0)}
+              {renderColorRow(colorData.olive, "right", 0)}
+              {renderMobileColorRows()}
+              <div className={styles.colorTextOverlay}>
+                <h2 className={styles.title}>Color Intelligence</h2>
+                <p className={styles.subtitle}>
+                  Dominant colors are extracted from every photo, allowing you
+                  to discover images by their visual palette. Search and analyze
+                  images by their distinct colors.
+                </p>
+                <Link href="/?color=red" className={styles.link}>
+                  explore colors
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className={styles.sectionSimilarityBg} ref={similarityRef}>
-          <div className={styles.similaritySection}>
-            {renderSimilarityClusters()}
-            {renderMobileSimilarity()}
-            <div className={styles.similarityTextOverlay}>
-              <div className={styles.title}>Vector Similarity</div>
-              <p className={styles.subtitle}>
-                Every image is encoded with vector embeddings, enabling
-                intelligent visual similarity search. Discover photos that share
-                composition and visual patterns.
-              </p>
-              <Link href="/" className={styles.link}>
-                find similar
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        <div className={styles.sectionThreeBg}>
-          <div className={styles.sectionThree}>
-            <div>
-              <div
-                className={`${styles.apiDemoContainer} ${styles.desktopOnly}`}
-              >
-                <div className={styles.apiDemo}>
-                  <CodeHighlight
-                    code={apiQuery}
-                    language="javascript"
-                    styles={{
-                      code: {
-                        fontSize: "0.75rem",
-                        maxWidth: "40vw",
-                      },
-                    }}
-                  />
+          {props.data.films.length > 0 && (
+            <div className={styles.band}>
+              <div className={styles.stacked}>
+                <div>
+                  <h2 className={styles.title}>Film Stocks</h2>
+                  <p className={`${styles.subtitle} ${styles.wideSubtitle}`}>
+                    Camera, lens and film are read from every post, so you can
+                    browse by film stock and see what each one looks like.
+                  </p>
+                  <Link href="/films" className={styles.link}>
+                    browse film
+                  </Link>
                 </div>
-                <div className={styles.apiDemo}>
-                  <CodeHighlight
-                    code={apiResponse}
-                    language="javascript"
-                    styles={{
-                      code: {
-                        fontSize: "0.75rem",
-                        maxHeight: "70vh",
-                        maxWidth: "40vw",
-                      },
-                    }}
-                  />
-                </div>
-              </div>
-              <div className={styles.mobileOnly}>
-                <div className={styles.mobileApiDemo}>
-                  <CodeHighlight
-                    code={`${apiQuery}\n${apiResponseShort}`}
-                    language="javascript"
-                    styles={{
-                      code: {
-                        fontSize: "0.75rem",
-                        maxHeight: "320px",
-                      },
-                    }}
-                  />
+                <div className={styles.visualFirst}>
+                  <AboutFilms films={props.data.films} />
                 </div>
               </div>
             </div>
-            <div>
-              <div className={styles.title}>Accessible API</div>
-              <p className={styles.subtitle}>
-                The entire collection of film is exposed through a simple and
-                modern JSON API. Embedding beautiful film photos in your
-                projects has never been easier.
-              </p>
-              <Link href="/docs" className={styles.link}>
-                read the docs
-              </Link>
-            </div>
-          </div>
-        </div>
+          )}
 
-        <div className={styles.sectionFourBg}>
-          <div className={styles.sectionFour}>
-            <div>
-              <div className={styles.title}>Open-source</div>
-              <p className={styles.subtitle}>
-                All code made publicly available on Github with flexible
-                licensing. AnalogDB is an open community where all contributions
-                are welcome!
-              </p>
-              <a
-                className={styles.link}
-                href="https://github.com/evanofslack/analogdb"
-              >
-                view source
-              </a>
+          {props.data.searches.length > 0 && (
+            <div className={styles.band}>
+              <div className={styles.split}>
+                <div className={`${styles.visualFirst} ${styles.searchVisual}`}>
+                  <AboutSearch searches={props.data.searches} />
+                </div>
+                <div>
+                  <h2 className={styles.title}>Search by Phrase</h2>
+                  <p className={styles.subtitle}>
+                    A vision model writes a caption and tags for every photo, so
+                    you can search by what is in it.
+                  </p>
+                  <Link href="/search" className={styles.link}>
+                    try search
+                  </Link>
+                </div>
+              </div>
             </div>
-            <div className={`${styles.imageThree} ${styles.desktopOnly}`}>
-              <Image
-                src={"/github_logo.png"}
-                alt={`example AnalogDB API call`}
-                width="384"
-                height="216"
-                quality={100}
-              />
+          )}
+
+          <div
+            className={styles.band}
+            ref={similarityRef}
+            onMouseEnter={() => setIsSimilarityHovered(true)}
+            onMouseLeave={() => setIsSimilarityHovered(false)}
+          >
+            <div className={styles.similaritySection}>
+              {renderSimilarityClusters()}
+              {renderMobileSimilarity()}
+              <div className={styles.similarityTextOverlay}>
+                <h2 className={styles.title}>Vector Similarity</h2>
+                <p className={styles.subtitle}>
+                  Every photo is embedded with CLIP, one vector space shared by
+                  text search, image search and similar photos. Find photos that
+                  share a look.
+                </p>
+                <Link href="/search" className={styles.link}>
+                  find similar
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.band}>
+            <div className={styles.split}>
+              {apiSample && (
+                <div className={styles.visualFirst}>
+                  <div
+                    className={`${styles.apiDemoContainer} ${styles.desktopOnly}`}
+                  >
+                    <div className={styles.apiDemo}>
+                      <CodeHighlight
+                        code={apiSample.query}
+                        language="bash"
+                        classNames={{ code: styles.apiCode }}
+                      />
+                    </div>
+                    <div className={styles.apiDemo}>
+                      <CodeHighlight
+                        code={apiSample.full}
+                        language="json"
+                        classNames={{ code: styles.apiCodeTall }}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.mobileOnly}>
+                    <div className={styles.mobileApiDemo}>
+                      <CodeHighlight
+                        code={`${apiSample.query}\n\n${apiSample.short}`}
+                        language="json"
+                        classNames={{ code: styles.mobileApiCode }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div>
+                <h2 className={styles.title}>Accessible API</h2>
+                <p className={styles.subtitle}>
+                  Posts, search, similar photos, colors and gear, all through
+                  one simple JSON API.
+                </p>
+                <Link href="/docs" className={styles.link}>
+                  read the docs
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.band}>
+            <div className={styles.split}>
+              <div>
+                <h2 className={styles.title}>Open-source</h2>
+                <p className={styles.subtitle}>
+                  All code made publicly available on Github with flexible
+                  licensing. AnalogDB is an open community where all
+                  contributions are welcome!
+                </p>
+                <a
+                  className={styles.link}
+                  href="https://github.com/evanofslack/analogdb"
+                >
+                  view source
+                </a>
+              </div>
+              <div className={styles.desktopOnly}>
+                <IconBrandGithub
+                  size={160}
+                  stroke={1}
+                  className={styles.githubIcon}
+                  aria-hidden
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <Footer />
-    </main>
+        <Footer />
+      </main>
+    </AboutPhotoProvider>
   );
 }
