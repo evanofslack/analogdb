@@ -1,0 +1,2 @@
+[pre-start]
+env = "wt step copy-ignored"
