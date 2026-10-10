@@ -25,8 +25,10 @@ export default function ReportModal({ postId, opened, onClose }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(null);
 
-  const set = (key) => (event) =>
-    setValues((v) => ({ ...v, [key]: event.currentTarget.value }));
+  const set = (key) => (event) => {
+    const value = event.currentTarget.value;
+    setValues((v) => ({ ...v, [key]: value }));
+  };
 
   function close() {
     onClose();
