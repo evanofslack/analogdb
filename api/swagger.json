@@ -581,6 +581,75 @@
                 }
             }
         },
+        "/events": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Accept a batch of UI events from the web server. Events that fail validation are dropped and the rest are published (requires authentication)",
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Record UI events",
+                "parameters": [
+                    {
+                        "description": "Event batch, at most 25 events",
+                        "name": "batch",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.EventBatch"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Visitor IP, only read for the web role",
+                        "name": "X-Analogdb-Visitor-IP",
+                        "in": "header"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Visitor user agent, only read for the web role",
+                        "name": "X-Analogdb-Visitor-UA",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Invalid batch",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "413": {
+                        "description": "Batch too large",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/film": {
             "put": {
                 "security": [
@@ -2663,6 +2732,82 @@
                 "message": {
                     "type": "string",
                     "example": "Success, post deleted"
+                }
+            }
+        },
+        "server.EventBatch": {
+            "type": "object",
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/server.EventInput"
+                    }
+                }
+            }
+        },
+        "server.EventInput": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "9b2f6c1e-3f4a-4d6b-9a51-2c7e8f0d1a23"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "page_view"
+                },
+                "path": {
+                    "type": "string",
+                    "example": "/post/123"
+                },
+                "post_id": {
+                    "type": "integer",
+                    "example": 123
+                },
+                "props": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "referrer": {
+                    "type": "string",
+                    "example": "news.ycombinator.com"
+                },
+                "route": {
+                    "type": "string",
+                    "example": "/post/[id]"
+                },
+                "search_id": {
+                    "type": "string"
+                },
+                "ts": {
+                    "type": "integer",
+                    "example": 1760000000000
+                },
+                "utm": {
+                    "$ref": "#/definitions/server.EventUtm"
+                },
+                "v": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "vw": {
+                    "type": "integer",
+                    "example": 1280
+                }
+            }
+        },
+        "server.EventUtm": {
+            "type": "object",
+            "properties": {
+                "campaign": {
+                    "type": "string"
+                },
+                "medium": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
                 }
             }
         },
