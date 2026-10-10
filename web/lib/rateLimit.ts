@@ -9,7 +9,8 @@ export type Bucket =
   | "imageSearch"
   | "download"
   | "login"
-  | "report";
+  | "report"
+  | "events";
 
 export type RateLimitResult = { ok: boolean; retryAfter: number };
 
@@ -23,6 +24,7 @@ const limits: Record<Bucket, { limit: number; windowMs: number }> = {
   download: { limit: 20, windowMs: minute },
   login: { limit: 5, windowMs: 15 * minute },
   report: { limit: 5, windowMs: 15 * minute },
+  events: { limit: 60, windowMs: minute },
 };
 
 const windows = new Map<
