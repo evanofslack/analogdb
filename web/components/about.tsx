@@ -4,6 +4,7 @@ import {
   AboutData,
   ColorData,
   AboutPhoto as Photo,
+  RainbowGroup,
   shuffle,
   SimilarityData,
 } from "@lib/about";
@@ -33,15 +34,28 @@ const CLUSTER_CENTER_HEIGHT = 420;
 const CLUSTER_SIMILAR_HEIGHT = 180;
 
 const COLOR_ROW_SIZE = 16;
-const MOBILE_ROW_SIZE = 8;
+const RAINBOW_SECONDS = 6;
+const NO_HUE_SORT = ["black", "white"];
+
+// pick each color's photos, then order them by hue so the belt reads as a gradient
+function buildRainbow(groups: RainbowGroup[]): Photo[] {
+  const shift = (hue: number) => (hue + 30) % 360;
+  return groups.flatMap(({ color, count, photos }) => {
+    const picks = shuffle(photos).slice(0, count);
+    if (!NO_HUE_SORT.includes(color)) {
+      picks.sort((a, b) => shift(a.hue) - shift(b.hue));
+    }
+    return picks.map((item) => item.photo);
+  });
+}
 
 function pickColorRows(colorData: ColorData, random: boolean): ColorData {
   const pick = (images: Photo[]) =>
     (random ? shuffle(images) : images).slice(0, COLOR_ROW_SIZE);
   return {
+    teal: pick(colorData.teal),
     red: pick(colorData.red),
     navy: pick(colorData.navy),
-    olive: pick(colorData.olive),
   };
 }
 
@@ -56,10 +70,12 @@ export default function About(props: AboutProps) {
   );
 
   const [shuffled, setShuffled] = useState(false);
+  const [rainbow, setRainbow] = useState<Photo[]>([]);
 
   // images render only after the shuffle, so the unshuffled server picks never download
   useEffect(() => {
     setColorData(pickColorRows(props.data.colorData, true));
+    setRainbow(buildRainbow(props.data.rainbow));
     setAllSimilarityData(shuffle(props.data.allSimilarityData));
     setShuffled(true);
   }, [props.data]);
@@ -137,36 +153,29 @@ export default function About(props: AboutProps) {
   }, [allSimilarityData, isSimilarityVisible, isSimilarityHovered]);
 
   const renderMobileColorRows = (): React.ReactElement | null => {
-    const rows: [Photo[], "left" | "right"][] = [
-      [colorData.red.slice(0, MOBILE_ROW_SIZE), "right"],
-      [colorData.navy.slice(0, MOBILE_ROW_SIZE), "left"],
-    ];
-    if (rows.every(([images]) => !images.length)) return null;
+    if (!shuffled || !rainbow.length) return null;
 
     return (
       <div className={`${styles.mobileOnly} ${styles.visual}`}>
         <div className={styles.mobileColorRows}>
-          {rows.map(([images, direction]) => (
-            <div key={direction} className={styles.mobileColorRow}>
-              <div
-                className={`${styles.colorScrollContainer} ${
-                  direction === "left" ? styles.scrollLeft : styles.scrollRight
-                } ${styles.mobileScroll}`}
-              >
-                {(shuffled ? [...images, ...images] : []).map(
-                  (image, index) => (
-                    <AboutPhoto
-                      key={`${image.id}-${index}`}
-                      photo={image}
-                      small
-                      className={styles.colorImageContainer}
-                      imageClassName={styles.mobileColorImage}
-                    />
-                  )
-                )}
-              </div>
+          <div className={styles.mobileColorRow}>
+            <div
+              className={`${styles.colorScrollContainer} ${styles.scrollLeft} ${styles.mobileScroll}`}
+              style={{
+                animationDuration: `${rainbow.length * RAINBOW_SECONDS}s`,
+              }}
+            >
+              {[...rainbow, ...rainbow].map((image, index) => (
+                <AboutPhoto
+                  key={`${image.id}-${index}`}
+                  photo={image}
+                  small
+                  className={styles.colorImageContainer}
+                  imageClassName={styles.mobileColorImage}
+                />
+              ))}
             </div>
-          ))}
+          </div>
         </div>
       </div>
     );
@@ -365,9 +374,9 @@ export default function About(props: AboutProps) {
 
           <div className={styles.band}>
             <div className={styles.colorSection}>
-              {renderColorRow(colorData.red, "right", 0)}
-              {renderColorRow(colorData.navy, "left", 0)}
-              {renderColorRow(colorData.olive, "right", 0)}
+              {renderColorRow(colorData.teal, "right", 0)}
+              {renderColorRow(colorData.red, "left", 0)}
+              {renderColorRow(colorData.navy, "right", 0)}
               {renderMobileColorRows()}
               <div className={styles.colorTextOverlay}>
                 <h2 className={styles.title}>Color Intelligence</h2>

@@ -13,9 +13,21 @@ export interface AboutPhoto {
 }
 
 export interface ColorData {
+  teal: AboutPhoto[];
   red: AboutPhoto[];
   navy: AboutPhoto[];
-  olive: AboutPhoto[];
+}
+
+export interface RainbowPhoto {
+  photo: AboutPhoto;
+  hue: number;
+}
+
+// one color's pool for the phone rainbow, count is how many to show
+export interface RainbowGroup {
+  color: string;
+  count: number;
+  photos: RainbowPhoto[];
 }
 
 export interface SimilarityData {
@@ -48,6 +60,7 @@ export interface AboutData {
   numCameras: number;
   numFilms: number;
   colorData: ColorData;
+  rainbow: RainbowGroup[];
   allSimilarityData: SimilarityData[];
   films: FilmSet[];
   searches: SearchDemo[];

@@ -5,6 +5,8 @@ import {
   ApiSample,
   ColorData,
   FilmSet,
+  RainbowGroup,
+  RainbowPhoto,
   SearchDemo,
   SimilarityData,
 } from "@lib/about";
@@ -20,11 +22,34 @@ import { cameraName, filmName, postAlt } from "@lib/seo";
 import { AnalogdbPost, PostsGetSortEnum } from "analogdb-generated";
 import { unstable_cache } from "next/cache";
 
-const COLOR_MIN_VALUES: Record<string, number> = {
-  red: 0.4,
-  navy: 0.4,
-  olive: 0.4,
-};
+const COLOR_ROW_POOL = 30;
+const TEAL_PAGES = 2;
+const TEAL_MIN_PHOTOS = 12;
+
+// phone rainbow order, thin colors in the archive get a lower threshold.
+// the api's color names are loose, so hues outside the range are dropped
+const RAINBOW: {
+  color: string;
+  min: number;
+  count: number;
+  hues?: [number, number];
+}[] = [
+  { color: "red", min: 0.4, count: 4, hues: [340, 20] },
+  { color: "orange", min: 0.25, count: 4, hues: [12, 45] },
+  { color: "yellow", min: 0.25, count: 2, hues: [38, 66] },
+  { color: "green", min: 0.25, count: 4, hues: [66, 160] },
+  { color: "teal", min: 0.3, count: 4 },
+  { color: "navy", min: 0.4, count: 4, hues: [200, 255] },
+  { color: "purple", min: 0.25, count: 4, hues: [255, 335] },
+  { color: "black", min: 0.5, count: 3 },
+  { color: "white", min: 0.5, count: 3 },
+];
+
+function inHues(hue: number, [low, high]: [number, number]): boolean {
+  return low <= high ? hue >= low && hue <= high : hue >= low || hue <= high;
+}
+
+const RAINBOW_POOL = 20;
 
 const SIMILARITY_IDS = [
   32298, 34246, 34252, 533, 30293, 4501, 5211, 1043, 4385, 2235, 6912, 33116,
@@ -131,29 +156,114 @@ function toPhotos(posts: AnalogdbPost[] | undefined): AboutPhoto[] {
     .filter((photo): photo is AboutPhoto => photo !== null);
 }
 
-async function fetchColorData(): Promise<ColorData> {
-  const colors = ["red", "navy", "olive"] as const;
+function hsl(hex: string): { hue: number; sat: number; light: number } {
+  const value = parseInt(hex.replace("#", ""), 16);
+  const r = ((value >> 16) & 255) / 255;
+  const g = ((value >> 8) & 255) / 255;
+  const b = (value & 255) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const light = (max + min) / 2;
+  const delta = max - min;
+  if (delta === 0) return { hue: 0, sat: 0, light };
+  const sat = delta / (1 - Math.abs(2 * light - 1));
+  let hue;
+  if (max === r) hue = ((g - b) / delta) % 6;
+  else if (max === g) hue = (b - r) / delta + 2;
+  else hue = (r - g) / delta + 4;
+  return { hue: (hue * 60 + 360) % 360, sat, light };
+}
 
-  const promises = colors.map(async (color) => {
-    try {
+type ColorPhoto = RainbowPhoto & { sat: number; light: number };
+
+// the api's teal is mostly pale sky blue, keep only real cyan green tones
+function isTeal({ hue, sat, light }: ColorPhoto): boolean {
+  return hue >= 160 && hue <= 198 && sat >= 0.2 && light <= 0.6;
+}
+
+async function fetchColor(
+  color: string,
+  min: number,
+  pageSize: number,
+  pages = 1
+): Promise<ColorPhoto[]> {
+  const result: ColorPhoto[] = [];
+  let cursor: string | undefined;
+  try {
+    for (let page = 0; page < pages; page++) {
       const response = await getPosts({
         color: [color],
-        minColor: [COLOR_MIN_VALUES[color]],
-        pageSize: 30,
+        minColor: [min],
+        pageSize,
+        cursor,
         nsfw: false,
+        grayscale: false,
         sort: PostsGetSortEnum.Random,
         ratioMin: 0.7,
         ratioMax: 1.5,
       });
-      return toPhotos(response.posts);
-    } catch (error) {
-      console.error("Fail fetch color posts for:", color, error);
-      return [];
+      for (const post of response.posts ?? []) {
+        const photo = toPhoto(post);
+        const match = post.colors?.find((c) => c.html === color);
+        if (!photo || !match?.hex) continue;
+        result.push({ photo, ...hsl(match.hex) });
+      }
+      cursor = response.meta?.nextCursor;
+      if (!cursor) break;
     }
-  });
+  } catch (error) {
+    console.error("Fail fetch color posts for:", color, error);
+  }
+  return result;
+}
 
-  const [red, navy, olive] = await Promise.all(promises);
-  return { red, navy, olive };
+const plain = (photos: ColorPhoto[]): AboutPhoto[] =>
+  photos.map((item) => item.photo);
+
+const toRainbow = (photos: ColorPhoto[]): RainbowPhoto[] =>
+  photos.map(({ photo, hue }) => ({ photo, hue }));
+
+async function fetchColors(): Promise<{
+  colorData: ColorData;
+  rainbow: RainbowGroup[];
+}> {
+  const [red, navy, tealPool] = await Promise.all([
+    fetchColor("red", 0.4, COLOR_ROW_POOL),
+    fetchColor("navy", 0.4, COLOR_ROW_POOL),
+    fetchColor("teal", 0.3, 100, TEAL_PAGES),
+  ]);
+  const teal = tealPool.filter(isTeal);
+  // too little real teal this hour, olive keeps the third row full
+  const thirdRow =
+    teal.length >= TEAL_MIN_PHOTOS
+      ? teal
+      : await fetchColor("olive", 0.4, COLOR_ROW_POOL);
+
+  const known: Record<string, ColorPhoto[]> = { red, navy, teal };
+  const others = await Promise.all(
+    RAINBOW.filter(({ color }) => !known[color]).map(
+      async ({ color, min }) =>
+        [color, await fetchColor(color, min, RAINBOW_POOL)] as const
+    )
+  );
+  const pools = { ...known, ...Object.fromEntries(others) };
+
+  return {
+    colorData: {
+      teal: plain(thirdRow),
+      red: plain(red),
+      navy: plain(navy),
+    },
+    rainbow: RAINBOW.map(({ color, count, hues }) => {
+      const pool = pools[color] ?? [];
+      const inRange = hues
+        ? pool.filter((item) => inHues(item.hue, hues))
+        : pool;
+      // a short group keeps the loose matches rather than vanish
+      const photos = inRange.length >= count ? inRange : pool;
+      return { color, count, photos: toRainbow(photos) };
+    }).filter((group) => group.photos.length > 0),
+  };
 }
 
 async function fetchSimilarityData(): Promise<SimilarityData[]> {
@@ -305,7 +415,7 @@ async function getData(): Promise<AboutData> {
     numAuthors,
     cameras,
     filmOptions,
-    colorData,
+    colors,
     allSimilarityData,
     films,
     searches,
@@ -315,7 +425,7 @@ async function getData(): Promise<AboutData> {
     getAuthorsTotalCount(),
     getCameraOptions(),
     getFilmOptions(),
-    fetchColorData(),
+    fetchColors(),
     fetchSimilarityData(),
     fetchFilms(),
     fetchSearches(),
@@ -327,7 +437,8 @@ async function getData(): Promise<AboutData> {
     numAuthors,
     numCameras: cameras.length,
     numFilms: filmOptions.length,
-    colorData,
+    colorData: colors.colorData,
+    rainbow: colors.rainbow,
     allSimilarityData,
     films,
     searches,
@@ -335,6 +446,6 @@ async function getData(): Promise<AboutData> {
   };
 }
 
-export const getAboutData = unstable_cache(getData, ["about-data-v2"], {
+export const getAboutData = unstable_cache(getData, ["about-data-v3"], {
   revalidate: 3600,
 });
