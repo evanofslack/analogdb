@@ -49,6 +49,11 @@
   padding-top: 4rem;
 }
 
+/* the last section sits close to the footer */
+.band:last-child .split {
+  padding-bottom: 3rem;
+}
+
 /* split with a large visual */
 .wide {
   max-width: 1300px;
@@ -297,7 +302,7 @@
   }
 }
 
-/* every section links with an arrow, phones give the hero a button */
+/* every section links with an arrow */
 .link {
   display: inline-block;
   font-size: 1rem;
@@ -478,16 +483,11 @@
     align-items: stretch;
     justify-content: flex-start;
     gap: 0;
-    padding: 2rem 1rem;
+    padding: 2.5rem 1rem;
   }
 
   .hero {
     padding-top: 1.5rem;
-  }
-
-  /* extra room before the footer */
-  .band:last-child .split {
-    padding-bottom: 4rem;
   }
 
   .text {
@@ -499,27 +499,12 @@
     margin-top: 1.25rem;
   }
 
-  .link.primary {
-    color: var(--adb-cta-fg);
-    font-weight: 400;
-    background-color: var(--adb-cta-bg);
-    padding: 0.5rem 1rem;
-    border-radius: var(--mantine-radius-default);
-  }
-
-  .link.primary::after {
-    content: none;
-  }
-
-  .link.primary:hover {
-    opacity: 0.85;
-  }
-
   .stats {
     display: flex;
     justify-content: space-between;
     gap: 0.75rem;
     margin-top: 1.75rem;
+    padding: 0 0.5rem;
   }
 
   .statIcon {
