@@ -1,7 +1,7 @@
 "use client";
 
 import useIsAdmin from "@hooks/useIsAdmin";
-import { ActionIcon, Drawer } from "@mantine/core";
+import { ActionIcon, Menu } from "@mantine/core";
 import { useDisclosure, useMediaQuery } from "@mantine/hooks";
 import { IconCheck, IconMenu2 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -41,7 +41,7 @@ const ADMIN_LINK = {
 export default function MobileNav() {
   const isAdmin = useIsAdmin();
   const pathname = usePathname();
-  const [opened, { open, close }] = useDisclosure(false);
+  const [opened, { close, toggle }] = useDisclosure(false);
   const isDesktop = useMediaQuery("(min-width: 721px)");
 
   useEffect(() => {
@@ -55,61 +55,66 @@ export default function MobileNav() {
   return (
     <div className={styles.bar}>
       <ThemeToggle size={24} stroke={2} />
-      <ActionIcon
-        onClick={open}
-        variant="subtle"
-        color="gray"
-        c="var(--adb-heading)"
-        size="xl"
-        aria-label="Open menu"
-        aria-expanded={opened}
-        aria-controls="mobile-menu"
-      >
-        <IconMenu2 size={24} stroke={2} />
-      </ActionIcon>
-      <Drawer
-        id="mobile-menu"
+      <Menu
         opened={opened}
         onClose={close}
-        position="right"
-        size="100%"
-        title="AnalogDB"
-        closeButtonProps={{ "aria-label": "Close menu", size: "xl" }}
+        position="bottom-end"
+        offset={6}
+        width={220}
+        radius="md"
+        shadow="md"
+        transitionProps={{ transition: "pop-top-right", duration: 150 }}
         classNames={{
-          header: styles.header,
-          title: styles.title,
-          content: styles.content,
-          body: styles.body,
+          dropdown: styles.dropdown,
+          item: styles.item,
+          divider: styles.divider,
         }}
       >
-        <nav className={styles.nav}>
+        <Menu.Target>
+          <ActionIcon
+            onClick={toggle}
+            variant="subtle"
+            color="gray"
+            c="var(--adb-heading)"
+            size="xl"
+            aria-label="Menu"
+          >
+            <IconMenu2 size={24} stroke={2} />
+          </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
           {links.map((link) => {
             const isActive = link.active(pathname);
             return (
-              <Link
+              <Menu.Item
                 key={link.href}
+                component={Link}
                 href={link.href}
-                onClick={close}
                 aria-current={isActive ? "page" : undefined}
-                className={
-                  isActive ? `${styles.link} ${styles.active}` : styles.link
-                }
+                className={isActive ? styles.active : undefined}
               >
-                <span className={styles.label}>{link.label}</span>
-                {isActive && (
-                  <IconCheck size={22} stroke={2} aria-hidden="true" />
-                )}
-              </Link>
+                <span className={styles.label}>
+                  {link.label}
+                  {isActive && (
+                    <IconCheck size={18} stroke={2} aria-hidden="true" />
+                  )}
+                </span>
+              </Menu.Item>
             );
           })}
-        </nav>
-        <div className={styles.footer}>
-          <p> &copy; 2026 AnalogDB </p>
-          <a href="https://github.com/evanofslack/analogdb" aria-label="GitHub">
-            <FiGithub size="1.2rem" />
-          </a>
-        </div>
-      </Drawer>
+          <Menu.Divider />
+          <Menu.Item
+            component="a"
+            href="https://github.com/evanofslack/analogdb"
+            className={styles.github}
+          >
+            <span className={styles.label}>
+              <FiGithub size="1rem" aria-hidden="true" />
+              GitHub
+            </span>
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
     </div>
   );
 }

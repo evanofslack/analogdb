@@ -5,50 +5,26 @@
   gap: 0.5rem;
 }
 
-.content {
-  display: flex;
-  flex-direction: column;
+.dropdown {
+  padding: 0.4rem;
   background-color: var(--adb-surface);
+  border: 1px solid var(--adb-divider);
 }
 
-.header {
-  padding: 1rem 1.5rem;
-  background-color: var(--adb-surface);
-}
-
-.title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--adb-heading);
-}
-
-.body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem 1.5rem 0;
-  overflow-y: auto;
-}
-
-.nav {
-  display: flex;
-  flex-direction: column;
-}
-
-.link {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
+.item {
   min-height: 44px;
-  padding: 0.6rem 0;
+  padding: 0 0.9rem;
   color: var(--adb-nav);
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: 300;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
     Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+.item[data-hovered] {
+  background-color: var(--adb-surface-hover);
 }
 
 .active {
@@ -57,20 +33,17 @@
 }
 
 .label {
-  line-height: 1.2;
-}
-
-.footer {
-  margin-top: auto;
-  padding: 1.5rem 0 max(1.5rem, env(safe-area-inset-bottom));
-  font-size: 0.7rem;
-  font-weight: 300;
-  display: flex;
-  flex-direction: row;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.footer p {
-  margin: 0;
+.divider {
+  border-color: var(--adb-divider);
+}
+
+.github {
+  font-size: 0.85rem;
+  text-transform: none;
+  letter-spacing: 0;
 }
