@@ -30,6 +30,7 @@ func TestKeywordSummaryParams(t *testing.T) {
 		wantTop    *int
 		wantMin    *int
 		wantDays   *int
+		wantSort   analogdb.KeywordSort
 	}{
 		{url: "/v1/keywords/summary", wantStatus: http.StatusOK},
 		{url: "/keywords/summary?min_count=20", wantStatus: http.StatusOK, wantMin: intPtr(20)},
@@ -39,6 +40,10 @@ func TestKeywordSummaryParams(t *testing.T) {
 		{url: "/v1/keywords/summary?top_posts=abc", wantStatus: http.StatusBadRequest},
 		{url: "/v1/keywords/summary?min_count=0", wantStatus: http.StatusBadRequest},
 		{url: "/v1/keywords/summary?min_count=abc", wantStatus: http.StatusBadRequest},
+		{url: "/v1/keywords/summary?sort=count", wantStatus: http.StatusOK},
+		{url: "/v1/keywords/summary?sort=trending", wantStatus: http.StatusOK, wantDays: intPtr(keywordTrendingDays), wantSort: analogdb.KeywordSortTrending},
+		{url: "/v1/keywords/summary?sort=trending&days=14", wantStatus: http.StatusOK, wantDays: intPtr(14), wantSort: analogdb.KeywordSortTrending},
+		{url: "/v1/keywords/summary?sort=bogus", wantStatus: http.StatusBadRequest},
 	}
 	for _, tt := range tests {
 		t.Run(tt.url, func(t *testing.T) {
@@ -61,6 +66,13 @@ func TestKeywordSummaryParams(t *testing.T) {
 			f := keywords.filter
 			if !equalIntPtr(f.TopPosts, tt.wantTop) || !equalIntPtr(f.MinCount, tt.wantMin) || !equalIntPtr(f.Days, tt.wantDays) {
 				t.Errorf("unexpected filter top=%v min=%v days=%v", f.TopPosts, f.MinCount, f.Days)
+			}
+			var sort analogdb.KeywordSort
+			if f.Sort != nil {
+				sort = *f.Sort
+			}
+			if sort != tt.wantSort {
+				t.Errorf("want sort %q, got %q", tt.wantSort, sort)
 			}
 		})
 	}
