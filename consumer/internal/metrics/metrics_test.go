@@ -68,15 +68,64 @@ func TestIncrementEventsCommitted(t *testing.T) {
 	m.IncrementEventsCommitted(1, "group1", "topic1", errors.New("test error"))
 
 	metric := &dto.Metric{}
-	m.eventsRead.WithLabelValues("group1", "topic1", "success").Write(metric)
+	m.eventsCommitted.WithLabelValues("group1", "topic1", "success").Write(metric)
 	if metric.Counter.GetValue() != 2 {
 		t.Errorf("Expected success count 2, got %v", metric.Counter.GetValue())
 	}
 
 	metric = &dto.Metric{}
-	m.eventsRead.WithLabelValues("group1", "topic1", "fail").Write(metric)
+	m.eventsCommitted.WithLabelValues("group1", "topic1", "fail").Write(metric)
 	if metric.Counter.GetValue() != 1 {
 		t.Errorf("Expected fail count 1, got %v", metric.Counter.GetValue())
+	}
+
+	metric = &dto.Metric{}
+	m.eventsRead.WithLabelValues("group1", "topic1", "success").Write(metric)
+	if metric.Counter.GetValue() != 0 {
+		t.Errorf("Expected read count 0, got %v", metric.Counter.GetValue())
+	}
+}
+
+func TestIncrementEventsDropped(t *testing.T) {
+	m, err := New(slog.Default())
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
+
+	m.IncrementEventsDropped(2, "topic1", "invalid")
+	m.IncrementEventsDropped(1, "topic1", "decode")
+
+	metric := &dto.Metric{}
+	m.eventsDropped.WithLabelValues("topic1", "invalid").Write(metric)
+	if metric.Counter.GetValue() != 2 {
+		t.Errorf("Expected invalid count 2, got %v", metric.Counter.GetValue())
+	}
+
+	metric = &dto.Metric{}
+	m.eventsDropped.WithLabelValues("topic1", "decode").Write(metric)
+	if metric.Counter.GetValue() != 1 {
+		t.Errorf("Expected decode count 1, got %v", metric.Counter.GetValue())
+	}
+}
+
+func TestSetBatchRetrying(t *testing.T) {
+	m, err := New(slog.Default())
+	if err != nil {
+		t.Fatalf("New() failed: %v", err)
+	}
+
+	m.SetBatchRetrying("topic1", true)
+	metric := &dto.Metric{}
+	m.batchRetrying.WithLabelValues("topic1").Write(metric)
+	if metric.Gauge.GetValue() != 1 {
+		t.Errorf("Expected gauge 1, got %v", metric.Gauge.GetValue())
+	}
+
+	m.SetBatchRetrying("topic1", false)
+	metric = &dto.Metric{}
+	m.batchRetrying.WithLabelValues("topic1").Write(metric)
+	if metric.Gauge.GetValue() != 0 {
+		t.Errorf("Expected gauge 0, got %v", metric.Gauge.GetValue())
 	}
 }
 

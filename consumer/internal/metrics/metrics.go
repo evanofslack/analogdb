@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	dto "github.com/prometheus/client_model/go"
 )
 
 const shutdownTimeout = 5 * time.Second
@@ -21,6 +22,8 @@ type Metrics struct {
 
 	eventsRead               *prometheus.CounterVec
 	eventsCommitted          *prometheus.CounterVec
+	eventsDropped            *prometheus.CounterVec
+	batchRetrying            *prometheus.GaugeVec
 	clickhouseInserts        *prometheus.CounterVec
 	clickhouseInsertDuration *prometheus.HistogramVec
 }
@@ -46,6 +49,20 @@ func New(logger *slog.Logger) (*Metrics, error) {
 			},
 			[]string{"consumer_group", "topic", "result"},
 		),
+		eventsDropped: prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "events_dropped_total",
+				Help: "Total number of events dropped without insert",
+			},
+			[]string{"topic", "reason"},
+		),
+		batchRetrying: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "batch_retrying",
+				Help: "Whether a batch is being retried",
+			},
+			[]string{"topic"},
+		),
 		clickhouseInserts: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "clickhouse_inserts_total",
@@ -69,6 +86,12 @@ func New(logger *slog.Logger) (*Metrics, error) {
 	if err := m.registerer.Register(m.eventsCommitted); err != nil {
 		return nil, err
 	}
+	if err := m.registerer.Register(m.eventsDropped); err != nil {
+		return nil, err
+	}
+	if err := m.registerer.Register(m.batchRetrying); err != nil {
+		return nil, err
+	}
 	if err := m.registerer.Register(m.clickhouseInserts); err != nil {
 		return nil, err
 	}
@@ -89,10 +112,22 @@ func (m *Metrics) IncrementEventsRead(count int, consumerGroup, topic string, er
 
 func (m *Metrics) IncrementEventsCommitted(count int, consumerGroup, topic string, err error) {
 	if err == nil {
-		m.eventsRead.WithLabelValues(consumerGroup, topic, "success").Add(float64(count))
+		m.eventsCommitted.WithLabelValues(consumerGroup, topic, "success").Add(float64(count))
 	} else {
-		m.eventsRead.WithLabelValues(consumerGroup, topic, "fail").Add(float64(count))
+		m.eventsCommitted.WithLabelValues(consumerGroup, topic, "fail").Add(float64(count))
 	}
+}
+
+func (m *Metrics) IncrementEventsDropped(count int, topic, reason string) {
+	m.eventsDropped.WithLabelValues(topic, reason).Add(float64(count))
+}
+
+func (m *Metrics) SetBatchRetrying(topic string, retrying bool) {
+	value := 0.0
+	if retrying {
+		value = 1
+	}
+	m.batchRetrying.WithLabelValues(topic).Set(value)
 }
 
 func (m *Metrics) IncrementClickHouseInserts(count int, table string, err error) {
@@ -105,6 +140,10 @@ func (m *Metrics) IncrementClickHouseInserts(count int, table string, err error)
 
 func (m *Metrics) ObserveClickHouseInsertDuration(table string, duration time.Duration) {
 	m.clickhouseInsertDuration.WithLabelValues(table).Observe(duration.Seconds())
+}
+
+func (m *Metrics) Gather() ([]*dto.MetricFamily, error) {
+	return m.registry.Gather()
 }
 
 const metricsPath = "/metrics"
