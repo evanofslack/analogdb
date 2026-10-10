@@ -1,8 +1,8 @@
 import "server-only";
-
 import { keywordsApi, postApi, searchApi } from "@lib/client";
 import {
   AnalogdbPost,
+  KeywordsSummaryGetSortEnum,
   SearchGetRequest,
   ServerSearchResponse,
 } from "analogdb-generated";
@@ -35,7 +35,7 @@ export interface SearchSource {
 const maxPageSize = 100;
 const maxQueryLength = 200;
 const keywordPageSize = 20;
-const minKeywords = 8;
+const trendingDays = 30;
 const exampleIds = [32768, 34336, 35099, 38512];
 
 function sanitizeSearch(params: SearchGetRequest): SearchGetRequest {
@@ -91,23 +91,18 @@ function mediumImage(post: AnalogdbPost): SearchImage | null {
   };
 }
 
-async function keywordSummary(days: number): Promise<string[]> {
-  const response = await keywordsApi.keywordsSummaryGet({
-    days,
-    pageSize: keywordPageSize,
-  });
-  return (response.keywords ?? [])
-    .map((keyword) => keyword.word)
-    .filter(Boolean);
-}
-
 const getKeywordsCached = unstable_cache(
   async (): Promise<string[]> => {
-    const week = await keywordSummary(7);
-    if (week.length >= minKeywords) return week;
-    return keywordSummary(30);
+    const response = await keywordsApi.keywordsSummaryGet({
+      sort: KeywordsSummaryGetSortEnum.Trending,
+      days: trendingDays,
+      pageSize: keywordPageSize,
+    });
+    return (response.keywords ?? [])
+      .map((keyword) => keyword.word)
+      .filter(Boolean);
   },
-  ["search-keywords"],
+  ["search-trending"],
   { revalidate: 3600 }
 );
 
