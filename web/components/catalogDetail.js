@@ -37,7 +37,6 @@ export default function CatalogDetail({
   titleLink,
   relatedTitle,
   relatedLinks,
-  relatedRow = false,
   initialPage,
   initialFilters,
   initialColumns,
@@ -129,32 +128,11 @@ export default function CatalogDetail({
             </div>
           )}
         </div>
-        {relatedRow && (
-          <KeywordRow
-            links={links}
-            label={relatedTitle}
-            className={styles.relatedRow}
-          />
-        )}
-        {!relatedRow && links.length > 0 && (
-          <section className={styles.related}>
-            <h2 className={styles.relatedTitle}>
-              {relatedTitle ?? `more from ${entry.make.toUpperCase()}`}
-            </h2>
-            <div className={styles.relatedLinks}>
-              {links.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  prefetch={false}
-                  className={styles.relatedLink}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
+        <KeywordRow
+          links={links}
+          label={relatedTitle ?? `more from ${entry.make.toUpperCase()}`}
+          className={styles.relatedRow}
+        />
         <div className={styles.sort}>
           <SegmentedControl
             value={filters.sort}
