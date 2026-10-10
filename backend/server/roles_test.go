@@ -147,8 +147,10 @@ func TestProtectedRoutes(t *testing.T) {
 	s := newRolesServer(t, &config.Config{})
 
 	public := map[string]bool{
-		"POST /v1/search/image": true,
-		"POST /search/image":    true,
+		"POST /v1/search/image":  true,
+		"POST /search/image":     true,
+		"POST /v1/post/1/report": true,
+		"POST /post/1/report":    true,
 	}
 	err := chi.Walk(s.router, func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
 		if strings.Contains(route, "*") || method == http.MethodOptions || method == http.MethodHead {

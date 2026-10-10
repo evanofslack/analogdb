@@ -60,10 +60,12 @@ func (s *Server) mountAdminHandlers(r chi.Router) {
 			r.Get("/posts/missing", s.getAdminMissingPosts)
 			r.Get("/traffic", s.getAdminTraffic)
 			r.Get("/audit", s.getAdminAudit)
+			s.mountAdminReportHandlers(r)
 		})
 		r.Group(func(r chi.Router) {
 			r.Use(s.require(roleScraper))
 			s.mountExtractionHandlers(r)
+			r.Get("/removed/permalinks", s.getRemovedPermalinks)
 		})
 	})
 }

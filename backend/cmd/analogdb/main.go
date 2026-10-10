@@ -226,6 +226,7 @@ func main() {
 	server.VectorLister = dbVec
 	server.AdminService = postgres.NewAdminService(db)
 	server.ExtractionService = postgres.NewExtractionService(db)
+	server.ReportService = postgres.NewReportService(db)
 	if analytics != nil {
 		server.AnalyticsService = analytics
 	}

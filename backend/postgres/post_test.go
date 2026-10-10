@@ -649,7 +649,7 @@ func TestPostService_DeletePost(t *testing.T) {
 			t.Fatalf("Post should exist before deletion: %v", err)
 		}
 
-		err = service.DeletePost(ctx, 1)
+		err = service.DeletePost(ctx, 1, "")
 		if err != nil {
 			t.Fatalf("DeletePost failed: %v", err)
 		}
@@ -667,7 +667,7 @@ func TestPostService_DeletePost(t *testing.T) {
 		if err := service.PatchPost(ctx, patch, 2); err != nil {
 			t.Fatalf("PatchPost failed: %v", err)
 		}
-		if err := service.DeletePost(ctx, 2); err != nil {
+		if err := service.DeletePost(ctx, 2, ""); err != nil {
 			t.Fatalf("DeletePost failed: %v", err)
 		}
 		var count int
@@ -680,7 +680,7 @@ func TestPostService_DeletePost(t *testing.T) {
 	})
 
 	t.Run("delete non-existent post", func(t *testing.T) {
-		err := service.DeletePost(ctx, 9999)
+		err := service.DeletePost(ctx, 9999, "")
 		if code := analogdb.ErrorCode(err); code != analogdb.ERRNOTFOUND {
 			t.Errorf("Expected code %s, got %s", analogdb.ERRNOTFOUND, code)
 		}

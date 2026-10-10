@@ -87,7 +87,7 @@ func TestAuthorService_FindAuthorsAfterPostDeletion(t *testing.T) {
 	initialCount := len(initialAuthors)
 
 	// Delete a post
-	err = postService.DeletePost(ctx, 1)
+	err = postService.DeletePost(ctx, 1, "")
 	if err != nil {
 		t.Fatalf("DeletePost failed: %v", err)
 	}

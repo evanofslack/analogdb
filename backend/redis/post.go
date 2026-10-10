@@ -173,12 +173,12 @@ func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, 
 	return nil
 }
 
-func (s *PostService) DeletePost(ctx context.Context, id int) error {
+func (s *PostService) DeletePost(ctx context.Context, id int, reason string) error {
 	s.rdb.logger.DebugContext(ctx, "Start delete post with cache", "instance", s.postCache.instance, "post_id", id)
 	defer s.rdb.logger.DebugContext(ctx, "Finish delete post with cache", "instance", s.postCache.instance, "post_id", id)
 
 	s.removePostFromCache(ctx, id)
-	if err := s.dbService.DeletePost(ctx, id); err != nil {
+	if err := s.dbService.DeletePost(ctx, id, reason); err != nil {
 		return err
 	}
 	s.invalidatePost(ctx, id)

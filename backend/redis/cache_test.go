@@ -99,7 +99,7 @@ func (f *fakePostService) PatchPost(ctx context.Context, patch *analogdb.PatchPo
 	return nil
 }
 
-func (f *fakePostService) DeletePost(ctx context.Context, id int) error {
+func (f *fakePostService) DeletePost(ctx context.Context, id int, reason string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	delete(f.posts, id)
@@ -238,7 +238,7 @@ func TestDeleteRemovesFromListsAndSimilar(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := posts.DeletePost(ctx, 3); err != nil {
+	if err := posts.DeletePost(ctx, 3, ""); err != nil {
 		t.Fatal(err)
 	}
 

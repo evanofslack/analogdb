@@ -128,7 +128,7 @@ func TestExtractionService(t *testing.T) {
 	})
 
 	t.Run("deleted post removes extraction", func(t *testing.T) {
-		if err := NewPostService(db).DeletePost(ctx, 3); err != nil {
+		if err := NewPostService(db).DeletePost(ctx, 3, ""); err != nil {
 			t.Fatal(err)
 		}
 		got, err := service.FindExtractions(ctx, &analogdb.ExtractionFilter{Limit: 10})
