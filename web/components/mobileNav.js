@@ -38,7 +38,7 @@ const ADMIN_LINK = {
   active: (path) => path === "/admin",
 };
 
-export default function MobileNav() {
+export default function MobileNav({ onOpenChange }) {
   const isAdmin = useIsAdmin();
   const pathname = usePathname();
   const [opened, { close, toggle }] = useDisclosure(false);
@@ -49,6 +49,10 @@ export default function MobileNav() {
       close();
     }
   }, [isDesktop, close]);
+
+  useEffect(() => {
+    onOpenChange?.(opened);
+  }, [opened, onOpenChange]);
 
   const links = isAdmin ? [...LINKS, ADMIN_LINK] : LINKS;
 

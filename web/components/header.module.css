@@ -50,6 +50,10 @@
   display: none;
 }
 
+.bar {
+  display: none;
+}
+
 .description {
   margin-top: 0.3rem;
   line-height: 1.5;
@@ -108,5 +112,28 @@
   }
   .mobileNav {
     display: block;
+  }
+  .bar {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 20;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: var(--mantine-color-body);
+    border-bottom: 1px solid var(--adb-border);
+    transform: translateY(-100%);
+    transition: transform 200ms ease;
+  }
+  .barShown {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    transition: none;
   }
 }
