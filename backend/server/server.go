@@ -46,6 +46,8 @@ type Server struct {
 	startedAt          time.Time
 	imageSlots         chan struct{}
 	imageWait          time.Duration
+	textSlots          chan struct{}
+	textWait           time.Duration
 	tagCountCache      tagCountCache
 	missingVectorCache missingVectorCache
 
@@ -85,15 +87,11 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 		startedAt:  time.Now(),
 		imageSlots: make(chan struct{}, searchImageSlots),
 		imageWait:  searchImageWait,
+		textSlots:  make(chan struct{}, searchTextSlots),
+		textWait:   searchTextWait,
 	}
 
-	if s.config.Auth.Username == "" && s.config.Auth.Password == "" {
-		s.logger.Error("Config auth username and password not set!")
-	}
-
-	if s.config.Auth.RateLimitUsername == "" && s.config.Auth.RateLimitPassword == "" {
-		s.logger.Error("Config ratelimit auth username and password not set!")
-	}
+	s.logCredentials()
 
 	hostname, err := os.Hostname()
 	if err != nil {

@@ -29,9 +29,9 @@ func (s *Server) mountCameraHandlers(r chi.Router) {
 		r.Get("/", s.getCameras)
 	})
 	r.Route(cameraPath, func(r chi.Router) {
-		r.With(s.auth).Put("/", s.createCamera)
-		r.With(s.auth).Post("/", s.createCamera)
-		r.With(s.auth).Delete("/{id}", s.deleteCamera)
+		r.With(s.require(roleScraper)).Put("/", s.createCamera)
+		r.With(s.require(roleScraper)).Post("/", s.createCamera)
+		r.With(s.require(roleScraper)).Delete("/{id}", s.deleteCamera)
 	})
 }
 
@@ -93,6 +93,7 @@ func (s *Server) makeCameraResponse(r *http.Request, filter *analogdb.CameraFilt
 // @Success 201 {object} CreateCameraResponse
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
@@ -128,6 +129,7 @@ func (s *Server) createCamera(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} DeleteResponse
 // @Failure 400 {object} analogdb.Error "Invalid ID"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 404 {object} analogdb.Error "Not found"
 // @Failure 409 {object} analogdb.Error "Still used by posts"
 // @Failure 500 {object} analogdb.Error "Internal server error"

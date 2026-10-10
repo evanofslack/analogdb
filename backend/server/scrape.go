@@ -29,13 +29,13 @@ const (
 
 func (s *Server) mountScrapeHandlers(r chi.Router) {
 	r.Route(keywordsUpdatedPath, func(r chi.Router) {
-		r.With(s.auth).Get("/", s.getKeywordUpdatedPosts)
+		r.With(s.require(roleScraper)).Get("/", s.getKeywordUpdatedPosts)
 	})
 	r.Route(captionsMissingPath, func(r chi.Router) {
-		r.With(s.auth).Get("/", s.getCaptionMissingPosts)
+		r.With(s.require(roleScraper)).Get("/", s.getCaptionMissingPosts)
 	})
 	r.Route(vectorsMissingPath, func(r chi.Router) {
-		r.With(s.auth).Get("/", s.getVectorMissingPosts)
+		r.With(s.require(roleScraper)).Get("/", s.getVectorMissingPosts)
 	})
 }
 
@@ -60,6 +60,7 @@ func (s *Server) getKeywordUpdatedPosts(w http.ResponseWriter, r *http.Request) 
 // @Param version query string false "Caption version the posts should have"
 // @Success 200 {object} CaptionsMissingResponse
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
 // @Router /scrape/captions/missing [get]
@@ -87,6 +88,7 @@ func (s *Server) getCaptionMissingPosts(w http.ResponseWriter, r *http.Request) 
 // @Produce json
 // @Success 200 {object} VectorsMissingResponse
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Failure 503 {object} analogdb.Error "Vector database unavailable"
 // @Security BasicAuth

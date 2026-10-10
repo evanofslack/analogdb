@@ -47,6 +47,7 @@ func (s *Server) mountExtractionHandlers(r chi.Router) {
 // @Success 200 {object} UpsertExtractionsResponse
 // @Failure 400 {object} analogdb.Error "Invalid extractions"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
@@ -115,6 +116,7 @@ func jsonStartsWith(raw json.RawMessage, first byte) bool {
 // @Success 200 {object} ExtractionsResponse
 // @Failure 400 {object} analogdb.Error "Invalid query parameters"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
 // @Router /admin/extractions [get]

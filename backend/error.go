@@ -11,6 +11,7 @@ const (
 	ERRNOTFOUND      = "not_found"
 	ERRUNAVAILABLE   = "service_unavailable"
 	ERRUNAUTHORIZED  = "unauthorized"
+	ERRFORBIDDEN     = "forbidden"
 	ERRBADREQUEST    = "bad_request"
 	ERRCONFLICT      = "conflict"
 )

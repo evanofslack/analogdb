@@ -21,6 +21,9 @@ func (s *Server) mountMiddleware() {
 	// resolve client ip from trusted proxies
 	s.router.Use(s.clientIP)
 
+	// resolve basic auth to a role
+	s.router.Use(s.principal)
+
 	// collect prom metrics
 	s.router.Use(s.collectStats)
 

@@ -26,6 +26,8 @@ const (
 	maxSearchImageBytes     = 5 << 20
 	searchImageSlots        = 2
 	searchImageWait         = 5 * time.Second
+	searchTextSlots         = 4
+	searchTextWait          = 5 * time.Second
 	errCodeUnsupportedMedia = "unsupported_media"
 )
 
@@ -256,7 +258,7 @@ func (s *Server) searchImage(w http.ResponseWriter, r *http.Request) {
 	}
 	filter.Image = image
 
-	release, err := s.acquireImageSlot(r.Context())
+	release, err := acquireSlot(r.Context(), s.imageSlots, s.imageWait, "too many image searches, try again")
 	if err != nil {
 		s.stats.searchRequests.WithLabelValues("image", "error").Inc()
 		s.writeError(w, r, err)
@@ -317,18 +319,41 @@ func readSearchImage(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 	return image, nil
 }
 
-// acquireImageSlot waits for a free image search slot, giving up after a few seconds
-func (s *Server) acquireImageSlot(ctx context.Context) (func(), error) {
-	timer := time.NewTimer(s.imageWait)
+// acquireSlot waits for a free search slot, giving up after wait
+func acquireSlot(ctx context.Context, slots chan struct{}, wait time.Duration, busy string) (func(), error) {
+	timer := time.NewTimer(wait)
 	defer timer.Stop()
 	select {
-	case s.imageSlots <- struct{}{}:
-		return func() { <-s.imageSlots }, nil
+	case slots <- struct{}{}:
+		return func() { <-slots }, nil
 	case <-timer.C:
-		return nil, &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "too many image searches, try again"}
+		return nil, &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: busy}
 	case <-ctx.Done():
-		return nil, &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "image search cancelled"}
+		return nil, &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "search cancelled"}
 	}
+}
+
+// textSlotSearch caps concurrent text searches, so a flood can't starve the
+// CLIP encoder
+type textSlotSearch struct {
+	analogdb.SearchService
+	slots chan struct{}
+	wait  time.Duration
+}
+
+func (t textSlotSearch) SearchText(ctx context.Context, filter *analogdb.SearchFilter) ([]analogdb.SearchHit, bool, error) {
+	release, err := acquireSlot(ctx, t.slots, t.wait, "too many searches, try again")
+	if err != nil {
+		return nil, false, err
+	}
+	defer release()
+	return t.SearchService.SearchText(ctx, filter)
+}
+
+// LimitTextSearch wraps the vector search service with the server's text
+// search slots. Wrap it inside any cache, so cache hits never wait
+func (s *Server) LimitTextSearch(svc analogdb.SearchService) analogdb.SearchService {
+	return textSlotSearch{SearchService: svc, slots: s.textSlots, wait: s.textWait}
 }
 
 // hydrateHits loads the posts of hits from the post service in hit order,

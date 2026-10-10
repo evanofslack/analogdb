@@ -28,6 +28,8 @@ type App struct {
 	Env              string `yaml:"env" env:"APP_ENV"`
 	CacheEnabled     bool   `yaml:"cache_enabled" env:"CACHE_ENABLED"`
 	RateLimitEnabled bool   `yaml:"rate_limit_enabled" env:"RATE_LIMIT_ENABLED"`
+	// RateLimitWebPerMinute caps all web requests together, 0 turns the cap off
+	RateLimitWebPerMinute int `yaml:"rate_limit_web_per_minute" env:"RATE_LIMIT_WEB_PER_MINUTE" env-default:"10000"`
 }
 
 type DB struct {
@@ -61,10 +63,62 @@ type Log struct {
 }
 
 type Auth struct {
+	AdminUsername   string `yaml:"admin_username" env:"AUTH_ADMIN_USERNAME"`
+	AdminPassword   string `yaml:"admin_password" env:"AUTH_ADMIN_PASSWORD"`
+	ScraperUsername string `yaml:"scraper_username" env:"AUTH_SCRAPER_USERNAME"`
+	ScraperPassword string `yaml:"scraper_password" env:"AUTH_SCRAPER_PASSWORD"`
+	WebUsername     string `yaml:"web_username" env:"AUTH_WEB_USERNAME"`
+	WebPassword     string `yaml:"web_password" env:"AUTH_WEB_PASSWORD"`
+
+	// legacy, removed after the rollout. Username is admin, RateLimitUsername is web
 	Username          string `yaml:"username" env:"AUTH_USERNAME"`
 	Password          string `yaml:"password" env:"AUTH_PASSWORD"`
 	RateLimitUsername string `yaml:"rate_limit_username" env:"RATE_LIMIT_AUTH_USERNAME"`
 	RateLimitPassword string `yaml:"rate_limit_password" env:"RATE_LIMIT_AUTH_PASSWORD"`
+}
+
+type Credential struct {
+	Name     string
+	Role     string
+	Legacy   bool
+	Username string
+	Password string
+}
+
+func (a Auth) Credentials() []Credential {
+	all := []Credential{
+		{Name: "admin", Role: "admin", Username: a.AdminUsername, Password: a.AdminPassword},
+		{Name: "scraper", Role: "scraper", Username: a.ScraperUsername, Password: a.ScraperPassword},
+		{Name: "web", Role: "web", Username: a.WebUsername, Password: a.WebPassword},
+		{Name: "legacy admin", Role: "admin", Legacy: true, Username: a.Username, Password: a.Password},
+		{Name: "legacy rate limit", Role: "web", Legacy: true, Username: a.RateLimitUsername, Password: a.RateLimitPassword},
+	}
+	enabled := make([]Credential, 0, len(all))
+	for _, c := range all {
+		if c.Username != "" && c.Password != "" {
+			enabled = append(enabled, c)
+		}
+	}
+	return enabled
+}
+
+// Validate refuses identical pairs, since the first match would win and a web
+// pair equal to the admin pair would quietly act as admin. It returns warnings
+// for pairs that share a username with different passwords
+func (a Auth) Validate() (warnings []string, err error) {
+	creds := a.Credentials()
+	for i := range creds {
+		for j := i + 1; j < len(creds); j++ {
+			if creds[i].Username != creds[j].Username {
+				continue
+			}
+			if creds[i].Password == creds[j].Password {
+				return nil, fmt.Errorf("auth: %s and %s credentials are the same", creds[i].Name, creds[j].Name)
+			}
+			warnings = append(warnings, fmt.Sprintf("auth: %s and %s share a username", creds[i].Name, creds[j].Name))
+		}
+	}
+	return warnings, nil
 }
 
 type Metrics struct {

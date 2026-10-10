@@ -17,7 +17,7 @@ const (
 
 func (s *Server) mountSimilarityHandlers(r chi.Router) {
 	r.Route(encodePath, func(r chi.Router) {
-		r.With(s.auth).Put("/", s.encodePosts)
+		r.With(s.require(roleScraper)).Put("/", s.encodePosts)
 	})
 }
 
@@ -40,6 +40,7 @@ type encodePostsResponse struct {
 // @Success 200 {object} encodePostsResponse
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth

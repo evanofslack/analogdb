@@ -35,9 +35,9 @@ func (s *Server) mountFilmHandlers(r chi.Router) {
 		r.Get("/", s.getFilms)
 	})
 	r.Route(filmPath, func(r chi.Router) {
-		r.With(s.auth).Put("/", s.createFilm)
-		r.With(s.auth).Post("/", s.createFilm)
-		r.With(s.auth).Delete("/{id}", s.deleteFilm)
+		r.With(s.require(roleScraper)).Put("/", s.createFilm)
+		r.With(s.require(roleScraper)).Post("/", s.createFilm)
+		r.With(s.require(roleScraper)).Delete("/{id}", s.deleteFilm)
 	})
 }
 
@@ -101,6 +101,7 @@ func (s *Server) makeFilmResponse(r *http.Request, filter *analogdb.FilmFilter) 
 // @Success 201 {object} CreateFilmResponse
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
@@ -136,6 +137,7 @@ func (s *Server) createFilm(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} DeleteResponse
 // @Failure 400 {object} analogdb.Error "Invalid ID"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 404 {object} analogdb.Error "Not found"
 // @Failure 409 {object} analogdb.Error "Still used by posts"
 // @Failure 500 {object} analogdb.Error "Internal server error"

@@ -20,7 +20,8 @@ type httpStats struct {
 	requestSize        *prometheus.SummaryVec
 	responseSize       *prometheus.SummaryVec
 	postEncodeFailures prometheus.Counter
-	rateLimited        prometheus.Counter
+	rateLimited        *prometheus.CounterVec
+	authRequests       *prometheus.CounterVec
 	unknownJSONFields  *prometheus.CounterVec
 	legacyRequests     *prometheus.CounterVec
 	deprecatedParams   *prometheus.CounterVec
@@ -77,13 +78,24 @@ func newHttpStats() *httpStats {
 		},
 	)
 
-	rateLimited := prometheus.NewCounter(
+	rateLimited := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metrics.AnalogdbNamespace,
 			Subsystem: metrics.HttpSubsystem,
 			Name:      "rate_limited_total",
 			Help:      "Number of HTTP requests rejected by the rate limiter",
 		},
+		[]string{"role"},
+	)
+
+	authRequests := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.HttpSubsystem,
+			Name:      "auth_requests_total",
+			Help:      "Number of HTTP requests with basic auth, by resolved role and whether a legacy pair was used",
+		},
+		[]string{"role", "legacy"},
 	)
 
 	unknownJSONFields := prometheus.NewCounterVec(
@@ -143,6 +155,7 @@ func newHttpStats() *httpStats {
 		responseSize:       responseSize,
 		postEncodeFailures: postEncodeFailures,
 		rateLimited:        rateLimited,
+		authRequests:       authRequests,
 		unknownJSONFields:  unknownJSONFields,
 		legacyRequests:     legacyRequests,
 		deprecatedParams:   deprecatedParams,
@@ -160,6 +173,7 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 	registerer.MustRegister(stats.responseSize)
 	registerer.MustRegister(stats.postEncodeFailures)
 	registerer.MustRegister(stats.rateLimited)
+	registerer.MustRegister(stats.authRequests)
 	registerer.MustRegister(stats.unknownJSONFields)
 	registerer.MustRegister(stats.legacyRequests)
 	registerer.MustRegister(stats.deprecatedParams)

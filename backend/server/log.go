@@ -29,6 +29,10 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 			}
 
 			authorized := auth.ok
+			var callerRole role
+			if p := principalFrom(r); p != nil {
+				callerRole = p.role
+			}
 
 			traceID := traceid.FromContext(r.Context())
 			remoteIP := getRealIP(r)
@@ -68,6 +72,7 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 				"bytes_in", bytesIn,
 				"bytes_out", bytesOut,
 				"authorized", authorized,
+				"role", callerRole,
 				"query_params", r.URL.Query(),
 			)
 

@@ -21,7 +21,7 @@ func (db *DB) Audit(ctx context.Context, filter *analogdb.AuditFilter) ([]*analo
 		SELECT %s, start_time, method, path, response_code, remote_ip, user_agent, request_id, %s
 		FROM %s
 		WHERE method IN ('POST', 'PUT', 'PATCH', 'DELETE')
-			AND (authorized OR response_code = 401)
+			AND (authorized OR response_code IN (401, 403))
 			AND start_time < ?
 		ORDER BY start_time DESC
 		LIMIT ?`, timeExpr, clientExpr, db.table)
