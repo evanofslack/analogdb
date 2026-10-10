@@ -3,7 +3,13 @@ import { rateLimitKey, resolveClientIp } from "@lib/clientIp";
 import { Limited } from "@lib/rateLimited";
 import { headers } from "next/headers";
 
-export type Bucket = "browse" | "search" | "imageSearch" | "download" | "login";
+export type Bucket =
+  | "browse"
+  | "search"
+  | "imageSearch"
+  | "download"
+  | "login"
+  | "report";
 
 export type RateLimitResult = { ok: boolean; retryAfter: number };
 
@@ -16,6 +22,7 @@ const limits: Record<Bucket, { limit: number; windowMs: number }> = {
   imageSearch: { limit: 10, windowMs: minute },
   download: { limit: 20, windowMs: minute },
   login: { limit: 5, windowMs: 15 * minute },
+  report: { limit: 5, windowMs: 15 * minute },
 };
 
 const windows = new Map<

@@ -359,6 +359,47 @@ export async function deletePost(id: number): Promise<void> {
   await adminFetch(`/post/${id}`, { method: "DELETE" });
 }
 
+export type ReportStatus = "open" | "resolved" | "all";
+export const reportStatuses: ReportStatus[] = ["open", "resolved", "all"];
+
+export interface Report {
+  id: number;
+  post_id: number;
+  reason: string;
+  message: string | null;
+  email: string | null;
+  created_at: string;
+  resolved_at: string | null;
+  post: {
+    title: string | null;
+    author: string | null;
+    permalink: string | null;
+    low_url: string | null;
+    nsfw: boolean | null;
+    removed: boolean;
+  };
+}
+
+export interface ReportsPage {
+  reports: Report[];
+  next_before: number | null;
+}
+
+export function getReports(
+  status: ReportStatus,
+  before?: number | null
+): Promise<ReportsPage> {
+  return adminGet(`/admin/reports${query({ status, before, limit: 50 })}`);
+}
+
+export async function resolveReport(id: number): Promise<void> {
+  await adminFetch(`/admin/reports/${id}/resolve`, { method: "POST" });
+}
+
+export async function takedownReport(id: number): Promise<void> {
+  await adminFetch(`/admin/reports/${id}/takedown`, { method: "POST" });
+}
+
 export async function createCamera(camera: CreateCamera): Promise<void> {
   await adminFetch("/camera", { method: "PUT", body: camera });
 }

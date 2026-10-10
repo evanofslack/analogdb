@@ -401,3 +401,22 @@
     padding: 2rem 1.5rem 4rem;
   }
 }
+
+.reportThumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.reportMeta {
+  color: var(--adb-muted);
+  font-size: 0.8125rem;
+  margin-top: 0.25rem;
+}
+
+.reportMessage {
+  margin-top: 0.25rem;
+  white-space: pre-wrap;
+}

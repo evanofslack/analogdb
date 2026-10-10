@@ -8,6 +8,7 @@ import styles from "./adminPanel.module.css";
 export const adminTabs = [
   { id: "overview", label: "Overview" },
   { id: "review", label: "Review" },
+  { id: "reports", label: "Reports" },
   { id: "quality", label: "Quality" },
   { id: "traffic", label: "Traffic" },
   { id: "audit", label: "Audit" },

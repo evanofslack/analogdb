@@ -4,6 +4,7 @@ import PostEditor from "@components/admin/postEditor";
 import Footer from "@components/footer";
 import Header from "@components/header";
 import ImageTag from "@components/imageTag";
+import ReportModal from "@components/reportModal";
 import useIsAdmin from "@hooks/useIsAdmin";
 import { postAlt } from "@lib/seo";
 import { ActionIcon, Tooltip } from "@mantine/core";
@@ -15,6 +16,7 @@ import {
   AiOutlineDelete,
   AiOutlineDownload,
   AiOutlineEdit,
+  AiOutlineFlag,
 } from "react-icons/ai";
 import styles from "./imagePage.module.css";
 
@@ -65,6 +67,7 @@ export default function ImagePage(props) {
   const isAdmin = useIsAdmin();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [reporting, setReporting] = useState(false);
   let image = post.images[2];
 
   return (
@@ -106,6 +109,16 @@ export default function ImagePage(props) {
                 <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
               </ActionIcon>
             </Tooltip>
+            <Tooltip label="report" withArrow className="px-2">
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                onClick={() => setReporting(true)}
+                aria-label="report"
+              >
+                <AiOutlineFlag size="24px" />
+              </ActionIcon>
+            </Tooltip>
             {/* Show edit and delete buttons only to admin */}
             {isAdmin && (
               <Tooltip label="edit" withArrow className="px-2">
@@ -138,6 +151,11 @@ export default function ImagePage(props) {
         similar={similar}
         filmHref={props.filmHref}
         cameraHref={props.cameraHref}
+      />
+      <ReportModal
+        postId={post.id}
+        opened={reporting}
+        onClose={() => setReporting(false)}
       />
       {isAdmin && (
         <PostEditor

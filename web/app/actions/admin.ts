@@ -9,6 +9,8 @@ import {
   getPost,
   patchPost,
   PostPatch,
+  resolveReport,
+  takedownReport,
 } from "@lib/adminClient";
 import { checkAdminAuth } from "@lib/auth";
 import { CameraOption, getCameraOptions } from "@lib/data/cameras";
@@ -143,6 +145,24 @@ export async function removePost(id: number): Promise<ActionResult> {
   return run(async () => {
     await deletePost(id);
     revalidatePost(id);
+  });
+}
+
+export async function dismissReport(id: number): Promise<ActionResult> {
+  if (!validId(id)) return fail("invalid report id");
+  return run(async () => {
+    await resolveReport(id);
+  });
+}
+
+export async function takedownReportedPost(
+  reportId: number,
+  postId: number
+): Promise<ActionResult> {
+  if (!validId(reportId) || !validId(postId)) return fail("invalid id");
+  return run(async () => {
+    await takedownReport(reportId);
+    revalidatePost(postId);
   });
 }
 
