@@ -17,6 +17,7 @@ const (
 	maxKeywordLimit        = 500
 	minKeywordDays         = 1
 	maxKeywordDays         = 90
+	keywordTrendingDays    = 30
 	defaultKeywordTopPosts = 6
 	defaultKeywordRelated  = 12
 	maxKeywordRelated      = 30
@@ -45,10 +46,11 @@ func (s *Server) mountKeywordDetailHandlers(r chi.Router) {
 }
 
 // @Summary Get keyword summary
-// @Description Most common keywords with their post counts, optionally only from posts created in the last days. Top posts are the highest scoring non nsfw posts of all time, also with days
+// @Description Most common keywords with their post counts, optionally only from posts created in the last days. Top posts are the highest scoring non nsfw posts of all time, also with days. Trending ranks keywords by smoothed lift of their share of non nsfw posts in the last days (default 30) over their share of all time, keeping keywords on at least 3 of those posts, and counts only those posts
 // @Tags keywords
 // @Produce json
 // @Param page_size query int false "Number of keywords to return" default(50)
+// @Param sort query string false "Rank by count or trending, lift of the days window over all time" Enums(count, trending) default(count)
 // @Param days query int false "Only count keywords of posts created in the last days, 1 to 90"
 // @Param min_count query int false "Only return keywords on at least this many posts"
 // @Param top_posts query int false "Attach this many top scoring posts to each keyword (1 to 10)"
@@ -70,6 +72,16 @@ func (s *Server) getSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	filter := &analogdb.KeywordFilter{Limit: &limit}
+	switch order := r.URL.Query().Get("sort"); order {
+	case "", string(analogdb.KeywordSortCount):
+	case string(analogdb.KeywordSortTrending):
+		trending, days := analogdb.KeywordSortTrending, keywordTrendingDays
+		filter.Sort = &trending
+		filter.Days = &days
+	default:
+		s.writeError(w, r, badRequest("invalid sort parameter %s, valid options are 'count' or 'trending'", order))
+		return
+	}
 	if strDays := r.URL.Query().Get("days"); strDays != "" {
 		days, err := stringToInt(strDays)
 		if err != nil {

@@ -76,13 +76,13 @@ export default function SearchSuggestions({
       {keywords.length > 0 && (
         <Section
           icon={<IconSparkles size={iconSize} stroke={1.5} />}
-          title="trending this week"
+          title="trending this month"
         >
           {trendingRow ? (
             <KeywordRow
               words={keywords}
               onSelect={onSearch}
-              label="trending this week"
+              label="trending this month"
             />
           ) : (
             <KeywordChips words={keywords} onSearch={onSearch} />

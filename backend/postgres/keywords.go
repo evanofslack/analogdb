@@ -12,6 +12,12 @@ import (
 // ensure interface is implemented
 var _ analogdb.KeywordService = (*KeywordService)(nil)
 
+const (
+	// trendingSmooth is the smoothing share of tagged posts, like relatedSmooth in the server
+	trendingSmooth   = 0.0025
+	trendingMinPosts = 3
+)
+
 type KeywordService struct {
 	db *DB
 }
@@ -141,6 +147,10 @@ func (s *KeywordService) TagCounts(ctx context.Context) (map[string]int, int, er
 }
 
 func getKeywordSummary(ctx context.Context, db *sql.DB, filter *analogdb.KeywordFilter) (*[]analogdb.KeywordSummary, error) {
+	if filter != nil && filter.Sort != nil && *filter.Sort == analogdb.KeywordSortTrending && filter.Days != nil {
+		return getKeywordTrending(ctx, db, filter)
+	}
+
 	var limit *int
 	if filter != nil {
 		limit = filter.Limit
@@ -183,6 +193,69 @@ func getKeywordSummary(ctx context.Context, db *sql.DB, filter *analogdb.Keyword
 	var total int
 	for rows.Next() {
 		if err := rows.Scan(&kw.Word, &kw.Count, &total); err != nil {
+			return nil, err
+		}
+		keywords = append(keywords, kw)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return &keywords, nil
+}
+
+// getKeywordTrending ranks keywords by smoothed lift of their share of non nsfw
+// posts in the last days over their share of all tagged posts. Counts are the
+// non nsfw posts in the window.
+func getKeywordTrending(ctx context.Context, db *sql.DB, filter *analogdb.KeywordFilter) (*[]analogdb.KeywordSummary, error) {
+	minPosts := trendingMinPosts
+	if filter.MinCount != nil && *filter.MinCount > minPosts {
+		minPosts = *filter.MinCount
+	}
+
+	query := `
+		WITH recent AS (
+			SELECT k.word, k.post_id
+			FROM keywords k
+			JOIN pictures p ON p.id = k.post_id
+			WHERE p.created >= now() - make_interval(days => $2)
+			AND p.nsfw = false
+		),
+		windowed AS (
+			SELECT word, count(DISTINCT post_id) AS n
+			FROM recent
+			GROUP BY word
+			HAVING count(DISTINCT post_id) >= $3
+		),
+		window_total AS (
+			SELECT count(DISTINCT post_id) AS t FROM recent
+		),
+		global AS (
+			SELECT word, count(DISTINCT post_id) AS df
+			FROM keywords
+			WHERE word IN (SELECT word FROM windowed)
+			GROUP BY word
+		),
+		global_total AS (
+			SELECT count(DISTINCT post_id) AS t FROM keywords
+		)
+		SELECT w.word, w.n
+		FROM windowed w
+		JOIN global g USING (word)
+		CROSS JOIN window_total wt
+		CROSS JOIN global_total gt
+		ORDER BY (w.n::float8 / wt.t) / (g.df::float8 / gt.t + $4) DESC, w.n DESC, w.word
+		LIMIT $1`
+
+	rows, err := db.QueryContext(ctx, query, filter.Limit, *filter.Days, minPosts, trendingSmooth)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	keywords := make([]analogdb.KeywordSummary, 0)
+	for rows.Next() {
+		var kw analogdb.KeywordSummary
+		if err := rows.Scan(&kw.Word, &kw.Count); err != nil {
 			return nil, err
 		}
 		keywords = append(keywords, kw)

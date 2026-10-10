@@ -231,3 +231,70 @@ func TestKeywordService_CoOccurring(t *testing.T) {
 		}
 	}
 }
+
+func TestKeywordService_GetKeywordSummaryTrending(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+	defer mustClose(t, db)
+	ctx := context.Background()
+
+	if _, err := db.db.Exec(`UPDATE pictures SET created = now() - interval '60 days'`); err != nil {
+		t.Fatal(err)
+	}
+	// posts 10 to 29 are old, 30 to 37 recent, 38 recent and nsfw
+	for id := 10; id <= 38; id++ {
+		age := "60 days"
+		if id >= 30 {
+			age = "2 days"
+		}
+		if _, err := db.db.Exec(`
+			INSERT INTO pictures (id, url, title, author, permalink, score, nsfw, greyscale, time, width, height, sprocket,
+				lowurl, lowwidth, lowheight, medurl, medwidth, medheight, highurl, highwidth, highheight, created)
+			VALUES ($1::int, 'raw' || $1::text, 'post ' || $1::text, 'u/a', 'link' || $1::text, 1, $2, false, 1641168000, 1, 1, false,
+				'low' || $1::text, 1, 1, 'med' || $1::text, 1, 1, 'high' || $1::text, 1, 1, now() - $3::interval)`, id, id == 38, age); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tag := func(word string, ids ...int) {
+		for _, id := range ids {
+			if _, err := db.db.Exec(`INSERT INTO keywords (word, weight, post_id) VALUES ($1, 0.5, $2)`, word, id); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	for id := 10; id <= 29; id++ {
+		tag("tree", id)
+	}
+	tag("tree", 30, 31, 32, 33, 34, 35, 38)
+	tag("lace", 30, 31, 32)
+	tag("pair", 30, 31)
+	tag("nude", 30, 31, 38)
+	tag("misc", 36, 37)
+
+	service := NewKeywordService(db)
+	limit, days, trending := 50, 30, analogdb.KeywordSortTrending
+	summary, err := service.GetKeywordSummary(ctx, &analogdb.KeywordFilter{Limit: &limit, Days: &days, Sort: &trending})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := *summary; len(got) != 2 || got[0].Word != "lace" || got[0].Count != 3 || got[1].Word != "tree" || got[1].Count != 6 {
+		t.Errorf("want lace=3 then tree=6, got %+v", got)
+	}
+
+	minCount := 4
+	summary, err = service.GetKeywordSummary(ctx, &analogdb.KeywordFilter{Limit: &limit, Days: &days, Sort: &trending, MinCount: &minCount})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := *summary; len(got) != 1 || got[0].Word != "tree" {
+		t.Errorf("want only tree with min count 4, got %+v", got)
+	}
+
+	plain, err := service.GetKeywordSummary(ctx, &analogdb.KeywordFilter{Limit: &limit, Days: &days})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := *plain; len(got) == 0 || got[0].Word != "tree" || got[0].Count != 7 {
+		t.Errorf("want count sort unchanged with tree=7 first, got %+v", got)
+	}
+}

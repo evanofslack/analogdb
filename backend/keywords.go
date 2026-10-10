@@ -19,8 +19,17 @@ type KeywordService interface {
 	CoOccurring(ctx context.Context, word string) (map[string]int, error)
 }
 
+type KeywordSort string
+
+const (
+	KeywordSortCount    KeywordSort = "count"
+	KeywordSortTrending KeywordSort = "trending"
+)
+
 type KeywordFilter struct {
 	Limit *int
+	// Sort ranks by count (default) or trending, lift of the days window over all time
+	Sort *KeywordSort
 	// Days counts only tags of posts created in the last n days
 	Days *int
 	// TopPosts attaches this many top scoring posts to each keyword

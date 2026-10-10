@@ -1061,7 +1061,7 @@ const docTemplate = `{
         },
         "/keywords/summary": {
             "get": {
-                "description": "Most common keywords with their post counts, optionally only from posts created in the last days. Top posts are the highest scoring non nsfw posts of all time, also with days",
+                "description": "Most common keywords with their post counts, optionally only from posts created in the last days. Top posts are the highest scoring non nsfw posts of all time, also with days. Trending ranks keywords by smoothed lift of their share of non nsfw posts in the last days (default 30) over their share of all time, keeping keywords on at least 3 of those posts, and counts only those posts",
                 "produces": [
                     "application/json"
                 ],
@@ -1075,6 +1075,17 @@ const docTemplate = `{
                         "default": 50,
                         "description": "Number of keywords to return",
                         "name": "page_size",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "count",
+                            "trending"
+                        ],
+                        "type": "string",
+                        "default": "count",
+                        "description": "Rank by count or trending, lift of the days window over all time",
+                        "name": "sort",
                         "in": "query"
                     },
                     {

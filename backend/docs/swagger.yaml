@@ -1441,13 +1441,24 @@ paths:
     get:
       description: Most common keywords with their post counts, optionally only from
         posts created in the last days. Top posts are the highest scoring non nsfw
-        posts of all time, also with days
+        posts of all time, also with days. Trending ranks keywords by smoothed lift
+        of their share of non nsfw posts in the last days (default 30) over their
+        share of all time, keeping keywords on at least 3 of those posts, and counts
+        only those posts
       parameters:
       - default: 50
         description: Number of keywords to return
         in: query
         name: page_size
         type: integer
+      - default: count
+        description: Rank by count or trending, lift of the days window over all time
+        enum:
+        - count
+        - trending
+        in: query
+        name: sort
+        type: string
       - description: Only count keywords of posts created in the last days, 1 to 90
         in: query
         name: days
