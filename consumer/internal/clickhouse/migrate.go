@@ -34,7 +34,7 @@ func (c *Client) migrate() error {
 	if err != nil {
 		return fmt.Errorf("open db connection: %w", err)
 	}
-	defer c.Close()
+	defer db.Close()
 
 	driver, err := clickhouse_migrate.WithInstance(db, &clickhouse_migrate.Config{})
 	if err != nil {
@@ -52,7 +52,7 @@ func (c *Client) migrate() error {
 		return fmt.Errorf("create migrations source, err=%w", err)
 	}
 
-	m, err := migrate.NewWithInstance("iofs", source, "postgres", driver)
+	m, err := migrate.NewWithInstance("iofs", source, "clickhouse", driver)
 	if err != nil {
 		return fmt.Errorf("create migrate instance, err=%w", err)
 	}
@@ -86,7 +86,7 @@ func (c *Client) migrateFromPath(path string) error {
 	if err != nil {
 		return fmt.Errorf("open c connection: %w", err)
 	}
-	defer c.Close()
+	defer db.Close()
 
 	driver, err := clickhouse_migrate.WithInstance(db, &clickhouse_migrate.Config{})
 	if err != nil {
