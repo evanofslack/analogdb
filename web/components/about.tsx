@@ -11,6 +11,7 @@ import Footer from "./footer";
 export interface AboutImage {
   id: number;
   url: string;
+  smallUrl?: string;
   width?: number;
   height?: number;
 }
@@ -35,7 +36,8 @@ interface AboutProps {
   };
 }
 
-const COLOR_ROW_SIZE = 20;
+const COLOR_ROW_SIZE = 16;
+const MOBILE_ROW_SIZE = 8;
 
 function shuffle<T>(items: T[]): T[] {
   const result = [...items];
@@ -67,10 +69,13 @@ export default function About(props: AboutProps) {
   );
 
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+  const [shuffled, setShuffled] = useState(false);
 
+  // images render only after the shuffle, so the unshuffled server picks never download
   useEffect(() => {
     setColorData(pickColorRows(props.data.colorData, true));
     setAllSimilarityData(shuffle(props.data.allSimilarityData));
+    setShuffled(true);
   }, [props.data]);
 
   useEffect(() => {
@@ -80,7 +85,8 @@ export default function About(props: AboutProps) {
   const [currentSimilarityIndex, setCurrentSimilarityIndex] =
     useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const similarityRef = useRef<HTMLDivElement | null>(null);
+  const [isSimilarityVisible, setIsSimilarityVisible] = useState(false);
 
   const currentSimilarityData = allSimilarityData[currentSimilarityIndex] || {
     centerPost: null,
@@ -88,35 +94,35 @@ export default function About(props: AboutProps) {
   };
 
   useEffect(() => {
-    if (allSimilarityData.length <= 1) return;
+    const node = similarityRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(([entry]) =>
+      setIsSimilarityVisible(entry.isIntersecting)
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
-    const startCycling = () => {
-      intervalRef.current = setInterval(() => {
-        setIsTransitioning(true);
+  useEffect(() => {
+    if (allSimilarityData.length <= 1 || !isSimilarityVisible) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+
+      setTimeout(() => {
+        setCurrentSimilarityIndex((prevIndex) => {
+          return (prevIndex + 1) % allSimilarityData.length;
+        });
 
         setTimeout(() => {
-          setCurrentSimilarityIndex((prevIndex) => {
-            return (prevIndex + 1) % allSimilarityData.length;
-          });
-
-          setTimeout(() => {
-            setIsTransitioning(false);
-          }, 50);
-        }, 250);
-      }, 7000);
-    };
-
-    const timer = setTimeout(() => {
-      startCycling();
+          setIsTransitioning(false);
+        }, 50);
+      }, 250);
     }, 7000);
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-      clearTimeout(timer);
-    };
-  }, [allSimilarityData]);
+    return () => clearInterval(interval);
+  }, [allSimilarityData, isSimilarityVisible]);
 
   const apiQuery: string = "curl https://api.analogdb.com/v1/posts";
 
@@ -168,12 +174,123 @@ export default function About(props: AboutProps) {
   ...
 ]`;
 
+  const apiResponseShort: string = `
+"meta":{
+  "total_posts":18233,
+  "page_size":20,
+  "next_cursor":"eyJzIjoidGltZSIsInYiOjE2NzIyNTE2NDcsImlkIjo1MTA4fQ"
+},
+"posts":[
+  {
+    "id":5127,
+    "title":"Exam | Olympus OM-2n | 50mm 1.8 | Vision3 250D",
+    "author":"Crazylyric",
+    "score":163,
+    "images":[
+      {
+        "resolution":"low",
+        "url":"https://d3i73ktnzbi69i.cloudfront.net/8ed69a77-83fc-4a82-8994-935f82cada2e.jpeg",
+        "width":720,
+        "height":477
+      },
+      ...
+    ]
+  },
+  ...
+]`;
+
+  const renderMobileColorRows = (): React.ReactElement | null => {
+    const rows: [AboutImage[], "left" | "right"][] = [
+      [colorData.red.slice(0, MOBILE_ROW_SIZE), "right"],
+      [colorData.navy.slice(0, MOBILE_ROW_SIZE), "left"],
+    ];
+    if (rows.every(([images]) => !images.length)) return null;
+
+    return (
+      <div className={styles.mobileOnly}>
+        <div className={styles.mobileColorRows}>
+          {rows.map(([images, direction]) => (
+            <div key={direction} className={styles.mobileColorRow}>
+              <div
+                className={`${styles.colorScrollContainer} ${
+                  direction === "left" ? styles.scrollLeft : styles.scrollRight
+                } ${styles.mobileScroll}`}
+              >
+                {(shuffled ? [...images, ...images] : []).map(
+                  (image, index) => (
+                    <div
+                      key={`${image.id}-${index}`}
+                      className={styles.colorImageContainer}
+                    >
+                      <Image
+                        src={image.smallUrl ?? image.url}
+                        alt={`image ${image.id}`}
+                        width={image.width}
+                        height={image.height}
+                        className={styles.mobileColorImage}
+                      />
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderMobileSimilarity = (): React.ReactElement | null => {
+    const { centerPost, similarPosts } = currentSimilarityData;
+    if (!shuffled || !centerPost || !similarPosts.length) return null;
+    const fade = isTransitioning ? styles.transitioning : "";
+
+    return (
+      <div className={styles.mobileOnly}>
+        <div className={styles.mobileSimilarity}>
+          <div
+            className={`${styles.mobileSimilarCenter} ${fade}`}
+            style={{
+              aspectRatio: `${centerPost.width || 4} / ${
+                centerPost.height || 3
+              }`,
+            }}
+          >
+            <Image
+              src={centerPost.smallUrl ?? centerPost.url}
+              alt={`image ${centerPost.id}`}
+              fill
+              sizes="100vw"
+              style={{ objectFit: "cover" }}
+            />
+          </div>
+          <div className={styles.mobileSimilarGrid}>
+            {similarPosts.slice(0, 6).map((image) => (
+              <div
+                key={image.id}
+                className={`${styles.mobileSimilarTile} ${fade}`}
+              >
+                <Image
+                  src={image.smallUrl ?? image.url}
+                  alt={`image ${image.id}`}
+                  fill
+                  sizes="33vw"
+                  style={{ objectFit: "cover" }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderColorRow = (
     images: AboutImage[],
     direction: "left" | "right",
     delay: number = 0
   ): React.ReactElement | null => {
-    if (!images.length) return null;
+    if (!shuffled || !images.length) return null;
 
     const duplicatedImages = [...images, ...images];
 
@@ -192,7 +309,7 @@ export default function About(props: AboutProps) {
                 className={styles.colorImageContainer}
               >
                 <Image
-                  src={image.url}
+                  src={image.smallUrl ?? image.url}
                   alt={`image ${image.id}`}
                   width={image.width}
                   height={image.height}
@@ -208,6 +325,7 @@ export default function About(props: AboutProps) {
 
   const renderSimilarityClusters = (): React.ReactElement | null => {
     if (
+      !shuffled ||
       !currentSimilarityData.centerPost ||
       !currentSimilarityData.similarPosts.length
     )
@@ -289,7 +407,7 @@ export default function About(props: AboutProps) {
               >
                 <div className={styles.clusterConnectionLine} />
                 <Image
-                  src={image.url}
+                  src={image.smallUrl ?? image.url}
                   alt={`image ${image.id}`}
                   fill
                   sizes="(max-width: 768px) 90px, 180px"
@@ -353,6 +471,7 @@ export default function About(props: AboutProps) {
             {renderColorRow(colorData.red, "right", 0)}
             {renderColorRow(colorData.navy, "left", 0)}
             {renderColorRow(colorData.olive, "right", 0)}
+            {renderMobileColorRows()}
             <div className={styles.colorTextOverlay}>
               <div className={styles.title}>Color Intelligence</div>
               <p className={styles.subtitle}>
@@ -367,9 +486,10 @@ export default function About(props: AboutProps) {
           </div>
         </div>
 
-        <div className={styles.sectionSimilarityBg}>
+        <div className={styles.sectionSimilarityBg} ref={similarityRef}>
           <div className={styles.similaritySection}>
             {renderSimilarityClusters()}
+            {renderMobileSimilarity()}
             <div className={styles.similarityTextOverlay}>
               <div className={styles.title}>Vector Similarity</div>
               <p className={styles.subtitle}>
@@ -411,6 +531,20 @@ export default function About(props: AboutProps) {
                         fontSize: "0.75rem",
                         maxHeight: "70vh",
                         maxWidth: "40vw",
+                      },
+                    }}
+                  />
+                </div>
+              </div>
+              <div className={styles.mobileOnly}>
+                <div className={styles.mobileApiDemo}>
+                  <CodeHighlight
+                    code={`${apiQuery}\n${apiResponseShort}`}
+                    language="javascript"
+                    styles={{
+                      code: {
+                        fontSize: "0.75rem",
+                        maxHeight: "320px",
                       },
                     }}
                   />
