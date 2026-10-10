@@ -511,8 +511,76 @@
   transition: opacity 0.5s ease-in-out;
 }
 
+.mobileOnly {
+  display: none;
+}
+
+.mobileColorRows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0 -1rem 2rem;
+  overflow: hidden;
+}
+
+.mobileColorRow {
+  height: 80px;
+  overflow: hidden;
+}
+
+.mobileScroll {
+  animation-duration: 60s;
+}
+
+.mobileColorImage {
+  height: 100% !important;
+  width: auto !important;
+  object-fit: cover;
+}
+
+.mobileSimilarity {
+  margin-bottom: 2rem;
+}
+
+.mobileSimilarCenter {
+  position: relative;
+  width: 100%;
+  max-height: 60svh;
+  overflow: hidden;
+}
+
+.mobileSimilarGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.mobileSimilarTile {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.mobileApiDemo {
+  margin-bottom: 2rem;
+  box-shadow: 0px 1px 10px 0.1px var(--adb-shadow-strong);
+}
+
 @media (max-width: 720px) {
   .desktopOnly {
     display: none;
+  }
+
+  .mobileOnly {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrollLeft,
+  .scrollRight,
+  .clusterSimilarContainer {
+    animation: none !important;
   }
 }

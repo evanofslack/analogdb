@@ -1,4 +1,5 @@
 import { getAuthorsTotalCount } from "@lib/data/authors";
+import { smallImage } from "@lib/images";
 import {
   getPosts,
   getPostsSimilar,
@@ -62,6 +63,7 @@ function toImage(post: AnalogdbPost): AboutImage | null {
   return {
     id: post.id,
     url: image.url,
+    smallUrl: smallImage(post.images)?.url ?? image.url,
     width: image.width,
     height: image.height,
   };
