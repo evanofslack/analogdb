@@ -76,16 +76,18 @@ const FILMS = [
 const FILM_SET_SIZE = 4;
 
 const QUERIES = [
-  "man in black",
+  "new york subway",
   "neon street signs",
-  "cat in window",
+  "double exposure",
   "red flowers",
   "foggy forest",
   "girl at sunset",
   "snow covered hill",
 ];
 
-const SEARCH_RESULTS = 6;
+// a pool per query, the page shows a random handful from it each time
+const SEARCH_RESULTS = 10;
+const SEARCH_MIN_RESULTS = 6;
 const SEARCH_KEYWORDS = 5;
 const SEARCH_CONCURRENCY = 2;
 
@@ -229,7 +231,7 @@ async function fetchSearch(query: string): Promise<SearchDemo | null> {
       grayscale: false,
     });
     const photos = toPhotos(response.posts);
-    if (photos.length < SEARCH_RESULTS) return null;
+    if (photos.length < SEARCH_MIN_RESULTS) return null;
     return {
       query,
       photos,

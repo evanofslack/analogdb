@@ -12,6 +12,7 @@ const TYPE_MS = 50;
 const DELETE_MS = 30;
 const HOLD_MS = 4000;
 const PAUSE_MS = 300;
+const SHOWN_RESULTS = 6;
 
 export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
   const [order, setOrder] = useState<SearchDemo[] | null>(null);
@@ -21,7 +22,7 @@ export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
   const [reduced, setReduced] = useState(false);
   const [visible, setVisible] = useState(false);
   const [hovered, setHovered] = useState(false);
-  const [shownIndex, setShownIndex] = useState<number | null>(null);
+  const [shown, setShown] = useState<SearchDemo | null>(null);
   const ref = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -45,11 +46,14 @@ export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
 
   // the last finished query stays on screen while the next one types
   useEffect(() => {
-    if (done) {
-      setShownIndex(index);
+    if (done && order && current) {
+      setShown({
+        ...current,
+        photos: shuffle(current.photos).slice(0, SHOWN_RESULTS),
+      });
       setHovered(false);
     }
-  }, [done, index]);
+  }, [done, index, order, current]);
 
   // type the query, hold the results, delete it, then type the next one
   useEffect(() => {
@@ -73,7 +77,6 @@ export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
   if (!order || !current) return null;
 
   const text = reduced ? current.query : current.query.slice(0, typed);
-  const shown = shownIndex === null ? null : order[shownIndex];
   const links = (shown?.keywords ?? []).map((word) => ({
     label: word,
     href: `/search/keyword/${encodeURIComponent(word)}`,
@@ -109,7 +112,7 @@ export default function AboutSearch({ searches }: { searches: SearchDemo[] }) {
         </div>
       ) : (
         <div className={styles.results} aria-hidden>
-          {current.photos.map((photo) => (
+          {current.photos.slice(0, SHOWN_RESULTS).map((photo) => (
             <div key={photo.id} className={`${styles.tile} ${styles.empty}`} />
           ))}
         </div>

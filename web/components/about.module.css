@@ -297,7 +297,7 @@
   }
 }
 
-/* sections link with an arrow, only the hero gets a button */
+/* every section links with an arrow, phones give the hero a button */
 .link {
   display: inline-block;
   font-size: 1rem;
@@ -312,22 +312,6 @@
 
 .link:hover {
   opacity: 0.7;
-}
-
-.link.primary {
-  color: var(--adb-cta-fg);
-  font-weight: 400;
-  background-color: var(--adb-cta-bg);
-  padding: 0.5rem 1rem;
-  border-radius: var(--mantine-radius-default);
-}
-
-.link.primary::after {
-  content: none;
-}
-
-.link.primary:hover {
-  opacity: 0.85;
 }
 
 .stats {
@@ -508,6 +492,22 @@
   .visual {
     order: 1;
     margin-top: 1.25rem;
+  }
+
+  .link.primary {
+    color: var(--adb-cta-fg);
+    font-weight: 400;
+    background-color: var(--adb-cta-bg);
+    padding: 0.5rem 1rem;
+    border-radius: var(--mantine-radius-default);
+  }
+
+  .link.primary::after {
+    content: none;
+  }
+
+  .link.primary:hover {
+    opacity: 0.85;
   }
 
   .stats {
