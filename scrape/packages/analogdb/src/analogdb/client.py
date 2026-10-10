@@ -10,6 +10,7 @@ from analogdb_generated.api.film_api import FilmApi
 from analogdb_generated.api.films_api import FilmsApi
 from analogdb_generated.api.post_api import PostApi
 from analogdb_generated.api.posts_api import PostsApi
+from analogdb_generated.api.removed_api import RemovedApi
 from analogdb_generated.api.scrape_api import ScrapeApi
 from analogdb_generated.api.similarity_api import SimilarityApi
 from analogdb_generated.exceptions import ApiException
@@ -88,6 +89,7 @@ class Client:
         self.cameras_api = CamerasApi(self.api_client)
         self.camera_api = CameraApi(self.api_client)
         self.extractions_api = ExtractionsApi(self.api_client)
+        self.removed_api = RemovedApi(self.api_client)
         self.scrape_api = ScrapeApi(self.api_client)
         self.similarity_api = SimilarityApi(self.api_client)
 
@@ -128,6 +130,12 @@ class Client:
     def get_latest_links(self, count: int) -> List[str]:
         posts = self.get_posts_all(count)
         return [post.permalink for post in posts]
+
+    def get_removed_links(self) -> List[str]:
+        """Permalinks of deleted posts, which must never be scraped again"""
+        return (
+            self._call(self.removed_api.admin_removed_permalinks_get).permalinks or []
+        )
 
     def upload_post(self, post: PostCreate) -> Uploaded:
         try:

@@ -424,6 +424,15 @@ class TestScrapeRoutes:
 
         assert client.get_post_ids() == [1, 2, 3]
 
+    def test_get_removed_links(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/admin/removed/permalinks",
+            method="GET",
+            headers={"Authorization": AUTH},
+        ).respond_with_json({"permalinks": ["/r/analog/9"]})
+
+        assert client.get_removed_links() == ["/r/analog/9"]
+
     def test_encode_posts_returns_failed(self, client, httpserver: HTTPServer):
         httpserver.expect_request(
             "/v1/encode",

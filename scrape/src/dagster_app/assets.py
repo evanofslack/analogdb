@@ -107,9 +107,13 @@ def analogdb_permalinks(
     context: dg.AssetExecutionContext, analogdb: AnalogDBResource
 ) -> List[str]:
     count = analogdb.permalink_posts_count
-    links = analogdb.client().get_latest_links(count=count)
-    context.log.info(f"Fetched {len(links)} post permalinks")
-    return links
+    client = analogdb.client()
+    links = client.get_latest_links(count=count)
+    removed = client.get_removed_links()
+    context.log.info(
+        f"Fetched {len(links)} post permalinks and {len(removed)} removed permalinks"
+    )
+    return list(dict.fromkeys(links + removed))
 
 
 @dg.asset(
