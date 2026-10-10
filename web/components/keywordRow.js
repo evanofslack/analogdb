@@ -69,7 +69,7 @@ export default function KeywordRow({
           size="lg"
           className={`${styles.arrow} ${styles.left}`}
           onClick={() => scroll(-1)}
-          aria-label="scroll keywords left"
+          aria-label="scroll left"
         >
           <IconChevronLeft size={18} stroke={1.5} />
         </ActionIcon>
@@ -107,7 +107,7 @@ export default function KeywordRow({
           size="lg"
           className={`${styles.arrow} ${styles.right}`}
           onClick={() => scroll(1)}
-          aria-label="scroll keywords right"
+          aria-label="scroll right"
         >
           <IconChevronRight size={18} stroke={1.5} />
         </ActionIcon>

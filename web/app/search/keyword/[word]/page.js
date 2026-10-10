@@ -73,7 +73,6 @@ export default async function Page({ params, searchParams }) {
         label: `search for ${entry.make}`,
       }}
       relatedTitle="related keywords"
-      relatedRow
       relatedLinks={related.map((other) => ({
         href: keywordPageHref(other.word),
         label: other.word,

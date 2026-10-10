@@ -99,48 +99,10 @@
   margin: 3rem 0 2rem;
 }
 
-.related {
-  width: 90vw;
-  max-width: 800px;
-  margin: 1.8rem auto 0;
-  text-align: left;
-}
-
 .relatedRow {
   width: 90vw;
   max-width: 800px;
   margin: 1.5rem auto 0;
-}
-
-.relatedTitle {
-  margin: 0 0 0.6rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--adb-nav);
-}
-
-.relatedLinks {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 0.5rem;
-}
-
-.relatedLink {
-  padding: 0.15rem 0.7rem;
-  border: 1.5px solid var(--adb-pill-border);
-  border-radius: 11px;
-  background-color: var(--adb-pill-bg);
-  color: var(--adb-pill-fg);
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.relatedLink:hover {
-  border-color: var(--adb-pill-fg);
-  background-color: var(--adb-pill-fg);
-  color: var(--adb-pill-hover-fg);
 }
 
 @media screen and (max-width: 720px) {
