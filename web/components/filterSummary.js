@@ -2,7 +2,12 @@
 
 import { ActionIcon, Button, CloseButton, Code, Popover } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import { IconInfoCircle, IconX } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconCopy,
+  IconInfoCircle,
+  IconX,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import styles from "./filterSummary.module.css";
 
@@ -13,8 +18,7 @@ export default function FilterSummary({
   items,
   apiUrl,
 }) {
-  const apiClipboard = useClipboard({ timeout: 1500 });
-  const linkClipboard = useClipboard({ timeout: 1500 });
+  const clipboard = useClipboard({ timeout: 1500 });
 
   return (
     <div className={styles.summary}>
@@ -27,17 +31,6 @@ export default function FilterSummary({
             count === 1 ? "photo" : "photos"
           }`}
       </span>
-      <Button
-        variant="subtle"
-        color="gray"
-        size="compact-sm"
-        leftSection={<IconX size={14} stroke={1.75} />}
-        className={styles.clear}
-        onClick={onClear}
-        aria-label="Clear filters"
-      >
-        clear
-      </Button>
       <Popover width={320} position="bottom-start" shadow="md" withArrow>
         <Popover.Target>
           <ActionIcon
@@ -55,16 +48,19 @@ export default function FilterSummary({
           <ul className={styles.items}>
             {items.map((item) => (
               <li key={item.key} className={styles.item}>
-                <span>{item.label}</span>
+                <span>
+                  <span className={styles.category}>{item.category}</span>{" "}
+                  {item.value}
+                </span>
                 <CloseButton
                   size="sm"
                   onClick={item.onRemove}
-                  aria-label={`Remove ${item.label}`}
+                  aria-label={`Remove ${item.category} ${item.value}`}
                 />
               </li>
             ))}
           </ul>
-          <p className={styles.heading}>as an api call</p>
+          <p className={styles.heading}>api call</p>
           <Code block className={styles.url}>
             {apiUrl}
           </Code>
@@ -73,26 +69,35 @@ export default function FilterSummary({
               variant="subtle"
               color="gray"
               size="compact-sm"
-              onClick={() => apiClipboard.copy(apiUrl)}
+              leftSection={
+                clipboard.copied ? (
+                  <IconCheck size={14} stroke={1.75} />
+                ) : (
+                  <IconCopy size={14} stroke={1.75} />
+                )
+              }
+              className={styles.copy}
+              onClick={() => clipboard.copy(apiUrl)}
             >
-              {apiClipboard.copied ? "copied" : "copy api url"}
+              {clipboard.copied ? "copied" : "copy api url"}
             </Button>
             <Link href="/docs" className={styles.docs}>
               api docs
             </Link>
           </div>
-          <div className={styles.share}>
-            <Button
-              variant="subtle"
-              color="gray"
-              size="compact-sm"
-              onClick={() => linkClipboard.copy(window.location.href)}
-            >
-              {linkClipboard.copied ? "copied" : "copy link to this view"}
-            </Button>
-          </div>
         </Popover.Dropdown>
       </Popover>
+      <Button
+        variant="subtle"
+        color="gray"
+        size="compact-sm"
+        leftSection={<IconX size={14} stroke={1.75} />}
+        className={styles.clear}
+        onClick={onClear}
+        aria-label="Clear filters"
+      >
+        clear
+      </Button>
     </div>
   );
 }

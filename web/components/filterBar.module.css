@@ -23,11 +23,13 @@
 }
 
 .dot {
-  width: 6px;
-  height: 6px;
-  margin-left: 6px;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
-  background-color: var(--adb-heading);
+  background-color: var(--adb-muted);
   visibility: hidden;
 }
 
@@ -139,15 +141,16 @@
 
 .query .button {
   flex-shrink: 0;
+  position: relative;
   height: 36px;
-  padding: 0 0.9rem;
+  padding: 0 10px;
   font-weight: 400;
   color: var(--adb-heading);
   border-color: var(--adb-border);
 }
 
 .query .buttonSection {
-  margin-right: 6px;
+  margin-right: 5px;
 }
 
 .query .button:not([data-disabled]):hover {
@@ -155,7 +158,7 @@
 }
 
 .query .button[data-active] {
-  border-color: var(--adb-heading);
+  border-color: var(--adb-muted);
 }
 
 @media (max-width: 720px) {

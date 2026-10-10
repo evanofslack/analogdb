@@ -171,40 +171,39 @@ export default function FilterBar({
   const flagItem = (key, title, value, setValue) =>
     value !== postsParsers[key].defaultValue && {
       key,
-      label: `${title}: ${value}`,
+      category: title,
+      value,
       onRemove: () => setValue(postsParsers[key].defaultValue),
     };
   const summaryItems = [
     active.camera && {
       key: "camera",
-      label: `camera: ${optionLabel(
+      category: "camera",
+      value: optionLabel(
         cameraOptions,
         cameraMake,
         cameraModel,
         "make",
         "model"
-      )}`,
+      ),
       onRemove: () => setCamera(null, null),
     },
     active.film && {
       key: "film",
-      label: `film: ${optionLabel(
-        filmOptions,
-        filmMake,
-        filmType,
-        "make",
-        "type"
-      )}`,
+      category: "film",
+      value: optionLabel(filmOptions, filmMake, filmType, "make", "type"),
       onRemove: () => setFilm(null, null),
     },
     active.color && {
       key: "color",
-      label: `color: ${color}`,
+      category: "color",
+      value: color,
       onRemove: () => setColor(null),
     },
     active.size && {
       key: "size",
-      label: "size: custom",
+      category: "size",
+      value: "custom",
       onRemove: () => setSizes(defaultSizes),
     },
     flagItem("nsfw", "18+", nsfw, setNsfw),
@@ -212,7 +211,8 @@ export default function FilterBar({
     flagItem("sprocket", "sprocket", sprocket, setSprocket),
     active.text && {
       key: "text",
-      label: `keyword: ${text}`,
+      category: "keyword",
+      value: text,
       onRemove: () => setText(null),
     },
   ].filter(Boolean);

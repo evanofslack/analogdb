@@ -54,6 +54,10 @@
   color: var(--adb-heading);
 }
 
+.category {
+  font-weight: 600;
+}
+
 .url {
   font-size: 0.75rem;
   white-space: pre-wrap;
@@ -67,14 +71,21 @@
   margin-top: 0.4rem;
 }
 
-.docs {
-  font-size: 0.85rem;
-  color: var(--adb-muted);
-  text-decoration: underline;
+.copy {
+  font-weight: 400;
 }
 
-.share {
-  margin-top: 0.75rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--adb-divider);
+.docs {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--adb-heading);
+  transition: opacity 0.2s;
+}
+
+.docs::after {
+  content: " →";
+}
+
+.docs:hover {
+  opacity: 0.7;
 }
