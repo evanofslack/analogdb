@@ -319,7 +319,7 @@ export default function About(props: AboutProps) {
               view latest
             </Link>
           </div>
-          <div className={`${styles.stats} ${styles.desktopOnly}`}>
+          <div className={styles.stats}>
             <div className={styles.statRow}>
               <IconPolaroid
                 size={40}
