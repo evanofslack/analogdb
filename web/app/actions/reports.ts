@@ -1,5 +1,6 @@
 "use server";
 
+import { checkAdminAuth } from "@lib/auth";
 import { postApi } from "@lib/client";
 import { limitAction } from "@lib/rateLimit";
 import { Limited } from "@lib/rateLimited";
@@ -18,8 +19,11 @@ export async function reportPost(
   if (!Number.isInteger(id) || id <= 0) {
     return { ok: false, error: "invalid post id" };
   }
-  const limited = await limitAction("report");
-  if (limited) return limited;
+  // admin flags posts in bulk to review later, so only visitors are limited
+  if (!(await checkAdminAuth())) {
+    const limited = await limitAction("report");
+    if (limited) return limited;
+  }
 
   // website is a hidden field only bots fill in, pretend it worked
   if (typeof input?.website === "string" && input.website !== "") {
