@@ -354,7 +354,7 @@ export default function About(props: AboutProps) {
                   photos, each one analyzed for color, gear and content. New
                   photos are added every day.
                 </p>
-                <Link href="/" className={`${styles.link} ${styles.primary}`}>
+                <Link href="/" className={styles.link}>
                   view latest
                 </Link>
               </div>
