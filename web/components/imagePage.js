@@ -63,22 +63,22 @@ async function downloadImage(id) {
 
 function Action({ label, icon: Icon, onClick, href }) {
   return (
-    <div className={styles.action}>
-      <Tooltip label={label} withArrow className="px-2">
-        <ActionIcon
-          variant="subtle"
-          color="gray"
-          aria-label={label}
-          onClick={onClick}
-          {...(href && { component: "a", href })}
-        >
-          <Icon size="24px" />
-        </ActionIcon>
-      </Tooltip>
-      <span className={styles.actionLabel} aria-hidden="true">
-        {label}
-      </span>
-    </div>
+    <Tooltip
+      label={label}
+      withArrow
+      events={{ hover: true, focus: true, touch: true }}
+      className="px-2"
+    >
+      <ActionIcon
+        variant="subtle"
+        color="gray"
+        aria-label={label}
+        onClick={onClick}
+        {...(href && { component: "a", href })}
+      >
+        <Icon size="24px" />
+      </ActionIcon>
+    </Tooltip>
   );
 }
 
@@ -137,11 +137,13 @@ export default function ImagePage(props) {
           />
         </div>
         <div className={styles.footerIcons}>
-          {actions
-            .filter((action) => !action.admin || isAdmin)
-            .map((action) => (
-              <Action key={action.label} {...action} />
-            ))}
+          <ActionIcon.Group>
+            {actions
+              .filter((action) => !action.admin || isAdmin)
+              .map((action) => (
+                <Action key={action.label} {...action} />
+              ))}
+          </ActionIcon.Group>
         </div>
       </div>
       <ImageTag
