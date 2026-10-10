@@ -1,4 +1,4 @@
-import { PostsGetRequest } from "analogdb-generated";
+import { HTTPQuery, PostsGetRequest, querystring } from "analogdb-generated";
 import {
   inferParserType,
   parseAsFloat,
@@ -6,6 +6,7 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
+import { publicURL } from "./constants";
 import { isValidSeed } from "./seed";
 
 const sortOpts = ["time", "score", "random"] as const;
@@ -220,4 +221,23 @@ export function toPostsRequest(filters: PostsFilters): PostsGetRequest {
   if (filters.camera_model) params.cameraModel = filters.camera_model;
 
   return params;
+}
+
+// the public api call for these filters, leaving out values the api already defaults to
+export function postsApiUrl(filters: PostsFilters): string {
+  const request = toPostsRequest(filters);
+  const defaults: Partial<Record<keyof PostsGetRequest, unknown>> = {
+    sort: "time",
+    pageSize: request.pageSize,
+    ...postsLimits,
+  };
+  const query: HTTPQuery = {};
+  for (const [key, value] of Object.entries(request)) {
+    if (value == null || defaults[key as keyof PostsGetRequest] === value) {
+      continue;
+    }
+    query[key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)] = value;
+  }
+  const qs = querystring(query);
+  return `${publicURL}/posts${qs ? `?${qs}` : ""}`;
 }

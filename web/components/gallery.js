@@ -1,7 +1,11 @@
 "use client";
 
 import usePosts from "@hooks/usePosts";
-import { activePostsFilters, clearedPostsFilters } from "@lib/searchParams";
+import {
+  activePostsFilters,
+  clearedPostsFilters,
+  postsApiUrl,
+} from "@lib/searchParams";
 import { pickSeed } from "@lib/seed";
 import FilterBar from "./filterBar";
 import Footer from "./footer";
@@ -83,6 +87,7 @@ export default function Gallery({
           }
           resultCount={anyActive ? posts.totalPosts : null}
           resultPending={posts.isPlaceholderData}
+          apiUrl={anyActive ? postsApiUrl(filters) : undefined}
         />
         <InfiniteGallery {...posts} initialColumns={initialColumns} />
         <ScrollTop />

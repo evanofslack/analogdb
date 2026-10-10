@@ -7,6 +7,7 @@ export default function ColorFilter({
   setColor,
   buttonClassNames,
   labelClassName,
+  dotClassName,
   active,
 }) {
   const handleColorClick = (event) => {
@@ -138,6 +139,7 @@ export default function ColorFilter({
           data-active={active || undefined}
         >
           <span className={labelClassName}>color</span>
+          <span className={dotClassName} aria-hidden="true" />
           {active && <VisuallyHidden>, filter on</VisuallyHidden>}
         </Button>
       </Menu.Target>

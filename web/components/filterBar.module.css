@@ -1,23 +1,17 @@
 .query {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
+  justify-content: flex-end;
   width: 100%;
   padding-bottom: 2rem;
 }
 
-.count {
-  margin: 0;
-  font-size: 0.95rem;
-  color: var(--adb-muted);
-  white-space: nowrap;
-  transition: opacity 0.2s;
-}
-
-.pending {
-  opacity: 0.5;
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  max-width: 100%;
 }
 
 .divider {
@@ -26,6 +20,19 @@
   height: 1.5rem;
   margin: 0 0.25rem;
   background-color: var(--adb-divider);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background-color: var(--adb-heading);
+  visibility: hidden;
+}
+
+.query .button[data-active] .dot {
+  visibility: visible;
 }
 
 .radio {
@@ -112,7 +119,6 @@
   flex-direction: row;
   align-items: center;
   gap: 0.5rem;
-  margin-left: auto;
   position: relative;
 }
 
@@ -131,16 +137,11 @@
   box-shadow: 0 2px 8px var(--adb-shadow-overlay);
 }
 
-.query .button,
-.query .clear {
+.query .button {
   flex-shrink: 0;
   height: 36px;
   padding: 0 0.9rem;
-  border-radius: 999px;
   font-weight: 400;
-}
-
-.query .button {
   color: var(--adb-heading);
   border-color: var(--adb-border);
 }
@@ -153,28 +154,18 @@
   background-color: var(--adb-surface-hover);
 }
 
-.query .button[data-active],
-.query .button[data-active]:not([data-disabled]):hover {
-  color: var(--adb-cta-fg);
-  background-color: var(--adb-cta-bg);
-  border-color: var(--adb-cta-bg);
-}
-
-.query .clear {
-  order: 99;
-  color: var(--adb-muted);
+.query .button[data-active] {
+  border-color: var(--adb-heading);
 }
 
 @media (max-width: 720px) {
   .query {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
+    display: block;
     padding-bottom: 1.25rem;
   }
 
-  .count {
-    order: 2;
+  .group {
+    align-items: stretch;
   }
 
   .filterButtons {
@@ -194,12 +185,7 @@
     display: none;
   }
 
-  .query .button,
-  .query .clear {
+  .query .button {
     height: 40px;
-  }
-
-  .query .clear {
-    order: -1;
   }
 }
