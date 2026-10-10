@@ -114,50 +114,60 @@ export interface MissingPosts {
 export const trafficRanges = ["24h", "7d", "30d"] as const;
 export type TrafficRange = (typeof trafficRanges)[number];
 
-export interface TrafficCount {
-  name: string;
-  client?: string;
+export interface TrafficTotals {
   requests: number;
+  web: number;
+  scraper: number;
+  direct: number;
+  bots: number;
+  status_4xx: number;
+  status_5xx: number;
+  p95_ms: number;
+  page_views: number;
 }
+
+export type CallerKind = "bot" | "tool" | "browser" | "empty";
 
 export interface Traffic {
   range: TrafficRange;
   bucket: "hour" | "day";
+  summary: {
+    current: TrafficTotals;
+    previous: TrafficTotals;
+  };
   series: {
     time: string;
     web: number;
     scraper: number;
-    other: number;
+    direct: number;
     status_4xx: number;
     status_5xx: number;
   }[];
-  totals: {
+  callers: {
+    name: string;
+    kind: CallerKind;
     requests: number;
-    unique_ips: number;
-    status_2xx: number;
-    status_3xx: number;
-    status_4xx: number;
-    status_5xx: number;
-  };
+    ips: number;
+  }[];
   routes: {
     route: string;
     requests: number;
+    total_ms: number;
     p50_ms: number;
     p95_ms: number;
-    errors: number;
+    status_4xx: number;
+    status_5xx: number;
   }[];
-  posts: { post_id: number; requests: number }[];
-  legacy: { client: string; requests: number; legacy: number }[];
-  params: TrafficCount[];
-  user_agents: TrafficCount[];
-  ips: TrafficCount[];
   errors: {
-    time: string;
-    method: string;
-    path: string;
-    status: number;
-    request_id: string;
-  }[];
+    by_status: { status: number; route: string; requests: number }[];
+    recent: {
+      time: string;
+      method: string;
+      path: string;
+      status: number;
+      request_id: string;
+    }[];
+  };
 }
 
 export interface ViewCounts {

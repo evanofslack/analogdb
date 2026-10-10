@@ -1,81 +1,22 @@
 import { formatNumber, formatPercent } from "@lib/format";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
+import Change from "./change";
 import RangePicker from "./rangePicker";
 import Stat from "./stat";
 import TabError from "./tabError";
-import { bucketLabel } from "./trafficTab";
+import TimeChart from "./timeChart";
+
+const viewSeries = [
+  { name: "page_views", label: "Page views", color: "blue.6" },
+  { name: "visitors", label: "Visitor-days", color: "teal.6" },
+];
 
 const vitalThresholds = {
   lcp: [2500, 4000],
   inp: [200, 500],
   cls: [0.1, 0.25],
 };
-
-function Change({ current, previous, invert }) {
-  if (!previous) {
-    return current ? <span>New this period</span> : null;
-  }
-  const pct = ((current - previous) / previous) * 100;
-  const good = invert ? pct < 0 : pct > 0;
-  const className = pct === 0 ? "" : good ? styles.fresh : styles.veryStale;
-  return (
-    <span className={className}>
-      {pct > 0 ? "+" : ""}
-      {pct.toFixed(1)}% vs previous
-    </span>
-  );
-}
-
-function Chart({ series, bucket }) {
-  if (series.length === 0) {
-    return <p className={styles.note}>No page views in this range.</p>;
-  }
-  const max = Math.max(1, ...series.map((b) => b.page_views));
-  return (
-    <div className={styles.card} style={{ padding: 0 }}>
-      <div className={styles.chart}>
-        {series.map((b) => {
-          const visitors = Math.min(b.visitors, b.page_views);
-          const title = `${bucketLabel(b.time, bucket)}: ${formatNumber(
-            b.page_views
-          )} page views, ${formatNumber(b.visitors)} visitors`;
-          return (
-            <div key={b.time} className={styles.barColumn} title={title}>
-              <div
-                className={styles.barWeb}
-                style={{ height: `${(visitors / max) * 100}%` }}
-              />
-              <div
-                className={styles.barScraper}
-                style={{
-                  height: `${((b.page_views - visitors) / max) * 100}%`,
-                }}
-              />
-            </div>
-          );
-        })}
-      </div>
-      <div className={styles.axis}>
-        <span>{bucketLabel(series[0].time, bucket)}</span>
-        <span>{bucketLabel(series[series.length - 1].time, bucket)} UTC</span>
-      </div>
-      <div className={styles.legend}>
-        <span className={styles.legendItem}>
-          <span className={`${styles.swatch} ${styles.barWeb}`} />
-          Visitors
-        </span>
-        <span className={styles.legendItem}>
-          <span className={`${styles.swatch} ${styles.barScraper}`} />
-          Further page views
-        </span>
-        <span>
-          Peak {formatNumber(max)} page views per {bucket}
-        </span>
-      </div>
-    </div>
-  );
-}
 
 function ViewsTable({ title, rows, nameLabel, href, mono }) {
   return (
@@ -358,7 +299,11 @@ function AnalyticsBody({ analytics }) {
         <h2 className={styles.sectionTitle}>
           Page views per {analytics.bucket}
         </h2>
-        <Chart series={analytics.series} bucket={analytics.bucket} />
+        <TimeChart
+          data={analytics.series}
+          series={viewSeries}
+          bucket={analytics.bucket}
+        />
       </section>
 
       <section className={`${styles.section} ${styles.twoCol}`}>

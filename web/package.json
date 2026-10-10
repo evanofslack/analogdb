@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fontsource/courier-prime": "^4.5.0",
+    "@mantine/charts": "8.0.1",
     "@mantine/code-highlight": "^8.0.1",
     "@mantine/core": "^8.0.1",
     "@mantine/dropzone": "^8.0.1",
@@ -28,6 +29,7 @@
     "react": "19.1.9",
     "react-dom": "19.1.9",
     "react-icons": "^4.3.1",
+    "recharts": "^2.15.4",
     "server-only": "^0.0.1",
     "sharp": "^0.35.5",
     "shiki": "^3.4.2"

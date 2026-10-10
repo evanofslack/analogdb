@@ -1,101 +1,38 @@
 import { formatDateTime, formatNumber, formatPercent } from "@lib/format";
-import Link from "next/link";
 import styles from "./adminPanel.module.css";
+import Change from "./change";
 import RangePicker from "./rangePicker";
 import Stat from "./stat";
 import TabError from "./tabError";
+import TimeChart from "./timeChart";
 
-const clients = [
-  { key: "web", label: "Web server", className: styles.barWeb },
-  { key: "scraper", label: "Scraper", className: styles.barScraper },
-  { key: "other", label: "Other", className: styles.barOther },
+const requestSeries = [
+  { name: "web", label: "Web server", color: "blue.6" },
+  { name: "scraper", label: "Scraper", color: "teal.6" },
+  { name: "direct", label: "Direct", color: "gray.6" },
 ];
 
-export function bucketLabel(time, bucket) {
-  const date = new Date(time);
-  if (bucket === "hour") {
-    return `${date.toISOString().slice(11, 13)}:00`;
-  }
-  return date.toISOString().slice(5, 10);
+const errorSeries = [
+  { name: "status_4xx", label: "4xx", color: "orange.6" },
+  { name: "status_5xx", label: "5xx", color: "red.6" },
+];
+
+function ratio(a, b) {
+  return b ? a / b : 0;
 }
 
-function Chart({ series, bucket }) {
-  if (series.length === 0) {
-    return <p className={styles.note}>No requests in this range.</p>;
-  }
-  const max = Math.max(1, ...series.map((b) => b.web + b.scraper + b.other));
-  return (
-    <div className={styles.card} style={{ padding: 0 }}>
-      <div className={styles.chart}>
-        {series.map((b) => {
-          const total = b.web + b.scraper + b.other;
-          const title = `${bucketLabel(b.time, bucket)}: ${formatNumber(
-            total
-          )} requests, ${b.status_4xx} 4xx, ${b.status_5xx} 5xx`;
-          return (
-            <div key={b.time} className={styles.barColumn} title={title}>
-              {clients.map((c) => (
-                <div
-                  key={c.key}
-                  className={c.className}
-                  style={{ height: `${(b[c.key] / max) * 100}%` }}
-                />
-              ))}
-            </div>
-          );
-        })}
-      </div>
-      <div className={styles.axis}>
-        <span>{bucketLabel(series[0].time, bucket)}</span>
-        <span>{bucketLabel(series[series.length - 1].time, bucket)} UTC</span>
-      </div>
-      <div className={styles.legend}>
-        {clients.map((c) => (
-          <span key={c.key} className={styles.legendItem}>
-            <span className={`${styles.swatch} ${c.className}`} />
-            {c.label}
-          </span>
-        ))}
-        <span>
-          Peak {formatNumber(max)} per {bucket}
-        </span>
-      </div>
-    </div>
-  );
+function derived(t) {
+  return {
+    ...t,
+    direct_share: ratio(t.direct, t.requests),
+    rate_4xx: ratio(t.status_4xx, t.requests),
+    rate_5xx: ratio(t.status_5xx, t.requests),
+    per_view: ratio(t.web, t.page_views),
+  };
 }
 
-function CountTable({ title, rows, nameLabel, showClient, mono }) {
-  return (
-    <div>
-      <h3 className={styles.sectionTitle}>{title}</h3>
-      {rows.length === 0 ? (
-        <p className={styles.note}>None.</p>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>{nameLabel}</th>
-                {showClient && <th>Client</th>}
-                <th className={styles.num}>Requests</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={`${row.name}|${row.client ?? ""}`}>
-                  <td className={`${styles.wrap} ${mono ? styles.mono : ""}`}>
-                    {row.name || "(empty)"}
-                  </td>
-                  {showClient && <td>{row.client}</td>}
-                  <td className={styles.num}>{formatNumber(row.requests)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
+function seconds(ms) {
+  return formatNumber(Number((ms / 1000).toFixed(1)));
 }
 
 export default function TrafficTab({ traffic, error, range }) {
@@ -103,8 +40,7 @@ export default function TrafficTab({ traffic, error, range }) {
     <>
       <RangePicker tab="traffic" range={range} />
       <p className={styles.note} style={{ marginBottom: "1.5rem" }}>
-        Backend API requests from ClickHouse. Pages served from the web cache
-        never reach the API, and page renders show as the web server&apos;s IP.
+        Backend API requests. Visitors are on the Analytics tab.
       </p>
 
       {error ? <TabError error={error} /> : <TrafficBody traffic={traffic} />}
@@ -112,175 +48,256 @@ export default function TrafficTab({ traffic, error, range }) {
   );
 }
 
-function TrafficBody({ traffic }) {
-  const { totals } = traffic;
+function Summary({ summary }) {
+  const current = derived(summary.current);
+  const previous = derived(summary.previous);
   return (
-    <>
-      <section className={styles.section}>
-        <div className={styles.stats}>
-          <Stat label="Requests" value={formatNumber(totals.requests)} />
-          <Stat
-            label="IPs seen by the API"
-            value={formatNumber(totals.unique_ips)}
-          />
-          <Stat
-            label="4xx"
-            value={formatNumber(totals.status_4xx)}
-            detail={formatPercent(totals.status_4xx, totals.requests)}
-          />
-          <Stat
-            label="5xx"
-            value={formatNumber(totals.status_5xx)}
-            detail={formatPercent(totals.status_5xx, totals.requests)}
-          />
+    <section className={styles.section}>
+      <div className={styles.stats}>
+        <Stat
+          label="Requests"
+          value={formatNumber(current.requests)}
+          detail={
+            <Change current={current.requests} previous={previous.requests} />
+          }
+        />
+        <Stat
+          label="Direct share"
+          value={formatPercent(current.direct, current.requests)}
+          detail={
+            <Change
+              current={current.direct_share}
+              previous={previous.direct_share}
+              invert
+            />
+          }
+        />
+        <Stat
+          label="5xx rate"
+          value={formatPercent(current.status_5xx, current.requests)}
+          detail={
+            <Change
+              current={current.rate_5xx}
+              previous={previous.rate_5xx}
+              invert
+            />
+          }
+        />
+        <Stat
+          label="4xx rate"
+          value={formatPercent(current.status_4xx, current.requests)}
+          detail={
+            <Change
+              current={current.rate_4xx}
+              previous={previous.rate_4xx}
+              invert
+            />
+          }
+        />
+        <Stat
+          label="p95 latency"
+          value={`${formatNumber(Math.round(current.p95_ms))} ms`}
+          detail={
+            <Change
+              current={current.p95_ms}
+              previous={previous.p95_ms}
+              invert
+            />
+          }
+        />
+        <Stat
+          label="API calls per page view"
+          value={current.page_views ? current.per_view.toFixed(1) : "–"}
+          detail={
+            <Change
+              current={current.per_view}
+              previous={previous.per_view}
+              invert
+            />
+          }
+        />
+      </div>
+    </section>
+  );
+}
+
+function CallersTable({ callers, direct }) {
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Direct callers</h2>
+      {callers.length === 0 ? (
+        <p className={styles.note}>None.</p>
+      ) : (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Caller</th>
+                <th>Kind</th>
+                <th className={styles.num}>Requests</th>
+                <th className={styles.num}>Share of direct</th>
+                <th className={styles.num}>IPs</th>
+              </tr>
+            </thead>
+            <tbody>
+              {callers.map((c) => (
+                <tr key={`${c.kind}|${c.name}`}>
+                  <td className={styles.wrap}>{c.name || "(empty)"}</td>
+                  <td>{c.kind}</td>
+                  <td className={styles.num}>{formatNumber(c.requests)}</td>
+                  <td className={styles.num}>
+                    {formatPercent(c.requests, direct)}
+                  </td>
+                  <td className={styles.num}>{formatNumber(c.ips)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </section>
+      )}
+    </section>
+  );
+}
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Requests per {traffic.bucket}</h2>
-        <Chart series={traffic.series} bucket={traffic.bucket} />
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Top routes</h2>
+function RoutesTable({ routes }) {
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Routes by total time</h2>
+      {routes.length === 0 ? (
+        <p className={styles.note}>None.</p>
+      ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
                 <th>Route</th>
                 <th className={styles.num}>Requests</th>
+                <th className={styles.num}>Total (s)</th>
                 <th className={styles.num}>p50 ms</th>
                 <th className={styles.num}>p95 ms</th>
+                <th className={styles.num}>4xx</th>
                 <th className={styles.num}>5xx</th>
               </tr>
             </thead>
             <tbody>
-              {traffic.routes.map((r) => (
+              {routes.map((r) => (
                 <tr key={r.route}>
                   <td className={styles.mono}>{r.route}</td>
                   <td className={styles.num}>{formatNumber(r.requests)}</td>
+                  <td className={styles.num}>{seconds(r.total_ms)}</td>
                   <td className={styles.num}>{Math.round(r.p50_ms)}</td>
                   <td className={styles.num}>{Math.round(r.p95_ms)}</td>
-                  <td className={styles.num}>{formatNumber(r.errors)}</td>
+                  <td className={styles.num}>{formatNumber(r.status_4xx)}</td>
+                  <td className={styles.num}>{formatNumber(r.status_5xx)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </section>
+      )}
+    </section>
+  );
+}
 
-      <section className={`${styles.section} ${styles.twoCol}`}>
-        <div>
-          <h3 className={styles.sectionTitle}>Most requested posts</h3>
-          {traffic.posts.length === 0 ? (
-            <p className={styles.note}>None.</p>
-          ) : (
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Post</th>
-                    <th className={styles.num}>Requests</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {traffic.posts.map((p) => (
-                    <tr key={p.post_id}>
-                      <td>
-                        <Link
-                          href={`/post/${p.post_id}`}
-                          className={styles.link}
-                        >
-                          #{p.post_id}
-                        </Link>
-                      </td>
-                      <td className={styles.num}>{formatNumber(p.requests)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-        <div>
-          <h3 className={styles.sectionTitle}>Legacy routes (no /v1)</h3>
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Client</th>
-                  <th className={styles.num}>Legacy</th>
-                  <th className={styles.num}>Share</th>
+function StatusTable({ rows }) {
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Errors by status</h2>
+      {rows.length === 0 ? (
+        <p className={styles.note}>No errors in this range.</p>
+      ) : (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.num}>Status</th>
+                <th>Route</th>
+                <th className={styles.num}>Requests</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={`${r.status}|${r.route}`}>
+                  <td className={styles.num}>{r.status}</td>
+                  <td className={styles.mono}>{r.route}</td>
+                  <td className={styles.num}>{formatNumber(r.requests)}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {traffic.legacy.map((l) => (
-                  <tr key={l.client}>
-                    <td>{l.client}</td>
-                    <td className={styles.num}>{formatNumber(l.legacy)}</td>
-                    <td className={styles.num}>
-                      {formatPercent(l.legacy, l.requests)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
-        <CountTable
-          title="Filters used on /posts"
-          rows={traffic.params}
-          nameLabel="Param"
-          mono
-        />
-        <CountTable
-          title="Top IPs (not web or scraper)"
-          rows={traffic.ips}
-          nameLabel="IP"
-          mono
+      )}
+    </section>
+  );
+}
+
+function RecentTable({ rows }) {
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionTitle}>Recent 5xx</h2>
+      {rows.length === 0 ? (
+        <p className={styles.note}>No server errors in this range.</p>
+      ) : (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Method</th>
+                <th>Path</th>
+                <th className={styles.num}>Status</th>
+                <th>Request id</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((e) => (
+                <tr key={e.request_id || e.time}>
+                  <td>{formatDateTime(e.time)}</td>
+                  <td>{e.method}</td>
+                  <td className={styles.mono}>{e.path}</td>
+                  <td className={styles.num}>{e.status}</td>
+                  <td className={styles.mono}>{e.request_id}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function TrafficBody({ traffic }) {
+  return (
+    <>
+      <Summary summary={traffic.summary} />
+
+      <section className={styles.section}>
+        <h2 className={styles.sectionTitle}>Requests per {traffic.bucket}</h2>
+        <TimeChart
+          data={traffic.series}
+          series={requestSeries}
+          bucket={traffic.bucket}
         />
       </section>
 
       <section className={styles.section}>
-        <CountTable
-          title="Top user agents"
-          rows={traffic.user_agents}
-          nameLabel="User agent"
-          showClient
+        <h2 className={styles.sectionTitle}>Errors per {traffic.bucket}</h2>
+        <TimeChart
+          data={traffic.series}
+          series={errorSeries}
+          bucket={traffic.bucket}
+          height={140}
         />
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Recent 5xx</h2>
-        {traffic.errors.length === 0 ? (
-          <p className={styles.note}>No server errors in this range.</p>
-        ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>Method</th>
-                  <th>Path</th>
-                  <th className={styles.num}>Status</th>
-                  <th>Request id</th>
-                </tr>
-              </thead>
-              <tbody>
-                {traffic.errors.map((e) => (
-                  <tr key={e.request_id || e.time}>
-                    <td>{formatDateTime(e.time)}</td>
-                    <td>{e.method}</td>
-                    <td className={styles.mono}>{e.path}</td>
-                    <td className={styles.num}>{e.status}</td>
-                    <td className={styles.mono}>{e.request_id}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <CallersTable
+        callers={traffic.callers}
+        direct={traffic.summary.current.direct}
+      />
+      <RoutesTable routes={traffic.routes} />
+      <StatusTable rows={traffic.errors.by_status} />
+      <RecentTable rows={traffic.errors.recent} />
     </>
   );
 }
