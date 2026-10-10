@@ -378,15 +378,6 @@
   color: var(--adb-heading);
 }
 
-.eyebrow {
-  margin: 0 0 0.4rem;
-  color: var(--adb-muted);
-  font-family: "Courier Prime", Courier, monospace;
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .transitioning {
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
@@ -451,7 +442,7 @@
   max-height: 240px;
 }
 
-/* phones: every section is label, title, text, link, then a short visual */
+/* phones: every section is title, text, link, then a short visual */
 @media (max-width: 720px) {
   .desktopOnly {
     display: none;

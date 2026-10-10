@@ -370,9 +370,6 @@ export default function About(props: AboutProps) {
               {renderColorRow(colorData.olive, "right", 0)}
               {renderMobileColorRows()}
               <div className={styles.colorTextOverlay}>
-                <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>
-                  color
-                </p>
                 <h2 className={styles.title}>Color Intelligence</h2>
                 <p className={styles.subtitle}>
                   Dominant colors are extracted from every photo, allowing you
@@ -390,9 +387,6 @@ export default function About(props: AboutProps) {
             <div className={styles.band}>
               <div className={`${styles.split} ${styles.wide}`}>
                 <div className={styles.text}>
-                  <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>
-                    film
-                  </p>
                   <h2 className={styles.title}>Film Stocks</h2>
                   <p className={styles.subtitle}>
                     Camera, lens and film are read from every post, so you can
@@ -416,9 +410,6 @@ export default function About(props: AboutProps) {
                   <AboutSearch searches={props.data.searches} />
                 </div>
                 <div>
-                  <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>
-                    search
-                  </p>
                   <h2 className={styles.title}>Search by Phrase</h2>
                   <p className={styles.subtitle}>
                     A vision model writes a caption and tags for every photo, so
@@ -435,9 +426,6 @@ export default function About(props: AboutProps) {
           <div className={styles.band} ref={similarityRef}>
             <div className={`${styles.split} ${styles.wide}`}>
               <div className={styles.text}>
-                <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>
-                  similarity
-                </p>
                 <h2 className={styles.title}>Vector Similarity</h2>
                 <p className={styles.subtitle}>
                   Every photo is embedded with CLIP, one vector space shared by
@@ -494,7 +482,6 @@ export default function About(props: AboutProps) {
                 </div>
               )}
               <div>
-                <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>api</p>
                 <h2 className={styles.title}>Accessible API</h2>
                 <p className={styles.subtitle}>
                   Posts, search, similar photos, colors and gear, all through
@@ -510,9 +497,6 @@ export default function About(props: AboutProps) {
           <div className={styles.band}>
             <div className={styles.split}>
               <div>
-                <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>
-                  open source
-                </p>
                 <h2 className={styles.title}>Open-source</h2>
                 <p className={styles.subtitle}>
                   All code made publicly available on Github with flexible
