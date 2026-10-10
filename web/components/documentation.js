@@ -636,15 +636,17 @@ export default function Documentation() {
             default, 20 records are returned per page. Pagination can be
             controlled with the following parameters:
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>param</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{paginationRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>param</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{paginationRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <div className={styles.codeblock}>
             <CodeHighlight
               code="curl https://api.analogdb.com/v1/posts?page_size=10&cursor=eyJzIjoidGltZSIsInYiOjE3OTA1Mzk5MjIsImlkIjo0MDA1Mn0"
@@ -667,108 +669,122 @@ export default function Documentation() {
             The <Code>image</Code> resource contains the image URL as well as
             resolution and dimensions.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>field name</Table.Th>
-                <Table.Th>type</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{imageRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>field name</Table.Th>
+                  <Table.Th>type</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{imageRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <h2 className={styles.h2}> Color </h2>
           <p>
             The <Code>color</Code> resource represents primary colors extracted
             from images and corresponding percentages.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>field name</Table.Th>
-                <Table.Th>type</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{colorRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>field name</Table.Th>
+                  <Table.Th>type</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{colorRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <h2 className={styles.h2}> Keyword </h2>
           <p>
             The <Code>keyword</Code> resource contains keywords scraped from
             post along with relevance score.
           </p>
-          <Table highlightOnHover withColumnBorders withRowBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>field name</Table.Th>
-                <Table.Th>type</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{keywordRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders withRowBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>field name</Table.Th>
+                  <Table.Th>type</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{keywordRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <h2 className={styles.h2}> Post </h2>
           <p>
             The <Code>post</Code> resource contains a list of <Code>image</Code>
             (multiple resolutions) as well as metadata about the post including
             timestamp, score, camera, film, colors, keywords, etc.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>field name</Table.Th>
-                <Table.Th>type</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{postRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>field name</Table.Th>
+                  <Table.Th>type</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{postRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <h2 className={styles.h2}> Camera </h2>
           <p>
             The <Code>camera</Code> resource contains film cameras used in posts
             including manufacturer, model, and description and post count.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>field name</Table.Th>
-                <Table.Th>type</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{cameraRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>field name</Table.Th>
+                  <Table.Th>type</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{cameraRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <h2 className={styles.h2}> Film </h2>
           <p>
             The <Code>film</Code> resource contains film stocks used in posts,
             including manufacturer, type, speed, and post count.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>field name</Table.Th>
-                <Table.Th>type</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{filmRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>field name</Table.Th>
+                  <Table.Th>type</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{filmRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <h2 className={styles.h2}> Meta </h2>
           <p>
             The <Code>meta</Code> resource contains supplementary information
             for a collection of <Code>post</Code> resources, including
             pagination details and total counts.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>field name</Table.Th>
-                <Table.Th>type</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{metaRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>field name</Table.Th>
+                  <Table.Th>type</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{metaRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <div className={styles.divider}>
             <Divider my="sm" />
           </div>
@@ -785,17 +801,19 @@ export default function Documentation() {
             be placed for maximum number of returned posts. If total number of
             posts exceeds the limit, results will be paginated.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>param</Table.Th>
-                <Table.Th>description</Table.Th>
-                <Table.Th>default</Table.Th>
-                <Table.Th>options</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{postsGeneralRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>param</Table.Th>
+                  <Table.Th>description</Table.Th>
+                  <Table.Th>default</Table.Th>
+                  <Table.Th>options</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{postsGeneralRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <div className={styles.codeblock}>
             <CodeHighlight
               code="curl https://api.analogdb.com/v1/posts?sort=score&page_size=50"
@@ -817,15 +835,17 @@ export default function Documentation() {
             if set to <Code>true</Code>, only that type is returned; if set to{" "}
             <Code>false</Code>, that type is excluded.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>param</Table.Th>
-                <Table.Th>description</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{postsFilterRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>param</Table.Th>
+                  <Table.Th>description</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{postsFilterRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <div className={styles.codeblock}>
             <CodeHighlight
               code="curl 'https://api.analogdb.com/v1/posts?camera_make=nikon&film_make=kodak&grayscale=false&keyword=portrait'"
@@ -863,16 +883,18 @@ export default function Documentation() {
             visually similar to the specified post based on vector similarity of
             image embeddings.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>param</Table.Th>
-                <Table.Th>description</Table.Th>
-                <Table.Th>options</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{similarParamRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>param</Table.Th>
+                  <Table.Th>description</Table.Th>
+                  <Table.Th>options</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{similarParamRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <div className={styles.codeblock}>
             <CodeHighlight
               code="curl https://api.analogdb.com/v1/post/1924/similar?page_size=20&nsfw=false"
@@ -892,16 +914,18 @@ export default function Documentation() {
             filtering and sorting. Useful for discovering cameras (not
             extensive) and their post counts.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>param</Table.Th>
-                <Table.Th>description</Table.Th>
-                <Table.Th>options</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{camerasParamRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>param</Table.Th>
+                  <Table.Th>description</Table.Th>
+                  <Table.Th>options</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{camerasParamRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <div className={styles.codeblock}>
             <CodeHighlight
               code="curl https://api.analogdb.com/v1/cameras?sort=counts&make=nikon&include_counts=true"
@@ -921,16 +945,18 @@ export default function Documentation() {
             filtering and sorting. Useful for discovering film stocks (not
             extensive) and their post counts.
           </p>
-          <Table highlightOnHover withColumnBorders>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>param</Table.Th>
-                <Table.Th>description</Table.Th>
-                <Table.Th>options</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{filmsParamRows}</Table.Tbody>
-          </Table>
+          <Table.ScrollContainer minWidth={0} type="native">
+            <Table highlightOnHover withColumnBorders>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>param</Table.Th>
+                  <Table.Th>description</Table.Th>
+                  <Table.Th>options</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{filmsParamRows}</Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
           <div className={styles.codeblock}>
             <CodeHighlight
               code="curl https://api.analogdb.com/v1/films?sort=counts&make=kodak&speed=400&include_zero_counts=true"
