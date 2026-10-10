@@ -34,7 +34,7 @@ const CLUSTER_CENTER_HEIGHT = 420;
 const CLUSTER_SIMILAR_HEIGHT = 180;
 
 const COLOR_ROW_SIZE = 16;
-const RAINBOW_SECONDS = 6;
+const RAINBOW_SECONDS = 4;
 const NO_HUE_SORT = ["black", "white"];
 
 // pick each color's photos, then order them by hue so the belt reads as a gradient

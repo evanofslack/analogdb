@@ -34,15 +34,15 @@ const RAINBOW: {
   count: number;
   hues?: [number, number];
 }[] = [
-  { color: "red", min: 0.4, count: 4, hues: [340, 20] },
-  { color: "orange", min: 0.25, count: 4, hues: [12, 45] },
+  { color: "red", min: 0.4, count: 2, hues: [340, 20] },
+  { color: "orange", min: 0.25, count: 2, hues: [12, 45] },
   { color: "yellow", min: 0.25, count: 2, hues: [38, 66] },
-  { color: "green", min: 0.25, count: 4, hues: [66, 160] },
-  { color: "teal", min: 0.3, count: 4 },
-  { color: "navy", min: 0.4, count: 4, hues: [200, 255] },
-  { color: "purple", min: 0.25, count: 4, hues: [255, 335] },
-  { color: "black", min: 0.5, count: 3 },
-  { color: "white", min: 0.5, count: 3 },
+  { color: "green", min: 0.25, count: 2, hues: [66, 160] },
+  { color: "teal", min: 0.3, count: 2 },
+  { color: "navy", min: 0.4, count: 2, hues: [200, 255] },
+  { color: "purple", min: 0.25, count: 2, hues: [255, 335] },
+  { color: "black", min: 0.5, count: 2 },
+  { color: "white", min: 0.5, count: 2 },
 ];
 
 function inHues(hue: number, [low, high]: [number, number]): boolean {
