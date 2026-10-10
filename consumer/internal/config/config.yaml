@@ -7,6 +7,8 @@ kafka:
   brokers: ""
   topic: "analytics"
   consumer_group: "analytics-consumer"
+  ui_topic: "analogdb-ui-events"
+  ui_consumer_group: "analytics-ui-consumer"
   batch_size: 100
   batch_timeout: ""
 
@@ -17,6 +19,7 @@ clickhouse:
   username: "default"
   password: ""
   table: "events"
+  ui_table: "ui_events"
   migration_enabled: true
   migration_path: "migrations"
 

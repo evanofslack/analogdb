@@ -40,11 +40,13 @@ type App struct {
 }
 
 type Kafka struct {
-	BrokersRaw       string `yaml:"brokers" env:"KAFKA_BROKERS"`
-	Topic         string `yaml:"topic" env:"KAFKA_TOPIC"`
-	ConsumerGroup string `yaml:"consumer_group" env:"KAFKA_CONSUMER_GROUP"`
-	BatchSize     int    `yaml:"batch_size" env:"KAFKA_BATCH_SIZE"`
-	BatchTimeoutRaw  string `yaml:"batch_timeout" env:"KAFKA_BATCH_TIMEOUT"`
+	BrokersRaw      string `yaml:"brokers" env:"KAFKA_BROKERS"`
+	Topic           string `yaml:"topic" env:"KAFKA_TOPIC"`
+	ConsumerGroup   string `yaml:"consumer_group" env:"KAFKA_CONSUMER_GROUP"`
+	UiTopic         string `yaml:"ui_topic" env:"KAFKA_UI_TOPIC" env-default:"analogdb-ui-events"`
+	UiConsumerGroup string `yaml:"ui_consumer_group" env:"KAFKA_UI_CONSUMER_GROUP" env-default:"analytics-ui-consumer"`
+	BatchSize       int    `yaml:"batch_size" env:"KAFKA_BATCH_SIZE"`
+	BatchTimeoutRaw string `yaml:"batch_timeout" env:"KAFKA_BATCH_TIMEOUT"`
 }
 
 func (k *Kafka) Brokers() []string {
@@ -62,6 +64,7 @@ type ClickHouse struct {
 	Username         string `yaml:"username" env:"CLICKHOUSE_USERNAME"`
 	Password         string `yaml:"password" env:"CLICKHOUSE_PASSWORD"`
 	Table            string `yaml:"table" env:"CLICKHOUSE_TABLE"`
+	UiTable          string `yaml:"ui_table" env:"CLICKHOUSE_UI_TABLE" env-default:"ui_events"`
 	MigrationEnabled bool   `yaml:"migration_enabled" env:"CLICKHOUSE_MIGRATION_ENABLED"`
 	MigrationPath    string `yaml:"migration_path" env:"CLICKHOUSE_MIGRATION_PATH"`
 }
