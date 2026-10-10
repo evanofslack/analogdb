@@ -2,8 +2,10 @@ package clickhouse
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -25,6 +27,11 @@ type testRow struct {
 	latencyMs  int64
 }
 
+const (
+	semrush = "Mozilla/5.0 (compatible; SemrushBot/7~bl; +http://www.semrush.com/bot.html)"
+	safari  = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+)
+
 var testRows = []testRow{
 	{ago: time.Hour, requestID: "r1", ip: "10.0.0.1", url: "/v1/posts?sort=time&nsfw=false", path: "/v1/posts", method: "GET", userAgent: "analogdb-web/1.0", status: 200, latencyMs: 10},
 	{ago: time.Hour, requestID: "r2", ip: "10.0.0.1", url: "/v1/post/12", path: "/v1/post/12", method: "GET", userAgent: "analogdb-web/1.0", status: 200, latencyMs: 20},
@@ -32,6 +39,14 @@ var testRows = []testRow{
 	{ago: 2 * time.Hour, requestID: "r4", ip: "1.2.3.4", url: "/v1/post/12", path: "/v1/post/12", method: "GET", userAgent: "curl/8", status: 500, latencyMs: 100},
 	{ago: 3 * time.Hour, requestID: "r5", ip: "10.0.0.2", url: "/v1/post/12", path: "/v1/post/12", method: "PATCH", userAgent: "analogdb-scraper/2.0", status: 200, authorized: true, latencyMs: 30},
 	{ago: 4 * time.Hour, requestID: "r6", ip: "5.6.7.8", url: "/v1/post/13", path: "/v1/post/13", method: "DELETE", userAgent: "curl/8", status: 401, latencyMs: 1},
+	{ago: 5 * time.Hour, requestID: "r9", ip: "7.7.7.1", url: "/v1/post/15/similar", path: "/v1/post/15/similar", method: "GET", userAgent: semrush, status: 200, latencyMs: 400},
+	{ago: 6 * time.Hour, requestID: "r10", ip: "7.7.7.2", url: "/v1/post/16/similar", path: "/v1/post/16/similar", method: "GET", userAgent: semrush, status: 200, latencyMs: 300},
+	{ago: 6 * time.Hour, requestID: "r11", ip: "7.7.7.3", url: "/v1/post/99", path: "/v1/post/99", method: "GET", userAgent: semrush, status: 404, latencyMs: 2},
+	{ago: 7 * time.Hour, requestID: "r12", ip: "8.8.8.8", url: "/v1/posts", path: "/v1/posts", method: "GET", userAgent: safari, status: 200, latencyMs: 15},
+	{ago: 8 * time.Hour, requestID: "r13", ip: "4.4.4.4", url: "/v1/films", path: "/v1/films", method: "GET", userAgent: "", status: 200, latencyMs: 3},
+	{ago: 9 * time.Hour, requestID: "r14", ip: "3.3.3.3", url: "/v1/cameras", path: "/v1/cameras", method: "GET", userAgent: "python-requests/2.31", status: 404, latencyMs: 2},
+	{ago: 30 * time.Hour, requestID: "r15", ip: "10.0.0.1", url: "/v1/posts", path: "/v1/posts", method: "GET", userAgent: "analogdb-web/1.0", status: 200, latencyMs: 10},
+	{ago: 30 * time.Hour, requestID: "r16", ip: "1.2.3.4", url: "/v1/post/12", path: "/v1/post/12", method: "GET", userAgent: "curl/8", status: 500, latencyMs: 50},
 	{ago: 3 * 24 * time.Hour, requestID: "r7", ip: "10.0.0.1", url: "/v1/posts", path: "/v1/posts", method: "GET", userAgent: "analogdb-web/1.0", status: 200, latencyMs: 10},
 	{ago: 40 * 24 * time.Hour, requestID: "r8", ip: "9.9.9.9", url: "/v1/post/14", path: "/v1/post/14", method: "DELETE", userAgent: "analogdb-web/1.0", status: 200, authorized: true, latencyMs: 15},
 }
@@ -111,6 +126,8 @@ func TestClickhouse(t *testing.T) {
 		}
 	})
 
+	mustCreateUIEvents(t, db, time.Now())
+
 	t.Run("traffic day", func(t *testing.T) {
 		traffic, err := db.Traffic(ctx, analogdb.TrafficDay)
 		if err != nil {
@@ -119,55 +136,68 @@ func TestClickhouse(t *testing.T) {
 		if traffic.Bucket != "hour" {
 			t.Errorf("want hour buckets, got %s", traffic.Bucket)
 		}
-		wantTotals := analogdb.TrafficTotals{Requests: 6, UniqueIPs: 4, Status2: 4, Status4: 1, Status5: 1}
-		if traffic.Totals != wantTotals {
-			t.Errorf("want totals %+v, got %+v", wantTotals, traffic.Totals)
+
+		wantCurrent := analogdb.TrafficTotals{Requests: 12, Web: 2, Scraper: 1, Direct: 9, Bots: 3, Status4: 3, Status5: 1, PageViews: 4}
+		current := traffic.Summary.Current
+		if current.P95Ms <= 0 {
+			t.Errorf("want a current p95, got %v", current.P95Ms)
+		}
+		current.P95Ms = 0
+		if current != wantCurrent {
+			t.Errorf("want current %+v, got %+v", wantCurrent, current)
+		}
+		wantPrevious := analogdb.TrafficTotals{Requests: 2, Web: 1, Direct: 1, Status5: 1, P95Ms: traffic.Summary.Previous.P95Ms, PageViews: 1}
+		if traffic.Summary.Previous != wantPrevious {
+			t.Errorf("want previous %+v, got %+v", wantPrevious, traffic.Summary.Previous)
 		}
 
-		var web, scraper, other int64
+		mustFilled(t, trafficTimes(traffic.Series), time.Hour, 24)
+		var web, scraper, direct, status4, status5 int64
 		for _, b := range traffic.Series {
-			web, scraper, other = web+b.Web, scraper+b.Scraper, other+b.Other
+			web, scraper, direct = web+b.Web, scraper+b.Scraper, direct+b.Direct
+			status4, status5 = status4+b.Status4, status5+b.Status5
 		}
-		if web != 2 || scraper != 1 || other != 3 {
-			t.Errorf("want series web 2 scraper 1 other 3, got %d %d %d", web, scraper, other)
-		}
-
-		if len(traffic.Routes) == 0 || traffic.Routes[0].Route != "/v1/post/{id}" || traffic.Routes[0].Requests != 4 || traffic.Routes[0].Errors != 1 {
-			t.Errorf("unexpected top route %+v", traffic.Routes)
-		}
-		if len(traffic.Posts) != 2 || traffic.Posts[0] != (analogdb.TrafficPost{PostID: 12, Requests: 4}) {
-			t.Errorf("unexpected posts %+v", traffic.Posts)
+		if web != 2 || scraper != 1 || direct != 9 || status4 != 3 || status5 != 1 {
+			t.Errorf("want series web 2 scraper 1 direct 9 4xx 3 5xx 1, got %d %d %d %d %d", web, scraper, direct, status4, status5)
 		}
 
-		legacy := map[string]analogdb.TrafficLegacy{}
-		for _, l := range traffic.Legacy {
-			legacy[l.Client] = l
+		wantCallers := []analogdb.TrafficCaller{
+			{Name: "SemrushBot", Kind: "bot", Requests: 3, IPs: 3},
+			{Name: "curl", Kind: "tool", Requests: 3, IPs: 2},
+			{Name: safari, Kind: "browser", Requests: 1, IPs: 1},
+			{Name: "", Kind: "empty", Requests: 1, IPs: 1},
+			{Name: "python-requests", Kind: "tool", Requests: 1, IPs: 1},
 		}
-		if legacy["other"].Legacy != 1 || legacy["web"].Legacy != 0 {
-			t.Errorf("unexpected legacy %+v", traffic.Legacy)
-		}
-
-		params := map[string]int64{}
-		for _, p := range traffic.Params {
-			params[p.Name] = p.Requests
-		}
-		if params["sort"] != 1 || params["nsfw"] != 1 || len(params) != 2 {
-			t.Errorf("unexpected params %+v", traffic.Params)
+		if !slices.Equal(traffic.Callers, wantCallers) {
+			t.Errorf("want callers %+v, got %+v", wantCallers, traffic.Callers)
 		}
 
-		if len(traffic.IPs) == 0 || traffic.IPs[0].Name != "1.2.3.4" || traffic.IPs[0].Requests != 2 {
-			t.Errorf("unexpected ips %+v", traffic.IPs)
+		if len(traffic.Routes) != 6 {
+			t.Fatalf("want 6 routes, got %+v", traffic.Routes)
 		}
-		for _, ip := range traffic.IPs {
-			if ip.Name == "10.0.0.1" {
-				t.Errorf("web ip in other ips %+v", traffic.IPs)
+		if top := traffic.Routes[0]; top.Route != "/v1/post/{id}/similar" || top.Requests != 2 || top.TotalMs != 700 {
+			t.Errorf("want similar route on top by total time, got %+v", top)
+		}
+		if second := traffic.Routes[1]; second.Route != "/v1/post/{id}" || second.TotalMs != 153 || second.Status4 != 2 || second.Status5 != 1 {
+			t.Errorf("unexpected second route %+v", second)
+		}
+		for i := 1; i < len(traffic.Routes); i++ {
+			if traffic.Routes[i].TotalMs > traffic.Routes[i-1].TotalMs {
+				t.Errorf("routes not ordered by total time %+v", traffic.Routes)
 			}
 		}
-		if len(traffic.UserAgents) == 0 || traffic.UserAgents[0].Name != "curl/8" || traffic.UserAgents[0].Client != "other" {
-			t.Errorf("unexpected user agents %+v", traffic.UserAgents)
+
+		wantStatus := []analogdb.TrafficStatus{
+			{Status: 401, Route: "/v1/post/{id}", Requests: 1},
+			{Status: 404, Route: "/v1/cameras", Requests: 1},
+			{Status: 404, Route: "/v1/post/{id}", Requests: 1},
+			{Status: 500, Route: "/v1/post/{id}", Requests: 1},
 		}
-		if len(traffic.Errors) != 1 || traffic.Errors[0].RequestID != "r4" || traffic.Errors[0].Status != 500 {
-			t.Errorf("unexpected errors %+v", traffic.Errors)
+		if !slices.Equal(traffic.Errors.ByStatus, wantStatus) {
+			t.Errorf("want errors by status %+v, got %+v", wantStatus, traffic.Errors.ByStatus)
+		}
+		if len(traffic.Errors.Recent) != 1 || traffic.Errors.Recent[0].RequestID != "r4" || traffic.Errors.Recent[0].Status != 500 {
+			t.Errorf("unexpected recent errors %+v", traffic.Errors.Recent)
 		}
 	})
 
@@ -176,9 +206,47 @@ func TestClickhouse(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if traffic.Bucket != "day" || traffic.Totals.Requests != 7 {
-			t.Errorf("want 7 requests in day buckets, got %d in %s", traffic.Totals.Requests, traffic.Bucket)
+		if traffic.Bucket != "hour" || traffic.Summary.Current.Requests != 15 || traffic.Summary.Previous.Requests != 0 {
+			t.Errorf("want 15 requests in hour buckets and none before, got %+v in %s", traffic.Summary, traffic.Bucket)
 		}
+		mustFilled(t, trafficTimes(traffic.Series), time.Hour, 7*24)
+	})
+
+	t.Run("traffic month", func(t *testing.T) {
+		traffic, err := db.Traffic(ctx, analogdb.TrafficMonth)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if traffic.Bucket != "day" || traffic.Summary.Current.Requests != 15 || traffic.Summary.Previous.Requests != 1 {
+			t.Errorf("want 15 requests in day buckets and one before, got %+v in %s", traffic.Summary, traffic.Bucket)
+		}
+		mustFilled(t, trafficTimes(traffic.Series), 24*time.Hour, 30)
+	})
+
+	t.Run("traffic shape", func(t *testing.T) {
+		traffic, err := db.Traffic(ctx, analogdb.TrafficDay)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := json.Marshal(traffic)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var body map[string]json.RawMessage
+		if err := json.Unmarshal(data, &body); err != nil {
+			t.Fatal(err)
+		}
+		if got := sortedKeys(body); !slices.Equal(got, []string{"bucket", "callers", "errors", "range", "routes", "series", "summary"}) {
+			t.Errorf("unexpected top level keys %v", got)
+		}
+		var errs map[string]json.RawMessage
+		if err := json.Unmarshal(body["errors"], &errs); err != nil {
+			t.Fatal(err)
+		}
+		if got := sortedKeys(errs); !slices.Equal(got, []string{"by_status", "recent"}) {
+			t.Errorf("unexpected error keys %v", got)
+		}
+		t.Logf("traffic %s", data)
 	})
 
 	t.Run("traffic bad range", func(t *testing.T) {
@@ -212,6 +280,31 @@ func TestClickhouse(t *testing.T) {
 			t.Errorf("want only r8 before r6, got %+v", entries)
 		}
 	})
+}
+
+// mustFilled checks the series has one bucket per step from the window start to now
+func mustFilled(t *testing.T, times []time.Time, step time.Duration, buckets int) {
+	t.Helper()
+	if len(times) != buckets && len(times) != buckets+1 {
+		t.Fatalf("want %d or %d buckets, got %d", buckets, buckets+1, len(times))
+	}
+	for i := 1; i < len(times); i++ {
+		if got := times[i].Sub(times[i-1]); got != step {
+			t.Fatalf("want step %s at bucket %d, got %s", step, i, got)
+		}
+	}
+	last := times[len(times)-1]
+	if now := time.Now().UTC().Truncate(step); !last.Equal(now) {
+		t.Errorf("want last bucket %s, got %s", now, last)
+	}
+}
+
+func trafficTimes(series []analogdb.TrafficBucket) []time.Time {
+	times := make([]time.Time, len(series))
+	for i, b := range series {
+		times[i] = b.Time
+	}
+	return times
 }
 
 func TestNewDBRejectsBadTable(t *testing.T) {
