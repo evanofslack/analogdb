@@ -254,7 +254,6 @@ async function fetchSearches(): Promise<SearchDemo[]> {
 type RawPost = Record<string, unknown> & {
   images?: { resolution?: string }[];
   colors?: unknown[];
-  keywords?: unknown[];
 };
 
 function toApiSample(id: number, post: RawPost): ApiSample {
@@ -269,14 +268,14 @@ function toApiSample(id: number, post: RawPost): ApiSample {
   const short = {
     id: post.id,
     title: post.title,
-    caption: post.caption,
     camera_make: post.camera_make,
     camera_model: post.camera_model,
     film_make: post.film_make,
     film_type: post.film_type,
-    keywords: (post.keywords ?? []).slice(0, 4),
-    images: images.filter((image) => image.resolution === "low"),
+    focal_length: post.focal_length,
+    aperture: post.aperture,
   };
+
   return {
     query: `curl ${publicURL}/post/${id}`,
     full: JSON.stringify(full, null, 2),

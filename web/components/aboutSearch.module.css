@@ -88,6 +88,29 @@
   }
 }
 
+@media (max-width: 720px) {
+  .demo {
+    gap: 0.6rem;
+    max-width: none;
+  }
+
+  /* one row of results keeps the demo short */
+  .results > :nth-child(n + 4) {
+    display: none;
+  }
+
+  .keywords {
+    min-height: 2.1rem;
+  }
+
+  .keywords a {
+    min-width: 0;
+    height: 2rem;
+    padding: 0 0.8rem;
+    font-size: 0.85rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .caret {
     animation: none;
