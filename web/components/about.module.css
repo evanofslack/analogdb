@@ -437,26 +437,72 @@
 }
 
 @media (max-width: 720px) {
-  .colorSection {
-    height: 55vh;
-    margin-top: 1rem;
+  .title {
+    font-size: 2.25rem;
+    line-height: 1.15;
     margin-bottom: 1rem;
-  }
-  .colorTextOverlay {
-    position: static;
-    transform: none;
-    margin: 2rem;
   }
 
-  .similaritySection {
-    height: 55vh;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
+  .subtitle {
+    font-size: 1.1rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
   }
+
+  .sectionOne,
+  .sectionThree,
+  .sectionFour {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 2.5rem 1rem;
+  }
+
+  .sectionOne {
+    padding-top: 2rem;
+  }
+
+  .stats {
+    flex-wrap: wrap;
+    margin-top: 2.5rem;
+    gap: 1rem 2rem;
+  }
+
+  .statRow {
+    padding-left: 0;
+  }
+
+  .statIcon {
+    margin: 0.4rem 0.5rem 0 0;
+  }
+
+  .statNum {
+    font-size: 2rem;
+  }
+
+  .statTitle {
+    font-size: 1rem;
+  }
+
+  .colorSection,
+  .similaritySection {
+    height: auto;
+    margin: 0;
+    padding: 2.5rem 1rem;
+    align-items: stretch;
+  }
+
+  .colorTextOverlay,
   .similarityTextOverlay {
     position: static;
     transform: none;
-    margin: 2rem;
+    margin: 0;
+    padding: 0;
+    max-width: none;
+    background: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    border-radius: 0;
   }
 }
 
