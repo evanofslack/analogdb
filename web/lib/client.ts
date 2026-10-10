@@ -23,12 +23,14 @@ const authHeaders: Record<string, string> =
       }
     : {};
 
+export const apiHeaders: Record<string, string> = {
+  ...authHeaders,
+  "User-Agent": userAgent,
+};
+
 const config = new Configuration({
   basePath: baseURL,
-  headers: {
-    ...authHeaders,
-    "User-Agent": userAgent,
-  },
+  headers: apiHeaders,
   middleware:
     process.env.NODE_ENV === "production"
       ? []
@@ -57,14 +59,9 @@ export async function authorized_fetch(
   revalidate: number = 60
 ): Promise<Response> {
   const url = `${baseURL}${route}`;
-  const headers: Record<string, string> = {
-    ...authHeaders,
-    "User-Agent": userAgent,
-  };
-
   const response = await fetch(url, {
     method: method,
-    headers: headers,
+    headers: apiHeaders,
     next: { revalidate },
   } as RequestInit);
 

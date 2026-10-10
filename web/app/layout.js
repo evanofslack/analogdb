@@ -2,6 +2,7 @@ import "@styles/globals.css";
 import "@mantine/core/styles.css";
 import "@mantine/code-highlight/styles.css";
 import "@mantine/dropzone/styles.css";
+import Analytics from "@components/analytics";
 import {
   ColorSchemeScript,
   mantineHtmlProps,
@@ -36,6 +37,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body>
+        <Analytics />
         <MantineProvider theme={theme} defaultColorScheme="light">
           <CodeHighlightProvider>
             <NuqsAdapter>
