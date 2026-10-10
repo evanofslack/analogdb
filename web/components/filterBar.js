@@ -1,6 +1,11 @@
 "use client";
 
-import { postsParsers } from "@lib/searchParams";
+import {
+  postsParsers,
+  ratioShapes,
+  selectedShapes,
+  toggleShape,
+} from "@lib/searchParams";
 import {
   Button,
   Menu,
@@ -145,6 +150,15 @@ export default function FilterBar({
     commitSizes();
   };
 
+  const shapes = selectedShapes(ratioMin, ratioMax);
+  const handleShape = (index) => {
+    const ratio = toggleShape(shapes, index);
+    const next = { ...draftsRef.current, ...ratio };
+    draftsRef.current = next;
+    setDrafts(next);
+    setSizes({ ...sizes, ...ratio });
+  };
+
   const buttonClassNames = {
     root: styles.button,
     section: styles.buttonSection,
@@ -167,6 +181,15 @@ export default function FilterBar({
     heightMax: heightMaxLimit,
     ratioMin: ratioMinLimit,
     ratioMax: ratioMaxLimit,
+  };
+  const sizeLabel = () => {
+    const onlyRatio = ["widthMin", "widthMax", "heightMin", "heightMax"].every(
+      (key) => sizes[key] === defaultSizes[key]
+    );
+    if (!onlyRatio || !shapes.length) return "custom";
+    const first = ratioShapes[shapes[0]].key;
+    const last = ratioShapes[shapes[shapes.length - 1]].key;
+    return first === last ? first : `${first} to ${last}`;
   };
   const flagItem = (key, title, value, setValue) =>
     value !== postsParsers[key].defaultValue && {
@@ -203,7 +226,7 @@ export default function FilterBar({
     active.size && {
       key: "size",
       category: "size",
-      value: "custom",
+      value: sizeLabel(),
       onRemove: () => setSizes(defaultSizes),
     },
     flagItem("nsfw", "18+", nsfw, setNsfw),
@@ -316,7 +339,7 @@ export default function FilterBar({
               dotClassName={styles.dot}
               active={active.color}
             />
-            <Menu shadow="md" width={170} onClose={() => commitSizes.flush()}>
+            <Menu shadow="md" width={230} onClose={() => commitSizes.flush()}>
               <Menu.Target>
                 <Button
                   variant="outline"
@@ -334,6 +357,27 @@ export default function FilterBar({
               <Menu.Dropdown>
                 <Menu.Label>with size</Menu.Label>
                 <div>
+                  <div className={styles.dimension}>
+                    <span className={styles.dimensionTitle}>shape</span>
+                    <div className={styles.shapes}>
+                      {ratioShapes.map((shape, index) => (
+                        <button
+                          key={shape.key}
+                          type="button"
+                          className={styles.shape}
+                          aria-pressed={shapes.includes(index)}
+                          onClick={() => handleShape(index)}
+                        >
+                          <span
+                            className={styles.shapeIcon}
+                            data-shape={shape.key}
+                            aria-hidden="true"
+                          />
+                          {shape.key}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <div className={styles.dimension}>
                     <span className={styles.dimensionTitle}>aspect ratio</span>
                     <div className={styles.subdimension}>

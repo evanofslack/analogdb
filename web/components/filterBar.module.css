@@ -90,6 +90,76 @@
   align-items: center;
 }
 
+.shapes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem;
+  padding-top: 0.5rem;
+}
+
+.shape {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem;
+  font: inherit;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--adb-muted-alt);
+  background: none;
+  border: 1px solid var(--adb-border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.shape:hover {
+  background-color: var(--adb-surface-hover);
+}
+
+.shape[aria-pressed="true"] {
+  color: var(--adb-heading);
+  border-color: var(--adb-muted);
+}
+
+/* centred in a fixed box so the labels line up */
+.shapeIcon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 16px;
+  position: relative;
+}
+
+.shapeIcon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: var(--w);
+  height: var(--h);
+  border: 1.5px solid currentColor;
+  border-radius: 1px;
+}
+
+.shapeIcon[data-shape="portrait"] {
+  --w: 10px;
+  --h: 16px;
+}
+
+.shapeIcon[data-shape="square"] {
+  --w: 14px;
+  --h: 14px;
+}
+
+.shapeIcon[data-shape="landscape"] {
+  --w: 18px;
+  --h: 12px;
+}
+
+.shapeIcon[data-shape="panorama"] {
+  --w: 20px;
+  --h: 7px;
+}
+
 .dimensionTitle {
   font-weight: 500;
 }

@@ -21,6 +21,54 @@ export const postsLimits = {
   ratioMax: 4.8,
 };
 
+// width / height ranges that touch end to end, so any run of neighbours is one range
+export const ratioShapes = [
+  { key: "portrait", min: postsLimits.ratioMin, max: 0.9 },
+  { key: "square", min: 0.9, max: 1.1 },
+  { key: "landscape", min: 1.1, max: 1.9 },
+  { key: "panorama", min: 1.9, max: postsLimits.ratioMax },
+] as const;
+
+const same = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+
+// Indexes of the shapes a ratio range covers exactly, empty when it is the
+// default range or custom values
+export function selectedShapes(ratioMin: number, ratioMax: number): number[] {
+  const first = ratioShapes.findIndex((s) => same(s.min, ratioMin));
+  const last = ratioShapes.findIndex((s) => same(s.max, ratioMax));
+  if (first < 0 || last < first) return [];
+  if (first === 0 && last === ratioShapes.length - 1) return [];
+  return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+}
+
+// Ratio range after toggling a shape. Picking one outside the selection fills
+// the gap, dropping an inner one keeps just that one.
+export function toggleShape(
+  selected: number[],
+  index: number
+): { ratioMin: number; ratioMax: number } {
+  let first = index;
+  let last = index;
+  if (selected.length) {
+    const lo = selected[0];
+    const hi = selected[selected.length - 1];
+    if (index < lo || index > hi) {
+      first = Math.min(lo, index);
+      last = Math.max(hi, index);
+    } else if (lo === hi) {
+      first = 0;
+      last = ratioShapes.length - 1;
+    } else if (index === lo) {
+      first = lo + 1;
+      last = hi;
+    } else if (index === hi) {
+      first = lo;
+      last = hi - 1;
+    }
+  }
+  return { ratioMin: ratioShapes[first].min, ratioMax: ratioShapes[last].max };
+}
+
 export const postsParsers = {
   sort: parseAsStringLiteral(sortOpts).withDefault("time"),
   seed: parseAsInteger,
