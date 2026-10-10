@@ -47,7 +47,7 @@ func (s *Server) mountFilmHandlers(r chi.Router) {
 // @Accept json
 // @Produce json
 // @Param sort query string false "Sort order" Enums(alphabetical, counts)
-// @Param page_size query int false "Number of results to return"
+// @Param page_size query int false "Number of results to return, 1 to 1000"
 // @Param make query string false "Filter by film make"
 // @Param type query string false "Filter by film type"
 // @Param speed query int false "Filter by film speed"
@@ -58,8 +58,8 @@ func (s *Server) mountFilmHandlers(r chi.Router) {
 // @Param min_count query int false "Only return entries with at least this many posts, implies include_counts"
 // @Param top_posts query int false "Attach this many top scoring posts to each entry (1 to 10)"
 // @Success 200 {object} FilmsResponse
-// @Failure 400 {object} analogdb.Error "Invalid query parameters"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid query parameters"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /films [get]
 func (s *Server) getFilms(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToFilmFilter(r)
@@ -99,11 +99,11 @@ func (s *Server) makeFilmResponse(r *http.Request, filter *analogdb.FilmFilter) 
 // @Produce json
 // @Param film body analogdb.CreateFilm true "Film data to create"
 // @Success 201 {object} CreateFilmResponse
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 422 {object} analogdb.Error "Unprocessable entity"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 422 {object} ErrorResponse "Unprocessable entity"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /film [put]
 // @Router /film [post]
@@ -135,12 +135,12 @@ func (s *Server) createFilm(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Film ID to delete"
 // @Success 200 {object} DeleteResponse
-// @Failure 400 {object} analogdb.Error "Invalid ID"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 404 {object} analogdb.Error "Not found"
-// @Failure 409 {object} analogdb.Error "Still used by posts"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid ID"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Not found"
+// @Failure 409 {object} ErrorResponse "Still used by posts"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /film/{id} [delete]
 func (s *Server) deleteFilm(w http.ResponseWriter, r *http.Request) {

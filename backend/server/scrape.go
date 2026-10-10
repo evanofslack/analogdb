@@ -59,9 +59,9 @@ func (s *Server) getKeywordUpdatedPosts(w http.ResponseWriter, r *http.Request) 
 // @Produce json
 // @Param version query string false "Caption version the posts should have"
 // @Success 200 {object} CaptionsMissingResponse
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /scrape/captions/missing [get]
 func (s *Server) getCaptionMissingPosts(w http.ResponseWriter, r *http.Request) {
@@ -87,10 +87,10 @@ func (s *Server) getCaptionMissingPosts(w http.ResponseWriter, r *http.Request) 
 // @Tags scrape
 // @Produce json
 // @Success 200 {object} VectorsMissingResponse
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 500 {object} analogdb.Error "Internal server error"
-// @Failure 503 {object} analogdb.Error "Vector database unavailable"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Failure 503 {object} ErrorResponse "Vector database unavailable"
 // @Security BasicAuth
 // @Router /scrape/vectors/missing [get]
 func (s *Server) getVectorMissingPosts(w http.ResponseWriter, r *http.Request) {

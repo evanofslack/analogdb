@@ -41,7 +41,7 @@ type CreatePost struct {
 	CameraMake  *string      `json:"camera_make,omitempty" example:"nikon"`
 	CameraModel *string      `json:"camera_model,omitempty" example:"fm2"`
 	FilmMake    *string      `json:"film_make,omitempty" example:"kodak"`
-	FilmType    *string      `json:"film_type,omitempty" example:"color"`
+	FilmType    *string      `json:"film_type,omitempty" example:"portra 400"`
 	FilmSpeed   *int64       `json:"film_speed,omitempty" example:"400"`
 	FocalLength *int64       `json:"focal_length,omitempty" example:"35"`
 	Aperture    *string      `json:"aperture,omitempty" example:"f/2.0"`
@@ -69,7 +69,7 @@ type DisplayPost struct {
 	CameraMake  *string   `json:"camera_make,omitempty" example:"nikon"`
 	CameraModel *string   `json:"camera_model,omitempty" example:"fm2"`
 	FilmMake    *string   `json:"film_make,omitempty" example:"kodak"`
-	FilmType    *string   `json:"film_type,omitempty" example:"color"`
+	FilmType    *string   `json:"film_type,omitempty" example:"portra 400"`
 	FilmSpeed   *int64    `json:"film_speed,omitempty" example:"400"`
 	FocalLength *int64    `json:"focal_length,omitempty" example:"35"`
 	Aperture    *string   `json:"aperture,omitempty" example:"f/2.0"`

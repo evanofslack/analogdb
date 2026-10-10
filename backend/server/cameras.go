@@ -41,7 +41,7 @@ func (s *Server) mountCameraHandlers(r chi.Router) {
 // @Accept json
 // @Produce json
 // @Param sort query string false "Sort order" Enums(alphabetical, counts)
-// @Param page_size query int false "Number of results to return"
+// @Param page_size query int false "Number of results to return, 1 to 1000"
 // @Param make query string false "Filter by camera make"
 // @Param model query string false "Filter by camera model"
 // @Param id query int false "Filter by specific camera ID"
@@ -50,8 +50,8 @@ func (s *Server) mountCameraHandlers(r chi.Router) {
 // @Param min_count query int false "Only return entries with at least this many posts, implies include_counts"
 // @Param top_posts query int false "Attach this many top scoring posts to each entry (1 to 10)"
 // @Success 200 {object} CamerasResponse
-// @Failure 400 {object} analogdb.Error "Invalid query parameters"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid query parameters"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /cameras [get]
 func (s *Server) getCameras(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseToCameraFilter(r)
@@ -91,11 +91,11 @@ func (s *Server) makeCameraResponse(r *http.Request, filter *analogdb.CameraFilt
 // @Produce json
 // @Param camera body analogdb.CreateCamera true "camera data to create"
 // @Success 201 {object} CreateCameraResponse
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 422 {object} analogdb.Error "Unprocessable entity"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 422 {object} ErrorResponse "Unprocessable entity"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /camera [put]
 // @Router /camera [post]
@@ -127,12 +127,12 @@ func (s *Server) createCamera(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Camera ID to delete"
 // @Success 200 {object} DeleteResponse
-// @Failure 400 {object} analogdb.Error "Invalid ID"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 404 {object} analogdb.Error "Not found"
-// @Failure 409 {object} analogdb.Error "Still used by posts"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid ID"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "Not found"
+// @Failure 409 {object} ErrorResponse "Still used by posts"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /camera/{id} [delete]
 func (s *Server) deleteCamera(w http.ResponseWriter, r *http.Request) {
