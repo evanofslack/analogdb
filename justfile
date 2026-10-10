@@ -69,7 +69,7 @@ _proto out:
     protoc -I={{ proto_dir }} \
         --go_out={{ out }} --go_opt=paths=source_relative \
         --go-grpc_out={{ out }} --go-grpc_opt=paths=source_relative \
-        {{ proto_dir }}/analytics/v1/event.proto
+        {{ proto_dir }}/analytics/v1/*.proto
 
 # Generate the OpenAPI spec into api/
 swagger:

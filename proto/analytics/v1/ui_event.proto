@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package analytics;
+
+option go_package = "github.com/evanofslack/analogdb/internal/gen/proto/analytics/v1;analyticsv1";
+option java_package = "com.evanofslack.analogdb.analytics";
+option java_multiple_files = true;
+
+message UiEvent {
+  string event_id = 1;
+  string event_name = 2;
+  int32 schema_version = 3;
+  string visitor_id = 4;
+  int64 client_ts = 5;
+  int64 received_ts = 6;
+  string path = 7;
+  string route = 8;
+  string referrer_host = 9;
+  string utm_source = 10;
+  string utm_medium = 11;
+  string utm_campaign = 12;
+  int32 viewport_width = 13;
+  string device_type = 14;
+  string browser = 15;
+  string os = 16;
+  string country = 17;
+  bool is_bot = 18;
+  string search_id = 19;
+  int64 post_id = 20;
+  string props_json = 21;
+}
