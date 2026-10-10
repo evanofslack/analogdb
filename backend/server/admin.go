@@ -52,13 +52,19 @@ type adminAuditResponse struct {
 
 func (s *Server) mountAdminHandlers(r chi.Router) {
 	r.Route(adminPath, func(r chi.Router) {
-		r.Use(s.auth, noStore)
-		r.Get("/overview", s.getAdminOverview)
-		r.Get("/quality", s.getAdminQuality)
-		r.Get("/posts/missing", s.getAdminMissingPosts)
-		r.Get("/traffic", s.getAdminTraffic)
-		r.Get("/audit", s.getAdminAudit)
-		s.mountExtractionHandlers(r)
+		r.Use(noStore)
+		r.Group(func(r chi.Router) {
+			r.Use(s.require())
+			r.Get("/overview", s.getAdminOverview)
+			r.Get("/quality", s.getAdminQuality)
+			r.Get("/posts/missing", s.getAdminMissingPosts)
+			r.Get("/traffic", s.getAdminTraffic)
+			r.Get("/audit", s.getAdminAudit)
+		})
+		r.Group(func(r chi.Router) {
+			r.Use(s.require(roleScraper))
+			s.mountExtractionHandlers(r)
+		})
 	})
 }
 

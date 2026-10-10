@@ -49,6 +49,14 @@ func main() {
 	}
 	logger.Info("Initializing application", "version", cfg.App.Version, "env", cfg.App.Env, "loglevel", cfg.Log.Level)
 
+	warnings, err := cfg.Auth.Validate()
+	if err != nil {
+		fatal(logger, err)
+	}
+	for _, warning := range warnings {
+		logger.Warn(warning)
+	}
+
 	// initialize otlp tracing
 	tracingLogger := logger.WithSubsystem("tracer")
 	tracer, err := tracer.New(tracingLogger, cfg)
@@ -195,7 +203,7 @@ func main() {
 	}
 
 	similarityService = weaviate.NewSimilarityService(dbVec, postService)
-	searchService = weaviate.NewSearchService(dbVec)
+	searchService = server.LimitTextSearch(weaviate.NewSearchService(dbVec))
 
 	// if cache enabled, replace the with cache implementation
 	if cfg.App.CacheEnabled {

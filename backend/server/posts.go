@@ -80,10 +80,10 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 	r.Route(postPath, func(r chi.Router) {
 		r.Get("/{id}", s.findPost)
 		r.Get("/{id}/similar", s.getSimilarPosts)
-		r.With(s.auth).Delete("/{id}", s.deletePost)
-		r.With(s.auth).Patch("/{id}", s.patchPost)
-		r.With(s.auth).Put("/", s.createPost)
-		r.With(s.auth).Post("/", s.createPost)
+		r.With(s.require()).Delete("/{id}", s.deletePost)
+		r.With(s.require(roleScraper)).Patch("/{id}", s.patchPost)
+		r.With(s.require(roleScraper)).Put("/", s.createPost)
+		r.With(s.require(roleScraper)).Post("/", s.createPost)
 	})
 	r.Route(idsPath, func(r chi.Router) {
 		r.Get("/", s.allPostIDs)
@@ -196,6 +196,7 @@ func (s *Server) getSimilarPosts(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 404 {object} analogdb.Error "Not found"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
 // @Router /post/{id} [get]
@@ -225,6 +226,7 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 404 {object} analogdb.Error "Not found"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 500 {object} analogdb.Error "Internal server error"
 // @Security BasicAuth
 // @Router /post/{id} [delete]
@@ -271,6 +273,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 // @Success 201 {object} CreatePostResponse
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 409 {object} analogdb.Error "Post with permalink already exists"
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"
@@ -315,6 +318,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} PatchResponse
 // @Failure 400 {object} analogdb.Error "Invalid request body"
 // @Failure 401 {object} analogdb.Error "Unauthorized"
+// @Failure 403 {object} analogdb.Error "Forbidden"
 // @Failure 404 {object} analogdb.Error "Not found"
 // @Failure 422 {object} analogdb.Error "Unprocessable entity"
 // @Failure 500 {object} analogdb.Error "Internal server error"

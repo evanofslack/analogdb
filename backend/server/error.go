@@ -15,6 +15,7 @@ var codes = map[string]int{
 	analogdb.ERRNOTFOUND:      http.StatusNotFound,
 	analogdb.ERRUNAVAILABLE:   http.StatusServiceUnavailable,
 	analogdb.ERRUNAUTHORIZED:  http.StatusUnauthorized,
+	analogdb.ERRFORBIDDEN:     http.StatusForbidden,
 	analogdb.ERRBADREQUEST:    http.StatusBadRequest,
 	analogdb.ERRCONFLICT:      http.StatusConflict,
 	errCodeTooLarge:           http.StatusRequestEntityTooLarge,

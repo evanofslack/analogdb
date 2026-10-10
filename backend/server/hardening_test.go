@@ -110,7 +110,7 @@ func TestRateLimitPerClientIP(t *testing.T) {
 	if code := do("172.18.0.2:1234", "2.2.2.2"); code != http.StatusOK {
 		t.Errorf("want 200 for second client, got %d", code)
 	}
-	if got := testutil.ToFloat64(s.stats.rateLimited); got != 1 {
+	if got := testutil.ToFloat64(s.stats.rateLimited.WithLabelValues("anonymous")); got != 1 {
 		t.Errorf("want 1 rate limited request, got %v", got)
 	}
 }
