@@ -10,20 +10,20 @@
 }
 
 .intro {
-  margin-top: 2rem;
   margin-bottom: 1rem;
 }
 
 .title {
   margin: 0;
-  font-size: 2.4rem;
+  font-size: 1.8rem;
+  font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--adb-heading);
 }
 
 .text {
   margin-top: 0.4rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   max-width: 40rem;
   color: var(--adb-muted);
 }
@@ -73,8 +73,8 @@
     margin: 0 1rem;
     padding-bottom: 4rem;
   }
-  .title {
-    font-size: 1.8rem;
+  .filter {
+    max-width: none;
   }
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

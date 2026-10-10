@@ -40,7 +40,7 @@ export default function CatalogIndex({
 
   return (
     <div className={styles.main}>
-      <Header compact />
+      <Header brandHeading={false} />
       <div className={styles.margin}>
         <div className={styles.intro}>
           <h1 className={styles.title}>{title}</h1>

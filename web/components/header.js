@@ -3,7 +3,8 @@ import styles from "./header.module.css";
 import MobileNav from "./mobileNav";
 import WebNav from "./webNav";
 
-export default function Header({ compact = false }) {
+export default function Header({ compact = false, brandHeading = true }) {
+  const Brand = brandHeading ? "h1" : "p";
   return (
     <header className={compact ? styles.compact : styles.main}>
       {compact ? (
@@ -12,9 +13,9 @@ export default function Header({ compact = false }) {
         </p>
       ) : (
         <div className={styles.brand}>
-          <h1 className={styles.title}>
+          <Brand className={styles.title}>
             <Link href="/">AnalogDB</Link>
-          </h1>
+          </Brand>
           <p className={styles.description}>
             the collection of film photography
           </p>
