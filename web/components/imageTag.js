@@ -1,6 +1,6 @@
 "use client";
 
-import { baseURL } from "@lib/constants";
+import { publicURL } from "@lib/constants";
 import { postAlt } from "@lib/seo";
 import { Tooltip } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
@@ -23,7 +23,7 @@ export default function ImageTag(props) {
   let post = props.post;
   let similarPosts = props.similar.posts;
 
-  const api_endpoint = baseURL + "/post/";
+  const api_endpoint = publicURL + "/post/";
   const redditUserURL = "https://www.reddit.com/user/";
   const author = post.author.replace("u/", "");
 
