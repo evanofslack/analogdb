@@ -95,6 +95,73 @@ type Traffic struct {
 	Errors     []TrafficError  `json:"errors"`
 }
 
+type AnalyticsTotals struct {
+	PageViews       int64   `json:"page_views"`
+	VisitorDays     int64   `json:"visitor_days"`
+	ViewsPerVisitor float64 `json:"views_per_visitor"`
+	BotShare        float64 `json:"bot_share"`
+}
+
+type AnalyticsBucket struct {
+	Time      time.Time `json:"time"`
+	PageViews int64     `json:"page_views"`
+	Visitors  int64     `json:"visitors"`
+}
+
+type AnalyticsLive struct {
+	PageViews int64 `json:"page_views"`
+	Visitors  int64 `json:"visitors"`
+}
+
+type AnalyticsPost struct {
+	PostID    int64  `json:"post_id"`
+	Title     string `json:"title"`
+	LowURL    string `json:"low_url"`
+	PageViews int64  `json:"page_views"`
+	Visitors  int64  `json:"visitors"`
+}
+
+type AnalyticsCount struct {
+	Name      string `json:"name"`
+	PageViews int64  `json:"page_views"`
+	Visitors  int64  `json:"visitors"`
+}
+
+type AnalyticsCampaign struct {
+	Source    string `json:"source"`
+	Campaign  string `json:"campaign"`
+	PageViews int64  `json:"page_views"`
+	Visitors  int64  `json:"visitors"`
+}
+
+// AnalyticsVital holds p75 web vitals for a route, nil when a metric has no samples
+type AnalyticsVital struct {
+	Route   string   `json:"route"`
+	LCP     *float64 `json:"lcp"`
+	INP     *float64 `json:"inp"`
+	CLS     *float64 `json:"cls"`
+	Samples int64    `json:"samples"`
+}
+
+// Analytics is product traffic from UI events, Available is false until the table exists
+type Analytics struct {
+	Range     TrafficRange        `json:"range"`
+	Bucket    string              `json:"bucket"`
+	Available bool                `json:"available"`
+	Totals    AnalyticsTotals     `json:"totals"`
+	Previous  AnalyticsTotals     `json:"previous"`
+	Series    []AnalyticsBucket   `json:"series"`
+	Live      AnalyticsLive       `json:"live"`
+	Pages     []AnalyticsCount    `json:"pages"`
+	Posts     []AnalyticsPost     `json:"posts"`
+	Referrers []AnalyticsCount    `json:"referrers"`
+	Campaigns []AnalyticsCampaign `json:"campaigns"`
+	Devices   []AnalyticsCount    `json:"devices"`
+	Browsers  []AnalyticsCount    `json:"browsers"`
+	Countries []AnalyticsCount    `json:"countries"`
+	Vitals    []AnalyticsVital    `json:"vitals"`
+}
+
 type AuditFilter struct {
 	Limit int
 	// Before is a start time in unix milliseconds
@@ -115,6 +182,7 @@ type AuditEntry struct {
 
 type AnalyticsService interface {
 	Traffic(ctx context.Context, r TrafficRange) (*Traffic, error)
+	Analytics(ctx context.Context, r TrafficRange) (*Analytics, error)
 	Audit(ctx context.Context, filter *AuditFilter) ([]*AuditEntry, error)
 	Readyz(ctx context.Context) error
 }

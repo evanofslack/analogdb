@@ -26,11 +26,11 @@ const (
 	timeExpr   = `toDateTime(intDiv(start_time, 1000), 'UTC')`
 )
 
-func bucketFor(r analogdb.TrafficRange) (string, string) {
+func bucketFor(r analogdb.TrafficRange, expr string) (string, string) {
 	if r == analogdb.TrafficDay {
-		return "hour", "toStartOfHour(" + timeExpr + ")"
+		return "hour", "toStartOfHour(" + expr + ")"
 	}
-	return "day", "toStartOfDay(" + timeExpr + ")"
+	return "day", "toStartOfDay(" + expr + ")"
 }
 
 func (db *DB) Traffic(ctx context.Context, r analogdb.TrafficRange) (*analogdb.Traffic, error) {
@@ -42,7 +42,7 @@ func (db *DB) Traffic(ctx context.Context, r analogdb.TrafficRange) (*analogdb.T
 		return nil, &analogdb.Error{Code: analogdb.ERRBADREQUEST, Message: fmt.Sprintf("invalid range: %s", r)}
 	}
 	since := time.Now().Add(-window).UnixMilli()
-	bucketName, bucketExpr := bucketFor(r)
+	bucketName, bucketExpr := bucketFor(r, timeExpr)
 
 	traffic := &analogdb.Traffic{Range: r, Bucket: bucketName}
 

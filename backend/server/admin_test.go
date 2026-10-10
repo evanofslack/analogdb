@@ -45,6 +45,11 @@ func (m mockAnalytics) Traffic(ctx context.Context, r analogdb.TrafficRange) (*a
 	return &analogdb.Traffic{Range: r}, m.err
 }
 
+func (m mockAnalytics) Analytics(ctx context.Context, r analogdb.TrafficRange) (*analogdb.Analytics, error) {
+	posts := []analogdb.AnalyticsPost{{PostID: 12, PageViews: 5}, {PostID: 404, PageViews: 2}}
+	return &analogdb.Analytics{Range: r, Available: true, Posts: posts}, m.err
+}
+
 func (m mockAnalytics) Audit(ctx context.Context, filter *analogdb.AuditFilter) ([]*analogdb.AuditEntry, error) {
 	return []*analogdb.AuditEntry{{StartMs: 5}}, m.err
 }
@@ -86,6 +91,7 @@ func TestAdminRequiresAuth(t *testing.T) {
 		"/v1/admin/posts/missing?field=camera",
 		"/v1/admin/posts/missing?field=caption",
 		"/v1/admin/traffic",
+		"/v1/admin/analytics",
 		"/v1/admin/audit",
 	} {
 		if w := adminRequest(s, path, false); w.Code != http.StatusUnauthorized {
@@ -156,6 +162,7 @@ func TestAdminBadParams(t *testing.T) {
 		"/v1/admin/posts/missing?field=title",
 		"/v1/admin/posts/missing?field=camera&before_id=abc",
 		"/v1/admin/traffic?range=1y",
+		"/v1/admin/analytics?range=1y",
 		"/v1/admin/audit?before=abc",
 	} {
 		if w := adminRequest(s, path, true); w.Code != http.StatusBadRequest {
@@ -183,16 +190,48 @@ func TestAdminAnalyticsUnavailable(t *testing.T) {
 	defer mustClose(t, s)
 
 	s.AnalyticsService = nil
-	for _, path := range []string{"/v1/admin/traffic", "/v1/admin/audit"} {
+	for _, path := range []string{"/v1/admin/traffic", "/v1/admin/analytics", "/v1/admin/audit"} {
 		if w := adminRequest(s, path, true); w.Code != http.StatusServiceUnavailable {
 			t.Errorf("%s: want 503 when disabled, got %d", path, w.Code)
 		}
 	}
 
 	s.AnalyticsService = mockAnalytics{err: errors.New("dial tcp: connection refused")}
-	for _, path := range []string{"/v1/admin/traffic", "/v1/admin/audit"} {
+	for _, path := range []string{"/v1/admin/traffic", "/v1/admin/analytics", "/v1/admin/audit"} {
 		if w := adminRequest(s, path, true); w.Code != http.StatusServiceUnavailable {
 			t.Errorf("%s: want 503 when down, got %d", path, w.Code)
 		}
+	}
+}
+
+type analyticsAdmin struct {
+	mockAdmin
+}
+
+func (analyticsAdmin) PostsByIDs(ctx context.Context, ids []int) ([]*analogdb.AdminPost, error) {
+	return []*analogdb.AdminPost{{ID: 12, Title: "Harbour", LowURL: "https://images.test/12-low.jpg"}}, nil
+}
+
+func TestAdminAnalyticsPosts(t *testing.T) {
+	s := mustOpenAdmin(t)
+	defer mustClose(t, s)
+	s.AdminService = analyticsAdmin{}
+
+	w := adminRequest(s, "/v1/admin/analytics?range=24h", true)
+	if w.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp analogdb.Analytics
+	if err := json.NewDecoder(w.Body).Decode(&resp); err != nil {
+		t.Fatal(err)
+	}
+	if resp.Range != analogdb.TrafficDay || !resp.Available || len(resp.Posts) != 2 {
+		t.Fatalf("unexpected analytics %+v", resp)
+	}
+	if resp.Posts[0].Title != "Harbour" || resp.Posts[0].LowURL == "" {
+		t.Errorf("want post 12 with title and thumbnail, got %+v", resp.Posts[0])
+	}
+	if resp.Posts[1].PostID != 404 || resp.Posts[1].Title != "" {
+		t.Errorf("want missing post 404 without title, got %+v", resp.Posts[1])
 	}
 }
