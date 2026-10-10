@@ -59,6 +59,7 @@ func (s *Server) mountAdminHandlers(r chi.Router) {
 			r.Get("/quality", s.getAdminQuality)
 			r.Get("/posts/missing", s.getAdminMissingPosts)
 			r.Get("/traffic", s.getAdminTraffic)
+			r.Get("/analytics", s.getAdminAnalytics)
 			r.Get("/audit", s.getAdminAudit)
 			s.mountAdminReportHandlers(r)
 		})
@@ -242,13 +243,21 @@ func (s *Server) analyticsUnavailable(w http.ResponseWriter, r *http.Request) bo
 	return true
 }
 
-func (s *Server) getAdminTraffic(w http.ResponseWriter, r *http.Request) {
+func parseRange(r *http.Request) (analogdb.TrafficRange, error) {
 	rng := analogdb.TrafficWeek
 	if str := r.URL.Query().Get("range"); str != "" {
 		rng = analogdb.TrafficRange(str)
 	}
 	if _, ok := rng.Duration(); !ok {
-		s.writeError(w, r, badRequest("invalid range %q, want 24h, 7d or 30d", rng))
+		return "", badRequest("invalid range %q, want 24h, 7d or 30d", rng)
+	}
+	return rng, nil
+}
+
+func (s *Server) getAdminTraffic(w http.ResponseWriter, r *http.Request) {
+	rng, err := parseRange(r)
+	if err != nil {
+		s.writeError(w, r, err)
 		return
 	}
 	if s.analyticsUnavailable(w, r) {
@@ -262,6 +271,53 @@ func (s *Server) getAdminTraffic(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := encodeResponse(w, r, http.StatusOK, traffic); err != nil {
 		s.writeError(w, r, err)
+	}
+}
+
+func (s *Server) getAdminAnalytics(w http.ResponseWriter, r *http.Request) {
+	rng, err := parseRange(r)
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if s.analyticsUnavailable(w, r) {
+		return
+	}
+
+	analytics, err := s.AnalyticsService.Analytics(r.Context(), rng)
+	if err != nil {
+		s.writeError(w, r, analyticsError(err))
+		return
+	}
+	s.addAnalyticsPosts(r.Context(), analytics.Posts)
+	if err := encodeResponse(w, r, http.StatusOK, analytics); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+// addAnalyticsPosts fills in titles and thumbnails, missing posts keep only their id
+func (s *Server) addAnalyticsPosts(ctx context.Context, posts []analogdb.AnalyticsPost) {
+	if len(posts) == 0 || s.AdminService == nil {
+		return
+	}
+	ids := make([]int, 0, len(posts))
+	for _, p := range posts {
+		ids = append(ids, int(p.PostID))
+	}
+	found, err := s.AdminService.PostsByIDs(ctx, ids)
+	if err != nil {
+		s.logger.WarnContext(ctx, "Fail look up analytics posts", "error", err)
+		return
+	}
+	byID := make(map[int]*analogdb.AdminPost, len(found))
+	for _, p := range found {
+		byID[p.ID] = p
+	}
+	for i := range posts {
+		if p, ok := byID[int(posts[i].PostID)]; ok {
+			posts[i].Title = p.Title
+			posts[i].LowURL = p.LowURL
+		}
 	}
 }
 

@@ -123,6 +123,8 @@ func TestRequireRoles(t *testing.T) {
 		{name: "web extractions", method: http.MethodGet, path: "/v1/admin/extractions", creds: &webPair, want: http.StatusForbidden},
 		{name: "scraper overview", method: http.MethodGet, path: "/v1/admin/overview", creds: &scraperPair, want: http.StatusForbidden},
 		{name: "admin overview", method: http.MethodGet, path: "/v1/admin/overview", creds: &adminPair, want: http.StatusOK},
+		{name: "web analytics", method: http.MethodGet, path: "/v1/admin/analytics", creds: &webPair, want: http.StatusForbidden},
+		{name: "admin analytics", method: http.MethodGet, path: "/v1/admin/analytics", creds: &adminPair, want: http.StatusOK},
 		{name: "admin extractions", method: http.MethodGet, path: "/v1/admin/extractions", creds: &adminPair, want: http.StatusOK},
 		{name: "legacy admin overview", method: http.MethodGet, path: "/v1/admin/overview", creds: &legacyAdminPair, want: http.StatusOK},
 	}

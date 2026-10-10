@@ -1,7 +1,8 @@
-import { trafficRanges } from "@lib/adminClient";
 import { formatDateTime, formatNumber, formatPercent } from "@lib/format";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
+import RangePicker from "./rangePicker";
+import Stat from "./stat";
 import TabError from "./tabError";
 
 const clients = [
@@ -10,7 +11,7 @@ const clients = [
   { key: "other", label: "Other", className: styles.barOther },
 ];
 
-function bucketLabel(time, bucket) {
+export function bucketLabel(time, bucket) {
   const date = new Date(time);
   if (bucket === "hour") {
     return `${date.toISOString().slice(11, 13)}:00`;
@@ -63,16 +64,6 @@ function Chart({ series, bucket }) {
   );
 }
 
-function Stat({ label, value, detail }) {
-  return (
-    <div className={styles.card}>
-      <div className={styles.statLabel}>{label}</div>
-      <div className={styles.statValue}>{value}</div>
-      {detail && <div className={styles.statDetail}>{detail}</div>}
-    </div>
-  );
-}
-
 function CountTable({ title, rows, nameLabel, showClient, mono }) {
   return (
     <div>
@@ -110,17 +101,7 @@ function CountTable({ title, rows, nameLabel, showClient, mono }) {
 export default function TrafficTab({ traffic, error, range }) {
   return (
     <>
-      <div className={styles.controls}>
-        {trafficRanges.map((r) => (
-          <Link
-            key={r}
-            href={`/admin?tab=traffic&range=${r}`}
-            className={`${styles.chip} ${r === range ? styles.chipActive : ""}`}
-          >
-            {r}
-          </Link>
-        ))}
-      </div>
+      <RangePicker tab="traffic" range={range} />
       <p className={styles.note} style={{ marginBottom: "1.5rem" }}>
         Backend API requests from ClickHouse. Pages served from the web cache
         never reach the API, and page renders show as the web server&apos;s IP.

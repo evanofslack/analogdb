@@ -95,6 +95,69 @@ type Traffic struct {
 	Errors     []TrafficError  `json:"errors"`
 }
 
+// ViewCounts holds page views and visitor-days, visitor ids rotate daily
+type ViewCounts struct {
+	PageViews int64 `json:"page_views"`
+	Visitors  int64 `json:"visitors"`
+}
+
+type AnalyticsTotals struct {
+	ViewCounts
+	BotViews int64 `json:"bot_views"`
+}
+
+type AnalyticsSummary struct {
+	Current  AnalyticsTotals `json:"current"`
+	Previous AnalyticsTotals `json:"previous"`
+	Live     ViewCounts      `json:"live"`
+}
+
+type AnalyticsBucket struct {
+	Time time.Time `json:"time"`
+	ViewCounts
+}
+
+type AnalyticsCount struct {
+	Name string `json:"name"`
+	ViewCounts
+}
+
+type AnalyticsTop struct {
+	Pages     []AnalyticsCount `json:"pages"`
+	Referrers []AnalyticsCount `json:"referrers"`
+	Sources   []AnalyticsCount `json:"sources"`
+	Campaigns []AnalyticsCount `json:"campaigns"`
+	Devices   []AnalyticsCount `json:"devices"`
+	Browsers  []AnalyticsCount `json:"browsers"`
+}
+
+type AnalyticsPost struct {
+	PostID int64  `json:"post_id"`
+	Title  string `json:"title"`
+	LowURL string `json:"low_url"`
+	ViewCounts
+}
+
+// AnalyticsVital holds p75 web vitals for a route, nil when a metric has no samples
+type AnalyticsVital struct {
+	Route   string   `json:"route"`
+	LCP     *float64 `json:"lcp"`
+	INP     *float64 `json:"inp"`
+	CLS     *float64 `json:"cls"`
+	Samples int64    `json:"samples"`
+}
+
+// Analytics is product traffic from UI events
+type Analytics struct {
+	Range   TrafficRange      `json:"range"`
+	Bucket  string            `json:"bucket"`
+	Summary AnalyticsSummary  `json:"summary"`
+	Series  []AnalyticsBucket `json:"series"`
+	Top     AnalyticsTop      `json:"top"`
+	Posts   []AnalyticsPost   `json:"posts"`
+	Vitals  []AnalyticsVital  `json:"vitals"`
+}
+
 type AuditFilter struct {
 	Limit int
 	// Before is a start time in unix milliseconds
@@ -115,6 +178,7 @@ type AuditEntry struct {
 
 type AnalyticsService interface {
 	Traffic(ctx context.Context, r TrafficRange) (*Traffic, error)
+	Analytics(ctx context.Context, r TrafficRange) (*Analytics, error)
 	Audit(ctx context.Context, filter *AuditFilter) ([]*AuditEntry, error)
 	Readyz(ctx context.Context) error
 }

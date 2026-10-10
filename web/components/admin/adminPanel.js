@@ -10,6 +10,7 @@ export const adminTabs = [
   { id: "review", label: "Review" },
   { id: "reports", label: "Reports" },
   { id: "quality", label: "Quality" },
+  { id: "analytics", label: "Analytics" },
   { id: "traffic", label: "Traffic" },
   { id: "audit", label: "Audit" },
 ];
