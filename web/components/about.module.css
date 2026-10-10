@@ -478,11 +478,16 @@
     align-items: stretch;
     justify-content: flex-start;
     gap: 0;
-    padding: 1.5rem 1rem;
+    padding: 2rem 1rem;
   }
 
   .hero {
     padding-top: 1.5rem;
+  }
+
+  /* extra room before the footer */
+  .band:last-child .split {
+    padding-bottom: 4rem;
   }
 
   .text {
