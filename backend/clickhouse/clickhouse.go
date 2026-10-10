@@ -17,7 +17,7 @@ const (
 	maxExecutionTime   = 5
 	defaultTable       = "httprequests"
 	dialTimeout        = 5 * time.Second
-	maxOpenConns       = 4
+	maxOpenConns       = 8
 	maxIdleConns       = 2
 	connMaxLifetime    = time.Hour
 	clientProductName  = "analogdb"
