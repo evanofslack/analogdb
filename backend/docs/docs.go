@@ -174,6 +174,49 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/removed/permalinks": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Permalinks of every deleted post, so the scraper never adds them again (requires authentication)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "removed"
+                ],
+                "summary": "List removed post permalinks",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.RemovedPermalinksResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/camera": {
             "put": {
                 "security": [
@@ -1293,6 +1336,71 @@ const docTemplate = `{
                 }
             }
         },
+        "/post/{id}/report": {
+            "post": {
+                "description": "Flag a post for the admin, for a takedown request, a wrong NSFW label, wrong info or a photo that isn't film",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "post"
+                ],
+                "summary": "Report a post",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Report",
+                        "name": "report",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.CreateReport"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/server.CreateReportResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid report",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "404": {
+                        "description": "Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "429": {
+                        "description": "Too many reports",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Error"
+                        }
+                    }
+                }
+            }
+        },
         "/post/{id}/similar": {
             "get": {
                 "description": "Find posts similar to a given post using similarity matching",
@@ -2078,6 +2186,34 @@ const docTemplate = `{
                 }
             }
         },
+        "analogdb.CreateReport": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "me@example.com"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "This is my photo, please remove it"
+                },
+                "reason": {
+                    "enum": [
+                        "takedown",
+                        "nsfw_mislabeled",
+                        "wrong_info",
+                        "not_film",
+                        "other"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/analogdb.ReportReason"
+                        }
+                    ],
+                    "example": "takedown"
+                }
+            }
+        },
         "analogdb.Error": {
             "type": "object",
             "properties": {
@@ -2438,6 +2574,23 @@ const docTemplate = `{
                 }
             }
         },
+        "analogdb.ReportReason": {
+            "type": "string",
+            "enum": [
+                "takedown",
+                "nsfw_mislabeled",
+                "wrong_info",
+                "not_film",
+                "other"
+            ],
+            "x-enum-varnames": [
+                "ReportTakedown",
+                "ReportNsfwMislabeled",
+                "ReportWrongInfo",
+                "ReportNotFilm",
+                "ReportOther"
+            ]
+        },
         "server.CamerasResponse": {
             "type": "object",
             "properties": {
@@ -2498,6 +2651,15 @@ const docTemplate = `{
                 },
                 "post": {
                     "$ref": "#/definitions/analogdb.Post"
+                }
+            }
+        },
+        "server.CreateReportResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 12
                 }
             }
         },
@@ -2652,6 +2814,20 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/analogdb.Post"
                     }
+                }
+            }
+        },
+        "server.RemovedPermalinksResponse": {
+            "type": "object",
+            "properties": {
+                "permalinks": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "/r/analog/comments/abc123/dusk/"
+                    ]
                 }
             }
         },

@@ -20,6 +20,7 @@ var codes = map[string]int{
 	analogdb.ERRCONFLICT:      http.StatusConflict,
 	errCodeTooLarge:           http.StatusRequestEntityTooLarge,
 	errCodeUnsupportedMedia:   http.StatusUnsupportedMediaType,
+	errCodeTooManyReports:     http.StatusTooManyRequests,
 }
 
 func errorStatusCode(code string) int {

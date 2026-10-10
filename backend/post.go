@@ -406,6 +406,7 @@ type PostService interface {
 	FindPostByID(ctx context.Context, id int) (*Post, error)
 	CreatePost(ctx context.Context, post *CreatePost) (*Post, error)
 	PatchPost(ctx context.Context, post *PatchPost, id int) error
-	DeletePost(ctx context.Context, id int) error
+	// DeletePost removes a post and leaves a tombstone in removed_posts, reason may be empty
+	DeletePost(ctx context.Context, id int, reason string) error
 	AllPostIDs(ctx context.Context) ([]int, error)
 }

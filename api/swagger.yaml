@@ -157,6 +157,25 @@ definitions:
         example: A day at the fields [Nikon FM2 | Portra 400]
         type: string
     type: object
+  analogdb.CreateReport:
+    properties:
+      email:
+        example: me@example.com
+        type: string
+      message:
+        example: This is my photo, please remove it
+        type: string
+      reason:
+        allOf:
+        - $ref: '#/definitions/analogdb.ReportReason'
+        enum:
+        - takedown
+        - nsfw_mislabeled
+        - wrong_info
+        - not_film
+        - other
+        example: takedown
+    type: object
   analogdb.Error:
     properties:
       code:
@@ -415,6 +434,20 @@ definitions:
       updated:
         type: string
     type: object
+  analogdb.ReportReason:
+    enum:
+    - takedown
+    - nsfw_mislabeled
+    - wrong_info
+    - not_film
+    - other
+    type: string
+    x-enum-varnames:
+    - ReportTakedown
+    - ReportNsfwMislabeled
+    - ReportWrongInfo
+    - ReportNotFilm
+    - ReportOther
   server.CamerasResponse:
     properties:
       cameras:
@@ -456,6 +489,12 @@ definitions:
         type: string
       post:
         $ref: '#/definitions/analogdb.Post'
+    type: object
+  server.CreateReportResponse:
+    properties:
+      id:
+        example: 12
+        type: integer
     type: object
   server.DeleteResponse:
     properties:
@@ -560,6 +599,15 @@ definitions:
       posts:
         items:
           $ref: '#/definitions/analogdb.Post'
+        type: array
+    type: object
+  server.RemovedPermalinksResponse:
+    properties:
+      permalinks:
+        example:
+        - /r/analog/comments/abc123/dusk/
+        items:
+          type: string
         type: array
     type: object
   server.SearchMeta:
@@ -757,6 +805,34 @@ paths:
       summary: Store post metadata extractions
       tags:
       - extractions
+  /admin/removed/permalinks:
+    get:
+      description: Permalinks of every deleted post, so the scraper never adds them
+        again (requires authentication)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.RemovedPermalinksResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: List removed post permalinks
+      tags:
+      - removed
   /camera:
     post:
       consumes:
@@ -1491,6 +1567,50 @@ paths:
       security:
       - BasicAuth: []
       summary: Update a post
+      tags:
+      - post
+  /post/{id}/report:
+    post:
+      consumes:
+      - application/json
+      description: Flag a post for the admin, for a takedown request, a wrong NSFW
+        label, wrong info or a photo that isn't film
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Report
+        in: body
+        name: report
+        required: true
+        schema:
+          $ref: '#/definitions/analogdb.CreateReport'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/server.CreateReportResponse'
+        "400":
+          description: Invalid report
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "404":
+          description: Post not found
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "429":
+          description: Too many reports
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      summary: Report a post
       tags:
       - post
   /post/{id}/similar:

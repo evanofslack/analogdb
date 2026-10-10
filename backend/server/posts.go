@@ -80,6 +80,7 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 	r.Route(postPath, func(r chi.Router) {
 		r.Get("/{id}", s.findPost)
 		r.Get("/{id}/similar", s.getSimilarPosts)
+		r.With(s.reportLimit).Post("/{id}/report", s.createReport)
 		r.With(s.require()).Delete("/{id}", s.deletePost)
 		r.With(s.require(roleScraper)).Patch("/{id}", s.patchPost)
 		r.With(s.require(roleScraper)).Put("/", s.createPost)
@@ -246,12 +247,12 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.PostService.DeletePost(r.Context(), identify); err != nil {
+	if err := s.PostService.DeletePost(r.Context(), identify, ""); err != nil {
 		s.writeError(w, r, err)
 		return
 	}
 
-	if err := s.SimilarityService.DeletePost(r.Context(), identify); err != nil {
+	if err := s.deleteVector(r.Context(), identify); err != nil {
 		s.writeError(w, r, err)
 		return
 	}

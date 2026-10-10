@@ -50,6 +50,7 @@ type Server struct {
 	textWait           time.Duration
 	tagCountCache      tagCountCache
 	missingVectorCache missingVectorCache
+	reportLimit        func(http.Handler) http.Handler
 
 	PostService       analogdb.PostService
 	FilmService       analogdb.FilmService
@@ -62,6 +63,7 @@ type Server struct {
 	EventService      analogdb.EventService
 	AdminService      analogdb.AdminService
 	ExtractionService analogdb.ExtractionService
+	ReportService     analogdb.ReportService
 	AnalyticsService  analogdb.AnalyticsService
 	VectorCounter     analogdb.VectorCounter
 	VectorLister      analogdb.VectorLister
@@ -115,6 +117,7 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	}
 
 	s.mountMiddleware()
+	s.reportLimit = s.reportLimiter()
 
 	// Mount only at base root
 	s.mountStaticHandlers()

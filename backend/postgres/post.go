@@ -127,13 +127,13 @@ func (s *PostService) PatchPost(ctx context.Context, patch *analogdb.PatchPost, 
 	return nil
 }
 
-func (s *PostService) DeletePost(ctx context.Context, id int) error {
+func (s *PostService) DeletePost(ctx context.Context, id int, reason string) error {
 	tx, err := s.db.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	err = s.db.deletePost(ctx, tx, id)
+	err = s.db.deletePost(ctx, tx, id, reason)
 	if err != nil {
 		return toPublicError(err, "fail delete post")
 	}
@@ -167,6 +167,15 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail insert post", "error", err)
 		return nil, err
+	}
+
+	var removed bool
+	if err := tx.QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM removed_posts WHERE permalink = $1)`, create.permalink).Scan(&removed); err != nil {
+		db.logger.ErrorContext(ctx, "Fail insert post", "error", err)
+		return nil, err
+	}
+	if removed {
+		return nil, &analogdb.Error{Code: analogdb.ERRCONFLICT, Message: "post with permalink was removed"}
 	}
 
 	var inserted insertedPost
@@ -1062,15 +1071,24 @@ func (db *DB) insertPostUpdateTimes(ctx context.Context, tx *sql.Tx, patch *anal
 	return nil
 }
 
-func (db *DB) deletePost(ctx context.Context, tx *sql.Tx, id int) error {
+// deletePost deletes a post and writes its tombstone in the same transaction.
+// The S3 images stay, so the tombstone keeps their urls.
+func (db *DB) deletePost(ctx context.Context, tx *sql.Tx, id int, reason string) error {
 	db.logger.DebugContext(ctx, "Start delete post", "post_id", id)
 
 	query := `
-			DELETE FROM pictures
-			WHERE id = $1
-			RETURNING id`
+			WITH deleted AS (
+				DELETE FROM pictures
+				WHERE id = $1
+				RETURNING id, permalink, title, author, url, lowurl, medurl, highurl, time
+			)
+			INSERT INTO removed_posts
+				(post_id, permalink, title, author, url, low_url, med_url, high_url, posted_at, reason)
+			SELECT id, permalink, title, author, url, lowurl, medurl, highurl, to_timestamp(time), NULLIF($2, '')
+			FROM deleted
+			RETURNING post_id`
 
-	row := tx.QueryRowContext(ctx, query, id)
+	row := tx.QueryRowContext(ctx, query, id, reason)
 
 	var returnedID int
 	err := row.Scan(&returnedID)
