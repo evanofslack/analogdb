@@ -38,11 +38,11 @@ type encodePostsResponse struct {
 // @Produce json
 // @Param request body encodePostsRequest true "Post IDs and batch size for encoding"
 // @Success 200 {object} encodePostsResponse
-// @Failure 400 {object} analogdb.Error "Invalid request body"
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 422 {object} analogdb.Error "Unprocessable entity"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid request body"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 422 {object} ErrorResponse "Unprocessable entity"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /encode [put]
 func (s *Server) encodePosts(w http.ResponseWriter, r *http.Request) {

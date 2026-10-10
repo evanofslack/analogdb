@@ -69,10 +69,10 @@ func (s *Server) reportLimiter() func(http.Handler) http.Handler {
 // @Param id path int true "Post ID"
 // @Param report body analogdb.CreateReport true "Report"
 // @Success 201 {object} CreateReportResponse
-// @Failure 400 {object} analogdb.Error "Invalid report"
-// @Failure 404 {object} analogdb.Error "Post not found"
-// @Failure 429 {object} analogdb.Error "Too many reports"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 400 {object} ErrorResponse "Invalid report"
+// @Failure 404 {object} ErrorResponse "Post not found"
+// @Failure 429 {object} ErrorResponse "Too many reports"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /post/{id}/report [post]
 func (s *Server) createReport(w http.ResponseWriter, r *http.Request) {
 	id, err := stringToInt(chi.URLParam(r, "id"))
@@ -238,9 +238,9 @@ func (s *Server) deleteVector(ctx context.Context, id int) error {
 // @Tags removed
 // @Produce json
 // @Success 200 {object} RemovedPermalinksResponse
-// @Failure 401 {object} analogdb.Error "Unauthorized"
-// @Failure 403 {object} analogdb.Error "Forbidden"
-// @Failure 500 {object} analogdb.Error "Internal server error"
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
 // @Router /admin/removed/permalinks [get]
 func (s *Server) getRemovedPermalinks(w http.ResponseWriter, r *http.Request) {
