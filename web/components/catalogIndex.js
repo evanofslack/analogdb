@@ -17,7 +17,13 @@ function matches(entry, query) {
   return catalogName(entry).toLowerCase().includes(query);
 }
 
-export default function CatalogIndex({ kind, intro, placeholder, groups }) {
+export default function CatalogIndex({
+  kind,
+  title,
+  intro,
+  placeholder,
+  groups,
+}) {
   const [{ q: query }, setFilter] = useQueryStates(catalogFilterParsers);
   const needle = query.trim().toLowerCase();
 
@@ -37,7 +43,8 @@ export default function CatalogIndex({ kind, intro, placeholder, groups }) {
       <Header brandHeading={false} />
       <div className={styles.margin}>
         <div className={styles.intro}>
-          <h1 className={styles.text}>{intro}</h1>
+          <h1 className={styles.title}>{title}</h1>
+          <p className={styles.text}>{intro}</p>
           <TextInput
             className={styles.filter}
             value={query}
