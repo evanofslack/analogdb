@@ -160,45 +160,38 @@ export interface Traffic {
   }[];
 }
 
-export interface AnalyticsTotals {
-  page_views: number;
-  visitor_days: number;
-  views_per_visitor: number;
-  bot_share: number;
-}
-
-export interface AnalyticsCount {
-  name: string;
+export interface ViewCounts {
   page_views: number;
   visitors: number;
 }
 
+export interface AnalyticsTotals extends ViewCounts {
+  bot_views: number;
+}
+
+export interface AnalyticsCount extends ViewCounts {
+  name: string;
+}
+
+export type AnalyticsTopKey =
+  | "pages"
+  | "referrers"
+  | "sources"
+  | "campaigns"
+  | "devices"
+  | "browsers";
+
 export interface Analytics {
   range: TrafficRange;
   bucket: "hour" | "day";
-  available: boolean;
-  totals: AnalyticsTotals;
-  previous: AnalyticsTotals;
-  series: { time: string; page_views: number; visitors: number }[];
-  live: { page_views: number; visitors: number };
-  pages: AnalyticsCount[];
-  posts: {
-    post_id: number;
-    title: string;
-    low_url: string;
-    page_views: number;
-    visitors: number;
-  }[];
-  referrers: AnalyticsCount[];
-  campaigns: {
-    source: string;
-    campaign: string;
-    page_views: number;
-    visitors: number;
-  }[];
-  devices: AnalyticsCount[];
-  browsers: AnalyticsCount[];
-  countries: AnalyticsCount[];
+  summary: {
+    current: AnalyticsTotals;
+    previous: AnalyticsTotals;
+    live: ViewCounts;
+  };
+  series: (ViewCounts & { time: string })[];
+  top: Record<AnalyticsTopKey, AnalyticsCount[]>;
+  posts: (ViewCounts & { post_id: number; title: string; low_url: string })[];
   vitals: {
     route: string;
     lcp: number | null;

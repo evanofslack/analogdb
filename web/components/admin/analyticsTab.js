@@ -180,40 +180,6 @@ function PostsTable({ posts }) {
   );
 }
 
-function CampaignsTable({ campaigns }) {
-  return (
-    <div>
-      <h3 className={styles.sectionTitle}>Campaigns</h3>
-      {campaigns.length === 0 ? (
-        <p className={styles.note}>None.</p>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Source</th>
-                <th>Campaign</th>
-                <th className={styles.num}>Views</th>
-                <th className={styles.num}>Visitor-days</th>
-              </tr>
-            </thead>
-            <tbody>
-              {campaigns.map((c) => (
-                <tr key={`${c.source}|${c.campaign}`}>
-                  <td>{c.source || "(none)"}</td>
-                  <td>{c.campaign || "(none)"}</td>
-                  <td className={styles.num}>{formatNumber(c.page_views)}</td>
-                  <td className={styles.num}>{formatNumber(c.visitors)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function vitalClass(metric, value) {
   const [good, poor] = vitalThresholds[metric];
   if (value <= good) return styles.fresh;
@@ -276,8 +242,40 @@ function pagePath(route) {
   return route.startsWith("/") && !route.includes("[") ? route : null;
 }
 
+const topTables = [
+  {
+    key: "pages",
+    title: "Top pages",
+    nameLabel: "Route",
+    href: pagePath,
+    mono: true,
+  },
+  {
+    key: "referrers",
+    title: "Referrers",
+    nameLabel: "Host",
+    href: (host) => `https://${host}`,
+  },
+  { key: "sources", title: "Sources", nameLabel: "utm_source" },
+  { key: "campaigns", title: "Campaigns", nameLabel: "utm_campaign" },
+  { key: "devices", title: "Devices", nameLabel: "Device" },
+  { key: "browsers", title: "Browsers", nameLabel: "Browser" },
+];
+
+function ratio(a, b) {
+  return b ? a / b : 0;
+}
+
+function derived(t) {
+  return {
+    ...t,
+    per_visitor: ratio(t.page_views, t.visitors),
+    bot_share: ratio(t.bot_views, t.page_views + t.bot_views),
+  };
+}
+
 export default function AnalyticsTab({ analytics, error, range }) {
-  const live = analytics?.available ? analytics.live : null;
+  const live = analytics?.summary.live;
   return (
     <>
       <RangePicker tab="analytics" range={range}>
@@ -291,11 +289,6 @@ export default function AnalyticsTab({ analytics, error, range }) {
       </RangePicker>
       {error ? (
         <TabError error={error} />
-      ) : !analytics.available ? (
-        <p className={styles.note}>
-          No UI events yet. Needs the consumer migration and web page view
-          tracking deployed.
-        </p>
       ) : (
         <AnalyticsBody analytics={analytics} />
       )}
@@ -304,47 +297,49 @@ export default function AnalyticsTab({ analytics, error, range }) {
 }
 
 function AnalyticsBody({ analytics }) {
-  const { totals, previous } = analytics;
+  const current = derived(analytics.summary.current);
+  const previous = derived(analytics.summary.previous);
+  const [pages, referrers, sources, campaigns, devices, browsers] =
+    topTables.map((t) => (
+      <ViewsTable key={t.key} {...t} rows={analytics.top[t.key]} />
+    ));
   return (
     <>
       <section className={styles.section}>
         <div className={styles.stats}>
           <Stat
             label="Page views"
-            value={formatNumber(totals.page_views)}
+            value={formatNumber(current.page_views)}
             detail={
               <Change
-                current={totals.page_views}
+                current={current.page_views}
                 previous={previous.page_views}
               />
             }
           />
           <Stat
             label="Visitor-days"
-            value={formatNumber(totals.visitor_days)}
+            value={formatNumber(current.visitors)}
             detail={
-              <Change
-                current={totals.visitor_days}
-                previous={previous.visitor_days}
-              />
+              <Change current={current.visitors} previous={previous.visitors} />
             }
           />
           <Stat
             label="Views per visitor-day"
-            value={totals.views_per_visitor.toFixed(2)}
+            value={current.per_visitor.toFixed(2)}
             detail={
               <Change
-                current={totals.views_per_visitor}
-                previous={previous.views_per_visitor}
+                current={current.per_visitor}
+                previous={previous.per_visitor}
               />
             }
           />
           <Stat
             label="Bot share"
-            value={formatPercent(totals.bot_share, 1)}
+            value={formatPercent(current.bot_share, 1)}
             detail={
               <Change
-                current={totals.bot_share}
+                current={current.bot_share}
                 previous={previous.bot_share}
                 invert
               />
@@ -352,6 +347,7 @@ function AnalyticsBody({ analytics }) {
           />
         </div>
         <p className={styles.note}>
+          {current.page_views === 0 && "No page views in this range yet. "}
           Visitor ids reset every day, so one person visiting on three days
           counts as three visitor-days. Bots are left out of every number but
           bot share.
@@ -366,42 +362,15 @@ function AnalyticsBody({ analytics }) {
       </section>
 
       <section className={`${styles.section} ${styles.twoCol}`}>
-        <ViewsTable
-          title="Top pages"
-          rows={analytics.pages}
-          nameLabel="Route"
-          href={pagePath}
-          mono
-        />
+        {pages}
         <PostsTable posts={analytics.posts} />
-        <ViewsTable
-          title="Referrers"
-          rows={analytics.referrers}
-          nameLabel="Host"
-          href={(host) => `https://${host}`}
-        />
-        <CampaignsTable campaigns={analytics.campaigns} />
+        {referrers}
         <div>
-          <ViewsTable
-            title="Devices"
-            rows={analytics.devices}
-            nameLabel="Device"
-          />
-          <div style={{ marginTop: "1.5rem" }}>
-            <ViewsTable
-              title="Browsers"
-              rows={analytics.browsers}
-              nameLabel="Browser"
-            />
-          </div>
+          {sources}
+          <div style={{ marginTop: "1.5rem" }}>{campaigns}</div>
         </div>
-        {analytics.countries.length > 0 && (
-          <ViewsTable
-            title="Countries"
-            rows={analytics.countries}
-            nameLabel="Country"
-          />
-        )}
+        {devices}
+        {browsers}
       </section>
 
       <VitalsTable vitals={analytics.vitals} />
