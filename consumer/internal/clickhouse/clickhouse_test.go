@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	tcclickhouse "github.com/testcontainers/testcontainers-go/modules/clickhouse"
 
 	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
@@ -85,6 +86,39 @@ func TestInsertAfterMigrations(t *testing.T) {
 			}
 			if want := uint64(i + 1); count != want {
 				t.Fatalf("count = %d, want %d", count, want)
+			}
+
+			var exists uint8
+			if err := c.conn.QueryRow(ctx, "EXISTS TABLE ui_events").Scan(&exists); err != nil {
+				t.Fatal(err)
+			}
+			if exists != 1 {
+				t.Fatal("ui_events table missing after migrations")
+			}
+
+			eventID := uuid.NewString()
+			uiEvents := []*v1.UiEvent{
+				{EventId: eventID, EventName: "page_view", SchemaVersion: 1, ClientTs: now, ReceivedTs: now, ViewportWidth: 1280, PostId: 42},
+				{EventId: eventID, EventName: "page_view", SchemaVersion: 1, ClientTs: now, ReceivedTs: now + 10, ViewportWidth: -1, PostId: -1},
+			}
+			if err := c.UiEvents("ui_events").Insert(ctx, uiEvents); err != nil {
+				t.Fatalf("Insert ui events, err=%v", err)
+			}
+
+			var uiCount uint64
+			if err := c.conn.QueryRow(ctx, "SELECT count() FROM ui_events FINAL WHERE event_id = ?", eventID).Scan(&uiCount); err != nil {
+				t.Fatal(err)
+			}
+			if uiCount != 1 {
+				t.Fatalf("ui_events count = %d, want 1", uiCount)
+			}
+
+			var props string
+			if err := c.conn.QueryRow(ctx, "SELECT props FROM ui_events FINAL WHERE event_id = ?", eventID).Scan(&props); err != nil {
+				t.Fatal(err)
+			}
+			if props != "{}" {
+				t.Fatalf("props = %q, want {}", props)
 			}
 		})
 	}

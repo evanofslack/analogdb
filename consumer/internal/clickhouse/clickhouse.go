@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/google/uuid"
 
 	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
 	"github.com/evanofslack/analogdb-consumer/internal/metrics"
@@ -162,6 +164,91 @@ func (c *Client) Insert(ctx context.Context, events []*v1.Event) error {
 	c.metrics.IncrementClickHouseInserts(len(events), c.table, nil)
 	c.logger.Debug("Finish insert events", "count", len(events))
 	return nil
+}
+
+type UiEventsTable struct {
+	client *Client
+	table  string
+}
+
+func (c *Client) UiEvents(table string) *UiEventsTable {
+	return &UiEventsTable{client: c, table: table}
+}
+
+func (t *UiEventsTable) Insert(ctx context.Context, events []*v1.UiEvent) error {
+	if len(events) == 0 {
+		return nil
+	}
+
+	c := t.client
+	start := time.Now()
+	defer func() { c.metrics.ObserveClickHouseInsertDuration(t.table, time.Since(start)) }()
+	c.logger.Debug("Start insert ui events", "ui_table", t.table, "count", len(events))
+
+	insert := fmt.Sprintf(`INSERT INTO %s (
+		event_id, event_name, schema_version, visitor_id, client_ts, received_ts,
+		path, route, referrer_host, utm_source, utm_medium, utm_campaign,
+		viewport_width, device_type, browser, os, country, is_bot,
+		search_id, post_id, props
+	)`, t.table)
+
+	batch, err := c.conn.PrepareBatch(ctx, insert)
+	if err != nil {
+		return fmt.Errorf("prepare batch: %w", err)
+	}
+
+	for _, event := range events {
+		eventID, err := uuid.Parse(event.EventId)
+		if err != nil {
+			return fmt.Errorf("parse event_id: %w", err)
+		}
+		props := event.PropsJson
+		if props == "" {
+			props = "{}"
+		}
+		err = batch.Append(
+			eventID,
+			event.EventName,
+			uint8(clamp(int64(event.SchemaVersion), math.MaxUint8)),
+			event.VisitorId,
+			time.UnixMilli(event.ClientTs).UTC(),
+			time.UnixMilli(event.ReceivedTs).UTC(),
+			event.Path,
+			event.Route,
+			event.ReferrerHost,
+			event.UtmSource,
+			event.UtmMedium,
+			event.UtmCampaign,
+			uint16(clamp(int64(event.ViewportWidth), math.MaxUint16)),
+			event.DeviceType,
+			event.Browser,
+			event.Os,
+			event.Country,
+			event.IsBot,
+			event.SearchId,
+			uint32(clamp(event.PostId, math.MaxUint32)),
+			props,
+		)
+		if err != nil {
+			return fmt.Errorf("append ui event: %w", err)
+		}
+	}
+
+	if err := batch.Send(); err != nil {
+		c.metrics.IncrementClickHouseInserts(len(events), t.table, err)
+		return fmt.Errorf("insert batch of ui events: %w", err)
+	}
+
+	c.metrics.IncrementClickHouseInserts(len(events), t.table, nil)
+	c.logger.Debug("Finish insert ui events", "ui_table", t.table, "count", len(events))
+	return nil
+}
+
+func clamp(value, limit int64) int64 {
+	if value < 0 || value > limit {
+		return 0
+	}
+	return value
 }
 
 func (c *Client) HealthCheck(ctx context.Context) error {

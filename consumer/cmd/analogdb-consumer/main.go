@@ -13,6 +13,7 @@ import (
 
 	"github.com/evanofslack/analogdb-consumer/internal/clickhouse"
 	"github.com/evanofslack/analogdb-consumer/internal/config"
+	v1 "github.com/evanofslack/analogdb-consumer/internal/gen/proto/analytics/v1"
 	"github.com/evanofslack/analogdb-consumer/internal/kafka"
 	"github.com/evanofslack/analogdb-consumer/internal/logging"
 	"github.com/evanofslack/analogdb-consumer/internal/metrics"
@@ -86,7 +87,7 @@ func main() {
 		batchTimeout = time.Second * 10
 	}
 
-	consumer := kafka.New(
+	consumer := kafka.New[v1.Event](
 		logger.With("subsystem", "kafka"),
 		metrics,
 		cfg.Kafka.Brokers(),
@@ -96,12 +97,31 @@ func main() {
 		batchTimeout,
 	)
 
-	processor := process.New(logger.With("subsystem", "processor"), consumer, ch)
+	processor := process.New(logger.With("subsystem", "processor"), metrics, cfg.Kafka.Topic, consumer, ch, process.ValidateEvent)
 	defer processor.Stop()
+
+	uiConsumer := kafka.New[v1.UiEvent](
+		logger.With("subsystem", "kafka"),
+		metrics,
+		cfg.Kafka.Brokers(),
+		cfg.Kafka.UiTopic,
+		cfg.Kafka.UiConsumerGroup,
+		cfg.Kafka.BatchSize,
+		batchTimeout,
+	)
+	topicCtx, topicCancel := context.WithTimeout(ctx, 10*time.Second)
+	if err := uiConsumer.EnsureTopic(topicCtx); err != nil {
+		logger.Warn("Ensure kafka topic", "topic", cfg.Kafka.UiTopic, "error", err)
+	}
+	topicCancel()
+
+	uiProcessor := process.New(logger.With("subsystem", "processor"), metrics, cfg.Kafka.UiTopic, uiConsumer, ch.UiEvents(cfg.ClickHouse.UiTable), process.ValidateUiEvent)
+	defer uiProcessor.Stop()
 
 	httpServer := server.New(logger.With("subsystem", "server"), cfg.Server.Port, cfg.App.Name, cfg.App.Version, cfg.App.Env)
 	httpServer.AddHealthChecker("clickhouse", ch)
 	httpServer.AddHealthChecker("kafka", consumer)
+	httpServer.AddHealthChecker("kafka_ui", uiConsumer)
 
 	var wg sync.WaitGroup
 
@@ -125,6 +145,18 @@ func main() {
 		err := processor.Start(ctx)
 		if err != nil && err != context.Canceled {
 			err = fmt.Errorf("start processor, err=%w", err)
+			fatal(logger, err)
+		}
+	}()
+
+	// start ui processor
+	wg.Add(1)
+	go func() {
+		defer uiProcessor.Stop()
+		defer wg.Done()
+		err := uiProcessor.Start(ctx)
+		if err != nil && err != context.Canceled {
+			err = fmt.Errorf("start ui processor, err=%w", err)
 			fatal(logger, err)
 		}
 	}()
