@@ -3,6 +3,7 @@ import AuditTab from "@components/admin/auditTab";
 import LoginForm from "@components/admin/loginForm";
 import OverviewTab from "@components/admin/overviewTab";
 import QualityTab from "@components/admin/qualityTab";
+import ReportsTab from "@components/admin/reportsTab";
 import ReviewTab from "@components/admin/reviewTab";
 import TabError from "@components/admin/tabError";
 import TrafficTab from "@components/admin/trafficTab";
@@ -11,9 +12,11 @@ import {
   getMissingPosts,
   getOverview,
   getQuality,
+  getReports,
   getReviewPosts,
   getTraffic,
   missingFields,
+  reportStatuses,
   trafficRanges,
 } from "@lib/adminClient";
 import { checkAdminAuth } from "@lib/auth";
@@ -48,6 +51,13 @@ async function renderTab(tab, params) {
       const { data, error } = await load(() => getReviewPosts(cursor));
       if (error) return <TabError error={error} />;
       return <ReviewTab page={data} firstPage={!cursor} />;
+    }
+    case "reports": {
+      const status = pick(params.status, reportStatuses, "open");
+      const before = positiveInt(params.before);
+      const { data, error } = await load(() => getReports(status, before));
+      if (error) return <TabError error={error} />;
+      return <ReportsTab page={data} status={status} firstPage={!before} />;
     }
     case "quality": {
       const field = pick(params.field, missingFields, "camera");
