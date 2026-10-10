@@ -91,11 +91,13 @@ export default function MobileNav() {
                 href={link.href}
                 onClick={close}
                 aria-current={isActive ? "page" : undefined}
-                className={styles.link}
+                className={
+                  isActive ? `${styles.link} ${styles.active}` : styles.link
+                }
               >
                 <span className={styles.label}>{link.label}</span>
                 {isActive && (
-                  <IconCheck size={28} stroke={1.5} aria-hidden="true" />
+                  <IconCheck size={22} stroke={2} aria-hidden="true" />
                 )}
               </Link>
             );
