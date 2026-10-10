@@ -172,6 +172,7 @@ export default function ColorFilter({
                 checked={color === colorOption.id}
                 onChange={handleColorClick}
                 id={colorOption.id}
+                aria-label={colorOption.label}
                 className={styles.colorButton}
                 radius="xs"
               />

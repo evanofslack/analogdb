@@ -61,6 +61,27 @@ async function downloadImage(id) {
   }
 }
 
+function Action({ label, icon: Icon, onClick, href }) {
+  return (
+    <div className={styles.action}>
+      <Tooltip label={label} withArrow className="px-2">
+        <ActionIcon
+          variant="subtle"
+          color="gray"
+          aria-label={label}
+          onClick={onClick}
+          {...(href && { component: "a", href })}
+        >
+          <Icon size="24px" />
+        </ActionIcon>
+      </Tooltip>
+      <span className={styles.actionLabel} aria-hidden="true">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export default function ImagePage(props) {
   let post = props.post;
   let similar = props.similar;
@@ -69,6 +90,28 @@ export default function ImagePage(props) {
   const [editing, setEditing] = useState(false);
   const [reporting, setReporting] = useState(false);
   let image = post.images[2];
+
+  const actions = [
+    {
+      label: "download",
+      icon: AiOutlineDownload,
+      onClick: () => downloadImage(post.id),
+    },
+    { label: "fullscreen", icon: AiOutlineArrowsAlt, href: post.images[3].url },
+    { label: "report", icon: AiOutlineFlag, onClick: () => setReporting(true) },
+    {
+      label: "edit",
+      icon: AiOutlineEdit,
+      onClick: () => setEditing(true),
+      admin: true,
+    },
+    {
+      label: "delete",
+      icon: AiOutlineDelete,
+      onClick: () => handleDelete(post.id),
+      admin: true,
+    },
+  ];
 
   return (
     <div>
@@ -94,61 +137,11 @@ export default function ImagePage(props) {
           />
         </div>
         <div className={styles.footerIcons}>
-          <ActionIcon.Group>
-            <Tooltip label="download" withArrow className="px-2">
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={() => downloadImage(post.id)}
-              >
-                <AiOutlineDownload size="24px" />
-              </ActionIcon>
-            </Tooltip>
-            <Tooltip label="fullscreen" withArrow className="px-2">
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                component="a"
-                href={post.images[3].url}
-              >
-                <AiOutlineArrowsAlt size="24px"></AiOutlineArrowsAlt>
-              </ActionIcon>
-            </Tooltip>
-            <Tooltip label="report" withArrow className="px-2">
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                onClick={() => setReporting(true)}
-                aria-label="report"
-              >
-                <AiOutlineFlag size="24px" />
-              </ActionIcon>
-            </Tooltip>
-            {/* Show edit and delete buttons only to admin */}
-            {isAdmin && (
-              <Tooltip label="edit" withArrow className="px-2">
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={() => setEditing(true)}
-                  aria-label="edit"
-                >
-                  <AiOutlineEdit size="24px" />
-                </ActionIcon>
-              </Tooltip>
-            )}
-            {isAdmin && (
-              <Tooltip label="delete" withArrow className="px-2">
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={() => handleDelete(post.id)}
-                >
-                  <AiOutlineDelete size="24px"></AiOutlineDelete>
-                </ActionIcon>
-              </Tooltip>
-            )}
-          </ActionIcon.Group>
+          {actions
+            .filter((action) => !action.admin || isAdmin)
+            .map((action) => (
+              <Action key={action.label} {...action} />
+            ))}
         </div>
       </div>
       <ImageTag
