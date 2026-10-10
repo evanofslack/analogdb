@@ -31,6 +31,25 @@
   width: 70vw;
 }
 
+@media screen and (max-width: 720px) {
+  .fullscreen {
+    height: auto;
+    padding-bottom: 0;
+  }
+
+  .imageContainer {
+    flex: none;
+    width: calc(100% - 2rem);
+    aspect-ratio: var(--ratio);
+    max-height: 80svh;
+    margin-top: 1rem;
+  }
+
+  .footerIcons {
+    width: calc(100% - 2rem);
+  }
+}
+
 .adminSection {
   margin-top: 2rem;
   padding: 1.5rem;
