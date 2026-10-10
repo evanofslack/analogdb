@@ -10,25 +10,24 @@
 }
 
 .intro {
-  margin-top: 2rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
-.title {
-  margin: 0;
-  font-size: 2.4rem;
-  letter-spacing: 0.04em;
-  color: var(--adb-heading);
-}
-
 .text {
-  margin-top: 0.4rem;
-  margin-bottom: 1.5rem;
+  margin: 0;
   max-width: 40rem;
+  font-size: 1rem;
+  font-weight: 400;
   color: var(--adb-muted);
 }
 
 .filter {
+  flex: 1 1 16rem;
   max-width: 22rem;
 }
 
@@ -73,8 +72,13 @@
     margin: 0 1rem;
     padding-bottom: 4rem;
   }
-  .title {
-    font-size: 1.8rem;
+  .intro {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter {
+    flex: none;
+    max-width: none;
   }
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

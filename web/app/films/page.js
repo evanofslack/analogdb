@@ -29,7 +29,6 @@ export default async function Page() {
       />
       <CatalogIndex
         kind="films"
-        title="FILM"
         intro="See how every film stock looks in real photos"
         placeholder="filter film stocks..."
         groups={groupFilms(list)}
