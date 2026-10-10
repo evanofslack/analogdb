@@ -2,9 +2,39 @@
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
-  align-items: center;
   width: 100%;
   padding-bottom: 2rem;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  max-width: 100%;
+}
+
+.divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1.5rem;
+  margin: 0 0.25rem;
+  background-color: var(--adb-divider);
+}
+
+.dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--adb-muted);
+  visibility: hidden;
+}
+
+.query .button[data-active] .dot {
+  visibility: visible;
 }
 
 .radio {
@@ -90,6 +120,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  gap: 0.5rem;
   position: relative;
 }
 
@@ -109,16 +140,16 @@
 }
 
 .query .button {
-  margin-right: 10px;
-  margin-left: 2px;
-  padding-left: 10px;
-  padding-right: 10px;
-  color: var(--adb-heading);
+  flex-shrink: 0;
+  position: relative;
+  height: 36px;
+  padding: 0 10px;
   font-weight: 400;
+  color: var(--adb-heading);
   border-color: var(--adb-border);
 }
 
-.query .button .buttonSection {
+.query .buttonSection {
   margin-right: 5px;
 }
 
@@ -126,24 +157,38 @@
   background-color: var(--adb-surface-hover);
 }
 
+.query .button[data-active] {
+  border-color: var(--adb-muted);
+}
+
 @media (max-width: 720px) {
-  .query .button {
-    margin-right: 2px;
-    padding-left: 6px;
-    padding-right: 0;
-    border-color: transparent;
+  .query {
+    display: block;
+    padding-bottom: 1.25rem;
   }
 
-  .query .button svg {
-    width: 24px;
-    height: 24px;
+  .group {
+    align-items: stretch;
   }
 
-  .query .button:not([data-disabled]):hover {
-    background-color: transparent;
+  .filterButtons {
+    margin: 0 -1.2rem;
+    padding: 0.25rem 1.2rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      black calc(100% - 2rem),
+      transparent
+    );
+    mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent);
   }
 
-  .label {
+  .filterButtons::-webkit-scrollbar {
     display: none;
+  }
+
+  .query .button {
+    height: 40px;
   }
 }

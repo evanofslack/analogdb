@@ -1,4 +1,4 @@
-import { PostsGetRequest } from "analogdb-generated";
+import { HTTPQuery, PostsGetRequest, querystring } from "analogdb-generated";
 import {
   inferParserType,
   parseAsFloat,
@@ -6,6 +6,7 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
+import { publicURL } from "./constants";
 import { isValidSeed } from "./seed";
 
 const sortOpts = ["time", "score", "random"] as const;
@@ -41,6 +42,55 @@ export const postsParsers = {
 };
 
 export type PostsFilters = inferParserType<typeof postsParsers>;
+
+export type ActivePostsFilters = {
+  camera: boolean;
+  film: boolean;
+  color: boolean;
+  size: boolean;
+  flags: boolean;
+  text: boolean;
+};
+
+export function activePostsFilters(f: PostsFilters): ActivePostsFilters {
+  const p = postsParsers;
+  return {
+    camera: Boolean(f.camera_make || f.camera_model),
+    film: Boolean(f.film_make || f.film_type),
+    color: Boolean(f.color),
+    size:
+      f.widthMin !== p.widthMin.defaultValue ||
+      f.widthMax !== p.widthMax.defaultValue ||
+      f.heightMin !== p.heightMin.defaultValue ||
+      f.heightMax !== p.heightMax.defaultValue ||
+      f.ratioMin !== p.ratioMin.defaultValue ||
+      f.ratioMax !== p.ratioMax.defaultValue,
+    flags:
+      f.nsfw !== p.nsfw.defaultValue ||
+      f.bw !== p.bw.defaultValue ||
+      f.sprocket !== p.sprocket.defaultValue,
+    text: Boolean(f.text),
+  };
+}
+
+// null drops the param from the url, so each filter falls back to its default
+export const clearedPostsFilters = {
+  nsfw: null,
+  bw: null,
+  sprocket: null,
+  color: null,
+  text: null,
+  widthMin: null,
+  widthMax: null,
+  heightMin: null,
+  heightMax: null,
+  ratioMin: null,
+  ratioMax: null,
+  film_make: null,
+  film_type: null,
+  camera_make: null,
+  camera_model: null,
+};
 
 export const searchParsers = {
   q: parseAsString,
@@ -171,4 +221,23 @@ export function toPostsRequest(filters: PostsFilters): PostsGetRequest {
   if (filters.camera_model) params.cameraModel = filters.camera_model;
 
   return params;
+}
+
+// the public api call for these filters, leaving out values the api already defaults to
+export function postsApiUrl(filters: PostsFilters): string {
+  const request = toPostsRequest(filters);
+  const defaults: Partial<Record<keyof PostsGetRequest, unknown>> = {
+    sort: "time",
+    pageSize: request.pageSize,
+    ...postsLimits,
+  };
+  const query: HTTPQuery = {};
+  for (const [key, value] of Object.entries(request)) {
+    if (value == null || defaults[key as keyof PostsGetRequest] === value) {
+      continue;
+    }
+    query[key.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)] = value;
+  }
+  const qs = querystring(query);
+  return `${publicURL}/posts${qs ? `?${qs}` : ""}`;
 }

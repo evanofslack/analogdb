@@ -1,5 +1,6 @@
 "use client";
 
+import { postsParsers } from "@lib/searchParams";
 import {
   Button,
   Menu,
@@ -8,6 +9,7 @@ import {
   SegmentedControl,
   Select,
   Stack,
+  VisuallyHidden,
 } from "@mantine/core";
 import { useDebouncedCallback } from "@mantine/hooks";
 import {
@@ -20,6 +22,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import ColorFilter from "./colorFilter";
 import styles from "./filterBar.module.css";
+import FilterSummary from "./filterSummary";
 
 export default function FilterBar({
   // State values
@@ -64,6 +67,12 @@ export default function FilterBar({
   heightMaxLimit,
   ratioMinLimit,
   ratioMaxLimit,
+
+  active = {},
+  onClear,
+  resultCount,
+  resultPending,
+  apiUrl,
 }) {
   const iconSize = 18;
 
@@ -141,310 +150,400 @@ export default function FilterBar({
     section: styles.buttonSection,
   };
 
+  const activeProps = (key) => (active[key] ? { "data-active": true } : {});
+  const activeText = (key) => (
+    <>
+      <span className={styles.dot} aria-hidden="true" />
+      {active[key] && <VisuallyHidden>, filter on</VisuallyHidden>}
+    </>
+  );
+
+  const optionLabel = (options, a, b, keyA, keyB) =>
+    options.find((o) => o[keyA] === a && o[keyB] === b)?.label ?? `${a} ${b}`;
+  const defaultSizes = {
+    widthMin: widthMinLimit,
+    widthMax: widthMaxLimit,
+    heightMin: heightMinLimit,
+    heightMax: heightMaxLimit,
+    ratioMin: ratioMinLimit,
+    ratioMax: ratioMaxLimit,
+  };
+  const flagItem = (key, title, value, setValue) =>
+    value !== postsParsers[key].defaultValue && {
+      key,
+      category: title,
+      value,
+      onRemove: () => setValue(postsParsers[key].defaultValue),
+    };
+  const summaryItems = [
+    active.camera && {
+      key: "camera",
+      category: "camera",
+      value: optionLabel(
+        cameraOptions,
+        cameraMake,
+        cameraModel,
+        "make",
+        "model"
+      ),
+      onRemove: () => setCamera(null, null),
+    },
+    active.film && {
+      key: "film",
+      category: "film",
+      value: optionLabel(filmOptions, filmMake, filmType, "make", "type"),
+      onRemove: () => setFilm(null, null),
+    },
+    active.color && {
+      key: "color",
+      category: "color",
+      value: color,
+      onRemove: () => setColor(null),
+    },
+    active.size && {
+      key: "size",
+      category: "size",
+      value: "custom",
+      onRemove: () => setSizes(defaultSizes),
+    },
+    flagItem("nsfw", "18+", nsfw, setNsfw),
+    flagItem("bw", "b&w", bw, setBw),
+    flagItem("sprocket", "sprocket", sprocket, setSprocket),
+    active.text && {
+      key: "text",
+      category: "keyword",
+      value: text,
+      onRemove: () => setText(null),
+    },
+  ].filter(Boolean);
+
   return (
     <>
       <div className={styles.query}>
-        <div className={styles.filterButtons}>
-          <Menu shadow="md" width={220}>
-            <Menu.Target>
-              <Button
-                variant="outline"
-                color="gray"
-                leftSection={<IconCamera size={iconSize} stroke={1.5} />}
-                classNames={buttonClassNames}
-              >
-                <span className={styles.label}>camera</span>
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>select camera</Menu.Label>
-              <div className={styles.filmSelect}>
-                <Select
-                  value={
-                    cameraMake && cameraModel
-                      ? JSON.stringify([cameraMake, cameraModel])
-                      : null
-                  }
-                  onChange={(value) => {
-                    if (value) {
-                      const [make, model] = JSON.parse(value);
-                      setCamera(make, model);
-                    } else {
-                      setCamera(null, null);
+        <div className={styles.group}>
+          <div className={styles.filterButtons}>
+            <Menu shadow="md" width={220}>
+              <Menu.Target>
+                <Button
+                  variant="outline"
+                  color="gray"
+                  leftSection={<IconCamera size={iconSize} stroke={1.5} />}
+                  classNames={buttonClassNames}
+                  {...activeProps("camera")}
+                >
+                  <span className={styles.label}>camera</span>
+                  {activeText("camera")}
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>select camera</Menu.Label>
+                <div className={styles.filmSelect}>
+                  <Select
+                    value={
+                      cameraMake && cameraModel
+                        ? JSON.stringify([cameraMake, cameraModel])
+                        : null
                     }
-                  }}
-                  data={cameraOptions.map((c) => ({
-                    value: JSON.stringify([c.make, c.model]),
-                    label: c.label,
-                  }))}
-                  placeholder="cameras..."
-                  searchable
-                  clearable
-                  size="sm"
-                  style={{ marginBottom: 12 }}
-                />
-              </div>
-            </Menu.Dropdown>
-          </Menu>
-          <Menu shadow="md" width={220}>
-            <Menu.Target>
-              <Button
-                variant="outline"
-                color="gray"
-                leftSection={<IconMovie size={iconSize} stroke={1.5} />}
-                classNames={buttonClassNames}
-              >
-                <span className={styles.label}>film</span>
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>select film</Menu.Label>
-              <div className={styles.filmSelect}>
-                <Select
-                  value={
-                    filmMake && filmType
-                      ? JSON.stringify([filmMake, filmType])
-                      : null
-                  }
-                  onChange={(value) => {
-                    if (value) {
-                      const [make, type] = JSON.parse(value);
-                      setFilm(make, type);
-                    } else {
-                      setFilm(null, null);
+                    onChange={(value) => {
+                      if (value) {
+                        const [make, model] = JSON.parse(value);
+                        setCamera(make, model);
+                      } else {
+                        setCamera(null, null);
+                      }
+                    }}
+                    data={cameraOptions.map((c) => ({
+                      value: JSON.stringify([c.make, c.model]),
+                      label: c.label,
+                    }))}
+                    placeholder="cameras..."
+                    searchable
+                    clearable
+                    size="sm"
+                    style={{ marginBottom: 12 }}
+                  />
+                </div>
+              </Menu.Dropdown>
+            </Menu>
+            <Menu shadow="md" width={220}>
+              <Menu.Target>
+                <Button
+                  variant="outline"
+                  color="gray"
+                  leftSection={<IconMovie size={iconSize} stroke={1.5} />}
+                  classNames={buttonClassNames}
+                  {...activeProps("film")}
+                >
+                  <span className={styles.label}>film</span>
+                  {activeText("film")}
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>select film</Menu.Label>
+                <div className={styles.filmSelect}>
+                  <Select
+                    value={
+                      filmMake && filmType
+                        ? JSON.stringify([filmMake, filmType])
+                        : null
                     }
-                  }}
-                  data={filmOptions.map((f) => ({
-                    value: JSON.stringify([f.make, f.type]),
-                    label: f.label,
-                  }))}
-                  placeholder="films..."
-                  searchable
-                  clearable
-                  size="sm"
-                  style={{ marginBottom: 12 }}
-                />
-              </div>
-            </Menu.Dropdown>
-          </Menu>
-          <ColorFilter
-            color={color}
-            setColor={setColor}
-            buttonClassNames={buttonClassNames}
-            labelClassName={styles.label}
-          />
-          <Menu shadow="md" width={170} onClose={() => commitSizes.flush()}>
-            <Menu.Target>
-              <Button
-                variant="outline"
-                color="gray"
-                leftSection={
-                  <IconArrowAutofitWidth size={iconSize} stroke={1.6} />
-                }
-                classNames={buttonClassNames}
-              >
-                <span className={styles.label}>size</span>
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>with size</Menu.Label>
-              <div>
-                <div className={styles.dimension}>
-                  <span className={styles.dimensionTitle}>aspect ratio</span>
-                  <div className={styles.subdimension}>
-                    <div className={styles.numInputRow}>
-                      <span className={styles.numInputLabel}>min</span>
-                      <div className={styles.numInput}>
-                        <NumberInput
-                          value={drafts.ratioMin}
-                          onChange={handleSizeChange("ratioMin")}
-                          error={errors.ratioMin}
-                          min={ratioMinLimit}
-                          max={ratioMax}
-                          step={0.01}
-                          decimalScale={2}
-                          size="xs"
-                        />
+                    onChange={(value) => {
+                      if (value) {
+                        const [make, type] = JSON.parse(value);
+                        setFilm(make, type);
+                      } else {
+                        setFilm(null, null);
+                      }
+                    }}
+                    data={filmOptions.map((f) => ({
+                      value: JSON.stringify([f.make, f.type]),
+                      label: f.label,
+                    }))}
+                    placeholder="films..."
+                    searchable
+                    clearable
+                    size="sm"
+                    style={{ marginBottom: 12 }}
+                  />
+                </div>
+              </Menu.Dropdown>
+            </Menu>
+            <ColorFilter
+              color={color}
+              setColor={setColor}
+              buttonClassNames={buttonClassNames}
+              labelClassName={styles.label}
+              dotClassName={styles.dot}
+              active={active.color}
+            />
+            <Menu shadow="md" width={170} onClose={() => commitSizes.flush()}>
+              <Menu.Target>
+                <Button
+                  variant="outline"
+                  color="gray"
+                  leftSection={
+                    <IconArrowAutofitWidth size={iconSize} stroke={1.6} />
+                  }
+                  classNames={buttonClassNames}
+                  {...activeProps("size")}
+                >
+                  <span className={styles.label}>size</span>
+                  {activeText("size")}
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>with size</Menu.Label>
+                <div>
+                  <div className={styles.dimension}>
+                    <span className={styles.dimensionTitle}>aspect ratio</span>
+                    <div className={styles.subdimension}>
+                      <div className={styles.numInputRow}>
+                        <span className={styles.numInputLabel}>min</span>
+                        <div className={styles.numInput}>
+                          <NumberInput
+                            value={drafts.ratioMin}
+                            onChange={handleSizeChange("ratioMin")}
+                            error={errors.ratioMin}
+                            min={ratioMinLimit}
+                            max={ratioMax}
+                            step={0.01}
+                            decimalScale={2}
+                            size="xs"
+                          />
+                        </div>
+                      </div>
+                      <div className={styles.numInputRow}>
+                        <span className={styles.numInputLabel}>max</span>
+                        <div className={styles.numInput}>
+                          <NumberInput
+                            value={drafts.ratioMax}
+                            onChange={handleSizeChange("ratioMax")}
+                            error={errors.ratioMax}
+                            min={ratioMin}
+                            max={ratioMaxLimit}
+                            step={0.01}
+                            decimalScale={2}
+                            size="xs"
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className={styles.numInputRow}>
-                      <span className={styles.numInputLabel}>max</span>
-                      <div className={styles.numInput}>
-                        <NumberInput
-                          value={drafts.ratioMax}
-                          onChange={handleSizeChange("ratioMax")}
-                          error={errors.ratioMax}
-                          min={ratioMin}
-                          max={ratioMaxLimit}
-                          step={0.01}
-                          decimalScale={2}
-                          size="xs"
-                        />
+                  </div>
+                  <div className={styles.dimension}>
+                    <span className={styles.dimensionTitle}>width</span>
+                    <div className={styles.subdimension}>
+                      <div className={styles.numInputRow}>
+                        <span className={styles.numInputLabel}>min</span>
+                        <div className={styles.numInput}>
+                          <NumberInput
+                            value={drafts.widthMin}
+                            onChange={handleSizeChange("widthMin")}
+                            error={errors.widthMin}
+                            min={widthMinLimit}
+                            max={widthMax}
+                            size="xs"
+                          />
+                        </div>
+                      </div>
+                      <div className={styles.numInputRow}>
+                        <span className={styles.numInputLabel}>max</span>
+                        <div className={styles.numInput}>
+                          <NumberInput
+                            value={drafts.widthMax}
+                            onChange={handleSizeChange("widthMax")}
+                            error={errors.widthMax}
+                            allowNegative={false}
+                            min={widthMin}
+                            max={widthMaxLimit}
+                            size="xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={styles.dimension}>
+                    <span className={styles.dimensionTitle}>height</span>
+                    <div className={styles.subdimension}>
+                      <div className={styles.numInputRow}>
+                        <span className={styles.numInputLabel}>min</span>
+                        <div className={styles.numInput}>
+                          <NumberInput
+                            value={drafts.heightMin}
+                            onChange={handleSizeChange("heightMin")}
+                            error={errors.heightMin}
+                            allowNegative={false}
+                            min={heightMinLimit}
+                            max={heightMax}
+                            size="xs"
+                          />
+                        </div>
+                      </div>
+                      <div className={styles.numInputRow}>
+                        <span className={styles.numInputLabel}>max</span>
+                        <div className={styles.numInput}>
+                          <NumberInput
+                            value={drafts.heightMax}
+                            onChange={handleSizeChange("heightMax")}
+                            error={errors.heightMax}
+                            min={heightMin}
+                            max={heightMaxLimit}
+                            size="xs"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div className={styles.dimension}>
-                  <span className={styles.dimensionTitle}>width</span>
-                  <div className={styles.subdimension}>
-                    <div className={styles.numInputRow}>
-                      <span className={styles.numInputLabel}>min</span>
-                      <div className={styles.numInput}>
-                        <NumberInput
-                          value={drafts.widthMin}
-                          onChange={handleSizeChange("widthMin")}
-                          error={errors.widthMin}
-                          min={widthMinLimit}
-                          max={widthMax}
-                          size="xs"
-                        />
-                      </div>
-                    </div>
-                    <div className={styles.numInputRow}>
-                      <span className={styles.numInputLabel}>max</span>
-                      <div className={styles.numInput}>
-                        <NumberInput
-                          value={drafts.widthMax}
-                          onChange={handleSizeChange("widthMax")}
-                          error={errors.widthMax}
-                          allowNegative={false}
-                          min={widthMin}
-                          max={widthMaxLimit}
-                          size="xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.dimension}>
-                  <span className={styles.dimensionTitle}>height</span>
-                  <div className={styles.subdimension}>
-                    <div className={styles.numInputRow}>
-                      <span className={styles.numInputLabel}>min</span>
-                      <div className={styles.numInput}>
-                        <NumberInput
-                          value={drafts.heightMin}
-                          onChange={handleSizeChange("heightMin")}
-                          error={errors.heightMin}
-                          allowNegative={false}
-                          min={heightMinLimit}
-                          max={heightMax}
-                          size="xs"
-                        />
-                      </div>
-                    </div>
-                    <div className={styles.numInputRow}>
-                      <span className={styles.numInputLabel}>max</span>
-                      <div className={styles.numInput}>
-                        <NumberInput
-                          value={drafts.heightMax}
-                          onChange={handleSizeChange("heightMax")}
-                          error={errors.heightMax}
-                          min={heightMin}
-                          max={heightMaxLimit}
-                          size="xs"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Menu.Dropdown>
-          </Menu>
+              </Menu.Dropdown>
+            </Menu>
 
-          <Menu shadow="md" width={125}>
-            <Menu.Target>
-              <Button
-                variant="outline"
-                color="gray"
-                leftSection={<IconArrowsSort size={iconSize} stroke={1.5} />}
-                classNames={buttonClassNames}
-              >
-                <span className={styles.label}>sort</span>
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>sort by</Menu.Label>
-              <div className={styles.radio}>
-                <Radio.Group value={sort} onChange={setSort} name="Sort">
-                  <Stack gap="xs">
-                    <Radio
-                      value="time"
-                      label="time"
-                      className={styles.radioButton}
+            <Menu shadow="md" width={250}>
+              <Menu.Target>
+                <Button
+                  variant="outline"
+                  color="gray"
+                  leftSection={
+                    <IconAdjustmentsHorizontal size={iconSize} stroke={1.5} />
+                  }
+                  classNames={buttonClassNames}
+                  {...activeProps("flags")}
+                >
+                  <span className={styles.label}>filters</span>
+                  {activeText("flags")}
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>filter by</Menu.Label>
+                <div className={styles.segment}>
+                  <div className={styles.segmentGroup}>
+                    <h5 className={styles.segmentTitle}>18+</h5>
+                    <SegmentedControl
+                      value={nsfw}
+                      onChange={setNsfw}
+                      data={[
+                        { label: "exclude", value: "exclude" },
+                        { label: "include", value: "include" },
+                        { label: "only", value: "only" },
+                      ]}
                     />
-                    <Radio
-                      value="score"
-                      label="score"
-                      className={styles.radioButton}
+                  </div>
+                  <div className={styles.segmentGroup}>
+                    <h5 className={styles.segmentTitle}>b&w</h5>
+                    <SegmentedControl
+                      value={bw}
+                      onChange={setBw}
+                      data={[
+                        { label: "exclude", value: "exclude" },
+                        { label: "include", value: "include" },
+                        { label: "only", value: "only" },
+                      ]}
                     />
-                    <Radio
-                      value="random"
-                      label="random"
-                      className={styles.radioButton}
-                      onClick={() => sort === "random" && setSort("random")}
+                  </div>
+                  <div className={styles.segmentGroup}>
+                    <h5 className={styles.segmentTitle}>sprocket</h5>
+                    <SegmentedControl
+                      value={sprocket}
+                      onChange={setSprocket}
+                      data={[
+                        { label: "exclude", value: "exclude" },
+                        { label: "include", value: "include" },
+                        { label: "only", value: "only" },
+                      ]}
                     />
-                  </Stack>
-                </Radio.Group>
-              </div>
-            </Menu.Dropdown>
-          </Menu>
+                  </div>
+                </div>
+              </Menu.Dropdown>
+            </Menu>
 
-          <Menu shadow="md" width={250}>
-            <Menu.Target>
-              <Button
-                variant="outline"
-                color="gray"
-                leftSection={
-                  <IconAdjustmentsHorizontal size={iconSize} stroke={1.5} />
-                }
-                classNames={buttonClassNames}
-              >
-                <span className={styles.label}>filter</span>
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Label>filter by</Menu.Label>
-              <div className={styles.segment}>
-                <div className={styles.segmentGroup}>
-                  <h5 className={styles.segmentTitle}>18+</h5>
-                  <SegmentedControl
-                    value={nsfw}
-                    onChange={setNsfw}
-                    data={[
-                      { label: "exclude", value: "exclude" },
-                      { label: "include", value: "include" },
-                      { label: "only", value: "only" },
-                    ]}
-                  />
+            <span className={styles.divider} aria-hidden="true" />
+
+            <Menu shadow="md" width={125}>
+              <Menu.Target>
+                <Button
+                  variant="outline"
+                  color="gray"
+                  leftSection={<IconArrowsSort size={iconSize} stroke={1.5} />}
+                  classNames={buttonClassNames}
+                >
+                  <span className={styles.label}>sort</span>
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>sort by</Menu.Label>
+                <div className={styles.radio}>
+                  <Radio.Group value={sort} onChange={setSort} name="Sort">
+                    <Stack gap="xs">
+                      <Radio
+                        value="time"
+                        label="time"
+                        className={styles.radioButton}
+                      />
+                      <Radio
+                        value="score"
+                        label="score"
+                        className={styles.radioButton}
+                      />
+                      <Radio
+                        value="random"
+                        label="random"
+                        className={styles.radioButton}
+                        onClick={() => sort === "random" && setSort("random")}
+                      />
+                    </Stack>
+                  </Radio.Group>
                 </div>
-                <div className={styles.segmentGroup}>
-                  <h5 className={styles.segmentTitle}>b&w</h5>
-                  <SegmentedControl
-                    value={bw}
-                    onChange={setBw}
-                    data={[
-                      { label: "exclude", value: "exclude" },
-                      { label: "include", value: "include" },
-                      { label: "only", value: "only" },
-                    ]}
-                  />
-                </div>
-                <div className={styles.segmentGroup}>
-                  <h5 className={styles.segmentTitle}>sprocket</h5>
-                  <SegmentedControl
-                    value={sprocket}
-                    onChange={setSprocket}
-                    data={[
-                      { label: "exclude", value: "exclude" },
-                      { label: "include", value: "include" },
-                      { label: "only", value: "only" },
-                    ]}
-                  />
-                </div>
-              </div>
-            </Menu.Dropdown>
-          </Menu>
+              </Menu.Dropdown>
+            </Menu>
+          </div>
+          {onClear && (
+            <FilterSummary
+              count={resultCount}
+              pending={resultPending}
+              onClear={onClear}
+              items={summaryItems}
+              apiUrl={apiUrl}
+            />
+          )}
         </div>
       </div>
     </>
