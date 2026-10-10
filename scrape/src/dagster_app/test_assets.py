@@ -21,6 +21,7 @@ from scrape.models import (
 from scrape.tagging import ImageTags, TaggingError
 
 from .assets import (
+    analogdb_permalinks,
     final_posts,
     patch_post_scores,
     post_images,
@@ -375,3 +376,14 @@ class TestPatchPosts:
             )
 
         assert client.patch_post.call_count == 3
+
+
+class TestAnalogdbPermalinks:
+    def test_includes_removed_permalinks(self):
+        client = MagicMock()
+        client.get_latest_links.return_value = ["/r/analog/1", "/r/analog/2"]
+        client.get_removed_links.return_value = ["/r/analog/2", "/r/analog/9"]
+        context = dg.build_asset_context()
+        with patch.object(AnalogDBResource, "client", return_value=client):
+            links = analogdb_permalinks(context, AnalogDBResource())
+        assert links == ["/r/analog/1", "/r/analog/2", "/r/analog/9"]
