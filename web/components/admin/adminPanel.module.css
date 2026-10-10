@@ -420,3 +420,33 @@
   margin-top: 0.25rem;
   white-space: pre-wrap;
 }
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-left: auto;
+  font-size: 0.8125rem;
+  color: var(--adb-muted);
+}
+
+.liveDot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--mantine-color-green-6);
+}
+
+.postThumb {
+  width: 48px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.postCell {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}

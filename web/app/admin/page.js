@@ -1,4 +1,5 @@
 import AdminPanel, { adminTabs } from "@components/admin/adminPanel";
+import AnalyticsTab from "@components/admin/analyticsTab";
 import AuditTab from "@components/admin/auditTab";
 import LoginForm from "@components/admin/loginForm";
 import OverviewTab from "@components/admin/overviewTab";
@@ -8,6 +9,7 @@ import ReviewTab from "@components/admin/reviewTab";
 import TabError from "@components/admin/tabError";
 import TrafficTab from "@components/admin/trafficTab";
 import {
+  getAnalytics,
   getAudit,
   getMissingPosts,
   getOverview,
@@ -75,6 +77,11 @@ async function renderTab(tab, params) {
           field={field}
         />
       );
+    }
+    case "analytics": {
+      const range = pick(params.range, trafficRanges, "7d");
+      const { data, error } = await load(() => getAnalytics(range));
+      return <AnalyticsTab analytics={data} error={error} range={range} />;
     }
     case "traffic": {
       const range = pick(params.range, trafficRanges, "7d");

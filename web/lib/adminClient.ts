@@ -160,6 +160,54 @@ export interface Traffic {
   }[];
 }
 
+export interface AnalyticsTotals {
+  page_views: number;
+  visitor_days: number;
+  views_per_visitor: number;
+  bot_share: number;
+}
+
+export interface AnalyticsCount {
+  name: string;
+  page_views: number;
+  visitors: number;
+}
+
+export interface Analytics {
+  range: TrafficRange;
+  bucket: "hour" | "day";
+  available: boolean;
+  totals: AnalyticsTotals;
+  previous: AnalyticsTotals;
+  series: { time: string; page_views: number; visitors: number }[];
+  live: { page_views: number; visitors: number };
+  pages: AnalyticsCount[];
+  posts: {
+    post_id: number;
+    title: string;
+    low_url: string;
+    page_views: number;
+    visitors: number;
+  }[];
+  referrers: AnalyticsCount[];
+  campaigns: {
+    source: string;
+    campaign: string;
+    page_views: number;
+    visitors: number;
+  }[];
+  devices: AnalyticsCount[];
+  browsers: AnalyticsCount[];
+  countries: AnalyticsCount[];
+  vitals: {
+    route: string;
+    lcp: number | null;
+    inp: number | null;
+    cls: number | null;
+    samples: number;
+  }[];
+}
+
 export interface AuditEntry {
   time: string;
   start_ms: number;
@@ -297,6 +345,10 @@ export function getMissingPosts(
 
 export function getTraffic(range: TrafficRange): Promise<Traffic> {
   return adminGet(`/admin/traffic${query({ range })}`);
+}
+
+export function getAnalytics(range: TrafficRange): Promise<Analytics> {
+  return adminGet(`/admin/analytics${query({ range })}`);
 }
 
 export function getAudit(before?: number | null): Promise<AuditPage> {
