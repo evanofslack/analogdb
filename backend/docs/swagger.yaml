@@ -502,6 +502,59 @@ definitions:
         example: Success, post deleted
         type: string
     type: object
+  server.EventBatch:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/server.EventInput'
+        type: array
+    type: object
+  server.EventInput:
+    properties:
+      id:
+        example: 9b2f6c1e-3f4a-4d6b-9a51-2c7e8f0d1a23
+        type: string
+      name:
+        example: page_view
+        type: string
+      path:
+        example: /post/123
+        type: string
+      post_id:
+        example: 123
+        type: integer
+      props:
+        additionalProperties: {}
+        type: object
+      referrer:
+        example: news.ycombinator.com
+        type: string
+      route:
+        example: /post/[id]
+        type: string
+      search_id:
+        type: string
+      ts:
+        example: 1760000000000
+        type: integer
+      utm:
+        $ref: '#/definitions/server.EventUtm'
+      v:
+        example: 1
+        type: integer
+      vw:
+        example: 1280
+        type: integer
+    type: object
+  server.EventUtm:
+    properties:
+      campaign:
+        type: string
+      medium:
+        type: string
+      source:
+        type: string
+    type: object
   server.ExtractionsRequest:
     properties:
       extractions:
@@ -1075,6 +1128,51 @@ paths:
       summary: Encode posts for similarity matching
       tags:
       - similarity
+  /events:
+    post:
+      consumes:
+      - application/json
+      description: Accept a batch of UI events from the web server. Events that fail
+        validation are dropped and the rest are published (requires authentication)
+      parameters:
+      - description: Event batch, at most 25 events
+        in: body
+        name: batch
+        required: true
+        schema:
+          $ref: '#/definitions/server.EventBatch'
+      - description: Visitor IP, only read for the web role
+        in: header
+        name: X-Analogdb-Visitor-IP
+        type: string
+      - description: Visitor user agent, only read for the web role
+        in: header
+        name: X-Analogdb-Visitor-UA
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid batch
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+        "413":
+          description: Batch too large
+          schema:
+            $ref: '#/definitions/analogdb.Error'
+      security:
+      - BasicAuth: []
+      summary: Record UI events
+      tags:
+      - events
   /film:
     post:
       consumes:

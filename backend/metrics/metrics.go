@@ -21,6 +21,7 @@ const (
 	RedisSubsystem    = "redis"
 	PostSubsystem     = "post"
 	EventsSubsystem   = "events"
+	UiEventsSubsystem = "ui_events"
 	SearchSubsystem   = "search"
 )
 

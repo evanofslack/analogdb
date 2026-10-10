@@ -40,6 +40,7 @@ func newTestServer(t *testing.T, cfg *config.Config) *Server {
 	s := New("0", logger, metrics, cfg)
 	s.ReadyService = &mockReady{}
 	s.EventService = events.NewNoop(logger)
+	s.UiEventService = events.NewNoopUi(logger)
 	return s
 }
 

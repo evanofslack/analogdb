@@ -30,6 +30,8 @@ type App struct {
 	RateLimitEnabled bool   `yaml:"rate_limit_enabled" env:"RATE_LIMIT_ENABLED"`
 	// RateLimitWebPerMinute caps all web requests together, 0 turns the cap off
 	RateLimitWebPerMinute int `yaml:"rate_limit_web_per_minute" env:"RATE_LIMIT_WEB_PER_MINUTE" env-default:"10000"`
+	// RateLimitEventsPerMinute caps web event batches apart from the web cap, 0 turns it off
+	RateLimitEventsPerMinute int `yaml:"rate_limit_events_per_minute" env:"RATE_LIMIT_EVENTS_PER_MINUTE" env-default:"3000"`
 }
 
 type DB struct {
@@ -134,6 +136,7 @@ type Tracing struct {
 type Kafka struct {
 	Enabled bool   `yaml:"enabled" env:"KAFKA_ENABLED"`
 	Topic   string `yaml:"topic" env:"KAFKA_TOPIC"`
+	UiTopic string `yaml:"ui_topic" env:"KAFKA_UI_TOPIC" env-default:"analogdb-ui-events"`
 	Brokers string `yaml:"brokers" env:"KAFKA_BROKERS"`
 
 	QueueSize    int           `yaml:"queue_size" env:"KAFKA_QUEUE_SIZE" env-default:"10000"`

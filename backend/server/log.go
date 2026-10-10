@@ -76,6 +76,11 @@ func (server *Server) logRequests(next http.Handler) http.Handler {
 				"query_params", r.URL.Query(),
 			)
 
+			// event batches have their own stream
+			if path == eventsRoute {
+				return
+			}
+
 			// send request to event stream too
 			event := &events.Event{
 				RequestId:     traceID,

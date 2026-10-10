@@ -135,6 +135,7 @@ func main() {
 
 	// open connection to kafka if enabled
 	var eventService analogdb.EventService
+	var uiEventService analogdb.UiEventService
 	if cfg.Kafka.Enabled {
 		kafkaLogger := logger.WithSubsystem("kafka")
 		topic := cfg.Kafka.Topic
@@ -149,8 +150,14 @@ func main() {
 			err = fmt.Errorf("startup kafka: %w", err)
 			fatal(logger, err)
 		}
+		uiEventService, err = events.NewUi(kafkaLogger, metrics.Registry, cfg.Kafka.UiTopic, brokers, opts)
+		if err != nil {
+			err = fmt.Errorf("startup kafka ui stream: %w", err)
+			fatal(logger, err)
+		}
 	} else {
 		eventService = events.NewNoop(logger)
+		uiEventService = events.NewNoopUi(logger)
 	}
 
 	// open connection to clickhouse if enabled, admin analytics only
@@ -221,6 +228,7 @@ func main() {
 	server.SimilarityService = similarityService
 	server.SearchService = searchService
 	server.EventService = eventService
+	server.UiEventService = uiEventService
 	server.VectorReadyService = dbVec
 	server.VectorCounter = dbVec
 	server.VectorLister = dbVec
@@ -232,6 +240,7 @@ func main() {
 	}
 	if rdb != nil {
 		server.CacheReadyService = rdb
+		server.SaltService = rdb
 	}
 
 	if err := server.Run(); err != nil {
@@ -249,6 +258,10 @@ func main() {
 
 	if err := eventService.Close(); err != nil {
 		logger.Error("Fail shutdown event service", "error", err)
+	}
+
+	if err := uiEventService.Close(); err != nil {
+		logger.Error("Fail shutdown ui event service", "error", err)
 	}
 
 	if rdb != nil {

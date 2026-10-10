@@ -18,6 +18,7 @@ require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.12.3
+	github.com/medama-io/go-useragent v1.2.5
 	github.com/mitchellh/hashstructure/v2 v2.0.2
 	github.com/prometheus/client_golang v1.24.1
 	github.com/redis/go-redis/extra/redisotel/v9 v9.23.0
@@ -44,6 +45,7 @@ require (
 )
 
 require (
+	github.com/boyter/go-string v1.0.5 // indirect
 	github.com/go-openapi/runtime/server-middleware v0.33.3 // indirect
 	github.com/go-openapi/swag/cmdutils v0.29.2 // indirect
 	github.com/go-openapi/swag/conv v0.29.2 // indirect
