@@ -31,25 +31,25 @@ export const ratioShapes = [
 
 const same = (a: number, b: number) => Math.abs(a - b) < 1e-9;
 
-// Indexes of the shapes a ratio range covers exactly, empty when it is the
-// default range or custom values
+// Indexes of the shapes a ratio range covers exactly, all of them for the
+// default range and none for custom values
 export function selectedShapes(ratioMin: number, ratioMax: number): number[] {
   const first = ratioShapes.findIndex((s) => same(s.min, ratioMin));
   const last = ratioShapes.findIndex((s) => same(s.max, ratioMax));
   if (first < 0 || last < first) return [];
-  if (first === 0 && last === ratioShapes.length - 1) return [];
   return Array.from({ length: last - first + 1 }, (_, i) => first + i);
 }
 
-// Ratio range after toggling a shape. Picking one outside the selection fills
-// the gap, dropping an inner one keeps just that one.
+// Ratio range after toggling a shape. With all or none selected it keeps just
+// that one, picking one outside the selection fills the gap, dropping an inner
+// one keeps just that one and dropping the last one selects all.
 export function toggleShape(
   selected: number[],
   index: number
 ): { ratioMin: number; ratioMax: number } {
   let first = index;
   let last = index;
-  if (selected.length) {
+  if (selected.length && selected.length < ratioShapes.length) {
     const lo = selected[0];
     const hi = selected[selected.length - 1];
     if (index < lo || index > hi) {
