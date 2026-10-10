@@ -76,7 +76,10 @@ export default function ImagePage(props) {
         <div className={styles.header}>
           <Header compact />
         </div>
-        <div className={styles.imageContainer}>
+        <div
+          className={styles.imageContainer}
+          style={{ "--ratio": `${image.width} / ${image.height}` }}
+        >
           <ResponsiveImage
             loading="eager"
             fetchPriority="high"

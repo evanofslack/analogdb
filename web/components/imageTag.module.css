@@ -232,3 +232,38 @@
     margin: 2px;
   }
 }
+
+@media screen and (max-width: 720px) {
+  .containerMetadata {
+    width: calc(100% - 2rem);
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .containerSub {
+    padding-top: 1.5rem;
+  }
+
+  .similar {
+    width: 100%;
+  }
+
+  .similarHeader {
+    width: calc(100% - 2rem);
+  }
+
+  .similarTitle {
+    margin-top: 3rem;
+    margin-left: 0;
+  }
+
+  .similarContainer {
+    width: calc(100% - 2rem);
+  }
+
+  .similarImage {
+    width: calc(50% - 4px);
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
