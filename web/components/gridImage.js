@@ -1,3 +1,4 @@
+import { smallImage } from "@lib/images";
 import { postAlt } from "@lib/seo";
 import Image from "next/image";
 import Link from "next/link";
@@ -8,15 +9,7 @@ export default function GridImage(props) {
     return;
   }
 
-  let low = post.images[0];
-  let medium = post.images[1];
-
-  // 1st gen low res is too small, use medium res
-  // 2nd gen low res is fine
-  let image = medium;
-  if (low.width >= 720 || low.height >= 720) {
-    image = low;
-  }
+  let image = smallImage(post.images);
 
   return (
     <Link href={`/post/${post.id}`} passHref={true} prefetch={false}>

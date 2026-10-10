@@ -1,9 +1,12 @@
+import { smallImage } from "@lib/images";
+
 export type CatalogKind = "films" | "cameras";
 
 export type CatalogCover = {
   id: number;
   title: string;
   url: string;
+  phoneUrl?: string;
   width: number;
   height: number;
 };
@@ -72,6 +75,7 @@ function toCover(post: CatalogPost): CatalogCover | null {
     id: post.id,
     title: post.title ?? "",
     url: image.url,
+    phoneUrl: smallImage(post.images)?.url,
     width: image.width,
     height: image.height,
   };

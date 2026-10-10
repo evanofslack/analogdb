@@ -8,7 +8,6 @@ import ReportModal from "@components/reportModal";
 import useIsAdmin from "@hooks/useIsAdmin";
 import { postAlt } from "@lib/seo";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
@@ -19,6 +18,7 @@ import {
   AiOutlineFlag,
 } from "react-icons/ai";
 import styles from "./imagePage.module.css";
+import ResponsiveImage from "./responsiveImage";
 
 async function handleDelete(postId) {
   if (!confirm("Are you sure you want to delete this post?")) return;
@@ -77,11 +77,13 @@ export default function ImagePage(props) {
           <Header compact />
         </div>
         <div className={styles.imageContainer}>
-          <Image
-            priority
+          <ResponsiveImage
+            loading="eager"
+            fetchPriority="high"
             style={{ objectFit: "contain" }}
             fill
             src={image.url}
+            phoneSrc={post.images[1]?.url}
             alt={postAlt(post)}
             sizes="100vw"
             quality={100}

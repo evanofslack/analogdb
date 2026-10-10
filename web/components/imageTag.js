@@ -1,6 +1,7 @@
 "use client";
 
 import { publicURL } from "@lib/constants";
+import { smallImage } from "@lib/images";
 import { postAlt } from "@lib/seo";
 import { Tooltip } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
@@ -167,7 +168,7 @@ export default function ImageTag(props) {
                     <Image
                       key={post.id}
                       style={{ objectFit: "cover" }}
-                      src={post.images[1].url}
+                      src={smallImage(post.images)?.url}
                       alt={postAlt(post)}
                       sizes="(max-width: 720px) 50vw, 200px"
                       fill
