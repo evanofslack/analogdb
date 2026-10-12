@@ -1,4 +1,9 @@
-import { reportStatuses } from "@lib/adminClient";
+import {
+  Report,
+  ReportsPage,
+  ReportStatus,
+  reportStatuses,
+} from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
 import { reportReasonLabel } from "@lib/reports";
 import { Badge, Button } from "@mantine/core";
@@ -6,14 +11,18 @@ import Link from "next/link";
 import styles from "./adminPanel.module.css";
 import ReportActions from "./reportActions";
 
-function redditLink(permalink) {
+function redditLink(permalink: string | null): string | null {
   if (!permalink) return null;
   return permalink.startsWith("http")
     ? permalink
     : `https://www.reddit.com${permalink}`;
 }
 
-function ReportRow({ report }) {
+interface ReportRowProps {
+  report: Report;
+}
+
+function ReportRow({ report }: ReportRowProps) {
   const { post } = report;
   const reddit = redditLink(post.permalink);
   return (
@@ -90,7 +99,17 @@ function ReportRow({ report }) {
   );
 }
 
-export default function ReportsTab({ page, status, firstPage }) {
+interface ReportsTabProps {
+  page: ReportsPage;
+  status: ReportStatus;
+  firstPage: boolean;
+}
+
+export default function ReportsTab({
+  page,
+  status,
+  firstPage,
+}: ReportsTabProps) {
   return (
     <>
       <div className={styles.controls}>
