@@ -4,8 +4,23 @@ import GallerySkeleton from "@components/gallerySkeleton";
 import Grid from "@components/grid";
 import { RateLimitedError } from "@lib/rateLimited";
 import { Button, Loader } from "@mantine/core";
+import { AnalogdbPost } from "analogdb-generated";
 import { useEffect, useMemo, useRef } from "react";
 import styles from "./infiniteGallery.module.css";
+
+interface InfiniteGalleryProps {
+  initialColumns?: number;
+  pages: { posts?: AnalogdbPost[] }[];
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  isPlaceholderData: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  isFetchNextPageError: boolean;
+  fetchNextPage: () => unknown;
+  refetch: () => unknown;
+}
 
 export default function InfiniteGallery({
   initialColumns,
@@ -19,8 +34,8 @@ export default function InfiniteGallery({
   isFetchNextPageError,
   fetchNextPage,
   refetch,
-}) {
-  const sentinelRef = useRef(null);
+}: InfiniteGalleryProps) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const postPages = useMemo(
     () => pages.map((page) => page.posts ?? []),
     [pages]

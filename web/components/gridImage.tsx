@@ -1,9 +1,15 @@
 import { smallImage } from "@lib/images";
 import { postAlt } from "@lib/seo";
+import { AnalogdbPost } from "analogdb-generated";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function GridImage(props) {
+interface GridImageProps {
+  post: AnalogdbPost;
+  priority?: boolean;
+}
+
+export default function GridImage(props: GridImageProps) {
   let post = props.post;
   if (post == null) {
     return;

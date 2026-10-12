@@ -1,12 +1,16 @@
 "use client";
 
 import usePosts from "@hooks/usePosts";
+import type { CameraOption } from "@lib/data/cameras";
+import type { FilmOption } from "@lib/data/films";
 import {
   activePostsFilters,
   clearedPostsFilters,
   postsApiUrl,
+  PostsFilters,
 } from "@lib/searchParams";
 import { pickSeed } from "@lib/seed";
+import { ServerPostResponse } from "analogdb-generated";
 import FilterBar from "./filterBar";
 import Footer from "./footer";
 import styles from "./gallery.module.css";
@@ -14,13 +18,21 @@ import Header from "./header";
 import InfiniteGallery from "./infiniteGallery";
 import ScrollTop from "./scrollTop";
 
+interface GalleryProps {
+  initialPage?: ServerPostResponse | null;
+  initialFilters?: PostsFilters;
+  initialColumns?: number;
+  filmOptions: FilmOption[];
+  cameraOptions: CameraOption[];
+}
+
 export default function Gallery({
   initialPage,
   initialFilters,
   initialColumns,
   filmOptions,
   cameraOptions,
-}) {
+}: GalleryProps) {
   const { filters, setFilters, limits, ...posts } = usePosts(
     initialPage,
     initialFilters
@@ -30,7 +42,7 @@ export default function Gallery({
   const active = activePostsFilters(filters);
   const anyActive = Object.values(active).some(Boolean);
 
-  const setSort = (sort) => {
+  const setSort = (sort: PostsFilters["sort"]) => {
     if (sort === "random") {
       setFilters({ sort: sort, seed: pickSeed() });
     } else {
