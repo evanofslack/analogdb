@@ -1,5 +1,6 @@
 "use client";
 
+import type { SearchOrigin } from "@lib/analytics";
 import { CatalogEntry } from "@lib/catalog";
 import type { SearchSuggestions as Suggestions } from "@lib/data/search";
 import { keywordHref, keywordLabel } from "@lib/keywords";
@@ -66,7 +67,7 @@ interface SearchSuggestionsProps {
   suggestions?: Suggestions | null;
   recent?: string[];
   onClearRecent?: () => void;
-  onSearch: (query: string) => void;
+  onSearch: (query: string, source?: SearchOrigin) => void;
   catalog?: CatalogEntry[] | null;
   trendingRow?: boolean;
 }
@@ -99,7 +100,10 @@ export default function SearchSuggestions({
             )
           }
         >
-          <KeywordChips words={recent} onSearch={onSearch} />
+          <KeywordChips
+            words={recent}
+            onSearch={(word) => onSearch(word, "recent")}
+          />
         </Section>
       )}
       {keywords.length > 0 && (
@@ -110,11 +114,14 @@ export default function SearchSuggestions({
           {trendingRow ? (
             <KeywordRow
               words={keywords}
-              onSelect={onSearch}
+              onSelect={(word) => onSearch(word, "chip")}
               label="trending this month"
             />
           ) : (
-            <KeywordChips words={keywords} onSearch={onSearch} />
+            <KeywordChips
+              words={keywords}
+              onSearch={(word) => onSearch(word, "suggestion")}
+            />
           )}
         </Section>
       )}

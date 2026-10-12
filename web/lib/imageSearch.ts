@@ -1,4 +1,5 @@
 import { ServerSearchResponse } from "analogdb-generated";
+import { RateLimitedError } from "./rateLimited";
 
 export const imageAccept = ["image/jpeg", "image/png", "image/webp"];
 export const imageMaxSize = 10 * 1024 * 1024;
@@ -27,8 +28,14 @@ export async function postImageSearch(
     body: form,
   });
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(body.error?.toLowerCase() || "image search failed");
+  const message = body.error?.toLowerCase() || "image search failed";
+  if (response.status === 429) {
+    const error = new RateLimitedError(
+      Number(response.headers.get("Retry-After")) || 0
+    );
+    error.message = message;
+    throw error;
   }
+  if (!response.ok) throw new Error(message);
   return body;
 }

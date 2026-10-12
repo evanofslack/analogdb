@@ -1,5 +1,6 @@
 "use client";
 
+import type { SearchOrigin } from "@lib/analytics";
 import type { SearchSuggestions as Suggestions } from "@lib/data/search";
 import { ActionIcon, CloseButton, Popover, Tooltip } from "@mantine/core";
 import { IconCameraSearch, IconSearch } from "@tabler/icons-react";
@@ -19,7 +20,7 @@ export interface SearchVisual {
 
 interface SearchBarProps {
   value?: string | null;
-  onSearch: (query: string) => void;
+  onSearch: (query: string, source?: SearchOrigin) => void;
   visual?: SearchVisual | null;
   suggestions?: Suggestions | null;
   recent?: string[];
@@ -54,9 +55,9 @@ export default function SearchBar({
     panel === "visual" ||
     (panel === "suggestions" && suggestionsDropdown && !text.trim() && !visual);
 
-  const search = (query: string) => {
+  const search = (query: string, source: SearchOrigin = "typed") => {
     onPanelChange(null);
-    onSearch(query);
+    onSearch(query, source);
   };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {

@@ -16,6 +16,15 @@ import {
 import SearchSuggestions, { KeywordChips } from "@components/searchSuggestions";
 import useRecentSearches from "@hooks/useRecentSearches";
 import useSearch, { useSearchSource, useSimilar } from "@hooks/useSearch";
+import {
+  currentSearchId,
+  EventMap,
+  SearchMode,
+  SearchOrigin,
+  setSearchSource,
+  track,
+  trackSearch,
+} from "@lib/analytics";
 import type { CatalogEntry } from "@lib/catalog";
 import type {
   SearchSource,
@@ -27,11 +36,12 @@ import {
   postImageSearch,
   rejectMessage,
 } from "@lib/imageSearch";
-import { retryUnlessLimited, unwrap } from "@lib/rateLimited";
+import { RateLimitedError, retryUnlessLimited, unwrap } from "@lib/rateLimited";
 import { resizeImage } from "@lib/resizeImage";
 import {
   SearchFilters,
   SearchFlags,
+  searchKey,
   searchParsers,
   toSearchFlags,
 } from "@lib/searchParams";
@@ -40,6 +50,7 @@ import { Dropzone, FileRejection, FileWithPath } from "@mantine/dropzone";
 import { IconAdjustmentsHorizontal, IconPhotoScan } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AnalogdbPost,
   ServerSearchResponse,
   ServerSimilarPostsResponse,
 } from "analogdb-generated";
@@ -62,6 +73,10 @@ const filterData = [
 ];
 
 const maxChips = 8;
+
+type SearchOutcome = EventMap["search"]["outcome"];
+
+let imageSearches = 0;
 
 type ResultsPage = ServerSearchResponse | ServerSimilarPostsResponse;
 
@@ -104,6 +119,108 @@ function similarKeywords(
     .sort((a, b) => b[1] - a[1])
     .slice(0, maxChips)
     .map(([word]) => word);
+}
+
+function trackResultClick(post: AnalogdbPost, position: number) {
+  const searchId = currentSearchId();
+  track(
+    "search_result_click",
+    { position, post_id: post.id, search_id: searchId },
+    { postId: post.id, searchId }
+  );
+}
+
+function outcomeFor(count: number, page: number): SearchOutcome {
+  return count > 0 || page > 0 ? "ok" : "empty";
+}
+
+function failureFor(error: unknown): SearchOutcome {
+  return error instanceof RateLimitedError ? "limited" : "error";
+}
+
+function useSearchEvents(
+  key: string,
+  mode: SearchMode,
+  q: string,
+  filters: Record<string, string>,
+  results: ResultsData
+) {
+  const {
+    pages,
+    isLoading,
+    isError,
+    error,
+    isPlaceholderData,
+    isFetchNextPageError,
+  } = results;
+
+  const sent = useRef("");
+
+  useEffect(() => {
+    if (isLoading || isPlaceholderData) return;
+    const failed = isError && (pages.length === 0 || isFetchNextPageError);
+    const signature = `${key}:${pages.length}:${failed}`;
+    if (sent.current === signature) return;
+    sent.current = signature;
+    const search = { key, mode, q, filters };
+    pages.forEach((page, index) => {
+      const count = (page.posts ?? []).length;
+      trackSearch({
+        ...search,
+        page: index,
+        result_count: count,
+        outcome: outcomeFor(count, index),
+      });
+    });
+    if (failed) {
+      trackSearch({
+        ...search,
+        page: pages.length,
+        result_count: 0,
+        outcome: failureFor(error),
+      });
+    }
+  }, [
+    key,
+    mode,
+    q,
+    filters,
+    pages,
+    isLoading,
+    isError,
+    error,
+    isPlaceholderData,
+    isFetchNextPageError,
+  ]);
+}
+
+async function searchImageTracked(
+  blob: Blob,
+  flags: SearchFlags,
+  filters: Record<string, string>
+): Promise<ServerSearchResponse> {
+  imageSearches += 1;
+  const search = {
+    key: `image:${imageSearches}`,
+    mode: "image" as const,
+    q: "",
+    filters,
+    source: "upload" as const,
+    page: 0,
+  };
+  try {
+    const response = await postImageSearch(blob, flags);
+    const count = (response.posts ?? []).length;
+    trackSearch({
+      ...search,
+      result_count: count,
+      outcome: outcomeFor(count, 0),
+    });
+    return response;
+  } catch (error) {
+    trackSearch({ ...search, result_count: 0, outcome: failureFor(error) });
+    throw error;
+  }
 }
 
 interface FlagsMenuProps {
@@ -165,7 +282,7 @@ function FlagsMenu({ filters, setFilters }: FlagsMenuProps) {
 interface ResultsProps {
   results: ResultsData;
   chips: string[];
-  onSearch: (query: string) => void;
+  onSearch: (query: string, source?: SearchOrigin) => void;
   noMatches?: ReactNode;
   initialColumns: number;
 }
@@ -181,13 +298,17 @@ function Results({
     <>
       <KeywordRow
         words={chips}
-        onSelect={onSearch}
+        onSelect={(word) => onSearch(word, "related")}
         label="related keywords"
         className={styles.related}
       />
       {noMatches}
       {!noMatches && (
-        <InfiniteGallery {...results} initialColumns={initialColumns} />
+        <InfiniteGallery
+          {...results}
+          initialColumns={initialColumns}
+          onClick={trackResultClick}
+        />
       )}
     </>
   );
@@ -198,7 +319,7 @@ interface EmptyBodyProps {
   catalogPromise: Promise<CatalogEntry[]> | null;
   recent: string[];
   onClearRecent: () => void;
-  onSearch: (query: string) => void;
+  onSearch: (query: string, source?: SearchOrigin) => void;
 }
 
 function EmptyBody({
@@ -235,16 +356,18 @@ function EmptyBody({
 interface TextResultsProps {
   q: string;
   flags: SearchFlags;
+  filters: Record<string, string>;
   textPromise: Promise<ServerSearchResponse | null> | null;
   initialKey: string | null;
   suggestions?: Suggestions;
-  onSearch: (query: string) => void;
+  onSearch: (query: string, source?: SearchOrigin) => void;
   initialColumns: number;
 }
 
 function TextResults({
   q,
   flags,
+  filters,
   textPromise,
   initialKey,
   suggestions,
@@ -253,6 +376,7 @@ function TextResults({
 }: TextResultsProps) {
   const initialPage = textPromise ? use(textPromise) : null;
   const results = useSearch(q, flags, initialPage, initialKey);
+  useSearchEvents(searchKey("q", q, flags), "text", q, filters, results);
 
   const empty =
     !results.isLoading &&
@@ -274,7 +398,7 @@ function TextResults({
             </h3>
             <KeywordChips
               words={suggestions?.keywords}
-              onSearch={onSearch}
+              onSearch={(word) => onSearch(word, "suggestion")}
               className={styles.noMatchesChips}
             />
           </div>
@@ -287,16 +411,18 @@ function TextResults({
 interface SimilarResultsProps {
   similar: number;
   flags: SearchFlags;
+  filters: Record<string, string>;
   similarPromise: Promise<ServerSimilarPostsResponse | null> | null;
   initialKey: string | null;
   grayscaleOnly: boolean;
-  onSearch: (query: string) => void;
+  onSearch: (query: string, source?: SearchOrigin) => void;
   initialColumns: number;
 }
 
 function SimilarResults({
   similar,
   flags,
+  filters,
   similarPromise,
   initialKey,
   grayscaleOnly,
@@ -305,6 +431,13 @@ function SimilarResults({
 }: SimilarResultsProps) {
   const initialPage = similarPromise ? use(similarPromise) : null;
   const results = useSimilar(similar, flags, initialPage, initialKey);
+  useSearchEvents(
+    searchKey("similar", similar, flags),
+    "similar",
+    "",
+    filters,
+    results
+  );
 
   return (
     <Results
@@ -341,6 +474,10 @@ export default function SearchPage({
   const { nsfw, bw, sprocket } = filters;
   const flags = useMemo(
     () => toSearchFlags({ nsfw, bw, sprocket }),
+    [nsfw, bw, sprocket]
+  );
+  const searchFilters = useMemo(
+    () => ({ nsfw, bw, sprocket }),
     [nsfw, bw, sprocket]
   );
   const flagsKey = JSON.stringify(flags);
@@ -393,7 +530,7 @@ export default function SearchPage({
     setUploadError(null);
     try {
       const blob = await resizeImage(file);
-      const response = await postImageSearch(blob, flags);
+      const response = await searchImageTracked(blob, flags, searchFilters);
       replaceUpload({
         blob,
         thumb: URL.createObjectURL(blob),
@@ -415,7 +552,8 @@ export default function SearchPage({
   const searchImageRef = useRef(searchImage);
   searchImageRef.current = searchImage;
 
-  const handleSearch = (query: string) => {
+  const handleSearch = (query: string, source: SearchOrigin = "typed") => {
+    setSearchSource(source);
     add(query);
     setPanel(null);
     setFilters({ q: query, similar: null }, { history: "push" });
@@ -423,6 +561,7 @@ export default function SearchPage({
   };
 
   const handleExample = (id: number) => {
+    setSearchSource("example");
     setPanel(null);
     setUploadError(null);
     setFilters({ q: null, similar: id }, { history: "push" });
@@ -441,7 +580,7 @@ export default function SearchPage({
     if (!upload || upload.flagsKey === flagsKey) return;
     let active = true;
     setUploadPending(true);
-    postImageSearch(upload.blob, flags)
+    searchImageTracked(upload.blob, flags, searchFilters)
       .then((response) => {
         if (active)
           setUpload((prev) => prev && { ...prev, flagsKey, response });
@@ -455,7 +594,7 @@ export default function SearchPage({
     return () => {
       active = false;
     };
-  }, [upload, flags, flagsKey]);
+  }, [upload, flags, flagsKey, searchFilters]);
 
   useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
@@ -494,6 +633,7 @@ export default function SearchPage({
         <TextResults
           q={q}
           flags={flags}
+          filters={searchFilters}
           textPromise={textPromise}
           initialKey={initialKey}
           suggestions={suggestions}
@@ -516,6 +656,7 @@ export default function SearchPage({
         <SimilarResults
           similar={similar}
           flags={flags}
+          filters={searchFilters}
           similarPromise={similarPromise}
           initialKey={initialKey}
           grayscaleOnly={bw === "only"}
