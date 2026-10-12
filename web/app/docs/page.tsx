@@ -1,8 +1,9 @@
 import Documentation from "@components/documentation";
 import styles from "@components/gallery.module.css";
 import Header from "@components/header";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "API docs",
   description: "Documentation for the AnalogDB public API",
 };

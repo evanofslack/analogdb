@@ -6,8 +6,33 @@ import Link from "next/link";
 import styles from "./documentation.module.css";
 import Footer from "./footer";
 
+interface FieldRow {
+  field: string;
+  type: string;
+  description: string;
+}
+
+interface ParamRow {
+  param: string;
+  description: string;
+  [column: string]: string;
+}
+
+interface FieldTableProps {
+  rows: FieldRow[];
+}
+
+interface ParamTableProps {
+  rows: ParamRow[];
+  columns?: string[];
+}
+
+interface ExampleProps {
+  code: string;
+}
+
 // field name, type, description
-function FieldTable({ rows }) {
+function FieldTable({ rows }: FieldTableProps) {
   return (
     <Table.ScrollContainer minWidth={0} type="native">
       <Table highlightOnHover withColumnBorders>
@@ -35,7 +60,7 @@ function FieldTable({ rows }) {
 }
 
 // param and description, plus any extra columns
-function ParamTable({ rows, columns = [] }) {
+function ParamTable({ rows, columns = [] }: ParamTableProps) {
   return (
     <Table.ScrollContainer minWidth={0} type="native">
       <Table highlightOnHover withColumnBorders>
@@ -66,7 +91,7 @@ function ParamTable({ rows, columns = [] }) {
   );
 }
 
-function Example({ code }) {
+function Example({ code }: ExampleProps) {
   return (
     <div className={styles.codeblock}>
       <CodeHighlight
@@ -92,7 +117,7 @@ function Section() {
   );
 }
 
-const flagDescription = (name) =>
+const flagDescription = (name: string) =>
   `filter ${name} posts (true=only, false=exclude)`;
 
 const flagParams = [

@@ -3,7 +3,15 @@
 import { ActionIcon, useMantineColorScheme } from "@mantine/core";
 import { IconMoon, IconSun } from "@tabler/icons-react";
 
-export default function ThemeToggle({ size = 22, stroke = 1.5 }) {
+interface ThemeToggleProps {
+  size?: number;
+  stroke?: number;
+}
+
+export default function ThemeToggle({
+  size = 22,
+  stroke = 1.5,
+}: ThemeToggleProps) {
   const { toggleColorScheme } = useMantineColorScheme();
 
   // render both icons and let mantine css hide one so ssr markup never depends on scheme

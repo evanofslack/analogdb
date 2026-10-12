@@ -1,6 +1,13 @@
-import { getImageProps } from "next/image";
+import { getImageProps, ImageProps } from "next/image";
 
-export default function ResponsiveImage({ phoneSrc, ...props }) {
+interface ResponsiveImageProps extends ImageProps {
+  phoneSrc?: string;
+}
+
+export default function ResponsiveImage({
+  phoneSrc,
+  ...props
+}: ResponsiveImageProps) {
   const {
     props: { alt, ...img },
   } = getImageProps(props);

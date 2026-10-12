@@ -4,6 +4,7 @@ import {
   CodeHighlightAdapterProvider,
   createShikiAdapter,
 } from "@mantine/code-highlight";
+import { ReactNode } from "react";
 
 // Shiki requires async code to load the highlighter
 async function loadShiki() {
@@ -17,7 +18,13 @@ async function loadShiki() {
 
 const shikiAdapter = createShikiAdapter(loadShiki);
 
-export function CodeHighlightProvider({ children }) {
+interface CodeHighlightProviderProps {
+  children: ReactNode;
+}
+
+export function CodeHighlightProvider({
+  children,
+}: CodeHighlightProviderProps) {
   return (
     <CodeHighlightAdapterProvider adapter={shikiAdapter}>
       {children}
