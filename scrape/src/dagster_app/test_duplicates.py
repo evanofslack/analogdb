@@ -3,14 +3,13 @@ from unittest.mock import MagicMock, patch
 import analogdb.models as adb
 import dagster as dg
 import pytest
-from analogdb.client import Deleted
 
 from . import duplicates
 from .duplicates import (
     BackfillImageHashesConfig,
-    PruneDuplicatesConfig,
+    ReportDuplicatesConfig,
     backfill_image_hashes,
-    prune_duplicates,
+    report_duplicates,
 )
 from .resources import AnalogDBResource
 
@@ -99,81 +98,55 @@ def dupe(keep: int, duplicate: int) -> adb.DuplicatePost:
     )
 
 
-def run_prune(client, **config):
+def run_report(client, **config):
     with patch.object(AnalogDBResource, "client", return_value=client):
-        return prune_duplicates(
+        return report_duplicates(
             dg.build_asset_context(),
-            config=PruneDuplicatesConfig(**config),
+            config=ReportDuplicatesConfig(**config),
             analogdb=AnalogDBResource(),
         )
 
 
-def prune_client():
+def report_client():
     client = MagicMock()
-    client.get_duplicates.return_value = [dupe(9156, 36395), dupe(9156, 40000)]
-    client.delete_post.return_value = Deleted.DELETED
+    dupes = [dupe(9156, 36395), dupe(9156, 40000)]
+    client.get_duplicates.return_value = dupes
+    client.report_duplicates.return_value = (dupes, 1)
     return client
 
 
-class TestPruneDuplicates:
-    def test_dry_run_lists_without_deleting(self):
-        client = prune_client()
+class TestReportDuplicates:
+    def test_dry_run_lists_without_reporting(self):
+        client = report_client()
 
-        result = run_prune(client)
+        result = run_report(client)
 
+        client.report_duplicates.assert_not_called()
         client.delete_post.assert_not_called()
         assert result.metadata["dry_run"] is True
         assert result.metadata["duplicates"] == 2
+        assert result.metadata["reported"] == 0
         assert result.metadata["duplicate_ids"] == "[36395, 40000]"
         table = result.metadata["pairs"].value
         assert "[36395](https://analogdb.com/post/36395)" in table
         assert "dry run" in table
 
-    def test_deletes_with_reason(self):
-        client = prune_client()
-        client.delete_post.side_effect = [Deleted.DELETED, Deleted.MISSING]
+    def test_reports_without_deleting(self):
+        client = report_client()
 
-        result = run_prune(client, dry_run=False)
+        result = run_report(client, dry_run=False)
 
-        assert [c.args for c in client.delete_post.call_args_list] == [
-            (36395,),
-            (40000,),
-        ]
-        assert {c.kwargs["reason"] for c in client.delete_post.call_args_list} == {
-            "duplicate of 9156"
-        }
-        assert result.metadata["deleted"] == 1
-        assert result.metadata["missing"] == 1
-
-    def test_max_deletes_fails_before_deleting(self):
-        client = prune_client()
-
-        with pytest.raises(dg.Failure):
-            run_prune(client, dry_run=False, max_deletes=1)
-
+        client.report_duplicates.assert_called_once_with()
+        client.get_duplicates.assert_not_called()
         client.delete_post.assert_not_called()
-
-    def test_max_deletes_ignored_on_dry_run(self):
-        result = run_prune(prune_client(), max_deletes=1)
-
         assert result.metadata["duplicates"] == 2
-
-    def test_failed_delete_fails_after_trying_all(self):
-        client = prune_client()
-        client.delete_post.side_effect = [RuntimeError("down"), Deleted.DELETED]
-
-        with pytest.raises(dg.Failure) as e:
-            run_prune(client, dry_run=False)
-
-        assert client.delete_post.call_count == 2
-        assert e.value.metadata["failed"].value == 1
-        assert e.value.metadata["deleted"].value == 1
+        assert result.metadata["reported"] == 1
+        assert "reported" in result.metadata["pairs"].value
 
     def test_no_duplicates(self):
         client = MagicMock()
-        client.get_duplicates.return_value = []
+        client.report_duplicates.return_value = ([], 0)
 
-        result = run_prune(client, dry_run=False)
+        result = run_report(client, dry_run=False)
 
-        client.delete_post.assert_not_called()
         assert result.metadata["pairs"].value == "None."

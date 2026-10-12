@@ -4,9 +4,10 @@
 New posts get their hash at upload, so the missing list only shrinks and a rerun
 picks up where the last one stopped.
 
-`prune_duplicates` lists every post whose image matches an older post, which the
-backend works out over the whole archive, and deletes them unless dry_run is on.
-The oldest copy is always kept.
+`report_duplicates` lists every post that duplicates an older post, which the
+backend works out over the whole archive, and unless dry_run is on files a
+duplicate report on each one. It never deletes: a person takes duplicates down
+from the admin Reports tab.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -16,7 +17,6 @@ from typing import Dict, List, Optional, Sequence
 import analogdb.models as adb
 import dagster as dg
 import requests
-from analogdb.client import Deleted
 from scrape.constants import IMAGE_TIMEOUT
 from scrape.image import image_bytes_hash
 
@@ -97,15 +97,11 @@ def backfill_image_hashes(
     return dg.MaterializeResult(metadata=metadata)
 
 
-class PruneDuplicatesConfig(dg.Config):
+class ReportDuplicatesConfig(dg.Config):
     dry_run: bool = True
-    # fail instead of deleting more than this many, set it to the dry run count
-    max_deletes: Optional[int] = None
 
 
-def _duplicates_table(
-    dupes: Sequence[adb.DuplicatePost], results: Dict[int, str]
-) -> str:
+def _duplicates_table(dupes: Sequence[adb.DuplicatePost], result: str) -> str:
     if not dupes:
         return "None."
     lines = [
@@ -113,7 +109,6 @@ def _duplicates_table(
         "|---|---|---|---|---|",
     ]
     for d in dupes:
-        result = results.get(d.duplicate_id, "dry run")
         lines.append(
             f"| [{d.keep_id}]({POST_URL}/{d.keep_id}) "
             f"| [{d.duplicate_id}]({POST_URL}/{d.duplicate_id}) "
@@ -125,64 +120,32 @@ def _duplicates_table(
 
 
 @dg.asset(group_name="backfill", deps=[backfill_image_hashes])
-def prune_duplicates(
+def report_duplicates(
     context: dg.AssetExecutionContext,
-    config: PruneDuplicatesConfig,
+    config: ReportDuplicatesConfig,
     analogdb: AnalogDBResource,
 ) -> dg.MaterializeResult:
-    """Delete every post whose image matches an older post, keeping the oldest.
-    Dry run by default, which only lists them. Deleted posts keep a tombstone
-    with the reason, and their S3 images stay."""
+    """File a duplicate report on every post that duplicates an older post.
+    Dry run by default, which only lists them. Posts that already have an open
+    duplicate report are skipped, and nothing is deleted."""
     client = analogdb.client()
-    dupes = client.get_duplicates()
-    context.log.info(f"Found {len(dupes)} duplicate posts")
-
-    if (
-        not config.dry_run
-        and config.max_deletes is not None
-        and len(dupes) > config.max_deletes
-    ):
-        raise dg.Failure(
-            description=f"prune duplicates: found {len(dupes)} duplicates, "
-            f"more than max_deletes={config.max_deletes}",
-            metadata={"duplicates": len(dupes)},
-        )
-
-    results: Dict[int, str] = {}
-    counts = {"deleted": 0, "missing": 0, "failed": 0}
-    if not config.dry_run:
-        for d in dupes:
-            try:
-                result = client.delete_post(
-                    d.duplicate_id, reason=f"duplicate of {d.keep_id}"
-                )
-            except Exception as e:
-                counts["failed"] += 1
-                results[d.duplicate_id] = "failed"
-                context.log.error(
-                    f"Failed to delete duplicate post, id={d.duplicate_id}, {error_detail(e)}"
-                )
-                continue
-            results[d.duplicate_id] = result.value
-            key = {Deleted.DELETED: "deleted", Deleted.MISSING: "missing"}.get(
-                result, "failed"
-            )
-            counts[key] += 1
+    if config.dry_run:
+        dupes = client.get_duplicates()
+        reported = 0
+    else:
+        dupes, reported = client.report_duplicates()
 
     metadata = {
         "dry_run": config.dry_run,
         "duplicates": len(dupes),
+        "reported": reported,
         "duplicate_ids": str([d.duplicate_id for d in dupes]),
-        **counts,
-        "pairs": dg.MetadataValue.md(_duplicates_table(dupes, results)),
+        "pairs": dg.MetadataValue.md(
+            _duplicates_table(dupes, "dry run" if config.dry_run else "reported")
+        ),
     }
     context.log.info(
-        f"Finished prune duplicates: dry_run={config.dry_run}, "
-        f"duplicates={len(dupes)}, {counts}"
+        f"Finished report duplicates: dry_run={config.dry_run}, "
+        f"duplicates={len(dupes)}, reported={reported}"
     )
-    if counts["failed"]:
-        raise dg.Failure(
-            description=f"prune duplicates: {counts['failed']} of {len(dupes)} deletes failed",
-            metadata=metadata,
-        )
     return dg.MaterializeResult(metadata=metadata)

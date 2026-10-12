@@ -2,6 +2,7 @@ package analogdb
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -25,6 +26,62 @@ type DuplicatePost struct {
 	Distance     int    `json:"distance" example:"0"`
 	KeepURL      string `json:"keep_url" example:"https://i.analogdb.com/keep.jpeg"`
 	DuplicateURL string `json:"duplicate_url" example:"https://i.analogdb.com/dupe.jpeg"`
+}
+
+// The duplicate rule, tuned against a hand check of 584 pairs within 4 bits.
+// Matches at 0 bits were all real, while 3 and 4 bits were mostly different
+// photos unless posted by the same author. Plain images such as fog or sky
+// land near many others, and a hash with that many neighbours is ignored.
+const (
+	DuplicateAnyAuthorBits   = 0
+	DuplicateSameAuthorBits  = 2
+	DuplicateAspectTolerance = 0.03
+	DuplicateCrowdBits       = 4
+	DuplicateCrowdSize       = 8
+)
+
+// ImageFacts are the fields of a post the duplicate rule compares
+type ImageFacts struct {
+	ID     int
+	Author string
+	Width  int
+	Height int
+}
+
+// ImageMatchQuery is a new post to check against existing posts
+type ImageMatchQuery struct {
+	Hash      int64
+	Grayscale bool
+	Author    string
+	Width     int
+	Height    int
+}
+
+// ImageMatch is the oldest existing post a new post duplicates
+type ImageMatch struct {
+	ID       int
+	Distance int
+}
+
+// IsDuplicateImage applies the duplicate rule to two posts whose hashes are
+// distance bits apart and whose greyscale flags already match
+func IsDuplicateImage(keep, dup ImageFacts, distance int) bool {
+	if keep.Width <= 0 || keep.Height <= 0 || dup.Width <= 0 || dup.Height <= 0 {
+		return false
+	}
+	ratio := float64(keep.Width*dup.Height) / float64(keep.Height*dup.Width)
+	if math.Abs(ratio-1) >= DuplicateAspectTolerance {
+		return false
+	}
+	if distance <= DuplicateAnyAuthorBits {
+		return true
+	}
+	return distance <= DuplicateSameAuthorBits && keep.Author == dup.Author
+}
+
+// DuplicateReportMessage is the message on a report filed for a duplicate
+func DuplicateReportMessage(keepID, distance int) string {
+	return fmt.Sprintf("duplicate of post %d, %d bits apart", keepID, distance)
 }
 
 // ParseImageHash reads 16 hex characters into the signed value stored in

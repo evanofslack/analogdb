@@ -23,7 +23,7 @@ from .backfill import (
     reencode_post_vectors,
     rematch_post_metadata,
 )
-from .duplicates import backfill_image_hashes, prune_duplicates
+from .duplicates import backfill_image_hashes, report_duplicates
 
 scrape_job = dg.define_asset_job(
     name="scrape_and_upload",
@@ -96,7 +96,7 @@ backfill_image_hashes_job = dg.define_asset_job(
     selection=[backfill_image_hashes],
 )
 
-prune_duplicates_job = dg.define_asset_job(
-    name="prune_duplicate_posts",
-    selection=[prune_duplicates],
+report_duplicates_job = dg.define_asset_job(
+    name="report_duplicate_posts",
+    selection=[report_duplicates],
 )

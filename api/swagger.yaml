@@ -718,6 +718,16 @@ definitions:
           type: string
         type: array
     type: object
+  server.ReportDuplicatesResponse:
+    properties:
+      duplicates:
+        items:
+          $ref: '#/definitions/analogdb.DuplicatePost'
+        type: array
+      reported:
+        example: 12
+        type: integer
+    type: object
   server.SearchMeta:
     properties:
       next_cursor:
@@ -2028,8 +2038,10 @@ paths:
       - scrape
   /scrape/duplicates:
     get:
-      description: List every post whose image hash is within DUPLICATE_MAX_BITS of
-        an older post, paired with the oldest match. Can take seconds (requires authentication)
+      description: List every post that duplicates an older post, paired with the
+        oldest match. Exact hash matches count from any author, near matches only
+        from the same author, and both need the same aspect ratio. Can take seconds
+        (requires authentication)
       produces:
       - application/json
       responses:
@@ -2052,6 +2064,35 @@ paths:
       security:
       - BasicAuth: []
       summary: List duplicate posts
+      tags:
+      - scrape
+  /scrape/duplicates/report:
+    post:
+      description: Find duplicate posts as GET /scrape/duplicates does and file a
+        duplicate report on each one without an open report. Nothing is deleted. Can
+        take seconds (requires authentication)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.ReportDuplicatesResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Report duplicate posts
       tags:
       - scrape
   /scrape/hashes:

@@ -32,20 +32,26 @@ type App struct {
 	RateLimitWebPerMinute int `yaml:"rate_limit_web_per_minute" env:"RATE_LIMIT_WEB_PER_MINUTE" env-default:"10000"`
 	// RateLimitEventsPerMinute caps web event batches apart from the web cap, 0 turns it off
 	RateLimitEventsPerMinute int `yaml:"rate_limit_events_per_minute" env:"RATE_LIMIT_EVENTS_PER_MINUTE" env-default:"3000"`
-	// DuplicateBlock rejects new posts whose image matches an existing post, off only logs them
-	DuplicateBlock bool `yaml:"duplicate_block" env:"DUPLICATE_BLOCK"`
+	// DuplicateMode is what an upload matching an existing post does: off skips the check,
+	// log only logs it, report files a duplicate report, block rejects the upload
+	DuplicateMode string `yaml:"duplicate_mode" env:"DUPLICATE_MODE" env-default:"report"`
 	// ImageBaseURL is where stored image keys are served from
 	ImageBaseURL string `yaml:"image_base_url" env:"IMAGE_BASE_URL" env-default:"https://i.analogdb.com"`
-	// DuplicateMaxBits is how many of the 64 image hash bits two posts may differ by and
-	// still count as the same photo. Reposts measure 0, different photos 19+
-	DuplicateMaxBits int `yaml:"duplicate_max_bits" env:"DUPLICATE_MAX_BITS" env-default:"4"`
 }
 
+const (
+	DuplicateOff    = "off"
+	DuplicateLog    = "log"
+	DuplicateReport = "report"
+	DuplicateBlock  = "block"
+)
+
 func (a App) Validate() error {
-	if a.DuplicateMaxBits < 0 || a.DuplicateMaxBits > 64 {
-		return fmt.Errorf("app: duplicate max bits must be 0 to 64, got %d", a.DuplicateMaxBits)
+	switch a.DuplicateMode {
+	case DuplicateOff, DuplicateLog, DuplicateReport, DuplicateBlock:
+		return nil
 	}
-	return nil
+	return fmt.Errorf("app: duplicate mode must be off, log, report or block, got %q", a.DuplicateMode)
 }
 
 type DB struct {

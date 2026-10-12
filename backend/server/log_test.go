@@ -122,10 +122,14 @@ func (mockScrape) SetImageHashes(ctx context.Context, hashes []analogdb.ImageHas
 	return len(hashes), nil
 }
 
-func (mockScrape) FindImageMatch(ctx context.Context, hash int64, grayscale bool, maxBits int) (int, bool, error) {
-	return 0, false, nil
+func (mockScrape) FindImageMatch(ctx context.Context, q analogdb.ImageMatchQuery) (analogdb.ImageMatch, bool, error) {
+	return analogdb.ImageMatch{}, false, nil
 }
 
-func (mockScrape) DuplicatePosts(ctx context.Context, maxBits int) ([]analogdb.DuplicatePost, error) {
+func (mockScrape) DuplicatePosts(ctx context.Context) ([]analogdb.DuplicatePost, error) {
 	return []analogdb.DuplicatePost{}, nil
+}
+
+func (mockScrape) ReportDuplicates(ctx context.Context, dupes []analogdb.DuplicatePost) (int, error) {
+	return len(dupes), nil
 }
