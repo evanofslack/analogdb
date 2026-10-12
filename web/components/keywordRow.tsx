@@ -8,14 +8,27 @@ import styles from "./keywordRow.module.css";
 
 const step = 2;
 
+export interface KeywordLink {
+  href?: string;
+  label: string;
+}
+
+interface KeywordRowProps {
+  words?: string[];
+  links?: KeywordLink[];
+  onSelect?: (word: string) => void;
+  label?: string;
+  className?: string;
+}
+
 export default function KeywordRow({
   words,
   links,
   onSelect,
   label,
   className,
-}) {
-  const rowRef = useRef(null);
+}: KeywordRowProps) {
+  const rowRef = useRef<HTMLDivElement>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
 
@@ -35,14 +48,17 @@ export default function KeywordRow({
     return () => observer.disconnect();
   }, [measure, words, links]);
 
-  const items = links ?? (words ?? []).map((word) => ({ label: word }));
+  const items: KeywordLink[] =
+    links ?? (words ?? []).map((word) => ({ label: word }));
   if (items.length === 0) return null;
 
-  const scroll = (direction) => {
+  const scroll = (direction: number) => {
     const row = rowRef.current;
     if (!row) return;
-    const offsets = [...row.children].map((child) => child.offsetLeft);
-    const first = row.children[0]?.offsetLeft ?? 0;
+    const offsets = Array.from(
+      row.children as HTMLCollectionOf<HTMLElement>
+    ).map((child) => child.offsetLeft);
+    const first = (row.children[0] as HTMLElement | undefined)?.offsetLeft ?? 0;
     const current = offsets.findIndex(
       (left) => left - first >= row.scrollLeft - 1
     );

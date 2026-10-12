@@ -1,12 +1,35 @@
 "use client";
 
+import type { SearchSuggestions as Suggestions } from "@lib/data/search";
 import { ActionIcon, CloseButton, Popover, Tooltip } from "@mantine/core";
 import { IconCameraSearch, IconSearch } from "@tabler/icons-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import styles from "./searchBar.module.css";
 import SearchSuggestions from "./searchSuggestions";
-import VisualSearch from "./visualSearch";
+import VisualSearch, { VisualSearchProps } from "./visualSearch";
+
+export type SearchPanel = "suggestions" | "visual" | null;
+
+export interface SearchVisual {
+  thumb?: string;
+  label: string;
+  onClear: () => void;
+}
+
+interface SearchBarProps {
+  value?: string | null;
+  onSearch: (query: string) => void;
+  visual?: SearchVisual | null;
+  suggestions?: Suggestions | null;
+  recent?: string[];
+  onClearRecent?: () => void;
+  panel: SearchPanel;
+  onPanelChange: (panel: SearchPanel) => void;
+  visualProps?: Omit<VisualSearchProps, "examples">;
+  suggestionsDropdown?: boolean;
+  placeholder?: string;
+}
 
 export default function SearchBar({
   value,
@@ -20,7 +43,7 @@ export default function SearchBar({
   visualProps,
   suggestionsDropdown = true,
   placeholder = "search photos...",
-}) {
+}: SearchBarProps) {
   const [text, setText] = useState(value ?? "");
 
   useEffect(() => {
@@ -31,12 +54,12 @@ export default function SearchBar({
     panel === "visual" ||
     (panel === "suggestions" && suggestionsDropdown && !text.trim() && !visual);
 
-  const search = (query) => {
+  const search = (query: string) => {
     onPanelChange(null);
     onSearch(query);
   };
 
-  const submit = (event) => {
+  const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const query = text.trim();
     if (query) search(query);

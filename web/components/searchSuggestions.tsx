@@ -1,7 +1,10 @@
 "use client";
 
+import { CatalogEntry } from "@lib/catalog";
+import type { SearchSuggestions as Suggestions } from "@lib/data/search";
 import { keywordHref, keywordLabel } from "@lib/keywords";
 import { IconClock, IconSparkles, IconTags } from "@tabler/icons-react";
+import { ReactNode } from "react";
 import CatalogGrid from "./catalogGrid";
 import KeywordRow from "./keywordRow";
 import styles from "./searchSuggestions.module.css";
@@ -9,7 +12,14 @@ import styles from "./searchSuggestions.module.css";
 const iconSize = 16;
 const priorityCount = 4;
 
-function Section({ icon, title, action, children }) {
+interface SectionProps {
+  icon: ReactNode;
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}
+
+function Section({ icon, title, action, children }: SectionProps) {
   return (
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
@@ -24,7 +34,17 @@ function Section({ icon, title, action, children }) {
   );
 }
 
-export function KeywordChips({ words, onSearch, className }) {
+interface KeywordChipsProps {
+  words?: string[];
+  onSearch: (word: string) => void;
+  className?: string;
+}
+
+export function KeywordChips({
+  words,
+  onSearch,
+  className,
+}: KeywordChipsProps) {
   if (!words || words.length === 0) return null;
   return (
     <div className={className ?? styles.chips}>
@@ -42,6 +62,15 @@ export function KeywordChips({ words, onSearch, className }) {
   );
 }
 
+interface SearchSuggestionsProps {
+  suggestions?: Suggestions | null;
+  recent?: string[];
+  onClearRecent?: () => void;
+  onSearch: (query: string) => void;
+  catalog?: CatalogEntry[] | null;
+  trendingRow?: boolean;
+}
+
 export default function SearchSuggestions({
   suggestions,
   recent = [],
@@ -49,7 +78,7 @@ export default function SearchSuggestions({
   onSearch,
   catalog,
   trendingRow = false,
-}) {
+}: SearchSuggestionsProps) {
   const keywords = suggestions?.keywords ?? [];
 
   return (
@@ -94,16 +123,20 @@ export default function SearchSuggestions({
   );
 }
 
-export function KeywordBrowser({ catalog }) {
+interface KeywordBrowserProps {
+  catalog?: CatalogEntry[] | null;
+}
+
+export function KeywordBrowser({ catalog }: KeywordBrowserProps) {
   if (!catalog || catalog.length === 0) return null;
 
   return (
     <Section icon={<IconTags size={iconSize} stroke={1.5} />} title="keywords">
       <CatalogGrid
         entries={catalog}
-        hrefFor={(entry) => keywordHref(entry.make)}
-        labelFor={(entry) => keywordLabel(entry.make)}
-        altFor={(entry) =>
+        hrefFor={(entry: CatalogEntry) => keywordHref(entry.make)}
+        labelFor={(entry: CatalogEntry) => keywordLabel(entry.make)}
+        altFor={(entry: CatalogEntry) =>
           `${entry.cover?.title || entry.make}, tagged ${entry.make}`
         }
         priorityCount={priorityCount}
