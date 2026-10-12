@@ -1,6 +1,10 @@
 "use client";
 
+import type { CameraOption } from "@lib/data/cameras";
+import type { FilmOption } from "@lib/data/films";
 import {
+  ActivePostsFilters,
+  PostsFilters,
   postsParsers,
   ratioShapes,
   selectedShapes,
@@ -27,7 +31,65 @@ import {
 import { useEffect, useRef, useState } from "react";
 import ColorFilter from "./colorFilter";
 import styles from "./filterBar.module.css";
-import FilterSummary from "./filterSummary";
+import FilterSummary, { FilterSummaryItem } from "./filterSummary";
+
+type SizeKey =
+  | "widthMin"
+  | "widthMax"
+  | "heightMin"
+  | "heightMax"
+  | "ratioMin"
+  | "ratioMax";
+type Sizes = Pick<PostsFilters, SizeKey>;
+type FlagKey = "nsfw" | "bw" | "sprocket";
+type Flag = PostsFilters[FlagKey];
+
+interface FilterBarProps {
+  sort: PostsFilters["sort"];
+  nsfw: Flag;
+  bw: Flag;
+  sprocket: Flag;
+  color: string | null;
+  text: string | null;
+  widthMin: number;
+  widthMax: number;
+  heightMin: number;
+  heightMax: number;
+  ratioMin: number;
+  ratioMax: number;
+  filmMake: string | null;
+  filmType: string | null;
+  cameraMake: string | null;
+  cameraModel: string | null;
+
+  setSort: (sort: PostsFilters["sort"]) => void;
+  setNsfw: (nsfw: Flag) => void;
+  setBw: (bw: Flag) => void;
+  setSprocket: (sprocket: Flag) => void;
+  setColor: (color: string | null) => void;
+  setText: (text: string | null) => void;
+  setSizes: (sizes: Sizes) => void;
+  setFilm: (make: string | null, type: string | null) => void;
+  setCamera: (make: string | null, model: string | null) => void;
+
+  filmOptions: FilmOption[];
+  cameraOptions: CameraOption[];
+
+  textPlaceholder?: string;
+
+  widthMinLimit: number;
+  widthMaxLimit: number;
+  heightMinLimit: number;
+  heightMaxLimit: number;
+  ratioMinLimit: number;
+  ratioMaxLimit: number;
+
+  active?: Partial<ActivePostsFilters>;
+  onClear?: () => void;
+  resultCount?: number | null;
+  resultPending?: boolean;
+  apiUrl?: string;
+}
 
 export default function FilterBar({
   // State values
@@ -78,10 +140,10 @@ export default function FilterBar({
   resultCount,
   resultPending,
   apiUrl,
-}) {
+}: FilterBarProps) {
   const iconSize = 18;
 
-  const sizes = {
+  const sizes: Sizes = {
     widthMin,
     widthMax,
     heightMin,
@@ -105,14 +167,14 @@ export default function FilterBar({
     setDrafts(next);
   }, [widthMin, widthMax, heightMin, heightMax, ratioMin, ratioMax]);
 
-  const inRange = (value, min, max, integer) =>
+  const inRange = (value: number, min: number, max: number, integer: boolean) =>
     typeof value === "number" &&
     Number.isFinite(value) &&
     (!integer || Number.isInteger(value)) &&
     value >= min &&
     value <= max;
 
-  const sizeErrors = (d) => {
+  const sizeErrors = (d: Sizes): Record<SizeKey, boolean> => {
     const widthOrder = !(d.widthMin <= d.widthMax);
     const heightOrder = !(d.heightMin <= d.heightMax);
     const ratioOrder = !(d.ratioMin <= d.ratioMax);
@@ -143,7 +205,7 @@ export default function FilterBar({
     if (changed) setSizes(d);
   }, 500);
 
-  const handleSizeChange = (key) => (value) => {
+  const handleSizeChange = (key: SizeKey) => (value: number | string) => {
     const next = { ...draftsRef.current, [key]: value };
     draftsRef.current = next;
     setDrafts(next);
@@ -151,7 +213,7 @@ export default function FilterBar({
   };
 
   const shapes = selectedShapes(ratioMin, ratioMax);
-  const handleShape = (index) => {
+  const handleShape = (index: number) => {
     const ratio = toggleShape(shapes, index);
     const next = { ...draftsRef.current, ...ratio };
     draftsRef.current = next;
@@ -164,17 +226,24 @@ export default function FilterBar({
     section: styles.buttonSection,
   };
 
-  const activeProps = (key) => (active[key] ? { "data-active": true } : {});
-  const activeText = (key) => (
+  const activeProps = (key: keyof ActivePostsFilters) =>
+    active[key] ? { "data-active": true } : {};
+  const activeText = (key: keyof ActivePostsFilters) => (
     <>
       <span className={styles.dot} aria-hidden="true" />
       {active[key] && <VisuallyHidden>, filter on</VisuallyHidden>}
     </>
   );
 
-  const optionLabel = (options, a, b, keyA, keyB) =>
+  const optionLabel = <T extends { label: string }>(
+    options: T[],
+    a: string,
+    b: string,
+    keyA: keyof T,
+    keyB: keyof T
+  ) =>
     options.find((o) => o[keyA] === a && o[keyB] === b)?.label ?? `${a} ${b}`;
-  const defaultSizes = {
+  const defaultSizes: Sizes = {
     widthMin: widthMinLimit,
     widthMax: widthMaxLimit,
     heightMin: heightMinLimit,
@@ -191,7 +260,12 @@ export default function FilterBar({
     const last = ratioShapes[shapes[shapes.length - 1]].key;
     return first === last ? first : `${first} to ${last}`;
   };
-  const flagItem = (key, title, value, setValue) =>
+  const flagItem = (
+    key: FlagKey,
+    title: string,
+    value: Flag,
+    setValue: (value: Flag) => void
+  ) =>
     value !== postsParsers[key].defaultValue && {
       key,
       category: title,
@@ -238,7 +312,7 @@ export default function FilterBar({
       value: text,
       onRemove: () => setText(null),
     },
-  ].filter(Boolean);
+  ].filter(Boolean) as FilterSummaryItem[];
 
   return (
     <>

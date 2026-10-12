@@ -1,6 +1,23 @@
-import { Button, Checkbox, Menu, Tooltip, VisuallyHidden } from "@mantine/core";
+import {
+  Button,
+  ButtonProps,
+  Checkbox,
+  Menu,
+  Tooltip,
+  VisuallyHidden,
+} from "@mantine/core";
 import { IconPalette } from "@tabler/icons-react";
+import { ChangeEvent } from "react";
 import styles from "./colorFilter.module.css";
+
+interface ColorFilterProps {
+  color: string | null;
+  setColor: (color: string | null) => void;
+  buttonClassNames?: ButtonProps["classNames"];
+  labelClassName?: string;
+  dotClassName?: string;
+  active?: boolean;
+}
 
 export default function ColorFilter({
   color,
@@ -9,8 +26,8 @@ export default function ColorFilter({
   labelClassName,
   dotClassName,
   active,
-}) {
-  const handleColorClick = (event) => {
+}: ColorFilterProps) {
+  const handleColorClick = (event: ChangeEvent<HTMLInputElement>) => {
     let clickedColor = event.target.id;
     if (clickedColor === color) {
       setColor(null);
