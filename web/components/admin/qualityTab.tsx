@@ -14,7 +14,7 @@ import Link from "next/link";
 import styles from "./adminPanel.module.css";
 import CatalogButton from "./catalogButton";
 import EditPostButton from "./editPostButton";
-import TabError from "./tabError";
+import TabError, { LoadError } from "./tabError";
 
 const coverageRows = [
   { key: "camera", label: "Camera" },
@@ -173,14 +173,9 @@ function describePost(post: AdminPost): string {
   return [camera, film].filter(Boolean).join(" · ") || "no camera or film";
 }
 
-interface TabLoadError {
-  status: number;
-  message?: string;
-}
-
 interface MissingPostsProps {
   missing?: MissingPostsPage;
-  error?: TabLoadError;
+  error?: LoadError;
   field: MissingField;
 }
 
@@ -242,7 +237,7 @@ function MissingPosts({ missing, error, field }: MissingPostsProps) {
 interface QualityTabProps {
   quality: AdminQuality;
   missing?: MissingPostsPage;
-  missingError?: TabLoadError;
+  missingError?: LoadError;
   field: MissingField;
 }
 
