@@ -1,4 +1,13 @@
-import { missingFields } from "@lib/adminClient";
+import {
+  AdminCoverage,
+  AdminPost,
+  AdminQuality,
+  MissingField,
+  missingFields,
+  MissingPosts as MissingPostsPage,
+  UnmatchedCamera,
+  UnmatchedFilm,
+} from "@lib/adminClient";
 import { formatNumber, formatPercent } from "@lib/format";
 import { Button, Progress } from "@mantine/core";
 import Link from "next/link";
@@ -15,9 +24,13 @@ const coverageRows = [
   { key: "colors", label: "Colors" },
   { key: "focal_length", label: "Focal length" },
   { key: "aperture", label: "Aperture" },
-];
+] as const;
 
-function Coverage({ coverage }) {
+interface CoverageProps {
+  coverage: AdminCoverage;
+}
+
+function Coverage({ coverage }: CoverageProps) {
   return (
     <div className={styles.coverage}>
       {coverageRows.map((row) => {
@@ -40,7 +53,11 @@ function Coverage({ coverage }) {
   );
 }
 
-function UnmatchedCameras({ cameras }) {
+interface UnmatchedCamerasProps {
+  cameras: UnmatchedCamera[];
+}
+
+function UnmatchedCameras({ cameras }: UnmatchedCamerasProps) {
   if (cameras.length === 0) {
     return (
       <p className={styles.note}>Every camera on a post is in the catalog.</p>
@@ -90,7 +107,11 @@ function UnmatchedCameras({ cameras }) {
   );
 }
 
-function UnmatchedFilms({ films }) {
+interface UnmatchedFilmsProps {
+  films: UnmatchedFilm[];
+}
+
+function UnmatchedFilms({ films }: UnmatchedFilmsProps) {
   if (films.length === 0) {
     return (
       <p className={styles.note}>Every film on a post is in the catalog.</p>
@@ -144,7 +165,7 @@ function UnmatchedFilms({ films }) {
   );
 }
 
-function describePost(post) {
+function describePost(post: AdminPost): string {
   const camera = [post.camera_make, post.camera_model]
     .filter(Boolean)
     .join(" ");
@@ -152,7 +173,18 @@ function describePost(post) {
   return [camera, film].filter(Boolean).join(" · ") || "no camera or film";
 }
 
-function MissingPosts({ missing, error, field }) {
+interface TabLoadError {
+  status: number;
+  message?: string;
+}
+
+interface MissingPostsProps {
+  missing?: MissingPostsPage;
+  error?: TabLoadError;
+  field: MissingField;
+}
+
+function MissingPosts({ missing, error, field }: MissingPostsProps) {
   return (
     <>
       <div className={styles.controls}>
@@ -207,7 +239,19 @@ function MissingPosts({ missing, error, field }) {
   );
 }
 
-export default function QualityTab({ quality, missing, missingError, field }) {
+interface QualityTabProps {
+  quality: AdminQuality;
+  missing?: MissingPostsPage;
+  missingError?: TabLoadError;
+  field: MissingField;
+}
+
+export default function QualityTab({
+  quality,
+  missing,
+  missingError,
+  field,
+}: QualityTabProps) {
   return (
     <>
       <section className={styles.section}>
