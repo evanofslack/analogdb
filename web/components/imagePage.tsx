@@ -6,6 +6,7 @@ import Header from "@components/header";
 import ImageTag from "@components/imageTag";
 import ReportModal from "@components/reportModal";
 import useIsAdmin from "@hooks/useIsAdmin";
+import { EditablePost } from "@lib/adminClient";
 import {
   currentSearchId,
   EventMap,
@@ -15,9 +16,10 @@ import {
 import { postAlt } from "@lib/seo";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import {
-  AnalogdbColor,
   AnalogdbImage,
-  AnalogdbKeyword,
+  AnalogdbPost,
+  AnalogdbPostToJSON,
+  ServerSimilarPostsResponse,
 } from "analogdb-generated";
 import { type ImageProps } from "next/image";
 import { useRouter } from "next/navigation";
@@ -33,37 +35,9 @@ import {
 import styles from "./imagePage.module.css";
 import ResponsiveImage from "./responsiveImage";
 
-export interface PagePost {
-  id: number;
-  title: string;
-  author: string;
-  permalink: string;
-  timestamp: number;
-  score?: number;
-  nsfw: boolean;
-  grayscale: boolean;
-  sprocket: boolean;
-  description?: string;
-  caption?: string;
-  images: AnalogdbImage[];
-  colors: AnalogdbColor[];
-  keywords?: AnalogdbKeyword[];
-  camera_make?: string;
-  camera_model?: string;
-  film_make?: string;
-  film_type?: string;
-  film_speed?: number;
-  focal_length?: number;
-  aperture?: string;
-}
-
-export interface SimilarPosts {
-  posts?: PagePost[];
-}
-
 interface ImagePageProps {
-  post: PagePost;
-  similar: SimilarPosts;
+  post: AnalogdbPost;
+  similar: ServerSimilarPostsResponse;
   filmHref: string | null;
   cameraHref: string | null;
 }
@@ -97,7 +71,7 @@ async function handleDelete(postId: number) {
 }
 
 function colorPlaceholder(
-  post: PagePost,
+  post: AnalogdbPost,
   image: AnalogdbImage
 ): ImageProps["placeholder"] {
   const hex = post.colors?.[0]?.hex;
@@ -263,7 +237,7 @@ export default function ImagePage(props: ImagePageProps) {
       />
       {isAdmin && (
         <PostEditor
-          post={post}
+          post={AnalogdbPostToJSON(post) as EditablePost}
           opened={editing}
           onClose={() => setEditing(false)}
           onSaved={() => router.refresh()}

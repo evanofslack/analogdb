@@ -1,7 +1,7 @@
+import { catalogHref } from "@lib/catalog";
+import { postsApi } from "@lib/client";
 import { getCameraCatalog } from "@lib/data/cameras";
 import { getFilmCatalog } from "@lib/data/films";
-import { catalogHref } from "@lib/catalog";
-import { authorized_fetch } from "@lib/client";
 import { MetadataRoute } from "next";
 import { unstable_cache } from "next/cache";
 
@@ -10,12 +10,10 @@ export const dynamic = "force-dynamic";
 const siteURL = "https://analogdb.com";
 
 async function fetchIds(): Promise<number[]> {
-  const response = await authorized_fetch("/ids", "GET", 86400);
-  if (!response.ok) {
-    throw new Error(`Fail fetch post ids: ${response.status}`);
-  }
-  const data = await response.json();
-  return data.ids || [];
+  const response = await postsApi.idsGet({
+    next: { revalidate: 86400 },
+  } as RequestInit);
+  return response.ids || [];
 }
 
 const getCachedIds = unstable_cache(fetchIds, ["sitemap-ids"], {

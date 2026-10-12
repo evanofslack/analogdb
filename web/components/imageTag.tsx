@@ -14,15 +14,15 @@ import {
   IconMovie,
   IconUser,
 } from "@tabler/icons-react";
+import { AnalogdbPost, ServerSimilarPostsResponse } from "analogdb-generated";
 import Image from "next/image";
 import Link from "next/link";
-import { PagePost, SimilarPosts } from "./imagePage";
 import styles from "./imageTag.module.css";
 import Keywords from "./keywords";
 
 interface ImageTagProps {
-  post: PagePost;
-  similar: SimilarPosts;
+  post: AnalogdbPost;
+  similar: ServerSimilarPostsResponse;
   filmHref?: string | null;
   cameraHref?: string | null;
 }
@@ -43,26 +43,26 @@ export default function ImageTag(props: ImageTagProps) {
   });
 
   const cameraInfo =
-    post.camera_make && post.camera_model
-      ? `${post.camera_make}, ${post.camera_model}`
+    post.cameraMake && post.cameraModel
+      ? `${post.cameraMake}, ${post.cameraModel}`
       : null;
 
   const filmInfo =
-    post.film_make && post.film_type
-      ? `${post.film_make}, ${post.film_type}`
+    post.filmMake && post.filmType
+      ? `${post.filmMake}, ${post.filmType}`
       : null;
 
   const filmURL =
     props.filmHref ??
     `/?film_make=${encodeURIComponent(
-      post.film_make
-    )}&film_type=${encodeURIComponent(post.film_type)}`;
+      post.filmMake
+    )}&film_type=${encodeURIComponent(post.filmType)}`;
 
   const cameraURL =
     props.cameraHref ??
     `/?camera_make=${encodeURIComponent(
-      post.camera_make
-    )}&camera_model=${encodeURIComponent(post.camera_model)}`;
+      post.cameraMake
+    )}&camera_model=${encodeURIComponent(post.cameraModel)}`;
 
   let hexColors = new Array();
   post.colors.forEach(function (color) {
