@@ -153,8 +153,6 @@ export default function CatalogDetail({
           )}
         </div>
         <KeywordRow
-          words={undefined}
-          onSelect={undefined}
           links={links}
           label={relatedTitle ?? `more from ${entry.make.toUpperCase()}`}
           className={styles.relatedRow}
