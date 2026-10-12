@@ -11,24 +11,9 @@ import (
 )
 
 const (
-	hashesPath             = scrapePath + "/hashes"
-	hashesMissingPath      = hashesPath + "/missing"
 	duplicatesPath         = scrapePath + "/duplicates"
-	maxHashesPerPut        = 500
 	duplicatesWriteTimeout = 5 * time.Minute
 )
-
-type HashesMissingResponse struct {
-	Posts []analogdb.ImageHashMissing `json:"posts"`
-}
-
-type SetHashesRequest struct {
-	Hashes []analogdb.ImageHash `json:"hashes"`
-}
-
-type SetHashesResponse struct {
-	Updated int `json:"updated" example:"200"`
-}
 
 type DuplicatesResponse struct {
 	Duplicates []analogdb.DuplicatePost `json:"duplicates"`
@@ -39,68 +24,8 @@ type ReportDuplicatesResponse struct {
 	Reported   int                      `json:"reported" example:"12"`
 }
 
-// @Summary List posts missing an image hash
-// @Description List posts with no image hash and their low res image url, oldest id first (requires authentication)
-// @Tags scrape
-// @Produce json
-// @Success 200 {object} HashesMissingResponse
-// @Failure 401 {object} ErrorResponse "Unauthorized"
-// @Failure 403 {object} ErrorResponse "Forbidden"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Security BasicAuth
-// @Router /scrape/hashes/missing [get]
-func (s *Server) getHashMissingPosts(w http.ResponseWriter, r *http.Request) {
-	posts, err := s.ScrapeService.ImageHashMissingPosts(r.Context())
-	if err != nil {
-		s.writeError(w, r, err)
-		return
-	}
-	if err := encodeResponse(w, r, http.StatusOK, HashesMissingResponse{Posts: posts}); err != nil {
-		s.writeError(w, r, err)
-	}
-}
-
-// @Summary Set image hashes
-// @Description Store image hashes for up to 500 posts, without changing their updated time (requires authentication)
-// @Tags scrape
-// @Accept json
-// @Produce json
-// @Param hashes body SetHashesRequest true "Hashes as 16 hex characters"
-// @Success 200 {object} SetHashesResponse
-// @Failure 400 {object} ErrorResponse "Invalid request body"
-// @Failure 401 {object} ErrorResponse "Unauthorized"
-// @Failure 403 {object} ErrorResponse "Forbidden"
-// @Failure 500 {object} ErrorResponse "Internal server error"
-// @Security BasicAuth
-// @Router /scrape/hashes [put]
-func (s *Server) putImageHashes(w http.ResponseWriter, r *http.Request) {
-	var req SetHashesRequest
-	if err := s.decodeBody(w, r, &req, "parse hashes from request body"); err != nil {
-		s.writeError(w, r, err)
-		return
-	}
-	if len(req.Hashes) > maxHashesPerPut {
-		s.writeError(w, r, badRequest("too many hashes, max %d per request", maxHashesPerPut))
-		return
-	}
-	for _, h := range req.Hashes {
-		if _, err := analogdb.ParseImageHash(h.Hash); err != nil {
-			s.writeError(w, r, err)
-			return
-		}
-	}
-	updated, err := s.ScrapeService.SetImageHashes(r.Context(), req.Hashes)
-	if err != nil {
-		s.writeError(w, r, err)
-		return
-	}
-	if err := encodeResponse(w, r, http.StatusOK, SetHashesResponse{Updated: updated}); err != nil {
-		s.writeError(w, r, err)
-	}
-}
-
 // @Summary List duplicate posts
-// @Description List every post that duplicates an older post, paired with the oldest match. Exact hash matches count from any author, near matches only from the same author, and both need the same aspect ratio. Can take seconds (requires authentication)
+// @Description List every post that duplicates an older post, paired with the oldest match. Hashes within 2 bits match from any author and within 4 bits from the same author, with aspect ratios within 5%. Can take seconds (requires authentication)
 // @Tags scrape
 // @Produce json
 // @Success 200 {object} DuplicatesResponse

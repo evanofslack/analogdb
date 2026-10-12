@@ -9,61 +9,6 @@ import (
 	"github.com/lib/pq"
 )
 
-func (s *ScrapeService) ImageHashMissingPosts(ctx context.Context) ([]analogdb.ImageHashMissing, error) {
-	s.db.logger.DebugContext(ctx, "Start get image hash missing posts")
-	defer s.db.logger.DebugContext(ctx, "Finish get image hash missing posts")
-
-	rows, err := s.db.db.QueryContext(ctx, `SELECT id, lowurl FROM pictures WHERE image_hash IS NULL ORDER BY id ASC`)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	posts := make([]analogdb.ImageHashMissing, 0)
-	for rows.Next() {
-		var p analogdb.ImageHashMissing
-		if err := rows.Scan(&p.ID, &p.URL); err != nil {
-			return nil, err
-		}
-		p.URL = imageURL(s.db.imageBase, p.URL)
-		posts = append(posts, p)
-	}
-	return posts, rows.Err()
-}
-
-// SetImageHashes skips touchPost and post_updates, since a backfill over the
-// archive is not a change to the posts
-func (s *ScrapeService) SetImageHashes(ctx context.Context, hashes []analogdb.ImageHash) (int, error) {
-	s.db.logger.DebugContext(ctx, "Start set image hashes", "count", len(hashes))
-
-	ids := make([]int64, 0, len(hashes))
-	values := make([]int64, 0, len(hashes))
-	for _, h := range hashes {
-		value, err := analogdb.ParseImageHash(h.Hash)
-		if err != nil {
-			return 0, err
-		}
-		ids = append(ids, int64(h.ID))
-		values = append(values, value)
-	}
-
-	query := `
-		UPDATE pictures p SET image_hash = v.hash
-		FROM unnest($1::int[], $2::bigint[]) AS v(id, hash)
-		WHERE p.id = v.id`
-	result, err := s.db.db.ExecContext(ctx, query, pq.Array(ids), pq.Array(values))
-	if err != nil {
-		s.db.logger.ErrorContext(ctx, "Fail set image hashes", "error", err)
-		return 0, err
-	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-	s.db.logger.InfoContext(ctx, "Finish set image hashes", "count", affected)
-	return int(affected), nil
-}
-
 // FindImageMatch returns the oldest post the new image duplicates. A hash
 // with many near neighbours is a plain image, and matches nothing.
 func (s *ScrapeService) FindImageMatch(ctx context.Context, q analogdb.ImageMatchQuery) (analogdb.ImageMatch, bool, error) {

@@ -114,14 +114,6 @@ func (mockScrape) CaptionMissingPostIDs(ctx context.Context, version *string) ([
 	return []int{1}, nil
 }
 
-func (mockScrape) ImageHashMissingPosts(ctx context.Context) ([]analogdb.ImageHashMissing, error) {
-	return []analogdb.ImageHashMissing{}, nil
-}
-
-func (mockScrape) SetImageHashes(ctx context.Context, hashes []analogdb.ImageHash) (int, error) {
-	return len(hashes), nil
-}
-
 func (mockScrape) FindImageMatch(ctx context.Context, q analogdb.ImageMatchQuery) (analogdb.ImageMatch, bool, error) {
 	return analogdb.ImageMatch{}, false, nil
 }

@@ -6,19 +6,6 @@ import (
 	"strconv"
 )
 
-// ImageHashMissing is a post with no image hash and its low res image
-type ImageHashMissing struct {
-	ID  int    `json:"id" example:"9156"`
-	URL string `json:"url" example:"https://i.analogdb.com/low.jpeg"`
-}
-
-// ImageHash is a post's 64 bit dHash as 16 hex characters, kept as a string
-// since JSON numbers lose precision past 53 bits
-type ImageHash struct {
-	ID   int    `json:"id" example:"9156"`
-	Hash string `json:"image_hash" example:"c3a1f0e0d8b8b0f0"`
-}
-
 // DuplicatePost is a post whose image matches an older post
 type DuplicatePost struct {
 	KeepID       int    `json:"keep_id" example:"9156"`

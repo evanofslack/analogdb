@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -17,21 +16,11 @@ import (
 
 type mockHashScrape struct {
 	mockScrape
-	set        []analogdb.ImageHash
 	match      int
 	lookups    []analogdb.ImageMatchQuery
 	fail       bool
 	reportFail bool
 	reported   []analogdb.DuplicatePost
-}
-
-func (m *mockHashScrape) ImageHashMissingPosts(ctx context.Context) ([]analogdb.ImageHashMissing, error) {
-	return []analogdb.ImageHashMissing{{ID: 3, URL: "https://example.com/low3.jpg"}}, nil
-}
-
-func (m *mockHashScrape) SetImageHashes(ctx context.Context, hashes []analogdb.ImageHash) (int, error) {
-	m.set = append(m.set, hashes...)
-	return len(hashes), nil
 }
 
 func (m *mockHashScrape) FindImageMatch(ctx context.Context, q analogdb.ImageMatchQuery) (analogdb.ImageMatch, bool, error) {
@@ -54,62 +43,12 @@ func (m *mockHashScrape) ReportDuplicates(ctx context.Context, dupes []analogdb.
 	return len(dupes), nil
 }
 
-func bodyRequest(s *Server, method, path, body string, creds *pair) *httptest.ResponseRecorder {
-	r := httptest.NewRequest(method, path, strings.NewReader(body))
-	if creds != nil {
-		r.SetBasicAuth(creds.username, creds.password)
-	}
-	w := httptest.NewRecorder()
-	s.router.ServeHTTP(w, r)
-	return w
-}
-
-func TestImageHashRoutes(t *testing.T) {
+func TestDuplicateRoutes(t *testing.T) {
 	s := newRolesServer(t, &config.Config{})
 	mock := &mockHashScrape{}
 	s.ScrapeService = mock
 
-	w := roleRequest(s, http.MethodGet, "/v1/scrape/hashes/missing", &scraperPair, "")
-	if w.Code != http.StatusOK {
-		t.Fatalf("missing: want 200, got %d: %s", w.Code, w.Body.String())
-	}
-	var missing HashesMissingResponse
-	if err := json.NewDecoder(w.Body).Decode(&missing); err != nil {
-		t.Fatal(err)
-	}
-	if len(missing.Posts) != 1 || missing.Posts[0].ID != 3 || missing.Posts[0].URL == "" {
-		t.Errorf("unexpected missing posts %+v", missing.Posts)
-	}
-
-	w = bodyRequest(s, http.MethodPut, "/v1/scrape/hashes", `{"hashes":[{"id":1,"image_hash":"c3a1f0e0d8b8b0f0"},{"id":2,"image_hash":"ffffffffffffffff"}]}`, &scraperPair)
-	if w.Code != http.StatusOK {
-		t.Fatalf("put: want 200, got %d: %s", w.Code, w.Body.String())
-	}
-	var set SetHashesResponse
-	if err := json.NewDecoder(w.Body).Decode(&set); err != nil {
-		t.Fatal(err)
-	}
-	if set.Updated != 2 || len(mock.set) != 2 {
-		t.Errorf("want 2 hashes set, got %d and %v", set.Updated, mock.set)
-	}
-
-	mock.set = nil
-	if w := bodyRequest(s, http.MethodPut, "/v1/scrape/hashes", `{"hashes":[{"id":1,"image_hash":"c3a1f0e0d8b8b0f0"},{"id":2,"image_hash":"nothex"}]}`, &scraperPair); w.Code != http.StatusBadRequest {
-		t.Errorf("bad hash: want 400, got %d", w.Code)
-	}
-	if mock.set != nil {
-		t.Error("want no hashes set when one is invalid")
-	}
-
-	hashes := make([]string, maxHashesPerPut+1)
-	for i := range hashes {
-		hashes[i] = fmt.Sprintf(`{"id":%d,"image_hash":"0000000000000000"}`, i+1)
-	}
-	if w := bodyRequest(s, http.MethodPut, "/v1/scrape/hashes", `{"hashes":[`+strings.Join(hashes, ",")+`]}`, &scraperPair); w.Code != http.StatusBadRequest {
-		t.Errorf("too many: want 400, got %d", w.Code)
-	}
-
-	w = roleRequest(s, http.MethodGet, "/v1/scrape/duplicates", &scraperPair, "")
+	w := roleRequest(s, http.MethodGet, "/v1/scrape/duplicates", &scraperPair, "")
 	if w.Code != http.StatusOK {
 		t.Fatalf("duplicates: want 200, got %d: %s", w.Code, w.Body.String())
 	}
@@ -136,10 +75,8 @@ func TestImageHashRoutes(t *testing.T) {
 		t.Errorf("report duplicates: want 403 for web, got %d", w.Code)
 	}
 
-	for _, path := range []string{"/v1/scrape/hashes/missing", "/v1/scrape/duplicates"} {
-		if w := roleRequest(s, http.MethodGet, path, &webPair, ""); w.Code != http.StatusForbidden {
-			t.Errorf("%s: want 403 for web, got %d", path, w.Code)
-		}
+	if w := roleRequest(s, http.MethodGet, "/v1/scrape/duplicates", &webPair, ""); w.Code != http.StatusForbidden {
+		t.Errorf("duplicates: want 403 for web, got %d", w.Code)
 	}
 }
 
@@ -234,9 +171,9 @@ func TestDeletePostReason(t *testing.T) {
 	s.PostService = posts
 	s.SimilarityService = &mockDeleteVectors{}
 
-	w := roleRequest(s, http.MethodDelete, "/v1/post/36395?reason=duplicate+of+9156", &scraperPair, "")
+	w := roleRequest(s, http.MethodDelete, "/v1/post/36395?reason=duplicate+of+9156", &adminPair, "")
 	if w.Code != http.StatusOK {
-		t.Fatalf("want 200 for scraper, got %d: %s", w.Code, w.Body.String())
+		t.Fatalf("want 200 for admin, got %d: %s", w.Code, w.Body.String())
 	}
 	if got := posts.deleted[36395]; got != "duplicate of 9156" {
 		t.Errorf("want reason passed through, got %q", got)
@@ -250,7 +187,7 @@ func TestDeletePostReason(t *testing.T) {
 	}
 
 	long := strings.Repeat("a", maxDeleteReason+1)
-	if w := roleRequest(s, http.MethodDelete, "/v1/post/8?reason="+long, &scraperPair, ""); w.Code != http.StatusBadRequest {
+	if w := roleRequest(s, http.MethodDelete, "/v1/post/8?reason="+long, &adminPair, ""); w.Code != http.StatusBadRequest {
 		t.Errorf("long reason: want 400, got %d", w.Code)
 	}
 	if _, ok := posts.deleted[8]; ok {
