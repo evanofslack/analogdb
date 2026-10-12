@@ -13,7 +13,11 @@ import {
 import { IconAlertCircle } from "@tabler/icons-react";
 import styles from "./loginForm.module.css";
 
-export default function LoginForm(props) {
+interface LoginFormProps {
+  error?: string | string[];
+}
+
+export default function LoginForm(props: LoginFormProps) {
   let error = props.error;
   return (
     <div className={styles.main}>
