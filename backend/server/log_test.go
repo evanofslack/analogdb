@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/evanofslack/analogdb"
 	"github.com/evanofslack/analogdb/events"
 	v1 "github.com/evanofslack/analogdb/internal/gen/proto/analytics/v1"
 	"github.com/evanofslack/analogdb/logger"
@@ -111,4 +112,20 @@ func (mockScrape) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error) {
 
 func (mockScrape) CaptionMissingPostIDs(ctx context.Context, version *string) ([]int, error) {
 	return []int{1}, nil
+}
+
+func (mockScrape) ImageHashMissingPosts(ctx context.Context) ([]analogdb.ImageHashMissing, error) {
+	return []analogdb.ImageHashMissing{}, nil
+}
+
+func (mockScrape) SetImageHashes(ctx context.Context, hashes []analogdb.ImageHash) (int, error) {
+	return len(hashes), nil
+}
+
+func (mockScrape) FindImageMatch(ctx context.Context, hash int64, grayscale bool) (int, bool, error) {
+	return 0, false, nil
+}
+
+func (mockScrape) DuplicatePosts(ctx context.Context) ([]analogdb.DuplicatePost, error) {
+	return []analogdb.DuplicatePost{}, nil
 }
