@@ -178,6 +178,7 @@ definitions:
         - nsfw_mislabeled
         - wrong_info
         - not_film
+        - duplicate
         - other
         example: takedown
     type: object
@@ -472,6 +473,7 @@ definitions:
     - nsfw_mislabeled
     - wrong_info
     - not_film
+    - duplicate
     - other
     type: string
     x-enum-varnames:
@@ -479,6 +481,7 @@ definitions:
     - ReportNsfwMislabeled
     - ReportWrongInfo
     - ReportNotFilm
+    - ReportDuplicate
     - ReportOther
   server.CamerasResponse:
     properties:

@@ -2432,6 +2432,7 @@ const docTemplate = `{
                         "nsfw_mislabeled",
                         "wrong_info",
                         "not_film",
+                        "duplicate",
                         "other"
                     ],
                     "allOf": [
@@ -2848,6 +2849,7 @@ const docTemplate = `{
                 "nsfw_mislabeled",
                 "wrong_info",
                 "not_film",
+                "duplicate",
                 "other"
             ],
             "x-enum-varnames": [
@@ -2855,6 +2857,7 @@ const docTemplate = `{
                 "ReportNsfwMislabeled",
                 "ReportWrongInfo",
                 "ReportNotFilm",
+                "ReportDuplicate",
                 "ReportOther"
             ]
         },

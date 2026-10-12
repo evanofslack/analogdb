@@ -112,6 +112,7 @@ func TestCreateReport(t *testing.T) {
 	}{
 		{name: "takedown with email", path: "/v1/post/1/report", body: `{"reason": "takedown", "message": "  mine  ", "email": "me@example.com"}`, want: http.StatusCreated},
 		{name: "reason only", path: "/v1/post/1/report", body: `{"reason": "not_film"}`, want: http.StatusCreated},
+		{name: "duplicate", path: "/v1/post/1/report", body: `{"reason": "duplicate"}`, want: http.StatusCreated},
 		{name: "bad reason", path: "/v1/post/1/report", body: `{"reason": "spam"}`, want: http.StatusBadRequest},
 		{name: "no reason", path: "/v1/post/1/report", body: `{}`, want: http.StatusBadRequest},
 		{name: "long message", path: "/v1/post/1/report", body: `{"reason": "other", "message": "` + strings.Repeat("a", maxReportMessage+1) + `"}`, want: http.StatusBadRequest},
@@ -127,8 +128,8 @@ func TestCreateReport(t *testing.T) {
 		})
 	}
 
-	if len(reports.created) != 2 {
-		t.Fatalf("want 2 reports created, got %d", len(reports.created))
+	if len(reports.created) != 3 {
+		t.Fatalf("want 3 reports created, got %d", len(reports.created))
 	}
 	if got := reports.created[0]; got.PostID != 1 || got.Message != "mine" || got.Email != "me@example.com" {
 		t.Errorf("want trimmed report for post 1, got %+v", got)

@@ -14,6 +14,7 @@ const (
 	ReportNsfwMislabeled ReportReason = "nsfw_mislabeled"
 	ReportWrongInfo      ReportReason = "wrong_info"
 	ReportNotFilm        ReportReason = "not_film"
+	ReportDuplicate      ReportReason = "duplicate"
 	ReportOther          ReportReason = "other"
 )
 
@@ -22,6 +23,7 @@ var ReportReasons = []ReportReason{
 	ReportNsfwMislabeled,
 	ReportWrongInfo,
 	ReportNotFilm,
+	ReportDuplicate,
 	ReportOther,
 }
 
@@ -44,7 +46,7 @@ const (
 
 type CreateReport struct {
 	PostID  int          `json:"-"`
-	Reason  ReportReason `json:"reason" example:"takedown" enums:"takedown,nsfw_mislabeled,wrong_info,not_film,other"`
+	Reason  ReportReason `json:"reason" example:"takedown" enums:"takedown,nsfw_mislabeled,wrong_info,not_film,duplicate,other"`
 	Message string       `json:"message,omitempty" example:"This is my photo, please remove it"`
 	Email   string       `json:"email,omitempty" example:"me@example.com"`
 }

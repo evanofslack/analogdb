@@ -4,6 +4,7 @@ export const reportReasons = [
   { value: "nsfw_mislabeled", label: "This image is NSFW but marked as safe" },
   { value: "wrong_info", label: "The camera, film or other info is wrong" },
   { value: "not_film", label: "This is not a film photograph" },
+  { value: "duplicate", label: "This photo is already on AnalogDB" },
   { value: "other", label: "Something else" },
 ] as const;
 
