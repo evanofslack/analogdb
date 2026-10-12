@@ -20,6 +20,7 @@ interface InfiniteGalleryProps {
   isFetchNextPageError: boolean;
   fetchNextPage: () => unknown;
   refetch: () => unknown;
+  onClick?: (post: AnalogdbPost, position: number) => void;
 }
 
 export default function InfiniteGallery({
@@ -34,6 +35,7 @@ export default function InfiniteGallery({
   isFetchNextPageError,
   fetchNextPage,
   refetch,
+  onClick,
 }: InfiniteGalleryProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const postPages = useMemo(
@@ -105,7 +107,11 @@ export default function InfiniteGallery({
         </div>
       )}
       <div className={isPlaceholderData ? styles.dimmed : undefined}>
-        <Grid pages={postPages} initialColumns={initialColumns} />
+        <Grid
+          pages={postPages}
+          initialColumns={initialColumns}
+          onClick={onClick}
+        />
       </div>
       {hasNextPage && <div ref={sentinelRef} aria-hidden />}
       {isFetchingNextPage && (

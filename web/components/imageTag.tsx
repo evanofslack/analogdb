@@ -1,5 +1,6 @@
 "use client";
 
+import { setSearchSource, track } from "@lib/analytics";
 import { publicURL } from "@lib/constants";
 import { smallImage } from "@lib/images";
 import { postAlt } from "@lib/seo";
@@ -86,13 +87,28 @@ export default function ImageTag(props: ImageTagProps) {
               </Tooltip>
               <time dateTime={uploaded.toISOString()}>{date}</time>
             </div>
-            <a href={redditUserURL + author} className={styles.author}>
+            <a
+              href={redditUserURL + author}
+              className={styles.author}
+              onClick={() =>
+                track("outbound_click", {
+                  post_id: post.id,
+                  target: "reddit_user",
+                })
+              }
+            >
               <Tooltip label={"author"} position="bottom" color="gray">
                 <IconUser size={16} className={styles.icon} />
               </Tooltip>
               {author}
             </a>
-            <a href={post.permalink} className={styles.author}>
+            <a
+              href={post.permalink}
+              className={styles.author}
+              onClick={() =>
+                track("outbound_click", { post_id: post.id, target: "reddit" })
+              }
+            >
               <Tooltip label={"view on reddit"} position="bottom" color="gray">
                 <IconBrandReddit size={16} className={styles.icon} />
               </Tooltip>
@@ -162,13 +178,14 @@ export default function ImageTag(props: ImageTagProps) {
             <Link
               href={`/search?similar=${post.id}`}
               prefetch={false}
+              onClick={() => setSearchSource("post")}
               className={styles.findSimilar}
             >
               see more...
             </Link>
           </div>
           <div className={styles.similarContainer}>
-            {similarPosts.map((post) => {
+            {similarPosts.map((post, position) => {
               return (
                 <div key={post.id} className={styles.similarImage}>
                   <Link
@@ -176,6 +193,13 @@ export default function ImageTag(props: ImageTagProps) {
                     passHref={true}
                     key={post.id}
                     prefetch={false}
+                    onClick={() =>
+                      track("similar_click", {
+                        from_post_id: props.post.id,
+                        post_id: post.id,
+                        position,
+                      })
+                    }
                   >
                     <Image
                       key={post.id}

@@ -11,9 +11,14 @@ const priorityCount = 6;
 interface GridProps {
   pages: AnalogdbPost[][];
   initialColumns?: number;
+  onClick?: (post: AnalogdbPost, position: number) => void;
 }
 
-export default function Grid({ pages, initialColumns = 4 }: GridProps) {
+export default function Grid({
+  pages,
+  initialColumns = 4,
+  onClick,
+}: GridProps) {
   const [numColumn, setNumColumn] = useState(initialColumns);
 
   useEffect(() => {
@@ -47,6 +52,7 @@ export default function Grid({ pages, initialColumns = 4 }: GridProps) {
               key={post.id}
               post={post}
               priority={index < priorityCount}
+              onClick={onClick && (() => onClick(post, index))}
             />
           ))}
         </div>

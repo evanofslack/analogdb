@@ -7,6 +7,7 @@ import Link from "next/link";
 interface GridImageProps {
   post: AnalogdbPost;
   priority?: boolean;
+  onClick?: () => void;
 }
 
 export default function GridImage(props: GridImageProps) {
@@ -18,7 +19,12 @@ export default function GridImage(props: GridImageProps) {
   let image = smallImage(post.images);
 
   return (
-    <Link href={`/post/${post.id}`} passHref={true} prefetch={false}>
+    <Link
+      href={`/post/${post.id}`}
+      passHref={true}
+      prefetch={false}
+      onClick={props.onClick}
+    >
       <div>
         <Image
           src={image.url}
