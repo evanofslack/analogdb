@@ -21,13 +21,19 @@ from analogdb_generated.models.server_extractions_request import (
     ServerExtractionsRequest,
 )
 from analogdb_generated.models.server_post_response import ServerPostResponse
+from analogdb_generated.models.server_set_hashes_request import (
+    ServerSetHashesRequest,
+)
 from urllib3 import Retry
 
 from .models import (
     Camera,
     CameraCreate,
+    DuplicatePost,
     Film,
     FilmCreate,
+    ImageHash,
+    ImageHashMissing,
     Post,
     PostCreate,
     PostExtraction,
@@ -42,6 +48,8 @@ REQUEST_TIMEOUT = (10.0, 30.0)
 ENCODE_TIMEOUT = (10.0, 900.0)
 EXTRACTIONS_CHUNK = 200
 EXTRACTIONS_PAGE_SIZE = 500
+HASHES_CHUNK = 500
+DUPLICATE_MESSAGE = "duplicate of post"
 RETRIES = Retry(
     total=4,
     backoff_factor=1,
@@ -54,6 +62,7 @@ RETRIES = Retry(
 class Uploaded(str, Enum):
     CREATED = "created"
     EXISTS = "exists"
+    DUPLICATE = "duplicate"
 
 
 class Deleted(str, Enum):
@@ -142,6 +151,8 @@ class Client:
             self._call(self.post_api.post_post, post=post)
         except ApiException as e:
             if e.status == 409:
+                if DUPLICATE_MESSAGE in (e.body or ""):
+                    return Uploaded.DUPLICATE
                 return Uploaded.EXISTS
             raise
         return Uploaded.CREATED
@@ -176,6 +187,29 @@ class Client:
         """Ids of posts with no image vector, oldest first."""
         return self._call(self.scrape_api.scrape_vectors_missing_get).ids or []
 
+    def get_missing_hashes(self) -> List[ImageHashMissing]:
+        """Posts with no image hash and their low res image, oldest first."""
+        return self._call(self.scrape_api.scrape_hashes_missing_get).posts or []
+
+    def set_image_hashes(self, hashes: List[ImageHash]) -> int:
+        """Store image hashes in chunks, returning how many posts were written."""
+        written = 0
+        for start in range(0, len(hashes), HASHES_CHUNK):
+            chunk = hashes[start : start + HASHES_CHUNK]
+            resp = self._call(
+                self.scrape_api.scrape_hashes_put,
+                hashes=ServerSetHashesRequest(hashes=chunk),
+            )
+            written += resp.updated or 0
+        return written
+
+    def get_duplicates(self) -> List[DuplicatePost]:
+        """Every post whose image matches an older post, with the oldest match."""
+        return self._call(self.scrape_api.scrape_duplicates_get).duplicates or []
+
+    def delete_post(self, id: int, reason: Optional[str] = None) -> Deleted:
+        return self._delete(self.post_api.post_id_delete, id, reason=reason)
+
     def get_films(self) -> List[Film]:
         return self._call(self.films_api.films_get).films or []
 
@@ -194,10 +228,10 @@ class Client:
     def delete_camera(self, id: int) -> Deleted:
         return self._delete(self.camera_api.camera_id_delete, id)
 
-    def _delete(self, fn, id: int) -> Deleted:
-        """Delete a catalog entry. The API refuses one that posts still use."""
+    def _delete(self, fn, id: int, **kwargs: Any) -> Deleted:
+        """Delete by id. The API refuses a catalog entry that posts still use."""
         try:
-            self._call(fn, id)
+            self._call(fn, id, **kwargs)
         except ApiException as e:
             if e.status == 409:
                 return Deleted.IN_USE

@@ -358,6 +358,7 @@ def upload_posts(
     adb = analogdb.client()
     created = 0
     exists = 0
+    duplicate = 0
     failed = 0
     for id, p in final_posts.successful().items():
         try:
@@ -371,16 +372,25 @@ def upload_posts(
         if uploaded == Uploaded.EXISTS:
             exists += 1
             context.log.info(f"Post already exists, permalink={id}")
+        elif uploaded == Uploaded.DUPLICATE:
+            duplicate += 1
+            context.log.info(f"Post is a duplicate image, permalink={id}")
         else:
             created += 1
 
-    counts = {"created": created, "exists": exists, "failed": failed}
+    counts = {
+        "created": created,
+        "exists": exists,
+        "duplicate": duplicate,
+        "failed": failed,
+    }
     context.log.info(
-        f"Uploaded posts, created={created}, exists={exists}, failed={failed}"
+        f"Uploaded posts, created={created}, exists={exists}, "
+        f"duplicate={duplicate}, failed={failed}"
     )
     if failed > 0:
         raise dg.Failure(
-            description=f"Failed to upload {failed} of {created + exists + failed} posts",
+            description=f"Failed to upload {failed} of {sum(counts.values())} posts",
             metadata=counts,
         )
     return dg.MaterializeResult(metadata=counts)

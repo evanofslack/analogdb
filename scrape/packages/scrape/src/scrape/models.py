@@ -124,6 +124,7 @@ class PostImages:
     grayscale: bool
     width: int
     height: int
+    image_hash: Optional[str] = None
 
 
 @dataclass
@@ -150,6 +151,7 @@ class CreatePost:
     keywords: List[Keyword]
     colors: List[Color]
     caption: Optional[Caption] = None
+    image_hash: Optional[str] = None
 
 
 def new_post_create(
@@ -183,5 +185,6 @@ def new_post_create(
         keywords=keywords,
         colors=images.colors,
         caption=caption,
+        image_hash=images.image_hash,
     )
     return cp
