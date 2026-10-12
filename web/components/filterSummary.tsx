@@ -11,13 +11,28 @@ import {
 import Link from "next/link";
 import styles from "./filterSummary.module.css";
 
+export interface FilterSummaryItem {
+  key: string;
+  category: string;
+  value: string;
+  onRemove: () => void;
+}
+
+interface FilterSummaryProps {
+  count?: number | null;
+  pending?: boolean;
+  onClear: () => void;
+  items: FilterSummaryItem[];
+  apiUrl?: string;
+}
+
 export default function FilterSummary({
   count,
   pending,
   onClear,
   items,
   apiUrl,
-}) {
+}: FilterSummaryProps) {
   const clipboard = useClipboard({ timeout: 1500 });
 
   return (

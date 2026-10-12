@@ -1,13 +1,19 @@
 "use client";
 
+import { toColumns } from "@lib/masonry";
+import { AnalogdbPost } from "analogdb-generated";
 import { useEffect, useMemo, useState } from "react";
 import styles from "./grid.module.css";
 import GridImage from "./gridImage";
-import { toColumns } from "@lib/masonry";
 
 const priorityCount = 6;
 
-export default function Grid({ pages, initialColumns = 4 }) {
+interface GridProps {
+  pages: AnalogdbPost[][];
+  initialColumns?: number;
+}
+
+export default function Grid({ pages, initialColumns = 4 }: GridProps) {
   const [numColumn, setNumColumn] = useState(initialColumns);
 
   useEffect(() => {
