@@ -130,6 +130,11 @@ definitions:
       grayscale:
         example: false
         type: boolean
+      image_hash:
+        description: ImageHash is the 64 bit dHash of the low res image as 16 hex
+          characters
+        example: c3a1f0e0d8b8b0f0
+        type: string
       images:
         items:
           $ref: '#/definitions/analogdb.Image'
@@ -175,6 +180,24 @@ definitions:
         - not_film
         - other
         example: takedown
+    type: object
+  analogdb.DuplicatePost:
+    properties:
+      distance:
+        example: 0
+        type: integer
+      duplicate_id:
+        example: 36395
+        type: integer
+      duplicate_url:
+        example: https://d3i73ktnzbi69i.cloudfront.net/dupe.jpeg
+        type: string
+      keep_id:
+        example: 9156
+        type: integer
+      keep_url:
+        example: https://d3i73ktnzbi69i.cloudfront.net/keep.jpeg
+        type: string
     type: object
   analogdb.Film:
     properties:
@@ -227,6 +250,24 @@ definitions:
       width:
         example: 4800
         type: integer
+    type: object
+  analogdb.ImageHash:
+    properties:
+      id:
+        example: 9156
+        type: integer
+      image_hash:
+        example: c3a1f0e0d8b8b0f0
+        type: string
+    type: object
+  analogdb.ImageHashMissing:
+    properties:
+      id:
+        example: 9156
+        type: integer
+      url:
+        example: https://d3i73ktnzbi69i.cloudfront.net/low.jpeg
+        type: string
     type: object
   analogdb.Keyword:
     properties:
@@ -493,6 +534,13 @@ definitions:
         example: Success, post deleted
         type: string
     type: object
+  server.DuplicatesResponse:
+    properties:
+      duplicates:
+        items:
+          $ref: '#/definitions/analogdb.DuplicatePost'
+        type: array
+    type: object
   server.ErrorResponse:
     properties:
       error:
@@ -574,6 +622,13 @@ definitions:
       films:
         items:
           $ref: '#/definitions/analogdb.Film'
+        type: array
+    type: object
+  server.HashesMissingResponse:
+    properties:
+      posts:
+        items:
+          $ref: '#/definitions/analogdb.ImageHashMissing'
         type: array
     type: object
   server.IDsResponse:
@@ -689,6 +744,19 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  server.SetHashesRequest:
+    properties:
+      hashes:
+        items:
+          $ref: '#/definitions/analogdb.ImageHash'
+        type: array
+    type: object
+  server.SetHashesResponse:
+    properties:
+      updated:
+        example: 200
+        type: integer
     type: object
   server.SimilarPostsResponse:
     properties:
@@ -1522,7 +1590,8 @@ paths:
           schema:
             $ref: '#/definitions/server.ErrorResponse'
         "409":
-          description: Post with permalink already exists
+          description: Post with permalink already exists, or a duplicate image when
+            blocking is on
           schema:
             $ref: '#/definitions/server.ErrorResponse'
         "422":
@@ -1549,6 +1618,10 @@ paths:
         name: id
         required: true
         type: integer
+      - description: Why the post was removed, kept with its permalink
+        in: query
+        name: reason
+        type: string
       produces:
       - application/json
       responses:
@@ -1948,6 +2021,103 @@ paths:
       security:
       - BasicAuth: []
       summary: List posts missing a caption
+      tags:
+      - scrape
+  /scrape/duplicates:
+    get:
+      description: List every post whose image matches an older post, paired with
+        the oldest match (requires authentication)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.DuplicatesResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: List duplicate posts
+      tags:
+      - scrape
+  /scrape/hashes:
+    put:
+      consumes:
+      - application/json
+      description: Store image hashes for up to 500 posts, without changing their
+        updated time (requires authentication)
+      parameters:
+      - description: Hashes as 16 hex characters
+        in: body
+        name: hashes
+        required: true
+        schema:
+          $ref: '#/definitions/server.SetHashesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.SetHashesResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Set image hashes
+      tags:
+      - scrape
+  /scrape/hashes/missing:
+    get:
+      description: List posts with no image hash and their low res image url, oldest
+        id first (requires authentication)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.HashesMissingResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: List posts missing an image hash
       tags:
       - scrape
   /scrape/vectors/missing:

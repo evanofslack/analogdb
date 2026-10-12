@@ -47,6 +47,7 @@ type rawCreatePost struct {
 	filmSpeed   NullInt
 	focalLength NullInt
 	aperture    NullString
+	imageHash   NullInt
 }
 
 // rawPost corresponds to the columns as a post is selected from the DB
@@ -183,8 +184,8 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	query := `
 	INSERT INTO pictures
 
-    (url, title, author, permalink, description, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight, camera_make, camera_model, film_make, film_type, film_speed, focal_length, aperture)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
+    (url, title, author, permalink, description, score, nsfw, greyscale, time, width, height, sprocket, lowUrl, lowWidth, lowHeight, medUrl, medWidth, medHeight, highUrl, highWidth, highHeight, camera_make, camera_model, film_make, film_type, film_speed, focal_length, aperture, image_hash)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)
 	ON CONFLICT (permalink) DO NOTHING
 	RETURNING id, created, updated
 	`
@@ -226,7 +227,8 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		create.filmType.ToSQLNullString(),
 		create.filmSpeed.ToSQLNullInt64(),
 		create.focalLength.ToSQLNullInt64(),
-		create.aperture.ToSQLNullString()).Scan(&inserted.id, &inserted.created, &inserted.updated)
+		create.aperture.ToSQLNullString(),
+		create.imageHash.ToSQLNullInt64()).Scan(&inserted.id, &inserted.created, &inserted.updated)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, &analogdb.Error{Code: analogdb.ERRCONFLICT, Message: "post with permalink already exists"}
 	}
@@ -1285,6 +1287,13 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		filmSpeed:   NewNullIntFromPtr(p.FilmSpeed),
 		focalLength: NewNullIntFromPtr(p.FocalLength),
 		aperture:    NewNullStringFromPtr(p.Aperture),
+	}
+	if p.ImageHash != nil {
+		hash, err := analogdb.ParseImageHash(*p.ImageHash)
+		if err != nil {
+			return nil, err
+		}
+		post.imageHash = NewNullIntFromPtr(&hash)
 	}
 	return post, nil
 }

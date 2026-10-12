@@ -1184,7 +1184,7 @@ const docTemplate = `{
                         }
                     },
                     "409": {
-                        "description": "Post with permalink already exists",
+                        "description": "Post with permalink already exists, or a duplicate image when blocking is on",
                         "schema": {
                             "$ref": "#/definitions/server.ErrorResponse"
                         }
@@ -1277,6 +1277,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Why the post was removed, kept with its permalink",
+                        "name": "reason",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1820,6 +1826,155 @@ const docTemplate = `{
                 }
             }
         },
+        "/scrape/duplicates": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "List every post whose image matches an older post, paired with the oldest match (requires authentication)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scrape"
+                ],
+                "summary": "List duplicate posts",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.DuplicatesResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/scrape/hashes": {
+            "put": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Store image hashes for up to 500 posts, without changing their updated time (requires authentication)",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scrape"
+                ],
+                "summary": "Set image hashes",
+                "parameters": [
+                    {
+                        "description": "Hashes as 16 hex characters",
+                        "name": "hashes",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/server.SetHashesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.SetHashesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request body",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/scrape/hashes/missing": {
+            "get": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "List posts with no image hash and their low res image url, oldest id first (requires authentication)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scrape"
+                ],
+                "summary": "List posts missing an image hash",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.HashesMissingResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/scrape/vectors/missing": {
             "get": {
                 "security": [
@@ -2217,6 +2372,11 @@ const docTemplate = `{
                     "type": "boolean",
                     "example": false
                 },
+                "image_hash": {
+                    "description": "ImageHash is the 64 bit dHash of the low res image as 16 hex characters",
+                    "type": "string",
+                    "example": "c3a1f0e0d8b8b0f0"
+                },
                 "images": {
                     "type": "array",
                     "items": {
@@ -2280,6 +2440,31 @@ const docTemplate = `{
                         }
                     ],
                     "example": "takedown"
+                }
+            }
+        },
+        "analogdb.DuplicatePost": {
+            "type": "object",
+            "properties": {
+                "distance": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "duplicate_id": {
+                    "type": "integer",
+                    "example": 36395
+                },
+                "duplicate_url": {
+                    "type": "string",
+                    "example": "https://d3i73ktnzbi69i.cloudfront.net/dupe.jpeg"
+                },
+                "keep_id": {
+                    "type": "integer",
+                    "example": 9156
+                },
+                "keep_url": {
+                    "type": "string",
+                    "example": "https://d3i73ktnzbi69i.cloudfront.net/keep.jpeg"
                 }
             }
         },
@@ -2352,6 +2537,32 @@ const docTemplate = `{
                 "width": {
                     "type": "integer",
                     "example": 4800
+                }
+            }
+        },
+        "analogdb.ImageHash": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 9156
+                },
+                "image_hash": {
+                    "type": "string",
+                    "example": "c3a1f0e0d8b8b0f0"
+                }
+            }
+        },
+        "analogdb.ImageHashMissing": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 9156
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://d3i73ktnzbi69i.cloudfront.net/low.jpeg"
                 }
             }
         },
@@ -2728,6 +2939,17 @@ const docTemplate = `{
                 }
             }
         },
+        "server.DuplicatesResponse": {
+            "type": "object",
+            "properties": {
+                "duplicates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.DuplicatePost"
+                    }
+                }
+            }
+        },
         "server.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -2846,6 +3068,17 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/analogdb.Film"
+                    }
+                }
+            }
+        },
+        "server.HashesMissingResponse": {
+            "type": "object",
+            "properties": {
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.ImageHashMissing"
                     }
                 }
             }
@@ -3012,6 +3245,26 @@ const docTemplate = `{
                         "silhouette",
                         "dusk"
                     ]
+                }
+            }
+        },
+        "server.SetHashesRequest": {
+            "type": "object",
+            "properties": {
+                "hashes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.ImageHash"
+                    }
+                }
+            }
+        },
+        "server.SetHashesResponse": {
+            "type": "object",
+            "properties": {
+                "updated": {
+                    "type": "integer",
+                    "example": 200
                 }
             }
         },

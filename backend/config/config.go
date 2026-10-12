@@ -32,6 +32,8 @@ type App struct {
 	RateLimitWebPerMinute int `yaml:"rate_limit_web_per_minute" env:"RATE_LIMIT_WEB_PER_MINUTE" env-default:"10000"`
 	// RateLimitEventsPerMinute caps web event batches apart from the web cap, 0 turns it off
 	RateLimitEventsPerMinute int `yaml:"rate_limit_events_per_minute" env:"RATE_LIMIT_EVENTS_PER_MINUTE" env-default:"3000"`
+	// DuplicateBlock rejects new posts whose image matches an existing post, off only logs them
+	DuplicateBlock bool `yaml:"duplicate_block" env:"DUPLICATE_BLOCK"`
 }
 
 type DB struct {

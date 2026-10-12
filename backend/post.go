@@ -49,6 +49,8 @@ type CreatePost struct {
 	Colors      []Color      `json:"colors"`
 	Keywords    []Keyword    `json:"keywords"`
 	Caption     *PostCaption `json:"caption,omitempty"`
+	// ImageHash is the 64 bit dHash of the low res image as 16 hex characters
+	ImageHash *string `json:"image_hash,omitempty" example:"c3a1f0e0d8b8b0f0"`
 }
 
 // DisplayPost is the model for displaying a post.

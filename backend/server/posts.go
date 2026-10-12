@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
@@ -68,9 +70,10 @@ var defaultPostsSort = analogdb.PostSortTime
 const randomSeedPool = 500
 
 const (
-	postsPath = "/posts"
-	postPath  = "/post"
-	idsPath   = "/ids"
+	maxDeleteReason = 200
+	postsPath       = "/posts"
+	postPath        = "/post"
+	idsPath         = "/ids"
 )
 
 func (s *Server) mountPostHandlers(r chi.Router) {
@@ -81,7 +84,7 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 		r.Get("/{id}", s.findPost)
 		r.Get("/{id}/similar", s.getSimilarPosts)
 		r.With(s.reportLimit).Post("/{id}/report", s.createReport)
-		r.With(s.require()).Delete("/{id}", s.deletePost)
+		r.With(s.require(roleScraper)).Delete("/{id}", s.deletePost)
 		r.With(s.require(roleScraper)).Patch("/{id}", s.patchPost)
 		r.With(s.require(roleScraper)).Put("/", s.createPost)
 		r.With(s.require(roleScraper)).Post("/", s.createPost)
@@ -220,6 +223,7 @@ func (s *Server) findPost(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param id path int true "Post ID to delete"
+// @Param reason query string false "Why the post was removed, kept with its permalink"
 // @Success 200 {object} DeleteResponse
 // @Failure 400 {object} ErrorResponse "Invalid request body"
 // @Failure 404 {object} ErrorResponse "Not found"
@@ -244,7 +248,13 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.PostService.DeletePost(r.Context(), identify, ""); err != nil {
+	reason := strings.TrimSpace(r.URL.Query().Get("reason"))
+	if utf8.RuneCountInString(reason) > maxDeleteReason {
+		s.writeError(w, r, badRequest("reason is too long, max %d characters", maxDeleteReason))
+		return
+	}
+
+	if err := s.PostService.DeletePost(r.Context(), identify, reason); err != nil {
 		s.writeError(w, r, err)
 		return
 	}
@@ -272,7 +282,7 @@ func (s *Server) deletePost(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} ErrorResponse "Invalid request body"
 // @Failure 401 {object} ErrorResponse "Unauthorized"
 // @Failure 403 {object} ErrorResponse "Forbidden"
-// @Failure 409 {object} ErrorResponse "Post with permalink already exists"
+// @Failure 409 {object} ErrorResponse "Post with permalink already exists, or a duplicate image when blocking is on"
 // @Failure 422 {object} ErrorResponse "Unprocessable entity"
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Security BasicAuth
@@ -284,6 +294,10 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := validateCaption(createPost.Caption); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if err := s.checkDuplicate(r.Context(), &createPost); err != nil {
 		s.writeError(w, r, err)
 		return
 	}
