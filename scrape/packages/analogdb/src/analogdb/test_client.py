@@ -586,6 +586,30 @@ class TestImageHashes:
             (9156, 36395, 0)
         ]
 
+    def test_report_duplicates(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/scrape/duplicates/report",
+            method="POST",
+            headers={"Authorization": AUTH},
+        ).respond_with_json(
+            {
+                "duplicates": [
+                    {
+                        "keep_id": 9156,
+                        "duplicate_id": 36395,
+                        "distance": 0,
+                        "keep_url": "k",
+                        "duplicate_url": "d",
+                    }
+                ],
+                "reported": 1,
+            }
+        )
+
+        dupes, reported = client.report_duplicates()
+        assert [d.duplicate_id for d in dupes] == [36395]
+        assert reported == 1
+
     @pytest.mark.parametrize(
         "status,expected", [(200, Deleted.DELETED), (404, Deleted.MISSING)]
     )

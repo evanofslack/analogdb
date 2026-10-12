@@ -212,6 +212,14 @@ class Client:
         )
         return resp.duplicates or []
 
+    def report_duplicates(self) -> Tuple[List[DuplicatePost], int]:
+        """File a duplicate report on every duplicate post without an open one,
+        returning the duplicates and how many reports were filed."""
+        resp = self.scrape_api.scrape_duplicates_report_post(
+            _request_timeout=DUPLICATES_TIMEOUT
+        )
+        return resp.duplicates or [], resp.reported or 0
+
     def delete_post(self, id: int, reason: Optional[str] = None) -> Deleted:
         return self._delete(self.post_api.post_id_delete, id, reason=reason)
 

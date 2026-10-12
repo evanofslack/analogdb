@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -93,6 +94,45 @@ func TestScrapeService_ImageHashes(t *testing.T) {
 	}
 }
 
+// near returns base with two bits flipped, so near posts are 2 bits from base
+// and 4 bits from each other
+func near(t *testing.T, i int) int64 {
+	return flip(t, 0) ^ (3 << (8 + 2*i))
+}
+
+type hashedPost struct {
+	author        string
+	width, height int
+	time          int
+	hash          int64
+	grayscale     bool
+}
+
+func createHashedPost(t *testing.T, db *DB, p hashedPost) int {
+	t.Helper()
+	permalink := fmt.Sprintf("hashed_%d_%d", p.time, p.hash)
+	hash := analogdb.FormatImageHash(p.hash)
+	post, err := NewPostService(db).CreatePost(context.Background(), &analogdb.CreatePost{
+		Title:     "hashed",
+		Author:    p.author,
+		Permalink: permalink,
+		Time:      p.time,
+		Grayscale: p.grayscale,
+		Images: []analogdb.Image{
+			{Label: "low", Url: "http://example.com/" + permalink + "/low.jpg", Width: p.width / 10, Height: p.height / 10},
+			{Label: "medium", Url: "http://example.com/" + permalink + "/med.jpg"},
+			{Label: "high", Url: "http://example.com/" + permalink + "/high.jpg"},
+			{Label: "raw", Url: "http://example.com/" + permalink + "/raw.jpg", Width: p.width, Height: p.height},
+		},
+		Colors:    []analogdb.Color{{Hex: "#FF0000", Css: "red", Html: "red", Percent: 1}},
+		ImageHash: &hash,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return post.Id
+}
+
 func TestScrapeService_FindImageMatch(t *testing.T) {
 	db, cleanup := mustOpenWithSeed(t)
 	defer cleanup()
@@ -100,30 +140,40 @@ func TestScrapeService_FindImageMatch(t *testing.T) {
 	service := NewScrapeService(db)
 	ctx := context.Background()
 
-	if _, err := db.db.Exec(`UPDATE pictures SET image_hash = $1, greyscale = false WHERE id = 2`, flip(t, 0)); err != nil {
-		t.Fatal(err)
-	}
+	keep := createHashedPost(t, db, hashedPost{author: "u/a", width: 2000, height: 3000, time: 100, hash: flip(t, 0)})
 
 	tests := []struct {
-		name      string
-		hash      int64
-		grayscale bool
-		found     bool
+		name  string
+		query analogdb.ImageMatchQuery
+		found bool
 	}{
-		{"same hash", flip(t, 0), false, true},
-		{"3 bits off", flip(t, 3), false, true},
-		{"4 bits off", flip(t, 4), false, true},
-		{"5 bits off", flip(t, 5), false, false},
-		{"grayscale differs", flip(t, 0), true, false},
+		{"exact, other author", analogdb.ImageMatchQuery{Hash: flip(t, 0), Author: "u/b", Width: 1000, Height: 1500}, true},
+		{"1 bit, other author", analogdb.ImageMatchQuery{Hash: flip(t, 1), Author: "u/b", Width: 1000, Height: 1500}, false},
+		{"2 bits, same author", analogdb.ImageMatchQuery{Hash: flip(t, 2), Author: "u/a", Width: 1000, Height: 1500}, true},
+		{"3 bits, same author", analogdb.ImageMatchQuery{Hash: flip(t, 3), Author: "u/a", Width: 1000, Height: 1500}, false},
+		{"other aspect", analogdb.ImageMatchQuery{Hash: flip(t, 0), Author: "u/a", Width: 1000, Height: 1600}, false},
+		{"grayscale differs", analogdb.ImageMatchQuery{Hash: flip(t, 0), Grayscale: true, Author: "u/a", Width: 1000, Height: 1500}, false},
 	}
 	for _, tt := range tests {
-		id, found, err := service.FindImageMatch(ctx, tt.hash, tt.grayscale, 4)
+		match, found, err := service.FindImageMatch(ctx, tt.query)
 		if err != nil {
 			t.Fatalf("%s: FindImageMatch failed: %v", tt.name, err)
 		}
-		if found != tt.found || (found && id != 2) {
-			t.Errorf("%s: want found %v on post 2, got %v on post %d", tt.name, tt.found, found, id)
+		if found != tt.found || (found && match.ID != keep) {
+			t.Errorf("%s: want found %v on post %d, got %v on %+v", tt.name, tt.found, keep, found, match)
 		}
+	}
+
+	// a plain image lands near many posts, so an exact match is ignored
+	for i := range analogdb.DuplicateCrowdSize {
+		createHashedPost(t, db, hashedPost{author: "u/other", width: 2000, height: 3000, time: 200 + i, hash: near(t, i)})
+	}
+	_, found, err := service.FindImageMatch(ctx, tests[0].query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found {
+		t.Error("want no match on a crowded hash")
 	}
 }
 
@@ -134,7 +184,7 @@ func TestScrapeService_DuplicatePosts(t *testing.T) {
 	service := NewScrapeService(db)
 	ctx := context.Background()
 
-	dupes, err := service.DuplicatePosts(ctx, 4)
+	dupes, err := service.DuplicatePosts(ctx)
 	if err != nil {
 		t.Fatalf("DuplicatePosts failed: %v", err)
 	}
@@ -142,49 +192,71 @@ func TestScrapeService_DuplicatePosts(t *testing.T) {
 		t.Fatalf("want no duplicates without hashes, got %v", dupes)
 	}
 
-	// post 2 is the oldest copy, 1 and 3 are reposts at the same time
-	db.SetImageBase("https://img.test/")
-	if _, err := db.db.Exec(`UPDATE pictures SET greyscale = false, image_hash = $1, time = 100, lowurl = 'low2.jpg' WHERE id = 2`, flip(t, 0)); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := db.db.Exec(`UPDATE pictures SET greyscale = false, image_hash = $1, time = 200 WHERE id = 1`, flip(t, 2)); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := db.db.Exec(`UPDATE pictures SET greyscale = false, image_hash = $1, time = 200 WHERE id = 3`, flip(t, 0)); err != nil {
-		t.Fatal(err)
-	}
+	keep := createHashedPost(t, db, hashedPost{author: "u/a", width: 2000, height: 3000, time: 100, hash: flip(t, 0)})
+	repost := createHashedPost(t, db, hashedPost{author: "u/b", width: 1000, height: 1500, time: 200, hash: flip(t, 0)})
+	edit := createHashedPost(t, db, hashedPost{author: "u/a", width: 2000, height: 3000, time: 300, hash: flip(t, 2)})
+	createHashedPost(t, db, hashedPost{author: "u/c", width: 2000, height: 3000, time: 400, hash: flip(t, 1)})
+	createHashedPost(t, db, hashedPost{author: "u/a", width: 3000, height: 2000, time: 500, hash: flip(t, 0)})
+	createHashedPost(t, db, hashedPost{author: "u/a", width: 2000, height: 3000, time: 600, hash: flip(t, 0), grayscale: true})
 
-	dupes, err = service.DuplicatePosts(ctx, 4)
+	dupes, err = service.DuplicatePosts(ctx)
 	if err != nil {
 		t.Fatalf("DuplicatePosts failed: %v", err)
 	}
+	keepURL := fmt.Sprintf("http://example.com/hashed_100_%d/low.jpg", flip(t, 0))
 	want := []analogdb.DuplicatePost{
-		{KeepID: 2, DuplicateID: 1, Distance: 2, KeepURL: "https://img.test/low2.jpg", DuplicateURL: "https://example.com/low1.jpg"},
-		{KeepID: 2, DuplicateID: 3, Distance: 0, KeepURL: "https://img.test/low2.jpg", DuplicateURL: "https://example.com/low3.jpg"},
+		{KeepID: keep, DuplicateID: repost, Distance: 0, KeepURL: keepURL, DuplicateURL: fmt.Sprintf("http://example.com/hashed_200_%d/low.jpg", flip(t, 0))},
+		{KeepID: keep, DuplicateID: edit, Distance: 2, KeepURL: keepURL, DuplicateURL: fmt.Sprintf("http://example.com/hashed_300_%d/low.jpg", flip(t, 2))},
 	}
 	if !slices.Equal(dupes, want) {
 		t.Errorf("want %+v, got %+v", want, dupes)
 	}
 
-	// post 1 is 2 bits off, outside a 1 bit cutoff
-	dupes, err = service.DuplicatePosts(ctx, 1)
+	// once the original is crowded by plain images it keeps nothing
+	for i := range analogdb.DuplicateCrowdSize {
+		createHashedPost(t, db, hashedPost{author: "u/other", width: 2000, height: 3000, time: 1000 + i, hash: near(t, i)})
+	}
+	dupes, err = service.DuplicatePosts(ctx)
 	if err != nil {
 		t.Fatalf("DuplicatePosts failed: %v", err)
 	}
-	if len(dupes) != 1 || dupes[0].DuplicateID != 3 || dupes[0].DuplicateURL != "https://example.com/low3.jpg" {
-		t.Errorf("want only post 3 within 1 bit, got %+v", dupes)
+	if len(dupes) != 0 {
+		t.Errorf("want no duplicates of a crowded post, got %+v", dupes)
 	}
+}
 
-	// a black and white copy is not a duplicate of the colour original
-	if _, err := db.db.Exec(`UPDATE pictures SET greyscale = true WHERE id = 3`); err != nil {
+func TestScrapeService_ReportDuplicates(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	service := NewScrapeService(db)
+	ctx := context.Background()
+
+	dupes := []analogdb.DuplicatePost{{KeepID: 1, DuplicateID: 2, Distance: 0}, {KeepID: 1, DuplicateID: 99999, Distance: 1}}
+	reported, err := service.ReportDuplicates(ctx, dupes)
+	if err != nil {
+		t.Fatalf("ReportDuplicates failed: %v", err)
+	}
+	if reported != 1 {
+		t.Fatalf("want 1 report for the live post, got %d", reported)
+	}
+	var reason, message string
+	if err := db.db.QueryRow(`SELECT reason, message FROM post_reports WHERE post_id = 2`).Scan(&reason, &message); err != nil {
 		t.Fatal(err)
 	}
-	dupes, err = service.DuplicatePosts(ctx, 4)
-	if err != nil {
-		t.Fatalf("DuplicatePosts failed: %v", err)
+	if reason != "duplicate" || message != "duplicate of post 1, 0 bits apart" {
+		t.Errorf("unexpected report %q %q", reason, message)
 	}
-	if len(dupes) != 1 || dupes[0].DuplicateID != 1 {
-		t.Errorf("want only post 1 as a duplicate, got %+v", dupes)
+
+	if reported, err = service.ReportDuplicates(ctx, dupes); err != nil || reported != 0 {
+		t.Errorf("want no second open report, got %d, %v", reported, err)
+	}
+
+	if _, err := db.db.Exec(`UPDATE post_reports SET resolved_at = NOW() WHERE post_id = 2`); err != nil {
+		t.Fatal(err)
+	}
+	if reported, err = service.ReportDuplicates(ctx, dupes); err != nil || reported != 1 {
+		t.Errorf("want a new report once the old one is resolved, got %d, %v", reported, err)
 	}
 }
 

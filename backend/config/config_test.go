@@ -75,27 +75,27 @@ func TestAuthValidate(t *testing.T) {
 	}
 }
 
-func TestDuplicateMaxBits(t *testing.T) {
+func TestDuplicateMode(t *testing.T) {
 	cfg, err := New("config.yml")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.App.DuplicateMaxBits != 4 {
-		t.Errorf("want default 4, got %d", cfg.App.DuplicateMaxBits)
+	if cfg.App.DuplicateMode != DuplicateReport {
+		t.Errorf("want default report, got %q", cfg.App.DuplicateMode)
 	}
 
-	t.Setenv("DUPLICATE_MAX_BITS", "2")
+	t.Setenv("DUPLICATE_MODE", "block")
 	cfg, err = New("config.yml")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.App.DuplicateMaxBits != 2 {
-		t.Errorf("want 2 from env, got %d", cfg.App.DuplicateMaxBits)
+	if cfg.App.DuplicateMode != DuplicateBlock {
+		t.Errorf("want block from env, got %q", cfg.App.DuplicateMode)
 	}
 
-	for bits, ok := range map[int]bool{-1: false, 0: true, 64: true, 65: false} {
-		if err := (App{DuplicateMaxBits: bits}).Validate(); (err == nil) != ok {
-			t.Errorf("%d bits: want ok %v, got %v", bits, ok, err)
+	for mode, ok := range map[string]bool{"off": true, "log": true, "report": true, "block": true, "delete": false, "": false} {
+		if err := (App{DuplicateMode: mode}).Validate(); (err == nil) != ok {
+			t.Errorf("%q: want ok %v, got %v", mode, ok, err)
 		}
 	}
 }

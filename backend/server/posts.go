@@ -297,7 +297,8 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 		s.writeError(w, r, err)
 		return
 	}
-	if err := s.checkDuplicate(r.Context(), &createPost); err != nil {
+	match, err := s.checkDuplicate(r.Context(), &createPost)
+	if err != nil {
 		s.writeError(w, r, err)
 		return
 	}
@@ -310,6 +311,7 @@ func (s *Server) createPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.encodePost(r, created.Id, "Fail encode created post")
+	s.reportDuplicate(r.Context(), match, created.Id)
 
 	createdResponse := CreatePostResponse{
 		Message: "Success, post created",
