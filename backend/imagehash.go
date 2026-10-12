@@ -8,7 +8,7 @@ import (
 // ImageHashMissing is a post with no image hash and its low res image
 type ImageHashMissing struct {
 	ID  int    `json:"id" example:"9156"`
-	URL string `json:"url" example:"https://d3i73ktnzbi69i.cloudfront.net/low.jpeg"`
+	URL string `json:"url" example:"https://i.analogdb.com/low.jpeg"`
 }
 
 // ImageHash is a post's 64 bit dHash as 16 hex characters, kept as a string
@@ -23,8 +23,8 @@ type DuplicatePost struct {
 	KeepID       int    `json:"keep_id" example:"9156"`
 	DuplicateID  int    `json:"duplicate_id" example:"36395"`
 	Distance     int    `json:"distance" example:"0"`
-	KeepURL      string `json:"keep_url" example:"https://d3i73ktnzbi69i.cloudfront.net/keep.jpeg"`
-	DuplicateURL string `json:"duplicate_url" example:"https://d3i73ktnzbi69i.cloudfront.net/dupe.jpeg"`
+	KeepURL      string `json:"keep_url" example:"https://i.analogdb.com/keep.jpeg"`
+	DuplicateURL string `json:"duplicate_url" example:"https://i.analogdb.com/dupe.jpeg"`
 }
 
 // ParseImageHash reads 16 hex characters into the signed value stored in

@@ -2456,7 +2456,7 @@ const docTemplate = `{
                 },
                 "duplicate_url": {
                     "type": "string",
-                    "example": "https://d3i73ktnzbi69i.cloudfront.net/dupe.jpeg"
+                    "example": "https://i.analogdb.com/dupe.jpeg"
                 },
                 "keep_id": {
                     "type": "integer",
@@ -2464,7 +2464,7 @@ const docTemplate = `{
                 },
                 "keep_url": {
                     "type": "string",
-                    "example": "https://d3i73ktnzbi69i.cloudfront.net/keep.jpeg"
+                    "example": "https://i.analogdb.com/keep.jpeg"
                 }
             }
         },
@@ -2532,7 +2532,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://cloudfront.net/1.jpeg"
+                    "example": "https://i.analogdb.com/1.jpeg"
                 },
                 "width": {
                     "type": "integer",
@@ -2562,7 +2562,7 @@ const docTemplate = `{
                 },
                 "url": {
                     "type": "string",
-                    "example": "https://d3i73ktnzbi69i.cloudfront.net/low.jpeg"
+                    "example": "https://i.analogdb.com/low.jpeg"
                 }
             }
         },
