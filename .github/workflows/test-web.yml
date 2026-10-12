@@ -1,0 +1,44 @@
+name: test-web
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "api/swagger.yaml"
+      - "justfile"
+      - ".github/workflows/test-web.yml"
+  pull_request:
+    paths:
+      - "web/**"
+      - "api/swagger.yaml"
+      - "justfile"
+      - ".github/workflows/test-web.yml"
+
+jobs:
+  test-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install openapi-generator
+        run: npm install -g @openapitools/openapi-generator-cli
+
+      - name: Setup just
+        uses: extractions/setup-just@v2
+
+      - name: Generate typescript client
+        run: just gen-client-typescript
+
+      - name: Typecheck
+        working-directory: web
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: web
+        run: npm run lint
