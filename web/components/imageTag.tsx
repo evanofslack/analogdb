@@ -15,10 +15,18 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
+import { PagePost, SimilarPosts } from "./imagePage";
 import styles from "./imageTag.module.css";
 import Keywords from "./keywords";
 
-export default function ImageTag(props) {
+interface ImageTagProps {
+  post: PagePost;
+  similar: SimilarPosts;
+  filmHref?: string | null;
+  cameraHref?: string | null;
+}
+
+export default function ImageTag(props: ImageTagProps) {
   const clipboard = useClipboard({ timeout: 1000 });
 
   let post = props.post;
@@ -60,7 +68,7 @@ export default function ImageTag(props) {
     hexColors.push(color.hex);
   });
 
-  const color = (hex) => {
+  const color = (hex: string) => {
     return {
       backgroundColor: hex,
     };
@@ -137,7 +145,11 @@ export default function ImageTag(props) {
               })}
             </div>
             <Keywords
-              keywords={Object.hasOwn(post, "keywords") ? post.keywords : []}
+              keywords={
+                Object.prototype.hasOwnProperty.call(post, "keywords")
+                  ? post.keywords
+                  : []
+              }
               maxKeywords={15}
             />
           </div>
