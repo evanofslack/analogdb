@@ -93,6 +93,7 @@ def dupe(keep: int, duplicate: int) -> adb.DuplicatePost:
         keep_id=keep,
         duplicate_id=duplicate,
         distance=0,
+        same_author=True,
         keep_url=f"https://x/low{keep}.jpg",
         duplicate_url=f"https://x/low{duplicate}.jpg",
     )
@@ -130,6 +131,7 @@ class TestReportDuplicates:
         table = result.metadata["pairs"].value
         assert "[36395](https://analogdb.com/post/36395)" in table
         assert "dry run" in table
+        assert "| 0 | same |" in table
 
     def test_reports_without_deleting(self):
         client = report_client()

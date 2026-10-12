@@ -105,14 +105,15 @@ def _duplicates_table(dupes: Sequence[adb.DuplicatePost], result: str) -> str:
     if not dupes:
         return "None."
     lines = [
-        "| keep | duplicate | distance | images | result |",
-        "|---|---|---|---|---|",
+        "| keep | duplicate | distance | author | images | result |",
+        "|---|---|---|---|---|---|",
     ]
     for d in dupes:
         lines.append(
             f"| [{d.keep_id}]({POST_URL}/{d.keep_id}) "
             f"| [{d.duplicate_id}]({POST_URL}/{d.duplicate_id}) "
             f"| {d.distance} "
+            f"| {'same' if d.same_author else 'other'} "
             f"| [keep]({d.keep_url}) [duplicate]({d.duplicate_url}) "
             f"| {result} |"
         )

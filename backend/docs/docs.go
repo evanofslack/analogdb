@@ -2509,6 +2509,10 @@ const docTemplate = `{
                 "keep_url": {
                     "type": "string",
                     "example": "https://i.analogdb.com/keep.jpeg"
+                },
+                "same_author": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },

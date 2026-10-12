@@ -24,18 +24,21 @@ type DuplicatePost struct {
 	KeepID       int    `json:"keep_id" example:"9156"`
 	DuplicateID  int    `json:"duplicate_id" example:"36395"`
 	Distance     int    `json:"distance" example:"0"`
+	SameAuthor   bool   `json:"same_author" example:"true"`
 	KeepURL      string `json:"keep_url" example:"https://i.analogdb.com/keep.jpeg"`
 	DuplicateURL string `json:"duplicate_url" example:"https://i.analogdb.com/dupe.jpeg"`
 }
 
 // The duplicate rule, tuned against a hand check of 584 pairs within 4 bits.
-// Matches at 0 bits were all real, while 3 and 4 bits were mostly different
-// photos unless posted by the same author. Plain images such as fog or sky
-// land near many others, and a hash with that many neighbours is ignored.
+// Matches up to 2 bits were mostly real, while 3 and 4 bits were mostly
+// different photos unless posted by the same author. Every match is reported
+// for a person to check, so the rule catches nearly all reposts and accepts
+// about one false report in four. Plain images such as fog or sky land near
+// many others, and a hash with that many neighbours is ignored.
 const (
-	DuplicateAnyAuthorBits   = 0
-	DuplicateSameAuthorBits  = 2
-	DuplicateAspectTolerance = 0.03
+	DuplicateAnyAuthorBits   = 2
+	DuplicateSameAuthorBits  = 4
+	DuplicateAspectTolerance = 0.05
 	DuplicateCrowdBits       = 4
 	DuplicateCrowdSize       = 8
 )
@@ -59,8 +62,9 @@ type ImageMatchQuery struct {
 
 // ImageMatch is the oldest existing post a new post duplicates
 type ImageMatch struct {
-	ID       int
-	Distance int
+	ID         int
+	Distance   int
+	SameAuthor bool
 }
 
 // IsDuplicateImage applies the duplicate rule to two posts whose hashes are
@@ -79,9 +83,18 @@ func IsDuplicateImage(keep, dup ImageFacts, distance int) bool {
 	return distance <= DuplicateSameAuthorBits && keep.Author == dup.Author
 }
 
-// DuplicateReportMessage is the message on a report filed for a duplicate
-func DuplicateReportMessage(keepID, distance int) string {
-	return fmt.Sprintf("duplicate of post %d, %d bits apart", keepID, distance)
+// DuplicateReportMessage is the message on a report filed for a duplicate,
+// such as "duplicate of post 9156, 1 bit apart, other author"
+func DuplicateReportMessage(d DuplicatePost) string {
+	bits := "bits"
+	if d.Distance == 1 {
+		bits = "bit"
+	}
+	author := "other author"
+	if d.SameAuthor {
+		author = "same author"
+	}
+	return fmt.Sprintf("duplicate of post %d, %d %s apart, %s", d.KeepID, d.Distance, bits, author)
 }
 
 // ParseImageHash reads 16 hex characters into the signed value stored in

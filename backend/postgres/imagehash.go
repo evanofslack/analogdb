@@ -102,7 +102,7 @@ func (s *ScrapeService) FindImageMatch(ctx context.Context, q analogdb.ImageMatc
 	post := analogdb.ImageFacts{Author: q.Author, Width: q.Width, Height: q.Height}
 	for _, c := range candidates {
 		if analogdb.IsDuplicateImage(c.facts, post, c.distance) {
-			return analogdb.ImageMatch{ID: c.facts.ID, Distance: c.distance}, true, nil
+			return analogdb.ImageMatch{ID: c.facts.ID, Distance: c.distance, SameAuthor: c.facts.Author == post.Author}, true, nil
 		}
 	}
 	return analogdb.ImageMatch{}, false, nil
@@ -152,6 +152,7 @@ func (s *ScrapeService) DuplicatePosts(ctx context.Context) ([]analogdb.Duplicat
 			KeepID:       p.keep,
 			DuplicateID:  p.dup,
 			Distance:     p.distance,
+			SameAuthor:   keep.Author == dup.Author,
 			KeepURL:      keep.url,
 			DuplicateURL: dup.url,
 		})
@@ -235,7 +236,7 @@ func (s *ScrapeService) ReportDuplicates(ctx context.Context, dupes []analogdb.D
 	messages := make([]string, 0, len(dupes))
 	for _, d := range dupes {
 		ids = append(ids, int64(d.DuplicateID))
-		messages = append(messages, analogdb.DuplicateReportMessage(d.KeepID, d.Distance))
+		messages = append(messages, analogdb.DuplicateReportMessage(d))
 	}
 
 	query := `
