@@ -2,12 +2,13 @@ import { getCameraOptions } from "@lib/data/cameras";
 import { getFilmOptions } from "@lib/data/films";
 import { getFirstPosts } from "@lib/data/posts";
 import { firstPageSize, guessColumns, slim } from "@lib/firstPage";
-import { postsParsers, toPostsRequest } from "@lib/searchParams";
+import { PostsFilters, postsParsers, toPostsRequest } from "@lib/searchParams";
 import { isValidSeed, pickSeed } from "@lib/seed";
 import { jsonLd } from "@lib/seo";
+import { Metadata } from "next";
 import { headers } from "next/headers";
 import { userAgent } from "next/server";
-import { createLoader } from "nuqs/server";
+import { createLoader, SearchParams } from "nuqs/server";
 import HomePage from "./home-page";
 
 const loadPosts = createLoader(postsParsers);
@@ -16,7 +17,7 @@ const title = "AnalogDB: film photography database and API";
 const description =
   "Thousands of film photographs from Reddit, searchable by camera, film stock and color, with a free open API.";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: { absolute: title },
   description,
   alternates: { canonical: "/" },
@@ -35,7 +36,7 @@ const website = {
   },
 };
 
-async function loadFirstPage(filters) {
+async function loadFirstPage(filters: PostsFilters) {
   try {
     const response = await getFirstPosts({
       ...toPostsRequest(filters),
@@ -47,7 +48,11 @@ async function loadFirstPage(filters) {
   }
 }
 
-export default async function Page({ searchParams }) {
+interface PageProps {
+  searchParams: Promise<SearchParams>;
+}
+
+export default async function Page({ searchParams }: PageProps) {
   let filters = loadPosts(await searchParams);
   if (filters.sort === "random" && !isValidSeed(filters.seed)) {
     filters = { ...filters, seed: pickSeed() };
