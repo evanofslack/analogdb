@@ -1,4 +1,5 @@
 import CatalogDetail from "@components/catalogDetail";
+import { CatalogKind } from "@lib/catalog";
 import {
   detailJsonLd,
   detailMetadata,
@@ -6,17 +7,25 @@ import {
   loadDetail,
 } from "@lib/catalogPage";
 import { jsonLd } from "@lib/seo";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-const kind = "cameras";
+const kind: CatalogKind = "cameras";
 
-export async function generateMetadata({ params }) {
+type PageProps = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const { entry } = await getEntry(kind, slug);
   return detailMetadata(kind, entry);
 }
 
-export default async function Page({ params, searchParams }) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { slug } = await params;
   const { list, entry } = await getEntry(kind, slug);
   if (!entry) notFound();

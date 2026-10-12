@@ -1,6 +1,12 @@
 "use client";
 
-import { catalogHref, catalogName } from "@lib/catalog";
+import {
+  CatalogEntry,
+  CatalogGroup,
+  catalogHref,
+  CatalogKind,
+  catalogName,
+} from "@lib/catalog";
 import { catalogFilterParsers } from "@lib/searchParams";
 import { TextInput } from "@mantine/core";
 import { IconSearch } from "@tabler/icons-react";
@@ -13,7 +19,15 @@ import ScrollTop from "./scrollTop";
 
 const priorityCount = 8;
 
-function matches(entry, query) {
+interface CatalogIndexProps {
+  kind: CatalogKind;
+  title: string;
+  intro: string;
+  placeholder: string;
+  groups: CatalogGroup[];
+}
+
+function matches(entry: CatalogEntry, query: string) {
   return catalogName(entry).toLowerCase().includes(query);
 }
 
@@ -23,7 +37,7 @@ export default function CatalogIndex({
   intro,
   placeholder,
   groups,
-}) {
+}: CatalogIndexProps) {
   const [{ q: query }, setFilter] = useQueryStates(catalogFilterParsers);
   const needle = query.trim().toLowerCase();
 

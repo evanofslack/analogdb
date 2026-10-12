@@ -1,9 +1,23 @@
-import { catalogName } from "@lib/catalog";
+import { CatalogEntry, catalogName } from "@lib/catalog";
 import Link from "next/link";
 import styles from "./catalogCard.module.css";
 import ResponsiveImage from "./responsiveImage";
 
-export default function CatalogCard({ entry, href, priority, label, alt }) {
+interface CatalogCardProps {
+  entry: CatalogEntry;
+  href: string;
+  priority?: boolean;
+  label?: string;
+  alt?: string;
+}
+
+export default function CatalogCard({
+  entry,
+  href,
+  priority,
+  label,
+  alt,
+}: CatalogCardProps) {
   const name = label ?? catalogName(entry);
   return (
     <Link href={href} prefetch={false} className={styles.card}>
