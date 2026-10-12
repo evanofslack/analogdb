@@ -41,10 +41,9 @@ from .backfill import (
     reencode_post_vectors,
     rematch_post_metadata,
 )
-from .duplicates import backfill_image_hashes, report_duplicates
+from .duplicates import report_duplicates
 from .jobs import (
     backfill_captions_job,
-    backfill_image_hashes_job,
     backfill_metadata_job,
     patch_comments_job,
     patch_descriptions_job,
@@ -73,7 +72,6 @@ from .schedules import (
 
 defs = dg.Definitions(
     assets=[
-        backfill_image_hashes,
         backfill_post_captions,
         backfill_post_metadata,
         prune_catalog,
@@ -140,7 +138,6 @@ defs = dg.Definitions(
         backfill_captions_job,
         backfill_metadata_job,
         reencode_vectors_job,
-        backfill_image_hashes_job,
         report_duplicates_job,
         rematch_metadata_job,
         scrape_job,

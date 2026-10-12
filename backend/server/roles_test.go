@@ -116,6 +116,7 @@ func TestRequireRoles(t *testing.T) {
 		{name: "anonymous delete", method: http.MethodDelete, path: "/v1/post/1", want: http.StatusUnauthorized},
 		{name: "wrong password delete", method: http.MethodDelete, path: "/v1/post/1", creds: &wrongPasswordPair, want: http.StatusUnauthorized},
 		{name: "web delete", method: http.MethodDelete, path: "/v1/post/1", creds: &webPair, want: http.StatusForbidden},
+		{name: "scraper delete", method: http.MethodDelete, path: "/v1/post/1", creds: &scraperPair, want: http.StatusForbidden},
 		{name: "web patch", method: http.MethodPatch, path: "/v1/post/1", creds: &webPair, want: http.StatusForbidden},
 		{name: "web scrape route", method: http.MethodGet, path: "/v1/scrape/vectors/missing", creds: &webPair, want: http.StatusForbidden},
 		{name: "scraper extractions", method: http.MethodGet, path: "/v1/admin/extractions", creds: &scraperPair, want: http.StatusOK},

@@ -21,9 +21,6 @@ from analogdb_generated.models.server_extractions_request import (
     ServerExtractionsRequest,
 )
 from analogdb_generated.models.server_post_response import ServerPostResponse
-from analogdb_generated.models.server_set_hashes_request import (
-    ServerSetHashesRequest,
-)
 from urllib3 import Retry
 
 from .models import (
@@ -32,8 +29,6 @@ from .models import (
     DuplicatePost,
     Film,
     FilmCreate,
-    ImageHash,
-    ImageHashMissing,
     Post,
     PostCreate,
     PostExtraction,
@@ -49,7 +44,6 @@ ENCODE_TIMEOUT = (10.0, 900.0)
 DUPLICATES_TIMEOUT = (10.0, 300.0)
 EXTRACTIONS_CHUNK = 200
 EXTRACTIONS_PAGE_SIZE = 500
-HASHES_CHUNK = 500
 DUPLICATE_MESSAGE = "duplicate of post"
 RETRIES = Retry(
     total=4,
@@ -188,22 +182,6 @@ class Client:
         """Ids of posts with no image vector, oldest first."""
         return self._call(self.scrape_api.scrape_vectors_missing_get).ids or []
 
-    def get_missing_hashes(self) -> List[ImageHashMissing]:
-        """Posts with no image hash and their low res image, oldest first."""
-        return self._call(self.scrape_api.scrape_hashes_missing_get).posts or []
-
-    def set_image_hashes(self, hashes: List[ImageHash]) -> int:
-        """Store image hashes in chunks, returning how many posts were written."""
-        written = 0
-        for start in range(0, len(hashes), HASHES_CHUNK):
-            chunk = hashes[start : start + HASHES_CHUNK]
-            resp = self._call(
-                self.scrape_api.scrape_hashes_put,
-                hashes=ServerSetHashesRequest(hashes=chunk),
-            )
-            written += resp.updated or 0
-        return written
-
     def get_duplicates(self) -> List[DuplicatePost]:
         """Every post whose image matches an older post, with the oldest match.
         The route compares every pair of posts and has 5 minutes per request."""
@@ -219,9 +197,6 @@ class Client:
             _request_timeout=DUPLICATES_TIMEOUT
         )
         return resp.duplicates or [], resp.reported or 0
-
-    def delete_post(self, id: int, reason: Optional[str] = None) -> Deleted:
-        return self._delete(self.post_api.post_id_delete, id, reason=reason)
 
     def get_films(self) -> List[Film]:
         return self._call(self.films_api.films_get).films or []

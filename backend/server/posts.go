@@ -84,7 +84,7 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 		r.Get("/{id}", s.findPost)
 		r.Get("/{id}/similar", s.getSimilarPosts)
 		r.With(s.reportLimit).Post("/{id}/report", s.createReport)
-		r.With(s.require(roleScraper)).Delete("/{id}", s.deletePost)
+		r.With(s.require()).Delete("/{id}", s.deletePost)
 		r.With(s.require(roleScraper)).Patch("/{id}", s.patchPost)
 		r.With(s.require(roleScraper)).Put("/", s.createPost)
 		r.With(s.require(roleScraper)).Post("/", s.createPost)

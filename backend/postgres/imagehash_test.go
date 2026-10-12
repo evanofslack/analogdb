@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/evanofslack/analogdb"
 )
@@ -21,77 +20,6 @@ func flip(t *testing.T, n int) int64 {
 		t.Fatal(err)
 	}
 	return h ^ (1<<n - 1)
-}
-
-func TestScrapeService_ImageHashes(t *testing.T) {
-	db, cleanup := mustOpenWithSeed(t)
-	defer cleanup()
-
-	service := NewScrapeService(db)
-	ctx := context.Background()
-
-	missingIDs := func() []int {
-		t.Helper()
-		posts, err := service.ImageHashMissingPosts(ctx)
-		if err != nil {
-			t.Fatalf("ImageHashMissingPosts failed: %v", err)
-		}
-		ids := []int{}
-		for _, p := range posts {
-			if p.URL == "" {
-				t.Errorf("want low url for post %d", p.ID)
-			}
-			ids = append(ids, p.ID)
-		}
-		return ids
-	}
-	if got := missingIDs(); !slices.Equal(got, []int{1, 2, 3}) {
-		t.Fatalf("want all seed posts missing, got %v", got)
-	}
-
-	var before time.Time
-	var updatesBefore int
-	if err := db.db.QueryRow(`SELECT updated, (SELECT count(*) FROM post_updates) FROM pictures WHERE id = 1`).Scan(&before, &updatesBefore); err != nil {
-		t.Fatal(err)
-	}
-
-	n, err := service.SetImageHashes(ctx, []analogdb.ImageHash{
-		{ID: 1, Hash: base},
-		{ID: 2, Hash: "0000000000000000"},
-		{ID: 999, Hash: base},
-	})
-	if err != nil {
-		t.Fatalf("SetImageHashes failed: %v", err)
-	}
-	if n != 2 {
-		t.Errorf("want 2 posts written, got %d", n)
-	}
-	if got := missingIDs(); !slices.Equal(got, []int{3}) {
-		t.Errorf("want only post 3 missing, got %v", got)
-	}
-
-	var after time.Time
-	var stored int64
-	var updates int
-	if err := db.db.QueryRow(`SELECT updated, image_hash FROM pictures WHERE id = 1`).Scan(&after, &stored); err != nil {
-		t.Fatal(err)
-	}
-	if !after.Equal(before) {
-		t.Errorf("want updated unchanged, was %v, now %v", before, after)
-	}
-	if got := analogdb.FormatImageHash(stored); got != base {
-		t.Errorf("want stored hash %s, got %s", base, got)
-	}
-	if err := db.db.QueryRow(`SELECT count(*) FROM post_updates`).Scan(&updates); err != nil {
-		t.Fatal(err)
-	}
-	if updates != updatesBefore {
-		t.Errorf("want no new post_updates rows, had %d, now %d", updatesBefore, updates)
-	}
-
-	if _, err := service.SetImageHashes(ctx, []analogdb.ImageHash{{ID: 3, Hash: "bad"}}); analogdb.ErrorCode(err) != analogdb.ERRBADREQUEST {
-		t.Errorf("want bad request for a bad hash, got %v", err)
-	}
 }
 
 // near returns base with two bits flipped, so near posts are 2 bits from base

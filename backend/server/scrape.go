@@ -37,11 +37,6 @@ func (s *Server) mountScrapeHandlers(r chi.Router) {
 	r.Route(vectorsMissingPath, func(r chi.Router) {
 		r.With(s.require(roleScraper)).Get("/", s.getVectorMissingPosts)
 	})
-	r.Route(hashesPath, func(r chi.Router) {
-		r.Use(s.require(roleScraper))
-		r.Put("/", s.putImageHashes)
-		r.Get("/missing", s.getHashMissingPosts)
-	})
 	r.Route(duplicatesPath, func(r chi.Router) {
 		r.Use(s.require(roleScraper))
 		r.Get("/", s.getDuplicatePosts)
