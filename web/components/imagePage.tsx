@@ -6,6 +6,12 @@ import Header from "@components/header";
 import ImageTag from "@components/imageTag";
 import ReportModal from "@components/reportModal";
 import useIsAdmin from "@hooks/useIsAdmin";
+import {
+  currentSearchId,
+  EventMap,
+  previousRoute,
+  track,
+} from "@lib/analytics";
 import { postAlt } from "@lib/seo";
 import { ActionIcon, Tooltip } from "@mantine/core";
 import {
@@ -15,7 +21,7 @@ import {
 } from "analogdb-generated";
 import { type ImageProps } from "next/image";
 import { useRouter } from "next/navigation";
-import { CSSProperties, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import { IconType } from "react-icons";
 import {
   AiOutlineArrowsAlt,
@@ -100,7 +106,41 @@ function colorPlaceholder(
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
+type PostFrom = EventMap["post_view"]["from"];
+
+function postFrom(searchId: string): PostFrom {
+  const route = previousRoute();
+  if (route === "/search" && searchId) return "search";
+  if (route === "/") return "gallery";
+  if (route === "/post/[id]") return "similar";
+  if (route.startsWith("/films/") || route.startsWith("/cameras/")) {
+    return "catalog";
+  }
+  if (route === "/search/keyword/[word]") return "keyword";
+  return "direct";
+}
+
+function trackPostView(id: number) {
+  const searchId = currentSearchId();
+  const from = postFrom(searchId);
+  if (from === "search") {
+    track(
+      "post_view",
+      { from, post_id: id, search_id: searchId },
+      { postId: id, searchId }
+    );
+  } else {
+    track("post_view", { from, post_id: id }, { postId: id });
+  }
+}
+
 async function downloadImage(id: number) {
+  const searchId = currentSearchId();
+  track(
+    "post_download",
+    searchId ? { post_id: id, search_id: searchId } : { post_id: id },
+    { postId: id, searchId }
+  );
   try {
     const link = document.createElement("a");
     link.href = `/api/download/${id}`;
@@ -143,13 +183,23 @@ export default function ImagePage(props: ImagePageProps) {
   const [reporting, setReporting] = useState(false);
   let image = post.images[2];
 
+  useEffect(() => {
+    trackPostView(post.id);
+  }, [post.id]);
+
   const actions = [
     {
       label: "download",
       icon: AiOutlineDownload,
       onClick: () => downloadImage(post.id),
     },
-    { label: "fullscreen", icon: AiOutlineArrowsAlt, href: post.images[3].url },
+    {
+      label: "fullscreen",
+      icon: AiOutlineArrowsAlt,
+      href: post.images[3].url,
+      onClick: () =>
+        track("outbound_click", { post_id: post.id, target: "original" }),
+    },
     { label: "report", icon: AiOutlineFlag, onClick: () => setReporting(true) },
     {
       label: "edit",
