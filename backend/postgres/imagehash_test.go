@@ -117,7 +117,7 @@ func TestScrapeService_FindImageMatch(t *testing.T) {
 		{"grayscale differs", flip(t, 0), true, false},
 	}
 	for _, tt := range tests {
-		id, found, err := service.FindImageMatch(ctx, tt.hash, tt.grayscale)
+		id, found, err := service.FindImageMatch(ctx, tt.hash, tt.grayscale, 4)
 		if err != nil {
 			t.Fatalf("%s: FindImageMatch failed: %v", tt.name, err)
 		}
@@ -134,7 +134,7 @@ func TestScrapeService_DuplicatePosts(t *testing.T) {
 	service := NewScrapeService(db)
 	ctx := context.Background()
 
-	dupes, err := service.DuplicatePosts(ctx)
+	dupes, err := service.DuplicatePosts(ctx, 4)
 	if err != nil {
 		t.Fatalf("DuplicatePosts failed: %v", err)
 	}
@@ -143,7 +143,8 @@ func TestScrapeService_DuplicatePosts(t *testing.T) {
 	}
 
 	// post 2 is the oldest copy, 1 and 3 are reposts at the same time
-	if _, err := db.db.Exec(`UPDATE pictures SET greyscale = false, image_hash = $1, time = 100 WHERE id = 2`, flip(t, 0)); err != nil {
+	db.SetImageBase("https://img.test/")
+	if _, err := db.db.Exec(`UPDATE pictures SET greyscale = false, image_hash = $1, time = 100, lowurl = 'low2.jpg' WHERE id = 2`, flip(t, 0)); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := db.db.Exec(`UPDATE pictures SET greyscale = false, image_hash = $1, time = 200 WHERE id = 1`, flip(t, 2)); err != nil {
@@ -153,23 +154,32 @@ func TestScrapeService_DuplicatePosts(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	dupes, err = service.DuplicatePosts(ctx)
+	dupes, err = service.DuplicatePosts(ctx, 4)
 	if err != nil {
 		t.Fatalf("DuplicatePosts failed: %v", err)
 	}
 	want := []analogdb.DuplicatePost{
-		{KeepID: 2, DuplicateID: 1, Distance: 2, KeepURL: "https://example.com/low2.jpg", DuplicateURL: "https://example.com/low1.jpg"},
-		{KeepID: 2, DuplicateID: 3, Distance: 0, KeepURL: "https://example.com/low2.jpg", DuplicateURL: "https://example.com/low3.jpg"},
+		{KeepID: 2, DuplicateID: 1, Distance: 2, KeepURL: "https://img.test/low2.jpg", DuplicateURL: "https://example.com/low1.jpg"},
+		{KeepID: 2, DuplicateID: 3, Distance: 0, KeepURL: "https://img.test/low2.jpg", DuplicateURL: "https://example.com/low3.jpg"},
 	}
 	if !slices.Equal(dupes, want) {
 		t.Errorf("want %+v, got %+v", want, dupes)
+	}
+
+	// post 1 is 2 bits off, outside a 1 bit cutoff
+	dupes, err = service.DuplicatePosts(ctx, 1)
+	if err != nil {
+		t.Fatalf("DuplicatePosts failed: %v", err)
+	}
+	if len(dupes) != 1 || dupes[0].DuplicateID != 3 || dupes[0].DuplicateURL != "https://example.com/low3.jpg" {
+		t.Errorf("want only post 3 within 1 bit, got %+v", dupes)
 	}
 
 	// a black and white copy is not a duplicate of the colour original
 	if _, err := db.db.Exec(`UPDATE pictures SET greyscale = true WHERE id = 3`); err != nil {
 		t.Fatal(err)
 	}
-	dupes, err = service.DuplicatePosts(ctx)
+	dupes, err = service.DuplicatePosts(ctx, 4)
 	if err != nil {
 		t.Fatalf("DuplicatePosts failed: %v", err)
 	}

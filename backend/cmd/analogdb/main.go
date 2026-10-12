@@ -49,6 +49,10 @@ func main() {
 	}
 	logger.Info("Initializing application", "version", cfg.App.Version, "env", cfg.App.Env, "loglevel", cfg.Log.Level)
 
+	if err := cfg.App.Validate(); err != nil {
+		fatal(logger, err)
+	}
+
 	warnings, err := cfg.Auth.Validate()
 	if err != nil {
 		fatal(logger, err)

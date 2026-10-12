@@ -1833,7 +1833,7 @@ const docTemplate = `{
                         "BasicAuth": []
                     }
                 ],
-                "description": "List every post whose image matches an older post, paired with the oldest match (requires authentication)",
+                "description": "List every post whose image hash is within DUPLICATE_MAX_BITS of an older post, paired with the oldest match. Can take seconds (requires authentication)",
                 "produces": [
                     "application/json"
                 ],

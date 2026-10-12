@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
@@ -21,6 +22,7 @@ type mockHashScrape struct {
 	match   int
 	lookups int
 	fail    bool
+	maxBits []int
 }
 
 func (m *mockHashScrape) ImageHashMissingPosts(ctx context.Context) ([]analogdb.ImageHashMissing, error) {
@@ -32,15 +34,17 @@ func (m *mockHashScrape) SetImageHashes(ctx context.Context, hashes []analogdb.I
 	return len(hashes), nil
 }
 
-func (m *mockHashScrape) FindImageMatch(ctx context.Context, hash int64, grayscale bool) (int, bool, error) {
+func (m *mockHashScrape) FindImageMatch(ctx context.Context, hash int64, grayscale bool, maxBits int) (int, bool, error) {
 	m.lookups++
+	m.maxBits = append(m.maxBits, maxBits)
 	if m.fail {
 		return 0, false, errors.New("lookup failed")
 	}
 	return m.match, m.match != 0, nil
 }
 
-func (m *mockHashScrape) DuplicatePosts(ctx context.Context) ([]analogdb.DuplicatePost, error) {
+func (m *mockHashScrape) DuplicatePosts(ctx context.Context, maxBits int) ([]analogdb.DuplicatePost, error) {
+	m.maxBits = append(m.maxBits, maxBits)
 	return []analogdb.DuplicatePost{{KeepID: 9156, DuplicateID: 36395}}, nil
 }
 
@@ -55,7 +59,9 @@ func bodyRequest(s *Server, method, path, body string, creds *pair) *httptest.Re
 }
 
 func TestImageHashRoutes(t *testing.T) {
-	s := newRolesServer(t, &config.Config{})
+	cfg := &config.Config{}
+	cfg.App.DuplicateMaxBits = 2
+	s := newRolesServer(t, cfg)
 	mock := &mockHashScrape{}
 	s.ScrapeService = mock
 
@@ -110,6 +116,9 @@ func TestImageHashRoutes(t *testing.T) {
 	if len(dupes.Duplicates) != 1 || dupes.Duplicates[0].KeepID != 9156 || dupes.Duplicates[0].DuplicateID != 36395 {
 		t.Errorf("unexpected duplicates %+v", dupes.Duplicates)
 	}
+	if !slices.Equal(mock.maxBits, []int{2}) {
+		t.Errorf("want max bits 2 from config, got %v", mock.maxBits)
+	}
 
 	for _, path := range []string{"/v1/scrape/hashes/missing", "/v1/scrape/duplicates"} {
 		if w := roleRequest(s, http.MethodGet, path, &webPair, ""); w.Code != http.StatusForbidden {
@@ -139,6 +148,7 @@ func TestCreatePostDuplicate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &config.Config{}
 			cfg.App.DuplicateBlock = tt.block
+			cfg.App.DuplicateMaxBits = 3
 			s := newTestServer(t, cfg)
 			posts := &mockPostService{}
 			scrape := &mockHashScrape{match: tt.match, fail: tt.fail}
@@ -158,6 +168,9 @@ func TestCreatePostDuplicate(t *testing.T) {
 			}
 			if scrape.lookups != tt.lookups {
 				t.Errorf("want %d lookups, got %d", tt.lookups, scrape.lookups)
+			}
+			if tt.lookups > 0 && scrape.maxBits[0] != 3 {
+				t.Errorf("want max bits 3 from config, got %v", scrape.maxBits)
 			}
 			created := tt.want == http.StatusCreated
 			if got := len(posts.created) == 1; got != created {

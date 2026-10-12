@@ -46,6 +46,7 @@ DEFAULT_SORT = "time"
 USER_AGENT = f"analogdb-scraper/{version('analogdb')}"
 REQUEST_TIMEOUT = (10.0, 30.0)
 ENCODE_TIMEOUT = (10.0, 900.0)
+DUPLICATES_TIMEOUT = (10.0, 300.0)
 EXTRACTIONS_CHUNK = 200
 EXTRACTIONS_PAGE_SIZE = 500
 HASHES_CHUNK = 500
@@ -204,8 +205,12 @@ class Client:
         return written
 
     def get_duplicates(self) -> List[DuplicatePost]:
-        """Every post whose image matches an older post, with the oldest match."""
-        return self._call(self.scrape_api.scrape_duplicates_get).duplicates or []
+        """Every post whose image matches an older post, with the oldest match.
+        The route compares every pair of posts and has 5 minutes per request."""
+        resp = self.scrape_api.scrape_duplicates_get(
+            _request_timeout=DUPLICATES_TIMEOUT
+        )
+        return resp.duplicates or []
 
     def delete_post(self, id: int, reason: Optional[str] = None) -> Deleted:
         return self._delete(self.post_api.post_id_delete, id, reason=reason)
