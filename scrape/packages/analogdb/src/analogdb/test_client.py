@@ -10,7 +10,7 @@ from urllib3 import Retry
 from urllib3.exceptions import HTTPError
 from werkzeug import Request, Response
 
-from .client import REQUEST_TIMEOUT, Client, Deleted, Uploaded
+from .client import DUPLICATES_TIMEOUT, REQUEST_TIMEOUT, Client, Deleted, Uploaded
 from .models import (
     CameraCreate,
     FilmCreate,
@@ -355,6 +355,21 @@ class TestTimeout:
             release.set()
 
         assert time.monotonic() - start < 2
+
+    def test_duplicates_outlast_default_timeout(self, httpserver: HTTPServer):
+        def handler(request: Request):
+            time.sleep(0.5)
+            return Response(json.dumps({"duplicates": []}), mimetype="application/json")
+
+        httpserver.expect_request("/v1/scrape/duplicates").respond_with_handler(handler)
+        client = Client(
+            base_url=httpserver.url_for("").rstrip("/"),
+            timeout=(1.0, 0.2),
+            retries=Retry(0),
+        )
+
+        assert client.get_duplicates() == []
+        assert DUPLICATES_TIMEOUT == (10.0, 300.0)
 
 
 def extraction(post_id: int) -> PostExtraction:

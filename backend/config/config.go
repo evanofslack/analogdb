@@ -36,6 +36,16 @@ type App struct {
 	DuplicateBlock bool `yaml:"duplicate_block" env:"DUPLICATE_BLOCK"`
 	// ImageBaseURL is where stored image keys are served from
 	ImageBaseURL string `yaml:"image_base_url" env:"IMAGE_BASE_URL" env-default:"https://i.analogdb.com"`
+	// DuplicateMaxBits is how many of the 64 image hash bits two posts may differ by and
+	// still count as the same photo. Reposts measure 0, different photos 19+
+	DuplicateMaxBits int `yaml:"duplicate_max_bits" env:"DUPLICATE_MAX_BITS" env-default:"4"`
+}
+
+func (a App) Validate() error {
+	if a.DuplicateMaxBits < 0 || a.DuplicateMaxBits > 64 {
+		return fmt.Errorf("app: duplicate max bits must be 0 to 64, got %d", a.DuplicateMaxBits)
+	}
+	return nil
 }
 
 type DB struct {

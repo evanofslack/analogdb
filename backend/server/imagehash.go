@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/evanofslack/analogdb"
 )
 
 const (
-	hashesPath        = scrapePath + "/hashes"
-	hashesMissingPath = hashesPath + "/missing"
-	duplicatesPath    = scrapePath + "/duplicates"
-	maxHashesPerPut   = 500
+	hashesPath             = scrapePath + "/hashes"
+	hashesMissingPath      = hashesPath + "/missing"
+	duplicatesPath         = scrapePath + "/duplicates"
+	maxHashesPerPut        = 500
+	duplicatesWriteTimeout = 5 * time.Minute
 )
 
 type HashesMissingResponse struct {
@@ -92,7 +94,7 @@ func (s *Server) putImageHashes(w http.ResponseWriter, r *http.Request) {
 }
 
 // @Summary List duplicate posts
-// @Description List every post whose image matches an older post, paired with the oldest match (requires authentication)
+// @Description List every post whose image hash is within DUPLICATE_MAX_BITS of an older post, paired with the oldest match. Can take seconds (requires authentication)
 // @Tags scrape
 // @Produce json
 // @Success 200 {object} DuplicatesResponse
@@ -102,7 +104,11 @@ func (s *Server) putImageHashes(w http.ResponseWriter, r *http.Request) {
 // @Security BasicAuth
 // @Router /scrape/duplicates [get]
 func (s *Server) getDuplicatePosts(w http.ResponseWriter, r *http.Request) {
-	dupes, err := s.ScrapeService.DuplicatePosts(r.Context())
+	if err := http.NewResponseController(w).SetWriteDeadline(time.Now().Add(duplicatesWriteTimeout)); err != nil {
+		s.logger.WarnContext(r.Context(), "Fail extend write deadline for duplicates", "error", err)
+	}
+
+	dupes, err := s.ScrapeService.DuplicatePosts(r.Context(), s.config.App.DuplicateMaxBits)
 	if err != nil {
 		s.writeError(w, r, err)
 		return
@@ -123,7 +129,7 @@ func (s *Server) checkDuplicate(ctx context.Context, post *analogdb.CreatePost) 
 	if err != nil {
 		return err
 	}
-	id, found, err := s.ScrapeService.FindImageMatch(ctx, hash, post.Grayscale)
+	id, found, err := s.ScrapeService.FindImageMatch(ctx, hash, post.Grayscale, s.config.App.DuplicateMaxBits)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "Fail find duplicate post", "permalink", post.Permalink, "error", err)
 		return nil
