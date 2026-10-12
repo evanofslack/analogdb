@@ -1,8 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 const threshold = 8;
 
-const useScrollUp = (ref, { paused = false } = {}) => {
+interface ScrollUpOptions {
+  paused?: boolean;
+}
+
+const useScrollUp = (
+  ref: RefObject<HTMLElement | null>,
+  { paused = false }: ScrollUpOptions = {}
+) => {
   const [shown, setShown] = useState(false);
   const pausedRef = useRef(paused);
   pausedRef.current = paused;
@@ -12,7 +19,7 @@ const useScrollUp = (ref, { paused = false } = {}) => {
       document.documentElement.scrollHeight - window.innerHeight;
     const position = () => Math.min(Math.max(window.scrollY, 0), max());
     let last = position();
-    let frame = null;
+    let frame: number | null = null;
 
     const update = () => {
       frame = null;
