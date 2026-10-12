@@ -279,8 +279,8 @@ function AnalyticsBody({ analytics }: { analytics: Analytics }) {
   const current = derived(analytics.summary.current);
   const previous = derived(analytics.summary.previous);
   const [pages, referrers, sources, campaigns, devices, browsers] =
-    topTables.map((t) => (
-      <ViewsTable key={t.key} {...t} rows={analytics.top[t.key]} />
+    topTables.map(({ key, ...t }) => (
+      <ViewsTable key={key} {...t} rows={analytics.top[key]} />
     ));
   return (
     <>

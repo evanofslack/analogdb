@@ -73,7 +73,6 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   return (
     <CatalogDetail
-      kind={undefined}
       entry={entry}
       {...detail}
       title={keywordLabel(entry.make)}
