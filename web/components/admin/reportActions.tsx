@@ -1,22 +1,38 @@
 "use client";
 
-import { dismissReport, takedownReportedPost } from "@app/actions/admin";
+import {
+  ActionResult,
+  dismissReport,
+  takedownReportedPost,
+} from "@app/actions/admin";
 import { Button, Group } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import EditPostButton from "./editPostButton";
 
-export default function ReportActions({ reportId, postId, removed, resolved }) {
-  const router = useRouter();
-  const [pending, setPending] = useState(null);
-  const [error, setError] = useState(null);
+interface ReportActionsProps {
+  reportId: number;
+  postId: number;
+  removed: boolean;
+  resolved: boolean;
+}
 
-  async function act(name, action) {
+export default function ReportActions({
+  reportId,
+  postId,
+  removed,
+  resolved,
+}: ReportActionsProps) {
+  const router = useRouter();
+  const [pending, setPending] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function act(name: string, action: () => Promise<ActionResult>) {
     setPending(name);
     setError(null);
     const result = await action();
     setPending(null);
-    if (!result.ok) {
+    if (result.ok === false) {
       setError(result.error);
       return;
     }

@@ -1,6 +1,9 @@
 "use client";
 
 import { loadCatalogOptions, updatePost } from "@app/actions/admin";
+import { EditablePost, PostPatch } from "@lib/adminClient";
+import { CameraOption } from "@lib/data/cameras";
+import { FilmOption } from "@lib/data/films";
 import {
   Alert,
   Autocomplete,
@@ -14,7 +17,7 @@ import {
   Textarea,
   TextInput,
 } from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const textKeys = [
   "description",
@@ -23,27 +26,42 @@ const textKeys = [
   "film_make",
   "film_type",
   "aperture",
-];
-const numberKeys = ["film_speed", "focal_length"];
-const boolKeys = ["nsfw", "grayscale", "sprocket"];
+] as const;
+const numberKeys = ["film_speed", "focal_length"] as const;
+const boolKeys = ["nsfw", "grayscale", "sprocket"] as const;
 
 const numberLabels = { film_speed: "Film speed", focal_length: "Focal length" };
 
-function initialValues(post) {
-  const values = {};
+type TextKey = (typeof textKeys)[number];
+type NumberKey = (typeof numberKeys)[number];
+type BoolKey = (typeof boolKeys)[number];
+
+type EditorValues = Record<TextKey, string> &
+  Record<NumberKey, number | string> &
+  Record<BoolKey, boolean>;
+
+type EditorPatch = PostPatch & Record<string, unknown>;
+
+type EditorPost = Partial<EditablePost> & Pick<EditablePost, "id">;
+
+function initialValues(post: EditorPost): EditorValues {
+  const values = {} as EditorValues;
   for (const key of textKeys) values[key] = post[key] ?? "";
   for (const key of numberKeys) values[key] = post[key] ?? "";
   for (const key of boolKeys) values[key] = !!post[key];
   return values;
 }
 
-function unique(values) {
-  return [...new Set(values.filter(Boolean))].sort();
+function unique(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean))).sort();
 }
 
 // diff returns only changed fields, or a string error
-function diff(initial, values) {
-  const patch = {};
+function diff(
+  initial: EditorValues,
+  values: EditorValues
+): EditorPatch | string {
+  const patch: EditorPatch = {};
   for (const key of textKeys) {
     const value = values[key].trim();
     if (value !== initial[key].trim()) patch[key] = value;
@@ -62,12 +80,24 @@ function diff(initial, values) {
   return patch;
 }
 
-export default function PostEditor({ post, opened, onClose, onSaved }) {
+interface PostEditorProps {
+  post: EditorPost;
+  opened: boolean;
+  onClose: () => void;
+  onSaved?: (patch: PostPatch) => void;
+}
+
+export default function PostEditor({
+  post,
+  opened,
+  onClose,
+  onSaved,
+}: PostEditorProps) {
   const initial = useMemo(() => initialValues(post), [post]);
   const [values, setValues] = useState(initial);
-  const [cameras, setCameras] = useState([]);
-  const [films, setFilms] = useState([]);
-  const [error, setError] = useState(null);
+  const [cameras, setCameras] = useState<CameraOption[]>([]);
+  const [films, setFilms] = useState<FilmOption[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -80,10 +110,15 @@ export default function PostEditor({ post, opened, onClose, onSaved }) {
     });
   }, [opened, initial]);
 
-  const set = (key) => (value) =>
+  const set = (key: keyof EditorValues) => (value: string | number | boolean) =>
     setValues((current) => ({ ...current, [key]: value }));
-  const setText = (key) => (event) => set(key)(event.currentTarget.value);
-  const setBool = (key) => (event) => set(key)(event.currentTarget.checked);
+  const setText =
+    (key: TextKey) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      set(key)(event.currentTarget.value);
+  const setBool =
+    (key: BoolKey) => (event: React.ChangeEvent<HTMLInputElement>) =>
+      set(key)(event.currentTarget.checked);
 
   const cameraMakes = unique(cameras.map((c) => c.make));
   const cameraModels = unique(
@@ -98,7 +133,7 @@ export default function PostEditor({ post, opened, onClose, onSaved }) {
       .map((f) => f.type)
   );
 
-  async function save(event) {
+  async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const patch = diff(initial, values);
     if (typeof patch === "string") {
@@ -113,7 +148,7 @@ export default function PostEditor({ post, opened, onClose, onSaved }) {
     setError(null);
     const result = await updatePost(post.id, patch);
     setSaving(false);
-    if (!result.ok) {
+    if (result.ok === false) {
       setError(result.error);
       return;
     }
