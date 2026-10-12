@@ -190,13 +190,13 @@ definitions:
         example: 36395
         type: integer
       duplicate_url:
-        example: https://d3i73ktnzbi69i.cloudfront.net/dupe.jpeg
+        example: https://i.analogdb.com/dupe.jpeg
         type: string
       keep_id:
         example: 9156
         type: integer
       keep_url:
-        example: https://d3i73ktnzbi69i.cloudfront.net/keep.jpeg
+        example: https://i.analogdb.com/keep.jpeg
         type: string
     type: object
   analogdb.Film:
@@ -245,7 +245,7 @@ definitions:
         example: high
         type: string
       url:
-        example: https://cloudfront.net/1.jpeg
+        example: https://i.analogdb.com/1.jpeg
         type: string
       width:
         example: 4800
@@ -266,7 +266,7 @@ definitions:
         example: 9156
         type: integer
       url:
-        example: https://d3i73ktnzbi69i.cloudfront.net/low.jpeg
+        example: https://i.analogdb.com/low.jpeg
         type: string
     type: object
   analogdb.Keyword:

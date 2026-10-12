@@ -58,13 +58,13 @@ curl "https://api.analogdb.com/v1/posts?page_size=1"
       "images": [
         {
           "resolution": "low",
-          "url": "https://d3i73ktnzbi69i.cloudfront.net/0cb48c8168dc5f67395fcdb4-low.jpeg",
+          "url": "https://i.analogdb.com/0cb48c8168dc5f67395fcdb4-low.jpeg",
           "width": 480,
           "height": 720
         },
         {
           "resolution": "medium",
-          "url": "https://d3i73ktnzbi69i.cloudfront.net/0cb48c8168dc5f67395fcdb4-medium.jpeg",
+          "url": "https://i.analogdb.com/0cb48c8168dc5f67395fcdb4-medium.jpeg",
           "width": 720,
           "height": 1080
         }

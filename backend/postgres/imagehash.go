@@ -29,6 +29,7 @@ func (s *ScrapeService) ImageHashMissingPosts(ctx context.Context) ([]analogdb.I
 		if err := rows.Scan(&p.ID, &p.URL); err != nil {
 			return nil, err
 		}
+		p.URL = imageURL(s.db.imageBase, p.URL)
 		posts = append(posts, p)
 	}
 	return posts, rows.Err()
@@ -112,6 +113,8 @@ func (s *ScrapeService) DuplicatePosts(ctx context.Context) ([]analogdb.Duplicat
 		if err := rows.Scan(&d.KeepID, &d.DuplicateID, &d.Distance, &d.KeepURL, &d.DuplicateURL); err != nil {
 			return nil, err
 		}
+		d.KeepURL = imageURL(s.db.imageBase, d.KeepURL)
+		d.DuplicateURL = imageURL(s.db.imageBase, d.DuplicateURL)
 		dupes = append(dupes, d)
 	}
 	if err := rows.Err(); err != nil {

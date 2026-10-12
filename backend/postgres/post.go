@@ -164,10 +164,13 @@ func (db *DB) insertPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	db.logger.DebugContext(ctx, "Start insert post")
 	defer db.logger.DebugContext(ctx, "Finish insert post")
 
-	create, err := createPostToRawPostCreate(post)
+	create, err := createPostToRawPostCreate(post, db.imageBase)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail insert post", "error", err)
 		return nil, err
+	}
+	if strings.Contains(create.url, "://") {
+		db.logger.WarnContext(ctx, "Insert post with an unknown image host", "url", create.url)
 	}
 
 	var removed bool
@@ -546,7 +549,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			db.logger.ErrorContext(ctx, "Fail find posts", "error", err)
 			return nil, 0, err
 		}
-		post, err := rawPostToPost(*p)
+		post, err := rawPostToPost(*p, db.imageBase)
 		if err != nil {
 			db.logger.ErrorContext(ctx, "Fail find posts", "error", err)
 			return nil, 0, err
@@ -1245,7 +1248,7 @@ func patchToSet(patch *analogdb.PatchPost) (string, []any, error) {
 	return `SET ` + strings.Join(set, ", "), args, nil
 }
 
-func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
+func createPostToRawPostCreate(p *analogdb.CreatePost, imageBase string) (*rawCreatePost, error) {
 	if len(p.Images) != 4 {
 		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 4 images (low, medium, high, raw)"}
 	}
@@ -1259,7 +1262,7 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	}
 
 	post := &rawCreatePost{
-		url:         raw.Url,
+		url:         imageKey(imageBase, raw.Url),
 		title:       p.Title,
 		author:      p.Author,
 		permalink:   p.Permalink,
@@ -1271,13 +1274,13 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 		width:       raw.Width,
 		height:      raw.Height,
 		sprocket:    p.Sprocket,
-		lowUrl:      low.Url,
+		lowUrl:      imageKey(imageBase, low.Url),
 		lowWidth:    low.Width,
 		lowHeight:   low.Height,
-		medUrl:      med.Url,
+		medUrl:      imageKey(imageBase, med.Url),
 		medWidth:    med.Width,
 		medHeight:   med.Height,
-		highUrl:     high.Url,
+		highUrl:     imageKey(imageBase, high.Url),
 		highWidth:   high.Width,
 		highHeight:  high.Height,
 		cameraMake:  NewNullStringFromPtr(p.CameraMake),
@@ -1298,12 +1301,12 @@ func createPostToRawPostCreate(p *analogdb.CreatePost) (*rawCreatePost, error) {
 	return post, nil
 }
 
-func rawPostToPost(p rawPost) (*analogdb.Post, error) {
+func rawPostToPost(p rawPost, imageBase string) (*analogdb.Post, error) {
 	// grab the images from raw
-	lowImage := analogdb.Image{Label: "low", Url: p.lowUrl, Width: p.lowWidth, Height: p.lowHeight}
-	medImage := analogdb.Image{Label: "medium", Url: p.medUrl, Width: p.medWidth, Height: p.medHeight}
-	highImage := analogdb.Image{Label: "high", Url: p.highUrl, Width: p.highWidth, Height: p.highHeight}
-	rawImage := analogdb.Image{Label: "raw", Url: p.url, Width: p.width, Height: p.height}
+	lowImage := analogdb.Image{Label: "low", Url: imageURL(imageBase, p.lowUrl), Width: p.lowWidth, Height: p.lowHeight}
+	medImage := analogdb.Image{Label: "medium", Url: imageURL(imageBase, p.medUrl), Width: p.medWidth, Height: p.medHeight}
+	highImage := analogdb.Image{Label: "high", Url: imageURL(imageBase, p.highUrl), Width: p.highWidth, Height: p.highHeight}
+	rawImage := analogdb.Image{Label: "raw", Url: imageURL(imageBase, p.url), Width: p.width, Height: p.height}
 	images := []analogdb.Image{lowImage, medImage, highImage, rawImage}
 
 	colors := []analogdb.Color{}

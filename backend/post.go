@@ -12,7 +12,7 @@ const defaultMinColorPercent = 0.0
 // Image represents the source info for an image
 type Image struct {
 	Label  string `json:"resolution" example:"high"`
-	Url    string `json:"url" example:"https://cloudfront.net/1.jpeg"`
+	Url    string `json:"url" example:"https://i.analogdb.com/1.jpeg"`
 	Width  int    `json:"width" example:"4800"`
 	Height int    `json:"height" example:"7600"`
 }

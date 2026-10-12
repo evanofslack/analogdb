@@ -34,6 +34,8 @@ type App struct {
 	RateLimitEventsPerMinute int `yaml:"rate_limit_events_per_minute" env:"RATE_LIMIT_EVENTS_PER_MINUTE" env-default:"3000"`
 	// DuplicateBlock rejects new posts whose image matches an existing post, off only logs them
 	DuplicateBlock bool `yaml:"duplicate_block" env:"DUPLICATE_BLOCK"`
+	// ImageBaseURL is where stored image keys are served from
+	ImageBaseURL string `yaml:"image_base_url" env:"IMAGE_BASE_URL" env-default:"https://i.analogdb.com"`
 }
 
 type DB struct {

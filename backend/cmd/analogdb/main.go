@@ -96,6 +96,7 @@ func main() {
 		ConnMaxLifetime: cfg.DB.ConnMaxLifetime,
 		ConnMaxIdleTime: cfg.DB.ConnMaxIdleTime,
 	})
+	db.SetImageBase(cfg.App.ImageBaseURL)
 	if err := db.Open(); err != nil {
 		err = fmt.Errorf("startup database: %w", err)
 		fatal(logger, err)

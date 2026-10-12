@@ -245,7 +245,7 @@ func (s *AdminService) MissingPosts(ctx context.Context, filter *analogdb.Missin
 		return nil, err
 	}
 	defer rows.Close()
-	return scanAdminPosts(rows)
+	return scanAdminPosts(rows, s.db.imageBase)
 }
 
 func (s *AdminService) PostsByIDs(ctx context.Context, ids []int) ([]*analogdb.AdminPost, error) {
@@ -262,10 +262,10 @@ func (s *AdminService) PostsByIDs(ctx context.Context, ids []int) ([]*analogdb.A
 		return nil, err
 	}
 	defer rows.Close()
-	return scanAdminPosts(rows)
+	return scanAdminPosts(rows, s.db.imageBase)
 }
 
-func scanAdminPosts(rows *sql.Rows) ([]*analogdb.AdminPost, error) {
+func scanAdminPosts(rows *sql.Rows, imageBase string) ([]*analogdb.AdminPost, error) {
 	posts := make([]*analogdb.AdminPost, 0)
 	for rows.Next() {
 		var p analogdb.AdminPost
@@ -278,7 +278,7 @@ func scanAdminPosts(rows *sql.Rows) ([]*analogdb.AdminPost, error) {
 		p.Title = title.String
 		p.Author = author.String
 		p.Time = postTime.Int64
-		p.LowURL = lowURL.String
+		p.LowURL = imageURL(imageBase, lowURL.String)
 		p.CameraMake = nullStringPtr(cameraMake)
 		p.CameraModel = nullStringPtr(cameraModel)
 		p.FilmMake = nullStringPtr(filmMake)

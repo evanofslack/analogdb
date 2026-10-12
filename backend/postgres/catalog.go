@@ -33,8 +33,8 @@ func (db *DB) findCatalogTopPosts(ctx context.Context, query string, args ...any
 			Title: title,
 			Score: score,
 			Images: []analogdb.Image{
-				{Label: "low", Url: lowUrl, Width: lowWidth, Height: lowHeight},
-				{Label: "medium", Url: medUrl, Width: medWidth, Height: medHeight},
+				{Label: "low", Url: imageURL(db.imageBase, lowUrl), Width: lowWidth, Height: lowHeight},
+				{Label: "medium", Url: imageURL(db.imageBase, medUrl), Width: medWidth, Height: medHeight},
 			},
 		})
 	}

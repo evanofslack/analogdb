@@ -86,7 +86,7 @@ func (s *ReportService) FindReports(ctx context.Context, filter *analogdb.Report
 
 	reports := make([]*analogdb.Report, 0)
 	for rows.Next() {
-		report, err := scanReport(rows)
+		report, err := scanReport(rows, s.db.imageBase)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +96,7 @@ func (s *ReportService) FindReports(ctx context.Context, filter *analogdb.Report
 }
 
 func (s *ReportService) FindReportByID(ctx context.Context, id int) (*analogdb.Report, error) {
-	report, err := scanReport(s.db.db.QueryRowContext(ctx, reportSelect+" WHERE r.id = $1", id))
+	report, err := scanReport(s.db.db.QueryRowContext(ctx, reportSelect+" WHERE r.id = $1", id), s.db.imageBase)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "report not found"}
 	}
@@ -107,7 +107,7 @@ type rowScanner interface {
 	Scan(dest ...any) error
 }
 
-func scanReport(row rowScanner) (*analogdb.Report, error) {
+func scanReport(row rowScanner, imageBase string) (*analogdb.Report, error) {
 	var r analogdb.Report
 	var reason string
 	var message, email, title, author, permalink, lowURL sql.NullString
@@ -126,6 +126,9 @@ func scanReport(row rowScanner) (*analogdb.Report, error) {
 	r.Post.Title = nullStringPtr(title)
 	r.Post.Author = nullStringPtr(author)
 	r.Post.Permalink = nullStringPtr(permalink)
+	if lowURL.Valid {
+		lowURL.String = imageURL(imageBase, lowURL.String)
+	}
 	r.Post.LowURL = nullStringPtr(lowURL)
 	if nsfw.Valid {
 		r.Post.Nsfw = &nsfw.Bool

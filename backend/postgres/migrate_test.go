@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"io/fs"
 	"strconv"
 	"strings"
@@ -198,5 +199,57 @@ func TestMigratePostTimestampsBackfill(t *testing.T) {
 	}
 	if nulls != 0 {
 		t.Errorf("Expected every post to have created <= updated, got %d bad rows", nulls)
+	}
+}
+
+func TestMigrateImageKeys(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+
+	m := mustMigrate(t, db)
+	before := migrationBefore(t, "image_keys")
+	if err := m.Migrate(before); err != nil {
+		t.Fatalf("Migrate down to %d, err=%v", before, err)
+	}
+
+	var id int
+	query := `INSERT INTO pictures (url, lowurl, medurl, highurl, permalink, time) VALUES
+		('https://d3i73ktnzbi69i.cloudfront.net/m-raw.jpeg', 'https://d3i73ktnzbi69i.cloudfront.net/m-low.jpeg',
+		'https://i.analogdb.com/m-medium.jpeg', NULL, 'reddit.com/keys', 1641600000) RETURNING id`
+	if err := db.db.QueryRow(query).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+
+	urls := func() [4]sql.NullString {
+		t.Helper()
+		var got [4]sql.NullString
+		if err := db.db.QueryRow(`SELECT url, lowurl, medurl, highurl FROM pictures WHERE id = $1`, id).
+			Scan(&got[0], &got[1], &got[2], &got[3]); err != nil {
+			t.Fatal(err)
+		}
+		return got
+	}
+
+	if err := m.Up(); err != nil {
+		t.Fatalf("Migrate up, err=%v", err)
+	}
+	got := urls()
+	if got[0].String != "m-raw.jpeg" || got[1].String != "m-low.jpeg" || got[2].String != "m-medium.jpeg" || got[3].Valid {
+		t.Errorf("Expected keys after up, got %v", got)
+	}
+	var seeded string
+	if err := db.db.QueryRow(`SELECT url FROM pictures WHERE id = 1`).Scan(&seeded); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(seeded, "https://example.com/") {
+		t.Errorf("Expected other hosts kept, got %q", seeded)
+	}
+
+	if err := m.Migrate(before); err != nil {
+		t.Fatalf("Migrate down to %d, err=%v", before, err)
+	}
+	got = urls()
+	if got[0].String != "https://d3i73ktnzbi69i.cloudfront.net/m-raw.jpeg" || got[2].String != "https://d3i73ktnzbi69i.cloudfront.net/m-medium.jpeg" || got[3].Valid {
+		t.Errorf("Expected CloudFront URLs after down, got %v", got)
 	}
 }
