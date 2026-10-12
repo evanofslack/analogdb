@@ -6,7 +6,12 @@ import { Button } from "@mantine/core";
 import styles from "@styles/Error.module.css";
 import { useEffect } from "react";
 
-export default function Error({ error, reset }) {
+interface ErrorProps {
+  error: Error & { digest?: string };
+  reset: () => void;
+}
+
+export default function Error({ error, reset }: ErrorProps) {
   useEffect(() => {
     console.error(error);
   }, [error]);

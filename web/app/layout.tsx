@@ -12,9 +12,11 @@ import {
 import { CodeHighlightProvider } from "@providers/codehighlight";
 import { QueryProvider } from "@providers/query";
 import { theme } from "@providers/theme";
+import type { Metadata } from "next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { ReactNode } from "react";
 
-export const metadata = {
+export const metadata: Metadata = {
   metadataBase: new URL("https://analogdb.com"),
   title: { default: "AnalogDB", template: "%s | AnalogDB" },
   description: "The collection of film photography",
@@ -25,7 +27,11 @@ export const metadata = {
   twitter: { card: "summary_large_image" },
 };
 
-export default function RootLayout({ children }) {
+interface RootLayoutProps {
+  children: ReactNode;
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" {...mantineHtmlProps}>
       <head>
