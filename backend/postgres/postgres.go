@@ -27,6 +27,7 @@ type DB struct {
 	migrationPath    string
 	tracingEnabled   bool
 	pool             Pool
+	imageBase        string
 }
 
 // Pool holds connection pool limits. Zero values keep the database/sql defaults.
@@ -35,6 +36,13 @@ type Pool struct {
 	MaxIdleConns    int
 	ConnMaxLifetime time.Duration
 	ConnMaxIdleTime time.Duration
+}
+
+// SetImageBase sets the base URL that image keys are served from
+func (db *DB) SetImageBase(base string) {
+	if base = strings.TrimSuffix(base, "/"); base != "" {
+		db.imageBase = base
+	}
 }
 
 // SetPool sets the connection pool limits applied on Open.
@@ -55,6 +63,7 @@ func NewDB(dsn string, logger *logger.Logger, migrationEnabled bool, migrationPa
 		migrationEnabled: migrationEnabled,
 		migrationPath:    migrationPath,
 		tracingEnabled:   tracingEnabled,
+		imageBase:        defaultImageBase,
 	}
 	db.logger.Info("Initialized db instance")
 	return db

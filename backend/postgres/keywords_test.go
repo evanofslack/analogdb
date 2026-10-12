@@ -131,7 +131,7 @@ func TestKeywordService_GetKeywordSummaryTopPosts(t *testing.T) {
 	if ids := topPostIDs(got["new york"].TopPosts); !slices.Equal(ids, []int{7, 4}) {
 		t.Errorf("want new york covers [7 4], got %v", ids)
 	}
-	if p := got["beach"].TopPosts[0]; p.Score != 30 || p.Title != "post 6" || len(p.Images) != 2 || p.Images[0].Url != "low6" {
+	if p := got["beach"].TopPosts[0]; p.Score != 30 || p.Title != "post 6" || len(p.Images) != 2 || p.Images[0].Url != "https://i.analogdb.com/low6" {
 		t.Errorf("unexpected cover %+v", p)
 	}
 
