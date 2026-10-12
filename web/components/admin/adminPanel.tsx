@@ -3,7 +3,19 @@ import Header from "@components/header";
 import { Button, Title } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
 import Link from "next/link";
+import { ReactNode } from "react";
 import styles from "./adminPanel.module.css";
+
+export interface AdminLink {
+  label: string;
+  href: string;
+}
+
+interface AdminPanelProps {
+  tab: string;
+  links: AdminLink[];
+  children: ReactNode;
+}
 
 export const adminTabs = [
   { id: "overview", label: "Overview" },
@@ -15,7 +27,7 @@ export const adminTabs = [
   { id: "audit", label: "Audit" },
 ];
 
-export default function AdminPanel({ tab, links, children }) {
+export default function AdminPanel({ tab, links, children }: AdminPanelProps) {
   return (
     <div className={styles.main}>
       <Header />

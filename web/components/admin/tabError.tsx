@@ -1,6 +1,15 @@
 import { Alert } from "@mantine/core";
 
-export default function TabError({ error }) {
+export interface LoadError {
+  status: number;
+  message?: string;
+}
+
+interface TabErrorProps {
+  error: LoadError;
+}
+
+export default function TabError({ error }: TabErrorProps) {
   const unavailable = error?.status === 503;
   return (
     <Alert

@@ -1,4 +1,4 @@
-import AdminPanel, { adminTabs } from "@components/admin/adminPanel";
+import AdminPanel, { AdminLink, adminTabs } from "@components/admin/adminPanel";
 import AnalyticsTab from "@components/admin/analyticsTab";
 import AuditTab from "@components/admin/auditTab";
 import LoginForm from "@components/admin/loginForm";
@@ -6,7 +6,7 @@ import OverviewTab from "@components/admin/overviewTab";
 import QualityTab from "@components/admin/qualityTab";
 import ReportsTab from "@components/admin/reportsTab";
 import ReviewTab from "@components/admin/reviewTab";
-import TabError from "@components/admin/tabError";
+import TabError, { LoadError } from "@components/admin/tabError";
 import TrafficTab from "@components/admin/trafficTab";
 import {
   getAnalytics,
@@ -22,22 +22,35 @@ import {
   trafficRanges,
 } from "@lib/adminClient";
 import { checkAdminAuth } from "@lib/auth";
+import { Metadata } from "next";
 
-export const metadata = {
+type AdminSearchParams = Record<string, string | string[] | undefined>;
+
+interface AdminPageProps {
+  searchParams: Promise<AdminSearchParams>;
+}
+
+export const metadata: Metadata = {
   title: "Admin",
   robots: { index: false, follow: false },
 };
 
-function positiveInt(value) {
+function positiveInt(value: unknown): number | null {
   const n = Number(value);
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
-function pick(value, allowed, fallback) {
-  return allowed.includes(value) ? value : fallback;
+function pick<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  fallback: T
+): T {
+  return allowed.includes(value as T) ? (value as T) : fallback;
 }
 
-async function load(fn) {
+async function load<T>(
+  fn: () => Promise<T>
+): Promise<{ data?: T; error?: LoadError }> {
   try {
     return { data: await fn() };
   } catch (error) {
@@ -46,7 +59,7 @@ async function load(fn) {
   }
 }
 
-async function renderTab(tab, params) {
+async function renderTab(tab: string, params: AdminSearchParams) {
   switch (tab) {
     case "review": {
       const cursor = typeof params.cursor === "string" ? params.cursor : null;
@@ -103,7 +116,7 @@ async function renderTab(tab, params) {
 }
 
 function externalLinks() {
-  const links = [];
+  const links: AdminLink[] = [];
   if (process.env.GRAFANA_URL) {
     links.push({ label: "Grafana", href: process.env.GRAFANA_URL });
   }
@@ -113,7 +126,7 @@ function externalLinks() {
   return links;
 }
 
-export default async function AdminPage({ searchParams }) {
+export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = (await searchParams) ?? {};
   const isAdmin = await checkAdminAuth();
 

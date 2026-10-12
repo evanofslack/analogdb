@@ -1,12 +1,26 @@
 "use client";
 
+import { Traffic } from "@lib/adminClient";
 import { formatNumber } from "@lib/format";
-import { ChartTooltip, LineChart } from "@mantine/charts";
+import { ChartTooltip, LineChart, LineChartSeries } from "@mantine/charts";
 import styles from "./adminPanel.module.css";
 
 const day = 24 * 60 * 60 * 1000;
 
-function bucketLabel(time, bucket, { full = false, multiDay = false } = {}) {
+type Bucket = Traffic["bucket"];
+
+interface TimeChartProps {
+  data: { time: string }[];
+  series: LineChartSeries[];
+  bucket: Bucket;
+  height?: number;
+}
+
+function bucketLabel(
+  time: string | number,
+  bucket: Bucket,
+  { full = false, multiDay = false } = {}
+) {
   const iso = new Date(time).toISOString();
   const date = full ? iso.slice(0, 10) : iso.slice(5, 10);
   if (bucket !== "hour") {
@@ -19,11 +33,18 @@ function bucketLabel(time, bucket, { full = false, multiDay = false } = {}) {
   return multiDay ? `${date} ${hour}` : hour;
 }
 
-export default function TimeChart({ data, series, bucket, height = 220 }) {
+export default function TimeChart({
+  data,
+  series,
+  bucket,
+  height = 220,
+}: TimeChartProps) {
   if (data.length === 0) {
     return <p className={styles.note}>No data in this range.</p>;
   }
-  const span = new Date(data[data.length - 1].time) - new Date(data[0].time);
+  const span =
+    new Date(data[data.length - 1].time).getTime() -
+    new Date(data[0].time).getTime();
   const multiDay = span > day;
   return (
     <div className={styles.card}>

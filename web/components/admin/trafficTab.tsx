@@ -1,27 +1,35 @@
+import { Traffic, TrafficRange, TrafficTotals } from "@lib/adminClient";
 import { formatDateTime, formatNumber, formatPercent } from "@lib/format";
+import { LineChartSeries } from "@mantine/charts";
 import styles from "./adminPanel.module.css";
 import Change from "./change";
 import RangePicker from "./rangePicker";
 import Stat from "./stat";
-import TabError from "./tabError";
+import TabError, { LoadError } from "./tabError";
 import TimeChart from "./timeChart";
 
-const requestSeries = [
+interface TrafficTabProps {
+  traffic?: Traffic;
+  error?: LoadError;
+  range: TrafficRange;
+}
+
+const requestSeries: LineChartSeries[] = [
   { name: "web", label: "Web server", color: "blue.6" },
   { name: "scraper", label: "Scraper", color: "teal.6" },
   { name: "direct", label: "Direct", color: "gray.6" },
 ];
 
-const errorSeries = [
+const errorSeries: LineChartSeries[] = [
   { name: "status_4xx", label: "4xx", color: "orange.6" },
   { name: "status_5xx", label: "5xx", color: "red.6" },
 ];
 
-function ratio(a, b) {
+function ratio(a: number, b: number) {
   return b ? a / b : 0;
 }
 
-function derived(t) {
+function derived(t: TrafficTotals) {
   return {
     ...t,
     direct_share: ratio(t.direct, t.requests),
@@ -31,11 +39,11 @@ function derived(t) {
   };
 }
 
-function seconds(ms) {
+function seconds(ms: number) {
   return formatNumber(Number((ms / 1000).toFixed(1)));
 }
 
-export default function TrafficTab({ traffic, error, range }) {
+export default function TrafficTab({ traffic, error, range }: TrafficTabProps) {
   return (
     <>
       <RangePicker tab="traffic" range={range} />
@@ -48,7 +56,7 @@ export default function TrafficTab({ traffic, error, range }) {
   );
 }
 
-function Summary({ summary }) {
+function Summary({ summary }: { summary: Traffic["summary"] }) {
   const current = derived(summary.current);
   const previous = derived(summary.previous);
   return (
@@ -121,7 +129,13 @@ function Summary({ summary }) {
   );
 }
 
-function CallersTable({ callers, direct }) {
+function CallersTable({
+  callers,
+  direct,
+}: {
+  callers: Traffic["callers"];
+  direct: number;
+}) {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Direct callers</h2>
@@ -159,7 +173,7 @@ function CallersTable({ callers, direct }) {
   );
 }
 
-function RoutesTable({ routes }) {
+function RoutesTable({ routes }: { routes: Traffic["routes"] }) {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Routes by total time</h2>
@@ -199,7 +213,7 @@ function RoutesTable({ routes }) {
   );
 }
 
-function StatusTable({ rows }) {
+function StatusTable({ rows }: { rows: Traffic["errors"]["by_status"] }) {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Errors by status</h2>
@@ -231,7 +245,7 @@ function StatusTable({ rows }) {
   );
 }
 
-function RecentTable({ rows }) {
+function RecentTable({ rows }: { rows: Traffic["errors"]["recent"] }) {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Recent 5xx</h2>
@@ -267,7 +281,7 @@ function RecentTable({ rows }) {
   );
 }
 
-function TrafficBody({ traffic }) {
+function TrafficBody({ traffic }: { traffic: Traffic }) {
   return (
     <>
       <Summary summary={traffic.summary} />

@@ -1,6 +1,13 @@
+import { ReactNode } from "react";
 import styles from "./adminPanel.module.css";
 
-export default function Stat({ label, value, detail }) {
+interface StatProps {
+  label: ReactNode;
+  value: ReactNode;
+  detail?: ReactNode;
+}
+
+export default function Stat({ label, value, detail }: StatProps) {
   return (
     <div className={styles.card}>
       <div className={styles.statLabel}>{label}</div>
