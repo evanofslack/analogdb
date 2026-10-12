@@ -7,7 +7,7 @@ import pytest
 from PIL import Image
 
 from .constants import AWS_BUCKET_PHOTOS, CLOUDFRONT_URL
-from .image import ImageProcessor
+from .image import ImageProcessor, image_bytes_hash, image_hash
 from .models import RedditPost
 
 
@@ -92,6 +92,13 @@ class TestProcess:
             assert "amazonaws.com" not in image.url
         assert all(bucket == AWS_BUCKET_PHOTOS for bucket, _, _, _ in s3.puts)
 
+    def test_hash_is_of_uploaded_low_image(self):
+        s3, result = process(make_post(PERMALINK), jpeg_bytes())
+
+        low = next(i for i in result.images if i.resolution == "low")
+        body = next(b for _, k, b, _ in s3.puts if low.url.endswith(k))
+        assert result.image_hash == image_bytes_hash(body)
+
     def test_keys_are_deterministic(self):
         content = jpeg_bytes()
         first, _ = process(make_post(PERMALINK), content)
@@ -142,6 +149,53 @@ class TestProcess:
     def test_colors_extracted(self):
         _, result = process(make_post(PERMALINK), jpeg_bytes())
         assert result.colors
+
+
+def hash_distance(a: str, b: str) -> int:
+    return bin(int(a, 16) ^ int(b, 16)).count("1")
+
+
+def photo(seed: int) -> Image.Image:
+    """A smooth random image, so its hash has detail to keep"""
+    rng = np.random.default_rng(seed)
+    small = rng.integers(0, 256, size=(12, 16, 3)).astype(np.uint8)
+    return Image.fromarray(small).resize((800, 600), Image.Resampling.BICUBIC)
+
+
+def reencode(image: Image.Image, quality: int, size=None) -> Image.Image:
+    if size:
+        image = image.resize(size, Image.Resampling.LANCZOS)
+    buf = BytesIO()
+    image.save(buf, "JPEG", quality=quality)
+    buf.seek(0)
+    return Image.open(buf)
+
+
+class TestImageHash:
+    def test_is_16_hex_characters(self):
+        h = image_hash(photo(1))
+        assert len(h) == 16
+        int(h, 16)
+
+    def test_same_image_same_hash(self):
+        assert image_hash(photo(1)) == image_hash(photo(1))
+
+    def test_reencoded_copy_is_close(self):
+        original = photo(1)
+        for quality, size in [(95, None), (70, None), (85, (400, 300))]:
+            copy = reencode(original, quality, size)
+            assert hash_distance(image_hash(original), image_hash(copy)) <= 4
+
+    def test_different_images_are_far(self):
+        hashes = [image_hash(photo(seed)) for seed in range(5)]
+        for i, a in enumerate(hashes):
+            for b in hashes[i + 1 :]:
+                assert hash_distance(a, b) > 10
+
+    def test_bytes_hash_matches_image_hash(self):
+        buf = BytesIO()
+        photo(2).save(buf, "PNG")
+        assert image_bytes_hash(buf.getvalue()) == image_hash(photo(2))
 
 
 class TestGrayscale:

@@ -14,6 +14,7 @@ from .client import REQUEST_TIMEOUT, Client, Deleted, Uploaded
 from .models import (
     CameraCreate,
     FilmCreate,
+    ImageHash,
     Keyword,
     PostCaption,
     PostCreate,
@@ -287,6 +288,13 @@ class TestUploadPostStatus:
         assert client.upload_post(post_create()) == Uploaded.EXISTS
         assert len(httpserver.log) == 1
 
+    def test_duplicate_image_is_duplicate(self, client, httpserver: HTTPServer):
+        httpserver.expect_request("/v1/post", method="POST").respond_with_json(
+            {"error": "post is a duplicate of post 9156"}, status=409
+        )
+
+        assert client.upload_post(post_create()) == Uploaded.DUPLICATE
+
     def test_server_error_raises_without_retry(self, client, httpserver: HTTPServer):
         httpserver.expect_request("/v1/post", method="POST").respond_with_json(
             {"error": "boom"}, status=500
@@ -505,3 +513,76 @@ class TestScrapeRoutes:
             "caption": {"model": "m", "version": "v1-text", "raw": {"tags": ["dog"]}},
             "keywords": [{"word": "dog", "weight": 1.0}],
         }
+
+
+class TestImageHashes:
+    def test_get_missing_hashes(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/scrape/hashes/missing", method="GET", headers={"Authorization": AUTH}
+        ).respond_with_json({"posts": [{"id": 3, "url": "https://x/low3.jpg"}]})
+
+        missing = client.get_missing_hashes()
+        assert [(p.id, p.url) for p in missing] == [(3, "https://x/low3.jpg")]
+
+    def test_set_image_hashes_chunks(self, client, httpserver: HTTPServer, monkeypatch):
+        monkeypatch.setattr("analogdb.client.HASHES_CHUNK", 2)
+        bodies = []
+
+        def handler(request: Request):
+            body = json.loads(request.get_data(as_text=True))
+            bodies.append(body)
+            return Response(
+                json.dumps({"updated": len(body["hashes"])}),
+                mimetype="application/json",
+            )
+
+        httpserver.expect_request(
+            "/v1/scrape/hashes", method="PUT", headers={"Authorization": AUTH}
+        ).respond_with_handler(handler)
+
+        hashes = [ImageHash(id=i, image_hash=f"{i:016x}") for i in range(1, 6)]
+        assert client.set_image_hashes(hashes) == 5
+        assert [len(b["hashes"]) for b in bodies] == [2, 2, 1]
+        assert bodies[0]["hashes"][0] == {"id": 1, "image_hash": "0000000000000001"}
+
+    def test_set_no_hashes_is_skipped(self, client, httpserver: HTTPServer):
+        assert client.set_image_hashes([]) == 0
+        assert len(httpserver.log) == 0
+
+    def test_get_duplicates(self, client, httpserver: HTTPServer):
+        httpserver.expect_request(
+            "/v1/scrape/duplicates", method="GET", headers={"Authorization": AUTH}
+        ).respond_with_json(
+            {
+                "duplicates": [
+                    {
+                        "keep_id": 9156,
+                        "duplicate_id": 36395,
+                        "distance": 0,
+                        "keep_url": "k",
+                        "duplicate_url": "d",
+                    }
+                ]
+            }
+        )
+
+        dupes = client.get_duplicates()
+        assert [(d.keep_id, d.duplicate_id, d.distance) for d in dupes] == [
+            (9156, 36395, 0)
+        ]
+
+    @pytest.mark.parametrize(
+        "status,expected", [(200, Deleted.DELETED), (404, Deleted.MISSING)]
+    )
+    def test_delete_post_with_reason(
+        self, client, httpserver: HTTPServer, status, expected
+    ):
+        httpserver.expect_request(
+            "/v1/post/36395",
+            method="DELETE",
+            headers={"Authorization": AUTH},
+            query_string={"reason": "duplicate of 9156"},
+        ).respond_with_json({"message": "m"}, status=status)
+
+        assert client.delete_post(36395, reason="duplicate of 9156") == expected
+        httpserver.check_assertions()

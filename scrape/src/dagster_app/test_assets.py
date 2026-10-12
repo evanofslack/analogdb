@@ -359,7 +359,30 @@ class TestUploadPosts:
             lambda: upload_posts(context, AnalogDBResource(), finals), client
         )
 
-        assert result.metadata == {"created": 0, "exists": 2, "failed": 0}
+        assert result.metadata == {
+            "created": 0,
+            "exists": 2,
+            "duplicate": 0,
+            "failed": 0,
+        }
+
+    def test_duplicate_counts_as_success(self):
+        images = make_post_images(2)
+        finals = run_final_posts(images, no_tags(images.data))
+        client = MagicMock()
+        client.upload_post.side_effect = [Uploaded.DUPLICATE, Uploaded.CREATED]
+        context = dg.build_asset_context()
+
+        result = run_with_client(
+            lambda: upload_posts(context, AnalogDBResource(), finals), client
+        )
+
+        assert result.metadata == {
+            "created": 1,
+            "exists": 0,
+            "duplicate": 1,
+            "failed": 0,
+        }
 
 
 class TestPatchPosts:

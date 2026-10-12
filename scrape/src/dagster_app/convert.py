@@ -24,6 +24,7 @@ def convert_create(p: scrape.CreatePost) -> analog.PostCreate:
         keywords=[convert_keyword(k) for k in p.keywords],
         colors=[convert_color(c) for c in p.colors],
         caption=convert_caption(p.caption) if p.caption else None,
+        image_hash=p.image_hash,
     )
 
 

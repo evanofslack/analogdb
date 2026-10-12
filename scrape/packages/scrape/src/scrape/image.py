@@ -28,6 +28,24 @@ from .models import Color, PostImages, RedditPost, S3Image
 from .s3 import S3
 
 
+def image_hash(image: Image.Image) -> str:
+    """64 bit dHash as 16 hex characters. Each bit says whether a pixel of the
+    9x8 grayscale thumbnail is brighter than its left neighbour, so a resized or
+    re-encoded copy keeps nearly every bit."""
+    small = image.convert("L").resize((9, 8), Image.Resampling.LANCZOS)
+    pixels = np.asarray(small, dtype=np.int16)
+    bits = (pixels[:, 1:] > pixels[:, :-1]).flatten()
+    value = 0
+    for bit in bits:
+        value = (value << 1) | int(bit)
+    return f"{value:016x}"
+
+
+def image_bytes_hash(content: bytes) -> str:
+    with Image.open(BytesIO(content)) as image:
+        return image_hash(image)
+
+
 def channel_spread(image: Image.Image) -> np.ndarray:
     a = np.asarray(image.convert("RGB"), dtype=np.int16)
     return a.max(axis=2) - a.min(axis=2)
@@ -139,10 +157,14 @@ class ImageProcessor:
             resized = {res: self.resize_image(image, dim) for res, dim in sizes.items()}
 
         images: List[S3Image] = []
+        hash = None
         for res, (img, w, h) in resized.items():
             body = self.image_to_bytes(image=img, content_type=content_type)
             url = self._upload_image(s3, prefix, res, body, content_type)
             images.append(S3Image(resolution=res, url=url, width=w, height=h))
+            # hash the low res bytes as uploaded, the same bytes a backfill reads
+            if res == "low":
+                hash = image_bytes_hash(body)
 
         url = self._upload_image(s3, prefix, "raw", content, content_type)
         images.append(S3Image(resolution="raw", url=url, width=width, height=height))
@@ -154,6 +176,7 @@ class ImageProcessor:
             grayscale=self._grayscale(low, post.subreddit),
             width=width,
             height=height,
+            image_hash=hash,
         )
 
     def is_grayscale(self, image: Image.Image) -> bool:

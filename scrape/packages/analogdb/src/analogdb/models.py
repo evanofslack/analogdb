@@ -12,8 +12,17 @@ from analogdb_generated.models.analogdb_create_film import (
 from analogdb_generated.models.analogdb_create_post import (
     AnalogdbCreatePost as PostCreate,
 )
+from analogdb_generated.models.analogdb_duplicate_post import (
+    AnalogdbDuplicatePost as DuplicatePost,
+)
 from analogdb_generated.models.analogdb_film import AnalogdbFilm as Film
 from analogdb_generated.models.analogdb_image import AnalogdbImage as Image
+from analogdb_generated.models.analogdb_image_hash import (
+    AnalogdbImageHash as ImageHash,
+)
+from analogdb_generated.models.analogdb_image_hash_missing import (
+    AnalogdbImageHashMissing as ImageHashMissing,
+)
 from analogdb_generated.models.analogdb_keyword import AnalogdbKeyword as Keyword
 from analogdb_generated.models.analogdb_patch_post import (
     AnalogdbPatchPost as PostPatch,
@@ -30,9 +39,12 @@ __all__ = [
     "Camera",
     "CameraCreate",
     "Color",
+    "DuplicatePost",
     "Film",
     "FilmCreate",
     "Image",
+    "ImageHash",
+    "ImageHashMissing",
     "Keyword",
     "Post",
     "PostCaption",
