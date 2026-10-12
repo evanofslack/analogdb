@@ -14,21 +14,33 @@ import {
   Textarea,
   TextInput,
 } from "@mantine/core";
-import { useState } from "react";
+import { ChangeEvent, FormEvent, useState } from "react";
 import styles from "./reportModal.module.css";
 
 const empty = { reason: "", message: "", email: "", website: "" };
 
-export default function ReportModal({ postId, opened, onClose }) {
+interface ReportModalProps {
+  postId: number;
+  opened: boolean;
+  onClose: () => void;
+}
+
+export default function ReportModal({
+  postId,
+  opened,
+  onClose,
+}: ReportModalProps) {
   const [values, setValues] = useState(empty);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const set = (key) => (event) => {
-    const value = event.currentTarget.value;
-    setValues((v) => ({ ...v, [key]: value }));
-  };
+  const set =
+    (key: keyof typeof empty) =>
+    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = event.currentTarget.value;
+      setValues((v) => ({ ...v, [key]: value }));
+    };
 
   function close() {
     onClose();
@@ -40,7 +52,7 @@ export default function ReportModal({ postId, opened, onClose }) {
     }, 200);
   }
 
-  async function submit(event) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!values.reason) {
       setError("Pick a reason");
@@ -55,7 +67,7 @@ export default function ReportModal({ postId, opened, onClose }) {
       return;
     }
     if (!result.ok) {
-      setError(result.error);
+      setError((result as { error: string }).error);
       return;
     }
     setSent(true);

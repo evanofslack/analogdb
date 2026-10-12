@@ -1,7 +1,11 @@
 import { removePost } from "@app/actions/admin";
 import { checkAdminAuth } from "@lib/auth";
+import { NextRequest } from "next/server";
 
-export async function DELETE(request, { params }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ pid: string }> }
+) {
   const isAdmin = await checkAdminAuth();
 
   if (!isAdmin) {

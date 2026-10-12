@@ -8,8 +8,15 @@ import ReportModal from "@components/reportModal";
 import useIsAdmin from "@hooks/useIsAdmin";
 import { postAlt } from "@lib/seo";
 import { ActionIcon, Tooltip } from "@mantine/core";
+import {
+  AnalogdbColor,
+  AnalogdbImage,
+  AnalogdbKeyword,
+} from "analogdb-generated";
+import { type ImageProps } from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { CSSProperties, useState } from "react";
+import { IconType } from "react-icons";
 import {
   AiOutlineArrowsAlt,
   AiOutlineDelete,
@@ -20,7 +27,49 @@ import {
 import styles from "./imagePage.module.css";
 import ResponsiveImage from "./responsiveImage";
 
-async function handleDelete(postId) {
+export interface PagePost {
+  id: number;
+  title: string;
+  author: string;
+  permalink: string;
+  timestamp: number;
+  score?: number;
+  nsfw: boolean;
+  grayscale: boolean;
+  sprocket: boolean;
+  description?: string;
+  caption?: string;
+  images: AnalogdbImage[];
+  colors: AnalogdbColor[];
+  keywords?: AnalogdbKeyword[];
+  camera_make?: string;
+  camera_model?: string;
+  film_make?: string;
+  film_type?: string;
+  film_speed?: number;
+  focal_length?: number;
+  aperture?: string;
+}
+
+export interface SimilarPosts {
+  posts?: PagePost[];
+}
+
+interface ImagePageProps {
+  post: PagePost;
+  similar: SimilarPosts;
+  filmHref: string | null;
+  cameraHref: string | null;
+}
+
+interface ActionProps {
+  label: string;
+  icon: IconType;
+  onClick?: () => void;
+  href?: string;
+}
+
+async function handleDelete(postId: number) {
   if (!confirm("Are you sure you want to delete this post?")) return;
 
   const route = `/api/post/${postId}`;
@@ -41,14 +90,17 @@ async function handleDelete(postId) {
   }
 }
 
-function colorPlaceholder(post, image) {
+function colorPlaceholder(
+  post: PagePost,
+  image: AnalogdbImage
+): ImageProps["placeholder"] {
   const hex = post.colors?.[0]?.hex;
   if (!hex) return "empty";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${image.width} ${image.height}"><rect width="100%" height="100%" fill="${hex}"/></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
-async function downloadImage(id) {
+async function downloadImage(id: number) {
   try {
     const link = document.createElement("a");
     link.href = `/api/download/${id}`;
@@ -61,7 +113,7 @@ async function downloadImage(id) {
   }
 }
 
-function Action({ label, icon: Icon, onClick, href }) {
+function Action({ label, icon: Icon, onClick, href }: ActionProps) {
   return (
     <Tooltip
       label={label}
@@ -82,7 +134,7 @@ function Action({ label, icon: Icon, onClick, href }) {
   );
 }
 
-export default function ImagePage(props) {
+export default function ImagePage(props: ImagePageProps) {
   let post = props.post;
   let similar = props.similar;
   const isAdmin = useIsAdmin();
@@ -121,7 +173,9 @@ export default function ImagePage(props) {
         </div>
         <div
           className={styles.imageContainer}
-          style={{ "--ratio": `${image.width} / ${image.height}` }}
+          style={
+            { "--ratio": `${image.width} / ${image.height}` } as CSSProperties
+          }
         >
           <ResponsiveImage
             loading="eager"

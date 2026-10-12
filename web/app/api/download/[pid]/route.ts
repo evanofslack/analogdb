@@ -1,17 +1,20 @@
 import { postApi } from "@lib/client";
 import { limit } from "@lib/rateLimit";
 import { ResponseError } from "analogdb-generated";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const imageHosts = ["i.analogdb.com", "d3i73ktnzbi69i.cloudfront.net"];
 
-const extensions = {
+const extensions: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/gif": "gif",
 };
 
-export async function GET(request, { params }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ pid: string }> }
+) {
   const limited = await limit("download");
   if (!limited.ok) {
     return NextResponse.json(
@@ -57,7 +60,7 @@ export async function GET(request, { params }) {
       .toLowerCase();
     const ext = extensions[contentType] || "jpg";
 
-    const headers = {
+    const headers: Record<string, string> = {
       "Content-Type": extensions[contentType]
         ? contentType
         : "application/octet-stream",

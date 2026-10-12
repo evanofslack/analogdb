@@ -1,20 +1,25 @@
-import { getCameraCatalog } from "@lib/data/cameras";
-import { getFilmCatalog } from "@lib/data/films";
-import ImagePage from "@components/imagePage";
+import ImagePage, { PagePost, SimilarPosts } from "@components/imagePage";
 import { catalogHref, findByName } from "@lib/catalog";
 import { authorized_fetch } from "@lib/client";
+import { getCameraCatalog } from "@lib/data/cameras";
+import { getFilmCatalog } from "@lib/data/films";
 import { authorName, jsonLd, postDescription } from "@lib/seo";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
 export const dynamicParams = true;
 export const revalidate = 3600;
 
+type PageProps = {
+  params: Promise<{ pid: string }>;
+};
+
 export async function generateStaticParams() {
   return [];
 }
 
-const getPost = cache(async (pid) => {
+const getPost = cache(async (pid: string): Promise<PagePost | null> => {
   const response = await authorized_fetch(`/post/${pid}`, "GET", revalidate);
   if (!response.ok) {
     return null;
@@ -29,8 +34,8 @@ const defaultImage = {
   alt: "AnalogDB",
 };
 
-function imageObject(post) {
-  const image = (resolution) =>
+function imageObject(post: PagePost) {
+  const image = (resolution: string) =>
     post.images?.find((img) => img.resolution === resolution)?.url;
   const author = authorName(post);
   return {
@@ -52,7 +57,9 @@ function imageObject(post) {
   };
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { pid } = await params;
 
   try {
@@ -98,7 +105,7 @@ export async function generateMetadata({ params }) {
   }
 }
 
-async function getPostData(pid) {
+async function getPostData(pid: string) {
   const post = await getPost(pid);
 
   if (!post) {
@@ -112,7 +119,7 @@ async function getPostData(pid) {
   }
 
   const similarRoute = `/post/${pid}/similar${query}`;
-  let similar;
+  let similar: SimilarPosts;
 
   try {
     const similarResponse = await authorized_fetch(
@@ -128,7 +135,7 @@ async function getPostData(pid) {
   return { post, similar };
 }
 
-async function getCatalogHrefs(post) {
+async function getCatalogHrefs(post: PagePost) {
   const [films, cameras] = await Promise.all([
     getFilmCatalog(),
     getCameraCatalog(),
@@ -141,7 +148,7 @@ async function getCatalogHrefs(post) {
   };
 }
 
-export default async function Post({ params }) {
+export default async function Post({ params }: PageProps) {
   const { pid } = await params;
   const { post, similar } = await getPostData(pid);
   const { filmHref, cameraHref } = await getCatalogHrefs(post);

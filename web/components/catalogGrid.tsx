@@ -1,5 +1,15 @@
+import { CatalogEntry } from "@lib/catalog";
 import CatalogCard from "./catalogCard";
 import styles from "./catalogIndex.module.css";
+
+interface CatalogGridProps {
+  entries: CatalogEntry[];
+  hrefFor: (entry: CatalogEntry) => string;
+  labelFor?: (entry: CatalogEntry) => string;
+  altFor?: (entry: CatalogEntry) => string;
+  priorityCount?: number;
+  offset?: number;
+}
 
 export default function CatalogGrid({
   entries,
@@ -8,7 +18,7 @@ export default function CatalogGrid({
   altFor,
   priorityCount = 0,
   offset = 0,
-}) {
+}: CatalogGridProps) {
   return (
     <div className={styles.grid}>
       {entries.map((entry, i) => (

@@ -1,11 +1,18 @@
 "use client";
 
 import usePosts from "@hooks/usePosts";
-import { catalogHref, catalogName } from "@lib/catalog";
-import { catalogParsers } from "@lib/searchParams";
+import {
+  CatalogEntry,
+  catalogHref,
+  CatalogKind,
+  catalogName,
+} from "@lib/catalog";
+import { EntryFact } from "@lib/catalogPage";
+import { catalogParsers, PostsFilters } from "@lib/searchParams";
 import { pickSeed } from "@lib/seed";
 import { SegmentedControl } from "@mantine/core";
 import { IconAperture, IconPalette, IconPhoto } from "@tabler/icons-react";
+import { ServerPostResponse } from "analogdb-generated";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import styles from "./catalogDetail.module.css";
@@ -20,6 +27,23 @@ const factIcons = {
   speed: IconAperture,
   color: IconPalette,
 };
+
+type DetailLink = { href: string; label: string };
+
+interface CatalogDetailProps {
+  kind?: CatalogKind;
+  entry: CatalogEntry;
+  facts: EntryFact[];
+  related?: CatalogEntry[];
+  fixed?: PostsFilters;
+  title?: string;
+  titleLink?: DetailLink;
+  relatedTitle?: string;
+  relatedLinks?: DetailLink[];
+  initialPage?: ServerPostResponse | null;
+  initialFilters?: PostsFilters;
+  initialColumns?: number;
+}
 
 const sortData = [
   { label: "top", value: "score" },
@@ -40,7 +64,7 @@ export default function CatalogDetail({
   initialPage,
   initialFilters,
   initialColumns,
-}) {
+}: CatalogDetailProps) {
   const { filters, setFilters, limits, ...posts } = usePosts(
     initialPage,
     initialFilters,
@@ -48,9 +72,9 @@ export default function CatalogDetail({
   );
   const [expanded, setExpanded] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
-  const descriptionRef = useRef(null);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
 
-  const setSort = (sort) => {
+  const setSort = (sort: PostsFilters["sort"]) => {
     if (sort === "random") {
       setFilters({ sort: sort, seed: pickSeed() });
     } else {
@@ -129,6 +153,8 @@ export default function CatalogDetail({
           )}
         </div>
         <KeywordRow
+          words={undefined}
+          onSelect={undefined}
           links={links}
           label={relatedTitle ?? `more from ${entry.make.toUpperCase()}`}
           className={styles.relatedRow}

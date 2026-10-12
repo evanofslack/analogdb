@@ -2,13 +2,14 @@ import CatalogIndex from "@components/catalogIndex";
 import { groupCameras } from "@lib/catalog";
 import { getCatalog, indexJsonLd } from "@lib/catalogPage";
 import { jsonLd } from "@lib/seo";
+import { Metadata } from "next";
 import { connection } from "next/server";
 
 const title = "Cameras";
 const description =
   "Film photographs grouped by the camera they were shot on, from Canon and Nikon SLRs to Hasselblad and Leica.";
 
-export const metadata = {
+export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: "/cameras" },

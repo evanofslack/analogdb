@@ -2,13 +2,14 @@ import CatalogIndex from "@components/catalogIndex";
 import { groupFilms } from "@lib/catalog";
 import { getCatalog, indexJsonLd } from "@lib/catalogPage";
 import { jsonLd } from "@lib/seo";
+import { Metadata } from "next";
 import { connection } from "next/server";
 
 const title = "Film stocks";
 const description =
   "Film photographs grouped by film stock, from Kodak Portra to Ilford HP5, with a description of each stock.";
 
-export const metadata = {
+export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: "/films" },
