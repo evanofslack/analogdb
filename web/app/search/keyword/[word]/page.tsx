@@ -1,16 +1,22 @@
-import { getKeyword } from "@lib/data/keywords";
 import CatalogDetail from "@components/catalogDetail";
 import { loadKeywordDetail } from "@lib/catalogPage";
+import { getKeyword } from "@lib/data/keywords";
 import {
   keywordLabel,
   keywordPageHref,
   keywordSearchHref,
 } from "@lib/keywords";
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 const robots = { index: false, follow: true };
 
-function decodeWord(word) {
+interface PageProps {
+  params: Promise<{ word: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function decodeWord(word: string): string {
   try {
     return decodeURIComponent(word);
   } catch {
@@ -18,7 +24,9 @@ function decodeWord(word) {
   }
 }
 
-export async function generateMetadata({ params }) {
+export async function generateMetadata({
+  params,
+}: Pick<PageProps, "params">): Promise<Metadata> {
   const { word } = await params;
   const keyword = await getKeyword(decodeWord(word));
   if (!keyword) notFound();
@@ -55,7 +63,7 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function Page({ params, searchParams }) {
+export default async function Page({ params, searchParams }: PageProps) {
   const { word } = await params;
   const keyword = await getKeyword(decodeWord(word));
   if (!keyword) notFound();
@@ -65,6 +73,7 @@ export default async function Page({ params, searchParams }) {
 
   return (
     <CatalogDetail
+      kind={undefined}
       entry={entry}
       {...detail}
       title={keywordLabel(entry.make)}

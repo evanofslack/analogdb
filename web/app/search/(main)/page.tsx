@@ -8,22 +8,34 @@ import {
 import { guessColumns, slim } from "@lib/firstPage";
 import { limit } from "@lib/rateLimit";
 import {
+  SearchFlags,
   searchKey,
   searchPageSize,
   searchParsers,
   similarPageSize,
   toSearchFlags,
 } from "@lib/searchParams";
+import {
+  ServerSearchResponse,
+  ServerSimilarPostsResponse,
+} from "analogdb-generated";
+import { Metadata } from "next";
 import { headers } from "next/headers";
 import { userAgent } from "next/server";
-import { createLoader } from "nuqs/server";
+import { createLoader, SearchParams } from "nuqs/server";
 import SearchPage from "./search-page";
 
 const loadSearch = createLoader(searchParsers);
 
 const robots = { index: false, follow: true };
 
-export async function generateMetadata({ searchParams }) {
+interface PageProps {
+  searchParams: Promise<SearchParams>;
+}
+
+export async function generateMetadata({
+  searchParams,
+}: PageProps): Promise<Metadata> {
   const { q, similar } = loadSearch(await searchParams);
   let title = "Search · AnalogDB";
   if (q) title = `"${q}" photos · AnalogDB`;
@@ -35,7 +47,9 @@ export async function generateMetadata({ searchParams }) {
   };
 }
 
-function withKeywords(response) {
+function withKeywords(
+  response: ServerSimilarPostsResponse
+): ServerSimilarPostsResponse {
   const slimmed = slim(response);
   return {
     ...slimmed,
@@ -46,7 +60,10 @@ function withKeywords(response) {
   };
 }
 
-async function loadText(q, flags) {
+async function loadText(
+  q: string,
+  flags: SearchFlags
+): Promise<ServerSearchResponse | null> {
   try {
     const response = await searchPosts({
       q,
@@ -62,7 +79,10 @@ async function loadText(q, flags) {
   }
 }
 
-async function loadSimilar(id, flags) {
+async function loadSimilar(
+  id: number,
+  flags: SearchFlags
+): Promise<ServerSimilarPostsResponse | null> {
   try {
     const response = await getPostsSimilar({
       id,
@@ -75,7 +95,7 @@ async function loadSimilar(id, flags) {
   }
 }
 
-export default async function Page({ searchParams }) {
+export default async function Page({ searchParams }: PageProps) {
   const filters = loadSearch(await searchParams);
   const flags = toSearchFlags(filters);
   const q = filters.q?.trim() || null;
@@ -87,7 +107,7 @@ export default async function Page({ searchParams }) {
   if (q) allowed = (await limit("search")).ok;
   else if (similar) allowed = (await limit("browse")).ok;
 
-  let initialKey = null;
+  let initialKey: string | null = null;
   if (q) initialKey = searchKey("q", q, flags);
   else if (similar) initialKey = searchKey("similar", similar, flags);
 
