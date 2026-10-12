@@ -1,4 +1,5 @@
 import { Skeleton } from "@mantine/core";
+import { ReactNode } from "react";
 import catalogStyles from "./catalogIndex.module.css";
 import GallerySkeleton from "./gallerySkeleton";
 import styles from "./searchSkeletons.module.css";
@@ -17,7 +18,11 @@ function PillRow() {
   );
 }
 
-function SectionSkeleton({ children }) {
+interface SectionSkeletonProps {
+  children: ReactNode;
+}
+
+function SectionSkeleton({ children }: SectionSkeletonProps) {
   return (
     <div className={suggestionStyles.section}>
       <Skeleton width={140} height={14} radius="sm" />
@@ -56,7 +61,11 @@ export function SuggestionsSkeleton() {
   );
 }
 
-export function ResultsSkeleton({ className }) {
+interface ResultsSkeletonProps {
+  className?: string;
+}
+
+export function ResultsSkeleton({ className }: ResultsSkeletonProps) {
   return (
     <>
       <div className={className}>

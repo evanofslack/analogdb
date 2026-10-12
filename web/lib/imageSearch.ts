@@ -4,7 +4,7 @@ export const imageAccept = ["image/jpeg", "image/png", "image/webp"];
 export const imageMaxSize = 10 * 1024 * 1024;
 
 export function rejectMessage(
-  rejections: { errors?: { code?: string }[] }[]
+  rejections: { errors?: readonly { code?: string }[] }[]
 ): string {
   const code = rejections?.[0]?.errors?.[0]?.code;
   if (code === "file-too-large") return "that image is over 10 MB";

@@ -8,7 +8,7 @@ import Header from "@components/header";
 import InfiniteGallery from "@components/infiniteGallery";
 import KeywordRow from "@components/keywordRow";
 import ScrollTop from "@components/scrollTop";
-import SearchBar from "@components/searchBar";
+import SearchBar, { SearchPanel, SearchVisual } from "@components/searchBar";
 import {
   ResultsSkeleton,
   SuggestionsSkeleton,
@@ -16,6 +16,11 @@ import {
 import SearchSuggestions, { KeywordChips } from "@components/searchSuggestions";
 import useRecentSearches from "@hooks/useRecentSearches";
 import useSearch, { useSearchSource, useSimilar } from "@hooks/useSearch";
+import type { CatalogEntry } from "@lib/catalog";
+import type {
+  SearchSource,
+  SearchSuggestions as Suggestions,
+} from "@lib/data/search";
 import {
   imageAccept,
   imageMaxSize,
@@ -24,13 +29,30 @@ import {
 } from "@lib/imageSearch";
 import { retryUnlessLimited, unwrap } from "@lib/rateLimited";
 import { resizeImage } from "@lib/resizeImage";
-import { searchParsers, toSearchFlags } from "@lib/searchParams";
+import {
+  SearchFilters,
+  SearchFlags,
+  searchParsers,
+  toSearchFlags,
+} from "@lib/searchParams";
 import { Button, Menu, SegmentedControl } from "@mantine/core";
-import { Dropzone } from "@mantine/dropzone";
+import { Dropzone, FileRejection, FileWithPath } from "@mantine/dropzone";
 import { IconAdjustmentsHorizontal, IconPhotoScan } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  ServerSearchResponse,
+  ServerSimilarPostsResponse,
+} from "analogdb-generated";
 import { useQueryStates } from "nuqs";
-import { Suspense, use, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ReactNode,
+  Suspense,
+  use,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import styles from "./search.module.css";
 
 const filterData = [
@@ -41,8 +63,33 @@ const filterData = [
 
 const maxChips = 8;
 
-function similarKeywords(pages, grayscaleOnly) {
-  const weights = new Map();
+type ResultsPage = ServerSearchResponse | ServerSimilarPostsResponse;
+
+interface ResultsData {
+  pages: ResultsPage[];
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  isPlaceholderData: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  isFetchNextPageError: boolean;
+  fetchNextPage: () => void;
+  refetch: () => void;
+}
+
+interface Upload {
+  blob: Blob;
+  thumb: string;
+  flagsKey: string;
+  response: ServerSearchResponse;
+}
+
+function similarKeywords(
+  pages: ResultsPage[],
+  grayscaleOnly: boolean
+): string[] {
+  const weights = new Map<string, number>();
   for (const post of pages[0]?.posts ?? []) {
     for (const keyword of post.keywords ?? []) {
       if (!keyword.word) continue;
@@ -59,7 +106,12 @@ function similarKeywords(pages, grayscaleOnly) {
     .map(([word]) => word);
 }
 
-function FlagsMenu({ filters, setFilters }) {
+interface FlagsMenuProps {
+  filters: SearchFilters;
+  setFilters: (values: Partial<SearchFilters>) => void;
+}
+
+function FlagsMenu({ filters, setFilters }: FlagsMenuProps) {
   return (
     <Menu shadow="md" width={250} position="bottom-end">
       <Menu.Target>
@@ -80,7 +132,9 @@ function FlagsMenu({ filters, setFilters }) {
             <h5 className={filterStyles.segmentTitle}>18+</h5>
             <SegmentedControl
               value={filters.nsfw}
-              onChange={(nsfw) => setFilters({ nsfw })}
+              onChange={(nsfw) =>
+                setFilters({ nsfw: nsfw as SearchFilters["nsfw"] })
+              }
               data={filterData}
             />
           </div>
@@ -88,7 +142,7 @@ function FlagsMenu({ filters, setFilters }) {
             <h5 className={filterStyles.segmentTitle}>b&w</h5>
             <SegmentedControl
               value={filters.bw}
-              onChange={(bw) => setFilters({ bw })}
+              onChange={(bw) => setFilters({ bw: bw as SearchFilters["bw"] })}
               data={filterData}
             />
           </div>
@@ -96,7 +150,9 @@ function FlagsMenu({ filters, setFilters }) {
             <h5 className={filterStyles.segmentTitle}>sprocket</h5>
             <SegmentedControl
               value={filters.sprocket}
-              onChange={(sprocket) => setFilters({ sprocket })}
+              onChange={(sprocket) =>
+                setFilters({ sprocket: sprocket as SearchFilters["sprocket"] })
+              }
               data={filterData}
             />
           </div>
@@ -106,7 +162,21 @@ function FlagsMenu({ filters, setFilters }) {
   );
 }
 
-function Results({ results, chips, onSearch, noMatches, initialColumns }) {
+interface ResultsProps {
+  results: ResultsData;
+  chips: string[];
+  onSearch: (query: string) => void;
+  noMatches?: ReactNode;
+  initialColumns: number;
+}
+
+function Results({
+  results,
+  chips,
+  onSearch,
+  noMatches,
+  initialColumns,
+}: ResultsProps) {
   return (
     <>
       <KeywordRow
@@ -123,13 +193,21 @@ function Results({ results, chips, onSearch, noMatches, initialColumns }) {
   );
 }
 
+interface EmptyBodyProps {
+  suggestionsPromise: Promise<Suggestions>;
+  catalogPromise: Promise<CatalogEntry[]> | null;
+  recent: string[];
+  onClearRecent: () => void;
+  onSearch: (query: string) => void;
+}
+
 function EmptyBody({
   suggestionsPromise,
   catalogPromise,
   recent,
   onClearRecent,
   onSearch,
-}) {
+}: EmptyBodyProps) {
   const suggestions = use(suggestionsPromise);
   const initialCatalog = catalogPromise ? use(catalogPromise) : null;
   const catalog = useQuery({
@@ -154,6 +232,16 @@ function EmptyBody({
   );
 }
 
+interface TextResultsProps {
+  q: string;
+  flags: SearchFlags;
+  textPromise: Promise<ServerSearchResponse | null> | null;
+  initialKey: string | null;
+  suggestions?: Suggestions;
+  onSearch: (query: string) => void;
+  initialColumns: number;
+}
+
 function TextResults({
   q,
   flags,
@@ -162,7 +250,7 @@ function TextResults({
   suggestions,
   onSearch,
   initialColumns,
-}) {
+}: TextResultsProps) {
   const initialPage = textPromise ? use(textPromise) : null;
   const results = useSearch(q, flags, initialPage, initialKey);
 
@@ -196,6 +284,16 @@ function TextResults({
   );
 }
 
+interface SimilarResultsProps {
+  similar: number;
+  flags: SearchFlags;
+  similarPromise: Promise<ServerSimilarPostsResponse | null> | null;
+  initialKey: string | null;
+  grayscaleOnly: boolean;
+  onSearch: (query: string) => void;
+  initialColumns: number;
+}
+
 function SimilarResults({
   similar,
   flags,
@@ -204,7 +302,7 @@ function SimilarResults({
   grayscaleOnly,
   onSearch,
   initialColumns,
-}) {
+}: SimilarResultsProps) {
   const initialPage = similarPromise ? use(similarPromise) : null;
   const results = useSimilar(similar, flags, initialPage, initialKey);
 
@@ -218,6 +316,17 @@ function SimilarResults({
   );
 }
 
+interface SearchPageProps {
+  suggestionsPromise: Promise<Suggestions>;
+  catalogPromise: Promise<CatalogEntry[]> | null;
+  textPromise: Promise<ServerSearchResponse | null> | null;
+  similarPromise: Promise<ServerSimilarPostsResponse | null> | null;
+  sourcePromise: Promise<SearchSource | null> | null;
+  sourceId: number | null;
+  initialKey: string | null;
+  initialColumns: number;
+}
+
 export default function SearchPage({
   suggestionsPromise,
   catalogPromise,
@@ -227,7 +336,7 @@ export default function SearchPage({
   sourceId,
   initialKey,
   initialColumns,
-}) {
+}: SearchPageProps) {
   const [filters, setFilters] = useQueryStates(searchParsers);
   const { nsfw, bw, sprocket } = filters;
   const flags = useMemo(
@@ -239,11 +348,11 @@ export default function SearchPage({
   const similar = !q && filters.similar > 0 ? filters.similar : null;
 
   const { recent, add, clear } = useRecentSearches();
-  const [panel, setPanel] = useState(null);
-  const [upload, setUpload] = useState(null);
+  const [panel, setPanel] = useState<SearchPanel>(null);
+  const [upload, setUpload] = useState<Upload | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadPending, setUploadPending] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const { data: suggestions } = useQuery({
     queryKey: ["search-suggestions"],
@@ -257,7 +366,7 @@ export default function SearchPage({
   else if (similar) mode = "similar";
   else if (upload) mode = "upload";
 
-  const replaceUpload = (next) =>
+  const replaceUpload = (next: Upload | null) =>
     setUpload((previous) => {
       if (previous && previous.thumb !== next?.thumb) {
         URL.revokeObjectURL(previous.thumb);
@@ -265,12 +374,12 @@ export default function SearchPage({
       return next;
     });
 
-  const showError = (message) => {
+  const showError = (message: string) => {
     setUploadError(message);
     setPanel("visual");
   };
 
-  const searchImage = async (file) => {
+  const searchImage = async (file: File) => {
     if (!imageAccept.includes(file.type)) {
       showError("use a JPEG, PNG or WebP image");
       return;
@@ -306,14 +415,14 @@ export default function SearchPage({
   const searchImageRef = useRef(searchImage);
   searchImageRef.current = searchImage;
 
-  const handleSearch = (query) => {
+  const handleSearch = (query: string) => {
     add(query);
     setPanel(null);
     setFilters({ q: query, similar: null }, { history: "push" });
     window.scrollTo({ top: 0 });
   };
 
-  const handleExample = (id) => {
+  const handleExample = (id: number) => {
     setPanel(null);
     setUploadError(null);
     setFilters({ q: null, similar: id }, { history: "push" });
@@ -349,7 +458,7 @@ export default function SearchPage({
   }, [upload, flags, flagsKey]);
 
   useEffect(() => {
-    const onPaste = (event) => {
+    const onPaste = (event: ClipboardEvent) => {
       const item = Array.from(event.clipboardData?.items ?? []).find(
         (entry) => entry.kind === "file" && entry.type.startsWith("image/")
       );
@@ -362,8 +471,8 @@ export default function SearchPage({
     return () => document.removeEventListener("paste", onPaste);
   }, []);
 
-  let visual = null;
-  let body = null;
+  let visual: SearchVisual | null = null;
+  let body: ReactNode = null;
   if (mode === "empty") {
     body = (
       <Suspense key="empty" fallback={<SuggestionsSkeleton />}>
@@ -427,6 +536,7 @@ export default function SearchPage({
           pages: [upload.response],
           isLoading: false,
           isError: false,
+          error: null,
           isPlaceholderData: uploadPending,
           hasNextPage: false,
           isFetchingNextPage: false,
@@ -450,8 +560,10 @@ export default function SearchPage({
           accept={imageAccept}
           maxSize={imageMaxSize}
           multiple={false}
-          onDrop={(files) => files[0] && searchImage(files[0])}
-          onReject={(rejections) => showError(rejectMessage(rejections))}
+          onDrop={(files: FileWithPath[]) => files[0] && searchImage(files[0])}
+          onReject={(rejections: FileRejection[]) =>
+            showError(rejectMessage(rejections))
+          }
         >
           <div className={styles.fullscreen}>
             <IconPhotoScan size={48} stroke={1.5} />

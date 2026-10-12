@@ -1,10 +1,20 @@
 "use client";
 
+import type { SearchExample } from "@lib/data/search";
 import { imageAccept, imageMaxSize, rejectMessage } from "@lib/imageSearch";
-import { Dropzone } from "@mantine/dropzone";
+import { Dropzone, FileRejection, FileWithPath } from "@mantine/dropzone";
 import { IconPhotoScan, IconPhotoX, IconUpload } from "@tabler/icons-react";
 import Image from "next/image";
 import styles from "./visualSearch.module.css";
+
+export interface VisualSearchProps {
+  examples?: SearchExample[];
+  loading?: boolean;
+  error?: string | null;
+  onImage: (file: FileWithPath) => void;
+  onError: (message: string) => void;
+  onExample: (id: number) => void;
+}
 
 export default function VisualSearch({
   examples = [],
@@ -13,13 +23,15 @@ export default function VisualSearch({
   onImage,
   onError,
   onExample,
-}) {
+}: VisualSearchProps) {
   return (
     <div className={styles.panel}>
       <h3 className={styles.title}>visual search</h3>
       <Dropzone
-        onDrop={(files) => files[0] && onImage(files[0])}
-        onReject={(rejections) => onError(rejectMessage(rejections))}
+        onDrop={(files: FileWithPath[]) => files[0] && onImage(files[0])}
+        onReject={(rejections: FileRejection[]) =>
+          onError(rejectMessage(rejections))
+        }
         accept={imageAccept}
         maxSize={imageMaxSize}
         multiple={false}
