@@ -468,6 +468,16 @@ definitions:
     - ReportNotFilm
     - ReportDuplicate
     - ReportOther
+  server.AuthorsResponse:
+    properties:
+      authors:
+        example:
+        - user1
+        - user2
+        items:
+          type: string
+        type: array
+    type: object
   server.CamerasResponse:
     properties:
       cameras:
@@ -929,6 +939,23 @@ paths:
       summary: List removed post permalinks
       tags:
       - removed
+  /authors:
+    get:
+      description: Usernames of every author with a post
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.AuthorsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      summary: Get authors
+      tags:
+      - authors
   /camera:
     post:
       consumes:

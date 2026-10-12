@@ -7,7 +7,7 @@ import (
 )
 
 type AuthorsResponse struct {
-	Authors []string `json:"authors"`
+	Authors []string `json:"authors" example:"user1,user2"`
 }
 
 const authorsPath = "/authors"
@@ -18,10 +18,18 @@ func (s *Server) mountAuthorHandlers(r chi.Router) {
 	})
 }
 
+// @Summary Get authors
+// @Description Usernames of every author with a post
+// @Tags authors
+// @Produce json
+// @Success 200 {object} AuthorsResponse
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /authors [get]
 func (s *Server) getAuthors(w http.ResponseWriter, r *http.Request) {
 	authors, err := s.AuthorService.FindAuthors(r.Context())
 	if err != nil {
 		s.writeError(w, r, err)
+		return
 	}
 	authorsResponse := AuthorsResponse{
 		Authors: authors,

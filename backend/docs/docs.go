@@ -217,6 +217,32 @@ const docTemplate = `{
                 }
             }
         },
+        "/authors": {
+            "get": {
+                "description": "Usernames of every author with a post",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authors"
+                ],
+                "summary": "Get authors",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.AuthorsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/camera": {
             "put": {
                 "security": [
@@ -2775,6 +2801,21 @@ const docTemplate = `{
                 "ReportDuplicate",
                 "ReportOther"
             ]
+        },
+        "server.AuthorsResponse": {
+            "type": "object",
+            "properties": {
+                "authors": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "user1",
+                        "user2"
+                    ]
+                }
+            }
         },
         "server.CamerasResponse": {
             "type": "object",
