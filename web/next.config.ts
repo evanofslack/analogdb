@@ -8,6 +8,10 @@ module.exports = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "i.analogdb.com",
+      },
+      {
+        protocol: "https",
         hostname: "d3i73ktnzbi69i.cloudfront.net",
       },
     ],
