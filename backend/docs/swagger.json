@@ -2426,6 +2426,7 @@
                         "nsfw_mislabeled",
                         "wrong_info",
                         "not_film",
+                        "duplicate",
                         "other"
                     ],
                     "allOf": [
@@ -2842,6 +2843,7 @@
                 "nsfw_mislabeled",
                 "wrong_info",
                 "not_film",
+                "duplicate",
                 "other"
             ],
             "x-enum-varnames": [
@@ -2849,6 +2851,7 @@
                 "ReportNsfwMislabeled",
                 "ReportWrongInfo",
                 "ReportNotFilm",
+                "ReportDuplicate",
                 "ReportOther"
             ]
         },
