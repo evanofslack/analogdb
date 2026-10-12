@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es5",
     "lib": ["dom", "dom.iterable", "es6"],
+    "allowJs": false,
     "skipLibCheck": true,
     "strict": false,
     "forceConsistentCasingInFileNames": true,
