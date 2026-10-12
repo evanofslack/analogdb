@@ -13,27 +13,51 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import React, { useState } from "react";
+
+interface CameraValues {
+  make: string;
+  model: string;
+  description: string;
+}
+
+interface FilmValues {
+  make: string;
+  type: string;
+  speed: number | string;
+  colorType: string;
+  description: string;
+}
+
+type CatalogValues = CameraValues & FilmValues;
+
+interface CatalogButtonProps {
+  kind: "camera" | "film";
+  initial: CameraValues | FilmValues;
+}
 
 // CatalogButton adds an unmatched camera or film to the catalog
-export default function CatalogButton({ kind, initial }) {
+export default function CatalogButton({ kind, initial }: CatalogButtonProps) {
   const router = useRouter();
   const [opened, setOpened] = useState(false);
-  const [values, setValues] = useState(initial);
-  const [error, setError] = useState(null);
+  const [values, setValues] = useState<CatalogValues>(initial as CatalogValues);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const set = (key) => (value) =>
+  const set = (key: keyof CatalogValues) => (value: string | number) =>
     setValues((current) => ({ ...current, [key]: value }));
-  const setText = (key) => (event) => set(key)(event.currentTarget.value);
+  const setText =
+    (key: keyof CatalogValues) =>
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      set(key)(event.currentTarget.value);
 
   function open() {
-    setValues(initial);
+    setValues(initial as CatalogValues);
     setError(null);
     setOpened(true);
   }
 
-  async function save(event) {
+  async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSaving(true);
     setError(null);
@@ -42,7 +66,7 @@ export default function CatalogButton({ kind, initial }) {
         ? await addCatalogCamera(values)
         : await addCatalogFilm({ ...values, speed: Number(values.speed) });
     setSaving(false);
-    if (!result.ok) {
+    if (result.ok === false) {
       setError(result.error);
       return;
     }
