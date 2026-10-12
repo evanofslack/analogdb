@@ -1,6 +1,7 @@
 "use client";
 
 import { removePost, updatePost } from "@app/actions/admin";
+import { ReviewPost } from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
 import {
   ActionIcon,
@@ -22,7 +23,7 @@ const flags = [
   { key: "nsfw", label: "NSFW" },
   { key: "grayscale", label: "B&W" },
   { key: "sprocket", label: "Sprocket" },
-];
+] as const;
 
 function readReviewed() {
   try {
@@ -32,28 +33,36 @@ function readReviewed() {
   }
 }
 
-function writeReviewed(id) {
+function writeReviewed(id: number) {
   try {
     window.localStorage.setItem(reviewedKey, String(id));
   } catch {}
 }
 
-function ReviewCard({ post, isNew, onDeleted }) {
+type FlagKey = (typeof flags)[number]["key"];
+
+interface ReviewCardProps {
+  post: ReviewPost;
+  isNew: boolean;
+  onDeleted: (id: number) => void;
+}
+
+function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
   const router = useRouter();
   const [values, setValues] = useState(post);
-  const [pending, setPending] = useState(null);
-  const [error, setError] = useState(null);
+  const [pending, setPending] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const image =
     post.images.find((i) => i.resolution === "low") ?? post.images[0];
 
-  async function toggle(key, checked) {
+  async function toggle(key: FlagKey, checked: boolean) {
     setPending(key);
     setError(null);
     setValues((v) => ({ ...v, [key]: checked }));
     const result = await updatePost(post.id, { [key]: checked });
     setPending(null);
-    if (!result.ok) {
+    if (result.ok === false) {
       setValues((v) => ({ ...v, [key]: !checked }));
       setError(result.error);
     }
@@ -64,7 +73,7 @@ function ReviewCard({ post, isNew, onDeleted }) {
     setPending("delete");
     const result = await removePost(post.id);
     setPending(null);
-    if (result.ok) {
+    if (result.ok === true) {
       onDeleted(post.id);
     } else {
       setError(result.error);
@@ -142,9 +151,14 @@ function ReviewCard({ post, isNew, onDeleted }) {
   );
 }
 
-export default function ReviewGrid({ posts, firstPage }) {
+interface ReviewGridProps {
+  posts: ReviewPost[];
+  firstPage: boolean;
+}
+
+export default function ReviewGrid({ posts, firstPage }: ReviewGridProps) {
   const [reviewed, setReviewed] = useState(0);
-  const [deleted, setDeleted] = useState([]);
+  const [deleted, setDeleted] = useState<number[]>([]);
 
   useEffect(() => {
     setReviewed(readReviewed());

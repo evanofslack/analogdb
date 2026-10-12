@@ -1,9 +1,15 @@
+import { ReviewPage } from "@lib/adminClient";
 import { Button } from "@mantine/core";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
 import ReviewGrid from "./reviewGrid";
 
-export default function ReviewTab({ page, firstPage }) {
+interface ReviewTabProps {
+  page: ReviewPage;
+  firstPage: boolean;
+}
+
+export default function ReviewTab({ page, firstPage }: ReviewTabProps) {
   return (
     <>
       <ReviewGrid posts={page.posts} firstPage={firstPage} />
