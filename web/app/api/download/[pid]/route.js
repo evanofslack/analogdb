@@ -3,7 +3,7 @@ import { limit } from "@lib/rateLimit";
 import { ResponseError } from "analogdb-generated";
 import { NextResponse } from "next/server";
 
-const imageHost = "d3i73ktnzbi69i.cloudfront.net";
+const imageHosts = ["i.analogdb.com", "d3i73ktnzbi69i.cloudfront.net"];
 
 const extensions = {
   "image/jpeg": "jpg",
@@ -39,7 +39,10 @@ export async function GET(request, { params }) {
     }
 
     const imageUrl = new URL(post.images[3].url);
-    if (imageUrl.protocol !== "https:" || imageUrl.hostname !== imageHost) {
+    if (
+      imageUrl.protocol !== "https:" ||
+      !imageHosts.includes(imageUrl.hostname)
+    ) {
       throw new Error("Unexpected image host");
     }
 
