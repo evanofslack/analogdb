@@ -1,3 +1,4 @@
+import { AdminOverview } from "@lib/adminClient";
 import {
   formatAgo,
   formatBytes,
@@ -5,14 +6,31 @@ import {
   formatNumber,
 } from "@lib/format";
 import { Badge } from "@mantine/core";
+import { ReactNode } from "react";
 import styles from "./adminPanel.module.css";
 
-const statusColors = { ok: "green", down: "red", disabled: "gray" };
+interface OverviewTabProps {
+  overview: AdminOverview;
+  now: number;
+}
+
+interface StatProps {
+  label: ReactNode;
+  value: ReactNode;
+  detail?: ReactNode;
+  className?: string;
+}
+
+const statusColors: Record<string, string> = {
+  ok: "green",
+  down: "red",
+  disabled: "gray",
+};
 const dependencies = ["postgres", "redis", "weaviate", "clickhouse"];
 
 const day = 24 * 60 * 60;
 
-function freshnessClass(unixSeconds, now) {
+function freshnessClass(unixSeconds: number | null, now: number) {
   if (!unixSeconds) return styles.veryStale;
   const age = now / 1000 - unixSeconds;
   if (age > 4 * day) return styles.veryStale;
@@ -20,7 +38,7 @@ function freshnessClass(unixSeconds, now) {
   return styles.fresh;
 }
 
-function Stat({ label, value, detail, className }) {
+function Stat({ label, value, detail, className }: StatProps) {
   return (
     <div className={styles.card}>
       <div className={styles.statLabel}>{label}</div>
@@ -30,7 +48,7 @@ function Stat({ label, value, detail, className }) {
   );
 }
 
-function vectorDetail({ objects, posts }) {
+function vectorDetail({ objects, posts }: AdminOverview["vectors"]) {
   if (objects === null) return "Could not count objects";
   const diff = objects - posts;
   if (diff === 0) return "Matches post count";
@@ -39,7 +57,7 @@ function vectorDetail({ objects, posts }) {
   return `${formatNumber(-diff)} posts without an object`;
 }
 
-export default function OverviewTab({ overview, now }) {
+export default function OverviewTab({ overview, now }: OverviewTabProps) {
   const { status, app, counts, posted, freshness, database, vectors } =
     overview;
 

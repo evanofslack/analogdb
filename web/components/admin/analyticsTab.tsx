@@ -1,24 +1,52 @@
+import {
+  Analytics,
+  AnalyticsCount,
+  AnalyticsTopKey,
+  AnalyticsTotals,
+  TrafficRange,
+} from "@lib/adminClient";
 import { formatNumber, formatPercent } from "@lib/format";
+import { LineChartSeries } from "@mantine/charts";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
 import Change from "./change";
 import RangePicker from "./rangePicker";
 import Stat from "./stat";
-import TabError from "./tabError";
+import TabError, { LoadError } from "./tabError";
 import TimeChart from "./timeChart";
 
-const viewSeries = [
+interface AnalyticsTabProps {
+  analytics?: Analytics;
+  error?: LoadError;
+  range: TrafficRange;
+}
+
+type VitalMetric = "lcp" | "inp" | "cls";
+
+interface TopTable {
+  key: AnalyticsTopKey;
+  title: string;
+  nameLabel: string;
+  href?: (name: string) => string | null;
+  mono?: boolean;
+}
+
+interface ViewsTableProps extends Omit<TopTable, "key"> {
+  rows: AnalyticsCount[];
+}
+
+const viewSeries: LineChartSeries[] = [
   { name: "page_views", label: "Page views", color: "blue.6" },
   { name: "visitors", label: "Visitor-days", color: "teal.6" },
 ];
 
-const vitalThresholds = {
+const vitalThresholds: Record<VitalMetric, [number, number]> = {
   lcp: [2500, 4000],
   inp: [200, 500],
   cls: [0.1, 0.25],
 };
 
-function ViewsTable({ title, rows, nameLabel, href, mono }) {
+function ViewsTable({ title, rows, nameLabel, href, mono }: ViewsTableProps) {
   return (
     <div>
       <h3 className={styles.sectionTitle}>{title}</h3>
@@ -71,7 +99,7 @@ function ViewsTable({ title, rows, nameLabel, href, mono }) {
   );
 }
 
-function PostsTable({ posts }) {
+function PostsTable({ posts }: { posts: Analytics["posts"] }) {
   return (
     <div>
       <h3 className={styles.sectionTitle}>Top posts</h3>
@@ -121,14 +149,20 @@ function PostsTable({ posts }) {
   );
 }
 
-function vitalClass(metric, value) {
+function vitalClass(metric: VitalMetric, value: number) {
   const [good, poor] = vitalThresholds[metric];
   if (value <= good) return styles.fresh;
   if (value <= poor) return styles.stale;
   return styles.veryStale;
 }
 
-function Vital({ metric, value }) {
+function Vital({
+  metric,
+  value,
+}: {
+  metric: VitalMetric;
+  value: number | null;
+}) {
   if (value === null || value === undefined) {
     return <td className={styles.num}>–</td>;
   }
@@ -143,7 +177,7 @@ function Vital({ metric, value }) {
   );
 }
 
-function VitalsTable({ vitals }) {
+function VitalsTable({ vitals }: { vitals: Analytics["vitals"] }) {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>Web vitals (p75)</h2>
@@ -179,11 +213,11 @@ function VitalsTable({ vitals }) {
   );
 }
 
-function pagePath(route) {
+function pagePath(route: string) {
   return route.startsWith("/") && !route.includes("[") ? route : null;
 }
 
-const topTables = [
+const topTables: TopTable[] = [
   {
     key: "pages",
     title: "Top pages",
@@ -203,11 +237,11 @@ const topTables = [
   { key: "browsers", title: "Browsers", nameLabel: "Browser" },
 ];
 
-function ratio(a, b) {
+function ratio(a: number, b: number) {
   return b ? a / b : 0;
 }
 
-function derived(t) {
+function derived(t: AnalyticsTotals) {
   return {
     ...t,
     per_visitor: ratio(t.page_views, t.visitors),
@@ -215,7 +249,11 @@ function derived(t) {
   };
 }
 
-export default function AnalyticsTab({ analytics, error, range }) {
+export default function AnalyticsTab({
+  analytics,
+  error,
+  range,
+}: AnalyticsTabProps) {
   const live = analytics?.summary.live;
   return (
     <>
@@ -237,7 +275,7 @@ export default function AnalyticsTab({ analytics, error, range }) {
   );
 }
 
-function AnalyticsBody({ analytics }) {
+function AnalyticsBody({ analytics }: { analytics: Analytics }) {
   const current = derived(analytics.summary.current);
   const previous = derived(analytics.summary.previous);
   const [pages, referrers, sources, campaigns, devices, browsers] =

@@ -1,9 +1,14 @@
+import { AuditPage } from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
 import { Button } from "@mantine/core";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
 
-export default function AuditTab({ page }) {
+interface AuditTabProps {
+  page: AuditPage;
+}
+
+export default function AuditTab({ page }: AuditTabProps) {
   return (
     <>
       <p className={styles.note} style={{ marginBottom: "1rem" }}>
