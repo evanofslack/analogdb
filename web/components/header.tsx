@@ -7,9 +7,17 @@ import styles from "./header.module.css";
 import MobileNav from "./mobileNav";
 import WebNav from "./webNav";
 
-export default function Header({ compact = false, brandHeading = true }) {
+interface HeaderProps {
+  compact?: boolean;
+  brandHeading?: boolean;
+}
+
+export default function Header({
+  compact = false,
+  brandHeading = true,
+}: HeaderProps) {
   const Brand = brandHeading ? "h1" : "p";
-  const headerRef = useRef(null);
+  const headerRef = useRef<HTMLElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const shown = useScrollUp(headerRef, { paused: menuOpen });
 

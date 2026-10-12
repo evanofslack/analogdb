@@ -11,7 +11,13 @@ import { FiGithub } from "react-icons/fi";
 import styles from "./mobileNav.module.css";
 import ThemeToggle from "./themeToggle";
 
-const LINKS = [
+interface NavLink {
+  href: string;
+  label: string;
+  active: (path: string) => boolean;
+}
+
+const LINKS: NavLink[] = [
   { href: "/", label: "Gallery", active: (path) => path === "/" },
   {
     href: "/search",
@@ -32,13 +38,17 @@ const LINKS = [
   { href: "/docs", label: "API", active: (path) => path === "/docs" },
 ];
 
-const ADMIN_LINK = {
+const ADMIN_LINK: NavLink = {
   href: "/admin",
   label: "Admin",
   active: (path) => path === "/admin",
 };
 
-export default function MobileNav({ onOpenChange }) {
+interface MobileNavProps {
+  onOpenChange?: (opened: boolean) => void;
+}
+
+export default function MobileNav({ onOpenChange }: MobileNavProps) {
   const isAdmin = useIsAdmin();
   const pathname = usePathname();
   const [opened, { close, toggle }] = useDisclosure(false);
