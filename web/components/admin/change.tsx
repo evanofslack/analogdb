@@ -1,6 +1,12 @@
 import styles from "./adminPanel.module.css";
 
-export default function Change({ current, previous, invert }) {
+interface ChangeProps {
+  current: number;
+  previous: number;
+  invert?: boolean;
+}
+
+export default function Change({ current, previous, invert }: ChangeProps) {
   if (!previous) {
     return current ? <span>New this period</span> : null;
   }

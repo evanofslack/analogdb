@@ -1,8 +1,19 @@
-import { trafficRanges } from "@lib/adminClient";
+import { TrafficRange, trafficRanges } from "@lib/adminClient";
 import Link from "next/link";
+import { ReactNode } from "react";
 import styles from "./adminPanel.module.css";
 
-export default function RangePicker({ tab, range, children }) {
+interface RangePickerProps {
+  tab: string;
+  range: TrafficRange;
+  children?: ReactNode;
+}
+
+export default function RangePicker({
+  tab,
+  range,
+  children,
+}: RangePickerProps) {
   return (
     <div className={styles.controls}>
       {trafficRanges.map((r) => (
