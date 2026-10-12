@@ -199,7 +199,7 @@ func (s *Server) reportDuplicate(ctx context.Context, match *analogdb.ImageMatch
 	if match == nil || s.config.App.DuplicateMode != config.DuplicateReport {
 		return
 	}
-	dupe := analogdb.DuplicatePost{KeepID: match.ID, DuplicateID: postID, Distance: match.Distance}
+	dupe := analogdb.DuplicatePost{KeepID: match.ID, DuplicateID: postID, Distance: match.Distance, SameAuthor: match.SameAuthor}
 	if _, err := s.ScrapeService.ReportDuplicates(ctx, []analogdb.DuplicatePost{dupe}); err != nil {
 		s.logger.ErrorContext(ctx, "Fail report duplicate post", "post_id", postID, "match_id", match.ID, "error", err)
 	}

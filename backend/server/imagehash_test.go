@@ -39,7 +39,7 @@ func (m *mockHashScrape) FindImageMatch(ctx context.Context, q analogdb.ImageMat
 	if m.fail {
 		return analogdb.ImageMatch{}, false, errors.New("lookup failed")
 	}
-	return analogdb.ImageMatch{ID: m.match, Distance: 1}, m.match != 0, nil
+	return analogdb.ImageMatch{ID: m.match, Distance: 1, SameAuthor: true}, m.match != 0, nil
 }
 
 func (m *mockHashScrape) DuplicatePosts(ctx context.Context) ([]analogdb.DuplicatePost, error) {
@@ -203,7 +203,7 @@ func TestCreatePostDuplicate(t *testing.T) {
 			if len(scrape.reported) != tt.reported {
 				t.Errorf("want %d reports, got %+v", tt.reported, scrape.reported)
 			}
-			if tt.reported > 0 && (scrape.reported[0].KeepID != 9156 || scrape.reported[0].DuplicateID != posts.created[0].Id) {
+			if tt.reported > 0 && (scrape.reported[0].KeepID != 9156 || scrape.reported[0].DuplicateID != posts.created[0].Id || !scrape.reported[0].SameAuthor) {
 				t.Errorf("want the new post reported against 9156, got %+v", scrape.reported[0])
 			}
 			created := tt.want == http.StatusCreated

@@ -199,6 +199,9 @@ definitions:
       keep_url:
         example: https://i.analogdb.com/keep.jpeg
         type: string
+      same_author:
+        example: true
+        type: boolean
     type: object
   analogdb.Film:
     properties:

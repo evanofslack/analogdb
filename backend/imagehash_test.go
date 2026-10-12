@@ -37,17 +37,33 @@ func TestIsDuplicateImage(t *testing.T) {
 		want     bool
 	}{
 		{"exact, other author", other("u/b", 1000, 1500), 0, true},
-		{"1 bit, other author", other("u/b", 1000, 1500), 1, false},
-		{"2 bits, same author", other("u/a", 1000, 1500), 2, true},
-		{"3 bits, same author", other("u/a", 1000, 1500), 3, false},
-		{"aspect within 3%", other("u/a", 1000, 1530), 0, true},
-		{"aspect off by 5%", other("u/a", 1000, 1580), 0, false},
+		{"2 bits, other author", other("u/b", 1000, 1500), 2, true},
+		{"3 bits, other author", other("u/b", 1000, 1500), 3, false},
+		{"4 bits, same author", other("u/a", 1000, 1500), 4, true},
+		{"5 bits, same author", other("u/a", 1000, 1500), 5, false},
+		{"aspect within 5%", other("u/a", 1000, 1570), 0, true},
+		{"aspect off by 7%", other("u/a", 1000, 1610), 0, false},
 		{"rotated", other("u/a", 3000, 2000), 0, false},
 		{"no size", other("u/a", 0, 0), 0, false},
 	}
 	for _, tt := range tests {
 		if got := IsDuplicateImage(keep, tt.dup, tt.distance); got != tt.want {
 			t.Errorf("%s: want %v, got %v", tt.name, tt.want, got)
+		}
+	}
+}
+
+func TestDuplicateReportMessage(t *testing.T) {
+	tests := []struct {
+		dupe DuplicatePost
+		want string
+	}{
+		{DuplicatePost{KeepID: 9156, Distance: 0, SameAuthor: true}, "duplicate of post 9156, 0 bits apart, same author"},
+		{DuplicatePost{KeepID: 1144, Distance: 1}, "duplicate of post 1144, 1 bit apart, other author"},
+	}
+	for _, tt := range tests {
+		if got := DuplicateReportMessage(tt.dupe); got != tt.want {
+			t.Errorf("want %q, got %q", tt.want, got)
 		}
 	}
 }

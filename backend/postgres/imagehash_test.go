@@ -148,10 +148,11 @@ func TestScrapeService_FindImageMatch(t *testing.T) {
 		found bool
 	}{
 		{"exact, other author", analogdb.ImageMatchQuery{Hash: flip(t, 0), Author: "u/b", Width: 1000, Height: 1500}, true},
-		{"1 bit, other author", analogdb.ImageMatchQuery{Hash: flip(t, 1), Author: "u/b", Width: 1000, Height: 1500}, false},
-		{"2 bits, same author", analogdb.ImageMatchQuery{Hash: flip(t, 2), Author: "u/a", Width: 1000, Height: 1500}, true},
-		{"3 bits, same author", analogdb.ImageMatchQuery{Hash: flip(t, 3), Author: "u/a", Width: 1000, Height: 1500}, false},
-		{"other aspect", analogdb.ImageMatchQuery{Hash: flip(t, 0), Author: "u/a", Width: 1000, Height: 1600}, false},
+		{"2 bits, other author", analogdb.ImageMatchQuery{Hash: flip(t, 2), Author: "u/b", Width: 1000, Height: 1500}, true},
+		{"3 bits, other author", analogdb.ImageMatchQuery{Hash: flip(t, 3), Author: "u/b", Width: 1000, Height: 1500}, false},
+		{"4 bits, same author", analogdb.ImageMatchQuery{Hash: flip(t, 4), Author: "u/a", Width: 1000, Height: 1500}, true},
+		{"5 bits, same author", analogdb.ImageMatchQuery{Hash: flip(t, 5), Author: "u/a", Width: 1000, Height: 1500}, false},
+		{"other aspect", analogdb.ImageMatchQuery{Hash: flip(t, 0), Author: "u/a", Width: 1000, Height: 1610}, false},
 		{"grayscale differs", analogdb.ImageMatchQuery{Hash: flip(t, 0), Grayscale: true, Author: "u/a", Width: 1000, Height: 1500}, false},
 	}
 	for _, tt := range tests {
@@ -159,7 +160,7 @@ func TestScrapeService_FindImageMatch(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%s: FindImageMatch failed: %v", tt.name, err)
 		}
-		if found != tt.found || (found && match.ID != keep) {
+		if found != tt.found || (found && (match.ID != keep || match.SameAuthor != (tt.query.Author == "u/a"))) {
 			t.Errorf("%s: want found %v on post %d, got %v on %+v", tt.name, tt.found, keep, found, match)
 		}
 	}
@@ -194,8 +195,8 @@ func TestScrapeService_DuplicatePosts(t *testing.T) {
 
 	keep := createHashedPost(t, db, hashedPost{author: "u/a", width: 2000, height: 3000, time: 100, hash: flip(t, 0)})
 	repost := createHashedPost(t, db, hashedPost{author: "u/b", width: 1000, height: 1500, time: 200, hash: flip(t, 0)})
-	edit := createHashedPost(t, db, hashedPost{author: "u/a", width: 2000, height: 3000, time: 300, hash: flip(t, 2)})
-	createHashedPost(t, db, hashedPost{author: "u/c", width: 2000, height: 3000, time: 400, hash: flip(t, 1)})
+	edit := createHashedPost(t, db, hashedPost{author: "u/a", width: 2000, height: 3000, time: 300, hash: flip(t, 4)})
+	createHashedPost(t, db, hashedPost{author: "u/c", width: 2000, height: 3000, time: 400, hash: flip(t, 0) ^ 7<<40})
 	createHashedPost(t, db, hashedPost{author: "u/a", width: 3000, height: 2000, time: 500, hash: flip(t, 0)})
 	createHashedPost(t, db, hashedPost{author: "u/a", width: 2000, height: 3000, time: 600, hash: flip(t, 0), grayscale: true})
 
@@ -205,8 +206,8 @@ func TestScrapeService_DuplicatePosts(t *testing.T) {
 	}
 	keepURL := fmt.Sprintf("http://example.com/hashed_100_%d/low.jpg", flip(t, 0))
 	want := []analogdb.DuplicatePost{
-		{KeepID: keep, DuplicateID: repost, Distance: 0, KeepURL: keepURL, DuplicateURL: fmt.Sprintf("http://example.com/hashed_200_%d/low.jpg", flip(t, 0))},
-		{KeepID: keep, DuplicateID: edit, Distance: 2, KeepURL: keepURL, DuplicateURL: fmt.Sprintf("http://example.com/hashed_300_%d/low.jpg", flip(t, 2))},
+		{KeepID: keep, DuplicateID: repost, Distance: 0, SameAuthor: false, KeepURL: keepURL, DuplicateURL: fmt.Sprintf("http://example.com/hashed_200_%d/low.jpg", flip(t, 0))},
+		{KeepID: keep, DuplicateID: edit, Distance: 4, SameAuthor: true, KeepURL: keepURL, DuplicateURL: fmt.Sprintf("http://example.com/hashed_300_%d/low.jpg", flip(t, 4))},
 	}
 	if !slices.Equal(dupes, want) {
 		t.Errorf("want %+v, got %+v", want, dupes)
@@ -244,7 +245,7 @@ func TestScrapeService_ReportDuplicates(t *testing.T) {
 	if err := db.db.QueryRow(`SELECT reason, message FROM post_reports WHERE post_id = 2`).Scan(&reason, &message); err != nil {
 		t.Fatal(err)
 	}
-	if reason != "duplicate" || message != "duplicate of post 1, 0 bits apart" {
+	if reason != "duplicate" || message != "duplicate of post 1, 0 bits apart, other author" {
 		t.Errorf("unexpected report %q %q", reason, message)
 	}
 
