@@ -13,6 +13,7 @@ import {
   AnalogdbImage,
   AnalogdbKeyword,
 } from "analogdb-generated";
+import { type ImageProps } from "next/image";
 import { useRouter } from "next/navigation";
 import { CSSProperties, useState } from "react";
 import { IconType } from "react-icons";
@@ -89,7 +90,10 @@ async function handleDelete(postId: number) {
   }
 }
 
-function colorPlaceholder(post: PagePost, image: AnalogdbImage) {
+function colorPlaceholder(
+  post: PagePost,
+  image: AnalogdbImage
+): ImageProps["placeholder"] {
   const hex = post.colors?.[0]?.hex;
   if (!hex) return "empty";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${image.width} ${image.height}"><rect width="100%" height="100%" fill="${hex}"/></svg>`;
