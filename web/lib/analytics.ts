@@ -6,6 +6,66 @@ export type EventMap = {
     value: number;
     rating: string;
   };
+  search: {
+    q_norm: string;
+    mode: SearchMode;
+    source: SearchOrigin;
+    filters: Record<string, string>;
+    result_count: number;
+    outcome: "ok" | "empty" | "limited" | "error";
+    page: number;
+  };
+  search_result_click: {
+    position: number;
+    post_id: number;
+    search_id: string;
+  };
+  post_view: {
+    from: "gallery" | "search" | "similar" | "catalog" | "keyword" | "direct";
+    post_id: number;
+    search_id?: string;
+  };
+  post_download: {
+    post_id: number;
+    search_id?: string;
+  };
+  outbound_click: {
+    post_id: number;
+    target: "original" | "reddit" | "reddit_user";
+  };
+  similar_click: {
+    from_post_id: number;
+    post_id: number;
+    position: number;
+  };
+};
+
+export type SearchMode = "text" | "similar" | "image";
+
+export type SearchOrigin =
+  | "typed"
+  | "suggestion"
+  | "recent"
+  | "chip"
+  | "related"
+  | "example"
+  | "upload"
+  | "post";
+
+export type SearchResult = Omit<EventMap["search"], "q_norm" | "source"> & {
+  key: string;
+  q: string;
+  source?: SearchOrigin;
+};
+
+type LastSearch = {
+  id: string;
+  key: string;
+  mode: SearchMode;
+  qNorm: string;
+  source: SearchOrigin;
+  pages: number[];
+  at: number;
 };
 
 type Extra = { postId?: number; searchId?: string };
@@ -31,6 +91,8 @@ const endpoint = "/api/e";
 const maxQueue = 25;
 const flushAt = 10;
 const flushAfterMs = 5000;
+const searchTtlMs = 30 * 60 * 1000;
+const maxQueryLength = 200;
 
 const routes: [RegExp, string][] = [
   [/^\/post\/\d+\/?$/, "/post/[id]"],
@@ -44,6 +106,9 @@ let timer: ReturnType<typeof setTimeout> | null = null;
 let listening = false;
 let firstView = true;
 let lastPathname: string | null = null;
+let previousPathname: string | null = null;
+let lastSearch: LastSearch | null = null;
+let nextSource: SearchOrigin | null = null;
 
 export function routeFor(pathname: string): string {
   for (const [pattern, route] of routes) {
@@ -165,8 +230,78 @@ export function track<K extends keyof EventMap>(
 export function pageView(pathname: string): void {
   try {
     if (!enabled() || pathname === lastPathname) return;
+    previousPathname = lastPathname;
     lastPathname = pathname;
     enqueue(build("page_view", {}, {}, firstView));
     firstView = false;
+  } catch {}
+}
+
+export function normalizeQuery(q: string): string {
+  return q.trim().toLowerCase().replace(/\s+/g, " ").slice(0, maxQueryLength);
+}
+
+export function setSearchSource(source: SearchOrigin): void {
+  nextSource = source;
+}
+
+export function currentSearchId(): string {
+  if (!lastSearch || Date.now() - lastSearch.at > searchTtlMs) return "";
+  return lastSearch.id;
+}
+
+// Route the visitor came from, whether or not the page view for the current
+// path has been recorded yet
+export function previousRoute(): string {
+  try {
+    const path =
+      location.pathname === lastPathname ? previousPathname : lastPathname;
+    return path ? routeFor(path) : "";
+  } catch {
+    return "";
+  }
+}
+
+// Sends one search event per search and page. A search is identified by key,
+// so re-renders and returning to the same results reuse it
+export function trackSearch(result: SearchResult): void {
+  try {
+    if (!enabled()) return;
+    const now = Date.now();
+    const qNorm = normalizeQuery(result.q);
+    let search = lastSearch;
+    if (!search || search.key !== result.key || !currentSearchId()) {
+      const refined =
+        search && search.mode === result.mode && search.qNorm === qNorm;
+      const source =
+        result.source ?? nextSource ?? (refined ? search.source : "typed");
+      nextSource = null;
+      search = {
+        id: crypto.randomUUID(),
+        key: result.key,
+        mode: result.mode,
+        qNorm,
+        source,
+        pages: [],
+        at: now,
+      };
+      lastSearch = search;
+    }
+    if (search.pages.indexOf(result.page) !== -1) return;
+    search.pages.push(result.page);
+    search.at = now;
+    track(
+      "search",
+      {
+        q_norm: qNorm,
+        mode: result.mode,
+        source: search.source,
+        filters: result.filters,
+        result_count: result.result_count,
+        outcome: result.outcome,
+        page: result.page,
+      },
+      { searchId: search.id }
+    );
   } catch {}
 }
