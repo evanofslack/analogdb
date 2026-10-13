@@ -77,8 +77,8 @@ func TestLogRequestsAuthorized(t *testing.T) {
 		wantStatus int
 		wantAuth   bool
 	}{
-		{name: "authed route good creds", path: "/v1/scrape/keywords/updated", password: "secret", wantStatus: http.StatusOK, wantAuth: true},
-		{name: "authed route bad creds", path: "/v1/scrape/keywords/updated", password: "wrong", wantStatus: http.StatusUnauthorized, wantAuth: false},
+		{name: "authed route good creds", path: "/v1/scrape/captions/missing", password: "secret", wantStatus: http.StatusOK, wantAuth: true},
+		{name: "authed route bad creds", path: "/v1/scrape/captions/missing", password: "wrong", wantStatus: http.StatusUnauthorized, wantAuth: false},
 		{name: "public route", path: "/ping", password: "secret", wantStatus: http.StatusOK, wantAuth: false},
 	}
 	s.ScrapeService = mockScrape{}
@@ -105,10 +105,6 @@ func TestLogRequestsAuthorized(t *testing.T) {
 }
 
 type mockScrape struct{}
-
-func (mockScrape) KeywordUpdatedPostIDs(ctx context.Context) ([]int, error) {
-	return []int{1}, nil
-}
 
 func (mockScrape) CaptionMissingPostIDs(ctx context.Context, version *string) ([]int, error) {
 	return []int{1}, nil
