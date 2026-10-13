@@ -3,7 +3,7 @@ import { rateLimitKey, resolveClientIp } from "@lib/clientIp";
 import { Limited } from "@lib/rateLimited";
 import { headers } from "next/headers";
 
-export type Bucket =
+type Bucket =
   | "browse"
   | "search"
   | "imageSearch"
@@ -12,7 +12,7 @@ export type Bucket =
   | "report"
   | "events";
 
-export type RateLimitResult = { ok: boolean; retryAfter: number };
+type RateLimitResult = { ok: boolean; retryAfter: number };
 
 const minute = 60 * 1000;
 const maxEntries = 10000;

@@ -134,7 +134,7 @@ interface KeywordBrowserProps {
   catalog?: CatalogEntry[] | null;
 }
 
-export function KeywordBrowser({ catalog }: KeywordBrowserProps) {
+function KeywordBrowser({ catalog }: KeywordBrowserProps) {
   if (!catalog || catalog.length === 0) return null;
 
   return (

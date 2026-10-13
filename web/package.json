@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@fontsource/courier-prime": "^4.5.0",
     "@mantine/charts": "8.0.1",
     "@mantine/code-highlight": "^8.0.1",
     "@mantine/core": "^8.0.1",
@@ -25,7 +24,6 @@
     "analogdb-generated": "file:../api/clients/typescript",
     "next": "15.5.27",
     "nuqs": "^2.4.3",
-    "prettier": "^2.8.1",
     "react": "19.1.9",
     "react-dom": "19.1.9",
     "react-icons": "^4.3.1",
@@ -41,8 +39,7 @@
     "eslint": "^8.30.0",
     "eslint-config-next": "^13.4.12",
     "postcss": "^8.5.29",
-    "postcss-preset-mantine": "^1.17.0",
-    "postcss-simple-vars": "^7.0.1",
+    "prettier": "^2.8.1",
     "typescript": "^5.8.0"
   },
   "overrides": {

@@ -46,12 +46,12 @@ export async function getEntry(kind: CatalogKind, slug: string) {
   return { list, entry: findBySlug(list, slug) };
 }
 
-export function pageTitle(kind: CatalogKind, entry: CatalogEntry): string {
+function pageTitle(kind: CatalogKind, entry: CatalogEntry): string {
   const name = catalogName(entry);
   return kind === "films" ? `${name} film photos` : `${name} photos`;
 }
 
-export function pageDescription(
+function pageDescription(
   kind: CatalogKind,
   entry: CatalogEntry
 ): string {
@@ -63,7 +63,7 @@ export function pageDescription(
   return `${entry.postCount} photographs ${shot}, from the AnalogDB archive.`;
 }
 
-export function entryMatch(
+function entryMatch(
   kind: CatalogKind,
   entry: CatalogEntry
 ): Partial<CatalogMatch> {
@@ -84,7 +84,7 @@ function photosFact(entry: CatalogEntry): EntryFact {
   };
 }
 
-export function entryFacts(
+function entryFacts(
   kind: CatalogKind,
   entry: CatalogEntry
 ): EntryFact[] {

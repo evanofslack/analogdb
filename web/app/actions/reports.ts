@@ -7,7 +7,7 @@ import { Limited } from "@lib/rateLimited";
 import { isReportReason, maxReportEmail, maxReportMessage } from "@lib/reports";
 import { ResponseError } from "analogdb-generated";
 
-export type ReportResult =
+type ReportResult =
   | { ok: true }
   | { ok: false; error: string }
   | Limited;

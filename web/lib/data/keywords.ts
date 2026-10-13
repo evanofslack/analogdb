@@ -5,12 +5,12 @@ import { keywordsApi } from "@lib/client";
 import { KeywordsSummaryGetRequest, ResponseError } from "analogdb-generated";
 import { unstable_cache } from "next/cache";
 
-export interface RelatedKeyword {
+interface RelatedKeyword {
   word: string;
   count: number;
 }
 
-export interface KeywordDetail {
+interface KeywordDetail {
   entry: CatalogEntry;
   related: RelatedKeyword[];
 }

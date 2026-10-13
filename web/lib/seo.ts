@@ -1,6 +1,6 @@
 type Keyword = { word?: string };
 
-export type SeoPost = {
+type SeoPost = {
   id?: number;
   title?: string;
   caption?: string;

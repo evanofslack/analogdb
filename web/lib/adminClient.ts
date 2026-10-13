@@ -259,13 +259,13 @@ export interface PostPatch {
   aperture?: string;
 }
 
-export interface CreateCamera {
+interface CreateCamera {
   make: string;
   model: string;
   description: string;
 }
 
-export interface CreateFilm {
+interface CreateFilm {
   make: string;
   type: string;
   speed: number;
