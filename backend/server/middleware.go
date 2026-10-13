@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -53,4 +54,20 @@ func (s *Server) mountMiddleware() {
 
 	// CORS
 	s.router.Use(corsHandler)
+
+	// gzip JSON last, so stats and logs count the bytes sent
+	s.router.Use(s.compress)
+}
+
+// compress gzips JSON for every caller but the web, whose calls stay on the
+// internal network where compressing only costs CPU
+func (s *Server) compress(next http.Handler) http.Handler {
+	compressed := middleware.Compress(5, "application/json")(next)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if p := principalFrom(r); p != nil && p.role == roleWeb {
+			next.ServeHTTP(w, r)
+			return
+		}
+		compressed.ServeHTTP(w, r)
+	})
 }
