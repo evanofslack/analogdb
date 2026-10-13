@@ -77,7 +77,7 @@ func decodeSearchCursor(s string) (int, error) {
 
 func (s *Server) mountSearchHandlers(r chi.Router) {
 	r.Route(searchPath, func(r chi.Router) {
-		r.Get("/", s.searchText)
+		r.With(s.edgeCache(fixedTTL(listEdgeTTL))).Get("/", s.searchText)
 		r.Post("/image", s.searchImage)
 	})
 }

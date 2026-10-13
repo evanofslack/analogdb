@@ -32,7 +32,7 @@ const (
 
 func (s *Server) mountFilmHandlers(r chi.Router) {
 	r.Route(filmsPath, func(r chi.Router) {
-		r.Get("/", s.getFilms)
+		r.With(s.edgeCache(fixedTTL(catalogEdgeTTL))).Get("/", s.getFilms)
 	})
 	r.Route(filmPath, func(r chi.Router) {
 		r.With(s.require(roleScraper)).Put("/", s.createFilm)
