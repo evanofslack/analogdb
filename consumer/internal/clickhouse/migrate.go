@@ -34,7 +34,7 @@ func (c *Client) migrate() error {
 	if err != nil {
 		return fmt.Errorf("open db connection: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	driver, err := clickhouse_migrate.WithInstance(db, &clickhouse_migrate.Config{})
 	if err != nil {
@@ -86,7 +86,7 @@ func (c *Client) migrateFromPath(path string) error {
 	if err != nil {
 		return fmt.Errorf("open c connection: %w", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	driver, err := clickhouse_migrate.WithInstance(db, &clickhouse_migrate.Config{})
 	if err != nil {

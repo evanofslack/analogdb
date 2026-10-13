@@ -45,13 +45,17 @@ func TestIncrementEventsRead(t *testing.T) {
 	m.IncrementEventsRead(3, "group1", "topic1", errors.New("test error"))
 
 	metric := &dto.Metric{}
-	m.eventsRead.WithLabelValues("group1", "topic1", "success").Write(metric)
+	if err := m.eventsRead.WithLabelValues("group1", "topic1", "success").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 5 {
 		t.Errorf("Expected success count 5, got %v", metric.Counter.GetValue())
 	}
 
 	metric = &dto.Metric{}
-	m.eventsRead.WithLabelValues("group1", "topic1", "fail").Write(metric)
+	if err := m.eventsRead.WithLabelValues("group1", "topic1", "fail").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 3 {
 		t.Errorf("Expected fail count 3, got %v", metric.Counter.GetValue())
 	}
@@ -68,19 +72,25 @@ func TestIncrementEventsCommitted(t *testing.T) {
 	m.IncrementEventsCommitted(1, "group1", "topic1", errors.New("test error"))
 
 	metric := &dto.Metric{}
-	m.eventsCommitted.WithLabelValues("group1", "topic1", "success").Write(metric)
+	if err := m.eventsCommitted.WithLabelValues("group1", "topic1", "success").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 2 {
 		t.Errorf("Expected success count 2, got %v", metric.Counter.GetValue())
 	}
 
 	metric = &dto.Metric{}
-	m.eventsCommitted.WithLabelValues("group1", "topic1", "fail").Write(metric)
+	if err := m.eventsCommitted.WithLabelValues("group1", "topic1", "fail").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 1 {
 		t.Errorf("Expected fail count 1, got %v", metric.Counter.GetValue())
 	}
 
 	metric = &dto.Metric{}
-	m.eventsRead.WithLabelValues("group1", "topic1", "success").Write(metric)
+	if err := m.eventsRead.WithLabelValues("group1", "topic1", "success").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 0 {
 		t.Errorf("Expected read count 0, got %v", metric.Counter.GetValue())
 	}
@@ -96,13 +106,17 @@ func TestIncrementEventsDropped(t *testing.T) {
 	m.IncrementEventsDropped(1, "topic1", "decode")
 
 	metric := &dto.Metric{}
-	m.eventsDropped.WithLabelValues("topic1", "invalid").Write(metric)
+	if err := m.eventsDropped.WithLabelValues("topic1", "invalid").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 2 {
 		t.Errorf("Expected invalid count 2, got %v", metric.Counter.GetValue())
 	}
 
 	metric = &dto.Metric{}
-	m.eventsDropped.WithLabelValues("topic1", "decode").Write(metric)
+	if err := m.eventsDropped.WithLabelValues("topic1", "decode").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 1 {
 		t.Errorf("Expected decode count 1, got %v", metric.Counter.GetValue())
 	}
@@ -116,14 +130,18 @@ func TestSetBatchRetrying(t *testing.T) {
 
 	m.SetBatchRetrying("topic1", true)
 	metric := &dto.Metric{}
-	m.batchRetrying.WithLabelValues("topic1").Write(metric)
+	if err := m.batchRetrying.WithLabelValues("topic1").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Gauge.GetValue() != 1 {
 		t.Errorf("Expected gauge 1, got %v", metric.Gauge.GetValue())
 	}
 
 	m.SetBatchRetrying("topic1", false)
 	metric = &dto.Metric{}
-	m.batchRetrying.WithLabelValues("topic1").Write(metric)
+	if err := m.batchRetrying.WithLabelValues("topic1").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Gauge.GetValue() != 0 {
 		t.Errorf("Expected gauge 0, got %v", metric.Gauge.GetValue())
 	}
@@ -140,13 +158,17 @@ func TestIncrementClickHouseInserts(t *testing.T) {
 	m.IncrementClickHouseInserts(5, "table1", errors.New("test error"))
 
 	metric := &dto.Metric{}
-	m.clickhouseInserts.WithLabelValues("table1", "success").Write(metric)
+	if err := m.clickhouseInserts.WithLabelValues("table1", "success").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 10 {
 		t.Errorf("Expected success count 10, got %v", metric.Counter.GetValue())
 	}
 
 	metric = &dto.Metric{}
-	m.clickhouseInserts.WithLabelValues("table1", "fail").Write(metric)
+	if err := m.clickhouseInserts.WithLabelValues("table1", "fail").Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Counter.GetValue() != 5 {
 		t.Errorf("Expected fail count 5, got %v", metric.Counter.GetValue())
 	}
@@ -164,7 +186,9 @@ func TestObserveClickHouseInsertDuration(t *testing.T) {
 
 	metric := &dto.Metric{}
 	histogram := m.clickhouseInsertDuration.WithLabelValues("table1").(prometheus.Histogram)
-	histogram.Write(metric)
+	if err := histogram.Write(metric); err != nil {
+		t.Fatal(err)
+	}
 	if metric.Histogram.GetSampleCount() != 1 {
 		t.Errorf("Expected sample count 1, got %v", metric.Histogram.GetSampleCount())
 	}

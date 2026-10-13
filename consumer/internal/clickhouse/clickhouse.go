@@ -77,9 +77,7 @@ func (c *Client) Open() error {
 				{Name: c.appName, Version: c.appVersion},
 			},
 		},
-		Debugf: func(format string, v ...interface{}) {
-			c.logger.Debug(fmt.Sprintf(format, v...))
-		},
+		Logger: c.logger,
 		Settings: clickhouse.Settings{
 			"max_execution_time": 60,
 		},

@@ -166,7 +166,7 @@ func (m *Metrics) Serve(ctx context.Context, port string) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
-		return m.Close(context.Background())
+		return m.Close(context.Background()) //nolint:contextcheck // ctx is already cancelled
 	}
 }
 
@@ -174,7 +174,7 @@ func (m *Metrics) Close(ctx context.Context) error {
 	m.logger.Debug("Starting prometheus metrics server close")
 	defer m.logger.Info("Closed prometheus metrics server")
 
-	ctxShutdown, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	ctxShutdown, cancel := context.WithTimeout(ctx, shutdownTimeout)
 	defer cancel()
 	return m.server.Shutdown(ctxShutdown)
 }

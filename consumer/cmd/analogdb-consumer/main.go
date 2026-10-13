@@ -71,11 +71,11 @@ func main() {
 		cfg.ClickHouse.MigrationEnabled,
 		cfg.ClickHouse.MigrationPath,
 	)
-	defer ch.Close()
 	if err != nil {
 		err = fmt.Errorf("create clickhouse client, err=%w", err)
 		fatal(logger, err)
 	}
+	defer func() { warn(logger, "Close clickhouse", ch.Close()) }()
 	if err := ch.Open(); err != nil {
 		err = fmt.Errorf("open clickhouse connection, err=%w", err)
 		fatal(logger, err)
@@ -98,7 +98,6 @@ func main() {
 	)
 
 	processor := process.New(logger.With("subsystem", "processor"), metrics, cfg.Kafka.Topic, consumer, ch, process.ValidateEvent)
-	defer processor.Stop()
 
 	uiConsumer := kafka.New[v1.UiEvent](
 		logger.With("subsystem", "kafka"),
@@ -116,7 +115,6 @@ func main() {
 	topicCancel()
 
 	uiProcessor := process.New(logger.With("subsystem", "processor"), metrics, cfg.Kafka.UiTopic, uiConsumer, ch.UiEvents(cfg.ClickHouse.UiTable), process.ValidateUiEvent)
-	defer uiProcessor.Stop()
 
 	httpServer := server.New(logger.With("subsystem", "server"), cfg.Server.Port, cfg.App.Name, cfg.App.Version, cfg.App.Env)
 	httpServer.AddHealthChecker("clickhouse", ch)
@@ -128,7 +126,6 @@ func main() {
 	// start HTTP server
 	wg.Add(1)
 	go func() {
-		defer httpServer.Shutdown(ctx)
 		defer wg.Done()
 		err := httpServer.Start(ctx)
 		if err != nil {
@@ -140,7 +137,7 @@ func main() {
 	// start processor
 	wg.Add(1)
 	go func() {
-		defer processor.Stop()
+		defer func() { warn(logger, "Stop processor", processor.Stop()) }()
 		defer wg.Done()
 		err := processor.Start(ctx)
 		if err != nil && err != context.Canceled {
@@ -152,7 +149,7 @@ func main() {
 	// start ui processor
 	wg.Add(1)
 	go func() {
-		defer uiProcessor.Stop()
+		defer func() { warn(logger, "Stop ui processor", uiProcessor.Stop()) }()
 		defer wg.Done()
 		err := uiProcessor.Start(ctx)
 		if err != nil && err != context.Canceled {
@@ -165,20 +162,18 @@ func main() {
 	if cfg.Metrics.Enabled {
 		wg.Add(1)
 		go func() {
-			defer metrics.Close(ctx)
 			defer wg.Done()
 			err := metrics.Serve(ctx, cfg.Metrics.Port)
 			if err != nil && err != context.Canceled {
-				err = fmt.Errorf("start processor, err=%w", err)
+				err = fmt.Errorf("serve metrics, err=%w", err)
 				fatal(logger, err)
 			}
 		}()
 	}
 
 	// wait for shutdown signal
-	<-sigChan
+	<-ctx.Done()
 	logger.Info("Shutdown signal received")
-	cancel()
 
 	// wait for all goroutines to finish
 	done := make(chan struct{})
@@ -194,6 +189,12 @@ func main() {
 	case <-time.After(30 * time.Second):
 		err = fmt.Errorf("shutdown timer exceeded")
 		fatal(logger, err)
+	}
+}
+
+func warn(logger *slog.Logger, msg string, err error) {
+	if err != nil {
+		logger.Warn(msg, "error", err)
 	}
 }
 

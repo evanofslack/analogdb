@@ -77,7 +77,7 @@ func (s *Server) Start(ctx context.Context) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
-		return s.Shutdown(context.Background())
+		return s.Shutdown(context.Background()) //nolint:contextcheck // ctx is already cancelled
 	}
 }
 

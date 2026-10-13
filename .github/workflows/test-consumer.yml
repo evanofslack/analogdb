@@ -1,0 +1,71 @@
+name: test-consumer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "consumer/**"
+      - "proto/**"
+      - "backend/internal/gen/proto/**"
+      - ".github/workflows/test-consumer.yml"
+  pull_request:
+    paths:
+      - "consumer/**"
+      - "proto/**"
+      - "backend/internal/gen/proto/**"
+      - ".github/workflows/test-consumer.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./consumer
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.26"
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-consumer-${{ hashFiles('consumer/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-consumer-
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Check generated proto matches backend
+        working-directory: .
+        run: diff -r backend/internal/gen/proto consumer/internal/gen/proto
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.14
+          working-directory: ./consumer
+
+      - name: Run tests
+        run: go test -race -coverprofile=coverage.out ./...
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+          TESTCONTAINERS_RYUK_DISABLED: false
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v5
+        continue-on-error: true
+        with:
+          files: ./consumer/coverage.out
+          flags: consumer
+          name: codecov-consumer
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
