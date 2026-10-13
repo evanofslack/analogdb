@@ -78,11 +78,11 @@ const (
 
 func (s *Server) mountPostHandlers(r chi.Router) {
 	r.Route(postsPath, func(r chi.Router) {
-		r.Get("/", s.getPosts)
+		r.With(s.edgeCache(postsTTL)).Get("/", s.getPosts)
 	})
 	r.Route(postPath, func(r chi.Router) {
-		r.Get("/{id}", s.findPost)
-		r.Get("/{id}/similar", s.getSimilarPosts)
+		r.With(s.edgeCache(fixedTTL(listEdgeTTL))).Get("/{id}", s.findPost)
+		r.With(s.edgeCache(fixedTTL(catalogEdgeTTL))).Get("/{id}/similar", s.getSimilarPosts)
 		r.With(s.reportLimit).Post("/{id}/report", s.createReport)
 		r.With(s.require()).Delete("/{id}", s.deletePost)
 		r.With(s.require(roleScraper)).Patch("/{id}", s.patchPost)
@@ -90,7 +90,7 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 		r.With(s.require(roleScraper)).Post("/", s.createPost)
 	})
 	r.Route(idsPath, func(r chi.Router) {
-		r.Get("/", s.allPostIDs)
+		r.With(s.edgeCache(fixedTTL(catalogEdgeTTL))).Get("/", s.allPostIDs)
 	})
 }
 

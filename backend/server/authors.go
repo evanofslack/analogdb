@@ -14,7 +14,7 @@ const authorsPath = "/authors"
 
 func (s *Server) mountAuthorHandlers(r chi.Router) {
 	r.Route(authorsPath, func(r chi.Router) {
-		r.Get("/", s.getAuthors)
+		r.With(s.edgeCache(fixedTTL(catalogEdgeTTL))).Get("/", s.getAuthors)
 	})
 }
 

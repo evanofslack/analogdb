@@ -26,7 +26,7 @@ const (
 
 func (s *Server) mountCameraHandlers(r chi.Router) {
 	r.Route(camerasPath, func(r chi.Router) {
-		r.Get("/", s.getCameras)
+		r.With(s.edgeCache(fixedTTL(catalogEdgeTTL))).Get("/", s.getCameras)
 	})
 	r.Route(cameraPath, func(r chi.Router) {
 		r.With(s.require(roleScraper)).Put("/", s.createCamera)

@@ -37,12 +37,12 @@ type KeywordResponse struct {
 
 func (s *Server) mountKeywordHandlers(r chi.Router) {
 	r.Route(keywordsPath, func(r chi.Router) {
-		r.Get("/summary", s.getSummary)
+		r.With(s.edgeCache(fixedTTL(catalogEdgeTTL))).Get("/summary", s.getSummary)
 	})
 }
 
 func (s *Server) mountKeywordDetailHandlers(r chi.Router) {
-	r.Get(keywordPath+"/{word}", s.getKeyword)
+	r.With(s.edgeCache(fixedTTL(catalogEdgeTTL))).Get(keywordPath+"/{word}", s.getKeyword)
 }
 
 // @Summary Get keyword summary
