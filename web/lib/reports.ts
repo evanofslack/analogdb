@@ -8,7 +8,7 @@ export const reportReasons = [
   { value: "other", label: "Something else" },
 ] as const;
 
-export type ReportReason = (typeof reportReasons)[number]["value"];
+type ReportReason = (typeof reportReasons)[number]["value"];
 
 export const maxReportMessage = 500;
 export const maxReportEmail = 254;

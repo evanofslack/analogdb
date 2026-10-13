@@ -8,7 +8,7 @@ import styles from "./keywordRow.module.css";
 
 const step = 2;
 
-export interface KeywordLink {
+interface KeywordLink {
   href?: string;
   label: string;
 }

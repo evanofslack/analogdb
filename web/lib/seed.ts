@@ -1,4 +1,4 @@
-export const maxSeed = 500;
+const maxSeed = 500;
 
 export function pickSeed(): number {
   return Math.floor(Math.random() * maxSeed) + 1;

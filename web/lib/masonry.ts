@@ -1,14 +1,14 @@
-export type MasonryPost = {
+type MasonryPost = {
   images?: { width?: number; height?: number }[];
 };
 
-export type MasonryItem<T> = { post: T; index: number };
+type MasonryItem<T> = { post: T; index: number };
 
 const gap = 15;
 
 const columnWidth: Record<number, number> = { 2: 170, 3: 340, 4: 440 };
 
-export function ratio(post: MasonryPost): number {
+function ratio(post: MasonryPost): number {
   const image = post.images?.[0];
   if (!image?.width || !image?.height) return 1;
   return image.height / image.width;

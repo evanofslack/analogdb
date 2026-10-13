@@ -22,14 +22,14 @@ export type CatalogEntry = {
   cover: CatalogCover | null;
 };
 
-export type CatalogImage = {
+type CatalogImage = {
   resolution?: string;
   url?: string;
   width?: number;
   height?: number;
 };
 
-export type CatalogPost = {
+type CatalogPost = {
   id?: number;
   title?: string;
   score?: number;

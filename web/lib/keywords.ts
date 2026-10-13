@@ -1,4 +1,4 @@
-export const keywordLinkMode: "page" | "search" = "page";
+const keywordLinkMode: "page" | "search" = "page";
 
 export function keywordPageHref(word: string): string {
   return `/search/keyword/${encodeURIComponent(word)}`;

@@ -52,7 +52,7 @@ export type SearchOrigin =
   | "upload"
   | "post";
 
-export type SearchResult = Omit<EventMap["search"], "q_norm" | "source"> & {
+type SearchResult = Omit<EventMap["search"], "q_norm" | "source"> & {
   key: string;
   q: string;
   source?: SearchOrigin;
@@ -110,7 +110,7 @@ let previousPathname: string | null = null;
 let lastSearch: LastSearch | null = null;
 let nextSource: SearchOrigin | null = null;
 
-export function routeFor(pathname: string): string {
+function routeFor(pathname: string): string {
   for (const [pattern, route] of routes) {
     if (pattern.test(pathname)) return route;
   }
@@ -237,7 +237,7 @@ export function pageView(pathname: string): void {
   } catch {}
 }
 
-export function normalizeQuery(q: string): string {
+function normalizeQuery(q: string): string {
   return q.trim().toLowerCase().replace(/\s+/g, " ").slice(0, maxQueryLength);
 }
 
