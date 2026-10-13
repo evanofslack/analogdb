@@ -1,9 +1,14 @@
-import ImagePage, { PagePost, SimilarPosts } from "@components/imagePage";
+import ImagePage from "@components/imagePage";
 import { catalogHref, findByName } from "@lib/catalog";
-import { authorized_fetch } from "@lib/client";
+import { postApi } from "@lib/client";
 import { getCameraCatalog } from "@lib/data/cameras";
 import { getFilmCatalog } from "@lib/data/films";
 import { authorName, jsonLd, postDescription } from "@lib/seo";
+import {
+  AnalogdbPost,
+  ResponseError,
+  ServerSimilarPostsResponse,
+} from "analogdb-generated";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
@@ -19,12 +24,17 @@ export async function generateStaticParams() {
   return [];
 }
 
-const getPost = cache(async (pid: string): Promise<PagePost | null> => {
-  const response = await authorized_fetch(`/post/${pid}`, "GET", revalidate);
-  if (!response.ok) {
-    return null;
+const getPost = cache(async (pid: string): Promise<AnalogdbPost | null> => {
+  try {
+    return await postApi.postIdGet({ id: Number(pid) }, {
+      next: { revalidate },
+    } as RequestInit);
+  } catch (error) {
+    if (error instanceof ResponseError) {
+      return null;
+    }
+    throw error;
   }
-  return response.json();
 });
 
 const defaultImage = {
@@ -34,7 +44,7 @@ const defaultImage = {
   alt: "AnalogDB",
 };
 
-function imageObject(post: PagePost) {
+function imageObject(post: AnalogdbPost) {
   const image = (resolution: string) =>
     post.images?.find((img) => img.resolution === resolution)?.url;
   const author = authorName(post);
@@ -112,22 +122,14 @@ async function getPostData(pid: string) {
     return notFound();
   }
 
-  // only show nsfw results if the original image was nsfw
-  let query = "?nsfw=false";
-  if (post.nsfw) {
-    query = "";
-  }
-
-  const similarRoute = `/post/${pid}/similar${query}`;
-  let similar: SimilarPosts;
+  let similar: ServerSimilarPostsResponse;
 
   try {
-    const similarResponse = await authorized_fetch(
-      similarRoute,
-      "GET",
-      revalidate
+    // only show nsfw results if the original image was nsfw
+    similar = await postApi.postIdSimilarGet(
+      { id: post.id, nsfw: post.nsfw ? undefined : false },
+      { next: { revalidate } } as RequestInit
     );
-    similar = await similarResponse.json();
   } catch (e) {
     similar = {};
   }
@@ -135,13 +137,13 @@ async function getPostData(pid: string) {
   return { post, similar };
 }
 
-async function getCatalogHrefs(post: PagePost) {
+async function getCatalogHrefs(post: AnalogdbPost) {
   const [films, cameras] = await Promise.all([
     getFilmCatalog(),
     getCameraCatalog(),
   ]);
-  const film = findByName(films, post.film_make, post.film_type);
-  const camera = findByName(cameras, post.camera_make, post.camera_model);
+  const film = findByName(films, post.filmMake, post.filmType);
+  const camera = findByName(cameras, post.cameraMake, post.cameraModel);
   return {
     filmHref: film ? catalogHref("films", film) : null,
     cameraHref: camera ? catalogHref("cameras", camera) : null,

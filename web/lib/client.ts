@@ -1,5 +1,6 @@
 import "server-only";
 import {
+  AuthorsApi,
   CamerasApi,
   Configuration,
   FilmsApi,
@@ -52,6 +53,7 @@ export const filmsApi: FilmsApi = new FilmsApi(config);
 export const camerasApi: CamerasApi = new CamerasApi(config);
 export const searchApi: SearchApi = new SearchApi(config);
 export const keywordsApi: KeywordsApi = new KeywordsApi(config);
+export const authorsApi: AuthorsApi = new AuthorsApi(config);
 
 export async function authorized_fetch(
   route: string,
