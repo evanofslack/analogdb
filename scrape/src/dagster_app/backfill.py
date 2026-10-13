@@ -1,16 +1,12 @@
-"""Backfills over the post archive.
+"""Upkeep over the whole post archive: rematching metadata and pruning the
+catalog after catalog changes, and repairing posts missing a caption or an
+image vector.
 
-Backfill assets use the daily partitions with a single run policy: any range of
-days (a day, a month, years) launched from the Dagster UI runs as one run over
-that time window. They return only metadata, so nothing large goes through the
-IO manager. Posts are processed in chunks so a failure late in a long range
-keeps the work already written.
-
-A new backfill is one asset that calls `range_posts`, optionally
-`range_comments`, and does its work per chunk.
+These assets return only metadata, so nothing large goes through the IO
+manager. Posts are processed in chunks so a failure late in a long run keeps
+the work already written.
 """
 
-import json
 import time
 from dataclasses import dataclass
 from typing import Dict, Iterator, List, Optional, Sequence
@@ -18,18 +14,14 @@ from typing import Dict, Iterator, List, Optional, Sequence
 import analogdb.models as adb
 import dagster as dg
 from analogdb.client import Client, Deleted
-from scrape.constants import AWS_BUCKET_COMMENTS
-from scrape.models import RedditComment
-from scrape.s3 import upload_comments
 from scrape.tagging import TAGGER_VERSION, TEXT_ONLY_SUFFIX, TagInput, medium_url
 
-from .assets import daily_partitions, error_detail, upload_cameras, upload_films
+from .assets import error_detail, upload_cameras, upload_films
 from .catalog import Retired, camera_key, catalog_for_matching, retired_entries
 from .convert import convert_caption, convert_keyword
 from .metadata_flow import (
     WriteStats,
     catalog_matcher,
-    extract_and_write,
     extraction_record,
     load_catalog,
     patch_groups,
@@ -40,114 +32,17 @@ from .resources import (
     AnalogDBResource,
     CamerasJsonResource,
     FilmsJsonResource,
-    MetadataResource,
-    RedditResource,
-    StorageResource,
     TaggerResource,
 )
 
 BACKFILL_CHUNK = 200
 MAX_POSTS = 1_000_000
-MIN_POSTS_FOR_REDDIT_CHECK = 5
 ENCODE_LOG_EVERY = 1000
 
 
 def chunks(items: Sequence, size: int) -> Iterator[Sequence]:
     for start in range(0, len(items), size):
         yield items[start : start + size]
-
-
-def range_window(context: dg.AssetExecutionContext) -> dg.TimeWindow:
-    """The time window covering every partition in the run."""
-    keys = context.partition_key_range
-    first = daily_partitions.time_window_for_partition_key(keys.start)
-    last = daily_partitions.time_window_for_partition_key(keys.end)
-    return dg.TimeWindow(first.start, last.end)
-
-
-def range_posts(context: dg.AssetExecutionContext, client: Client) -> List[adb.Post]:
-    """Every post in the run's time window, oldest first."""
-    window = range_window(context)
-    start, end = int(window.start.timestamp()), int(window.end.timestamp())
-    filter = adb.create_posts_filter(time_start=start, time_end=end)
-    posts = client.get_posts_all(count=MAX_POSTS, filter=filter)
-    posts.sort(key=lambda p: (p.timestamp, p.id))
-    context.log.info(f"Fetched {len(posts)} posts from {window.start} to {window.end}")
-    return posts
-
-
-def range_comments(
-    context: dg.AssetExecutionContext,
-    posts: Sequence[adb.Post],
-    storage: StorageResource,
-    reddit: RedditResource,
-) -> Dict[int, List[RedditComment]]:
-    """Reddit comments per post, from the S3 comments cache, else from Reddit
-    and written back to the cache. Posts Reddit fails on get no comments."""
-    comments: Dict[int, List[RedditComment]] = {}
-    cached = fetched = failed = 0
-    scraper = None
-    for p in posts:
-        body = storage.get_object(AWS_BUCKET_COMMENTS, f"{p.id}.json")
-        if body is not None:
-            comments[p.id] = [RedditComment(**c) for c in json.loads(body)]
-            cached += 1
-            continue
-        scraper = scraper or reddit.client()
-        try:
-            found = scraper.scrape_comments(p.permalink)
-        except Exception as e:
-            failed += 1
-            comments[p.id] = []
-            context.log.warning(f"Failed to fetch comments, id={p.id}, error={e}")
-            continue
-        comments[p.id] = found
-        fetched += 1
-        upload_comments(storage, p.id, found)
-
-    context.log.info(f"Comments: {cached} cached, {fetched} fetched, {failed} failed")
-    needed = fetched + failed
-    if needed >= MIN_POSTS_FOR_REDDIT_CHECK and fetched == 0:
-        raise dg.Failure(
-            f"Reddit failed for all {needed} posts missing from the comments cache"
-        )
-    return comments
-
-
-@dg.asset(
-    partitions_def=daily_partitions,
-    backfill_policy=dg.BackfillPolicy.single_run(),
-    group_name="backfill",
-)
-def backfill_post_metadata(
-    context: dg.AssetExecutionContext,
-    analogdb: AnalogDBResource,
-    metadata: MetadataResource,
-    reddit: RedditResource,
-    storage: StorageResource,
-    cameras_json: CamerasJsonResource,
-    films_json: FilmsJsonResource,
-) -> dg.MaterializeResult:
-    """Extract camera, film and lens metadata for every post in the range with
-    the title, description and OP comments, overwrite by the write rule, and
-    store each extraction."""
-    client = analogdb.client()
-    posts = range_posts(context, client)
-    catalog = load_catalog(context, client, cameras_json, films_json)
-    extractor = metadata.client()
-
-    stats = WriteStats()
-    for chunk in chunks(posts, BACKFILL_CHUNK):
-        comments = range_comments(context, chunk, storage, reddit)
-        chunk_stats = extract_and_write(
-            context, client, extractor, catalog, metadata.openai_model, chunk, comments
-        )
-        stats.add(chunk_stats)
-        context.log.info(
-            f"Metadata backfill progress: {stats.posts} of {len(posts)} posts"
-        )
-
-    return finish(context, "backfill metadata", stats, context.partition_key_range)
 
 
 @dg.asset(group_name="backfill", deps=[upload_cameras, upload_films])
@@ -205,19 +100,11 @@ def rematch_post_metadata(
 
 
 def finish(
-    context: dg.AssetExecutionContext,
-    name: str,
-    stats: WriteStats,
-    keys: Optional[dg.PartitionKeyRange] = None,
+    context: dg.AssetExecutionContext, name: str, stats: WriteStats
 ) -> dg.MaterializeResult:
     metadata = stats.metadata()
-    if keys is not None:
-        # A single run backfill puts the same metadata on every partition, so say
-        # these are the run's totals and for which days
-        metadata["range"] = f"{keys.start} to {keys.end}"
-        metadata["partitions"] = len(daily_partitions.get_partition_keys_in_range(keys))
     context.log.info(
-        f"Finished {name}, run totals: posts={stats.posts}, patched={stats.patched}, "
+        f"Finished {name}, totals: posts={stats.posts}, patched={stats.patched}, "
         f"unchanged={stats.unchanged}, llm_failed={stats.llm_failed}, "
         f"patch_failed={stats.patch_failed}, extractions_stored={stats.stored}"
     )
@@ -359,10 +246,10 @@ def prune_catalog(
     return dg.MaterializeResult(metadata=metadata)
 
 
-class BackfillCaptionsConfig(dg.Config):
-    version: str = TAGGER_VERSION
+class TagMissingCaptionsConfig(dg.Config):
     limit: Optional[int] = None
     retry_text_only: bool = False
+    fail_on_error: bool = True
 
 
 @dataclass
@@ -393,22 +280,23 @@ def missing_caption_ids(
 
 
 @dg.asset(group_name="backfill")
-def backfill_post_captions(
+def tag_missing_post_captions(
     context: dg.AssetExecutionContext,
-    config: BackfillCaptionsConfig,
+    config: TagMissingCaptionsConfig,
     analogdb: AnalogDBResource,
     tagger: TaggerResource,
     cameras_json: CamerasJsonResource,
     films_json: FilmsJsonResource,
 ) -> dg.MaterializeResult:
-    """Caption and tag every post missing a caption of the version, and replace
-    its keywords with the tags. Written posts leave the missing list, so a rerun
-    picks up where the last one stopped."""
+    """Caption and tag every post missing a caption of the current tagger
+    version, and replace its keywords with the tags. Written posts leave the
+    missing list, so a rerun picks up where the last one stopped. Patch failures
+    fail the run unless fail_on_error is off."""
     client = analogdb.client()
-    ids = missing_caption_ids(client, config.version, config.retry_text_only)
+    ids = missing_caption_ids(client, TAGGER_VERSION, config.retry_text_only)
     if config.limit is not None:
         ids = ids[: config.limit]
-    context.log.info(f"Found {len(ids)} posts missing a {config.version} caption")
+    context.log.info(f"Found {len(ids)} posts missing a {TAGGER_VERSION} caption")
     stats = CaptionStats()
     if not ids:
         return dg.MaterializeResult(metadata=stats.metadata())
@@ -461,16 +349,16 @@ def backfill_post_captions(
             if r.text_only:
                 stats.text_only += 1
         context.log.info(
-            f"Caption backfill progress: {stats.posts} of {len(ids)} posts, "
+            f"Tag missing captions progress: {stats.posts} of {len(ids)} posts, "
             f"written={stats.written}, text_only={stats.text_only}, "
             f"failed={stats.tag_failed + stats.patch_failed}"
         )
 
     metadata = stats.metadata()
-    context.log.info(f"Finished backfill captions: {metadata}")
-    if stats.patch_failed:
+    context.log.info(f"Finished tag missing captions: {metadata}")
+    if stats.patch_failed and config.fail_on_error:
         raise dg.Failure(
-            description=f"backfill captions: {stats.patch_failed} patches failed",
+            description=f"tag missing captions: {stats.patch_failed} patches failed",
             metadata=metadata,
         )
     return dg.MaterializeResult(metadata=metadata)
@@ -480,17 +368,14 @@ class ReencodeVectorsConfig(dg.Config):
     batch_size: int = 20
     ids: Optional[List[int]] = None
     limit: Optional[int] = None
-    missing_only: bool = True
     fail_on_error: bool = True
 
 
 def reencode_ids(config: ReencodeVectorsConfig, client: Client) -> List[int]:
     if config.ids is not None:
         ids = config.ids
-    elif config.missing_only:
-        ids = client.get_missing_vectors()
     else:
-        ids = client.get_post_ids()
+        ids = client.get_missing_vectors()
     if config.limit is not None:
         ids = ids[: config.limit]
     return ids
@@ -514,9 +399,9 @@ def reencode_post_vectors(
     config: ReencodeVectorsConfig,
     analogdb: AnalogDBResource,
 ) -> dg.MaterializeResult:
-    """Encode the image vectors of posts missing one, or of every post when
-    missing_only is off, or of the configured ids. Failed ids are retried once
-    on their own. Remaining failures fail the run unless fail_on_error is off."""
+    """Encode the image vectors of posts missing one, or of the configured ids.
+    Failed ids are retried once on their own. Remaining failures fail the run
+    unless fail_on_error is off."""
     client = analogdb.client()
     ids = reencode_ids(config, client)
     if not ids:

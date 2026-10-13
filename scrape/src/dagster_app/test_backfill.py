@@ -12,15 +12,13 @@ from scrape.tagging import ImageTags, TaggingError
 
 from . import backfill
 from .backfill import (
-    BackfillCaptionsConfig,
     PruneCatalogConfig,
     ReencodeVectorsConfig,
-    backfill_post_captions,
-    backfill_post_metadata,
+    TagMissingCaptionsConfig,
     prune_catalog,
-    range_comments,
     reencode_post_vectors,
     rematch_post_metadata,
+    tag_missing_post_captions,
 )
 from .resources import (
     AnalogDBResource,
@@ -34,103 +32,11 @@ from .resources import (
 from .test_metadata_flow import CAMERAS_JSON, LIVE_CAMERAS, post
 
 
-def comment_json(author):
-    return {"body": "hi", "score": 1, "author": author, "time": 1, "permalink": "p"}
-
-
-class FakeStorage:
-    def __init__(self, cached):
-        self.cached = cached
-        self.put = {}
-
-    def get_object(self, bucket, key):
-        return self.cached.get(key)
-
-    def put_object(self, bucket, key, body, content_type):
-        self.put[key] = body
-
-
-class TestRangeComments:
-    def run(self, storage, scraper):
-        with patch.object(RedditResource, "client", return_value=scraper):
-            posts = [post(i) for i in range(1, 7)]
-            return range_comments(
-                dg.build_asset_context(), posts, storage, RedditResource()
-            )
-
-    def test_cache_hit_miss_and_write_back(self):
-        storage = FakeStorage({"1.json": json.dumps([comment_json("u/me")]).encode()})
-        scraper = MagicMock()
-        scraper.scrape_comments.side_effect = lambda permalink: (
-            [RedditComment(body="new", score=1, author="u/me", time=2, permalink="p")]
-            if permalink.endswith("/2")
-            else []
-        )
-        comments = self.run(storage, scraper)
-        assert comments[1][0].author == "u/me"
-        assert comments[2][0].body == "new"
-        assert json.loads(storage.put["2.json"])[0]["body"] == "new"
-        assert scraper.scrape_comments.call_count == 5
-
-    def test_all_reddit_failures_raise(self):
-        scraper = MagicMock()
-        scraper.scrape_comments.side_effect = RuntimeError("down")
-        with pytest.raises(dg.Failure):
-            self.run(FakeStorage({}), scraper)
-
-
 def resources():
     return dict(
         cameras_json=CamerasJsonResource(file_path="unused"),
         films_json=FilmsJsonResource(file_path="unused"),
     )
-
-
-class TestBackfillPostMetadata:
-    def test_range_runs_as_one_window_in_chunks(self):
-        client = MagicMock()
-        client.get_posts_all.return_value = [post(2, timestamp=5), post(1, timestamp=1)]
-        client.get_cameras.return_value = LIVE_CAMERAS
-        client.get_films.return_value = []
-        client.upsert_extractions.return_value = (2, [])
-        extractor = MagicMock()
-        extractor.extract.side_effect = lambda inputs, *a: [
-            MatchResult(
-                proposed=PhotoMetadata(camera_make="nikon", camera_model="f3"),
-                raw={"cameras": [{"text": "Nikon F3"}], "films": [], "lenses": []},
-            )
-            for _ in inputs
-        ]
-        storage = FakeStorage({"1.json": b"[]", "2.json": b"[]"})
-        context = dg.build_asset_context(
-            partition_key_range=dg.PartitionKeyRange("2024-01-01", "2024-01-31")
-        )
-        with (
-            patch.object(AnalogDBResource, "client", return_value=client),
-            patch.object(MetadataResource, "client", return_value=extractor),
-            patch.object(CamerasJsonResource, "client", return_value=CAMERAS_JSON),
-            patch.object(FilmsJsonResource, "client", return_value=[]),
-            patch.object(StorageResource, "get_object", side_effect=storage.get_object),
-        ):
-            result = backfill_post_metadata(
-                context,
-                analogdb=AnalogDBResource(),
-                metadata=MetadataResource(openai_model="model-x"),
-                reddit=RedditResource(),
-                storage=StorageResource(s3_resource=S3Resource()),
-                **resources(),
-            )
-
-        filter = client.get_posts_all.call_args.kwargs["filter"]
-        assert filter.time_start == int(datetime(2024, 1, 1, tzinfo=UTC).timestamp())
-        assert filter.time_end == int(datetime(2024, 2, 1, tzinfo=UTC).timestamp())
-        assert [c.args[0] for c in client.patch_post.call_args_list] == [1, 2]
-        stored = client.upsert_extractions.call_args.args[0]
-        assert {r.model for r in stored} == {"model-x"}
-        assert result.metadata["patched"] == 2
-        assert result.metadata["camera_patches"] == 2
-        assert result.metadata["range"] == "2024-01-01 to 2024-01-31"
-        assert result.metadata["partitions"] == 31
 
 
 class TestRematch:
@@ -245,7 +151,7 @@ def medium_post(id, title="t"):
     return post(id, title=title, images=images)
 
 
-class TestBackfillCaptions:
+class TestTagMissingCaptions:
     def run(self, client, tagger, **config):
         with (
             patch.object(AnalogDBResource, "client", return_value=client),
@@ -254,9 +160,9 @@ class TestBackfillCaptions:
             patch.object(FilmsJsonResource, "client", return_value=[]),
             patch.object(backfill, "BACKFILL_CHUNK", 2),
         ):
-            return backfill_post_captions(
+            return tag_missing_post_captions(
                 dg.build_asset_context(),
-                config=BackfillCaptionsConfig(**config),
+                config=TagMissingCaptionsConfig(**config),
                 analogdb=AnalogDBResource(),
                 tagger=TaggerResource(),
                 **resources(),
@@ -328,6 +234,12 @@ class TestBackfillCaptions:
         with pytest.raises(dg.Failure):
             self.run(client, FakeTagger())
 
+    def test_fail_on_error_off_does_not_raise(self):
+        client = FakeCaptionClient(self.posts()[:1])
+        client.patch_post = MagicMock(side_effect=RuntimeError("down"))
+        result = self.run(client, FakeTagger(), fail_on_error=False)
+        assert result.metadata["patch_failed"] == 1
+
 
 class TestReencodeVectors:
     def run(self, client, **config):
@@ -375,27 +287,22 @@ class TestReencodeVectors:
 
         result = self.run(client, ids=[7, 8, 9], limit=2)
 
-        client.get_post_ids.assert_not_called()
+        client.get_missing_vectors.assert_not_called()
         assert client.encode_posts.call_args.args == ([7, 8], 20)
         assert result.metadata == {"posts": 2, "retried": 0, "failed": 0}
 
     def test_id_source_order(self):
         client = MagicMock()
-        client.get_missing_vectors.return_value = [3, 4]
-        client.get_post_ids.return_value = [1, 2, 3, 4]
+        client.get_missing_vectors.return_value = [3, 4, 5]
         client.encode_posts.return_value = []
 
         self.run(client, ids=[9])
         assert client.encode_posts.call_args.args == ([9], 20)
         client.get_missing_vectors.assert_not_called()
 
-        self.run(client)
+        result = self.run(client, limit=2)
         assert client.encode_posts.call_args.args == ([3, 4], 20)
-        client.get_post_ids.assert_not_called()
-
-        result = self.run(client, missing_only=False, limit=3)
-        assert client.encode_posts.call_args.args == ([1, 2, 3], 20)
-        assert result.metadata == {"posts": 3, "retried": 0, "failed": 0}
+        assert result.metadata == {"posts": 2, "retried": 0, "failed": 0}
 
     def test_nothing_missing_is_noop(self):
         client = MagicMock()

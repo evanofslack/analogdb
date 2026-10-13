@@ -157,9 +157,6 @@ class Client:
             return
         self._call(self.post_api.post_id_patch, id, post=patch)
 
-    def get_post_ids(self) -> List[int]:
-        return self._call(self.posts_api.ids_get).ids or []
-
     def encode_posts(self, ids: List[int], batch_size: int = 20) -> List[int]:
         """Encode the posts' image vectors, returning the ids that failed. The
         route takes at most 100 per batch and has 15 minutes per request."""

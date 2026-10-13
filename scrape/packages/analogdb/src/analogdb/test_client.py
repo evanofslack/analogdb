@@ -439,13 +439,6 @@ class TestExtractions:
 
 
 class TestScrapeRoutes:
-    def test_get_post_ids(self, client, httpserver: HTTPServer):
-        httpserver.expect_request("/v1/ids", method="GET").respond_with_json(
-            {"ids": [1, 2, 3]}
-        )
-
-        assert client.get_post_ids() == [1, 2, 3]
-
     def test_get_removed_links(self, client, httpserver: HTTPServer):
         httpserver.expect_request(
             "/v1/admin/removed/permalinks",
