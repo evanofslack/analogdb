@@ -3,15 +3,15 @@ name = "dagster-app"
 version = "0.1.0"
 requires-python = ">=3.13"
 dependencies = [
-    "dagster>=1.10.19",
-    "dagster-webserver>=1.10.19",
+    "dagster>=1.13.1",
+    "dagster-webserver>=1.13.1",
     "analogdb",
     "scrape",
     "python-dotenv>=1.2.2",
-    "dagster-aws>=0.26.19",
-    "dagster-postgres>=0.26.19",
-    "dagster-docker>=0.26.19",
-    "dagster-obstore>=0.2.3",
+    "dagster-aws>=0.29.1",
+    "dagster-postgres>=0.29.1",
+    "dagster-docker>=0.29.1",
+    "dagster-obstore>=0.2.5",
 ]
 
 [tool.uv.workspace]
