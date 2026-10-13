@@ -145,7 +145,7 @@ def reddit_posts(
         data[id] = p
         status[id] = Status.SUCCESS
     for err in scrape_errors:
-        context.log.warn(f"Scrape reddit post, {err}")
+        context.log.warning(f"Scrape reddit post, {err}")
         status[err.permalink] = Status.FAILED
         errors[err.permalink] = err.msg
 
@@ -182,11 +182,11 @@ def title_metadatas(
         status[p.permalink] = Status.SUCCESS
 
     if failed > 0:
-        context.log.warn(
+        context.log.warning(
             f"Failed to extract metadata for {failed} of {len(posts)} posts"
         )
     if posts and failed == len(posts):
-        context.log.warn(
+        context.log.warning(
             "Failed to extract metadata for all posts, uploading without it"
         )
 
@@ -258,7 +258,7 @@ def post_tags(
         try:
             url = medium_url(post_images.data[id].images)
         except ValueError as e:
-            context.log.warn(f"Failed to tag {id}, uploading without tags: {e}")
+            context.log.warning(f"Failed to tag {id}, uploading without tags: {e}")
             status[id] = Status.FAILED
             errors[id] = str(e)
             continue
@@ -276,7 +276,7 @@ def post_tags(
     text_only = 0
     for id, r in zip(tagged, results, strict=True):
         if isinstance(r, Exception):
-            context.log.warn(f"Failed to tag {id}, uploading without tags: {r}")
+            context.log.warning(f"Failed to tag {id}, uploading without tags: {r}")
             status[id] = Status.FAILED
             errors[id] = str(r)
             continue
@@ -323,7 +323,7 @@ def final_posts(
         try:
             t = tags.get(id)
             if t is None:
-                context.log.warn(f"Missing tags for {id}, uploading without them")
+                context.log.warning(f"Missing tags for {id}, uploading without them")
             final = new_post_create(
                 post=reddit_posts.data[id],
                 metadata=title_metadatas.data[id],

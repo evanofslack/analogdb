@@ -68,11 +68,6 @@ run_coordinator:
         value: "true"
         limit: 2
 
-loggers:
-  console:
-    config:
-      log_level: DEBUG
-
 compute_logs:
   module: dagster_obstore.s3.compute_log_manager
   class: S3ComputeLogManager
