@@ -35,16 +35,13 @@ from .assets import (
     upload_posts,
 )
 from .backfill import (
-    backfill_post_captions,
-    backfill_post_metadata,
     prune_catalog,
     reencode_post_vectors,
     rematch_post_metadata,
+    tag_missing_post_captions,
 )
 from .duplicates import report_duplicates
 from .jobs import (
-    backfill_captions_job,
-    backfill_metadata_job,
     patch_comments_job,
     patch_descriptions_job,
     patch_scores_job,
@@ -52,6 +49,7 @@ from .jobs import (
     rematch_metadata_job,
     report_duplicates_job,
     scrape_job,
+    tag_missing_captions_job,
 )
 from .resources import (
     AnalogDBResource,
@@ -66,18 +64,18 @@ from .resources import (
 from .schedules import (
     encode_missing_vectors_schedule,
     scrape_analog_schedule,
+    tag_missing_captions_schedule,
     update_post_comments_schedule,
     update_post_scores_schedule,
 )
 
 defs = dg.Definitions(
     assets=[
-        backfill_post_captions,
-        backfill_post_metadata,
         prune_catalog,
         report_duplicates,
         reencode_post_vectors,
         rematch_post_metadata,
+        tag_missing_post_captions,
         analogdb_permalinks,
         analogdb_posts,
         debug_posts,
@@ -135,8 +133,6 @@ defs = dg.Definitions(
         "io_manager": io_manager(),
     },
     jobs=[
-        backfill_captions_job,
-        backfill_metadata_job,
         reencode_vectors_job,
         report_duplicates_job,
         rematch_metadata_job,
@@ -144,10 +140,12 @@ defs = dg.Definitions(
         patch_descriptions_job,
         patch_scores_job,
         patch_comments_job,
+        tag_missing_captions_job,
     ],
     schedules=[
         encode_missing_vectors_schedule,
         scrape_analog_schedule,
+        tag_missing_captions_schedule,
         update_post_comments_schedule,
         update_post_scores_schedule,
     ],

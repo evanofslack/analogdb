@@ -62,14 +62,6 @@ class Result(Generic[T]):
         """Get only failed processed items count."""
         return len([s for s in self.status.values() if s == Status.FAILED])
 
-    def filter_by_ids(self, item_ids: Set[str]) -> "Result[T]":
-        """Create new result with only specified IDs."""
-        return Result(
-            data={id: self.data[id] for id in item_ids if id in self.data},
-            status={id: self.status[id] for id in item_ids if id in self.status},
-            errors={id: self.errors[id] for id in item_ids if id in self.errors},
-        )
-
 
 def create_result_type_check(expected_inner_type: Type | None = None):
     """Factory function to create type check functions for specific Result types"""

@@ -2,11 +2,12 @@ from datetime import UTC, datetime
 
 import dagster as dg
 
-from .backfill import ReencodeVectorsConfig
+from .backfill import ReencodeVectorsConfig, TagMissingCaptionsConfig
 from .definitions import defs
 from .resources import TaggerResource
 from .schedules import (
     encode_missing_vectors_schedule,
+    tag_missing_captions_schedule,
     update_post_comments_schedule,
     update_post_scores_schedule,
 )
@@ -46,17 +47,31 @@ def test_encode_missing_vectors_schedule():
     )
     (request,) = schedule.evaluate_tick(context).run_requests
     assert request.run_config == {
-        "ops": {
-            "reencode_post_vectors": {
-                "config": {"missing_only": True, "fail_on_error": False}
-            }
-        }
+        "ops": {"reencode_post_vectors": {"config": {"fail_on_error": False}}}
     }
     config = request.run_config["ops"]["reencode_post_vectors"]["config"]
     assert ReencodeVectorsConfig(**config).fail_on_error is False
     assert (
         "reencode_post_vectors"
         in defs.resolve_job_def("reencode_vectors").graph.node_dict
+    )
+
+
+def test_tag_missing_captions_schedule():
+    schedule = tag_missing_captions_schedule
+    assert schedule.cron_schedule == "0 2 * * *"
+    assert schedule.job_name == "tag_missing_captions"
+    context = dg.build_schedule_context(
+        scheduled_execution_time=datetime(2026, 9, 27, 2, tzinfo=UTC)
+    )
+    (request,) = schedule.evaluate_tick(context).run_requests
+    config = request.run_config["ops"]["tag_missing_post_captions"]["config"]
+    assert TagMissingCaptionsConfig(**config) == TagMissingCaptionsConfig(
+        limit=500, fail_on_error=False
+    )
+    assert (
+        "tag_missing_post_captions"
+        in defs.resolve_job_def("tag_missing_captions").graph.node_dict
     )
 
 

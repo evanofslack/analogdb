@@ -7,6 +7,7 @@ from .jobs import (
     patch_scores_job,
     reencode_vectors_job,
     scrape_job,
+    tag_missing_captions_job,
 )
 
 scrape_analog_schedule = dg.ScheduleDefinition(
@@ -23,10 +24,19 @@ encode_missing_vectors_schedule = dg.ScheduleDefinition(
     execution_timezone="UTC",
     name="encode_missing_vectors_schedule",
     description="Daily encode of posts missing an image vector",
+    run_config={"ops": {"reencode_post_vectors": {"config": {"fail_on_error": False}}}},
+)
+
+tag_missing_captions_schedule = dg.ScheduleDefinition(
+    job=tag_missing_captions_job,
+    cron_schedule="0 2 * * *",
+    execution_timezone="UTC",
+    name="tag_missing_captions_schedule",
+    description="Daily tagging of posts missing a caption",
     run_config={
         "ops": {
-            "reencode_post_vectors": {
-                "config": {"missing_only": True, "fail_on_error": False}
+            "tag_missing_post_captions": {
+                "config": {"limit": 500, "fail_on_error": False}
             }
         }
     },

@@ -18,10 +18,9 @@ from .assets import (
     upload_posts,
 )
 from .backfill import (
-    backfill_post_captions,
-    backfill_post_metadata,
     reencode_post_vectors,
     rematch_post_metadata,
+    tag_missing_post_captions,
 )
 from .duplicates import report_duplicates
 
@@ -70,20 +69,14 @@ patch_comments_job = dg.define_asset_job(
 )
 
 
-backfill_metadata_job = dg.define_asset_job(
-    name="backfill_metadata",
-    tags={"reddit": "true"},
-    selection=[backfill_post_metadata],
-)
-
 rematch_metadata_job = dg.define_asset_job(
     name="rematch_metadata",
     selection=[rematch_post_metadata],
 )
 
-backfill_captions_job = dg.define_asset_job(
-    name="backfill_captions",
-    selection=[backfill_post_captions],
+tag_missing_captions_job = dg.define_asset_job(
+    name="tag_missing_captions",
+    selection=[tag_missing_post_captions],
 )
 
 reencode_vectors_job = dg.define_asset_job(
