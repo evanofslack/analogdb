@@ -3,6 +3,9 @@ const path = require("path");
 module.exports = {
   output: "standalone",
   reactStrictMode: true,
+  // caps stale-while-revalidate at expireTime minus revalidate, so the edge
+  // never serves a page much older than its revalidate window
+  expireTime: 7200,
   images: {
     unoptimized: true,
     remotePatterns: [
