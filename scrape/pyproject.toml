@@ -7,7 +7,7 @@ dependencies = [
     "dagster-webserver>=1.10.19",
     "analogdb",
     "scrape",
-    "python-dotenv>=1.1.0",
+    "python-dotenv>=1.2.2",
     "dagster-aws>=0.26.19",
     "dagster-postgres>=0.26.19",
     "dagster-docker>=0.26.19",
@@ -20,11 +20,11 @@ members = [
     "packages/scrape"
 ]
 
-[tool.uv]
-dev-dependencies = [
-    "pytest>=8.4.0",
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
     "pytest-cov>=4.0.0",
-    "black>=23.0.0",
+    "black>=26.3.1",
     "ruff>=0.1.0",
     "pytest-httpserver>=1.1.0",
 ]
