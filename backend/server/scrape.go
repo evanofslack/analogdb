@@ -7,10 +7,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type keywordsUpdatedResponse struct {
-	Ids []int `json:"ids"`
-}
-
 type CaptionsMissingResponse struct {
 	Ids []int `json:"ids" example:"1,2,3"`
 }
@@ -22,15 +18,11 @@ type VectorsMissingResponse struct {
 
 const (
 	scrapePath          = "/scrape"
-	keywordsUpdatedPath = scrapePath + "/keywords/updated"
 	captionsMissingPath = scrapePath + "/captions/missing"
 	vectorsMissingPath  = scrapePath + "/vectors/missing"
 )
 
 func (s *Server) mountScrapeHandlers(r chi.Router) {
-	r.Route(keywordsUpdatedPath, func(r chi.Router) {
-		r.With(s.require(roleScraper)).Get("/", s.getKeywordUpdatedPosts)
-	})
 	r.Route(captionsMissingPath, func(r chi.Router) {
 		r.With(s.require(roleScraper)).Get("/", s.getCaptionMissingPosts)
 	})
@@ -42,20 +34,6 @@ func (s *Server) mountScrapeHandlers(r chi.Router) {
 		r.Get("/", s.getDuplicatePosts)
 		r.Post("/report", s.reportDuplicatePosts)
 	})
-}
-
-func (s *Server) getKeywordUpdatedPosts(w http.ResponseWriter, r *http.Request) {
-	ids, err := s.ScrapeService.KeywordUpdatedPostIDs(r.Context())
-	if err != nil {
-		s.writeError(w, r, err)
-		return
-	}
-	response := keywordsUpdatedResponse{
-		Ids: ids,
-	}
-	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
-		s.writeError(w, r, err)
-	}
 }
 
 // @Summary List posts missing a caption
