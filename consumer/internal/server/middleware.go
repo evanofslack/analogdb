@@ -50,7 +50,7 @@ func (s *Server) loggingMiddleware(next http.Handler) http.Handler {
 // recoveryMiddleware recovers from panics
 func (s *Server) recoveryMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
+		defer func() { //nolint:contextcheck // false positive on a deferred recover
 			if err := recover(); err != nil {
 				requestID := getRequestID(r.Context())
 
