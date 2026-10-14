@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
@@ -248,6 +249,7 @@ func TestTextSearchSlots(t *testing.T) {
 	s.textWait = 50 * time.Millisecond
 	inner := &blockingSearch{started: make(chan struct{}, searchTextSlots), block: make(chan struct{})}
 	search := s.LimitTextSearch(inner)
+	inUse := s.stats.searchSlotsInUse.WithLabelValues("text")
 
 	done := make(chan error, searchTextSlots)
 	for range searchTextSlots {
@@ -260,7 +262,14 @@ func TestTextSearchSlots(t *testing.T) {
 		<-inner.started
 	}
 
+	if got := testutil.ToFloat64(inUse); got != searchTextSlots {
+		t.Errorf("want %d slots in use, got %v", searchTextSlots, got)
+	}
+
 	_, _, err := search.SearchText(context.Background(), &analogdb.SearchFilter{})
+	if !errors.Is(err, errTextSearchBusy) {
+		t.Errorf("want busy error with all slots busy, got %v", err)
+	}
 	if code := analogdb.ErrorCode(err); code != analogdb.ERRUNAVAILABLE {
 		t.Errorf("want %s with all slots busy, got %v", analogdb.ERRUNAVAILABLE, err)
 	}
@@ -270,6 +279,9 @@ func TestTextSearchSlots(t *testing.T) {
 		if err := <-done; err != nil {
 			t.Errorf("want blocked searches to finish, got %v", err)
 		}
+	}
+	if got := testutil.ToFloat64(inUse); got != 0 {
+		t.Errorf("want no slots in use after release, got %v", got)
 	}
 
 	// a free slot passes through

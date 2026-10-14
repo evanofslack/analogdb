@@ -15,6 +15,7 @@ import (
 
 	"github.com/evanofslack/analogdb"
 	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 const (
@@ -29,6 +30,11 @@ const (
 	searchTextSlots         = 4
 	searchTextWait          = 5 * time.Second
 	errCodeUnsupportedMedia = "unsupported_media"
+)
+
+var (
+	errTextSearchBusy  = &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "too many searches, try again"}
+	errImageSearchBusy = &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "too many image searches, try again"}
 )
 
 var searchImageTypes = map[string]struct{}{
@@ -191,14 +197,14 @@ func (s *Server) searchText(w http.ResponseWriter, r *http.Request) {
 
 	hits, hasMore, err := s.SearchService.SearchText(r.Context(), filter)
 	if err != nil {
-		s.stats.searchRequests.WithLabelValues("text", "error").Inc()
+		s.searchFailed("text", err)
 		s.writeError(w, r, err)
 		return
 	}
 
 	posts, err := s.hydrateHits(r.Context(), hits)
 	if err != nil {
-		s.stats.searchRequests.WithLabelValues("text", "error").Inc()
+		s.searchFailed("text", err)
 		s.writeError(w, r, err)
 		return
 	}
@@ -259,23 +265,23 @@ func (s *Server) searchImage(w http.ResponseWriter, r *http.Request) {
 	}
 	filter.Image = image
 
-	release, err := acquireSlot(r.Context(), s.imageSlots, s.imageWait, "too many image searches, try again")
+	release, err := acquireSlot(r.Context(), s.imageSlots, s.imageWait, errImageSearchBusy, s.stats.searchSlotsInUse.WithLabelValues("image"))
 	if err != nil {
-		s.stats.searchRequests.WithLabelValues("image", "error").Inc()
+		s.searchFailed("image", err)
 		s.writeError(w, r, err)
 		return
 	}
 	hits, err := s.SearchService.SearchImage(r.Context(), filter)
 	release()
 	if err != nil {
-		s.stats.searchRequests.WithLabelValues("image", "error").Inc()
+		s.searchFailed("image", err)
 		s.writeError(w, r, err)
 		return
 	}
 
 	posts, err := s.hydrateHits(r.Context(), hits)
 	if err != nil {
-		s.stats.searchRequests.WithLabelValues("image", "error").Inc()
+		s.searchFailed("image", err)
 		s.writeError(w, r, err)
 		return
 	}
@@ -321,14 +327,18 @@ func readSearchImage(w http.ResponseWriter, r *http.Request) ([]byte, error) {
 }
 
 // acquireSlot waits for a free search slot, giving up after wait
-func acquireSlot(ctx context.Context, slots chan struct{}, wait time.Duration, busy string) (func(), error) {
+func acquireSlot(ctx context.Context, slots chan struct{}, wait time.Duration, busy error, inUse prometheus.Gauge) (func(), error) {
 	timer := time.NewTimer(wait)
 	defer timer.Stop()
 	select {
 	case slots <- struct{}{}:
-		return func() { <-slots }, nil
+		inUse.Inc()
+		return func() {
+			inUse.Dec()
+			<-slots
+		}, nil
 	case <-timer.C:
-		return nil, &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: busy}
+		return nil, busy
 	case <-ctx.Done():
 		return nil, &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "search cancelled"}
 	}
@@ -340,10 +350,11 @@ type textSlotSearch struct {
 	analogdb.SearchService
 	slots chan struct{}
 	wait  time.Duration
+	inUse prometheus.Gauge
 }
 
 func (t textSlotSearch) SearchText(ctx context.Context, filter *analogdb.SearchFilter) ([]analogdb.SearchHit, bool, error) {
-	release, err := acquireSlot(ctx, t.slots, t.wait, "too many searches, try again")
+	release, err := acquireSlot(ctx, t.slots, t.wait, errTextSearchBusy, t.inUse)
 	if err != nil {
 		return nil, false, err
 	}
@@ -354,7 +365,12 @@ func (t textSlotSearch) SearchText(ctx context.Context, filter *analogdb.SearchF
 // LimitTextSearch wraps the vector search service with the server's text
 // search slots. Wrap it inside any cache, so cache hits never wait
 func (s *Server) LimitTextSearch(svc analogdb.SearchService) analogdb.SearchService {
-	return textSlotSearch{SearchService: svc, slots: s.textSlots, wait: s.textWait}
+	return textSlotSearch{
+		SearchService: svc,
+		slots:         s.textSlots,
+		wait:          s.textWait,
+		inUse:         s.stats.searchSlotsInUse.WithLabelValues("text"),
+	}
 }
 
 // hydrateHits loads the posts of hits from the post service in hit order,
@@ -396,4 +412,13 @@ func (s *Server) observeSearch(kind string, resp SearchResponse, start time.Time
 	}
 	s.stats.searchRequests.WithLabelValues(kind, result).Inc()
 	s.stats.searchDuration.WithLabelValues(kind).Observe(time.Since(start).Seconds())
+}
+
+// searchFailed counts a failed search, telling full slots apart from errors
+func (s *Server) searchFailed(kind string, err error) {
+	result := "error"
+	if errors.Is(err, errTextSearchBusy) || errors.Is(err, errImageSearchBusy) {
+		result = "busy"
+	}
+	s.stats.searchRequests.WithLabelValues(kind, result).Inc()
 }

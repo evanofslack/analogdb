@@ -119,6 +119,8 @@ func New(port string, logger *logger.Logger, metrics *metrics.Metrics, config *c
 	if err := s.stats.register(s.metrics.Registry); err != nil {
 		s.logger.Error("Fail register http metrics", "error", err)
 	}
+	s.stats.searchSlots.WithLabelValues("text").Set(float64(cap(s.textSlots)))
+	s.stats.searchSlots.WithLabelValues("image").Set(float64(cap(s.imageSlots)))
 
 	s.mountMiddleware()
 	s.reportLimit = s.reportLimiter()
