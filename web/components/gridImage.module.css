@@ -1,12 +1,8 @@
 .tile {
   display: block;
-  position: relative;
-  overflow: hidden;
+  color: inherit;
+  text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-}
-
-.tile img {
-  transition: transform 0.3s, filter 0.2s;
 }
 
 .tile:focus-visible {
@@ -14,9 +10,74 @@
   outline-offset: 2px;
 }
 
+/* clips the hover zoom to the image so it never covers the gear caption */
+.frame {
+  position: relative;
+  overflow: hidden;
+}
+
+/* block so no baseline gap shows under images, which spacing none exposes */
+.frame img {
+  display: block;
+  transition: transform 0.3s, filter 0.2s;
+}
+
+.gearLine {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.gearItem {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.gearItem svg {
+  flex-shrink: 0;
+}
+
+.gearText {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* fixed height, the masonry layout counts on it (gearPx in lib/display) */
+.caption {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 2px;
+  color: var(--adb-muted-alt);
+}
+
+.overlay {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 1.5rem 0.5rem 0.45rem;
+  color: #fff;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
 @media (hover: hover) {
   .tile:hover img {
     transform: scale(1.02);
+  }
+
+  .tile:hover .overlay,
+  .tile:focus-visible .overlay {
+    opacity: 1;
   }
 }
 

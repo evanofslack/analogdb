@@ -1,6 +1,7 @@
 "use client";
 
 import { getKeywordCatalog } from "@app/actions/keywords";
+import DisplayMenu from "@components/displayMenu";
 import filterStyles from "@components/filterBar.module.css";
 import Footer from "@components/footer";
 import galleryStyles from "@components/gallery.module.css";
@@ -14,6 +15,7 @@ import {
   SuggestionsSkeleton,
 } from "@components/searchSkeletons";
 import SearchSuggestions, { KeywordChips } from "@components/searchSuggestions";
+import { DisplayProvider, InitialDisplay } from "@hooks/useDisplay";
 import useRecentSearches from "@hooks/useRecentSearches";
 import useSearch, { useSearchSource, useSimilar } from "@hooks/useSearch";
 import {
@@ -284,16 +286,9 @@ interface ResultsProps {
   chips: string[];
   onSearch: (query: string, source?: SearchOrigin) => void;
   noMatches?: ReactNode;
-  initialColumns: number;
 }
 
-function Results({
-  results,
-  chips,
-  onSearch,
-  noMatches,
-  initialColumns,
-}: ResultsProps) {
+function Results({ results, chips, onSearch, noMatches }: ResultsProps) {
   return (
     <>
       <KeywordRow
@@ -304,11 +299,7 @@ function Results({
       />
       {noMatches}
       {!noMatches && (
-        <InfiniteGallery
-          {...results}
-          initialColumns={initialColumns}
-          onClick={trackResultClick}
-        />
+        <InfiniteGallery {...results} onClick={trackResultClick} />
       )}
     </>
   );
@@ -361,7 +352,6 @@ interface TextResultsProps {
   initialKey: string | null;
   suggestions?: Suggestions;
   onSearch: (query: string, source?: SearchOrigin) => void;
-  initialColumns: number;
 }
 
 function TextResults({
@@ -372,7 +362,6 @@ function TextResults({
   initialKey,
   suggestions,
   onSearch,
-  initialColumns,
 }: TextResultsProps) {
   const initialPage = textPromise ? use(textPromise) : null;
   const results = useSearch(q, flags, initialPage, initialKey);
@@ -389,7 +378,6 @@ function TextResults({
       results={results}
       chips={results.relatedKeywords}
       onSearch={onSearch}
-      initialColumns={initialColumns}
       noMatches={
         empty && (
           <div className={styles.noMatches}>
@@ -416,7 +404,6 @@ interface SimilarResultsProps {
   initialKey: string | null;
   grayscaleOnly: boolean;
   onSearch: (query: string, source?: SearchOrigin) => void;
-  initialColumns: number;
 }
 
 function SimilarResults({
@@ -427,7 +414,6 @@ function SimilarResults({
   initialKey,
   grayscaleOnly,
   onSearch,
-  initialColumns,
 }: SimilarResultsProps) {
   const initialPage = similarPromise ? use(similarPromise) : null;
   const results = useSimilar(similar, flags, initialPage, initialKey);
@@ -444,7 +430,6 @@ function SimilarResults({
       results={results}
       chips={similarKeywords(results.pages, grayscaleOnly)}
       onSearch={onSearch}
-      initialColumns={initialColumns}
     />
   );
 }
@@ -457,7 +442,7 @@ interface SearchPageProps {
   sourcePromise: Promise<SearchSource | null> | null;
   sourceId: number | null;
   initialKey: string | null;
-  initialColumns: number;
+  initialDisplay: InitialDisplay;
 }
 
 export default function SearchPage({
@@ -468,7 +453,7 @@ export default function SearchPage({
   sourcePromise,
   sourceId,
   initialKey,
-  initialColumns,
+  initialDisplay,
 }: SearchPageProps) {
   const [filters, setFilters] = useQueryStates(searchParsers);
   const { nsfw, bw, sprocket } = filters;
@@ -638,7 +623,6 @@ export default function SearchPage({
           initialKey={initialKey}
           suggestions={suggestions}
           onSearch={handleSearch}
-          initialColumns={initialColumns}
         />
       </Suspense>
     );
@@ -661,7 +645,6 @@ export default function SearchPage({
           initialKey={initialKey}
           grayscaleOnly={bw === "only"}
           onSearch={handleSearch}
-          initialColumns={initialColumns}
         />
       </Suspense>
     );
@@ -687,59 +670,67 @@ export default function SearchPage({
         }}
         chips={upload.response.relatedKeywords ?? []}
         onSearch={handleSearch}
-        initialColumns={initialColumns}
       />
     );
   }
 
   return (
-    <div className={galleryStyles.main}>
-      <Header />
-      <div className={galleryStyles.margin}>
-        <Dropzone.FullScreen
-          active={panel !== "visual" && !uploading}
-          accept={imageAccept}
-          maxSize={imageMaxSize}
-          multiple={false}
-          onDrop={(files: FileWithPath[]) => files[0] && searchImage(files[0])}
-          onReject={(rejections: FileRejection[]) =>
-            showError(rejectMessage(rejections))
-          }
-        >
-          <div className={styles.fullscreen}>
-            <IconPhotoScan size={48} stroke={1.5} />
-            <p>drop an image to search</p>
-          </div>
-        </Dropzone.FullScreen>
+    <DisplayProvider value={initialDisplay}>
+      <div className={galleryStyles.main}>
+        <Header />
+        <div className={galleryStyles.margin}>
+          <Dropzone.FullScreen
+            active={panel !== "visual" && !uploading}
+            accept={imageAccept}
+            maxSize={imageMaxSize}
+            multiple={false}
+            onDrop={(files: FileWithPath[]) =>
+              files[0] && searchImage(files[0])
+            }
+            onReject={(rejections: FileRejection[]) =>
+              showError(rejectMessage(rejections))
+            }
+          >
+            <div className={styles.fullscreen}>
+              <IconPhotoScan size={48} stroke={1.5} />
+              <p>drop an image to search</p>
+            </div>
+          </Dropzone.FullScreen>
 
-        <div className={styles.top}>
-          <div className={styles.bar}>
-            <SearchBar
-              value={q ?? ""}
-              onSearch={handleSearch}
-              visual={visual}
-              suggestions={suggestions}
-              recent={recent}
-              onClearRecent={clear}
-              panel={panel}
-              onPanelChange={setPanel}
-              suggestionsDropdown={mode !== "empty"}
-              visualProps={{
-                loading: uploading,
-                error: uploadError,
-                onImage: searchImage,
-                onError: setUploadError,
-                onExample: handleExample,
-              }}
+          <div className={styles.top}>
+            <div className={styles.bar}>
+              <SearchBar
+                value={q ?? ""}
+                onSearch={handleSearch}
+                visual={visual}
+                suggestions={suggestions}
+                recent={recent}
+                onClearRecent={clear}
+                panel={panel}
+                onPanelChange={setPanel}
+                suggestionsDropdown={mode !== "empty"}
+                visualProps={{
+                  loading: uploading,
+                  error: uploadError,
+                  onImage: searchImage,
+                  onError: setUploadError,
+                  onExample: handleExample,
+                }}
+              />
+            </div>
+            <FlagsMenu filters={filters} setFilters={setFilters} />
+            <DisplayMenu
+              buttonClassName={styles.filterButton}
+              labelClassName={styles.filterLabel}
+              position="bottom-end"
             />
           </div>
-          <FlagsMenu filters={filters} setFilters={setFilters} />
-        </div>
 
-        {body}
-        <ScrollTop />
+          {body}
+          <ScrollTop />
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </DisplayProvider>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { DisplayProvider, InitialDisplay } from "@hooks/useDisplay";
 import usePosts from "@hooks/usePosts";
 import type { CameraOption } from "@lib/data/cameras";
 import type { FilmOption } from "@lib/data/films";
@@ -21,7 +22,7 @@ import ScrollTop from "./scrollTop";
 interface GalleryProps {
   initialPage?: ServerPostResponse | null;
   initialFilters?: PostsFilters;
-  initialColumns?: number;
+  initialDisplay?: InitialDisplay;
   filmOptions: FilmOption[];
   cameraOptions: CameraOption[];
 }
@@ -29,7 +30,7 @@ interface GalleryProps {
 export default function Gallery({
   initialPage,
   initialFilters,
-  initialColumns,
+  initialDisplay,
   filmOptions,
   cameraOptions,
 }: GalleryProps) {
@@ -51,60 +52,62 @@ export default function Gallery({
   };
 
   return (
-    <div className={styles.main}>
-      <Header />
-      <div className={styles.margin}>
-        <FilterBar
-          sort={filters.sort}
-          nsfw={filters.nsfw}
-          bw={filters.bw}
-          sprocket={filters.sprocket}
-          color={filters.color}
-          text={filters.text}
-          widthMin={filters.widthMin}
-          widthMax={filters.widthMax}
-          heightMin={filters.heightMin}
-          heightMax={filters.heightMax}
-          ratioMin={filters.ratioMin}
-          ratioMax={filters.ratioMax}
-          filmMake={filters.film_make}
-          filmType={filters.film_type}
-          cameraMake={filters.camera_make}
-          cameraModel={filters.camera_model}
-          setSort={setSort}
-          setNsfw={(nsfw) => setFilters({ nsfw })}
-          setBw={(bw) => setFilters({ bw })}
-          setSprocket={(sprocket) => setFilters({ sprocket })}
-          setColor={(color) => setFilters({ color })}
-          setText={(text) => setFilters({ text: text || null })}
-          setSizes={(sizes) => setFilters(sizes)}
-          setFilm={(make, type) =>
-            setFilters({ film_make: make, film_type: type })
-          }
-          setCamera={(make, model) =>
-            setFilters({ camera_make: make, camera_model: model })
-          }
-          filmOptions={filmOptions}
-          cameraOptions={cameraOptions}
-          textPlaceholder={textPlaceholder}
-          widthMinLimit={limits.widthMin}
-          widthMaxLimit={limits.widthMax}
-          heightMinLimit={limits.heightMin}
-          heightMaxLimit={limits.heightMax}
-          ratioMinLimit={limits.ratioMin}
-          ratioMaxLimit={limits.ratioMax}
-          active={active}
-          onClear={
-            anyActive ? () => setFilters(clearedPostsFilters) : undefined
-          }
-          resultCount={anyActive ? posts.totalPosts : null}
-          resultPending={posts.isPlaceholderData}
-          apiUrl={anyActive ? postsApiUrl(filters) : undefined}
-        />
-        <InfiniteGallery {...posts} initialColumns={initialColumns} />
-        <ScrollTop />
+    <DisplayProvider value={initialDisplay}>
+      <div className={styles.main}>
+        <Header />
+        <div className={styles.margin}>
+          <FilterBar
+            sort={filters.sort}
+            nsfw={filters.nsfw}
+            bw={filters.bw}
+            sprocket={filters.sprocket}
+            color={filters.color}
+            text={filters.text}
+            widthMin={filters.widthMin}
+            widthMax={filters.widthMax}
+            heightMin={filters.heightMin}
+            heightMax={filters.heightMax}
+            ratioMin={filters.ratioMin}
+            ratioMax={filters.ratioMax}
+            filmMake={filters.film_make}
+            filmType={filters.film_type}
+            cameraMake={filters.camera_make}
+            cameraModel={filters.camera_model}
+            setSort={setSort}
+            setNsfw={(nsfw) => setFilters({ nsfw })}
+            setBw={(bw) => setFilters({ bw })}
+            setSprocket={(sprocket) => setFilters({ sprocket })}
+            setColor={(color) => setFilters({ color })}
+            setText={(text) => setFilters({ text: text || null })}
+            setSizes={(sizes) => setFilters(sizes)}
+            setFilm={(make, type) =>
+              setFilters({ film_make: make, film_type: type })
+            }
+            setCamera={(make, model) =>
+              setFilters({ camera_make: make, camera_model: model })
+            }
+            filmOptions={filmOptions}
+            cameraOptions={cameraOptions}
+            textPlaceholder={textPlaceholder}
+            widthMinLimit={limits.widthMin}
+            widthMaxLimit={limits.widthMax}
+            heightMinLimit={limits.heightMin}
+            heightMaxLimit={limits.heightMax}
+            ratioMinLimit={limits.ratioMin}
+            ratioMaxLimit={limits.ratioMax}
+            active={active}
+            onClear={
+              anyActive ? () => setFilters(clearedPostsFilters) : undefined
+            }
+            resultCount={anyActive ? posts.totalPosts : null}
+            resultPending={posts.isPlaceholderData}
+            apiUrl={anyActive ? postsApiUrl(filters) : undefined}
+          />
+          <InfiniteGallery {...posts} />
+          <ScrollTop />
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </DisplayProvider>
   );
 }

@@ -44,23 +44,23 @@
 }
 
 .skeletonGrid {
-  column-count: 4;
-  column-gap: 15px;
+  column-count: var(--grid-columns, 4);
+  column-gap: var(--grid-gap, 15px);
 }
 
 .skeletonTile {
   break-inside: avoid;
-  margin-bottom: 15px;
+  margin-bottom: var(--grid-gap, 15px);
 }
 
 @media (max-width: 1440px) {
   .skeletonGrid {
-    column-count: 3;
+    column-count: var(--grid-columns, 3);
   }
 }
 
 @media (max-width: 720px) {
   .skeletonGrid {
-    column-count: 2;
+    column-count: var(--grid-columns, 2);
   }
 }

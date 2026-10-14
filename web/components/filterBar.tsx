@@ -30,6 +30,7 @@ import {
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
 import ColorFilter from "./colorFilter";
+import DisplayMenu from "./displayMenu";
 import styles from "./filterBar.module.css";
 import FilterSummary, { FilterSummaryItem } from "./filterSummary";
 
@@ -652,6 +653,11 @@ export default function FilterBar({
                 </div>
               </Menu.Dropdown>
             </Menu>
+            <DisplayMenu
+              buttonClassName={styles.button}
+              sectionClassName={styles.buttonSection}
+              labelClassName={styles.label}
+            />
           </div>
           {onClear && (
             <FilterSummary
