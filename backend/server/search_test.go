@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
 type mockSearchService struct {
@@ -24,10 +25,14 @@ type mockSearchService struct {
 	filters []analogdb.SearchFilter
 	block   chan struct{}
 	started chan struct{}
+	err     error
 }
 
 func (m *mockSearchService) SearchText(ctx context.Context, filter *analogdb.SearchFilter) ([]analogdb.SearchHit, bool, error) {
 	m.filters = append(m.filters, *filter)
+	if m.err != nil {
+		return nil, false, m.err
+	}
 	return m.hits, m.hasMore, nil
 }
 
@@ -302,6 +307,10 @@ func TestSearchImageBusy(t *testing.T) {
 	search.block = make(chan struct{})
 	search.started = make(chan struct{}, searchImageSlots)
 
+	busy := s.stats.searchRequests.WithLabelValues("image", "busy")
+	failed := s.stats.searchRequests.WithLabelValues("image", "error")
+	inUse := s.stats.searchSlotsInUse.WithLabelValues("image")
+
 	body, ct := multipartImage(t, pngBytes(t))
 	done := make(chan int, searchImageSlots)
 	for range searchImageSlots {
@@ -311,8 +320,17 @@ func TestSearchImageBusy(t *testing.T) {
 		<-search.started
 	}
 
+	if got := testutil.ToFloat64(inUse); got != searchImageSlots {
+		t.Errorf("want %d slots in use, got %v", searchImageSlots, got)
+	}
 	if w := postImage(s, body.Bytes(), ct); w.Code != http.StatusServiceUnavailable {
 		t.Errorf("want 503 with all slots busy, got %d", w.Code)
+	}
+	if got := testutil.ToFloat64(busy); got != 1 {
+		t.Errorf("want 1 busy search, got %v", got)
+	}
+	if got := testutil.ToFloat64(failed); got != 0 {
+		t.Errorf("want no failed searches, got %v", got)
 	}
 
 	close(search.block)
@@ -320,6 +338,38 @@ func TestSearchImageBusy(t *testing.T) {
 		if code := <-done; code != http.StatusOK {
 			t.Errorf("want 200 for the blocked searches, got %d", code)
 		}
+	}
+	if got := testutil.ToFloat64(inUse); got != 0 {
+		t.Errorf("want no slots in use after release, got %v", got)
+	}
+}
+
+func TestSearchTextFailures(t *testing.T) {
+	s, search := openSearchServer(t, nil, false)
+
+	search.err = errTextSearchBusy
+	if w, _ := doSearch(t, s, "/v1/search?q=cats"); w.Code != http.StatusServiceUnavailable {
+		t.Errorf("want 503 when busy, got %d", w.Code)
+	}
+	search.err = errVectorsUnavailable
+	doSearch(t, s, "/v1/search?q=dogs")
+
+	if got := testutil.ToFloat64(s.stats.searchRequests.WithLabelValues("text", "busy")); got != 1 {
+		t.Errorf("want 1 busy search, got %v", got)
+	}
+	if got := testutil.ToFloat64(s.stats.searchRequests.WithLabelValues("text", "error")); got != 1 {
+		t.Errorf("want 1 failed search, got %v", got)
+	}
+}
+
+func TestSearchSlotCapacity(t *testing.T) {
+	s := mustOpen(t)
+	defer mustClose(t, s)
+	if got := testutil.ToFloat64(s.stats.searchSlots.WithLabelValues("text")); got != searchTextSlots {
+		t.Errorf("want %d text slots, got %v", searchTextSlots, got)
+	}
+	if got := testutil.ToFloat64(s.stats.searchSlots.WithLabelValues("image")); got != searchImageSlots {
+		t.Errorf("want %d image slots, got %v", searchImageSlots, got)
 	}
 }
 

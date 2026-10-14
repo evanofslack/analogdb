@@ -27,6 +27,8 @@ type httpStats struct {
 	deprecatedParams   *prometheus.CounterVec
 	searchRequests     *prometheus.CounterVec
 	searchDuration     *prometheus.HistogramVec
+	searchSlots        *prometheus.GaugeVec
+	searchSlotsInUse   *prometheus.GaugeVec
 }
 
 func newHttpStats() *httpStats {
@@ -148,6 +150,26 @@ func newHttpStats() *httpStats {
 		[]string{"kind"},
 	)
 
+	searchSlots := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.SearchSubsystem,
+			Name:      "slots",
+			Help:      "Concurrent search slots by kind",
+		},
+		[]string{"kind"},
+	)
+
+	searchSlotsInUse := prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.SearchSubsystem,
+			Name:      "slots_in_use",
+			Help:      "Search slots in use by kind",
+		},
+		[]string{"kind"},
+	)
+
 	stats := &httpStats{
 		requestsTotal:      requestsTotal,
 		requestDuration:    requestDuration,
@@ -161,6 +183,8 @@ func newHttpStats() *httpStats {
 		deprecatedParams:   deprecatedParams,
 		searchRequests:     searchRequests,
 		searchDuration:     searchDuration,
+		searchSlots:        searchSlots,
+		searchSlotsInUse:   searchSlotsInUse,
 	}
 
 	return stats
@@ -179,6 +203,8 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 	registerer.MustRegister(stats.deprecatedParams)
 	registerer.MustRegister(stats.searchRequests)
 	registerer.MustRegister(stats.searchDuration)
+	registerer.MustRegister(stats.searchSlots)
+	registerer.MustRegister(stats.searchSlotsInUse)
 	return nil
 }
 
