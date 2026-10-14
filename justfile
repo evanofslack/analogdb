@@ -101,8 +101,8 @@ gen-client-typescript:
 
 # Run a k6 load test script
 [working-directory('test/k6')]
-load script:
-    ./run.sh {{ script }}
+load script *args:
+    ./run.sh {{ script }} {{ args }}
 
 # Remove build and test artifacts
 clean:

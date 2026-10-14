@@ -140,5 +140,5 @@ Note: the backend uses `log/slog` for logging, wrapped in `logger.Logger` (`/bac
 - **Backend**: `just backend test` runs all unit tests
 - **Scrape**: `just scrape test` runs pytest
 - **Frontend**: No test suite yet, `just web lint` runs ESLint
-- **Integration**: Docker compose in `/test/k6/` for load testing
+- **Load testing**: k6 scripts in `/test/k6/`, run natively with `just load` (see its README)
 - **Database**: Test containers used in Go tests for isolated database testing
