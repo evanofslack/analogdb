@@ -719,11 +719,13 @@ export default function SearchPage({
               />
             </div>
             <FlagsMenu filters={filters} setFilters={setFilters} />
-            <DisplayMenu
-              buttonClassName={styles.filterButton}
-              labelClassName={styles.filterLabel}
-              position="bottom-end"
-            />
+            {mode !== "empty" && (
+              <DisplayMenu
+                buttonClassName={styles.filterButton}
+                labelClassName={styles.filterLabel}
+                position="bottom-end"
+              />
+            )}
           </div>
 
           {body}
