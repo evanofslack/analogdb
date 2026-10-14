@@ -2,7 +2,9 @@ import "server-only";
 import {
   AboutData,
   AboutPhoto,
-  ApiSample,
+  ApiDemo,
+  ApiDemoGroup,
+  ApiDemoLayout,
   ColorData,
   FilmSet,
   RainbowGroup,
@@ -11,7 +13,6 @@ import {
   SimilarityData,
 } from "@lib/about";
 import { authorized_fetch } from "@lib/client";
-import { publicURL } from "@lib/constants";
 import { getAuthorsTotalCount } from "@lib/data/authors";
 import { getCameraOptions } from "@lib/data/cameras";
 import { getFilmCatalog, getFilmOptions } from "@lib/data/films";
@@ -19,7 +20,11 @@ import { getPosts, getPostsSimilar, getPostsTotalCount } from "@lib/data/posts";
 import { searchPosts } from "@lib/data/search";
 import { smallImage } from "@lib/images";
 import { cameraName, filmName, postAlt } from "@lib/seo";
-import { AnalogdbPost, PostsGetSortEnum } from "analogdb-generated";
+import {
+  AnalogdbPost,
+  AnalogdbPostFromJSON,
+  PostsGetSortEnum,
+} from "analogdb-generated";
 import { unstable_cache } from "next/cache";
 
 const COLOR_ROW_POOL = 30;
@@ -115,8 +120,6 @@ const SEARCH_RESULTS = 10;
 const SEARCH_MIN_RESULTS = 6;
 const SEARCH_KEYWORDS = 5;
 const SEARCH_CONCURRENCY = 2;
-
-const API_SAMPLE_IDS = [4777, 3995];
 
 function lensName(post: AnalogdbPost): string | undefined {
   const focal = post.focalLength ? `${post.focalLength}mm` : "";
@@ -363,50 +366,195 @@ async function fetchSearches(): Promise<SearchDemo[]> {
   return results.filter((search): search is SearchDemo => search !== null);
 }
 
-type RawPost = Record<string, unknown> & {
-  images?: { resolution?: string }[];
-  colors?: unknown[];
-};
+// fields picked from a response: objects keep the given keys, arrays the first few items.
+// inline prints on one line, rest is the spec for the items after the first
+type Spec =
+  | true
+  | { keys: Record<string, Spec>; inline?: boolean }
+  | { take: number; item: Spec; rest?: Spec; inline?: boolean };
 
-function toApiSample(id: number, post: RawPost): ApiSample {
-  const images = post.images ?? [];
-  const full = {
-    ...post,
-    images: images.filter(
-      (image) => image.resolution === "low" || image.resolution === "raw"
-    ),
-    colors: (post.colors ?? []).slice(0, 3),
-  };
-  const short = {
-    id: post.id,
-    title: post.title,
-    camera_make: post.camera_make,
-    camera_model: post.camera_model,
-    film_make: post.film_make,
-    film_type: post.film_type,
-    focal_length: post.focal_length,
-    aperture: post.aperture,
-  };
+const SHORT_STRING = 24;
 
-  return {
-    query: `curl ${publicURL}/post/${id}`,
-    full: JSON.stringify(full, null, 2),
-    short: JSON.stringify(short, null, 2),
-  };
+function leaf(value: unknown): string {
+  if (typeof value === "string" && value.length > SHORT_STRING) {
+    return JSON.stringify(`${value.slice(0, SHORT_STRING)}…`);
+  }
+  return JSON.stringify(value);
 }
 
-// raw json keeps the field names and order the api actually returns
-async function fetchApiSample(): Promise<ApiSample | null> {
-  for (const id of API_SAMPLE_IDS) {
-    try {
-      const response = await authorized_fetch(`/post/${id}`, "GET", 3600);
-      if (!response.ok) continue;
-      return toApiSample(id, await response.json());
-    } catch (error) {
-      console.error("Fail fetch api sample post:", id, error);
+// an ellipsis stands for skipped fields and never takes a comma
+function wrap(
+  open: string,
+  close: string,
+  entries: string[],
+  inline: boolean | undefined,
+  depth: number
+): string {
+  const parts = entries.map((entry, i) =>
+    entry === "…" || i === entries.length - 1 ? entry : `${entry},`
+  );
+  if (inline) return `${open}${parts.join(" ")}${close}`;
+  const pad = (n: number) => "  ".repeat(n);
+  const body = parts.map((part) => `${pad(depth + 1)}${part}`).join("\n");
+  return `${open}\n${body}\n${pad(depth)}${close}`;
+}
+
+// json in the api's own field order, with … wherever fields or items were left out
+function shortJSON(value: unknown, spec: Spec, depth = 0): string {
+  if (spec === true || value === null || typeof value !== "object") {
+    return leaf(value);
+  }
+  if ("take" in spec) {
+    const items = Array.isArray(value) ? value : [];
+    const entries = items
+      .slice(0, spec.take)
+      .map((item, i) =>
+        shortJSON(item, i > 0 && spec.rest ? spec.rest : spec.item, depth + 1)
+      );
+    if (items.length > spec.take) entries.push("…");
+    return wrap("[", "]", entries, spec.inline, depth);
+  }
+  const entries: string[] = [];
+  for (const [key, item] of Object.entries(value)) {
+    const keySpec = spec.keys[key];
+    if (keySpec) {
+      entries.push(`"${key}": ${shortJSON(item, keySpec, depth + 1)}`);
+    } else if (entries[entries.length - 1] !== "…") {
+      entries.push("…");
     }
   }
-  return null;
+  if (!spec.inline) return wrap("{", "}", entries, false, depth);
+  // a one line object lists its picked fields, then one … for the rest
+  const picked = entries.filter((entry) => entry !== "…");
+  if (picked.length < entries.length) picked.push("…");
+  return wrap("{ ", " }", picked, true, depth);
+}
+
+const COLOR: Spec = { inline: true, keys: { hex: true, html: true } };
+
+const POST: Spec = {
+  keys: {
+    id: true,
+    title: true,
+    camera_make: true,
+    camera_model: true,
+    film_make: true,
+    film_type: true,
+    images: { take: 1, item: { inline: true, keys: { url: true } } },
+    colors: { take: 3, item: COLOR },
+  },
+};
+
+const LIST_POST: Spec = {
+  keys: {
+    id: true,
+    title: true,
+    film_make: true,
+    film_type: true,
+  },
+};
+
+const BRIEF_POST: Spec = { inline: true, keys: { id: true, title: true } };
+
+const POSTS = { take: 3, item: LIST_POST, rest: BRIEF_POST };
+
+const META: Spec = { keys: { total_posts: true, next_cursor: true } };
+
+type ApiDemoConfig = {
+  name: string;
+  layout: ApiDemoLayout;
+  spec: Spec;
+  paths: string[];
+};
+
+// requests the demo cycles through, each visit to an endpoint shows the next of its paths.
+// the single posts are all 2:3 portraits so the photo pane keeps one shape
+const API_DEMOS: ApiDemoConfig[] = [
+  {
+    name: "/post",
+    layout: "post",
+    spec: POST,
+    paths: ["/post/4777", "/post/35719", "/post/36774"],
+  },
+  {
+    name: "/posts",
+    layout: "grid",
+    spec: { keys: { meta: META, posts: POSTS } },
+    paths: ["red", "navy", "green"].map(
+      (color) => `/posts?color=${color}&nsfw=false&page_size=3`
+    ),
+  },
+  {
+    name: "/search",
+    layout: "grid",
+    spec: {
+      keys: {
+        meta: META,
+        posts: POSTS,
+        related_keywords: { take: 4, inline: true, item: true },
+      },
+    },
+    paths: ["protest", "greenhouse", "kayak", "railroad"].map(
+      (query) => `/search?q=${query.replace(/ /g, "+")}&page_size=3`
+    ),
+  },
+  {
+    name: "/similar",
+    layout: "similar",
+    spec: { keys: { posts: { ...POSTS, take: 4 } } },
+    paths: [32298, 34246, 533].map((id) => `/post/${id}/similar?page_size=4`),
+  },
+];
+
+// raw json keeps the field names and order the api actually returns
+async function fetchApiDemo(
+  config: ApiDemoConfig,
+  path: string
+): Promise<ApiDemo | null> {
+  try {
+    // similar photos show beside the post they were found for
+    const source =
+      config.layout === "similar" ? Number(path.split("/")[2]) : null;
+    const [response, sourcePosts] = await Promise.all([
+      authorized_fetch(path, "GET", 3600),
+      source ? getPosts({ id: source }) : null,
+    ]);
+    if (!response.ok) return null;
+    const json = await response.json();
+    const posts: AnalogdbPost[] = (
+      config.layout === "post" ? [json] : json.posts ?? []
+    ).map(AnalogdbPostFromJSON);
+    const shown = [...(sourcePosts?.posts ?? []), ...posts];
+    // every returned photo is shown, so a request with nsfw results is skipped
+    if (!posts.length || shown.some((post) => post.nsfw)) return null;
+    return {
+      path,
+      photos: toPhotos(shown),
+      short: shortJSON(json, config.spec),
+      response: json,
+    };
+  } catch (error) {
+    console.error("Fail fetch api demo:", path, error);
+    return null;
+  }
+}
+
+// one endpoint's paths run in turn, backend text search has few slots
+async function fetchApiDemoGroup(
+  config: ApiDemoConfig
+): Promise<ApiDemoGroup | null> {
+  const demos: ApiDemo[] = [];
+  for (const path of config.paths) {
+    const demo = await fetchApiDemo(config, path);
+    if (demo) demos.push(demo);
+  }
+  if (!demos.length) return null;
+  return { name: config.name, layout: config.layout, demos };
+}
+
+async function fetchApiDemos(): Promise<ApiDemoGroup[]> {
+  const results = await Promise.all(API_DEMOS.map(fetchApiDemoGroup));
+  return results.filter((group): group is ApiDemoGroup => group !== null);
 }
 
 async function getData(): Promise<AboutData> {
@@ -419,7 +567,7 @@ async function getData(): Promise<AboutData> {
     allSimilarityData,
     films,
     searches,
-    sample,
+    apiDemos,
   ] = await Promise.all([
     getPostsTotalCount(),
     getAuthorsTotalCount(),
@@ -429,7 +577,7 @@ async function getData(): Promise<AboutData> {
     fetchSimilarityData(),
     fetchFilms(),
     fetchSearches(),
-    fetchApiSample(),
+    fetchApiDemos(),
   ]);
 
   return {
@@ -442,10 +590,10 @@ async function getData(): Promise<AboutData> {
     allSimilarityData,
     films,
     searches,
-    apiSample: sample,
+    apiDemos,
   };
 }
 
-export const getAboutData = unstable_cache(getData, ["about-data-v3"], {
+export const getAboutData = unstable_cache(getData, ["about-data-v4"], {
   revalidate: 3600,
 });

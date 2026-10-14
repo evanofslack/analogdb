@@ -8,7 +8,6 @@ import {
   shuffle,
   SimilarityData,
 } from "@lib/about";
-import { CodeHighlight } from "@mantine/code-highlight";
 import {
   IconBrandGithub,
   IconCamera,
@@ -19,6 +18,7 @@ import {
 import Link from "next/link";
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./about.module.css";
+import AboutApi from "./aboutApi";
 import AboutFilms from "./aboutFilms";
 import AboutPhoto, { AboutPhotoProvider } from "./aboutPhoto";
 import AboutSearch from "./aboutSearch";
@@ -60,7 +60,7 @@ function pickColorRows(colorData: ColorData, random: boolean): ColorData {
 }
 
 export default function About(props: AboutProps) {
-  const { numPosts, numAuthors, numCameras, numFilms, apiSample } = props.data;
+  const { numPosts, numAuthors, numCameras, numFilms, apiDemos } = props.data;
 
   const [colorData, setColorData] = useState<ColorData>(() =>
     pickColorRows(props.data.colorData, false)
@@ -458,36 +458,10 @@ export default function About(props: AboutProps) {
           </div>
 
           <div className={styles.band}>
-            <div className={styles.split}>
-              {apiSample && (
-                <div className={styles.visual}>
-                  <div
-                    className={`${styles.apiDemoContainer} ${styles.desktopOnly}`}
-                  >
-                    <div className={styles.apiDemo}>
-                      <CodeHighlight
-                        code={apiSample.query}
-                        language="bash"
-                        classNames={{ code: styles.apiCode }}
-                      />
-                    </div>
-                    <div className={styles.apiDemo}>
-                      <CodeHighlight
-                        code={apiSample.full}
-                        language="json"
-                        classNames={{ code: styles.apiCodeTall }}
-                      />
-                    </div>
-                  </div>
-                  <div className={styles.mobileOnly}>
-                    <div className={styles.mobileApiDemo}>
-                      <CodeHighlight
-                        code={`${apiSample.query}\n\n${apiSample.short}`}
-                        language="json"
-                        classNames={{ code: styles.mobileApiCode }}
-                      />
-                    </div>
-                  </div>
+            <div className={`${styles.split} ${styles.apiSplit}`}>
+              {apiDemos.length > 0 && (
+                <div className={`${styles.visual} ${styles.apiVisual}`}>
+                  <AboutApi groups={apiDemos} />
                 </div>
               )}
               <div>
