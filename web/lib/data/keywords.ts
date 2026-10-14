@@ -1,6 +1,12 @@
 import "server-only";
 
-import { CatalogEntry, pickCover, pickDistinctCovers } from "@lib/catalog";
+import {
+  CatalogEntry,
+  coverPosts,
+  hourlyRandom,
+  pickCover,
+  pickCovers,
+} from "@lib/catalog";
 import { keywordsApi } from "@lib/client";
 import { KeywordsSummaryGetRequest, ResponseError } from "analogdb-generated";
 import { unstable_cache } from "next/cache";
@@ -18,7 +24,7 @@ interface KeywordDetail {
 const catalogParams: KeywordsSummaryGetRequest = {
   pageSize: 300,
   minCount: 100,
-  topPosts: 8,
+  topPosts: coverPosts,
 };
 
 const maxWordLength = 100;
@@ -29,7 +35,10 @@ const getKeywordCatalogCached = unstable_cache(
     const keywords = (response.keywords ?? [])
       .filter((k) => k.word)
       .sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
-    const covers = pickDistinctCovers(keywords.map((k) => k.topPosts ?? []));
+    const covers = pickCovers(
+      keywords.map((k) => k.topPosts ?? []),
+      { random: hourlyRandom() }
+    );
     return keywords.map((k, i) => ({
       slug: k.word,
       make: k.word,

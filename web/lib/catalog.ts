@@ -20,6 +20,7 @@ export type CatalogEntry = {
   speed?: number;
   colorType?: string;
   cover: CatalogCover | null;
+  metaCover?: CatalogCover | null;
 };
 
 type CatalogImage = {
@@ -112,15 +113,43 @@ export function pickCover(topPosts: CatalogPost[] = []): CatalogCover | null {
   return best;
 }
 
-export function pickDistinctCovers(
-  lists: CatalogPost[][]
+export const coverPosts = 10;
+const coverChoices = 5;
+const hour = 60 * 60 * 1000;
+
+export function hourlyRandom(): () => number {
+  let seed = Math.floor(Date.now() / hour);
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+interface PickOptions {
+  random?: () => number;
+  fits?: (cover: CatalogCover) => boolean;
+  used?: Set<number>;
+}
+
+export function pickCovers(
+  lists: CatalogPost[][],
+  { random, fits = isGoodCover, used = new Set<number>() }: PickOptions = {}
 ): (CatalogCover | null)[] {
-  const used = new Set<number>();
+  const choose = (covers: CatalogCover[]) => {
+    const choices = covers.slice(0, random ? coverChoices : 1);
+    if (choices.length === 0) return null;
+    return random ? choices[Math.floor(random() * choices.length)] : choices[0];
+  };
   return lists.map((topPosts) => {
-    const unused = coverCandidates(topPosts).filter(
-      (cover) => !used.has(cover.id)
-    );
-    const cover = unused.find(isGoodCover) ?? unused[0] ?? pickCover(topPosts);
+    const covers = coverCandidates(topPosts);
+    const unused = covers.filter((cover) => !used.has(cover.id));
+    const cover =
+      choose(unused.filter(fits)) ??
+      choose(unused) ??
+      choose(covers.filter(fits)) ??
+      pickCover(topPosts);
     if (cover) used.add(cover.id);
     return cover;
   });
