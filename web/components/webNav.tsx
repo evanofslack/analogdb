@@ -48,12 +48,6 @@ export default function WebNav() {
         >
           ABOUT
         </Link>
-        <Link
-          href="/docs"
-          className={pathname == "/docs" ? styles.linkOn : styles.linkOff}
-        >
-          API
-        </Link>
         {isAdmin && (
           <Link
             href="/admin"
