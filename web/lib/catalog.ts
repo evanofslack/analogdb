@@ -7,6 +7,7 @@ export type CatalogCover = {
   title: string;
   url: string;
   phoneUrl?: string;
+  thumbUrl?: string;
   width: number;
   height: number;
 };
@@ -77,6 +78,7 @@ function toCover(post: CatalogPost): CatalogCover | null {
     title: post.title ?? "",
     url: image.url,
     phoneUrl: smallImage(post.images)?.url,
+    thumbUrl: post.images?.find((img) => img.resolution === "low")?.url,
     width: image.width,
     height: image.height,
   };

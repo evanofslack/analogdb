@@ -113,13 +113,16 @@ export default function SearchSuggestions({
         >
           {trendingRow ? (
             <KeywordRow
-              words={keywords}
+              links={keywords.map((keyword) => ({
+                label: keyword.word,
+                image: keyword.thumb,
+              }))}
               onSelect={(word) => onSearch(word, "chip")}
               label="trending this month"
             />
           ) : (
             <KeywordChips
-              words={keywords}
+              words={keywords.map((keyword) => keyword.word)}
               onSearch={(word) => onSearch(word, "suggestion")}
             />
           )}

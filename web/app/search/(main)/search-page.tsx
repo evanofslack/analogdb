@@ -385,7 +385,7 @@ function TextResults({
               no matches for &ldquo;{q}&rdquo;
             </h3>
             <KeywordChips
-              words={suggestions?.keywords}
+              words={suggestions?.keywords.map((keyword) => keyword.word)}
               onSearch={(word) => onSearch(word, "suggestion")}
               className={styles.noMatchesChips}
             />
