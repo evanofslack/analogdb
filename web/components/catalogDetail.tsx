@@ -36,7 +36,7 @@ const factIcons = {
   color: IconPalette,
 };
 
-type DetailLink = { href: string; label: string };
+type DetailLink = { href: string; label: string; image?: string };
 
 interface CatalogDetailProps {
   kind?: CatalogKind;

@@ -1,10 +1,5 @@
 import "server-only";
-import {
-  CatalogCover,
-  coverPosts,
-  hourlyRandom,
-  pickCovers,
-} from "@lib/catalog";
+import { coverPosts, fitsThumb, hourlyRandom, pickCovers } from "@lib/catalog";
 import { keywordsApi, postApi, searchApi } from "@lib/client";
 import { getKeywordCatalog } from "@lib/data/keywords";
 import {
@@ -127,9 +122,6 @@ const getKeywordsCached = unstable_cache(
   ["search-trending"],
   { revalidate: 3600 }
 );
-
-const fitsThumb = (cover: CatalogCover) =>
-  cover.width <= cover.height * 2 && cover.height <= cover.width * 2;
 
 async function getTrendingKeywords(): Promise<TrendingKeyword[]> {
   const [trending, catalog] = await Promise.all([

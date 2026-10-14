@@ -232,6 +232,27 @@ func TestKeywordService_CoOccurring(t *testing.T) {
 	}
 }
 
+func TestKeywordService_TopPosts(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+	defer mustClose(t, db)
+	seedKeywordPosts(t, db)
+
+	top, err := NewKeywordService(db).TopPosts(context.Background(), []string{"beach", "new york", "zzzz"}, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ids := topPostIDs(top["beach"]); !slices.Equal(ids, []int{6, 7}) {
+		t.Errorf("want beach covers [6 7], got %v", ids)
+	}
+	if len(top["new york"]) == 0 {
+		t.Errorf("want new york covers, got %v", top)
+	}
+	if _, ok := top["zzzz"]; ok {
+		t.Errorf("want no entry for an unknown word, got %v", top)
+	}
+}
+
 func TestKeywordService_GetKeywordSummaryTrending(t *testing.T) {
 	db, cleanup := mustOpenWithSeed(t)
 	defer cleanup()

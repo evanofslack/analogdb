@@ -84,6 +84,7 @@ export default async function Page({ params, searchParams }: PageProps) {
       relatedLinks={related.map((other) => ({
         href: keywordPageHref(other.word),
         label: other.word,
+        image: other.thumb,
       }))}
     />
   );

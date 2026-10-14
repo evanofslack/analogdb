@@ -94,6 +94,8 @@ type detailKeywordService struct {
 	topPosts int
 	shared   map[string]int
 	coCalls  int
+	topWords []string
+	topN     int
 }
 
 func (m *detailKeywordService) FindKeyword(ctx context.Context, word string, topPosts int) (*analogdb.KeywordDetail, error) {
@@ -108,6 +110,12 @@ func (m *detailKeywordService) FindKeyword(ctx context.Context, word string, top
 func (m *detailKeywordService) CoOccurring(ctx context.Context, word string) (map[string]int, error) {
 	m.coCalls++
 	return m.shared, nil
+}
+
+func (m *detailKeywordService) TopPosts(ctx context.Context, words []string, n int) (map[string][]analogdb.CatalogPost, error) {
+	m.topWords = words
+	m.topN = n
+	return map[string][]analogdb.CatalogPost{"ocean": {{Id: 7, Score: 40}}}, nil
 }
 
 func TestGetKeyword(t *testing.T) {
@@ -243,4 +251,39 @@ func equalIntPtr(a, b *int) bool {
 		return a == b
 	}
 	return *a == *b
+}
+
+func TestGetKeywordRelatedPosts(t *testing.T) {
+	s := mustOpen(t)
+	defer mustClose(t, s)
+	keywords := &detailKeywordService{shared: map[string]int{"ocean": 6, "beach ball": 3}}
+	s.KeywordService = keywords
+
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/v1/keyword/beach", nil))
+	if keywords.topWords != nil {
+		t.Errorf("want no related top posts by default, got %v", keywords.topWords)
+	}
+
+	w = httptest.NewRecorder()
+	s.router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/v1/keyword/beach?related_posts=50", nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("want status 200, got %d: %s", w.Code, w.Body.String())
+	}
+	if want := []string{"ocean", "beach ball"}; !slices.Equal(keywords.topWords, want) || keywords.topN != maxTopPosts {
+		t.Errorf("want top posts of %v with %d, got %v with %d", want, maxTopPosts, keywords.topWords, keywords.topN)
+	}
+	var resp KeywordResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if len(resp.Related) != 2 || len(resp.Related[0].TopPosts) != 1 || len(resp.Related[1].TopPosts) != 0 {
+		t.Errorf("unexpected related %+v", resp.Related)
+	}
+
+	w = httptest.NewRecorder()
+	s.router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/v1/keyword/beach?related_posts=abc", nil))
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("want status 400, got %d", w.Code)
+	}
 }

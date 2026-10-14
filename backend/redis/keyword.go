@@ -67,6 +67,18 @@ func (s *KeywordService) FindKeyword(ctx context.Context, word string, topPosts 
 	})
 }
 
+func (s *KeywordService) TopPosts(ctx context.Context, words []string, n int) (map[string][]analogdb.CatalogPost, error) {
+	hash, err := hashstructure.Hash(words, hashstructure.FormatV2, nil)
+	if err != nil {
+		s.rdb.logger.ErrorContext(ctx, "Fail hash keyword words", "instance", s.keywordCache.instance, "error", err)
+		return s.dbService.TopPosts(ctx, words, n)
+	}
+	key := fmt.Sprintf("keywords:top:%d:%d", n, hash)
+	return fetch(ctx, s.keywordCache, key, keywordTTL, func(ctx context.Context) (map[string][]analogdb.CatalogPost, error) {
+		return s.dbService.TopPosts(ctx, words, n)
+	})
+}
+
 func (s *KeywordService) CoOccurring(ctx context.Context, word string) (map[string]int, error) {
 	return fetch(ctx, s.keywordCache, "keywords:related:"+word, keywordTTL, func(ctx context.Context) (map[string]int, error) {
 		return s.dbService.CoOccurring(ctx, word)

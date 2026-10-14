@@ -3,6 +3,7 @@ import "server-only";
 import {
   CatalogEntry,
   coverPosts,
+  fitsThumb,
   hourlyRandom,
   pickCover,
   pickCovers,
@@ -14,6 +15,7 @@ import { unstable_cache } from "next/cache";
 interface RelatedKeyword {
   word: string;
   count: number;
+  thumb?: string;
 }
 
 interface KeywordDetail {
@@ -68,8 +70,14 @@ const getKeywordCached = unstable_cache(
         word,
         topPosts: 6,
         related: 12,
+        relatedPosts: coverPosts,
       });
       const name = response.word ?? word;
+      const related = (response.related ?? []).filter((k) => k.word);
+      const thumbs = pickCovers(
+        related.map((k) => k.topPosts ?? []),
+        { random: hourlyRandom(), fits: fitsThumb }
+      );
       return {
         entry: {
           slug: name,
@@ -79,9 +87,11 @@ const getKeywordCached = unstable_cache(
           description: "",
           cover: pickCover(response.topPosts),
         },
-        related: (response.related ?? [])
-          .filter((k) => k.word)
-          .map((k) => ({ word: k.word, count: k.count ?? 0 })),
+        related: related.map((k, i) => ({
+          word: k.word,
+          count: k.count ?? 0,
+          thumb: thumbs[i]?.thumbUrl ?? thumbs[i]?.url,
+        })),
       };
     } catch (error) {
       if (error instanceof ResponseError && error.response.status === 404) {

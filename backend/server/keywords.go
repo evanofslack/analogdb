@@ -136,6 +136,7 @@ func (s *Server) getSummary(w http.ResponseWriter, r *http.Request) {
 // @Param word path string true "Keyword, URL encoded"
 // @Param top_posts query int false "Number of top scoring posts (1 to 10)" default(6)
 // @Param related query int false "Number of related keywords (0 to 30)" default(12)
+// @Param related_posts query int false "Attach this many top scoring posts to each related keyword (0 to 10)" default(0)
 // @Success 200 {object} KeywordResponse
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 404 {object} ErrorResponse "Keyword not found"
@@ -170,6 +171,15 @@ func (s *Server) getKeyword(w http.ResponseWriter, r *http.Request) {
 		related = clampLimit(related, 0, 0, maxKeywordRelated)
 	}
 
+	relatedPosts := 0
+	if strPosts := r.URL.Query().Get("related_posts"); strPosts != "" {
+		if relatedPosts, err = stringToInt(strPosts); err != nil {
+			s.writeError(w, r, err)
+			return
+		}
+		relatedPosts = clampLimit(relatedPosts, 0, 0, maxTopPosts)
+	}
+
 	detail, err := s.KeywordService.FindKeyword(r.Context(), word, topPosts)
 	if err != nil {
 		s.writeError(w, r, err)
@@ -197,6 +207,21 @@ func (s *Server) getKeyword(w http.ResponseWriter, r *http.Request) {
 			s.logger.WarnContext(r.Context(), "Fail get tag counts, ranking related keywords by count", "error", err)
 		}
 		response.Related = rankCoOccurring(shared, detail.Count, df, total, related)
+	}
+
+	if relatedPosts > 0 && len(response.Related) > 0 {
+		words := make([]string, len(response.Related))
+		for i, kw := range response.Related {
+			words[i] = kw.Word
+		}
+		top, err := s.KeywordService.TopPosts(r.Context(), words, relatedPosts)
+		if err != nil {
+			s.writeError(w, r, err)
+			return
+		}
+		for i := range response.Related {
+			response.Related[i].TopPosts = top[response.Related[i].Word]
+		}
 	}
 
 	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {

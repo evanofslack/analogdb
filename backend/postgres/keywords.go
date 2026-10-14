@@ -95,6 +95,23 @@ func (s *KeywordService) CoOccurring(ctx context.Context, word string) (map[stri
 	return counts, nil
 }
 
+func (s *KeywordService) TopPosts(ctx context.Context, words []string, n int) (map[string][]analogdb.CatalogPost, error) {
+	s.db.logger.DebugContext(ctx, "Start find keyword top posts")
+	defer s.db.logger.DebugContext(ctx, "Finish find keyword top posts")
+
+	top, err := s.db.findKeywordTopPosts(ctx, words, n)
+	if err != nil {
+		return nil, err
+	}
+	byWord := make(map[string][]analogdb.CatalogPost, len(words))
+	for _, word := range words {
+		if posts := top[catalogKey(word, "")]; len(posts) > 0 {
+			byWord[word] = posts
+		}
+	}
+	return byWord, nil
+}
+
 // attachKeywordTopPosts adds the highest scoring non nsfw posts to each keyword
 func (db *DB) attachKeywordTopPosts(ctx context.Context, keywords []analogdb.KeywordSummary, n int) error {
 	words := make([]string, 0, len(keywords))
