@@ -2,6 +2,7 @@
 
 import { ActionIcon } from "@mantine/core";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./keywordRow.module.css";
@@ -11,6 +12,7 @@ const step = 2;
 interface KeywordLink {
   href?: string;
   label: string;
+  image?: string;
 }
 
 interface KeywordRowProps {
@@ -98,23 +100,45 @@ export default function KeywordRow({
         aria-label={label}
         tabIndex={0}
       >
-        {items.map((item) => (
-          <div role="listitem" key={item.label} className={styles.item}>
-            {item.href ? (
-              <Link href={item.href} prefetch={false} className={styles.chip}>
-                {item.label}
-              </Link>
-            ) : (
-              <button
-                type="button"
-                className={styles.chip}
-                onClick={() => onSelect(item.label)}
-              >
-                {item.label}
-              </button>
-            )}
-          </div>
-        ))}
+        {items.map((item) => {
+          const chipClass = item.image
+            ? `${styles.chip} ${styles.withThumb}`
+            : styles.chip;
+          const content = (
+            <>
+              {item.image && (
+                <span className={styles.thumb}>
+                  <Image
+                    src={item.image}
+                    alt=""
+                    fill
+                    sizes="31px"
+                    unoptimized
+                    style={{ objectFit: "cover" }}
+                  />
+                </span>
+              )}
+              {item.label}
+            </>
+          );
+          return (
+            <div role="listitem" key={item.label} className={styles.item}>
+              {item.href ? (
+                <Link href={item.href} prefetch={false} className={chipClass}>
+                  {content}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className={chipClass}
+                  onClick={() => onSelect(item.label)}
+                >
+                  {content}
+                </button>
+              )}
+            </div>
+          );
+        })}
       </div>
       {canRight && (
         <ActionIcon

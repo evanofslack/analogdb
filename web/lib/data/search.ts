@@ -1,6 +1,14 @@
 import "server-only";
-import { keywordsApi, postApi, searchApi } from "@lib/client";
 import {
+  CatalogCover,
+  coverPosts,
+  hourlyRandom,
+  pickCovers,
+} from "@lib/catalog";
+import { keywordsApi, postApi, searchApi } from "@lib/client";
+import { getKeywordCatalog } from "@lib/data/keywords";
+import {
+  AnalogdbCatalogPost,
   AnalogdbPost,
   KeywordsSummaryGetSortEnum,
   SearchGetRequest,
@@ -21,8 +29,13 @@ export interface SearchExample {
   image: SearchImage;
 }
 
+export interface TrendingKeyword {
+  word: string;
+  thumb?: string;
+}
+
 export interface SearchSuggestions {
-  keywords: string[];
+  keywords: TrendingKeyword[];
   examples: SearchExample[];
 }
 
@@ -91,20 +104,48 @@ function mediumImage(post: AnalogdbPost): SearchImage | null {
   };
 }
 
+interface TrendingPosts {
+  word: string;
+  topPosts: AnalogdbCatalogPost[];
+}
+
 const getKeywordsCached = unstable_cache(
-  async (): Promise<string[]> => {
+  async (): Promise<TrendingPosts[]> => {
     const response = await keywordsApi.keywordsSummaryGet({
       sort: KeywordsSummaryGetSortEnum.Trending,
       days: trendingDays,
       pageSize: keywordPageSize,
+      topPosts: coverPosts,
     });
     return (response.keywords ?? [])
-      .map((keyword) => keyword.word)
-      .filter(Boolean);
+      .filter((keyword) => keyword.word)
+      .map((keyword) => ({
+        word: keyword.word,
+        topPosts: keyword.topPosts ?? [],
+      }));
   },
   ["search-trending"],
   { revalidate: 3600 }
 );
+
+const fitsThumb = (cover: CatalogCover) =>
+  cover.width <= cover.height * 2 && cover.height <= cover.width * 2;
+
+async function getTrendingKeywords(): Promise<TrendingKeyword[]> {
+  const [trending, catalog] = await Promise.all([
+    getKeywordsCached(),
+    getKeywordCatalog(),
+  ]);
+  const used = new Set(catalog.map((entry) => entry.cover?.id).filter(Boolean));
+  const covers = pickCovers(
+    trending.map((keyword) => keyword.topPosts),
+    { random: hourlyRandom(), fits: fitsThumb, used }
+  );
+  return trending.map((keyword, i) => ({
+    word: keyword.word,
+    thumb: covers[i]?.thumbUrl ?? covers[i]?.url,
+  }));
+}
 
 const getExamplesCached = unstable_cache(
   async (): Promise<SearchExample[]> => {
@@ -125,9 +166,9 @@ const getExamplesCached = unstable_cache(
 
 export async function getSearchSuggestions(): Promise<SearchSuggestions> {
   const [keywords, examples] = await Promise.all([
-    getKeywordsCached().catch((error) => {
+    getTrendingKeywords().catch((error) => {
       console.error("get search keywords request failed:", error);
-      return [] as string[];
+      return [] as TrendingKeyword[];
     }),
     getExamplesCached().catch((error) => {
       console.error("get search examples request failed:", error);
