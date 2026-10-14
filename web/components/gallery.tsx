@@ -45,7 +45,7 @@ export default function Gallery({
 
   const setSort = (sort: PostsFilters["sort"]) => {
     if (sort === "random") {
-      setFilters({ sort: sort, seed: pickSeed() });
+      setFilters({ sort: sort, order: null, seed: pickSeed() });
     } else {
       setFilters({ sort: sort, seed: null });
     }
@@ -58,6 +58,7 @@ export default function Gallery({
         <div className={styles.margin}>
           <FilterBar
             sort={filters.sort}
+            order={filters.order}
             nsfw={filters.nsfw}
             bw={filters.bw}
             sprocket={filters.sprocket}
@@ -74,6 +75,7 @@ export default function Gallery({
             cameraMake={filters.camera_make}
             cameraModel={filters.camera_model}
             setSort={setSort}
+            setOrder={(order) => setFilters({ order })}
             setNsfw={(nsfw) => setFilters({ nsfw })}
             setBw={(bw) => setFilters({ bw })}
             setSprocket={(sprocket) => setFilters({ sprocket })}
