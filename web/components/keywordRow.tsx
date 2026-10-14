@@ -112,7 +112,7 @@ export default function KeywordRow({
                     src={item.image}
                     alt=""
                     fill
-                    sizes="28px"
+                    sizes="31px"
                     unoptimized
                     style={{ objectFit: "cover" }}
                   />
