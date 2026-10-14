@@ -103,6 +103,7 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Param cursor query string false "Opaque cursor from next_cursor for the next page"
 // @Param page_id query int false "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random"
 // @Param sort query string false "Sort order" Enums(time,score,random) default(time)
+// @Param order query string false "Sort direction for time and score, ignored for random" Enums(asc,desc) default(desc)
 // @Param seed query int false "Random seed for consistent random sorting, picked from 1..500 when missing"
 // @Param id query int false "Filter by post ID"
 // @Param title query string false "Filter by post title"
@@ -501,7 +502,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int, has
 		meta.PageID = 1
 	}
 
-	cursor, err := encodeCursor(sort, last, seed)
+	cursor, err := encodeCursor(sort, filter.Ascending(), last, seed)
 	if err != nil {
 		return Meta{}, err
 	}
@@ -519,6 +520,9 @@ func filterToValues(filter *analogdb.PostFilter, sort analogdb.PostSort) url.Val
 	values.Set("sort", sort.String())
 	if limit := filter.Limit; limit != nil {
 		values.Set("page_size", strconv.Itoa(*limit))
+	}
+	if filter.Ascending() {
+		values.Set("order", analogdb.PostOrderAsc.String())
 	}
 	if seed := filter.Seed; seed != nil && sort == analogdb.PostSortRandom {
 		values.Set("seed", strconv.Itoa(*seed))
@@ -670,6 +674,20 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
+	if order := values.Get("order"); order != "" {
+		switch analogdb.PostOrderFromString(order) {
+		case analogdb.PostOrderAsc:
+			asc := analogdb.PostOrderAsc
+			filter.Order = &asc
+		case analogdb.PostOrderDesc:
+		default:
+			return nil, badRequest("invalid order parameter %s, valid options are '%s', '%s'", order, analogdb.PostOrderAsc, analogdb.PostOrderDesc)
+		}
+	}
+	if *filter.Sort == analogdb.PostSortRandom {
+		filter.Order = nil
+	}
+
 	if limit := values.Get("page_size"); limit != "" {
 		if intLimit, err := stringToInt(limit); err != nil {
 			return nil, err
@@ -694,7 +712,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if c := values.Get("cursor"); c != "" {
-		cursor, seed, err := decodeCursor(c, *filter.Sort)
+		cursor, seed, err := decodeCursor(c, *filter.Sort, filter.Ascending())
 		if err != nil {
 			return nil, err
 		}
@@ -714,6 +732,9 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			filter.Seed = &seed
 		}
 	} else {
+		if filter.Keyset != nil && filter.Ascending() {
+			return nil, badRequest("page_id is not supported with order=asc; use cursor")
+		}
 		filter.Seed = nil
 	}
 

@@ -581,15 +581,22 @@ func filterSeed(filter *analogdb.PostFilter) int {
 	return 0
 }
 
+func filterDirection(filter *analogdb.PostFilter) string {
+	if filter.Ascending() {
+		return "ASC"
+	}
+	return "DESC"
+}
+
 // filterToOrder builds the ORDER BY clause. seedIndex is the
 // parameter holding the seed for random sort.
 func filterToOrder(filter *analogdb.PostFilter, tableAlias string, seedIndex int) string {
 	if sort := filter.Sort; sort != nil {
 		switch *sort {
 		case analogdb.PostSortTime:
-			return fmt.Sprintf(" ORDER BY %[1]stime DESC, %[1]sid DESC", tableAlias)
+			return fmt.Sprintf(" ORDER BY %[1]stime %[2]s, %[1]sid %[2]s", tableAlias, filterDirection(filter))
 		case analogdb.PostSortScore:
-			return fmt.Sprintf(" ORDER BY %[1]sscore DESC, %[1]sid DESC", tableAlias)
+			return fmt.Sprintf(" ORDER BY %[1]sscore %[2]s, %[1]sid %[2]s", tableAlias, filterDirection(filter))
 		case analogdb.PostSortRandom:
 			return fmt.Sprintf(" ORDER BY md5(%[1]sid::text || $%[2]d::text), %[1]sid", tableAlias, seedIndex)
 		}
@@ -605,11 +612,15 @@ func filterToPageWhere(filter *analogdb.PostFilter, index int, seedIndex int) (s
 		return "", nil
 	}
 	if c := filter.Cursor; c != nil {
+		op := "<"
+		if filter.Ascending() {
+			op = ">"
+		}
 		switch *sort {
 		case analogdb.PostSortTime:
-			return fmt.Sprintf("(time, id) < ($%d, $%d)", index, index+1), []any{c.Value, c.ID}
+			return fmt.Sprintf("(time, id) %s ($%d, $%d)", op, index, index+1), []any{c.Value, c.ID}
 		case analogdb.PostSortScore:
-			return fmt.Sprintf("(score, id) < ($%d, $%d)", index, index+1), []any{c.Value, c.ID}
+			return fmt.Sprintf("(score, id) %s ($%d, $%d)", op, index, index+1), []any{c.Value, c.ID}
 		case analogdb.PostSortRandom:
 			return fmt.Sprintf("(md5(id::text || $%d::text), id) > ($%d, $%d)", seedIndex, index, index+1), []any{c.Hash, c.ID}
 		}

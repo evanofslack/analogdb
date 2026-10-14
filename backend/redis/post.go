@@ -81,6 +81,7 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	countFilter.Cursor = nil
 	countFilter.Keyset = nil
 	countFilter.Sort = nil
+	countFilter.Order = nil
 	countFilter.Seed = nil
 	countHash, err := hashstructure.Hash(countFilter, hashstructure.FormatV2, nil)
 	if err != nil {

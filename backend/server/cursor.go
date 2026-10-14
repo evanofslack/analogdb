@@ -18,11 +18,13 @@ type wireCursor struct {
 	Value json.RawMessage `json:"v"`
 	ID    int             `json:"id"`
 	Seed  int             `json:"seed,omitempty"`
+	Order string          `json:"o,omitempty"`
 }
 
 // encodeCursor builds the opaque cursor pointing after post.
-func encodeCursor(sort analogdb.PostSort, post *analogdb.Post, seed int) (string, error) {
+func encodeCursor(sort analogdb.PostSort, asc bool, post *analogdb.Post, seed int) (string, error) {
 	wire := wireCursor{Sort: sort.String(), ID: post.Id}
+	wire.Order = cursorOrder(sort, asc)
 	var value any
 	switch sort {
 	case analogdb.PostSortTime:
@@ -47,9 +49,9 @@ func encodeCursor(sort analogdb.PostSort, post *analogdb.Post, seed int) (string
 	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-// decodeCursor parses an opaque cursor for the given sort.
+// decodeCursor parses an opaque cursor for the given sort and direction.
 // It returns the cursor and the seed it carries, or 0.
-func decodeCursor(s string, sort analogdb.PostSort) (*analogdb.Cursor, int, error) {
+func decodeCursor(s string, sort analogdb.PostSort, asc bool) (*analogdb.Cursor, int, error) {
 	b, err := base64.RawURLEncoding.DecodeString(s)
 	if err != nil {
 		return nil, 0, badRequest("invalid cursor")
@@ -58,7 +60,7 @@ func decodeCursor(s string, sort analogdb.PostSort) (*analogdb.Cursor, int, erro
 	if err := json.Unmarshal(b, &wire); err != nil || len(wire.Value) == 0 {
 		return nil, 0, badRequest("invalid cursor")
 	}
-	if wire.Sort != sort.String() {
+	if wire.Sort != sort.String() || wire.Order != cursorOrder(sort, asc) {
 		return nil, 0, badRequest("cursor does not match sort")
 	}
 	cursor := &analogdb.Cursor{ID: wire.ID}
@@ -78,6 +80,14 @@ func decodeCursor(s string, sort analogdb.PostSort) (*analogdb.Cursor, int, erro
 		return nil, 0, badRequest("invalid cursor")
 	}
 	return cursor, wire.Seed, nil
+}
+
+// cursorOrder is the order a cursor carries, empty for the default
+func cursorOrder(sort analogdb.PostSort, asc bool) string {
+	if asc && sort != analogdb.PostSortRandom {
+		return analogdb.PostOrderAsc.String()
+	}
+	return ""
 }
 
 func validSeed(seed int) bool {
