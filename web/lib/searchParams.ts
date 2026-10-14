@@ -10,6 +10,7 @@ import { publicURL } from "./constants";
 import { isValidSeed } from "./seed";
 
 const sortOpts = ["time", "score", "random"] as const;
+const orderOpts = ["desc", "asc"] as const;
 const filterOpts = ["include", "exclude", "only"] as const;
 
 export const postsLimits = {
@@ -71,6 +72,7 @@ export function toggleShape(
 
 export const postsParsers = {
   sort: parseAsStringLiteral(sortOpts).withDefault("time"),
+  order: parseAsStringLiteral(orderOpts).withDefault("desc"),
   seed: parseAsInteger,
   nsfw: parseAsStringLiteral(filterOpts).withDefault("exclude"),
   bw: parseAsStringLiteral(filterOpts).withDefault("exclude"),
@@ -188,6 +190,7 @@ export const catalogFilterParsers = {
 
 export const catalogParsers = {
   sort: parseAsStringLiteral(sortOpts).withDefault("score"),
+  order: parseAsStringLiteral(orderOpts).withDefault("desc"),
   seed: parseAsInteger,
 };
 
@@ -199,6 +202,7 @@ export type CatalogMatch = Pick<
 export function catalogFilters(match: Partial<CatalogMatch>): PostsFilters {
   return {
     sort: "score",
+    order: "desc",
     seed: null,
     nsfw: "exclude",
     bw: "include",
@@ -241,6 +245,10 @@ export function toPostsRequest(filters: PostsFilters): PostsGetRequest {
 
   if (filters.sort === "random" && isValidSeed(filters.seed)) {
     params.seed = filters.seed;
+  }
+
+  if (filters.order === "asc" && filters.sort !== "random") {
+    params.order = "asc";
   }
 
   if (filters.nsfw === "exclude") params.nsfw = false;

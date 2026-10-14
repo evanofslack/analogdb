@@ -19,22 +19,26 @@ func TestCursorRoundTrip(t *testing.T) {
 	tests := []struct {
 		name     string
 		sort     analogdb.PostSort
+		asc      bool
 		seed     int
 		expected analogdb.Cursor
 		wantSeed int
 	}{
-		{"time", analogdb.PostSortTime, 0, analogdb.Cursor{Value: 1752244116, ID: 40211}, 0},
-		{"score", analogdb.PostSortScore, 0, analogdb.Cursor{Value: 153, ID: 40211}, 0},
-		{"random", analogdb.PostSortRandom, 37, analogdb.Cursor{Hash: randomSortKey(40211, 37), ID: 40211}, 37},
+		{"time", analogdb.PostSortTime, false, 0, analogdb.Cursor{Value: 1752244116, ID: 40211}, 0},
+		{"time asc", analogdb.PostSortTime, true, 0, analogdb.Cursor{Value: 1752244116, ID: 40211}, 0},
+		{"score", analogdb.PostSortScore, false, 0, analogdb.Cursor{Value: 153, ID: 40211}, 0},
+		{"score asc", analogdb.PostSortScore, true, 0, analogdb.Cursor{Value: 153, ID: 40211}, 0},
+		{"random", analogdb.PostSortRandom, false, 37, analogdb.Cursor{Hash: randomSortKey(40211, 37), ID: 40211}, 37},
+		{"random ignores asc", analogdb.PostSortRandom, true, 37, analogdb.Cursor{Hash: randomSortKey(40211, 37), ID: 40211}, 37},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			encoded, err := encodeCursor(tt.sort, post, tt.seed)
+			encoded, err := encodeCursor(tt.sort, tt.asc, post, tt.seed)
 			if err != nil {
 				t.Fatal(err)
 			}
-			cursor, seed, err := decodeCursor(encoded, tt.sort)
+			cursor, seed, err := decodeCursor(encoded, tt.sort, tt.asc)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -62,22 +66,26 @@ func TestDecodeCursorErrors(t *testing.T) {
 		name    string
 		cursor  string
 		sort    analogdb.PostSort
+		asc     bool
 		message string
 	}{
-		{"not base64", "!!!", analogdb.PostSortTime, "invalid cursor"},
-		{"not json", encode("hello"), analogdb.PostSortTime, "invalid cursor"},
-		{"missing value", encode(`{"s":"time","id":1}`), analogdb.PostSortTime, "invalid cursor"},
-		{"string value for time", encode(`{"s":"time","v":"abc","id":1}`), analogdb.PostSortTime, "invalid cursor"},
-		{"sort mismatch", encode(`{"s":"score","v":153,"id":1}`), analogdb.PostSortTime, "cursor does not match sort"},
-		{"unknown sort", encode(`{"s":"best","v":153,"id":1}`), analogdb.PostSortTime, "cursor does not match sort"},
-		{"random without seed", encode(`{"s":"random","v":"c0e190d8267e36708f955d7ab048990d","id":1}`), analogdb.PostSortRandom, "invalid cursor"},
-		{"random bad hash", encode(`{"s":"random","v":"xyz","id":1,"seed":3}`), analogdb.PostSortRandom, "invalid cursor"},
-		{"random int value", encode(`{"s":"random","v":12,"id":1,"seed":3}`), analogdb.PostSortRandom, "invalid cursor"},
+		{"not base64", "!!!", analogdb.PostSortTime, false, "invalid cursor"},
+		{"not json", encode("hello"), analogdb.PostSortTime, false, "invalid cursor"},
+		{"missing value", encode(`{"s":"time","id":1}`), analogdb.PostSortTime, false, "invalid cursor"},
+		{"string value for time", encode(`{"s":"time","v":"abc","id":1}`), analogdb.PostSortTime, false, "invalid cursor"},
+		{"sort mismatch", encode(`{"s":"score","v":153,"id":1}`), analogdb.PostSortTime, false, "cursor does not match sort"},
+		{"unknown sort", encode(`{"s":"best","v":153,"id":1}`), analogdb.PostSortTime, false, "cursor does not match sort"},
+		{"random without seed", encode(`{"s":"random","v":"c0e190d8267e36708f955d7ab048990d","id":1}`), analogdb.PostSortRandom, false, "invalid cursor"},
+		{"random bad hash", encode(`{"s":"random","v":"xyz","id":1,"seed":3}`), analogdb.PostSortRandom, false, "invalid cursor"},
+		{"asc cursor on desc request", encode(`{"s":"time","v":1,"id":1,"o":"asc"}`), analogdb.PostSortTime, false, "cursor does not match sort"},
+		{"desc cursor on asc request", encode(`{"s":"time","v":1,"id":1}`), analogdb.PostSortTime, true, "cursor does not match sort"},
+		{"unknown order", encode(`{"s":"time","v":1,"id":1,"o":"up"}`), analogdb.PostSortTime, false, "cursor does not match sort"},
+		{"random int value", encode(`{"s":"random","v":12,"id":1,"seed":3}`), analogdb.PostSortRandom, false, "invalid cursor"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := decodeCursor(tt.cursor, tt.sort)
+			_, _, err := decodeCursor(tt.cursor, tt.sort, tt.asc)
 			var e *analogdb.Error
 			if !errors.As(err, &e) {
 				t.Fatalf("expected analogdb.Error, got %v", err)
@@ -94,7 +102,7 @@ func TestDecodeCursorErrors(t *testing.T) {
 
 func mustEncodeCursor(t *testing.T, sort analogdb.PostSort, post *analogdb.Post, seed int) string {
 	t.Helper()
-	c, err := encodeCursor(sort, post, seed)
+	c, err := encodeCursor(sort, false, post, seed)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -193,6 +201,36 @@ func TestParseToPostFilterPaging(t *testing.T) {
 		}
 	})
 
+	t.Run("asc cursor", func(t *testing.T) {
+		c, err := encodeCursor(analogdb.PostSortScore, true, post, 0)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req := httptest.NewRequest(http.MethodGet, "/posts?sort=score&order=asc&cursor="+c, nil)
+		filter, err := parseToPostFilter(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !filter.Ascending() {
+			t.Error("expected ascending order")
+		}
+		if want := (analogdb.Cursor{Value: 20, ID: 5}); filter.Cursor == nil || *filter.Cursor != want {
+			t.Errorf("expected cursor %+v, got %+v", want, filter.Cursor)
+		}
+	})
+
+	for _, url := range []string{"/posts?sort=time", "/posts?sort=time&order=desc", "/posts?sort=time&order=DESC", "/posts?sort=random&order=asc"} {
+		t.Run("no order for "+url, func(t *testing.T) {
+			filter, err := parseToPostFilter(httptest.NewRequest(http.MethodGet, url, nil))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if filter.Order != nil {
+				t.Errorf("expected no order, got %s", *filter.Order)
+			}
+		})
+	}
+
 	t.Run("cursor with random ignores page_id", func(t *testing.T) {
 		randomCursor := mustEncodeCursor(t, analogdb.PostSortRandom, post, 9)
 		req := httptest.NewRequest(http.MethodGet, "/posts?sort=random&page_id=1&cursor="+randomCursor, nil)
@@ -211,6 +249,9 @@ func TestParseToPostFilterPaging(t *testing.T) {
 		{"garbage cursor", "/posts?cursor=garbage!", "invalid cursor"},
 		{"cursor sort mismatch", "/posts?sort=time&cursor=" + scoreCursor, "cursor does not match sort"},
 		{"cursor default sort mismatch", "/posts?cursor=" + scoreCursor, "cursor does not match sort"},
+		{"desc cursor with asc", "/posts?sort=time&order=asc&cursor=" + timeCursor, "cursor does not match sort"},
+		{"invalid order", "/posts?sort=time&order=up", "invalid order parameter up, valid options are 'asc', 'desc'"},
+		{"page_id with asc", "/posts?sort=time&order=asc&page_id=1000", "page_id is not supported with order=asc; use cursor"},
 	}
 	for _, tt := range errTests {
 		t.Run(tt.name, func(t *testing.T) {

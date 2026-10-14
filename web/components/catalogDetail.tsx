@@ -11,8 +11,14 @@ import {
 import { EntryFact } from "@lib/catalogPage";
 import { catalogParsers, PostsFilters } from "@lib/searchParams";
 import { pickSeed } from "@lib/seed";
-import { SegmentedControl } from "@mantine/core";
-import { IconAperture, IconPalette, IconPhoto } from "@tabler/icons-react";
+import { Button, SegmentedControl } from "@mantine/core";
+import {
+  IconAperture,
+  IconPalette,
+  IconPhoto,
+  IconSortAscending,
+  IconSortDescending,
+} from "@tabler/icons-react";
 import { ServerPostResponse } from "analogdb-generated";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -47,11 +53,19 @@ interface CatalogDetailProps {
   initialDisplay?: InitialDisplay;
 }
 
-const sortData = [
-  { label: "top", value: "score" },
-  { label: "newest", value: "time" },
-  { label: "random", value: "random" },
-];
+function sortData(ascending: boolean) {
+  return [
+    { label: ascending ? "lowest" : "top", value: "score" },
+    { label: ascending ? "oldest" : "newest", value: "time" },
+    { label: "random", value: "random" },
+  ];
+}
+
+function orderLabel(sort: PostsFilters["sort"], ascending: boolean): string {
+  if (sort === "time") return ascending ? "oldest first" : "newest first";
+  if (sort === "score") return ascending ? "lowest first" : "highest first";
+  return "order";
+}
 
 export default function CatalogDetail({
   kind,
@@ -78,11 +92,14 @@ export default function CatalogDetail({
 
   const setSort = (sort: PostsFilters["sort"]) => {
     if (sort === "random") {
-      setFilters({ sort: sort, seed: pickSeed() });
+      setFilters({ sort: sort, order: null, seed: pickSeed() });
     } else {
       setFilters({ sort: sort, seed: null });
     }
   };
+
+  const ascending = filters.order === "asc";
+  const OrderIcon = ascending ? IconSortAscending : IconSortDescending;
 
   const description = entry.description?.trim();
   const heading = title ?? catalogName(entry);
@@ -164,9 +181,21 @@ export default function CatalogDetail({
             <SegmentedControl
               value={filters.sort}
               onChange={setSort}
-              data={sortData}
+              data={sortData(ascending)}
               aria-label="sort"
             />
+            <Button
+              variant="outline"
+              color="gray"
+              className={styles.orderButton}
+              onClick={() => setFilters({ order: ascending ? null : "asc" })}
+              disabled={filters.sort === "random"}
+              aria-label="reverse order"
+              aria-pressed={ascending}
+              title={orderLabel(filters.sort, ascending)}
+            >
+              <OrderIcon size={18} stroke={1.5} />
+            </Button>
             <DisplayMenu
               buttonClassName={styles.displayButton}
               labelClassName={styles.displayLabel}

@@ -1,5 +1,4 @@
 import "server-only";
-
 import { postApi, postsApi } from "@lib/client";
 import {
   PostIdSimilarGetRequest,
@@ -15,6 +14,7 @@ const postsParamKeys = [
   "pageSize",
   "cursor",
   "sort",
+  "order",
   "seed",
   "id",
   "nsfw",

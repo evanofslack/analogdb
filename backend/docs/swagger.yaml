@@ -1867,6 +1867,14 @@ paths:
         in: query
         name: sort
         type: string
+      - default: desc
+        description: Sort direction for time and score, ignored for random
+        enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
       - description: Random seed for consistent random sorting, picked from 1..500
           when missing
         in: query

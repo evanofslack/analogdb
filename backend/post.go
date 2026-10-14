@@ -173,6 +173,36 @@ func PostSortFromString(s string) PostSort {
 	}
 }
 
+type PostOrder int
+
+const (
+	PostOrderUnknown PostOrder = iota
+	PostOrderDesc
+	PostOrderAsc
+)
+
+func (o PostOrder) String() string {
+	switch o {
+	case PostOrderDesc:
+		return "desc"
+	case PostOrderAsc:
+		return "asc"
+	default:
+		return "unknown"
+	}
+}
+
+func PostOrderFromString(s string) PostOrder {
+	switch strings.ToLower(s) {
+	case "desc":
+		return PostOrderDesc
+	case "asc":
+		return PostOrderAsc
+	default:
+		return PostOrderUnknown
+	}
+}
+
 // Dimension represents a dimension with
 // optional minimum and maximum sizes.
 type Dimension struct {
@@ -203,6 +233,7 @@ type Cursor struct {
 type PostFilter struct {
 	Limit         *int
 	Sort          *PostSort
+	Order         *PostOrder
 	Cursor        *Cursor
 	Keyset        *int
 	Nsfw          *bool
@@ -274,6 +305,9 @@ func (filter *PostFilter) String() string {
 	}
 	if filter.Sort != nil {
 		out = append(out, fmt.Sprintf("sort: %s", *filter.Sort))
+	}
+	if filter.Order != nil {
+		out = append(out, fmt.Sprintf("order: %s", *filter.Order))
 	}
 	if c := filter.Cursor; c != nil {
 		out = append(out, fmt.Sprintf("cursor: value=%d, hash=%s, id=%d", c.Value, c.Hash, c.ID))
@@ -348,6 +382,11 @@ func (filter *PostFilter) String() string {
 		out = append(out, fmt.Sprintf("aspect_ratio: %s", filter.AspectRatio))
 	}
 	return strings.Join(out, ", ")
+}
+
+// Ascending reports whether the filter asks for ascending order
+func (filter *PostFilter) Ascending() bool {
+	return filter.Order != nil && *filter.Order == PostOrderAsc
 }
 
 func (filter *PostFilter) SetMinColorPercent() {

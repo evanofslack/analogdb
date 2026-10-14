@@ -45,8 +45,20 @@ type Sizes = Pick<PostsFilters, SizeKey>;
 type FlagKey = "nsfw" | "bw" | "sprocket";
 type Flag = PostsFilters[FlagKey];
 
+const orderLabels = {
+  time: [
+    { label: "newest", value: "desc" },
+    { label: "oldest", value: "asc" },
+  ],
+  score: [
+    { label: "highest", value: "desc" },
+    { label: "lowest", value: "asc" },
+  ],
+};
+
 interface FilterBarProps {
   sort: PostsFilters["sort"];
+  order: PostsFilters["order"];
   nsfw: Flag;
   bw: Flag;
   sprocket: Flag;
@@ -64,6 +76,7 @@ interface FilterBarProps {
   cameraModel: string | null;
 
   setSort: (sort: PostsFilters["sort"]) => void;
+  setOrder: (order: PostsFilters["order"]) => void;
   setNsfw: (nsfw: Flag) => void;
   setBw: (bw: Flag) => void;
   setSprocket: (sprocket: Flag) => void;
@@ -95,6 +108,7 @@ interface FilterBarProps {
 export default function FilterBar({
   // State values
   sort,
+  order,
   nsfw,
   bw,
   sprocket,
@@ -113,6 +127,7 @@ export default function FilterBar({
 
   // State setters
   setSort,
+  setOrder,
   setNsfw,
   setBw,
   setSprocket,
@@ -616,7 +631,7 @@ export default function FilterBar({
 
             <span className={styles.divider} aria-hidden="true" />
 
-            <Menu shadow="md" width={125}>
+            <Menu shadow="md" width={160}>
               <Menu.Target>
                 <Button
                   variant="outline"
@@ -650,6 +665,20 @@ export default function FilterBar({
                       />
                     </Stack>
                   </Radio.Group>
+                </div>
+                <Menu.Label>order</Menu.Label>
+                <div className={styles.order}>
+                  <SegmentedControl
+                    size="xs"
+                    fullWidth
+                    value={sort === "random" ? "desc" : order}
+                    onChange={(value) =>
+                      setOrder(value as PostsFilters["order"])
+                    }
+                    disabled={sort === "random"}
+                    data={orderLabels[sort === "score" ? "score" : "time"]}
+                    aria-label="order"
+                  />
                 </div>
               </Menu.Dropdown>
             </Menu>

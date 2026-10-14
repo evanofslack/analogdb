@@ -110,6 +110,19 @@
   border-color: var(--adb-border);
 }
 
+.orderButton {
+  flex: none;
+  height: 34px;
+  padding: 0 8px;
+  color: var(--adb-heading);
+  border-color: var(--adb-border);
+}
+
+.orderButton:disabled {
+  opacity: 0.4;
+  background: transparent;
+}
+
 .relatedRow {
   width: 90vw;
   max-width: 800px;
