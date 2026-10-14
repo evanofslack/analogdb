@@ -19,11 +19,10 @@ export const options = {
 export function setup() {
   announce();
   const ids = json(api("/ids", "/ids"), "ids");
-  const cameras = json(
-    api("/cameras?exclude_zero_counts=true", "/cameras"),
-    "cameras"
-  );
-  const films = json(api("/films?exclude_zero_counts=true", "/films"), "films");
+  // web only builds catalog pages for entries with at least 5 posts
+  const catalog = "?min_count=5&page_size=500";
+  const cameras = json(api(`/cameras${catalog}`, "/cameras"), "cameras");
+  const films = json(api(`/films${catalog}`, "/films"), "films");
   return {
     ids,
     cameras: cameras.map((c) => c.slug),
