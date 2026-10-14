@@ -88,7 +88,7 @@ func TestSetMeta(t *testing.T) {
 	seed42 := 42
 
 	mustCursor := func(sort analogdb.PostSort, post *analogdb.Post, seed int) string {
-		c, err := encodeCursor(sort, post, seed)
+		c, err := encodeCursor(sort, false, post, seed)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -97,6 +97,11 @@ func TestSetMeta(t *testing.T) {
 	last := &analogdb.Post{Id: 7, DisplayPost: analogdb.DisplayPost{Time: 2000, Score: 200}}
 	lastRandom := &analogdb.Post{Id: 3, DisplayPost: analogdb.DisplayPost{Time: 1000, Score: 100}}
 	lastZeroScore := &analogdb.Post{Id: 9, DisplayPost: analogdb.DisplayPost{Time: 3000, Score: 0}}
+	orderAsc := analogdb.PostOrderAsc
+	ascCursor, err := encodeCursor(sortTime, true, last, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	tests := []struct {
 		name     string
@@ -121,6 +126,23 @@ func TestSetMeta(t *testing.T) {
 				NextCursor: mustCursor(sortTime, last, 0),
 				PageID:     2000,
 				PageURL:    "/posts?cursor=" + mustCursor(sortTime, last, 0) + "&page_size=2&sort=time",
+			},
+		},
+		{
+			name:   "meta with time sort ascending",
+			filter: &analogdb.PostFilter{Limit: &limit2, Sort: &sortTime, Order: &orderAsc},
+			posts: []*analogdb.Post{
+				{Id: 8, DisplayPost: analogdb.DisplayPost{Time: 1000, Score: 100}},
+				last,
+			},
+			count:   100,
+			hasMore: true,
+			expected: Meta{
+				TotalPosts: 100,
+				PageSize:   2,
+				NextCursor: ascCursor,
+				PageID:     2000,
+				PageURL:    "/posts?cursor=" + ascCursor + "&order=asc&page_size=2&sort=time",
 			},
 		},
 		{

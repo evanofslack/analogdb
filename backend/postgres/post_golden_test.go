@@ -47,6 +47,7 @@ func TestPostService_FindPostsGolden(t *testing.T) {
 	ptr := func(s string) *string { return &s }
 	intPtr := func(i int) *int { return &i }
 	boolPtr := func(b bool) *bool { return &b }
+	asc := analogdb.PostOrderAsc
 
 	cases := []struct {
 		name   string
@@ -57,6 +58,16 @@ func TestPostService_FindPostsGolden(t *testing.T) {
 		{"time_keyset", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) { f.Keyset = intPtr(1641427200) })},
 		{"score", filter(analogdb.PostSortScore, nil)},
 		{"score_keyset", filter(analogdb.PostSortScore, func(f *analogdb.PostFilter) { f.Keyset = intPtr(150) })},
+		{"time_asc", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) { f.Order = &asc })},
+		{"score_asc", filter(analogdb.PostSortScore, func(f *analogdb.PostFilter) { f.Order = &asc })},
+		{"time_asc_cursor", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) {
+			f.Order = &asc
+			f.Cursor = &analogdb.Cursor{Value: 1641427200, ID: 5}
+		})},
+		{"score_asc_cursor", filter(analogdb.PostSortScore, func(f *analogdb.PostFilter) {
+			f.Order = &asc
+			f.Cursor = &analogdb.Cursor{Value: 150, ID: 1}
+		})},
 		{"random_seed", filter(analogdb.PostSortRandom, func(f *analogdb.PostFilter) { f.Seed = intPtr(37) })},
 		{"time_cursor", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) {
 			f.Cursor = &analogdb.Cursor{Value: 1641427200, ID: 5}

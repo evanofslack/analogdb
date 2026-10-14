@@ -16,6 +16,11 @@ func TestPostFilterHashIncludesCursorAndSeed(t *testing.T) {
 		f.Cursor = cursor
 		return f
 	}
+	ascending := func(f *analogdb.PostFilter) *analogdb.PostFilter {
+		asc := analogdb.PostOrderAsc
+		f.Order = &asc
+		return f
+	}
 	hash := func(f *analogdb.PostFilter) uint64 {
 		h, err := hashstructure.Hash(f, hashstructure.FormatV2, nil)
 		if err != nil {
@@ -33,6 +38,7 @@ func TestPostFilterHashIncludesCursorAndSeed(t *testing.T) {
 		"cursor":      filter(37, &analogdb.Cursor{Hash: "8f", ID: 3}),
 		"cursor id":   filter(37, &analogdb.Cursor{Hash: "8f", ID: 4}),
 		"cursor hash": filter(37, &analogdb.Cursor{Hash: "90", ID: 3}),
+		"order":       ascending(filter(37, nil)),
 	}
 	seen := map[uint64]string{base: "base"}
 	for name, f := range cases {

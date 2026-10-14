@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -206,25 +207,47 @@ func TestPostsPagination(t *testing.T) {
 
 	sorts := []struct {
 		sort analogdb.PostSort
+		asc  bool
 		seed int
 	}{
-		{analogdb.PostSortTime, 0},
-		{analogdb.PostSortScore, 0},
-		{analogdb.PostSortRandom, 37},
+		{analogdb.PostSortTime, false, 0},
+		{analogdb.PostSortTime, true, 0},
+		{analogdb.PostSortScore, false, 0},
+		{analogdb.PostSortScore, true, 0},
+		{analogdb.PostSortRandom, false, 37},
 	}
 
 	for _, sc := range sorts {
-		want := fullOrder(t, service, sc.sort, sc.seed, nil)
+		var modify func(*analogdb.PostFilter)
+		name := sc.sort.String()
+		if sc.asc {
+			name += "_asc"
+			modify = func(f *analogdb.PostFilter) {
+				asc := analogdb.PostOrderAsc
+				f.Order = &asc
+			}
+		}
+		want := fullOrder(t, service, sc.sort, sc.seed, modify)
 		if len(want) != pagingPosts {
 			t.Fatalf("expected %d seeded posts, got %d", pagingPosts, len(want))
 		}
+		if sc.asc {
+			desc := fullOrder(t, service, sc.sort, 0, nil)
+			slices.Reverse(desc)
+			if !reflect.DeepEqual(want, desc) {
+				t.Fatalf("%s: expected the reverse of desc", name)
+			}
+		}
 		for _, size := range []int{1, 7, 20} {
 			base := fmt.Sprintf("/v1/posts?sort=%s&page_size=%d", sc.sort, size)
+			if sc.asc {
+				base += "&order=asc"
+			}
 			if sc.seed != 0 {
 				base += fmt.Sprintf("&seed=%d", sc.seed)
 			}
 
-			t.Run(fmt.Sprintf("%s_%d_cursor", sc.sort, size), func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s_%d_cursor", name, size), func(t *testing.T) {
 				result := walk(t, s, base, func(resp PostResponse) string {
 					if resp.Meta.NextCursor == "" {
 						return ""
@@ -241,7 +264,7 @@ func TestPostsPagination(t *testing.T) {
 				}
 			})
 
-			t.Run(fmt.Sprintf("%s_%d_next_page_url", sc.sort, size), func(t *testing.T) {
+			t.Run(fmt.Sprintf("%s_%d_next_page_url", name, size), func(t *testing.T) {
 				result := walk(t, s, base, func(resp PostResponse) string {
 					if resp.Meta.PageURL == "" {
 						return ""

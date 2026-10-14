@@ -51,6 +51,8 @@ ANALOGDB_BENCH_READONLY=1 BENCH_DSN='postgres://user:pass@host:5432/analogdb' ju
 |---|---|
 | `posts_default` | `/posts` (time sort, 20 rows) |
 | `sort_score_page5` | `/posts?sort=score`, fifth page |
+| `sort_time_asc` | `/posts?order=asc` (oldest first) |
+| `sort_score_asc_page5` | `/posts?sort=score&order=asc`, fifth page by cursor |
 | `sort_random` | `/posts?sort=random&seed=37` |
 | `sort_random_mod_sql` | page select only, `ORDER BY MOD(time, 37), time DESC` |
 | `sort_random_md5_sql` | page select only, `ORDER BY md5(id::text \|\| '42'), id` |
