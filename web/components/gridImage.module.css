@@ -1,0 +1,27 @@
+.tile {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tile img {
+  transition: transform 0.3s, filter 0.2s;
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--adb-heading);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .tile:hover img {
+    transform: scale(1.02);
+  }
+}
+
+@media (hover: none) {
+  .tile:active img {
+    filter: brightness(0.85);
+  }
+}

@@ -3,6 +3,7 @@ import { postAlt } from "@lib/seo";
 import { AnalogdbPost } from "analogdb-generated";
 import Image from "next/image";
 import Link from "next/link";
+import styles from "./gridImage.module.css";
 
 interface GridImageProps {
   post: AnalogdbPost;
@@ -24,24 +25,25 @@ export default function GridImage(props: GridImageProps) {
       passHref={true}
       prefetch={false}
       onClick={props.onClick}
+      className={styles.tile}
+      // iOS Safari only applies :active when a touch listener is attached
+      onTouchStart={() => {}}
     >
-      <div>
-        <Image
-          src={image.url}
-          width={image.width}
-          height={image.height}
-          alt={postAlt(post)}
-          sizes="(max-width: 720px) 50vw, (max-width: 1440px) 33vw, 25vw"
-          priority={props.priority}
-          fetchPriority={props.priority ? "high" : undefined}
-          style={{
-            objectFit: "cover",
-            width: "100%",
-            height: "auto",
-            backgroundColor: post.colors?.[0]?.hex,
-          }}
-        />
-      </div>
+      <Image
+        src={image.url}
+        width={image.width}
+        height={image.height}
+        alt={postAlt(post)}
+        sizes="(max-width: 720px) 50vw, (max-width: 1440px) 33vw, 25vw"
+        priority={props.priority}
+        fetchPriority={props.priority ? "high" : undefined}
+        style={{
+          objectFit: "cover",
+          width: "100%",
+          height: "auto",
+          backgroundColor: post.colors?.[0]?.hex,
+        }}
+      />
     </Link>
   );
 }
