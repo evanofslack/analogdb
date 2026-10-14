@@ -10,7 +10,7 @@ import {
   findBySlug,
   sameMake,
 } from "@lib/catalog";
-import { firstPageSize, guessColumns, slim } from "@lib/firstPage";
+import { firstPageSize, loadDisplay, slim } from "@lib/firstPage";
 import {
   catalogFilters,
   CatalogMatch,
@@ -159,7 +159,7 @@ async function loadFirstPage(
     fixed,
     initialFilters: filters,
     initialPage,
-    initialColumns: guessColumns(device),
+    initialDisplay: await loadDisplay(device),
   };
 }
 

@@ -9,7 +9,6 @@ import { useEffect, useMemo, useRef } from "react";
 import styles from "./infiniteGallery.module.css";
 
 interface InfiniteGalleryProps {
-  initialColumns?: number;
   pages: { posts?: AnalogdbPost[] }[];
   isLoading: boolean;
   isError: boolean;
@@ -24,7 +23,6 @@ interface InfiniteGalleryProps {
 }
 
 export default function InfiniteGallery({
-  initialColumns,
   pages,
   isLoading,
   isError,
@@ -107,11 +105,7 @@ export default function InfiniteGallery({
         </div>
       )}
       <div className={isPlaceholderData ? styles.dimmed : undefined}>
-        <Grid
-          pages={postPages}
-          initialColumns={initialColumns}
-          onClick={onClick}
-        />
+        <Grid pages={postPages} onClick={onClick} />
       </div>
       {hasNextPage && <div ref={sentinelRef} aria-hidden />}
       {isFetchingNextPage && (

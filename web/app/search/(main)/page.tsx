@@ -5,7 +5,7 @@ import {
   getSearchSuggestions,
   searchPosts,
 } from "@lib/data/search";
-import { guessColumns, slim } from "@lib/firstPage";
+import { loadDisplay, slim } from "@lib/firstPage";
 import { limit } from "@lib/rateLimit";
 import {
   SearchFlags,
@@ -120,7 +120,7 @@ export default async function Page({ searchParams }: PageProps) {
       sourcePromise={similar && allowed ? getSearchSource(similar) : null}
       sourceId={similar}
       initialKey={initialKey}
-      initialColumns={guessColumns(device)}
+      initialDisplay={await loadDisplay(device)}
     />
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { DisplayProvider, InitialDisplay } from "@hooks/useDisplay";
 import usePosts from "@hooks/usePosts";
 import {
   CatalogEntry,
@@ -16,6 +17,7 @@ import { ServerPostResponse } from "analogdb-generated";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import styles from "./catalogDetail.module.css";
+import DisplayMenu from "./displayMenu";
 import Footer from "./footer";
 import Header from "./header";
 import InfiniteGallery from "./infiniteGallery";
@@ -42,7 +44,7 @@ interface CatalogDetailProps {
   relatedLinks?: DetailLink[];
   initialPage?: ServerPostResponse | null;
   initialFilters?: PostsFilters;
-  initialColumns?: number;
+  initialDisplay?: InitialDisplay;
 }
 
 const sortData = [
@@ -63,7 +65,7 @@ export default function CatalogDetail({
   relatedLinks,
   initialPage,
   initialFilters,
-  initialColumns,
+  initialDisplay,
 }: CatalogDetailProps) {
   const { filters, setFilters, limits, ...posts } = usePosts(
     initialPage,
@@ -103,72 +105,78 @@ export default function CatalogDetail({
   }, [description, expanded]);
 
   return (
-    <div className={styles.main}>
-      <Header brandHeading={false} />
-      <div className={styles.margin}>
-        <div className={styles.intro}>
-          {titleLink ? (
-            <div className={styles.titleRow}>
-              <h1 className={styles.title}>{heading}</h1>
-              <Link
-                href={titleLink.href}
-                prefetch={false}
-                className={styles.titleLink}
-              >
-                {titleLink.label}
-              </Link>
-            </div>
-          ) : (
-            <h1 className={styles.title}>{heading}</h1>
-          )}
-          <ul className={styles.facts}>
-            {facts.map((fact) => {
-              const Icon = factIcons[fact.icon];
-              return (
-                <li key={fact.label} className={styles.fact}>
-                  <Icon size={16} className={styles.icon} />
-                  {fact.label}
-                </li>
-              );
-            })}
-          </ul>
-          {description && (
-            <div className={styles.descriptionBox}>
-              <p
-                ref={descriptionRef}
-                className={expanded ? styles.description : styles.clamped}
-              >
-                {description}
-              </p>
-              {(overflowing || expanded) && (
-                <button
-                  type="button"
-                  className={styles.more}
-                  onClick={() => setExpanded((value) => !value)}
+    <DisplayProvider value={initialDisplay}>
+      <div className={styles.main}>
+        <Header brandHeading={false} />
+        <div className={styles.margin}>
+          <div className={styles.intro}>
+            {titleLink ? (
+              <div className={styles.titleRow}>
+                <h1 className={styles.title}>{heading}</h1>
+                <Link
+                  href={titleLink.href}
+                  prefetch={false}
+                  className={styles.titleLink}
                 >
-                  {expanded ? "less" : "more"}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-        <KeywordRow
-          links={links}
-          label={relatedTitle ?? `more from ${entry.make.toUpperCase()}`}
-          className={styles.relatedRow}
-        />
-        <div className={styles.sort}>
-          <SegmentedControl
-            value={filters.sort}
-            onChange={setSort}
-            data={sortData}
-            aria-label="sort"
+                  {titleLink.label}
+                </Link>
+              </div>
+            ) : (
+              <h1 className={styles.title}>{heading}</h1>
+            )}
+            <ul className={styles.facts}>
+              {facts.map((fact) => {
+                const Icon = factIcons[fact.icon];
+                return (
+                  <li key={fact.label} className={styles.fact}>
+                    <Icon size={16} className={styles.icon} />
+                    {fact.label}
+                  </li>
+                );
+              })}
+            </ul>
+            {description && (
+              <div className={styles.descriptionBox}>
+                <p
+                  ref={descriptionRef}
+                  className={expanded ? styles.description : styles.clamped}
+                >
+                  {description}
+                </p>
+                {(overflowing || expanded) && (
+                  <button
+                    type="button"
+                    className={styles.more}
+                    onClick={() => setExpanded((value) => !value)}
+                  >
+                    {expanded ? "less" : "more"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          <KeywordRow
+            links={links}
+            label={relatedTitle ?? `more from ${entry.make.toUpperCase()}`}
+            className={styles.relatedRow}
           />
+          <div className={styles.sort}>
+            <SegmentedControl
+              value={filters.sort}
+              onChange={setSort}
+              data={sortData}
+              aria-label="sort"
+            />
+            <DisplayMenu
+              buttonClassName={styles.displayButton}
+              labelClassName={styles.displayLabel}
+            />
+          </div>
+          <InfiniteGallery {...posts} />
+          <ScrollTop />
         </div>
-        <InfiniteGallery {...posts} initialColumns={initialColumns} />
-        <ScrollTop />
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </DisplayProvider>
   );
 }

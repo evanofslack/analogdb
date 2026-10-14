@@ -96,7 +96,18 @@
 .sort {
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
   margin: 3rem 0 2rem;
+}
+
+.displayButton {
+  flex: none;
+  height: 34px;
+  padding: 0 10px;
+  font-weight: 400;
+  color: var(--adb-heading);
+  border-color: var(--adb-border);
 }
 
 .relatedRow {
@@ -108,5 +119,19 @@
 @media screen and (max-width: 720px) {
   .title {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 720px) {
+  .displayLabel {
+    display: none;
+  }
+
+  .displayButton {
+    padding: 0 0.7rem;
+  }
+
+  .displayButton [data-position="left"] {
+    margin-inline-end: 0;
   }
 }

@@ -1,8 +1,10 @@
 "use client";
 
+import useDisplay, { takeAnchor } from "@hooks/useDisplay";
+import { columnWidth, gearPx, spacingPx } from "@lib/display";
 import { toColumns } from "@lib/masonry";
 import { AnalogdbPost } from "analogdb-generated";
-import { useEffect, useMemo, useState } from "react";
+import { CSSProperties, useLayoutEffect, useMemo } from "react";
 import styles from "./grid.module.css";
 import GridImage from "./gridImage";
 
@@ -10,47 +12,46 @@ const priorityCount = 6;
 
 interface GridProps {
   pages: AnalogdbPost[][];
-  initialColumns?: number;
   onClick?: (post: AnalogdbPost, position: number) => void;
 }
 
-export default function Grid({
-  pages,
-  initialColumns = 4,
-  onClick,
-}: GridProps) {
-  const [numColumn, setNumColumn] = useState(initialColumns);
+export default function Grid({ pages, onClick }: GridProps) {
+  const { display, width, columns } = useDisplay();
+  const gap = spacingPx[display.spacing];
+  const extra =
+    (gap + (display.gear === "always" ? gearPx : 0)) /
+    columnWidth(width, columns);
 
-  useEffect(() => {
-    const small = window.matchMedia("(max-width: 720px)");
-    const medium = window.matchMedia("(max-width: 1440px)");
-    const update = () => {
-      if (small.matches) setNumColumn(2);
-      else if (medium.matches) setNumColumn(3);
-      else setNumColumn(4);
-    };
-    update();
-    small.addEventListener("change", update);
-    medium.addEventListener("change", update);
-    return () => {
-      small.removeEventListener("change", update);
-      medium.removeEventListener("change", update);
-    };
-  }, []);
-
-  const columns = useMemo(
-    () => toColumns(pages, numColumn),
-    [pages, numColumn]
+  const layout = useMemo(
+    () => toColumns(pages, columns, extra),
+    [pages, columns, extra]
   );
 
+  // Keep the image that was at the top of the screen in place when the
+  // layout changes under it
+  useLayoutEffect(() => {
+    const anchor = takeAnchor();
+    if (!anchor) return;
+    const el = document.querySelector(`[data-post-id="${anchor.id}"]`);
+    if (!el) return;
+    window.scrollBy(0, el.getBoundingClientRect().top - anchor.top);
+  }, [columns, gap, display.gear]);
+
+  const sizes = `${Math.ceil(100 / columns)}vw`;
+
   return (
-    <div className={styles.grid}>
-      {columns.map((column, i) => (
+    <div
+      className={styles.grid}
+      style={{ "--grid-gap": `${gap}px` } as CSSProperties}
+    >
+      {layout.map((column, i) => (
         <div key={i} className={styles.column}>
           {column.map(({ post, index }) => (
             <GridImage
               key={post.id}
               post={post}
+              sizes={sizes}
+              gear={display.gear}
               priority={index < priorityCount}
               onClick={onClick && (() => onClick(post, index))}
             />
