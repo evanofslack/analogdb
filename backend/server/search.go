@@ -26,9 +26,9 @@ const (
 	maxSearchOffset         = 500
 	maxSearchImageBytes     = 5 << 20
 	searchImageSlots        = 2
-	searchImageWait         = 5 * time.Second
+	searchImageWait         = 1500 * time.Millisecond
 	searchTextSlots         = 4
-	searchTextWait          = 5 * time.Second
+	searchTextWait          = 1500 * time.Millisecond
 	errCodeUnsupportedMedia = "unsupported_media"
 )
 
