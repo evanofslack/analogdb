@@ -39,6 +39,10 @@ func (f *fakeKeywordService) CoOccurring(ctx context.Context, word string) (map[
 	return map[string]int{"ocean": 3}, nil
 }
 
+func (f *fakeKeywordService) TopPosts(ctx context.Context, words []string, n int) (map[string][]analogdb.CatalogPost, error) {
+	return map[string][]analogdb.CatalogPost{}, nil
+}
+
 func TestKeywordCache(t *testing.T) {
 	rdb, _ := newMiniRDB(t)
 	inner := &fakeKeywordService{}

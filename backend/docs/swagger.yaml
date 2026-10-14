@@ -1488,6 +1488,12 @@ paths:
         in: query
         name: related
         type: integer
+      - default: 0
+        description: Attach this many top scoring posts to each related keyword (0
+          to 10)
+        in: query
+        name: related_posts
+        type: integer
       produces:
       - application/json
       responses:

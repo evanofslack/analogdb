@@ -1055,6 +1055,13 @@ const docTemplate = `{
                         "description": "Number of related keywords (0 to 30)",
                         "name": "related",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Attach this many top scoring posts to each related keyword (0 to 10)",
+                        "name": "related_posts",
+                        "in": "query"
                     }
                 ],
                 "responses": {

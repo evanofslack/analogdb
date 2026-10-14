@@ -17,6 +17,8 @@ type KeywordService interface {
 	FindKeyword(ctx context.Context, word string, topPosts int) (*KeywordDetail, error)
 	// CoOccurring returns the number of posts each other tag shares with the word
 	CoOccurring(ctx context.Context, word string) (map[string]int, error)
+	// TopPosts returns the top posts of each word
+	TopPosts(ctx context.Context, words []string, n int) (map[string][]CatalogPost, error)
 }
 
 type KeywordSort string
