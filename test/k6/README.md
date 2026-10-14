@@ -11,6 +11,13 @@ export K6_PROMETHEUS_RW_SERVER_URL=http://<prometheus>:9090/api/v1/write   # opt
 export K6_USERNAME=... K6_PASSWORD=...                                      # the web credential pair
 ```
 
+`browser.js` needs Chrome or Chromium. Without Google Chrome in `/Applications`, point k6 at another one,
+such as a Playwright download:
+
+```bash
+export K6_BROWSER_EXECUTABLE_PATH="$HOME/Library/Caches/ms-playwright/chromium-<n>/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+```
+
 Prometheus needs `--web.enable-remote-write-receiver` and native histograms enabled. Import
 `infra/config/grafana/dashboards/Analogdb/dashboard-results.json` into Grafana to see runs, picked by
 `testid`.
