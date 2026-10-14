@@ -39,14 +39,16 @@ function rate(fallback) {
   return __ENV.RATE ? Number(__ENV.RATE) : fallback;
 }
 
+// arrival counts per minute, since k6 rates are whole numbers and RATE can
+// be fractional. Stage targets come in per second
 function arrival(stages, peak) {
   return {
     executor: "ramping-arrival-rate",
     startRate: 0,
-    timeUnit: "1s",
+    timeUnit: "1m",
     preAllocatedVUs: Math.min(Math.ceil(peak * 2), 50),
     maxVUs: Math.min(Math.ceil(peak * 20) + 10, 600),
-    stages,
+    stages: stages.map((s) => ({ ...s, target: Math.round(s.target * 60) })),
   };
 }
 
@@ -95,8 +97,8 @@ export function scenario(exec, defaults) {
           [
             { target, duration: "10s" },
             { target, duration: "1m" },
-            { target: 0, duration: "10s" },
-            { target: 0, duration: "1m" },
+            { target: 1, duration: "10s" },
+            { target: 1, duration: "1m" },
           ],
           target
         ),
