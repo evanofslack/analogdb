@@ -12,3 +12,19 @@
   justify-content: space-between;
   align-items: center;
 }
+
+.links {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 120ms ease;
+}
+
+.link:hover {
+  opacity: 0.6;
+}

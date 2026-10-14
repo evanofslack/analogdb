@@ -7,7 +7,7 @@ import { IconCheck, IconMenu2 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { FiGithub } from "react-icons/fi";
+import { FiCode, FiGithub } from "react-icons/fi";
 import styles from "./mobileNav.module.css";
 import ThemeToggle from "./themeToggle";
 
@@ -35,7 +35,6 @@ const LINKS: NavLink[] = [
     active: (path) => path.startsWith("/cameras"),
   },
   { href: "/about", label: "About", active: (path) => path === "/about" },
-  { href: "/docs", label: "API", active: (path) => path === "/docs" },
 ];
 
 const ADMIN_LINK: NavLink = {
@@ -65,6 +64,7 @@ export default function MobileNav({ onOpenChange }: MobileNavProps) {
   }, [opened, onOpenChange]);
 
   const links = isAdmin ? [...LINKS, ADMIN_LINK] : LINKS;
+  const docsActive = pathname === "/docs";
 
   return (
     <div className={styles.bar}>
@@ -117,6 +117,20 @@ export default function MobileNav({ onOpenChange }: MobileNavProps) {
             );
           })}
           <Menu.Divider />
+          <Menu.Item
+            component={Link}
+            href="/docs"
+            aria-current={docsActive ? "page" : undefined}
+            className={`${styles.github} ${docsActive ? styles.active : ""}`}
+          >
+            <span className={styles.label}>
+              <FiCode size="1rem" aria-hidden="true" />
+              API
+              {docsActive && (
+                <IconCheck size={18} stroke={2} aria-hidden="true" />
+              )}
+            </span>
+          </Menu.Item>
           <Menu.Item
             component="a"
             href="https://github.com/evanofslack/analogdb"
