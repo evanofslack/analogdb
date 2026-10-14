@@ -1,6 +1,13 @@
 import "server-only";
 
-import { CatalogEntry, minPosts, pickCover } from "@lib/catalog";
+import {
+  CatalogEntry,
+  coverPosts,
+  hourlyRandom,
+  minPosts,
+  pickCover,
+  pickCovers,
+} from "@lib/catalog";
 import { camerasApi } from "@lib/client";
 import { CamerasGetRequest } from "analogdb-generated";
 import { unstable_cache } from "next/cache";
@@ -48,24 +55,28 @@ const catalogParams: CamerasGetRequest = {
   pageSize: 500,
   includeCounts: true,
   minCount: minPosts,
-  topPosts: 6,
+  topPosts: coverPosts,
 };
 
 const getCameraCatalogCached = unstable_cache(
   async (): Promise<CatalogEntry[]> => {
     const response = await camerasApi.camerasGet(catalogParams);
-    return (response.cameras ?? [])
-      .filter(
-        (c) => c.slug && c.make && c.model && (c.postCount ?? 0) >= minPosts
-      )
-      .map((c) => ({
-        slug: c.slug,
-        make: c.make,
-        name: c.model,
-        postCount: c.postCount ?? 0,
-        description: c.description ?? "",
-        cover: pickCover(c.topPosts),
-      }));
+    const cameras = (response.cameras ?? []).filter(
+      (c) => c.slug && c.make && c.model && (c.postCount ?? 0) >= minPosts
+    );
+    const covers = pickCovers(
+      cameras.map((c) => c.topPosts ?? []),
+      { random: hourlyRandom() }
+    );
+    return cameras.map((c, i) => ({
+      slug: c.slug,
+      make: c.make,
+      name: c.model,
+      postCount: c.postCount ?? 0,
+      description: c.description ?? "",
+      cover: covers[i],
+      metaCover: pickCover(c.topPosts),
+    }));
   },
   ["camera-catalog"],
   { revalidate: 3600, tags: ["catalog"] }

@@ -1,6 +1,13 @@
 import "server-only";
 
-import { CatalogEntry, minPosts, pickCover } from "@lib/catalog";
+import {
+  CatalogEntry,
+  coverPosts,
+  hourlyRandom,
+  minPosts,
+  pickCover,
+  pickCovers,
+} from "@lib/catalog";
 import { filmsApi } from "@lib/client";
 import { FilmsGetRequest } from "analogdb-generated";
 import { unstable_cache } from "next/cache";
@@ -48,26 +55,30 @@ const catalogParams: FilmsGetRequest = {
   pageSize: 500,
   includeCounts: true,
   minCount: minPosts,
-  topPosts: 6,
+  topPosts: coverPosts,
 };
 
 const getFilmCatalogCached = unstable_cache(
   async (): Promise<CatalogEntry[]> => {
     const response = await filmsApi.filmsGet(catalogParams);
-    return (response.films ?? [])
-      .filter(
-        (f) => f.slug && f.make && f.type && (f.postCount ?? 0) >= minPosts
-      )
-      .map((f) => ({
-        slug: f.slug,
-        make: f.make,
-        name: f.type,
-        postCount: f.postCount ?? 0,
-        description: f.description ?? "",
-        speed: f.speed,
-        colorType: f.colorType,
-        cover: pickCover(f.topPosts),
-      }));
+    const films = (response.films ?? []).filter(
+      (f) => f.slug && f.make && f.type && (f.postCount ?? 0) >= minPosts
+    );
+    const covers = pickCovers(
+      films.map((f) => f.topPosts ?? []),
+      { random: hourlyRandom() }
+    );
+    return films.map((f, i) => ({
+      slug: f.slug,
+      make: f.make,
+      name: f.type,
+      postCount: f.postCount ?? 0,
+      description: f.description ?? "",
+      speed: f.speed,
+      colorType: f.colorType,
+      cover: covers[i],
+      metaCover: pickCover(f.topPosts),
+    }));
   },
   ["film-catalog"],
   { revalidate: 3600, tags: ["catalog"] }

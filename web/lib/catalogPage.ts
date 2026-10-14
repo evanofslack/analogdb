@@ -109,12 +109,13 @@ export function detailMetadata(
   const title = pageTitle(kind, entry);
   const description = pageDescription(kind, entry);
   const url = catalogHref(kind, entry);
-  const images = entry.cover
+  const cover = entry.metaCover;
+  const images = cover
     ? [
         {
-          url: entry.cover.url,
-          width: entry.cover.width,
-          height: entry.cover.height,
+          url: cover.url,
+          width: cover.width,
+          height: cover.height,
           alt: title,
         },
       ]
@@ -198,11 +199,11 @@ export function detailJsonLd(kind: CatalogKind, entry: CatalogEntry) {
       name: pageTitle(kind, entry),
       description: pageDescription(kind, entry),
       url,
-      ...(entry.cover && {
+      ...(entry.metaCover && {
         primaryImageOfPage: {
           "@type": "ImageObject",
-          contentUrl: entry.cover.url,
-          url: `${siteURL}/post/${entry.cover.id}`,
+          contentUrl: entry.metaCover.url,
+          url: `${siteURL}/post/${entry.metaCover.id}`,
         },
       }),
     },
