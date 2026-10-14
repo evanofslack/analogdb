@@ -48,10 +48,22 @@ export interface SearchDemo {
   keywords: string[];
 }
 
-export interface ApiSample {
-  query: string;
-  full: string;
+// post is one photo, grid a row of results, similar the source photo then its matches
+export type ApiDemoLayout = "post" | "grid" | "similar";
+
+// one real request for the api demo, short is the response trimmed to its key fields
+export interface ApiDemo {
+  path: string;
+  photos: AboutPhoto[];
   short: string;
+  response: unknown;
+}
+
+// an endpoint and the requests the demo rotates through for it
+export interface ApiDemoGroup {
+  name: string;
+  layout: ApiDemoLayout;
+  demos: ApiDemo[];
 }
 
 export interface AboutData {
@@ -64,7 +76,7 @@ export interface AboutData {
   allSimilarityData: SimilarityData[];
   films: FilmSet[];
   searches: SearchDemo[];
-  apiSample: ApiSample | null;
+  apiDemos: ApiDemoGroup[];
 }
 
 export function shuffle<T>(items: T[]): T[] {
