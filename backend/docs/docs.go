@@ -1617,6 +1617,17 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "default": "desc",
+                        "description": "Sort direction for time and score, ignored for random",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
                         "description": "Random seed for consistent random sorting, picked from 1..500 when missing",
                         "name": "seed",
