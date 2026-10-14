@@ -129,6 +129,10 @@ export function hourlyRandom(): () => number {
   };
 }
 
+export function fitsThumb(cover: CatalogCover): boolean {
+  return cover.width <= cover.height * 2 && cover.height <= cover.width * 2;
+}
+
 interface PickOptions {
   random?: () => number;
   fits?: (cover: CatalogCover) => boolean;
