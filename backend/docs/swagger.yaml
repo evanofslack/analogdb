@@ -50,15 +50,18 @@ definitions:
   analogdb.Color:
     properties:
       css:
-        example: dimgray
+        description: Nearest CSS color name, derived by the API and ignored on write
+        example: gray
         type: string
       hex:
         example: '#837d5c'
         type: string
       html:
-        example: gray
+        description: Color bucket, derived by the API and ignored on write
+        example: olive
         type: string
       percent:
+        description: Share of the whole image, from 0 to 1
         example: 0.55
         type: number
     type: object
@@ -1867,21 +1870,23 @@ paths:
         name: cursor
         type: string
       - description: 'Deprecated: use cursor. Keyset from next_page_id, not supported
-          with sort=random'
+          with sort=random or sort=color'
         in: query
         name: page_id
         type: integer
       - default: time
-        description: Sort order
+        description: Sort order. color ranks by the share of the given colors, or
+          gives a rainbow with no colors
         enum:
         - time
         - score
         - random
+        - color
         in: query
         name: sort
         type: string
       - default: desc
-        description: Sort direction for time and score, ignored for random
+        description: Sort direction for time and score, ignored for random and color
         enum:
         - asc
         - desc
@@ -1961,14 +1966,17 @@ paths:
         name: keyword
         type: array
       - collectionFormat: multi
-        description: Color filter (multiple allowed)
+        description: 'Color name (red, orange, tan, yellow, green, olive, teal, navy,
+          purple, gray, black, white, brown) or 6 digit hex, # optional. Multiple
+          colors must all match'
         in: query
         items:
           type: string
         name: color
         type: array
       - collectionFormat: multi
-        description: Minimum color percentage (multiple allowed)
+        description: Minimum share of the image for the color at the same position,
+          from 0 to 1. Defaults per color, divided by the number of colors
         in: query
         items:
           type: number

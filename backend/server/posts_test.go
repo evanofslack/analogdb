@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/evanofslack/analogdb/colorspace"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
@@ -254,6 +255,65 @@ func TestParseToPostFilterPageSize(t *testing.T) {
 				t.Errorf("expected limit %d, got %v", tt.expected, filter.Limit)
 			}
 		})
+	}
+}
+
+func TestParseToPostFilterColors(t *testing.T) {
+	tests := []struct {
+		name     string
+		url      string
+		colors   []string
+		percents []float64
+	}{
+		{"name", "/posts?color=red", []string{"red"}, []float64{colorspace.BucketThresholds["red"]}},
+		{"name case", "/posts?color=Teal", []string{"teal"}, []float64{colorspace.BucketThresholds["teal"]}},
+		{"hex snapped", "/posts?color=%23C0392B", []string{"bb3333"}, []float64{colorspace.HexThreshold}},
+		{"hex without hash", "/posts?color=c0392b", []string{"bb3333"}, []float64{colorspace.HexThreshold}},
+		{"defaults divided", "/posts?color=red&color=gray", []string{"red", "gray"}, []float64{colorspace.BucketThresholds["red"] / 2, colorspace.BucketThresholds["gray"] / 2}},
+		{"override by position", "/posts?color=red&color=ffffff&min_color=0.5", []string{"red", "ffffff"}, []float64{0.5, colorspace.HexThreshold / 2}},
+		{"extra min_color dropped", "/posts?color=red&min_color=0.1&min_color=0.2", []string{"red"}, []float64{0.1}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filter, err := parseToPostFilter(httptest.NewRequest(http.MethodGet, tt.url, nil))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(*filter.Colors, tt.colors) || !reflect.DeepEqual(*filter.ColorPercents, tt.percents) {
+				t.Errorf("expected %v %v, got %v %v", tt.colors, tt.percents, *filter.Colors, *filter.ColorPercents)
+			}
+		})
+	}
+}
+
+func TestSetMetaColorSort(t *testing.T) {
+	limit := 2
+	sort := analogdb.PostSortColor
+	colors := []string{"bb3333", "teal"}
+	filter := &analogdb.PostFilter{Limit: &limit, Sort: &sort, Colors: &colors}
+	filter.SetMinColorPercent()
+	last := &analogdb.Post{Id: 7, DisplayPost: analogdb.DisplayPost{Time: 2000}, SortRank: 0.25}
+	meta, err := setMeta(filter, []*analogdb.Post{{Id: 9}, last}, 10, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	next, err := url.Parse(meta.PageURL)
+	if err != nil {
+		t.Fatal(err)
+	}
+	q := next.Query()
+	if q.Get("sort") != "color" || q.Get("order") != "" || !reflect.DeepEqual(q["color"], colors) || len(q["min_color"]) != 2 {
+		t.Errorf("unexpected next_page_url %s", meta.PageURL)
+	}
+	cursor, _, err := decodeCursor(meta.NextCursor, sort, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if *cursor != (analogdb.Cursor{Rank: 0.25, ID: 7}) {
+		t.Errorf("unexpected cursor %+v", *cursor)
+	}
+	if meta.PageID != 2000 {
+		t.Errorf("expected next_page_id 2000, got %d", meta.PageID)
 	}
 }
 

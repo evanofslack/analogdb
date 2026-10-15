@@ -14,7 +14,7 @@ import (
 )
 
 func TestCursorRoundTrip(t *testing.T) {
-	post := &analogdb.Post{Id: 40211, DisplayPost: analogdb.DisplayPost{Time: 1752244116, Score: 153}}
+	post := &analogdb.Post{Id: 40211, DisplayPost: analogdb.DisplayPost{Time: 1752244116, Score: 153}, SortRank: 0.30000000000000004}
 
 	tests := []struct {
 		name     string
@@ -30,6 +30,8 @@ func TestCursorRoundTrip(t *testing.T) {
 		{"score asc", analogdb.PostSortScore, true, 0, analogdb.Cursor{Value: 153, ID: 40211}, 0},
 		{"random", analogdb.PostSortRandom, false, 37, analogdb.Cursor{Hash: randomSortKey(40211, 37), ID: 40211}, 37},
 		{"random ignores asc", analogdb.PostSortRandom, true, 37, analogdb.Cursor{Hash: randomSortKey(40211, 37), ID: 40211}, 37},
+		{"color", analogdb.PostSortColor, false, 0, analogdb.Cursor{Rank: 0.30000000000000004, ID: 40211}, 0},
+		{"color ignores asc", analogdb.PostSortColor, true, 0, analogdb.Cursor{Rank: 0.30000000000000004, ID: 40211}, 0},
 	}
 
 	for _, tt := range tests {
@@ -81,6 +83,9 @@ func TestDecodeCursorErrors(t *testing.T) {
 		{"desc cursor on asc request", encode(`{"s":"time","v":1,"id":1}`), analogdb.PostSortTime, true, "cursor does not match sort"},
 		{"unknown order", encode(`{"s":"time","v":1,"id":1,"o":"up"}`), analogdb.PostSortTime, false, "cursor does not match sort"},
 		{"random int value", encode(`{"s":"random","v":12,"id":1,"seed":3}`), analogdb.PostSortRandom, false, "invalid cursor"},
+		{"color string value", encode(`{"s":"color","v":"red","id":1}`), analogdb.PostSortColor, false, "invalid cursor"},
+		{"color cursor on time", encode(`{"s":"color","v":0.4,"id":1}`), analogdb.PostSortTime, false, "cursor does not match sort"},
+		{"asc color cursor", encode(`{"s":"color","v":0.4,"id":1,"o":"asc"}`), analogdb.PostSortColor, false, "cursor does not match sort"},
 	}
 
 	for _, tt := range tests {
@@ -219,7 +224,7 @@ func TestParseToPostFilterPaging(t *testing.T) {
 		}
 	})
 
-	for _, url := range []string{"/posts?sort=time", "/posts?sort=time&order=desc", "/posts?sort=time&order=DESC", "/posts?sort=random&order=asc"} {
+	for _, url := range []string{"/posts?sort=time", "/posts?sort=time&order=desc", "/posts?sort=time&order=DESC", "/posts?sort=random&order=asc", "/posts?sort=color&order=asc"} {
 		t.Run("no order for "+url, func(t *testing.T) {
 			filter, err := parseToPostFilter(httptest.NewRequest(http.MethodGet, url, nil))
 			if err != nil {
@@ -252,6 +257,11 @@ func TestParseToPostFilterPaging(t *testing.T) {
 		{"desc cursor with asc", "/posts?sort=time&order=asc&cursor=" + timeCursor, "cursor does not match sort"},
 		{"invalid order", "/posts?sort=time&order=up", "invalid order parameter up, valid options are 'asc', 'desc'"},
 		{"page_id with asc", "/posts?sort=time&order=asc&page_id=1000", "page_id is not supported with order=asc; use cursor"},
+		{"page_id with color", "/posts?sort=color&color=red&page_id=1000", "page_id is not supported with sort=color; use cursor"},
+		{"unknown sort", "/posts?sort=best", "invalid sort parameter best, valid options are 'time', 'score', 'random', 'color'"},
+		{"unknown color", "/posts?color=blue", "invalid color blue, use a color name or a 6 digit hex"},
+		{"short hex", "/posts?color=fff", "invalid color fff, use a color name or a 6 digit hex"},
+		{"empty color", "/posts?color=", "invalid color , use a color name or a 6 digit hex"},
 	}
 	for _, tt := range errTests {
 		t.Run(tt.name, func(t *testing.T) {

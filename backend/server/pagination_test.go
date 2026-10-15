@@ -439,3 +439,91 @@ func TestPostsPagination(t *testing.T) {
 func pagingTime(id int) int {
 	return pagingBaseTime + (id/5)*3600
 }
+
+var pagingHexes = []string{"#ff0000", "#c0392b", "#008080", "#0000ff", "#808080", "#d2b48c"}
+
+func TestColorPagination(t *testing.T) {
+	s, service := mustOpenPagingServer(t)
+	ctx := context.Background()
+
+	n := len(pagingHexes)
+	for id := 1; id <= pagingPosts; id++ {
+		colors := []analogdb.Color{
+			{Hex: pagingHexes[id%n], Percent: 0.5},
+			{Hex: pagingHexes[(id/n)%n], Percent: 0.3},
+			{Hex: pagingHexes[(id*5+3)%n], Percent: 0.2},
+		}
+		if err := service.PatchPost(ctx, &analogdb.PatchPost{Colors: &colors}, id); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	cases := []struct {
+		name   string
+		query  string
+		colors []string
+	}{
+		{"named", "color=red", []string{"red"}},
+		{"hex", "color=%23C0392B", []string{"bb3333"}},
+		{"two", "color=red&color=teal", []string{"red", "teal"}},
+		{"rainbow", "", nil},
+	}
+	for _, tc := range cases {
+		want := fullOrder(t, service, analogdb.PostSortColor, 0, func(f *analogdb.PostFilter) {
+			if tc.colors != nil {
+				colors := tc.colors
+				f.Colors = &colors
+				f.SetMinColorPercent()
+			}
+		})
+		if len(want) <= 20 {
+			t.Fatalf("%s: expected more than one page of matches, got %d", tc.name, len(want))
+		}
+		for _, size := range []int{1, 7, 20} {
+			base := fmt.Sprintf("/v1/posts?sort=color&page_size=%d", size)
+			if tc.query != "" {
+				base += "&" + tc.query
+			}
+
+			t.Run(fmt.Sprintf("%s_%d_cursor", tc.name, size), func(t *testing.T) {
+				result := walk(t, s, base+"&order=asc", func(resp PostResponse) string {
+					if resp.Meta.NextCursor == "" {
+						return ""
+					}
+					return base + "&cursor=" + url.QueryEscape(resp.Meta.NextCursor)
+				})
+				checkWalk(t, result, want)
+			})
+
+			t.Run(fmt.Sprintf("%s_%d_next_page_url", tc.name, size), func(t *testing.T) {
+				result := walk(t, s, base, func(resp PostResponse) string {
+					if resp.Meta.PageURL == "" {
+						return ""
+					}
+					next, err := url.Parse(resp.Meta.PageURL)
+					if err != nil {
+						t.Fatal(err)
+					}
+					q := next.Query()
+					if q.Get("order") != "" || q.Get("sort") != "color" || !reflect.DeepEqual(q["color"], tc.colors) {
+						t.Fatalf("unexpected next_page_url %s", resp.Meta.PageURL)
+					}
+					return "/v1" + resp.Meta.PageURL
+				})
+				checkWalk(t, result, want)
+			})
+		}
+	}
+
+	t.Run("page_id with color", func(t *testing.T) {
+		if w, _ := getPostsPage(t, s, "/v1/posts?sort=color&page_id=1600000000"); w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400, got %d", w.Code)
+		}
+	})
+
+	t.Run("unknown color", func(t *testing.T) {
+		if w, _ := getPostsPage(t, s, "/v1/posts?color=blue"); w.Code != http.StatusBadRequest {
+			t.Fatalf("expected 400, got %d", w.Code)
+		}
+	})
+}

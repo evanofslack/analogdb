@@ -34,6 +34,8 @@ func encodeCursor(sort analogdb.PostSort, asc bool, post *analogdb.Post, seed in
 	case analogdb.PostSortRandom:
 		value = randomSortKey(post.Id, seed)
 		wire.Seed = seed
+	case analogdb.PostSortColor:
+		value = post.SortRank
 	default:
 		return "", fmt.Errorf("invalid sort parameter: %s", sort.String())
 	}
@@ -76,6 +78,10 @@ func decodeCursor(s string, sort analogdb.PostSort, asc bool) (*analogdb.Cursor,
 		if !validSeed(wire.Seed) {
 			return nil, 0, badRequest("invalid cursor")
 		}
+	case analogdb.PostSortColor:
+		if err := json.Unmarshal(wire.Value, &cursor.Rank); err != nil {
+			return nil, 0, badRequest("invalid cursor")
+		}
 	default:
 		return nil, 0, badRequest("invalid cursor")
 	}
@@ -84,7 +90,7 @@ func decodeCursor(s string, sort analogdb.PostSort, asc bool) (*analogdb.Cursor,
 
 // cursorOrder is the order a cursor carries, empty for the default
 func cursorOrder(sort analogdb.PostSort, asc bool) string {
-	if asc && sort != analogdb.PostSortRandom {
+	if asc && sort != analogdb.PostSortRandom && sort != analogdb.PostSortColor {
 		return analogdb.PostOrderAsc.String()
 	}
 	return ""
