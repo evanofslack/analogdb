@@ -1967,7 +1967,7 @@ paths:
         type: array
       - collectionFormat: multi
         description: 'Color name (red, orange, tan, yellow, green, olive, teal, navy,
-          purple, gray, black, white, brown) or 6 digit hex, # optional. Multiple
+          purple, pink, gray, black, white, brown) or 6 digit hex, # optional. Multiple
           colors must all match'
         in: query
         items:

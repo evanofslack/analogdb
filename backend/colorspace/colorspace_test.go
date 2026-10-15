@@ -35,7 +35,16 @@ func TestBucket(t *testing.T) {
 		{"#008000", Green},
 		{"#006400", Green},
 		{"#800080", Purple},
-		{"#ff00ff", Purple},
+		{"#ff00ff", Pink},
+		{"#ffc0cb", Pink},
+		{"#ff69b4", Pink},
+		{"#c71585", Pink},
+		{"#db7093", Red},
+		{"#cc5500", Orange},
+		{"#b5651d", Orange},
+		{"#160113", Black},
+		{"#140a1f", Black},
+		{"#4a5560", Gray},
 	}
 	for _, tt := range tests {
 		t.Run(tt.hex, func(t *testing.T) {

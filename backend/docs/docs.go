@@ -1747,7 +1747,7 @@ const docTemplate = `{
                             "type": "string"
                         },
                         "collectionFormat": "multi",
-                        "description": "Color name (red, orange, tan, yellow, green, olive, teal, navy, purple, gray, black, white, brown) or 6 digit hex, # optional. Multiple colors must all match",
+                        "description": "Color name (red, orange, tan, yellow, green, olive, teal, navy, purple, pink, gray, black, white, brown) or 6 digit hex, # optional. Multiple colors must all match",
                         "name": "color",
                         "in": "query"
                     },

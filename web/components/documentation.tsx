@@ -521,7 +521,7 @@ const postsFilters = [
   {
     param: "color",
     description:
-      "filter by color name (red, orange, tan, yellow, green, olive, teal, navy, purple, gray, black, white, brown) or 6 digit hex (e.g., c0392b), repeat to require every color",
+      "filter by color name (red, orange, tan, yellow, green, olive, teal, navy, purple, pink, gray, black, white, brown) or 6 digit hex (e.g., c0392b), repeat to require every color",
   },
   {
     param: "min_color",

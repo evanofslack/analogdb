@@ -122,7 +122,7 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
 // @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
 // @Param keyword query []string false "Filter by keywords (multiple allowed)" collectionFormat(multi)
-// @Param color query []string false "Color name (red, orange, tan, yellow, green, olive, teal, navy, purple, gray, black, white, brown) or 6 digit hex, # optional. Multiple colors must all match" collectionFormat(multi)
+// @Param color query []string false "Color name (red, orange, tan, yellow, green, olive, teal, navy, purple, pink, gray, black, white, brown) or 6 digit hex, # optional. Multiple colors must all match" collectionFormat(multi)
 // @Param min_color query []number false "Minimum share of the image for the color at the same position, from 0 to 1. Defaults per color, divided by the number of colors" collectionFormat(multi)
 // @Param width_min query number false "Minimum picture width"
 // @Param width_max query number false "Maximum picture width"

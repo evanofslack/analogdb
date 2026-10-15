@@ -19,6 +19,7 @@ const (
 	Teal   = "teal"
 	Navy   = "navy"
 	Purple = "purple"
+	Pink   = "pink"
 	Gray   = "gray"
 	Black  = "black"
 	White  = "white"
@@ -26,7 +27,7 @@ const (
 )
 
 // Buckets lists every bucket name
-var Buckets = []string{Red, Orange, Tan, Yellow, Green, Olive, Teal, Navy, Purple, Gray, Black, White, Brown}
+var Buckets = []string{Red, Orange, Tan, Yellow, Green, Olive, Teal, Navy, Purple, Pink, Gray, Black, White, Brown}
 
 // IsBucket reports whether name is a bucket name
 func IsBucket(name string) bool {
@@ -41,7 +42,7 @@ func inHue(h, from, to float64) bool {
 // Bucket names an OKLCH color
 func Bucket(l, c, h float64) string {
 	switch {
-	case c < NeutralChroma:
+	case c < NeutralChroma || l < DarkMaxL && c < DarkMaxChroma:
 		if l < BlackMaxL {
 			return Black
 		}
@@ -49,13 +50,31 @@ func Bucket(l, c, h float64) string {
 			return White
 		}
 		return Gray
-	case inHue(h, BrownHueMin, BrownHueMax) && l < BrownMaxL:
+	case inHue(h, BrownHueMin, BrownHueMax) && l < BrownMaxL && (c < BrownMaxChroma || l < BrownDarkL):
 		return Brown
-	case inHue(h, BrownHueMin, BrownHueMax) && c < TanMaxChroma:
+	case inHue(h, BrownHueMin, BrownHueMax) && l >= BrownMaxL && c < TanMaxChroma:
 		return Tan
 	case inHue(h, OliveHueMin, OliveHueMax) && (l < OliveMaxL || c < OliveLowC && l < OliveLowCMax):
 		return Olive
+	case inHue(h, PinkMagentaHueMin, PinkMagentaHueMax) && l >= PinkMagentaMinL:
+		return Pink
+	case (h >= PinkHueMin || h < PinkHueMax) && l >= PinkMinL:
+		return Pink
 	}
+	name := hue(h)
+	switch {
+	case name == Navy && c < NavyMinChroma:
+		if l < BlackMaxL {
+			return Black
+		}
+		return Gray
+	case name == Red && c < RedMinChroma:
+		return Brown
+	}
+	return name
+}
+
+func hue(h float64) string {
 	name := hueRanges[0].Name
 	for _, r := range hueRanges {
 		if h >= r.From {

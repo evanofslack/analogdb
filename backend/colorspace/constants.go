@@ -5,6 +5,15 @@ const (
 	// NeutralChroma is the chroma below which a color is black, gray or white
 	NeutralChroma = 0.04
 
+	// DarkMaxL and DarkMaxChroma make tinted near-black shadows neutral
+	DarkMaxL      = 0.25
+	DarkMaxChroma = 0.08
+
+	// NavyMinChroma and RedMinChroma keep blue-gray shadows out of navy and
+	// send muted brick reds to brown
+	NavyMinChroma = 0.06
+	RedMinChroma  = 0.08
+
 	// BlackMaxL and WhiteMinL split neutrals by lightness
 	BlackMaxL = 0.35
 	WhiteMinL = 0.9
@@ -27,15 +36,28 @@ const (
 
 // Warm modifiers turn dark warm hues brown, pale warm hues tan and dark yellows olive
 const (
-	BrownHueMin  = 35.0
-	BrownHueMax  = 95.0
-	BrownMaxL    = 0.6
-	TanMaxChroma = 0.1
-	OliveHueMin  = 95.0
-	OliveHueMax  = 135.0
-	OliveMaxL    = 0.7
-	OliveLowC    = 0.08
-	OliveLowCMax = 0.85
+	BrownHueMin = 35.0
+	BrownHueMax = 95.0
+	BrownMaxL   = 0.6
+	// BrownMaxChroma keeps saturated burnt oranges orange unless darker than BrownDarkL
+	BrownMaxChroma = 0.1
+	BrownDarkL     = 0.55
+	TanMaxChroma   = 0.1
+	OliveHueMin    = 95.0
+	OliveHueMax    = 135.0
+	OliveMaxL      = 0.7
+	OliveLowC      = 0.08
+	OliveLowCMax   = 0.85
+)
+
+// Pink takes light reds and mid to light magentas
+const (
+	PinkHueMin        = 340.0
+	PinkHueMax        = 25.0
+	PinkMinL          = 0.7
+	PinkMagentaHueMin = 320.0
+	PinkMagentaHueMax = 350.0
+	PinkMagentaMinL   = 0.55
 )
 
 // hueRanges assigns the remaining chromatic colors by hue. A range starts at
@@ -65,6 +87,7 @@ var BucketThresholds = map[string]float64{
 	Teal:   0.25,
 	Navy:   0.25,
 	Purple: 0.15,
+	Pink:   0.2,
 	Gray:   0.6,
 	Black:  0.5,
 	White:  0.4,
