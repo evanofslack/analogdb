@@ -73,6 +73,7 @@ async function loadText(
     return {
       ...slim(response),
       relatedKeywords: response.relatedKeywords ?? [],
+      relatedPosts: response.relatedPosts,
     };
   } catch {
     return null;

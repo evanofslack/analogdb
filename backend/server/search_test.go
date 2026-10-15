@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"image"
 	"image/png"
 	"mime/multipart"
@@ -193,6 +194,97 @@ func TestSearchText(t *testing.T) {
 	}
 	if len(resp.RelatedKeywords) != 0 {
 		t.Errorf("want no related keywords after page one, got %v", resp.RelatedKeywords)
+	}
+}
+
+type topPostsKeywordService struct {
+	mockKeywordService
+	words []string
+	n     int
+	err   error
+}
+
+func (m *topPostsKeywordService) TopPosts(ctx context.Context, words []string, n int) (map[string][]analogdb.CatalogPost, error) {
+	m.words = words
+	m.n = n
+	if m.err != nil {
+		return nil, m.err
+	}
+	return map[string][]analogdb.CatalogPost{words[0]: {{Id: 7, Score: 40}}}, nil
+}
+
+func TestSearchRelatedPosts(t *testing.T) {
+	hits := []analogdb.SearchHit{
+		{PostID: 3, Tags: []string{"cat", "sofa", "window"}},
+		{PostID: 9, Tags: []string{"cat", "sofa"}},
+		{PostID: 1, Tags: []string{"cat", "window"}},
+	}
+	s, _ := openSearchServer(t, hits, true, 1, 3)
+	keywords := &topPostsKeywordService{}
+	s.KeywordService = keywords
+
+	w, resp := doSearch(t, s, "/v1/search?q=cats&page_size=3")
+	if w.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d", w.Code)
+	}
+	if keywords.words != nil || resp.RelatedPosts != nil {
+		t.Errorf("want no related posts by default, got %v", resp.RelatedPosts)
+	}
+
+	w, resp = doSearch(t, s, "/v1/search?q=cats&page_size=3&related_posts=50")
+	if w.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d", w.Code)
+	}
+	if !slices.Equal(keywords.words, resp.RelatedKeywords) || keywords.n != maxTopPosts {
+		t.Errorf("want top posts of %v with %d, got %v with %d", resp.RelatedKeywords, maxTopPosts, keywords.words, keywords.n)
+	}
+	if len(resp.RelatedPosts) != 1 || len(resp.RelatedPosts["sofa"]) != 1 {
+		t.Errorf("unexpected related posts %+v", resp.RelatedPosts)
+	}
+	if strings.Contains(resp.Meta.PageURL, "related_posts") {
+		t.Errorf("want related_posts left off the next page url, got %q", resp.Meta.PageURL)
+	}
+
+	keywords.words = nil
+	w, resp = doSearch(t, s, "/v1"+resp.Meta.PageURL+"&related_posts=3")
+	if w.Code != http.StatusOK || keywords.words != nil || resp.RelatedPosts != nil {
+		t.Errorf("want no related posts after page one, got %d %v", w.Code, resp.RelatedPosts)
+	}
+
+	if w, _ := doSearch(t, s, "/v1/search?q=cats&related_posts=abc"); w.Code != http.StatusBadRequest {
+		t.Errorf("want 400, got %d", w.Code)
+	}
+
+	keywords.err = errors.New("db down")
+	w, resp = doSearch(t, s, "/v1/search?q=cats&page_size=3&related_posts=3")
+	if w.Code != http.StatusOK || len(resp.Posts) != 2 || len(resp.RelatedKeywords) == 0 || resp.RelatedPosts != nil {
+		t.Errorf("want results without related posts when top posts fail, got %d %+v", w.Code, resp)
+	}
+}
+
+func TestSearchImageRelatedPosts(t *testing.T) {
+	hits := []analogdb.SearchHit{
+		{PostID: 2, Tags: []string{"beach", "dusk"}},
+		{PostID: 5, Tags: []string{"beach", "dusk"}},
+	}
+	s, _ := openSearchServer(t, hits, false, 2, 5)
+	keywords := &topPostsKeywordService{}
+	s.KeywordService = keywords
+
+	body, ct := multipartImage(t, pngBytes(t))
+	r := httptest.NewRequest(http.MethodPost, "/v1/search/image?related_posts=2", bytes.NewReader(body.Bytes()))
+	r.Header.Set("Content-Type", ct)
+	w := httptest.NewRecorder()
+	s.router.ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp SearchResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatal(err)
+	}
+	if keywords.n != 2 || len(resp.RelatedPosts) != 1 {
+		t.Errorf("want related posts with 2, got %d %+v", keywords.n, resp.RelatedPosts)
 	}
 }
 

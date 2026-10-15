@@ -1,4 +1,5 @@
 import { searchApi } from "@lib/client";
+import { relatedPostCount, slimRelatedPosts } from "@lib/data/search";
 import { limit } from "@lib/rateLimit";
 import { NextResponse } from "next/server";
 
@@ -68,8 +69,9 @@ export async function POST(request: Request) {
       nsfw: flag(params.get("nsfw")),
       grayscale: flag(params.get("grayscale")),
       sprocket: flag(params.get("sprocket")),
+      relatedPosts: relatedPostCount,
     });
-    return NextResponse.json(response, {
+    return NextResponse.json(slimRelatedPosts(response), {
       headers: { "Cache-Control": "no-store" },
     });
   } catch (err) {

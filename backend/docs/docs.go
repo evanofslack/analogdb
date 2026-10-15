@@ -2053,6 +2053,13 @@ const docTemplate = `{
                         "description": "Filter by sprocketshots (true=only, false=exclude)",
                         "name": "sprocket",
                         "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Attach this many top scoring posts to each related keyword (0 to 10)",
+                        "name": "related_posts",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2127,6 +2134,13 @@ const docTemplate = `{
                         "type": "boolean",
                         "description": "Filter by sprocketshots (true=only, false=exclude)",
                         "name": "sprocket",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 0,
+                        "description": "Attach this many top scoring posts to each related keyword (0 to 10)",
+                        "name": "related_posts",
                         "in": "query"
                     }
                 ],
@@ -3226,6 +3240,16 @@ const docTemplate = `{
                         "silhouette",
                         "dusk"
                     ]
+                },
+                "related_posts": {
+                    "description": "Top scoring posts of each related keyword, only with related_posts",
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/analogdb.CatalogPost"
+                        }
+                    }
                 }
             }
         },
