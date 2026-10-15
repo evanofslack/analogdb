@@ -1,6 +1,7 @@
 import { HTTPQuery, PostsGetRequest, querystring } from "analogdb-generated";
 import {
   inferParserType,
+  parseAsArrayOf,
   parseAsFloat,
   parseAsInteger,
   parseAsString,
@@ -9,7 +10,8 @@ import {
 import { publicURL } from "./constants";
 import { isValidSeed } from "./seed";
 
-const sortOpts = ["time", "score", "random"] as const;
+const sortOpts = ["time", "score", "random", "color"] as const;
+const catalogSortOpts = ["time", "score", "random"] as const;
 const orderOpts = ["desc", "asc"] as const;
 const filterOpts = ["include", "exclude", "only"] as const;
 
@@ -77,7 +79,7 @@ export const postsParsers = {
   nsfw: parseAsStringLiteral(filterOpts).withDefault("exclude"),
   bw: parseAsStringLiteral(filterOpts).withDefault("exclude"),
   sprocket: parseAsStringLiteral(filterOpts).withDefault("include"),
-  color: parseAsString,
+  color: parseAsArrayOf(parseAsString),
   text: parseAsString,
   widthMin: parseAsInteger.withDefault(postsLimits.widthMin),
   widthMax: parseAsInteger.withDefault(postsLimits.widthMax),
@@ -107,7 +109,7 @@ export function activePostsFilters(f: PostsFilters): ActivePostsFilters {
   return {
     camera: Boolean(f.camera_make || f.camera_model),
     film: Boolean(f.film_make || f.film_type),
-    color: Boolean(f.color),
+    color: Boolean(f.color?.length),
     size:
       f.widthMin !== p.widthMin.defaultValue ||
       f.widthMax !== p.widthMax.defaultValue ||
@@ -189,7 +191,7 @@ export const catalogFilterParsers = {
 };
 
 export const catalogParsers = {
-  sort: parseAsStringLiteral(sortOpts).withDefault("score"),
+  sort: parseAsStringLiteral(catalogSortOpts).withDefault("score"),
   order: parseAsStringLiteral(orderOpts).withDefault("desc"),
   seed: parseAsInteger,
 };
@@ -218,19 +220,6 @@ export function catalogFilters(match: Partial<CatalogMatch>): PostsFilters {
   };
 }
 
-const COLOR_MIN_VALUES: Record<string, number> = {
-  gray: 0.8,
-  black: 0.7,
-  white: 0.5,
-  teal: 0.35,
-  olive: 0.35,
-  brown: 0.35,
-  tan: 0.3,
-  navy: 0.25,
-  green: 0.25,
-  default: 0.15,
-};
-
 export function toPostsRequest(filters: PostsFilters): PostsGetRequest {
   const params: PostsGetRequest = {
     sort: filters.sort,
@@ -247,7 +236,8 @@ export function toPostsRequest(filters: PostsFilters): PostsGetRequest {
     params.seed = filters.seed;
   }
 
-  if (filters.order === "asc" && filters.sort !== "random") {
+  const ordered = filters.sort === "time" || filters.sort === "score";
+  if (filters.order === "asc" && ordered) {
     params.order = "asc";
   }
 
@@ -264,11 +254,9 @@ export function toPostsRequest(filters: PostsFilters): PostsGetRequest {
     params.keyword = [filters.text];
   }
 
-  if (filters.color) {
-    params.color = [filters.color];
-    params.minColor = [
-      COLOR_MIN_VALUES[filters.color] || COLOR_MIN_VALUES.default,
-    ];
+  const colors = filters.color?.filter(Boolean);
+  if (colors?.length) {
+    params.color = colors;
   }
 
   if (filters.film_make) params.filmMake = filters.film_make;

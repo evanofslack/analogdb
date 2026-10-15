@@ -1,11 +1,11 @@
 "use client";
 
 import { setSearchSource, track } from "@lib/analytics";
+import { bareHex, similarPalette } from "@lib/color";
 import { publicURL } from "@lib/constants";
 import { smallImage } from "@lib/images";
 import { postAlt } from "@lib/seo";
 import { Tooltip } from "@mantine/core";
-import { useClipboard } from "@mantine/hooks";
 import {
   IconApi,
   IconBrandReddit,
@@ -28,8 +28,6 @@ interface ImageTagProps {
 }
 
 export default function ImageTag(props: ImageTagProps) {
-  const clipboard = useClipboard({ timeout: 1000 });
-
   let post = props.post;
   let similarPosts = props.similar.posts;
 
@@ -64,16 +62,15 @@ export default function ImageTag(props: ImageTagProps) {
       post.cameraMake
     )}&camera_model=${encodeURIComponent(post.cameraModel)}`;
 
-  let hexColors = new Array();
-  post.colors.forEach(function (color) {
-    hexColors.push(color.hex);
-  });
-
-  const color = (hex: string) => {
-    return {
-      backgroundColor: hex,
-    };
-  };
+  const palette = (post.colors ?? [])
+    .filter((color) => color.hex)
+    .map((color) => ({
+      hex: bareHex(color.hex),
+      percent: Math.max(0, Math.min(1, color.percent ?? 0)),
+    }))
+    .sort((a, b) => b.percent - a.percent);
+  const paletteTotal = palette.reduce((sum, { percent }) => sum + percent, 0);
+  const paletteHexes = similarPalette(post.colors);
 
   return (
     <div className={styles.container}>
@@ -142,24 +139,41 @@ export default function ImageTag(props: ImageTagProps) {
             </a>
           </div>
           <div className={styles.containerColorsAndKeywords}>
-            <div className={styles.containerColors}>
-              {hexColors.map((hex) => {
-                return (
-                  <Tooltip
-                    key={hex}
-                    label={clipboard.copied ? "copied" : hex}
-                    position="top"
-                    color="gray"
+            {palette.length > 0 && (
+              <div className={styles.containerColors}>
+                <div className={styles.strip}>
+                  {palette.map(({ hex, percent }, index) => (
+                    <Tooltip
+                      key={index}
+                      label={`#${hex} · ${Math.round(percent * 100)}%`}
+                      position="top"
+                      color="gray"
+                    >
+                      <Link
+                        href={`/?color=${hex}&sort=color`}
+                        prefetch={false}
+                        className={styles.segment}
+                        style={{
+                          flexGrow:
+                            paletteTotal > 0 ? percent / paletteTotal : 1,
+                          backgroundColor: `#${hex}`,
+                        }}
+                        aria-label={`Photos with #${hex}`}
+                      />
+                    </Tooltip>
+                  ))}
+                </div>
+                {paletteHexes.length > 0 && (
+                  <Link
+                    href={`/?color=${paletteHexes.join(",")}&sort=color`}
+                    prefetch={false}
+                    className={styles.similarPalette}
                   >
-                    <div
-                      style={color(hex)}
-                      className={styles.colorSquare}
-                      onClick={() => clipboard.copy(hex)}
-                    ></div>
-                  </Tooltip>
-                );
-              })}
-            </div>
+                    similar palette
+                  </Link>
+                )}
+              </div>
+            )}
             <Keywords
               keywords={
                 Object.prototype.hasOwnProperty.call(post, "keywords")

@@ -1,3 +1,4 @@
+import { colorOptions } from "@lib/color";
 import {
   Button,
   ButtonProps,
@@ -11,8 +12,8 @@ import { ChangeEvent } from "react";
 import styles from "./colorFilter.module.css";
 
 interface ColorFilterProps {
-  color: string | null;
-  setColor: (color: string | null) => void;
+  color: string[] | null;
+  setColor: (color: string[] | null) => void;
   buttonClassNames?: ButtonProps["classNames"];
   labelClassName?: string;
   dotClassName?: string;
@@ -27,123 +28,13 @@ export default function ColorFilter({
   dotClassName,
   active,
 }: ColorFilterProps) {
-  const handleColorClick = (event: ChangeEvent<HTMLInputElement>) => {
-    let clickedColor = event.target.id;
-    if (clickedColor === color) {
-      setColor(null);
-    } else {
-      setColor(clickedColor);
-    }
-  };
+  const checked = color?.length === 1 ? color[0].toLowerCase() : null;
 
-  const colorOptions = [
-    {
-      id: "red",
-      label: "red",
-      bg: "#f03e3e",
-      tooltipColor: "red.7",
-      checkedColor: "red.8",
-      colorProp: "red.8",
-    },
-    {
-      id: "orange",
-      label: "orange",
-      bg: "#fd7e14",
-      tooltipColor: "orange.6",
-      checkedColor: "orange.7",
-      colorProp: "orange.7",
-    },
-    {
-      id: "tan",
-      label: "beige",
-      bg: "#ffdcb0",
-      tooltipColor: "brown.1",
-      checkedColor: "brown.2",
-      colorProp: "brown.2",
-    },
-    {
-      id: "yellow",
-      label: "yellow",
-      bg: "#ffd43b",
-      tooltipColor: "yellow.4",
-      checkedColor: "yellow.5",
-      colorProp: "yellow.5",
-    },
-    {
-      id: "green",
-      label: "green",
-      bg: "#2f9e44",
-      tooltipColor: "green.8",
-      checkedColor: "green.9",
-      colorProp: "green.9",
-    },
-    {
-      id: "olive",
-      label: "olive",
-      bg: "#4c4d00",
-      tooltipColor: "olive.8",
-      checkedColor: "olive.9",
-      colorProp: "olive.9",
-    },
-    {
-      id: "teal",
-      label: "teal",
-      bg: "#22b8cf",
-      tooltipColor: "cyan.5",
-      checkedColor: "cyan.6",
-      colorProp: "cyan.6",
-    },
-    {
-      id: "navy",
-      label: "navy",
-      bg: "#064679",
-      tooltipColor: "navy.7",
-      checkedColor: "navy.8",
-      colorProp: "navy.8",
-    },
-    {
-      id: "purple",
-      label: "purple",
-      bg: "#9c36b5",
-      tooltipColor: "grape.8",
-      checkedColor: "grape.9",
-      colorProp: "grape.9",
-    },
-    {
-      id: "gray",
-      label: "gray",
-      bg: "#868e96",
-      tooltipColor: "dark.2",
-      checkedColor: "dark.3",
-      colorProp: "dark.3",
-    },
-    {
-      id: "brown",
-      label: "brown",
-      bg: "#7d4500",
-      tooltipColor: "brown.7",
-      checkedColor: "brown.8",
-      colorProp: "brown.8",
-    },
-    {
-      id: "black",
-      label: "black",
-      bg: "#141517",
-      outline: "var(--adb-swatch-black-outline)",
-      tooltipColor: "dark.8",
-      checkedColor: "dark.9",
-      colorProp: "dark.9",
-    },
-    {
-      id: "white",
-      label: "white",
-      bg: "#e9ecef",
-      outline: "var(--adb-swatch-white-outline)",
-      tooltipColor: "gray.2",
-      checkedColor: "gray.3",
-      colorProp: "gray.3",
-    },
-  ];
+  // a named color replaces any hexes, clicking the checked one clears
+  const handleColorClick = (event: ChangeEvent<HTMLInputElement>) => {
+    const clickedColor = event.target.id;
+    setColor(clickedColor === checked ? null : [clickedColor]);
+  };
 
   return (
     <Menu shadow="md" width={100}>
@@ -168,7 +59,7 @@ export default function ColorFilter({
               key={colorOption.id}
               label={colorOption.label}
               color={
-                color === colorOption.id
+                checked === colorOption.id
                   ? colorOption.checkedColor
                   : colorOption.tooltipColor
               }
@@ -186,7 +77,7 @@ export default function ColorFilter({
                 }}
                 size="md"
                 color={colorOption.colorProp}
-                checked={color === colorOption.id}
+                checked={checked === colorOption.id}
                 onChange={handleColorClick}
                 id={colorOption.id}
                 aria-label={colorOption.label}

@@ -15,6 +15,7 @@ import {
   SimilarityData,
 } from "@lib/about";
 import { authorized_fetch } from "@lib/client";
+import { representativeHue } from "@lib/color";
 import { getAuthorsTotalCount } from "@lib/data/authors";
 import { getCameraOptions } from "@lib/data/cameras";
 import { getFilmCatalog, getFilmOptions } from "@lib/data/films";
@@ -30,33 +31,26 @@ import {
 import { unstable_cache } from "next/cache";
 
 const COLOR_ROW_POOL = 30;
-const TEAL_PAGES = 2;
-const TEAL_MIN_PHOTOS = 12;
 
-// phone rainbow order, thin colors in the archive get a lower threshold.
-// the api's color names are loose, so hues outside the range are dropped
-const RAINBOW: {
-  color: string;
-  min: number;
-  count: number;
-  hues?: [number, number];
-}[] = [
-  { color: "red", min: 0.4, count: 2, hues: [340, 20] },
-  { color: "orange", min: 0.25, count: 2, hues: [12, 45] },
-  { color: "yellow", min: 0.25, count: 2, hues: [38, 66] },
-  { color: "green", min: 0.25, count: 2, hues: [66, 160] },
-  { color: "teal", min: 0.3, count: 2 },
-  { color: "navy", min: 0.4, count: 2, hues: [200, 255] },
-  { color: "purple", min: 0.25, count: 2, hues: [255, 335] },
-  { color: "black", min: 0.5, count: 2 },
-  { color: "white", min: 0.5, count: 2 },
+// the phone rainbow takes a few photos per hue band from the rainbow sort,
+// then black and white at the end. Hues are OKLCH degrees, red wraps
+const RAINBOW_BANDS: { color: string; from: number; to: number }[] = [
+  { color: "red", from: 350, to: 40 },
+  { color: "orange", from: 40, to: 75 },
+  { color: "yellow", from: 75, to: 115 },
+  { color: "green", from: 115, to: 165 },
+  { color: "teal", from: 165, to: 235 },
+  { color: "navy", from: 235, to: 290 },
+  { color: "purple", from: 290, to: 350 },
 ];
-
-function inHues(hue: number, [low, high]: [number, number]): boolean {
-  return low <= high ? hue >= low && hue <= high : hue >= low || hue <= high;
-}
-
+const RAINBOW_NEUTRALS = ["black", "white"];
+const RAINBOW_COUNT = 2;
+const RAINBOW_PAGES = 2;
 const RAINBOW_POOL = 20;
+
+function inBand(hue: number, { from, to }: { from: number; to: number }) {
+  return from <= to ? hue >= from && hue < to : hue >= from || hue < to;
+}
 
 const SIMILARITY_IDS = [
   32298, 34246, 34252, 533, 30293, 4501, 5211, 1043, 4385, 2235, 6912, 33116,
@@ -161,113 +155,100 @@ function toPhotos(posts: AnalogdbPost[] | undefined): AboutPhoto[] {
     .filter((photo): photo is AboutPhoto => photo !== null);
 }
 
-function hsl(hex: string): { hue: number; sat: number; light: number } {
-  const value = parseInt(hex.replace("#", ""), 16);
-  const r = ((value >> 16) & 255) / 255;
-  const g = ((value >> 8) & 255) / 255;
-  const b = (value & 255) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const light = (max + min) / 2;
-  const delta = max - min;
-  if (delta === 0) return { hue: 0, sat: 0, light };
-  const sat = delta / (1 - Math.abs(2 * light - 1));
-  let hue;
-  if (max === r) hue = ((g - b) / delta) % 6;
-  else if (max === g) hue = (b - r) / delta + 2;
-  else hue = (r - g) / delta + 4;
-  return { hue: (hue * 60 + 360) % 360, sat, light };
+const colorPostsRequest = {
+  nsfw: false,
+  grayscale: false,
+  sort: PostsGetSortEnum.Color,
+  ratioMin: 0.7,
+  ratioMax: 1.5,
+};
+
+function toRainbowPhoto(post: AnalogdbPost): RainbowPhoto | null {
+  const photo = toPhoto(post);
+  if (!photo) return null;
+  return { photo, hue: representativeHue(post.colors) ?? 0 };
 }
 
-type ColorPhoto = RainbowPhoto & { sat: number; light: number };
-
-// the api's teal is mostly pale sky blue, keep only real cyan green tones
-function isTeal({ hue, sat, light }: ColorPhoto): boolean {
-  return hue >= 160 && hue <= 198 && sat >= 0.2 && light <= 0.6;
-}
-
+// photos ranked by how much of the color they have, best first
 async function fetchColor(
   color: string,
-  min: number,
-  pageSize: number,
-  pages = 1
-): Promise<ColorPhoto[]> {
-  const result: ColorPhoto[] = [];
+  pageSize: number
+): Promise<RainbowPhoto[]> {
+  try {
+    const response = await getPosts({
+      ...colorPostsRequest,
+      color: [color],
+      pageSize,
+    });
+    return (response.posts ?? [])
+      .map(toRainbowPhoto)
+      .filter((item): item is RainbowPhoto => item !== null);
+  } catch (error) {
+    console.error("Fail fetch color posts for:", color, error);
+    return [];
+  }
+}
+
+// the first pages of the rainbow sort, colored posts in hue order
+async function fetchRainbow(): Promise<RainbowPhoto[]> {
+  const result: RainbowPhoto[] = [];
   let cursor: string | undefined;
   try {
-    for (let page = 0; page < pages; page++) {
+    for (let page = 0; page < RAINBOW_PAGES; page++) {
       const response = await getPosts({
-        color: [color],
-        minColor: [min],
-        pageSize,
+        ...colorPostsRequest,
+        pageSize: 100,
         cursor,
-        nsfw: false,
-        grayscale: false,
-        sort: PostsGetSortEnum.Random,
-        ratioMin: 0.7,
-        ratioMax: 1.5,
       });
       for (const post of response.posts ?? []) {
+        const hue = representativeHue(post.colors);
         const photo = toPhoto(post);
-        const match = post.colors?.find((c) => c.html === color);
-        if (!photo || !match?.hex) continue;
-        result.push({ photo, ...hsl(match.hex) });
+        if (photo && hue !== null) result.push({ photo, hue });
       }
       cursor = response.meta?.nextCursor;
       if (!cursor) break;
     }
   } catch (error) {
-    console.error("Fail fetch color posts for:", color, error);
+    console.error("Fail fetch rainbow posts:", error);
   }
   return result;
 }
 
-const plain = (photos: ColorPhoto[]): AboutPhoto[] =>
+const plain = (photos: RainbowPhoto[]): AboutPhoto[] =>
   photos.map((item) => item.photo);
-
-const toRainbow = (photos: ColorPhoto[]): RainbowPhoto[] =>
-  photos.map(({ photo, hue }) => ({ photo, hue }));
 
 async function fetchColors(): Promise<{
   colorData: ColorData;
   rainbow: RainbowGroup[];
 }> {
-  const [red, navy, tealPool] = await Promise.all([
-    fetchColor("red", 0.4, COLOR_ROW_POOL),
-    fetchColor("navy", 0.4, COLOR_ROW_POOL),
-    fetchColor("teal", 0.3, 100, TEAL_PAGES),
+  const [red, navy, teal, spectrum, ...neutrals] = await Promise.all([
+    fetchColor("red", COLOR_ROW_POOL),
+    fetchColor("navy", COLOR_ROW_POOL),
+    fetchColor("teal", COLOR_ROW_POOL),
+    fetchRainbow(),
+    ...RAINBOW_NEUTRALS.map((color) => fetchColor(color, RAINBOW_POOL)),
   ]);
-  const teal = tealPool.filter(isTeal);
-  // too little real teal this hour, olive keeps the third row full
-  const thirdRow =
-    teal.length >= TEAL_MIN_PHOTOS
-      ? teal
-      : await fetchColor("olive", 0.4, COLOR_ROW_POOL);
 
-  const known: Record<string, ColorPhoto[]> = { red, navy, teal };
-  const others = await Promise.all(
-    RAINBOW.filter(({ color }) => !known[color]).map(
-      async ({ color, min }) =>
-        [color, await fetchColor(color, min, RAINBOW_POOL)] as const
-    )
-  );
-  const pools = { ...known, ...Object.fromEntries(others) };
+  const bands = RAINBOW_BANDS.map((band) => ({
+    color: band.color,
+    count: RAINBOW_COUNT,
+    photos: spectrum.filter((item) => inBand(item.hue, band)),
+  }));
+  const neutralGroups = RAINBOW_NEUTRALS.map((color, i) => ({
+    color,
+    count: RAINBOW_COUNT,
+    photos: neutrals[i],
+  }));
 
   return {
     colorData: {
-      teal: plain(thirdRow),
+      teal: plain(teal),
       red: plain(red),
       navy: plain(navy),
     },
-    rainbow: RAINBOW.map(({ color, count, hues }) => {
-      const pool = pools[color] ?? [];
-      const inRange = hues
-        ? pool.filter((item) => inHues(item.hue, hues))
-        : pool;
-      // a short group keeps the loose matches rather than vanish
-      const photos = inRange.length >= count ? inRange : pool;
-      return { color, count, photos: toRainbow(photos) };
-    }).filter((group) => group.photos.length > 0),
+    rainbow: [...bands, ...neutralGroups].filter(
+      (group) => group.photos.length > 0
+    ),
   };
 }
 
@@ -483,7 +464,7 @@ const API_DEMOS: ApiDemoConfig[] = [
     layout: "grid",
     spec: { keys: { meta: META, posts: POSTS } },
     paths: ["red", "navy", "green"].map(
-      (color) => `/posts?color=${color}&nsfw=false&page_size=3`
+      (color) => `/posts?color=${color}&sort=color&nsfw=false&page_size=3`
     ),
   },
   {
@@ -659,6 +640,6 @@ async function getData(): Promise<AboutData> {
   };
 }
 
-export const getAboutData = unstable_cache(getData, ["about-data-v5"], {
+export const getAboutData = unstable_cache(getData, ["about-data-v6"], {
   revalidate: 3600,
 });
