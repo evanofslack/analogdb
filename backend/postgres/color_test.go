@@ -48,16 +48,56 @@ func createColorPost(ctx context.Context, t *testing.T, service *PostService, na
 }
 
 type postColorRow struct {
-	hue, chroma, rainbow sql.NullFloat64
+	hue, chroma, strength, rainbow sql.NullFloat64
 }
 
 func mustPostColor(t *testing.T, db *DB, id int) postColorRow {
 	t.Helper()
 	var row postColorRow
-	if err := db.db.QueryRow("SELECT color_hue, color_chroma, rainbow_key FROM pictures WHERE id = $1", id).Scan(&row.hue, &row.chroma, &row.rainbow); err != nil {
+	if err := db.db.QueryRow("SELECT color_hue, color_chroma, color_strength, rainbow_key FROM pictures WHERE id = $1", id).Scan(&row.hue, &row.chroma, &row.strength, &row.rainbow); err != nil {
 		t.Fatal(err)
 	}
 	return row
+}
+
+// checkPostColor compares the stored color columns of a post with colorspace
+func checkPostColor(t *testing.T, db *DB, id int, palette []colorspace.Swatch, grayscale bool) postColorRow {
+	t.Helper()
+	row := mustPostColor(t, db, id)
+	c, ok, err := colorspace.PalettePostColor(palette, grayscale)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !ok {
+		if row.hue.Valid || row.chroma.Valid || row.strength.Valid || row.rainbow.Valid {
+			t.Errorf("post %d: expected no rainbow color, got %+v", id, row)
+		}
+		return row
+	}
+	if !row.strength.Valid || float32(row.strength.Float64) != float32(c.Strength) || !row.rainbow.Valid || row.rainbow.Float64 != colorspace.RainbowKey(id, c) {
+		t.Errorf("post %d: expected strength %v and key %v, got %+v", id, float32(c.Strength), colorspace.RainbowKey(id, c), row)
+	}
+	if c.Neutral {
+		if row.hue.Valid || row.chroma.Valid {
+			t.Errorf("post %d: expected no hue for a neutral post, got %+v", id, row)
+		}
+		// black ends its loop where the next one starts
+		w := colorspace.RainbowHueWidth + colorspace.RainbowNeutralWidth
+		if loop := int(math.Ceil(row.rainbow.Float64/w - 1)); loop < 0 || loop >= colorspace.RainbowNeutralLoops(c.Bucket) {
+			t.Errorf("post %d: loop %d out of the %d loops of %s", id, loop, colorspace.RainbowNeutralLoops(c.Bucket), c.Bucket)
+		}
+	} else if float32(row.hue.Float64) != float32(c.Hue) || float32(row.chroma.Float64) != float32(c.Chroma) {
+		t.Errorf("post %d: expected hue %v chroma %v, got %+v", id, c.Hue, c.Chroma, row)
+	}
+	return row
+}
+
+func swatches(colors []analogdb.Color) []colorspace.Swatch {
+	out := []colorspace.Swatch{}
+	for _, c := range colors {
+		out = append(out, colorspace.Swatch{Hex: c.Hex, Percent: c.Percent})
+	}
+	return out
 }
 
 func TestPostService_ColorsDerived(t *testing.T) {
@@ -98,12 +138,9 @@ func TestPostService_ColorsDerived(t *testing.T) {
 		t.Errorf("unexpected derived columns %v %v %v %v %v", l, a, b, chroma, hue)
 	}
 
-	row := mustPostColor(t, db, post.Id)
-	if !row.hue.Valid || float32(row.hue.Float64) != float32(d.Hue) || float32(row.chroma.Float64) != float32(d.Chroma) {
+	row := checkPostColor(t, db, post.Id, swatches(colors), false)
+	if !row.hue.Valid || float32(row.hue.Float64) != float32(d.Hue) || float32(row.strength.Float64) != float32(0.3*d.Chroma) {
 		t.Fatalf("expected the firebrick cluster as representative, got %+v", row)
-	}
-	if want := colorspace.RainbowKey(post.Id, d.Hue); row.rainbow.Float64 != want {
-		t.Errorf("expected rainbow key %v, got %v", want, row.rainbow.Float64)
 	}
 
 	t.Run("patch colors", func(t *testing.T) {
@@ -119,7 +156,7 @@ func TestPostService_ColorsDerived(t *testing.T) {
 			t.Errorf("expected a derived navy color, got %+v", found.Colors)
 		}
 		blue, _ := colorspace.Derive("0000ff")
-		if row := mustPostColor(t, db, post.Id); float32(row.hue.Float64) != float32(blue.Hue) || row.rainbow.Float64 != colorspace.RainbowKey(post.Id, blue.Hue) {
+		if row := checkPostColor(t, db, post.Id, swatches(patch), false); float32(row.hue.Float64) != float32(blue.Hue) {
 			t.Errorf("expected the blue hue, got %+v", row)
 		}
 	})
@@ -129,8 +166,8 @@ func TestPostService_ColorsDerived(t *testing.T) {
 		if err := service.PatchPost(ctx, &analogdb.PatchPost{Grayscale: &yes}, post.Id); err != nil {
 			t.Fatal(err)
 		}
-		if row := mustPostColor(t, db, post.Id); row.hue.Valid || row.chroma.Valid || row.rainbow.Valid {
-			t.Errorf("expected no representative for grayscale, got %+v", row)
+		if row := mustPostColor(t, db, post.Id); row.hue.Valid || row.chroma.Valid || row.strength.Valid || row.rainbow.Valid {
+			t.Errorf("expected no rainbow color for a grayscale blue post, got %+v", row)
 		}
 		if err := service.PatchPost(ctx, &analogdb.PatchPost{Grayscale: &no}, post.Id); err != nil {
 			t.Fatal(err)
@@ -141,20 +178,46 @@ func TestPostService_ColorsDerived(t *testing.T) {
 	})
 
 	t.Run("neutral and grayscale posts", func(t *testing.T) {
-		neutral := createColorPost(ctx, t, service, "neutral", []analogdb.Color{{Hex: "#808080", Percent: 0.7}, {Hex: "#000000", Percent: 0.3}}, false)
-		if row := mustPostColor(t, db, neutral.Id); row.hue.Valid || row.rainbow.Valid {
-			t.Errorf("expected no representative for a neutral palette, got %+v", row)
+		cases := []struct {
+			name      string
+			colors    []analogdb.Color
+			grayscale bool
+			ok        bool
+		}{
+			{"neutral white", []analogdb.Color{{Hex: "#ffffff", Percent: 0.5}, {Hex: "#808080", Percent: 0.5}}, false, true},
+			{"neutral gray", []analogdb.Color{{Hex: "#808080", Percent: 0.7}, {Hex: "#000000", Percent: 0.3}}, false, true},
+			{"neutral black", []analogdb.Color{{Hex: "#000000", Percent: 0.6}, {Hex: "#808080", Percent: 0.4}}, false, true},
+			{"neutral below minimum", []analogdb.Color{{Hex: "#808080", Percent: 0.6}, {Hex: "#000000", Percent: 0.4}}, false, false},
+			{"grayscale black", []analogdb.Color{{Hex: "#ff0000", Percent: 0.4}, {Hex: "#000000", Percent: 0.6}}, true, true},
+			{"grayscale red", []analogdb.Color{{Hex: "#ff0000", Percent: 1}}, true, false},
 		}
-		gray := createColorPost(ctx, t, service, "grayscale", []analogdb.Color{{Hex: "#ff0000", Percent: 1}}, true)
-		if row := mustPostColor(t, db, gray.Id); row.hue.Valid || row.rainbow.Valid {
-			t.Errorf("expected no representative for a grayscale post, got %+v", row)
+		tails := map[string]float64{}
+		for _, tc := range cases {
+			p := createColorPost(ctx, t, service, tc.name, tc.colors, tc.grayscale)
+			row := checkPostColor(t, db, p.Id, swatches(tc.colors), tc.grayscale)
+			if row.rainbow.Valid != tc.ok {
+				t.Errorf("%s: expected in the rainbow %t, got %+v", tc.name, tc.ok, row)
+			}
+			if tc.ok {
+				// black ends its loop where the next one starts
+				w := colorspace.RainbowHueWidth + colorspace.RainbowNeutralWidth
+				place := row.rainbow.Float64 - math.Ceil(row.rainbow.Float64/w-1)*w
+				if place < colorspace.RainbowHueWidth {
+					t.Errorf("%s: expected a place in the neutral tail, got %v", tc.name, place)
+				}
+				tails[tc.name] = place
+			}
 		}
+		if !(tails["neutral white"] < tails["neutral gray"] && tails["neutral gray"] < tails["neutral black"]) {
+			t.Errorf("expected white before gray before black in the tail, got %v", tails)
+		}
+
 		empty := []analogdb.Color{}
 		if err := service.PatchPost(ctx, &analogdb.PatchPost{Colors: &empty}, post.Id); err != nil {
 			t.Fatal(err)
 		}
-		if row := mustPostColor(t, db, post.Id); row.hue.Valid {
-			t.Errorf("expected no representative without colors, got %+v", row)
+		if row := mustPostColor(t, db, post.Id); row.hue.Valid || row.strength.Valid || row.rainbow.Valid {
+			t.Errorf("expected no rainbow color without colors, got %+v", row)
 		}
 	})
 
@@ -241,12 +304,12 @@ func expectedRainbowOrder(t *testing.T, posts []colorTestPost) []int {
 	}
 	out := []keyed{}
 	for _, p := range posts {
-		hue, _, ok, err := colorspace.PaletteRepresentative(p.palette)
+		c, ok, err := colorspace.PalettePostColor(p.palette, p.grayscale)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if ok && !p.grayscale {
-			out = append(out, keyed{p.id, colorspace.RainbowKey(p.id, hue)})
+		if ok {
+			out = append(out, keyed{p.id, colorspace.RainbowKey(p.id, c)})
 		}
 	}
 	sort.Slice(out, func(i, j int) bool {
@@ -269,15 +332,21 @@ func TestPostService_ColorSort(t *testing.T) {
 	ctx := context.Background()
 
 	posts := []colorTestPost{}
-	for i := range 40 {
+	neutrals := [][]analogdb.Color{
+		{{Hex: "#ffffff", Percent: 0.6}, {Hex: "#808080", Percent: 0.4}},
+		{{Hex: "#808080", Percent: 0.8}, {Hex: "#ffffff", Percent: 0.2}},
+		{{Hex: "#000000", Percent: 0.7}, {Hex: "#808080", Percent: 0.3}},
+		{{Hex: "#808080", Percent: 0.5}, {Hex: "#000000", Percent: 0.45}},
+	}
+	for i := range 48 {
 		colors := colorTestPalette(i)
+		if i >= 40 {
+			colors = neutrals[i%len(neutrals)]
+		}
 		grayscale := i%9 == 0
 		post := createColorPost(ctx, t, service, fmt.Sprintf("color_%d", i), colors, grayscale)
-		palette := []colorspace.Swatch{}
-		for _, c := range colors {
-			palette = append(palette, colorspace.Swatch{Hex: c.Hex, Percent: c.Percent})
-		}
-		posts = append(posts, colorTestPost{id: post.Id, grayscale: grayscale, palette: palette})
+		posts = append(posts, colorTestPost{id: post.Id, grayscale: grayscale, palette: swatches(colors)})
+		checkPostColor(t, db, post.Id, swatches(colors), grayscale)
 	}
 
 	colorSort := analogdb.PostSortColor
@@ -406,4 +475,125 @@ func TestPostService_ColorSort(t *testing.T) {
 			t.Error("expected newest first")
 		}
 	})
+}
+
+type colorSnapshot struct {
+	colors map[int][7]any
+	posts  map[int][4]any
+}
+
+func mustColorSnapshot(t *testing.T, db *DB) colorSnapshot {
+	t.Helper()
+	snap := colorSnapshot{colors: map[int][7]any{}, posts: map[int][4]any{}}
+	mustScanRows(t, db, "SELECT id, html, css, oklab_l, oklab_a, oklab_b, chroma, hue FROM colors", func(rows *sql.Rows) error {
+		var id int
+		var html, css sql.NullString
+		var l, a, b, chroma, hue sql.NullFloat64
+		err := rows.Scan(&id, &html, &css, &l, &a, &b, &chroma, &hue)
+		snap.colors[id] = [7]any{html, css, l, a, b, chroma, hue}
+		return err
+	})
+	mustScanRows(t, db, "SELECT id, color_hue, color_chroma, color_strength, rainbow_key FROM pictures", func(rows *sql.Rows) error {
+		var id int
+		var hue, chroma, strength, key sql.NullFloat64
+		err := rows.Scan(&id, &hue, &chroma, &strength, &key)
+		snap.posts[id] = [4]any{hue, chroma, strength, key}
+		return err
+	})
+	return snap
+}
+
+func mustScanRows(t *testing.T, db *DB, query string, scan func(*sql.Rows) error) {
+	t.Helper()
+	rows, err := db.db.Query(query)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		if err := scan(rows); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestColorService_Rederive(t *testing.T) {
+	db, cleanup := mustOpen(t)
+	defer cleanup()
+	service := NewPostService(db)
+	colors := NewColorService(db)
+	ctx := context.Background()
+
+	type created struct {
+		id        int
+		grayscale bool
+		palette   []colorspace.Swatch
+	}
+	posts := []created{}
+	create := func(i int) {
+		c := colorTestPalette(i)
+		grayscale := i%5 == 0
+		p := createColorPost(ctx, t, service, fmt.Sprintf("rederive_%d", i), c, grayscale)
+		posts = append(posts, created{p.Id, grayscale, swatches(c)})
+	}
+	for i := range 20 {
+		create(i)
+	}
+	// later posts fall in other batches
+	if _, err := db.db.Exec("SELECT setval(pg_get_serial_sequence('pictures', 'id'), 1700)"); err != nil {
+		t.Fatal(err)
+	}
+	for i := 20; i < 25; i++ {
+		create(i)
+	}
+	want := mustColorSnapshot(t, db)
+
+	result, err := colors.RederiveColors(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Posts != len(posts) || result.Colors != 3*len(posts) || result.PostsUpdated != 0 || result.ColorsUpdated != 0 {
+		t.Fatalf("expected nothing to change on fresh posts, got %+v", result)
+	}
+
+	corrupt := []string{
+		"UPDATE colors SET html = 'red', css = 'nope', oklab_l = NULL, chroma = 0, hue = NULL",
+		"UPDATE pictures SET color_hue = NULL, color_chroma = 1, color_strength = NULL, rainbow_key = NULL",
+	}
+	for _, q := range corrupt {
+		if _, err := db.db.Exec(q); err != nil {
+			t.Fatal(err)
+		}
+	}
+	result, err = colors.RederiveColors(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.PostsUpdated != len(posts) || result.ColorsUpdated != 3*len(posts) {
+		t.Errorf("expected every row updated, got %+v", result)
+	}
+	if got := mustColorSnapshot(t, db); !reflect.DeepEqual(got, want) {
+		t.Errorf("expected the derived columns restored\nwant %v\ngot  %v", want, got)
+	}
+	keys := 0
+	for _, p := range posts {
+		if checkPostColor(t, db, p.id, p.palette, p.grayscale).rainbow.Valid {
+			keys++
+		}
+	}
+	if keys == 0 {
+		t.Error("expected rainbow keys")
+	}
+
+	// a grayscale change made outside the API is picked up
+	if _, err := db.db.Exec("UPDATE pictures SET greyscale = NOT greyscale WHERE id = $1", posts[1].id); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := colors.RederiveColors(ctx); err != nil {
+		t.Fatal(err)
+	}
+	checkPostColor(t, db, posts[1].id, posts[1].palette, !posts[1].grayscale)
 }

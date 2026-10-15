@@ -27,11 +27,36 @@ const (
 	// RainbowHueOffset rotates the start of each rainbow loop to red
 	RainbowHueOffset = 15.0
 
-	// RainbowCycles is how many hue loops the rainbow is split into
-	RainbowCycles = 128
-
-	// RainbowHash spreads post ids over the rainbow cycles
+	// RainbowHash spreads post ids over the rainbow loops
 	RainbowHash = 2654435761
+
+	// RainbowHueWidth is the hue part of a rainbow loop, RainbowNeutralWidth
+	// the white to black tail after it
+	RainbowHueWidth     = 360.0
+	RainbowNeutralWidth = 30.0
+)
+
+// The rainbow tiers posts by color strength, strongest first. A post is in the
+// first tier whose minimum strength it reaches, and each tier is spread over its
+// own loops of about 50 posts. Black, gray and white posts go after purple when
+// their dominant neutral share reaches its minimum, about NeutralPerLoop of each
+// per loop over the first loops of their bucket.
+// Tuned on 2026-10-15 data. They can be retuned, then rederived with
+// POST /admin/colors/rederive, without a migration.
+var (
+	RainbowTierStrengths = []float64{0.03, 0.02, 0.015, 0.0115, 0.009, 0}
+	RainbowTierLoops     = []int{9, 20, 31, 43, 45, 104}
+)
+
+const (
+	NeutralWhiteMin = 0.4
+	NeutralGrayMin  = 0.7
+	NeutralBlackMin = 0.5
+
+	NeutralPerLoop    = 6
+	NeutralWhiteLoops = 23
+	NeutralGrayLoops  = 186
+	NeutralBlackLoops = 172
 )
 
 // Warm modifiers turn dark warm hues brown, pale warm hues tan and dark yellows olive
