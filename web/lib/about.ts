@@ -103,3 +103,47 @@ export function shuffle<T>(items: T[]): T[] {
   }
   return result;
 }
+
+function hexToRgb(hex: string): [number, number, number] | null {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!match) return null;
+  const value = parseInt(match[1], 16);
+  return [(value >> 16) & 255, (value >> 8) & 255, value & 255];
+}
+
+function colorDistance(a: string, b: string): number {
+  const x = hexToRgb(a);
+  const y = hexToRgb(b);
+  if (!x || !y) return 0;
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+}
+
+// pick clusters whose sources look unlike each other, judged by dominant color
+export function pickSimilarRows(
+  clusters: SimilarityData[],
+  count: number,
+  matches: number
+): SimilarityData[] {
+  const full = clusters.filter((c) => c.similarPosts.length >= matches);
+  const pool = shuffle(full.length >= count ? full : clusters);
+  const color = (c: SimilarityData) => c.centerPost.colors[0] ?? "";
+  const picked = pool.splice(0, 1);
+  while (picked.length < count && pool.length) {
+    let best = 0;
+    let bestDistance = -1;
+    pool.forEach((candidate, index) => {
+      const distance = Math.min(
+        ...picked.map((p) => colorDistance(color(p), color(candidate)))
+      );
+      if (distance > bestDistance) {
+        best = index;
+        bestDistance = distance;
+      }
+    });
+    picked.push(...pool.splice(best, 1));
+  }
+  return picked.map((c) => ({
+    ...c,
+    similarPosts: c.similarPosts.slice(0, matches),
+  }));
+}

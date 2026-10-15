@@ -1,0 +1,53 @@
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+}
+
+/* a faint sleeve marks the source and its matches as one set */
+.row {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(5, 1fr);
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border: 1px solid var(--adb-border-soft);
+  border-radius: var(--mantine-radius-default);
+  background-color: var(--adb-surface-alt);
+}
+
+/* the source is wider and set apart from its matches */
+.source {
+  position: relative;
+  margin-right: 0.5rem;
+}
+
+.tile {
+  position: relative;
+  aspect-ratio: 1;
+}
+
+.empty {
+  background-color: var(--adb-border-soft);
+}
+
+@media (max-width: 720px) {
+  .rows {
+    gap: 1rem;
+  }
+
+  .row {
+    grid-template-columns: 1.5fr repeat(3, 1fr);
+    gap: 0.2rem;
+    padding: 0.4rem;
+  }
+
+  .source {
+    margin-right: 0.3rem;
+  }
+
+  /* the source and three matches keep each row short */
+  .row > :nth-child(n + 5) {
+    display: none;
+  }
+}
