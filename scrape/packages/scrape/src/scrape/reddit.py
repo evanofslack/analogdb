@@ -1,8 +1,9 @@
-from typing import List, Optional
+from typing import Collection, List, Optional
 
 import praw
 from praw.models import Comment
 
+from .arctic import ArcticShift
 from .constants import REDDIT_URL, SPROCKET_SUB
 from .models import RedditComment, RedditPost, ScrapeError, ScrapeResult
 
@@ -45,6 +46,52 @@ class RedditScraper:
 
         result = ScrapeResult(posts=posts, errors=errors)
         return result
+
+    def scrape_day(
+        self,
+        subreddit: str,
+        num_posts: int,
+        start: int,
+        end: int,
+        skip_permalinks: List[str],
+        arctic: ArcticShift,
+    ) -> ScrapeResult:
+        """Top posts by current score created in [start, end), found through
+        Arctic Shift since Reddit listings cannot be searched by time"""
+        ids = arctic.post_ids(subreddit, start, end)
+        submissions = list(self.reddit.info(fullnames=[f"t3_{id}" for id in ids]))
+        usable = [s for s in submissions if self._is_usable(s, start, end)]
+        usable.sort(key=lambda s: s.score, reverse=True)
+
+        skip = set(skip_permalinks)
+        posts: List[RedditPost] = []
+        errors: List[ScrapeError] = []
+        for submission in usable:
+            if len(posts) >= num_posts:
+                break
+            try:
+                post = self._process_submission(submission, subreddit, skip)
+                if post:
+                    posts.append(post)
+            except RedditScrapingError as e:
+                errors.append(
+                    ScrapeError(
+                        id=submission.id,
+                        url=submission.url,
+                        permalink=f"{REDDIT_URL}{submission.permalink}",
+                        msg=str(e),
+                    )
+                )
+
+        return ScrapeResult(posts=posts, errors=errors)
+
+    def _is_usable(self, submission: praw.reddit.Submission, start: int, end: int):
+        return (
+            not getattr(submission, "removed_by_category", None)
+            and submission.author is not None
+            and not submission.is_self
+            and start <= submission.created_utc < end
+        )
 
     def scrape_comments(self, url: str) -> List[RedditComment]:
         submission = self.reddit.submission(url=url)
@@ -113,11 +160,13 @@ class RedditScraper:
         self,
         submission: praw.reddit.Submission,
         subreddit: str,
-        latest_permalinks: List[str],
+        latest_permalinks: Collection[str],
     ) -> Optional[RedditPost]:
         permalink = f"{REDDIT_URL}{submission.permalink}"
         if permalink in latest_permalinks:
             return None
+        if submission.author is None:
+            raise RedditScrapingError("Author deleted")
 
         url = self._extract_url(submission)
         if not url:
@@ -142,10 +191,15 @@ class RedditScraper:
         return submission.url
 
     def _handle_gallery(self, submission: praw.reddit.Submission) -> Optional[str]:
+        # galleries removed or deleted later keep is_gallery but lose their media
+        if not getattr(submission, "gallery_data", None) or not getattr(
+            submission, "media_metadata", None
+        ):
+            return None
         for item in sorted(submission.gallery_data["items"], key=lambda x: x["id"]):
             media_id = item["media_id"]
-            meta = submission.media_metadata[media_id]
-            if meta["e"] == "Image":
+            meta = submission.media_metadata.get(media_id, {})
+            if meta.get("e") == "Image" and "s" in meta:
                 return meta["s"]["u"]
         return None
 

@@ -17,6 +17,12 @@ from dagster_app.iomanager import io_manager
 from .assets import (
     analogdb_permalinks,
     analogdb_posts,
+    archive_final_posts,
+    archive_post_images,
+    archive_post_tags,
+    archive_reddit_posts,
+    archive_title_metadatas,
+    archive_upload_posts,
     debug_posts,
     final_posts,
     patch_post_descriptions,
@@ -42,6 +48,7 @@ from .backfill import (
 )
 from .duplicates import report_duplicates
 from .jobs import (
+    archive_job,
     patch_comments_job,
     patch_descriptions_job,
     patch_scores_job,
@@ -78,6 +85,12 @@ defs = dg.Definitions(
         tag_missing_post_captions,
         analogdb_permalinks,
         analogdb_posts,
+        archive_final_posts,
+        archive_post_images,
+        archive_post_tags,
+        archive_reddit_posts,
+        archive_title_metadatas,
+        archive_upload_posts,
         debug_posts,
         final_posts,
         patch_post_descriptions,
@@ -133,6 +146,7 @@ defs = dg.Definitions(
         "io_manager": io_manager(),
     },
     jobs=[
+        archive_job,
         reencode_vectors_job,
         report_duplicates_job,
         rematch_metadata_job,

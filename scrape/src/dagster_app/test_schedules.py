@@ -12,7 +12,14 @@ from .schedules import (
     update_post_scores_schedule,
 )
 
-RETRY_ASSETS = {"reddit_posts", "post_images", "upload_posts"}
+RETRY_ASSETS = {
+    "reddit_posts",
+    "post_images",
+    "upload_posts",
+    "archive_reddit_posts",
+    "archive_post_images",
+    "archive_upload_posts",
+}
 
 
 def evaluate(schedule: dg.ScheduleDefinition) -> dg.RunRequest:
@@ -102,6 +109,19 @@ def test_day_two_job_keeps_comments_and_metadata():
         "reddit_comments_to_s3",
         "patch_post_metadata",
     }
+
+
+def test_archive_job_has_its_own_assets():
+    job = defs.resolve_job_def("scrape_archive")
+    assert set(job.graph.node_dict) == {
+        "archive_reddit_posts",
+        "archive_title_metadatas",
+        "archive_post_images",
+        "archive_post_tags",
+        "archive_final_posts",
+        "archive_upload_posts",
+    }
+    assert job.tags["reddit"] == "true"
 
 
 def test_retry_policies():

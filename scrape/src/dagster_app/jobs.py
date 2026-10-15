@@ -3,6 +3,12 @@ import dagster as dg
 from .assets import (
     analogdb_permalinks,
     analogdb_posts,
+    archive_final_posts,
+    archive_post_images,
+    archive_post_tags,
+    archive_reddit_posts,
+    archive_title_metadatas,
+    archive_upload_posts,
     final_posts,
     patch_post_descriptions,
     patch_post_metadata,
@@ -34,6 +40,20 @@ scrape_job = dg.define_asset_job(
         post_tags,
         final_posts,
         upload_posts,
+    ],
+)
+
+archive_job = dg.define_asset_job(
+    name="scrape_archive",
+    description="Fill missed days from Arctic Shift, set config.days to dates or ranges",
+    tags={"reddit": "true"},
+    selection=[
+        archive_reddit_posts,
+        archive_title_metadatas,
+        archive_post_images,
+        archive_post_tags,
+        archive_final_posts,
+        archive_upload_posts,
     ],
 )
 
