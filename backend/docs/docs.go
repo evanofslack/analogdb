@@ -1607,7 +1607,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random",
+                        "description": "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random or sort=color",
                         "name": "page_id",
                         "in": "query"
                     },
@@ -1615,11 +1615,12 @@ const docTemplate = `{
                         "enum": [
                             "time",
                             "score",
-                            "random"
+                            "random",
+                            "color"
                         ],
                         "type": "string",
                         "default": "time",
-                        "description": "Sort order",
+                        "description": "Sort order. color ranks by the share of the given colors, or gives a rainbow with no colors",
                         "name": "sort",
                         "in": "query"
                     },
@@ -1630,7 +1631,7 @@ const docTemplate = `{
                         ],
                         "type": "string",
                         "default": "desc",
-                        "description": "Sort direction for time and score, ignored for random",
+                        "description": "Sort direction for time and score, ignored for random and color",
                         "name": "order",
                         "in": "query"
                     },
@@ -1746,7 +1747,7 @@ const docTemplate = `{
                             "type": "string"
                         },
                         "collectionFormat": "multi",
-                        "description": "Color filter (multiple allowed)",
+                        "description": "Color name (red, orange, tan, yellow, green, olive, teal, navy, purple, pink, gray, black, white, brown) or 6 digit hex, # optional. Multiple colors must all match",
                         "name": "color",
                         "in": "query"
                     },
@@ -1756,7 +1757,7 @@ const docTemplate = `{
                             "type": "number"
                         },
                         "collectionFormat": "multi",
-                        "description": "Minimum color percentage (multiple allowed)",
+                        "description": "Minimum share of the image for the color at the same position, from 0 to 1. Defaults per color, divided by the number of colors",
                         "name": "min_color",
                         "in": "query"
                     },
@@ -2256,18 +2257,21 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "css": {
+                    "description": "Nearest CSS color name, derived by the API and ignored on write",
                     "type": "string",
-                    "example": "dimgray"
+                    "example": "gray"
                 },
                 "hex": {
                     "type": "string",
                     "example": "#837d5c"
                 },
                 "html": {
+                    "description": "Color bucket, derived by the API and ignored on write",
                     "type": "string",
-                    "example": "gray"
+                    "example": "olive"
                 },
                 "percent": {
+                    "description": "Share of the whole image, from 0 to 1",
                     "type": "number",
                     "example": 0.55
                 }

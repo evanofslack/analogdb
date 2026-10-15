@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/evanofslack/analogdb/colorspace"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -101,9 +102,9 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Produce json
 // @Param page_size query int false "Number of posts per page, 1 to 200" default(20)
 // @Param cursor query string false "Opaque cursor from next_cursor for the next page"
-// @Param page_id query int false "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random"
-// @Param sort query string false "Sort order" Enums(time,score,random) default(time)
-// @Param order query string false "Sort direction for time and score, ignored for random" Enums(asc,desc) default(desc)
+// @Param page_id query int false "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random or sort=color"
+// @Param sort query string false "Sort order. color ranks by the share of the given colors, or gives a rainbow with no colors" Enums(time,score,random,color) default(time)
+// @Param order query string false "Sort direction for time and score, ignored for random and color" Enums(asc,desc) default(desc)
 // @Param seed query int false "Random seed for consistent random sorting, picked from 1..500 when missing"
 // @Param id query int false "Filter by post ID"
 // @Param title query string false "Filter by post title"
@@ -121,8 +122,8 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
 // @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
 // @Param keyword query []string false "Filter by keywords (multiple allowed)" collectionFormat(multi)
-// @Param color query []string false "Color filter (multiple allowed)" collectionFormat(multi)
-// @Param min_color query []number false "Minimum color percentage (multiple allowed)" collectionFormat(multi)
+// @Param color query []string false "Color name (red, orange, tan, yellow, green, olive, teal, navy, purple, pink, gray, black, white, brown) or 6 digit hex, # optional. Multiple colors must all match" collectionFormat(multi)
+// @Param min_color query []number false "Minimum share of the image for the color at the same position, from 0 to 1. Defaults per color, divided by the number of colors" collectionFormat(multi)
 // @Param width_min query number false "Minimum picture width"
 // @Param width_max query number false "Maximum picture width"
 // @Param height_min query number false "Minimum picture height"
@@ -491,7 +492,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int, has
 
 	// pageID, kept non-zero while there are more pages
 	switch sort {
-	case analogdb.PostSortTime, analogdb.PostSortRandom:
+	case analogdb.PostSortTime, analogdb.PostSortRandom, analogdb.PostSortColor:
 		meta.PageID = last.Time
 	case analogdb.PostSortScore:
 		meta.PageID = last.Score
@@ -659,6 +660,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	sortTime := analogdb.PostSortTime
 	sortScore := analogdb.PostSortScore
 	sortRandom := analogdb.PostSortRandom
+	sortColor := analogdb.PostSortColor
 	values := r.URL.Query()
 
 	if sort := values.Get("sort"); sort != "" {
@@ -669,8 +671,10 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			filter.Sort = &sortScore
 		case sortRandom.String():
 			filter.Sort = &sortRandom
+		case sortColor.String():
+			filter.Sort = &sortColor
 		default:
-			return nil, badRequest("invalid sort parameter %s, valid options are '%s', '%s', '%s'", sort, sortTime, sortScore, sortRandom)
+			return nil, badRequest("invalid sort parameter %s, valid options are '%s', '%s', '%s', '%s'", sort, sortTime, sortScore, sortRandom, sortColor)
 		}
 	}
 
@@ -684,7 +688,7 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			return nil, badRequest("invalid order parameter %s, valid options are '%s', '%s'", order, analogdb.PostOrderAsc, analogdb.PostOrderDesc)
 		}
 	}
-	if *filter.Sort == analogdb.PostSortRandom {
+	if *filter.Sort == analogdb.PostSortRandom || *filter.Sort == analogdb.PostSortColor {
 		filter.Order = nil
 	}
 
@@ -732,6 +736,9 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			filter.Seed = &seed
 		}
 	} else {
+		if filter.Keyset != nil && *filter.Sort == analogdb.PostSortColor {
+			return nil, badRequest("page_id is not supported with sort=color; use cursor")
+		}
 		if filter.Keyset != nil && filter.Ascending() {
 			return nil, badRequest("page_id is not supported with order=asc; use cursor")
 		}
@@ -845,7 +852,15 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 	}
 
 	if colors, ok := values["color"]; ok {
-		filter.Colors = &colors
+		normalized := make([]string, 0, len(colors))
+		for _, c := range colors {
+			color, err := colorspace.NormalizeQuery(c)
+			if err != nil {
+				return nil, badRequest("invalid color %s, use a color name or a 6 digit hex", c)
+			}
+			normalized = append(normalized, color)
+		}
+		filter.Colors = &normalized
 		filter.SetMinColorPercent()
 	}
 

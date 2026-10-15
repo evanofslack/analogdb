@@ -91,6 +91,20 @@ func TestPostService_FindPostsGolden(t *testing.T) {
 			f.Colors = &[]string{"navy", "black"}
 			f.ColorPercents = &[]float64{0.5, 0.1}
 		})},
+		{"color_sort", filter(analogdb.PostSortColor, func(f *analogdb.PostFilter) {
+			f.Colors = &[]string{"gray"}
+			f.ColorPercents = &[]float64{0.1}
+		})},
+		{"color_sort_two", filter(analogdb.PostSortColor, func(f *analogdb.PostFilter) {
+			f.Colors = &[]string{"gray", "white"}
+			f.ColorPercents = &[]float64{0, 0}
+		})},
+		{"color_sort_cursor", filter(analogdb.PostSortColor, func(f *analogdb.PostFilter) {
+			f.Colors = &[]string{"gray"}
+			f.ColorPercents = &[]float64{0}
+			f.Cursor = &analogdb.Cursor{Rank: 0.3, ID: 2}
+		})},
+		{"rainbow", filter(analogdb.PostSortColor, nil)},
 		{"camera", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) {
 			f.CameraMake = ptr("nikon")
 			f.CameraModel = ptr("fm2")
