@@ -246,6 +246,23 @@ func (cache *Cache) delete(ctx context.Context, key string) error {
 	return err
 }
 
+// deleteMany removes keys from redis and the local cache in one call
+func (cache *Cache) deleteMany(ctx context.Context, keys []string) error {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cacheOpTimeout)
+	defer cancel()
+
+	cache.deletes.Add(1)
+	for _, key := range keys {
+		cache.local.Del(key)
+	}
+	if err := cache.redis.Del(ctx, keys...).Err(); err != nil {
+		cache.logger.ErrorContext(ctx, "Fail delete items in cache", "instance", cache.instance, "count", len(keys), "error", err)
+		cache.stats.incErrors(errorKindRedis)
+		return err
+	}
+	return nil
+}
+
 // once runs load for a key at most once at a time and stores the result.
 // Concurrent misses on the same key share one call to load.
 func (cache *Cache) once(ctx context.Context, key string, load func(ctx context.Context) (any, error)) (any, error) {

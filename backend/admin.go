@@ -130,3 +130,18 @@ type VectorCounter interface {
 type VectorLister interface {
 	VectorPostIDs(ctx context.Context) ([]int, error)
 }
+
+// ColorRederive counts the rows a color rederive scanned and changed
+type ColorRederive struct {
+	Posts         int   `json:"posts"`
+	PostsUpdated  int   `json:"posts_updated"`
+	Colors        int   `json:"colors"`
+	ColorsUpdated int   `json:"colors_updated"`
+	DurationMs    int64 `json:"duration_ms"`
+}
+
+// ColorService recomputes everything derived from the stored color hex and
+// percent values, after the naming or rainbow rules change
+type ColorService interface {
+	RederiveColors(ctx context.Context) (*ColorRederive, error)
+}

@@ -61,6 +61,7 @@ func (s *Server) mountAdminHandlers(r chi.Router) {
 			r.Get("/traffic", s.getAdminTraffic)
 			r.Get("/analytics", s.getAdminAnalytics)
 			r.Get("/audit", s.getAdminAudit)
+			r.Post("/colors/rederive", s.rederiveColors)
 			s.mountAdminReportHandlers(r)
 		})
 		r.Group(func(r chi.Router) {
@@ -132,6 +133,17 @@ func (s *Server) getAdminOverview(w http.ResponseWriter, r *http.Request) {
 		Vectors:    adminVectors{Objects: vectors, Posts: stats.Counts.Posts},
 	}
 	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+func (s *Server) rederiveColors(w http.ResponseWriter, r *http.Request) {
+	result, err := s.ColorService.RederiveColors(r.Context())
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if err := encodeResponse(w, r, http.StatusOK, result); err != nil {
 		s.writeError(w, r, err)
 	}
 }
