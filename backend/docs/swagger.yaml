@@ -745,6 +745,13 @@ definitions:
         items:
           type: string
         type: array
+      related_posts:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/analogdb.CatalogPost'
+          type: array
+        description: Top scoring posts of each related keyword, only with related_posts
+        type: object
     type: object
   server.SimilarPostsResponse:
     properties:
@@ -2164,6 +2171,12 @@ paths:
         in: query
         name: sprocket
         type: boolean
+      - default: 0
+        description: Attach this many top scoring posts to each related keyword (0
+          to 10)
+        in: query
+        name: related_posts
+        type: integer
       produces:
       - application/json
       responses:
@@ -2215,6 +2228,12 @@ paths:
         in: query
         name: sprocket
         type: boolean
+      - default: 0
+        description: Attach this many top scoring posts to each related keyword (0
+          to 10)
+        in: query
+        name: related_posts
+        type: integer
       produces:
       - application/json
       responses:

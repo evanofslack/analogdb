@@ -54,6 +54,8 @@ type SearchResponse struct {
 	Meta            SearchMeta      `json:"meta"`
 	Posts           []analogdb.Post `json:"posts"`
 	RelatedKeywords []string        `json:"related_keywords" example:"beach,silhouette,dusk"`
+	// Top scoring posts of each related keyword, only with related_posts
+	RelatedPosts map[string][]analogdb.CatalogPost `json:"related_posts,omitempty"`
 }
 
 // searchCursor is the JSON form of a search cursor before base64url encoding
@@ -146,6 +148,19 @@ func parseSearchText(r *http.Request) (*analogdb.SearchFilter, searchQuery, erro
 	return filter, query, nil
 }
 
+// parseRelatedPosts reads how many top posts to attach to each related keyword
+func parseRelatedPosts(values url.Values) (int, error) {
+	str := values.Get("related_posts")
+	if str == "" {
+		return 0, nil
+	}
+	n, err := stringToInt(str)
+	if err != nil {
+		return 0, err
+	}
+	return clampLimit(n, 0, 0, maxTopPosts), nil
+}
+
 // searchValues turns a search filter back into query parameters
 func searchValues(filter *analogdb.SearchFilter, q string) url.Values {
 	values := url.Values{}
@@ -173,6 +188,7 @@ func searchValues(filter *analogdb.SearchFilter, q string) url.Values {
 // @Param nsfw query bool false "Filter by NSFW (true=only, false=exclude)"
 // @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
 // @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
+// @Param related_posts query int false "Attach this many top scoring posts to each related keyword (0 to 10)" default(0)
 // @Success 200 {object} SearchResponse
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 500 {object} ErrorResponse "Internal server error"
@@ -181,6 +197,11 @@ func searchValues(filter *analogdb.SearchFilter, q string) url.Values {
 func (s *Server) searchText(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	filter, query, err := parseSearchText(r)
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	relatedPosts, err := parseRelatedPosts(r.URL.Query())
 	if err != nil {
 		s.writeError(w, r, err)
 		return
@@ -212,6 +233,7 @@ func (s *Server) searchText(w http.ResponseWriter, r *http.Request) {
 
 	if filter.Offset == 0 {
 		resp.RelatedKeywords = s.related(r.Context(), hits, query.terms, filter.Grayscale)
+		resp.RelatedPosts = s.relatedTopPosts(r.Context(), resp.RelatedKeywords, relatedPosts)
 	}
 
 	next := filter.Offset + filter.Limit
@@ -243,6 +265,7 @@ func (s *Server) searchText(w http.ResponseWriter, r *http.Request) {
 // @Param nsfw query bool false "Filter by NSFW (true=only, false=exclude)"
 // @Param grayscale query bool false "Filter by black and white (true=only, false=exclude)"
 // @Param sprocket query bool false "Filter by sprocketshots (true=only, false=exclude)"
+// @Param related_posts query int false "Attach this many top scoring posts to each related keyword (0 to 10)" default(0)
 // @Success 200 {object} SearchResponse
 // @Failure 400 {object} ErrorResponse "Invalid request"
 // @Failure 413 {object} ErrorResponse "Image too large"
@@ -254,6 +277,11 @@ func (s *Server) searchImage(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	filter := &analogdb.SearchFilter{}
 	if err := parseSearchFlags(r.URL.Query(), filter); err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	relatedPosts, err := parseRelatedPosts(r.URL.Query())
+	if err != nil {
 		s.writeError(w, r, err)
 		return
 	}
@@ -290,6 +318,7 @@ func (s *Server) searchImage(w http.ResponseWriter, r *http.Request) {
 		Posts:           posts,
 		RelatedKeywords: s.related(r.Context(), hits, nil, filter.Grayscale),
 	}
+	resp.RelatedPosts = s.relatedTopPosts(r.Context(), resp.RelatedKeywords, relatedPosts)
 
 	s.observeSearch("image", resp, start)
 	if err := encodeResponse(w, r, http.StatusOK, resp); err != nil {
@@ -403,6 +432,20 @@ func (s *Server) related(ctx context.Context, hits []analogdb.SearchHit, terms [
 		df, total = nil, 0
 	}
 	return relatedKeywords(hits, terms, df, total, grayscale != nil && *grayscale)
+}
+
+// relatedTopPosts finds the top n posts of each related keyword. A failure
+// only drops the posts, the search still succeeds.
+func (s *Server) relatedTopPosts(ctx context.Context, words []string, n int) map[string][]analogdb.CatalogPost {
+	if n == 0 || len(words) == 0 {
+		return nil
+	}
+	top, err := s.KeywordService.TopPosts(ctx, words, n)
+	if err != nil {
+		s.logger.WarnContext(ctx, "Fail get related keyword top posts", "error", err)
+		return nil
+	}
+	return top
 }
 
 func (s *Server) observeSearch(kind string, resp SearchResponse, start time.Time) {
