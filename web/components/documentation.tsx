@@ -465,9 +465,10 @@ const searchResults = [
 const postsGenerals = [
   {
     param: "sort",
-    description: "how to order the posts",
+    description:
+      "how to order the posts. color ranks by how much of the given colors a post has, or gives a rainbow when no color is set",
     default: "time",
-    options: "time, score, random",
+    options: "time, score, random, color",
   },
   {
     param: "page_size",
@@ -520,12 +521,12 @@ const postsFilters = [
   {
     param: "color",
     description:
-      "filter by HTML color name (e.g., gray), repeat for more colors",
+      "filter by color name (red, orange, tan, yellow, green, olive, teal, navy, purple, gray, black, white, brown) or 6 digit hex (e.g., c0392b), repeat to require every color",
   },
   {
     param: "min_color",
     description:
-      "minimum percent of the image for each color, paired by position with color",
+      "minimum share of the image from 0 to 1 for each color, paired by position with color. Each color has a default, divided by the number of colors",
   },
   { param: "width_min", description: "minimum picture width" },
   { param: "width_max", description: "maximum picture width" },
