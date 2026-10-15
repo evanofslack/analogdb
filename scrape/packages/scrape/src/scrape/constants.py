@@ -46,6 +46,18 @@ GRAYSCALE_SUBREDDITS: set[str] = set()
 # colors presented in the output.
 COLOR_LIMIT = 5
 
+# k-means clusters fit in OKLab before merging and keeping the top COLOR_LIMIT
+PALETTE_CLUSTERS = 8
+
+# clusters closer than this OKLab distance are merged into one
+PALETTE_MERGE_DISTANCE = 0.03
+
+# max pixels sampled to fit the clusters, every pixel is still counted for shares
+PALETTE_SAMPLE = 40000
+
+# fixed seed so the same image always gives the same palette
+PALETTE_SEED = 7
+
 # group colors to limit the output and give a
 # better visual representation. Based on a
 # scale from 0 to 100. Where 0 won't group any
