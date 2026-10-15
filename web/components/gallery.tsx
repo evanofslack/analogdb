@@ -46,6 +46,8 @@ export default function Gallery({
   const setSort = (sort: PostsFilters["sort"]) => {
     if (sort === "random") {
       setFilters({ sort: sort, order: null, seed: pickSeed() });
+    } else if (sort === "color") {
+      setFilters({ sort: sort, order: null, seed: null });
     } else {
       setFilters({ sort: sort, seed: null });
     }

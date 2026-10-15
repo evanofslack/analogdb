@@ -1,5 +1,6 @@
 "use client";
 
+import { colorLabel, colorSwatch, isColorName } from "@lib/color";
 import type { CameraOption } from "@lib/data/cameras";
 import type { FilmOption } from "@lib/data/films";
 import {
@@ -56,13 +57,22 @@ const orderLabels = {
   ],
 };
 
+// what the color sort ranks by, a rainbow when no color is set
+function colorSortLabel(colors: string[] | null): string {
+  if (!colors?.length) return "rainbow";
+  if (colors.length === 1 && isColorName(colors[0])) {
+    return `most ${colorLabel(colors[0])}`;
+  }
+  return "closest match";
+}
+
 interface FilterBarProps {
   sort: PostsFilters["sort"];
   order: PostsFilters["order"];
   nsfw: Flag;
   bw: Flag;
   sprocket: Flag;
-  color: string | null;
+  color: string[] | null;
   text: string | null;
   widthMin: number;
   widthMax: number;
@@ -80,7 +90,7 @@ interface FilterBarProps {
   setNsfw: (nsfw: Flag) => void;
   setBw: (bw: Flag) => void;
   setSprocket: (sprocket: Flag) => void;
-  setColor: (color: string | null) => void;
+  setColor: (color: string[] | null) => void;
   setText: (text: string | null) => void;
   setSizes: (sizes: Sizes) => void;
   setFilm: (make: string | null, type: string | null) => void;
@@ -288,6 +298,7 @@ export default function FilterBar({
       value,
       onRemove: () => setValue(postsParsers[key].defaultValue),
     };
+  const unordered = sort === "random" || sort === "color";
   const summaryItems = [
     active.camera && {
       key: "camera",
@@ -310,7 +321,8 @@ export default function FilterBar({
     active.color && {
       key: "color",
       category: "color",
-      value: color,
+      value: color.map(colorLabel).join(", "),
+      swatches: color.map(colorSwatch),
       onRemove: () => setColor(null),
     },
     active.size && {
@@ -639,7 +651,9 @@ export default function FilterBar({
                   leftSection={<IconArrowsSort size={iconSize} stroke={1.5} />}
                   classNames={buttonClassNames}
                 >
-                  <span className={styles.label}>sort</span>
+                  <span className={styles.label}>
+                    {sort === "color" ? colorSortLabel(color) : "sort"}
+                  </span>
                 </Button>
               </Menu.Target>
               <Menu.Dropdown>
@@ -663,6 +677,11 @@ export default function FilterBar({
                         className={styles.radioButton}
                         onClick={() => sort === "random" && setSort("random")}
                       />
+                      <Radio
+                        value="color"
+                        label="color"
+                        className={styles.radioButton}
+                      />
                     </Stack>
                   </Radio.Group>
                 </div>
@@ -671,11 +690,11 @@ export default function FilterBar({
                   <SegmentedControl
                     size="xs"
                     fullWidth
-                    value={sort === "random" ? "desc" : order}
+                    value={unordered ? "desc" : order}
                     onChange={(value) =>
                       setOrder(value as PostsFilters["order"])
                     }
-                    disabled={sort === "random"}
+                    disabled={unordered}
                     data={orderLabels[sort === "score" ? "score" : "time"]}
                     aria-label="order"
                   />

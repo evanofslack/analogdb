@@ -15,6 +15,7 @@ export interface FilterSummaryItem {
   key: string;
   category: string;
   value: string;
+  swatches?: { bg: string; outline?: string }[];
   onRemove: () => void;
 }
 
@@ -63,8 +64,22 @@ export default function FilterSummary({
           <ul className={styles.items}>
             {items.map((item) => (
               <li key={item.key} className={styles.item}>
-                <span>
+                <span className={styles.itemText}>
                   <span className={styles.category}>{item.category}</span>{" "}
+                  {item.swatches && (
+                    <span className={styles.swatches} aria-hidden="true">
+                      {item.swatches.map((swatch, index) => (
+                        <span
+                          key={index}
+                          className={styles.swatch}
+                          style={{
+                            backgroundColor: swatch.bg,
+                            borderColor: swatch.outline ?? swatch.bg,
+                          }}
+                        />
+                      ))}
+                    </span>
+                  )}
                   {item.value}
                 </span>
                 <CloseButton
