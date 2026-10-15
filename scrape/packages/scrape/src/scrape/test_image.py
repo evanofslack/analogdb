@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from .constants import AWS_BUCKET_PHOTOS, CLOUDFRONT_URL
+from .constants import AWS_BUCKET_PHOTOS, CLOUDFRONT_URL, USER_AGENT
 from .image import ImageProcessor, image_bytes_hash, image_hash
 from .models import RedditPost
 
@@ -145,6 +145,15 @@ class TestProcess:
     def test_invalid_content_type_raises(self):
         with pytest.raises(ValueError):
             process(make_post(PERMALINK), b"<html></html>", "text/html")
+
+    def test_sends_analogdb_user_agent(self):
+        with patch(
+            "scrape.image.requests.get",
+            return_value=fake_response(jpeg_bytes(), "image/jpeg"),
+        ) as get:
+            ImageProcessor().process(make_post("/r/analog/comments/a"), FakeS3())
+
+        assert get.call_args.kwargs["headers"] == {"User-Agent": USER_AGENT}
 
     def test_colors_extracted(self):
         _, result = process(make_post(PERMALINK), jpeg_bytes())
