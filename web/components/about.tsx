@@ -4,6 +4,7 @@ import {
   AboutData,
   ColorData,
   AboutPhoto as Photo,
+  pickSimilarRows,
   RainbowGroup,
   shuffle,
   SimilarityData,
@@ -16,23 +17,19 @@ import {
   IconUsers,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./about.module.css";
 import AboutApi from "./aboutApi";
 import AboutFilms from "./aboutFilms";
 import AboutPhoto, { AboutPhotoProvider } from "./aboutPhoto";
 import AboutRepo from "./aboutRepo";
 import AboutSearch from "./aboutSearch";
+import AboutSimilar, { SIMILAR_MATCHES, SIMILAR_ROWS } from "./aboutSimilar";
 import Footer from "./footer";
 
 interface AboutProps {
   data: AboutData;
 }
-
-// how far the similar photos reach past the center photo
-const CLUSTER_REACH = { left: 170, right: 195, top: 160, bottom: 165 };
-const CLUSTER_CENTER_HEIGHT = 420;
-const CLUSTER_SIMILAR_HEIGHT = 180;
 
 const COLOR_ROW_SIZE = 16;
 const RAINBOW_SECONDS = 4;
@@ -66,9 +63,7 @@ export default function About(props: AboutProps) {
   const [colorData, setColorData] = useState<ColorData>(() =>
     pickColorRows(props.data.colorData, false)
   );
-  const [allSimilarityData, setAllSimilarityData] = useState<SimilarityData[]>(
-    props.data.allSimilarityData
-  );
+  const [similarRows, setSimilarRows] = useState<SimilarityData[] | null>(null);
 
   const [shuffled, setShuffled] = useState(false);
   const [rainbow, setRainbow] = useState<Photo[]>([]);
@@ -77,81 +72,15 @@ export default function About(props: AboutProps) {
   useEffect(() => {
     setColorData(pickColorRows(props.data.colorData, true));
     setRainbow(buildRainbow(props.data.rainbow));
-    setAllSimilarityData(shuffle(props.data.allSimilarityData));
+    setSimilarRows(
+      pickSimilarRows(
+        props.data.allSimilarityData,
+        SIMILAR_ROWS,
+        SIMILAR_MATCHES
+      )
+    );
     setShuffled(true);
   }, [props.data]);
-
-  const [currentSimilarityIndex, setCurrentSimilarityIndex] =
-    useState<number>(0);
-  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-  const similarityRef = useRef<HTMLDivElement | null>(null);
-  const [isSimilarityVisible, setIsSimilarityVisible] = useState(false);
-  const [isSimilarityHovered, setIsSimilarityHovered] = useState(false);
-  const clusterAreaRef = useRef<HTMLDivElement | null>(null);
-  const [clusterArea, setClusterArea] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-
-  const currentSimilarityData = allSimilarityData[currentSimilarityIndex] || {
-    centerPost: null,
-    similarPosts: [],
-  };
-
-  useEffect(() => {
-    const node = similarityRef.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(([entry]) =>
-      setIsSimilarityVisible(entry.isIntersecting)
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  // the cluster scales down to fit the space beside the text
-  useEffect(() => {
-    const node = clusterAreaRef.current;
-    if (!node) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setClusterArea({
-        width: entry.contentRect.width,
-        height: entry.contentRect.height,
-      })
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, []);
-
-  // a photo can leave while the pointer is on it, so a new cluster starts unpaused
-  useEffect(() => {
-    setIsSimilarityHovered(false);
-  }, [currentSimilarityIndex]);
-
-  useEffect(() => {
-    if (
-      allSimilarityData.length <= 1 ||
-      !isSimilarityVisible ||
-      isSimilarityHovered
-    )
-      return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    const interval = setInterval(() => {
-      setIsTransitioning(true);
-
-      setTimeout(() => {
-        setCurrentSimilarityIndex((prevIndex) => {
-          return (prevIndex + 1) % allSimilarityData.length;
-        });
-
-        setTimeout(() => {
-          setIsTransitioning(false);
-        }, 50);
-      }, 250);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [allSimilarityData, isSimilarityVisible, isSimilarityHovered]);
 
   const renderMobileColorRows = (): React.ReactElement | null => {
     if (!shuffled || !rainbow.length) return null;
@@ -182,35 +111,6 @@ export default function About(props: AboutProps) {
     );
   };
 
-  const renderMobileSimilarity = (): React.ReactElement | null => {
-    const { centerPost, similarPosts } = currentSimilarityData;
-    if (!shuffled || !centerPost || !similarPosts.length) return null;
-    const fade = isTransitioning ? styles.transitioning : "";
-
-    // the center photo takes a 2x2 block, its neighbors fill the tiles beside it
-    return (
-      <div className={styles.mobileSimilarGrid}>
-        <AboutPhoto
-          photo={centerPost}
-          small
-          fill
-          sizes="50vw"
-          className={`${styles.mobileSimilarCenter} ${fade}`}
-        />
-        {similarPosts.slice(0, 4).map((image) => (
-          <AboutPhoto
-            key={image.id}
-            photo={image}
-            small
-            fill
-            sizes="25vw"
-            className={`${styles.mobileSimilarTile} ${fade}`}
-          />
-        ))}
-      </div>
-    );
-  };
-
   const renderColorRow = (
     images: Photo[],
     direction: "left" | "right",
@@ -237,98 +137,6 @@ export default function About(props: AboutProps) {
               imageClassName={styles.colorImage}
             />
           ))}
-        </div>
-      </div>
-    );
-  };
-
-  const renderSimilarityClusters = (): React.ReactElement | null => {
-    if (
-      !shuffled ||
-      !currentSimilarityData.centerPost ||
-      !currentSimilarityData.similarPosts.length
-    )
-      return null;
-
-    const similarPositions = [
-      { top: "-160px", left: "-40px" },
-      { top: "-130px", right: "-120px" },
-      { bottom: "-150px", left: "-130px" },
-      { bottom: "-165px", right: "-65px" },
-      { top: "45%", left: "-170px", transform: "translateY(-50%)" },
-      { top: "55%", right: "-195px", transform: "translateY(-50%)" },
-    ];
-
-    const centerImage = currentSimilarityData.centerPost;
-
-    const similarPosts = currentSimilarityData.similarPosts;
-
-    const centerAspectRatio =
-      (centerImage.width || 400) / (centerImage.height || 400);
-    const centerHeight = CLUSTER_CENTER_HEIGHT;
-    const centerWidth = centerHeight * centerAspectRatio;
-
-    const stageWidth = centerWidth + CLUSTER_REACH.left + CLUSTER_REACH.right;
-    const stageHeight = centerHeight + CLUSTER_REACH.top + CLUSTER_REACH.bottom;
-    const scale = clusterArea
-      ? Math.min(
-          1,
-          clusterArea.width / stageWidth,
-          clusterArea.height / stageHeight
-        )
-      : 1;
-    const fade = isTransitioning ? styles.transitioning : "";
-
-    return (
-      <div
-        className={styles.clusterStage}
-        style={{
-          width: `${stageWidth}px`,
-          height: `${stageHeight}px`,
-          transform: `translate(-50%, -50%) scale(${scale})`,
-        }}
-      >
-        <div
-          key={centerImage.id}
-          className={styles.clusterContainer}
-          style={{
-            left: `${CLUSTER_REACH.left}px`,
-            top: `${CLUSTER_REACH.top}px`,
-            width: `${centerWidth}px`,
-            height: `${centerHeight}px`,
-          }}
-        >
-          <AboutPhoto
-            photo={centerImage}
-            fill
-            sizes="420px"
-            className={`${styles.clusterCenterContainer} ${fade}`}
-            style={{ width: "100%", height: "100%" }}
-            onHover={setIsSimilarityHovered}
-          />
-
-          {similarPosts.slice(0, 6).map((image, index) => {
-            if (!similarPositions[index]) return null;
-
-            const aspectRatio = (image.width || 200) / (image.height || 200);
-
-            return (
-              <AboutPhoto
-                key={image.id}
-                photo={image}
-                small
-                fill
-                sizes="180px"
-                className={`${styles.clusterSimilarContainer} ${fade}`}
-                style={{
-                  ...similarPositions[index],
-                  width: `${CLUSTER_SIMILAR_HEIGHT * aspectRatio}px`,
-                  height: `${CLUSTER_SIMILAR_HEIGHT}px`,
-                }}
-                onHover={setIsSimilarityHovered}
-              />
-            );
-          })}
         </div>
       </div>
     );
@@ -433,30 +241,33 @@ export default function About(props: AboutProps) {
             </div>
           )}
 
-          <div className={styles.band} ref={similarityRef}>
-            <div className={`${styles.split} ${styles.wide}`}>
-              <div className={styles.text}>
-                <h2 className={styles.title}>Vector Similarity</h2>
-                <p className={styles.subtitle}>
-                  Every photo is embedded with CLIP, one vector space shared by
-                  text search, image search and similar photos. Find photos that
-                  share a look.
-                </p>
-                <Link href="/search" className={styles.link}>
-                  find similar
-                </Link>
-              </div>
-              <div
-                ref={clusterAreaRef}
-                className={`${styles.clusterArea} ${styles.desktopOnly}`}
-              >
-                {renderSimilarityClusters()}
-              </div>
-              <div className={`${styles.visual} ${styles.mobileOnly}`}>
-                {renderMobileSimilarity()}
+          {props.data.allSimilarityData.length > 0 && (
+            <div className={styles.band}>
+              <div className={`${styles.split} ${styles.wide}`}>
+                <div className={styles.text}>
+                  <h2 className={styles.title}>Similar Photos</h2>
+                  <p className={styles.subtitle}>
+                    Every photo is mapped by CLIP, so photos with the same
+                    light, color and mood turn up together.
+                  </p>
+                  <Link
+                    href={
+                      similarRows?.length
+                        ? `/search?similar=${similarRows[0].centerPost.id}`
+                        : "/search"
+                    }
+                    prefetch={false}
+                    className={styles.link}
+                  >
+                    see similar photos
+                  </Link>
+                </div>
+                <div className={`${styles.visual} ${styles.similarVisual}`}>
+                  <AboutSimilar rows={similarRows} />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className={styles.band}>
             <div className={`${styles.split} ${styles.apiSplit}`}>
