@@ -55,6 +55,15 @@ export const searchApi: SearchApi = new SearchApi(config);
 export const keywordsApi: KeywordsApi = new KeywordsApi(config);
 export const authorsApi: AuthorsApi = new AuthorsApi(config);
 
+// errorStatus returns the HTTP status of a failed generated client call. It
+// checks the shape rather than instanceof ResponseError, because the server
+// bundle can hold more than one copy of that class
+export function errorStatus(error: unknown): number | undefined {
+  const status = (error as { response?: { status?: unknown } })?.response
+    ?.status;
+  return typeof status === "number" ? status : undefined;
+}
+
 export async function authorized_fetch(
   route: string,
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET",

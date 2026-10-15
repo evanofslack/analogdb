@@ -3,15 +3,11 @@ import { catalogHref, findByName } from "@lib/catalog";
 import { postApi } from "@lib/client";
 import { getCameraCatalog } from "@lib/data/cameras";
 import { getFilmCatalog } from "@lib/data/films";
+import { getPost } from "@lib/data/posts";
 import { authorName, jsonLd, postDescription } from "@lib/seo";
-import {
-  AnalogdbPost,
-  ResponseError,
-  ServerSimilarPostsResponse,
-} from "analogdb-generated";
+import { AnalogdbPost, ServerSimilarPostsResponse } from "analogdb-generated";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { cache } from "react";
 
 export const dynamicParams = true;
 export const revalidate = 3600;
@@ -23,19 +19,6 @@ type PageProps = {
 export async function generateStaticParams() {
   return [];
 }
-
-const getPost = cache(async (pid: string): Promise<AnalogdbPost | null> => {
-  try {
-    return await postApi.postIdGet({ id: Number(pid) }, {
-      next: { revalidate },
-    } as RequestInit);
-  } catch (error) {
-    if (error instanceof ResponseError) {
-      return null;
-    }
-    throw error;
-  }
-});
 
 const defaultImage = {
   url: "/opengraph-image.jpg",

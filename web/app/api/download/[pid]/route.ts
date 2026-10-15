@@ -1,6 +1,5 @@
-import { postApi } from "@lib/client";
+import { errorStatus, postApi } from "@lib/client";
 import { limit } from "@lib/rateLimit";
-import { ResponseError } from "analogdb-generated";
 import { NextRequest, NextResponse } from "next/server";
 
 const imageHosts = ["i.analogdb.com", "d3i73ktnzbi69i.cloudfront.net"];
@@ -35,7 +34,7 @@ export async function GET(
     try {
       post = await postApi.postIdGet({ id });
     } catch (error) {
-      if (error instanceof ResponseError && error.response.status === 404) {
+      if (errorStatus(error) === 404) {
         return NextResponse.json({ error: "Post not found" }, { status: 404 });
       }
       throw error;
