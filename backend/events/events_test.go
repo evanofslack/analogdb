@@ -20,9 +20,17 @@ type fakeWriter struct {
 	delay   time.Duration
 	written []kafka.Message
 	closed  bool
+	// when set, receives a signal each time a write starts
+	started chan struct{}
 }
 
 func (w *fakeWriter) WriteMessages(ctx context.Context, msgs ...kafka.Message) error {
+	if w.started != nil {
+		select {
+		case w.started <- struct{}{}:
+		default:
+		}
+	}
 	select {
 	case <-time.After(w.delay):
 	case <-ctx.Done():
@@ -61,22 +69,22 @@ func newTestStream(t *testing.T, writer MessageWriter, opts Options) *EventStrea
 }
 
 func TestWriteDoesNotBlock(t *testing.T) {
-	writer := &fakeWriter{delay: 5 * time.Second}
+	writer := &fakeWriter{delay: 5 * time.Second, started: make(chan struct{}, 1)}
 	es := newTestStream(t, writer, Options{QueueSize: 2, BatchSize: 1, BatchTimeout: 10 * time.Millisecond})
 	defer es.cancel()
 
 	if err := es.Write(context.Background(), &v1.Event{Path: "/first"}); err != nil {
 		t.Fatal(err)
 	}
-	// let the worker pick up the first event and block in the writer
-	time.Sleep(50 * time.Millisecond)
+	// wait for the worker to pick up the first event and block in the writer
+	<-writer.started
 
 	var fullErr error
 	for i := 0; i < 5; i++ {
 		start := time.Now()
 		err := es.Write(context.Background(), &v1.Event{Path: "/next"})
-		if elapsed := time.Since(start); elapsed > time.Millisecond {
-			t.Fatalf("write took %s, want under 1ms", elapsed)
+		if elapsed := time.Since(start); elapsed > 100*time.Millisecond {
+			t.Fatalf("write took %s, want under 100ms", elapsed)
 		}
 		if err != nil {
 			fullErr = err

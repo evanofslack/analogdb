@@ -293,8 +293,10 @@ func mustFilled(t *testing.T, times []time.Time, step time.Duration, buckets int
 			t.Fatalf("want step %s at bucket %d, got %s", step, i, got)
 		}
 	}
+	// the query may have run in the previous bucket if a boundary passed since
 	last := times[len(times)-1]
-	if now := time.Now().UTC().Truncate(step); !last.Equal(now) {
+	now := time.Now().UTC().Truncate(step)
+	if !last.Equal(now) && !last.Equal(now.Add(-step)) {
 		t.Errorf("want last bucket %s, got %s", now, last)
 	}
 }
