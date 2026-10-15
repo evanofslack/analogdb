@@ -45,6 +45,7 @@ const maxQueryLength = 200;
 const keywordPageSize = 20;
 const trendingDays = 30;
 const exampleIds = [32768, 34336, 35099, 38512];
+export const relatedPostCount = 5;
 
 function sanitizeSearch(params: SearchGetRequest): SearchGetRequest {
   const source = (params ?? {}) as SearchGetRequest;
@@ -55,6 +56,8 @@ function sanitizeSearch(params: SearchGetRequest): SearchGetRequest {
   };
   if (typeof source.cursor === "string" && source.cursor) {
     clean.cursor = source.cursor;
+  } else {
+    clean.relatedPosts = relatedPostCount;
   }
   if (source.pageSize !== undefined) {
     const pageSize = Math.trunc(Number(source.pageSize));
@@ -80,11 +83,37 @@ export async function searchPosts(
   const clean = sanitizeSearch(params);
   if (!clean.q) return { posts: [], relatedKeywords: [] };
   try {
-    return await searchPostsCached(clean);
+    return slimRelatedPosts(await searchPostsCached(clean));
   } catch (error) {
     console.error("search posts request failed:", error);
     throw error;
   }
+}
+
+// slimRelatedPosts keeps one thumb sized cover per related keyword
+export function slimRelatedPosts(
+  response: ServerSearchResponse
+): ServerSearchResponse {
+  const words = response.relatedKeywords ?? [];
+  const posts = response.relatedPosts;
+  if (!posts || words.length === 0) return response;
+  const covers = pickCovers(
+    words.map((word) => posts[word] ?? []),
+    { random: hourlyRandom(), fits: fitsThumb }
+  );
+  const relatedPosts: Record<string, AnalogdbCatalogPost[]> = {};
+  words.forEach((word, i) => {
+    const cover = covers[i];
+    if (!cover) return;
+    relatedPosts[word] = [
+      {
+        id: cover.id,
+        title: cover.title,
+        images: [{ url: cover.thumbUrl ?? cover.url }],
+      },
+    ];
+  });
+  return { ...response, relatedPosts };
 }
 
 function mediumImage(post: AnalogdbPost): SearchImage | null {

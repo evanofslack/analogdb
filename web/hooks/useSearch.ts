@@ -53,6 +53,7 @@ export default function useSearch(
   return {
     pages,
     relatedKeywords: pages[0]?.relatedKeywords ?? [],
+    relatedPosts: pages[0]?.relatedPosts,
     isLoading: query.isPending,
     isError: query.isError,
     error: query.error,

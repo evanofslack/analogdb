@@ -52,6 +52,7 @@ import { Dropzone, FileRejection, FileWithPath } from "@mantine/dropzone";
 import { IconAdjustmentsHorizontal, IconPhotoScan } from "@tabler/icons-react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AnalogdbCatalogPost,
   AnalogdbPost,
   ServerSearchResponse,
   ServerSimilarPostsResponse,
@@ -284,15 +285,25 @@ function FlagsMenu({ filters, setFilters }: FlagsMenuProps) {
 interface ResultsProps {
   results: ResultsData;
   chips: string[];
+  chipPosts?: Record<string, AnalogdbCatalogPost[]>;
   onSearch: (query: string, source?: SearchOrigin) => void;
   noMatches?: ReactNode;
 }
 
-function Results({ results, chips, onSearch, noMatches }: ResultsProps) {
+function Results({
+  results,
+  chips,
+  chipPosts,
+  onSearch,
+  noMatches,
+}: ResultsProps) {
   return (
     <>
       <KeywordRow
-        words={chips}
+        links={chips.map((word) => ({
+          label: word,
+          image: chipPosts?.[word]?.[0]?.images?.[0]?.url,
+        }))}
         onSelect={(word) => onSearch(word, "related")}
         label="related keywords"
         className={styles.related}
@@ -377,6 +388,7 @@ function TextResults({
     <Results
       results={results}
       chips={results.relatedKeywords}
+      chipPosts={results.relatedPosts}
       onSearch={onSearch}
       noMatches={
         empty && (
@@ -386,6 +398,12 @@ function TextResults({
             </h3>
             <KeywordChips
               words={suggestions?.keywords.map((keyword) => keyword.word)}
+              thumbs={Object.fromEntries(
+                (suggestions?.keywords ?? []).map((keyword) => [
+                  keyword.word,
+                  keyword.thumb,
+                ])
+              )}
               onSearch={(word) => onSearch(word, "suggestion")}
               className={styles.noMatchesChips}
             />
@@ -669,6 +687,7 @@ export default function SearchPage({
           refetch: () => {},
         }}
         chips={upload.response.relatedKeywords ?? []}
+        chipPosts={upload.response.relatedPosts}
         onSearch={handleSearch}
       />
     );

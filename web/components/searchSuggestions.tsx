@@ -5,6 +5,7 @@ import { CatalogEntry } from "@lib/catalog";
 import type { SearchSuggestions as Suggestions } from "@lib/data/search";
 import { keywordHref, keywordLabel } from "@lib/keywords";
 import { IconClock, IconSparkles, IconTags } from "@tabler/icons-react";
+import Image from "next/image";
 import { ReactNode } from "react";
 import CatalogGrid from "./catalogGrid";
 import KeywordRow from "./keywordRow";
@@ -37,28 +38,47 @@ function Section({ icon, title, action, children }: SectionProps) {
 
 interface KeywordChipsProps {
   words?: string[];
+  thumbs?: Record<string, string | undefined>;
   onSearch: (word: string) => void;
   className?: string;
 }
 
 export function KeywordChips({
   words,
+  thumbs,
   onSearch,
   className,
 }: KeywordChipsProps) {
   if (!words || words.length === 0) return null;
   return (
     <div className={className ?? styles.chips}>
-      {words.map((word) => (
-        <button
-          type="button"
-          key={word}
-          className={styles.chip}
-          onClick={() => onSearch(word)}
-        >
-          {word}
-        </button>
-      ))}
+      {words.map((word) => {
+        const thumb = thumbs?.[word];
+        return (
+          <button
+            type="button"
+            key={word}
+            className={
+              thumb ? `${styles.chip} ${styles.withThumb}` : styles.chip
+            }
+            onClick={() => onSearch(word)}
+          >
+            {thumb && (
+              <span className={styles.thumb}>
+                <Image
+                  src={thumb}
+                  alt=""
+                  fill
+                  sizes="34px"
+                  unoptimized
+                  style={{ objectFit: "cover" }}
+                />
+              </span>
+            )}
+            {word}
+          </button>
+        );
+      })}
     </div>
   );
 }
