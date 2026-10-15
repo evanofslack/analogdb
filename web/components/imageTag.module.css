@@ -77,13 +77,13 @@
   display: flex;
   width: 100%;
   height: 3rem;
+  gap: 2px;
   overflow: hidden;
   border-radius: 4px;
-  background-color: var(--adb-surface-alt);
 }
 
 .segment {
-  flex-shrink: 1;
+  flex-basis: 0;
   min-width: 3px;
   height: 100%;
   transition: opacity 0.2s;

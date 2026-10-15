@@ -464,7 +464,7 @@ const API_DEMOS: ApiDemoConfig[] = [
     layout: "grid",
     spec: { keys: { meta: META, posts: POSTS } },
     paths: ["red", "navy", "green"].map(
-      (color) => `/posts?color=${color}&nsfw=false&page_size=3`
+      (color) => `/posts?color=${color}&sort=color&nsfw=false&page_size=3`
     ),
   },
   {

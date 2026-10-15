@@ -69,6 +69,7 @@ export default function ImageTag(props: ImageTagProps) {
       percent: Math.max(0, Math.min(1, color.percent ?? 0)),
     }))
     .sort((a, b) => b.percent - a.percent);
+  const paletteTotal = palette.reduce((sum, { percent }) => sum + percent, 0);
   const paletteHexes = similarPalette(post.colors);
 
   return (
@@ -153,7 +154,8 @@ export default function ImageTag(props: ImageTagProps) {
                         prefetch={false}
                         className={styles.segment}
                         style={{
-                          width: `${percent * 100}%`,
+                          flexGrow:
+                            paletteTotal > 0 ? percent / paletteTotal : 1,
                           backgroundColor: `#${hex}`,
                         }}
                         aria-label={`Photos with #${hex}`}

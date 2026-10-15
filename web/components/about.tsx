@@ -194,7 +194,7 @@ export default function About(props: AboutProps) {
                   to discover images by their visual palette. Search and analyze
                   images by their distinct colors.
                 </p>
-                <Link href="/?color=red" className={styles.link}>
+                <Link href="/?color=red&sort=color" className={styles.link}>
                   explore colors
                 </Link>
               </div>
