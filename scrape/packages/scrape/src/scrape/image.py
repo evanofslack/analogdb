@@ -1,4 +1,5 @@
 import hashlib
+import warnings
 from io import BytesIO
 from typing import Dict, List, Optional, Tuple
 
@@ -8,6 +9,7 @@ import requests
 import webcolors
 from PIL import Image, ImageChops
 from retry import retry
+from scipy.cluster.vq import kmeans2, vq
 from scipy.spatial import KDTree
 
 from .constants import (
@@ -22,6 +24,10 @@ from .constants import (
     JPEG_QUALITY,
     LOW_RES,
     MEDIUM_RES,
+    PALETTE_CLUSTERS,
+    PALETTE_MERGE_DISTANCE,
+    PALETTE_SAMPLE,
+    PALETTE_SEED,
     USER_AGENT,
     VALID_CONTENT,
 )
@@ -50,6 +56,139 @@ def image_bytes_hash(content: bytes) -> str:
 def channel_spread(image: Image.Image) -> np.ndarray:
     a = np.asarray(image.convert("RGB"), dtype=np.int16)
     return a.max(axis=2) - a.min(axis=2)
+
+
+_LINEAR_TO_LMS = np.array(
+    [
+        [0.4122214708, 0.5363325363, 0.0514459929],
+        [0.2119034982, 0.6806995451, 0.1073969566],
+        [0.0883024619, 0.2817188376, 0.6299787005],
+    ]
+)
+
+_LMS_TO_OKLAB = np.array(
+    [
+        [0.2104542553, 0.7936177850, -0.0040720468],
+        [1.9779984951, -2.4285922050, 0.4505937099],
+        [0.0259040371, 0.7827717662, -0.8086757660],
+    ]
+)
+
+_OKLAB_TO_LMS = np.array(
+    [
+        [1.0, 0.3963377774, 0.2158037573],
+        [1.0, -0.1055613458, -0.0638541728],
+        [1.0, -0.0894841775, -1.2914855480],
+    ]
+)
+
+_LMS_TO_LINEAR = np.array(
+    [
+        [4.0767416621, -3.3077115913, 0.2309699292],
+        [-1.2684380046, 2.6097574011, -0.3413193965],
+        [-0.0041960863, -0.7034186147, 1.7076147010],
+    ]
+)
+
+
+def _transform(rows: np.ndarray, matrix: np.ndarray) -> np.ndarray:
+    return np.einsum("nj,ij->ni", rows, matrix)
+
+
+def srgb_to_oklab(rgb: np.ndarray) -> np.ndarray:
+    """Rows of 0-255 sRGB to rows of OKLab"""
+    c = np.asarray(rgb, dtype=np.float64) / 255.0
+    linear = np.where(c <= 0.04045, c / 12.92, ((c + 0.055) / 1.055) ** 2.4)
+    lms = np.cbrt(_transform(linear, _LINEAR_TO_LMS))
+    return _transform(lms, _LMS_TO_OKLAB)
+
+
+def oklab_to_srgb(lab: np.ndarray) -> np.ndarray:
+    """Rows of OKLab to rows of 0-255 sRGB, clipped to the gamut"""
+    lms = _transform(np.asarray(lab, dtype=np.float64), _OKLAB_TO_LMS) ** 3
+    linear = np.clip(_transform(lms, _LMS_TO_LINEAR), 0.0, 1.0)
+    c = np.where(
+        linear <= 0.0031308, linear * 12.92, 1.055 * linear ** (1 / 2.4) - 0.055
+    )
+    return np.clip(np.round(c * 255.0), 0, 255).astype(np.uint8)
+
+
+def resize_image(
+    image: Image.Image, size: Optional[Tuple[int, int]]
+) -> Tuple[Image.Image, int, int]:
+    if not size:
+        return image, image.width, image.height
+    img_resized = image.copy()
+    img_resized.thumbnail(size, Image.Resampling.LANCZOS)
+    return img_resized, img_resized.width, img_resized.height
+
+
+def remove_border(image: Image.Image) -> Image.Image:
+    bg = Image.new(image.mode, image.size, image.getpixel((0, 0)))
+    diff = ImageChops.difference(image, bg)
+    diff = ImageChops.add(diff, diff, 1.0, -100)
+    bbox = diff.getbbox()
+    return image.crop(bbox) if bbox else image
+
+
+def prepare_image_for_analysis(image: Image.Image) -> Image.Image:
+    resized, _, _ = resize_image(image, LOW_RES)
+    return remove_border(resized)
+
+
+def _fit_clusters(lab: np.ndarray) -> np.ndarray:
+    rng = np.random.default_rng(PALETTE_SEED)
+    sample = lab
+    if len(lab) > PALETTE_SAMPLE:
+        sample = lab[np.sort(rng.choice(len(lab), PALETTE_SAMPLE, replace=False))]
+    k = min(PALETTE_CLUSTERS, len(np.unique(sample, axis=0)))
+    if k <= 1:
+        return sample.mean(axis=0, keepdims=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        centroids, _ = kmeans2(sample, k, minit="++", rng=rng)
+    return centroids
+
+
+def _merge_clusters(
+    centroids: np.ndarray, counts: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
+    centroids, counts = list(centroids), list(counts)
+    while len(centroids) > 1:
+        points = np.array(centroids)
+        dist = np.linalg.norm(points[:, None, :] - points[None, :, :], axis=2)
+        dist[np.triu_indices(len(points))] = np.inf
+        i, j = np.unravel_index(np.argmin(dist), dist.shape)
+        if dist[i, j] >= PALETTE_MERGE_DISTANCE:
+            break
+        total = counts[i] + counts[j]
+        centroids[j] = (centroids[i] * counts[i] + centroids[j] * counts[j]) / total
+        counts[j] = total
+        del centroids[i], counts[i]
+    return np.array(centroids), np.array(counts)
+
+
+def extract_palette(
+    image: Image.Image, limit: int = COLOR_LIMIT
+) -> List[Tuple[str, float]]:
+    """Dominant colors as (hex, share of the whole image), largest first. Pixels
+    are clustered in OKLab so close colors group the way they look, and shares
+    are not renormalized over the kept colors."""
+    prepared = prepare_image_for_analysis(image.convert("RGB"))
+    lab = srgb_to_oklab(np.asarray(prepared).reshape(-1, 3))
+
+    labels, _ = vq(lab, _fit_clusters(lab))
+    counts = np.bincount(labels)
+    kept = np.flatnonzero(counts)
+    centroids = np.array([lab[labels == i].mean(axis=0) for i in kept])
+    centroids, counts = _merge_clusters(centroids, counts[kept])
+
+    order = np.argsort(-counts, kind="stable")[:limit]
+    rgb = oklab_to_srgb(centroids[order])
+    return [
+        ("#{:02x}{:02x}{:02x}".format(*map(int, c)), round(float(n) / len(lab), 8))
+        for c, n in zip(rgb, counts[order])
+    ]
 
 
 class ImageProcessor:
@@ -190,11 +329,10 @@ class ImageProcessor:
     def resize_image(
         self, image: Image.Image, size: Optional[Tuple[int, int]]
     ) -> Tuple[Image.Image, int, int]:
-        if not size:
-            return image, image.width, image.height
-        img_resized = image.copy()
-        img_resized.thumbnail(size, Image.Resampling.LANCZOS)
-        return img_resized, img_resized.width, img_resized.height
+        return resize_image(image, size)
+
+    def extract_palette(self, image: Image.Image) -> List[Tuple[str, float]]:
+        return extract_palette(image)
 
     def image_to_bytes(self, image: Image.Image, content_type: str) -> bytes:
         image_bytes = BytesIO()
@@ -223,20 +361,9 @@ class ImageProcessor:
     def _extract_colors(
         self, image: Image.Image, count: int = COLOR_LIMIT
     ) -> List[Color]:
-        prepared_image = self._prepare_image_for_analysis(image)
+        prepared_image = prepare_image_for_analysis(image)
         raw_colors = self._extract_raw_colors(prepared_image, count)
         return self._process_color_data(raw_colors)
-
-    def _remove_border(self, image: Image.Image) -> Image.Image:
-        bg = Image.new(image.mode, image.size, image.getpixel((0, 0)))
-        diff = ImageChops.difference(image, bg)
-        diff = ImageChops.add(diff, diff, 1.0, -100)
-        bbox = diff.getbbox()
-        return image.crop(bbox) if bbox else image
-
-    def _prepare_image_for_analysis(self, image: Image.Image) -> Image.Image:
-        resized, _, _ = self.resize_image(image, LOW_RES)
-        return self._remove_border(resized)
 
     def _extract_raw_colors(
         self, image: Image.Image, count: int

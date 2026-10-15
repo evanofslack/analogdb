@@ -7,7 +7,14 @@ import pytest
 from PIL import Image
 
 from .constants import AWS_BUCKET_PHOTOS, CLOUDFRONT_URL, USER_AGENT
-from .image import ImageProcessor, image_bytes_hash, image_hash
+from .image import (
+    ImageProcessor,
+    extract_palette,
+    image_bytes_hash,
+    image_hash,
+    oklab_to_srgb,
+    srgb_to_oklab,
+)
 from .models import RedditPost
 
 
@@ -224,3 +231,95 @@ class TestGrayscale:
 
         _, result = process(post, buf.getvalue())
         assert not result.grayscale
+
+
+def split_image(share: float, a, b, width: int = 200, height: int = 100):
+    """Pixels of b scattered over a, so the border crop keeps the whole frame"""
+    rng = np.random.default_rng(3)
+    mask = np.zeros(width * height, dtype=bool)
+    mask[rng.permutation(width * height)[: round(width * height * (1 - share))]] = True
+    mask[0] = False
+    pixels = np.where(mask[:, None], np.array(b), np.array(a)).astype(np.uint8)
+    return Image.fromarray(pixels.reshape(height, width, 3))
+
+
+class TestPalette:
+    def test_oklab_round_trip(self):
+        rgb = np.random.default_rng(0).integers(0, 256, size=(500, 3))
+        assert np.array_equal(oklab_to_srgb(srgb_to_oklab(rgb)), rgb)
+
+    def test_oklab_white_and_black(self):
+        lab = srgb_to_oklab(np.array([[255, 255, 255], [0, 0, 0]]))
+        assert np.allclose(lab, [[1, 0, 0], [0, 0, 0]], atol=1e-6)
+
+    def test_solid_color(self):
+        palette = extract_palette(Image.new("RGB", (300, 200), (200, 30, 40)))
+        assert palette == [("#c81e28", 1.0)]
+
+    def test_split_shares(self):
+        image = split_image(0.7, (30, 90, 200), (240, 200, 40))
+        palette = dict(extract_palette(image))
+        assert set(palette) == {"#1e5ac8", "#f0c828"}
+        assert palette["#1e5ac8"] == pytest.approx(0.7, abs=0.01)
+        assert palette["#f0c828"] == pytest.approx(0.3, abs=0.01)
+
+    def test_close_colors_merge(self):
+        image = split_image(0.5, (120, 120, 120), (122, 121, 120))
+        palette = extract_palette(image)
+        assert len(palette) == 1
+        assert palette[0][1] == pytest.approx(1.0)
+
+    def test_many_colors(self):
+        palette = extract_palette(photo(4))
+        assert 1 < len(palette) <= 5
+        shares = [p for _, p in palette]
+        assert sum(shares) <= 1.0
+        assert shares == sorted(shares, reverse=True)
+        assert all(len(h) == 7 and h.startswith("#") for h, _ in palette)
+
+    def test_shares_are_over_the_whole_image(self):
+        stripes = [
+            (220, 30, 30),
+            (30, 180, 40),
+            (30, 60, 220),
+            (240, 220, 40),
+            (40, 220, 230),
+            (210, 40, 200),
+            (10, 10, 10),
+            (240, 140, 20),
+        ]
+        pixels = np.repeat(np.array(stripes, dtype=np.uint8), 10, axis=0)
+        pixels = np.repeat(pixels[:, None, :], 100, axis=1)
+        pixels[0, 0] = (255, 255, 255)
+        palette = extract_palette(Image.fromarray(pixels))
+        assert len(palette) == 5
+        for _, share in palette:
+            assert share == pytest.approx(1 / 8, abs=0.01)
+        assert sum(p for _, p in palette) == pytest.approx(5 / 8, abs=0.01)
+
+    def test_large_image_is_sampled(self):
+        image = split_image(0.6, (20, 140, 60), (200, 60, 160), 720, 540)
+        palette = dict(extract_palette(image))
+        assert palette["#148c3c"] == pytest.approx(0.6, abs=0.01)
+
+    def test_deterministic(self):
+        image = photo(5)
+        assert extract_palette(image) == extract_palette(image.copy())
+
+    def test_tiny_images(self):
+        assert extract_palette(Image.new("RGB", (1, 1), (9, 9, 9))) == [
+            ("#090909", 1.0)
+        ]
+        two = Image.new("RGB", (2, 1), (0, 0, 0))
+        two.putpixel((1, 0), (255, 255, 255))
+        assert len(extract_palette(two)) <= 2
+
+    def test_other_modes(self):
+        image = Image.new("L", (40, 40), 128)
+        assert extract_palette(image) == [("#808080", 1.0)]
+        rgba = Image.new("RGBA", (40, 40), (10, 200, 30, 255))
+        assert extract_palette(rgba) == [("#0ac81e", 1.0)]
+
+    def test_processor_method(self):
+        image = photo(6)
+        assert ImageProcessor().extract_palette(image) == extract_palette(image)
