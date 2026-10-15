@@ -22,6 +22,7 @@ from .constants import (
     JPEG_QUALITY,
     LOW_RES,
     MEDIUM_RES,
+    USER_AGENT,
     VALID_CONTENT,
 )
 from .models import Color, PostImages, RedditPost, S3Image
@@ -206,7 +207,9 @@ class ImageProcessor:
 
     @retry(delay=1, tries=5)
     def _fetch(self, url: str) -> requests.Response:
-        resp = requests.get(url, timeout=IMAGE_TIMEOUT)
+        resp = requests.get(
+            url, headers={"User-Agent": USER_AGENT}, timeout=IMAGE_TIMEOUT
+        )
         resp.raise_for_status()
         return resp
 

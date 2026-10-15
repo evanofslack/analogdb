@@ -19,6 +19,9 @@ CLOUDFRONT_URL = "https://d3i73ktnzbi69i.cloudfront.net"
 # reddit base url
 REDDIT_URL = "https://www.reddit.com"
 
+# imgur rejects the default python-requests user agent
+USER_AGENT = "analogdb/1.0 (+https://analogdb.com)"
+
 # valid media types
 VALID_CONTENT = [
     "image/png",

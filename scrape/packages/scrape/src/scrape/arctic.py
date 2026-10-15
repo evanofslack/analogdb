@@ -10,12 +10,13 @@ from typing import Callable, List, Optional
 
 import requests
 
+from .constants import USER_AGENT
+
 ARCTIC_SHIFT_URL = "https://arctic-shift.photon-reddit.com"
 PAGE_SIZE = 100
 MAX_TRIES = 5
 RETRY_STATUS = {422, 429, 500, 502, 503, 504}
 TIMEOUT = (10, 30)
-USER_AGENT = "analogdb-archive/1.0"
 
 
 class ArcticShiftError(Exception):
