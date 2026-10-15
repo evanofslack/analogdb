@@ -230,15 +230,6 @@ wheels = [
 ]
 
 [[package]]
-name = "convcolors"
-version = "2.2.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7d/d1/d3406f4c73c1a69c84b4f97c63fe36473e3f8b9fd91caa83b21be6119ebd/convcolors-2.2.0.tar.gz", hash = "sha256:4036848e98ae752abac4a54acb879b6711f8dcf2f768815c85366359a287c1bd", size = 3722, upload-time = "2022-06-16T11:23:05.521Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/48/c6/3f7a61098504ab4b55c10d677a722093f8ece63421db5680753d609f8111/convcolors-2.2.0-py3-none-any.whl", hash = "sha256:aa5dfb9239cddd391df8aff1f6e482b242a212826a6e3427ba2e11db70836a2e", size = 3826, upload-time = "2022-06-16T11:23:00.382Z" },
-]
-
-[[package]]
 name = "coverage"
 version = "7.16.2"
 source = { registry = "https://pypi.org/simple" }
@@ -572,19 +563,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/08/12/9c22a58c0b1e29271051222d8906257616da84135af9ed167c9e28f85cb3/docstring_parser-0.16.tar.gz", hash = "sha256:538beabd0af1e2db0146b6bd3caa526c35a34d61af9fd2887f3a8a27a739aa6e", size = 26565, upload-time = "2024-03-15T10:39:44.419Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d5/7c/e9fcff7623954d86bdc17782036cbf715ecab1bec4847c008557affe1ca8/docstring_parser-0.16-py3-none-any.whl", hash = "sha256:bf0a1387354d3691d102edef7ec124f219ef639982d096e26e3b60aeffa90637", size = 36533, upload-time = "2024-03-15T10:39:41.527Z" },
-]
-
-[[package]]
-name = "extcolors"
-version = "1.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "convcolors" },
-    { name = "pillow" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/fd/3e/47e48ba0737c1bad19f4134a4b8e00f80701d32de55d3566d64cd20cb013/extcolors-1.0.0.tar.gz", hash = "sha256:14e81457f98555ba36c07a5dde677d1d555e8f4b75633a4fad42df30a27c4f27", size = 8473, upload-time = "2020-10-19T05:43:12.477Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/57/61/b912f519502cd8e2ef590546dcbbd5b853eae33782a367c074bbf63304ef/extcolors-1.0.0-py3-none-any.whl", hash = "sha256:92bfcd137c415ca1a3463feaa75f4189a7607f5bdf78dfd6a3e924be09e5ab14", size = 9840, upload-time = "2020-10-19T05:43:10.98Z" },
 ]
 
 [[package]]
@@ -1739,7 +1717,6 @@ name = "scrape"
 version = "0.1.0"
 source = { editable = "packages/scrape" }
 dependencies = [
-    { name = "extcolors" },
     { name = "inflect" },
     { name = "numpy" },
     { name = "openai" },
@@ -1749,7 +1726,6 @@ dependencies = [
     { name = "requests" },
     { name = "retry" },
     { name = "scipy" },
-    { name = "webcolors" },
 ]
 
 [package.dev-dependencies]
@@ -1759,7 +1735,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "extcolors", specifier = ">=1.0.0" },
     { name = "inflect", specifier = ">=7.5.0" },
     { name = "numpy", specifier = ">=2.2.6" },
     { name = "openai", specifier = ">=1.84.0" },
@@ -1769,7 +1744,6 @@ requires-dist = [
     { name = "requests", specifier = ">=2.33.0" },
     { name = "retry", specifier = ">=0.9.2" },
     { name = "scipy", specifier = ">=1.15.3" },
-    { name = "webcolors", specifier = ">=24.11.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -2047,15 +2021,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fc/17/180ca383f5061b61406477218c55d66ec118e6c0c51f02d8142895fcf0a9/watchfiles-1.0.5-cp313-cp313-musllinux_1_1_x86_64.whl", hash = "sha256:839ebd0df4a18c5b3c1b890145b5a3f5f64063c2a0d02b13c76d78fe5de34936", size = 624677, upload-time = "2025-04-08T10:35:49.65Z" },
     { url = "https://files.pythonhosted.org/packages/bf/15/714d6ef307f803f236d69ee9d421763707899d6298d9f3183e55e366d9af/watchfiles-1.0.5-cp313-cp313-win32.whl", hash = "sha256:4a8ec1e4e16e2d5bafc9ba82f7aaecfeec990ca7cd27e84fb6f191804ed2fcfc", size = 277804, upload-time = "2025-04-08T10:35:51.093Z" },
     { url = "https://files.pythonhosted.org/packages/a8/b4/c57b99518fadf431f3ef47a610839e46e5f8abf9814f969859d1c65c02c7/watchfiles-1.0.5-cp313-cp313-win_amd64.whl", hash = "sha256:f436601594f15bf406518af922a89dcaab416568edb6f65c4e5bbbad1ea45c11", size = 291087, upload-time = "2025-04-08T10:35:52.458Z" },
-]
-
-[[package]]
-name = "webcolors"
-version = "24.11.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7b/29/061ec845fb58521848f3739e466efd8250b4b7b98c1b6c5bf4d40b419b7e/webcolors-24.11.1.tar.gz", hash = "sha256:ecb3d768f32202af770477b8b65f318fa4f566c22948673a977b00d589dd80f6", size = 45064, upload-time = "2024-11-11T07:43:24.224Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/e8/c0e05e4684d13459f93d312077a9a2efbe04d59c393bc2b8802248c908d4/webcolors-24.11.1-py3-none-any.whl", hash = "sha256:515291393b4cdf0eb19c155749a096f779f7d909f7cceea072791cb9095b92e9", size = 14934, upload-time = "2024-11-11T07:43:22.529Z" },
 ]
 
 [[package]]

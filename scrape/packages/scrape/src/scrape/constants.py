@@ -57,10 +57,3 @@ PALETTE_SAMPLE = 40000
 
 # fixed seed so the same image always gives the same palette
 PALETTE_SEED = 7
-
-# group colors to limit the output and give a
-# better visual representation. Based on a
-# scale from 0 to 100. Where 0 won't group any
-# color and 100 will group all colors into one.
-# Tolerance 0 will bypass all conversion.
-COLOR_TOLERANCE = 20

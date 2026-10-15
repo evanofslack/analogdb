@@ -43,6 +43,7 @@ from .assets import (
 from .backfill import (
     prune_catalog,
     reencode_post_vectors,
+    reextract_post_colors,
     rematch_post_metadata,
     tag_missing_post_captions,
 )
@@ -53,6 +54,7 @@ from .jobs import (
     patch_descriptions_job,
     patch_scores_job,
     reencode_vectors_job,
+    reextract_colors_job,
     rematch_metadata_job,
     report_duplicates_job,
     scrape_job,
@@ -81,6 +83,7 @@ defs = dg.Definitions(
         prune_catalog,
         report_duplicates,
         reencode_post_vectors,
+        reextract_post_colors,
         rematch_post_metadata,
         tag_missing_post_captions,
         analogdb_permalinks,
@@ -148,6 +151,7 @@ defs = dg.Definitions(
     jobs=[
         archive_job,
         reencode_vectors_job,
+        reextract_colors_job,
         report_duplicates_job,
         rematch_metadata_job,
         scrape_job,
