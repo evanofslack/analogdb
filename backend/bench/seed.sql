@@ -750,6 +750,51 @@ FROM (
 CROSS JOIN bench_colors bc
 ORDER BY x.i, x.r_share DESC;
 
+-- OKLab values as the API derives them from hex
+WITH rgb AS (
+  SELECT id,
+    ('x' || substr(hex, 2, 2))::bit(8)::int / 255.0::float8 AS r,
+    ('x' || substr(hex, 4, 2))::bit(8)::int / 255.0::float8 AS g,
+    ('x' || substr(hex, 6, 2))::bit(8)::int / 255.0::float8 AS b
+  FROM colors
+), lin AS (
+  SELECT id,
+    CASE WHEN r <= 0.04045 THEN r / 12.92 ELSE power((r + 0.055) / 1.055, 2.4) END AS r,
+    CASE WHEN g <= 0.04045 THEN g / 12.92 ELSE power((g + 0.055) / 1.055, 2.4) END AS g,
+    CASE WHEN b <= 0.04045 THEN b / 12.92 ELSE power((b + 0.055) / 1.055, 2.4) END AS b
+  FROM rgb
+), lms AS (
+  SELECT id,
+    cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) AS l,
+    cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) AS m,
+    cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) AS s
+  FROM lin
+), lab AS (
+  SELECT id,
+    0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s AS ok_l,
+    1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s AS ok_a,
+    0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s AS ok_b
+  FROM lms
+)
+UPDATE colors c SET
+  oklab_l = lab.ok_l,
+  oklab_a = lab.ok_a,
+  oklab_b = lab.ok_b,
+  chroma = sqrt(lab.ok_a ^ 2 + lab.ok_b ^ 2),
+  hue = mod((degrees(atan2(lab.ok_b, lab.ok_a)) + 360)::numeric, 360)
+FROM lab
+WHERE c.id = lab.id;
+
+-- representative color: the largest percent times chroma among chromatic clusters
+UPDATE pictures p SET color_hue = r.hue, color_chroma = r.chroma
+FROM (
+  SELECT DISTINCT ON (post_id) post_id, hue, chroma
+  FROM colors
+  WHERE chroma >= 0.04
+  ORDER BY post_id, percent * chroma DESC, id
+) r
+WHERE p.id = r.post_id AND NOT p.greyscale;
+
 -- about ten keywords per post from a skewed vocabulary
 CREATE TEMP TABLE bench_post_keywords ON COMMIT DROP AS
 SELECT p.i, 1 + floor(3000 * power(random(), 3))::int AS idx, random() AS r_weight
