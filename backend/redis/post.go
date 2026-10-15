@@ -20,6 +20,8 @@ const (
 	postInstance = "post"
 	// ttl for individual post in cache
 	postTTL = time.Hour * 24
+	// how many posts one delete removes when every post is invalidated
+	invalidateBatch = 1000
 	// im memory cache size for individual posts
 	postLocalSize = 1000
 
@@ -214,6 +216,26 @@ func (s *PostService) invalidatePost(ctx context.Context, id int) {
 	s.rdb.bumpGen(ctx, postsEntity, filmsEntity, camerasEntity)
 	s.removePostFromCache(ctx, id)
 	s.rdb.stats.invalidations.WithLabelValues(postInstance).Inc()
+}
+
+// invalidateAll runs after a write to every post is committed
+func (s *PostService) invalidateAll(ctx context.Context) error {
+	ids, err := s.dbService.AllPostIDs(ctx)
+	if err != nil {
+		return err
+	}
+	s.rdb.bumpGen(ctx, postsEntity, filmsEntity, camerasEntity)
+	for start := 0; start < len(ids); start += invalidateBatch {
+		keys := []string{}
+		for _, id := range ids[start:min(start+invalidateBatch, len(ids))] {
+			keys = append(keys, fmt.Sprint(id))
+		}
+		if err := s.postCache.deleteMany(ctx, keys); err != nil {
+			return err
+		}
+	}
+	s.rdb.stats.invalidations.WithLabelValues(postInstance).Inc()
+	return nil
 }
 
 func (s *PostService) removePostFromCache(ctx context.Context, id int) {

@@ -107,7 +107,31 @@ func (f *fakePostService) DeletePost(ctx context.Context, id int, reason string)
 }
 
 func (f *fakePostService) AllPostIDs(ctx context.Context) ([]int, error) {
-	return nil, nil
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	ids := []int{}
+	for id := range f.posts {
+		ids = append(ids, id)
+	}
+	sort.Ints(ids)
+	return ids, nil
+}
+
+type fakeColorService struct {
+	posts *fakePostService
+	err   error
+}
+
+// RederiveColors changes every post's score, standing in for its colors
+func (f *fakeColorService) RederiveColors(ctx context.Context) (*analogdb.ColorRederive, error) {
+	f.posts.mu.Lock()
+	defer f.posts.mu.Unlock()
+	for id, p := range f.posts.posts {
+		post := *p
+		post.Score++
+		f.posts.posts[id] = &post
+	}
+	return &analogdb.ColorRederive{Posts: len(f.posts.posts)}, f.err
 }
 
 type fakeSimilarityService struct {
@@ -528,5 +552,48 @@ func TestSimilarNeverReturnsDuplicates(t *testing.T) {
 	}
 	if calls := vec.calls.Load(); calls != 1 {
 		t.Errorf("expected similar ids to be cached, got %d calls", calls)
+	}
+}
+
+func TestRederiveColorsDropsCachedPosts(t *testing.T) {
+	ctx := context.Background()
+	rdb, _ := newMiniRDB(t)
+	ids := []int{}
+	for id := 1; id <= 2*invalidateBatch+5; id++ {
+		ids = append(ids, id)
+	}
+	db := newFakePostService(ids...)
+	posts := NewCachePostService(rdb, db)
+
+	limit := 5
+	filter := analogdb.NewPostFilter(&limit, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	read := func() (*analogdb.Post, *analogdb.Post) {
+		t.Helper()
+		post, err := posts.FindPostByID(ctx, 2*invalidateBatch+1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		list, _, err := posts.FindPosts(ctx, filter)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return post, list[0]
+	}
+	before, beforeList := read()
+
+	for _, fail := range []bool{false, true} {
+		colors := &fakeColorService{posts: db}
+		if fail {
+			colors.err = errors.New("batch failed")
+		}
+		_, err := NewCacheColorService(colors, posts).RederiveColors(ctx)
+		if fail != (err != nil) {
+			t.Fatalf("expected error %t, got %v", fail, err)
+		}
+		post, first := read()
+		if post.Score != before.Score+1 || first.Score != beforeList.Score+1 {
+			t.Errorf("fail %t: expected fresh posts after rederive, got scores %d %d", fail, post.Score, first.Score)
+		}
+		before, beforeList = post, first
 	}
 }

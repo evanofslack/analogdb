@@ -371,28 +371,52 @@ func deriveColors(colors []analogdb.Color) ([]colorspace.Derived, error) {
 	return derived, nil
 }
 
-// setPostColor stores the representative color of a post, NULL for grayscale
-// posts and posts without a chromatic color
+// setPostColor stores the post's rainbow color and key. Grayscale posts and
+// posts without a chromatic color only enter the rainbow as black, gray or white.
 func (db *DB) setPostColor(ctx context.Context, tx *sql.Tx, colors []analogdb.Color, derived []colorspace.Derived, id int64) error {
-	chromas, percents := make([]float64, len(colors)), make([]float64, len(colors))
+	var grayscale bool
+	if err := tx.QueryRowContext(ctx, "SELECT greyscale FROM pictures WHERE id = $1", id).Scan(&grayscale); err != nil {
+		db.logger.ErrorContext(ctx, "Fail set post color", "post_id", id, "error", err)
+		return err
+	}
+	percents := make([]float64, len(colors))
 	for i := range colors {
-		chromas[i], percents[i] = derived[i].Chroma, colors[i].Percent
+		percents[i] = colors[i].Percent
 	}
-	var hue, chroma sql.NullFloat64
-	if i := colorspace.Representative(chromas, percents); i >= 0 {
-		hue = sql.NullFloat64{Float64: derived[i].Hue, Valid: true}
-		chroma = sql.NullFloat64{Float64: derived[i].Chroma, Valid: true}
-	}
+	c := newColorColumns(int(id), derived, percents, grayscale)
 	query := `
 		UPDATE pictures SET
-			color_hue = CASE WHEN greyscale THEN NULL ELSE $1::real END,
-			color_chroma = CASE WHEN greyscale THEN NULL ELSE $2::real END
-		WHERE id = $3`
-	if _, err := tx.ExecContext(ctx, query, hue, chroma, id); err != nil {
+			color_hue = $1::real,
+			color_chroma = $2::real,
+			color_strength = $3::real,
+			rainbow_key = $4::float8
+		WHERE id = $5`
+	if _, err := tx.ExecContext(ctx, query, c.hue, c.chroma, c.strength, c.key, id); err != nil {
 		db.logger.ErrorContext(ctx, "Fail set post color", "post_id", id, "error", err)
 		return err
 	}
 	return nil
+}
+
+// colorColumns holds the color columns of a post, NULL when it is not in the rainbow
+type colorColumns struct {
+	hue, chroma, strength, key sql.NullFloat64
+}
+
+func newColorColumns(id int, derived []colorspace.Derived, percents []float64, grayscale bool) colorColumns {
+	c, ok := colorspace.NewPostColor(derived, percents, grayscale)
+	if !ok {
+		return colorColumns{}
+	}
+	row := colorColumns{
+		strength: sql.NullFloat64{Float64: c.Strength, Valid: true},
+		key:      sql.NullFloat64{Float64: colorspace.RainbowKey(id, c), Valid: true},
+	}
+	if !c.Neutral {
+		row.hue = sql.NullFloat64{Float64: c.Hue, Valid: true}
+		row.chroma = sql.NullFloat64{Float64: c.Chroma, Valid: true}
+	}
+	return row
 }
 
 // refreshPostColor recomputes the representative color from the stored colors
@@ -1062,7 +1086,7 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 		}
 	}
 
-	// grayscale posts have no representative color
+	// grayscale posts have no chromatic representative color
 	if patch.Grayscale != nil && patch.Colors == nil {
 		if err := db.refreshPostColor(ctx, tx, id); err != nil {
 			db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)

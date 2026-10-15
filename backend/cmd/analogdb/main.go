@@ -195,6 +195,7 @@ func main() {
 	var keywordService analogdb.KeywordService
 	var similarityService analogdb.SimilarityService
 	var searchService analogdb.SearchService
+	var colorService analogdb.ColorService
 
 	// create service implementations
 	postService = postgres.NewPostService(db)
@@ -204,10 +205,13 @@ func main() {
 	readyService = postgres.NewReadyService(db)
 	scrapeService = postgres.NewScrapeService(db)
 	keywordService = postgres.NewKeywordService(db)
+	colorService = postgres.NewColorService(db)
 
 	// if cache enabled, replace the with cache implementation
 	if cfg.App.CacheEnabled {
-		postService = redis.NewCachePostService(rdb, postService)
+		cachePostService := redis.NewCachePostService(rdb, postService)
+		postService = cachePostService
+		colorService = redis.NewCacheColorService(colorService, cachePostService)
 		authorService = redis.NewCacheAuthorService(rdb, authorService)
 		filmService = redis.NewCacheFilmService(rdb, filmService)
 		cameraService = redis.NewCacheCameraService(rdb, cameraService)
@@ -239,6 +243,7 @@ func main() {
 	server.VectorLister = dbVec
 	server.AdminService = postgres.NewAdminService(db)
 	server.ExtractionService = postgres.NewExtractionService(db)
+	server.ColorService = colorService
 	server.ReportService = postgres.NewReportService(db)
 	if analytics != nil {
 		server.AnalyticsService = analytics

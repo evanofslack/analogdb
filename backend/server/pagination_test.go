@@ -52,6 +52,18 @@ FROM generate_series(1, 250) AS i
 
 func mustOpenPagingServer(t *testing.T) (*Server, analogdb.PostService) {
 	t.Helper()
+	db, _ := mustOpenPagingDB(t)
+	s := mustOpen(t)
+	t.Cleanup(func() { mustClose(t, s) })
+	service := postgres.NewPostService(db)
+	s.PostService = service
+	return s, service
+}
+
+// mustOpenPagingDB starts a migrated postgres seeded with the paging posts and
+// returns it with a plain connection to it
+func mustOpenPagingDB(t *testing.T) (*postgres.DB, *sql.DB) {
+	t.Helper()
 	ctx := context.Background()
 
 	container, err := tcpostgres.Run(ctx,
@@ -95,16 +107,11 @@ func mustOpenPagingServer(t *testing.T) (*Server, analogdb.PostService) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer func() { _ = raw.Close() }()
+	t.Cleanup(func() { _ = raw.Close() })
 	if _, err := raw.ExecContext(ctx, pagingSeedSQL); err != nil {
 		t.Fatalf("Seed posts, err=%v", err)
 	}
-
-	s := mustOpen(t)
-	t.Cleanup(func() { mustClose(t, s) })
-	service := postgres.NewPostService(db)
-	s.PostService = service
-	return s, service
+	return db, raw
 }
 
 func getPostsPage(t *testing.T, s *Server, path string) (*httptest.ResponseRecorder, PostResponse) {

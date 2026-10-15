@@ -786,14 +786,40 @@ FROM lab
 WHERE c.id = lab.id;
 
 -- representative color: the largest percent times chroma among chromatic clusters
-UPDATE pictures p SET color_hue = r.hue, color_chroma = r.chroma
+UPDATE pictures p SET color_hue = r.hue, color_chroma = r.chroma, color_strength = r.strength
 FROM (
-  SELECT DISTINCT ON (post_id) post_id, hue, chroma
+  SELECT DISTINCT ON (post_id) post_id, hue, chroma, percent * chroma AS strength
   FROM colors
-  WHERE chroma >= 0.04
+  WHERE chroma >= 0.04 AND NOT (oklab_l < 0.25 AND chroma < 0.08)
   ORDER BY post_id, percent * chroma DESC, id
 ) r
 WHERE p.id = r.post_id AND NOT p.greyscale;
+
+-- mostly neutral posts without one go in the tail of the loops of their bucket,
+-- a rough version of colorspace.NewPostColor that skips the per bucket minimums
+UPDATE pictures p SET color_strength = n.share, rainbow_key =
+  ((p.id::bigint * 2654435761) % CASE WHEN n.l >= 0.9 THEN 23 WHEN n.l < 0.35 THEN 172 ELSE 186 END) * 390
+  + 360 + (1 - LEAST(1, GREATEST(0, n.l))) * 30
+FROM (
+  SELECT post_id, sum(percent)::float8 AS share, (sum(percent * oklab_l) / sum(percent))::float8 AS l
+  FROM colors
+  WHERE chroma < 0.04 OR oklab_l < 0.25 AND chroma < 0.08
+  GROUP BY post_id
+) n
+WHERE p.id = n.post_id AND p.color_hue IS NULL AND n.share >= 0.5;
+
+-- strength tiers and loops of colorspace.RainbowKey
+UPDATE pictures p SET rainbow_key =
+  (t.off + (p.id::bigint * 2654435761) % t.loops) * 390 + mod((p.color_hue + 345)::numeric, 360)::float8
+FROM (VALUES
+  (0.03, 'Infinity'::float8, 0, 9),
+  (0.02, 0.03, 9, 20),
+  (0.015, 0.02, 29, 31),
+  (0.0115, 0.015, 60, 43),
+  (0.009, 0.0115, 103, 45),
+  (0, 0.009, 148, 104)
+) t(min, max, off, loops)
+WHERE p.color_hue IS NOT NULL AND p.color_strength >= t.min AND p.color_strength < t.max;
 
 -- about ten keywords per post from a skewed vocabulary
 CREATE TEMP TABLE bench_post_keywords ON COMMIT DROP AS
