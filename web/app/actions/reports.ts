@@ -1,11 +1,11 @@
 "use server";
 
 import { checkAdminAuth } from "@lib/auth";
-import { postApi } from "@lib/client";
+import { errorStatus, postApi } from "@lib/client";
 import { limitAction } from "@lib/rateLimit";
 import { Limited } from "@lib/rateLimited";
 import { isReportReason, maxReportEmail, maxReportMessage } from "@lib/reports";
-import { ResponseError } from "analogdb-generated";
+import type { ResponseError } from "analogdb-generated";
 
 type ReportResult =
   | { ok: true }
@@ -53,19 +53,18 @@ export async function reportPost(
     });
     return { ok: true };
   } catch (error) {
-    if (error instanceof ResponseError) {
-      if (error.response.status === 429) {
-        return { rateLimited: true, retryAfter: 60 };
-      }
-      if (error.response.status === 400) {
-        try {
-          const body = await error.response.json();
-          if (body?.error) return { ok: false, error: body.error };
-        } catch {}
-      }
-      if (error.response.status === 404) {
-        return { ok: false, error: "this post no longer exists" };
-      }
+    const status = errorStatus(error);
+    if (status === 429) {
+      return { rateLimited: true, retryAfter: 60 };
+    }
+    if (status === 400) {
+      try {
+        const body = await (error as ResponseError).response.json();
+        if (body?.error) return { ok: false, error: body.error };
+      } catch {}
+    }
+    if (status === 404) {
+      return { ok: false, error: "this post no longer exists" };
     }
     console.error("report post failed:", error);
     return { ok: false, error: "could not send the report, try again later" };

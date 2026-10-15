@@ -1,12 +1,14 @@
 import "server-only";
-import { postApi, postsApi } from "@lib/client";
+import { errorStatus, postApi, postsApi } from "@lib/client";
 import {
+  AnalogdbPost,
   PostIdSimilarGetRequest,
   PostsGetRequest,
   ServerPostResponse,
   ServerSimilarPostsResponse,
 } from "analogdb-generated";
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
 const maxPageSize = 100;
 
@@ -110,3 +112,25 @@ export async function getPostsTotalCount(): Promise<number> {
     throw error;
   }
 }
+
+// getPost loads one post for the post page and its layout, null when the id
+// is invalid or the post doesn't exist. Its revalidate matches the page's ISR
+export const getPost = cache(
+  async (pid: string): Promise<AnalogdbPost | null> => {
+    const id = Number(pid);
+    if (!Number.isInteger(id) || id <= 0) {
+      return null;
+    }
+    try {
+      return await postApi.postIdGet({ id }, {
+        next: { revalidate: 3600 },
+      } as RequestInit);
+    } catch (error) {
+      const status = errorStatus(error);
+      if (status === 400 || status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+);

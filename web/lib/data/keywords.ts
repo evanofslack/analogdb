@@ -8,8 +8,8 @@ import {
   pickCover,
   pickCovers,
 } from "@lib/catalog";
-import { keywordsApi } from "@lib/client";
-import { KeywordsSummaryGetRequest, ResponseError } from "analogdb-generated";
+import { errorStatus, keywordsApi } from "@lib/client";
+import { KeywordsSummaryGetRequest } from "analogdb-generated";
 import { unstable_cache } from "next/cache";
 
 interface RelatedKeyword {
@@ -94,7 +94,7 @@ const getKeywordCached = unstable_cache(
         })),
       };
     } catch (error) {
-      if (error instanceof ResponseError && error.response.status === 404) {
+      if (errorStatus(error) === 404) {
         return null;
       }
       throw error;
