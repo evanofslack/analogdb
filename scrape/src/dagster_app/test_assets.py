@@ -10,6 +10,7 @@ from analogdb.client import Uploaded
 from analogdb_generated.exceptions import ApiException
 from dagster_aws.s3 import S3Resource
 from PIL import Image
+from scrape.arctic import ArcticShiftError
 from scrape.models import (
     Caption,
     Keyword,
@@ -17,11 +18,15 @@ from scrape.models import (
     PostImages,
     RedditPost,
     S3Image,
+    ScrapeResult,
 )
 from scrape.tagging import ImageTags, TaggingError
 
 from .assets import (
+    ArchiveConfig,
     analogdb_permalinks,
+    archive_reddit_posts,
+    expand_days,
     final_posts,
     patch_post_scores,
     post_images,
@@ -64,6 +69,89 @@ def run_updated_reddit_comments(post_count: int):
     context = dg.build_asset_context(partition_key="2024-01-01")
     with patch.object(RedditResource, "client", return_value=scraper):
         return updated_reddit_comments(context, posts, RedditResource())
+
+
+class TestExpandDays:
+    def test_single_days_and_inclusive_ranges(self):
+        days = expand_days(["2024-10-30..2024-11-01", "2022-12-02", "2024-10-31"])
+        assert [str(d) for d in days] == [
+            "2022-12-02",
+            "2024-10-30",
+            "2024-10-31",
+            "2024-11-01",
+        ]
+
+    def test_rejects_reversed_and_malformed(self):
+        with pytest.raises(ValueError):
+            expand_days(["2024-10-31..2024-10-25"])
+        with pytest.raises(ValueError):
+            expand_days(["2024-13-01"])
+
+
+def held_post(subreddit: str, i: int) -> MagicMock:
+    p = MagicMock()
+    p.permalink = f"https://www.reddit.com/r/{subreddit}/comments/h{i}/title/"
+    return p
+
+
+def run_archive(held: list, scrape_day):
+    client = MagicMock()
+    client.get_removed_links.return_value = ["removed"]
+    client.get_posts_all.return_value = held
+    scraper = MagicMock()
+    scraper.scrape_day.side_effect = scrape_day
+    context = dg.build_asset_context()
+    with (
+        patch.object(AnalogDBResource, "client", return_value=client),
+        patch.object(RedditResource, "client", return_value=scraper),
+    ):
+        result = archive_reddit_posts(
+            context,
+            ArchiveConfig(days=["2024-10-27"]),
+            RedditResource(),
+            AnalogDBResource(),
+        )
+    return result, scraper
+
+
+class TestArchiveRedditPosts:
+    def test_tops_up_each_subreddit_to_its_count(self):
+        held = [held_post("analog", i) for i in range(13)] + [held_post("analog_bw", 0)]
+        posts = make_reddit_posts(1)
+        result, scraper = run_archive(
+            held, lambda *a: ScrapeResult(posts=list(posts.data.values()), errors=[])
+        )
+
+        calls = {c.args[0]: c.args for c in scraper.scrape_day.call_args_list}
+        assert calls["analog"][1] == 2
+        assert calls["analog_bw"][1] == 1
+        assert calls["SprocketShots"][1] == 2
+        start = calls["analog"][2]
+        assert (start, calls["analog"][3]) == (1729987200, 1729987200 + 86400)
+        assert "removed" in calls["analog"][4]
+        assert held[0].permalink in calls["analog"][4]
+        assert result.successful_count() == 1
+
+    def test_skips_full_days(self):
+        held = (
+            [held_post("analog", i) for i in range(15)]
+            + [held_post("analog_bw", i) for i in range(2)]
+            + [held_post("SprocketShots", i) for i in range(2)]
+        )
+        result, scraper = run_archive(held, None)
+
+        scraper.scrape_day.assert_not_called()
+        assert result.successful_count() == 0
+
+    def test_carries_on_past_arctic_errors(self):
+        def scrape_day(subreddit, *a):
+            if subreddit == "analog":
+                raise ArcticShiftError("down")
+            return ScrapeResult(posts=[], errors=[])
+
+        _, scraper = run_archive([], scrape_day)
+
+        assert scraper.scrape_day.call_count == 3
 
 
 class TestUpdatedRedditComments:

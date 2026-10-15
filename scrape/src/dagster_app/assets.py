@@ -1,18 +1,22 @@
 import json
+import re
 import time
 from dataclasses import asdict
-from typing import List, Tuple
+from datetime import UTC, date, datetime, timedelta
+from typing import Dict, List, Tuple
 
 import analogdb.models as adb
 import dagster as dg
 from analogdb.client import Client, Uploaded
 from analogdb_generated.exceptions import ApiException
+from scrape.arctic import ArcticShift, ArcticShiftError
 from scrape.models import (
     MetadataPost,
     PhotoMetadata,
     PostImages,
     RedditComment,
     RedditPost,
+    ScrapeError,
     new_post_create,
 )
 from scrape.s3 import upload_comments
@@ -137,6 +141,14 @@ def reddit_posts(
         posts += scraped.posts
         scrape_errors += scraped.errors
 
+    return scrape_result(context, posts, scrape_errors)
+
+
+def scrape_result(
+    context: dg.AssetExecutionContext,
+    posts: List[RedditPost],
+    scrape_errors: List[ScrapeError],
+) -> Result[RedditPost]:
     data = {}
     status = {}
     errors = {}
@@ -155,245 +167,378 @@ def reddit_posts(
     return result
 
 
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
-def title_metadatas(
-    context: dg.AssetExecutionContext,
-    metadata: MetadataResource,
-    analogdb: AnalogDBResource,
-    cameras_json: CamerasJsonResource,
-    films_json: FilmsJsonResource,
-    reddit_posts,
-) -> Result[PhotoMetadata]:
-    posts = [p for _, p in reddit_posts.successful().items()]
-    catalog = load_catalog(context, analogdb.client(), cameras_json, films_json)
-    inputs = [MetadataPost(title=p.title, description=p.selftext) for p in posts]
-    results = metadata.client().extract(
-        inputs, catalog.cameras, catalog.films, catalog.aliases
-    )
+class ArchiveConfig(dg.Config):
+    days: List[str] = []
 
-    failed = 0
-    data = {}
-    status = {}
-    for p, r in zip(posts, results, strict=True):
-        if "llm_failed" in r.flags:
-            failed += 1
-        context.log.debug(f"Extracted metadata from {p.title}, metadata: {r.proposed}")
-        data[p.permalink] = r.proposed
-        status[p.permalink] = Status.SUCCESS
 
-    if failed > 0:
-        context.log.warning(
-            f"Failed to extract metadata for {failed} of {len(posts)} posts"
-        )
-    if posts and failed == len(posts):
-        context.log.warning(
-            "Failed to extract metadata for all posts, uploading without it"
-        )
+def expand_days(days: List[str]) -> List[date]:
+    """UTC days from entries like 2024-10-25 or 2024-10-25..2024-10-31,
+    both ends inclusive"""
+    out: List[date] = []
+    for entry in days:
+        first, _, last = entry.strip().partition("..")
+        start = date.fromisoformat(first.strip())
+        end = date.fromisoformat(last.strip()) if last else start
+        if end < start:
+            raise ValueError(f"Day range {entry} ends before it starts")
+        out += [start + timedelta(days=i) for i in range((end - start).days + 1)]
+    return sorted(set(out))
 
-    with_metadata = len([r for r in results if not r.proposed.is_empty()])
-    result = Result(data=data, status=status)
-    context.add_output_metadata(
-        {
-            "success": result.successful_count(),
-            "failed": result.failed_count(),
-            "llm_failed": failed,
-            "with_metadata": with_metadata,
-        }
-    )
-    context.log.info(f"Extracted metadata from {result.successful_count()} posts")
-    return result
+
+def permalink_subreddit(permalink: str) -> str:
+    m = re.search(r"/r/([^/]+)/", permalink)
+    return m.group(1).lower() if m else ""
 
 
 @dg.asset(
     dagster_type=ResultDagsterType,
-    group_name="scrape",
+    group_name="archive",
     retry_policy=dg.RetryPolicy(
         max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
     ),
 )
-def post_images(
+def archive_reddit_posts(
     context: dg.AssetExecutionContext,
-    image_processor: ImageProcessorResource,
-    storage: StorageResource,
-    reddit_posts,
-) -> Result[PostImages]:
-    data = {}
-    status = {}
-    errors = {}
-    processor = image_processor.client()
-    for id, p in reddit_posts.successful().items():
-        try:
-            data[id] = processor.process(p, storage)
-            status[id] = Status.SUCCESS
-        except Exception as e:
-            context.log.error(f"Failed to process images for {id}: {e}")
-            status[id] = Status.FAILED
-            errors[id] = str(e)
+    config: ArchiveConfig,
+    reddit: RedditResource,
+    analogdb: AnalogDBResource,
+) -> Result[RedditPost]:
+    """Fill missed days up to the daily scrape counts, from posts found
+    through Arctic Shift and ranked by their current reddit score"""
+    days = expand_days(config.days)
+    if not days:
+        raise dg.Failure(description="No days given, set config.days")
 
-    result = Result(data=data, status=status, errors=errors)
-    add_result_metadata(context, result)
-    context.log.info(f"Processed images for {result.successful_count()} posts")
-    return result
+    r = reddit.client()
+    arctic = ArcticShift()
+    client = analogdb.client()
+    removed = client.get_removed_links()
 
+    posts: List[RedditPost] = []
+    scrape_errors: List[ScrapeError] = []
+    added: Dict[str, int] = {}
+    failed_days: List[str] = []
+    for day in days:
+        start = int(datetime(day.year, day.month, day.day, tzinfo=UTC).timestamp())
+        end = start + 24 * 60 * 60
+        filter = adb.create_posts_filter(time_start=start, time_end=end - 1)
+        held = [p.permalink for p in client.get_posts_all(count=1000, filter=filter)]
+        before = len(posts)
 
-@dg.asset(dagster_type=ResultDagsterType, group_name="scrape")
-def post_tags(
-    context: dg.AssetExecutionContext,
-    tagger: TaggerResource,
-    cameras_json: CamerasJsonResource,
-    films_json: FilmsJsonResource,
-    reddit_posts,
-    post_images,
-) -> Result[ImageTags]:
-    ids = sorted(reddit_posts.successful_ids() & post_images.successful_ids())
-    tagger_client = tagger.client(cameras_json.client(), films_json.client())
-
-    data = {}
-    status = {}
-    errors = {}
-    inputs = []
-    tagged = []
-    for id in ids:
-        p = reddit_posts.data[id]
-        try:
-            url = medium_url(post_images.data[id].images)
-        except ValueError as e:
-            context.log.warning(f"Failed to tag {id}, uploading without tags: {e}")
-            status[id] = Status.FAILED
-            errors[id] = str(e)
-            continue
-        inputs.append(
-            TagInput(
-                image_url=url,
-                title=p.title,
-                description=p.selftext,
-                grayscale=post_images.data[id].grayscale,
+        for subreddit, count in SUBREDDITS:
+            have = [
+                link for link in held if permalink_subreddit(link) == subreddit.lower()
+            ]
+            need = count - len(have)
+            if need <= 0:
+                context.log.info(f"{day} r/{subreddit} has {len(have)}, skipping")
+                continue
+            try:
+                scraped = r.scrape_day(
+                    subreddit, need, start, end, held + removed, arctic
+                )
+            except ArcticShiftError as e:
+                # the day is safe to run again, so carry on with the rest
+                context.log.error(f"{day} r/{subreddit} failed, {e}")
+                failed_days.append(str(day))
+                continue
+            context.log.info(
+                f"{day} r/{subreddit} had {len(have)}, scraped {len(scraped.posts)}"
             )
+            posts += scraped.posts
+            scrape_errors += scraped.errors
+        added[str(day)] = len(posts) - before
+
+    context.log.info(f"Archive posts by day {json.dumps(added)}")
+    if failed_days:
+        context.log.warning(f"Run these days again {sorted(set(failed_days))}")
+    return scrape_result(context, posts, scrape_errors)
+
+
+def scrape_assets(prefix: str, source: str, group: str) -> List[dg.AssetsDefinition]:
+    """Assets turning scraped reddit posts into uploaded analogdb posts. Built
+    once for the daily scrape and once for archive backfills, with their own
+    keys so the two never share IO manager outputs."""
+
+    @dg.asset(
+        name=f"{prefix}title_metadatas",
+        dagster_type=ResultDagsterType,
+        group_name=group,
+        ins={"reddit_posts": dg.AssetIn(source)},
+    )
+    def title_metadatas(
+        context: dg.AssetExecutionContext,
+        metadata: MetadataResource,
+        analogdb: AnalogDBResource,
+        cameras_json: CamerasJsonResource,
+        films_json: FilmsJsonResource,
+        reddit_posts,
+    ) -> Result[PhotoMetadata]:
+        posts = [p for _, p in reddit_posts.successful().items()]
+        catalog = load_catalog(context, analogdb.client(), cameras_json, films_json)
+        inputs = [MetadataPost(title=p.title, description=p.selftext) for p in posts]
+        results = metadata.client().extract(
+            inputs, catalog.cameras, catalog.films, catalog.aliases
         )
-        tagged.append(id)
 
-    results = tagger_client.tag_all(inputs, tagger.concurrency)
-    text_only = 0
-    for id, r in zip(tagged, results, strict=True):
-        if isinstance(r, Exception):
-            context.log.warning(f"Failed to tag {id}, uploading without tags: {r}")
-            status[id] = Status.FAILED
-            errors[id] = str(r)
-            continue
-        if r.text_only:
-            text_only += 1
-        data[id] = r
-        status[id] = Status.SUCCESS
+        failed = 0
+        data = {}
+        status = {}
+        for p, r in zip(posts, results, strict=True):
+            if "llm_failed" in r.flags:
+                failed += 1
+            context.log.debug(
+                f"Extracted metadata from {p.title}, metadata: {r.proposed}"
+            )
+            data[p.permalink] = r.proposed
+            status[p.permalink] = Status.SUCCESS
 
-    result = Result(data=data, status=status, errors=errors)
-    context.add_output_metadata(
-        {
-            "success": result.successful_count(),
-            "failed": result.failed_count(),
-            "text_only": text_only,
+        if failed > 0:
+            context.log.warning(
+                f"Failed to extract metadata for {failed} of {len(posts)} posts"
+            )
+        if posts and failed == len(posts):
+            context.log.warning(
+                "Failed to extract metadata for all posts, uploading without it"
+            )
+
+        with_metadata = len([r for r in results if not r.proposed.is_empty()])
+        result = Result(data=data, status=status)
+        context.add_output_metadata(
+            {
+                "success": result.successful_count(),
+                "failed": result.failed_count(),
+                "llm_failed": failed,
+                "with_metadata": with_metadata,
+            }
+        )
+        context.log.info(f"Extracted metadata from {result.successful_count()} posts")
+        return result
+
+    @dg.asset(
+        name=f"{prefix}post_images",
+        dagster_type=ResultDagsterType,
+        group_name=group,
+        ins={"reddit_posts": dg.AssetIn(source)},
+        retry_policy=dg.RetryPolicy(
+            max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+        ),
+    )
+    def post_images(
+        context: dg.AssetExecutionContext,
+        image_processor: ImageProcessorResource,
+        storage: StorageResource,
+        reddit_posts,
+    ) -> Result[PostImages]:
+        data = {}
+        status = {}
+        errors = {}
+        processor = image_processor.client()
+        for id, p in reddit_posts.successful().items():
+            try:
+                data[id] = processor.process(p, storage)
+                status[id] = Status.SUCCESS
+            except Exception as e:
+                context.log.error(f"Failed to process images for {id}: {e}")
+                status[id] = Status.FAILED
+                errors[id] = str(e)
+
+        result = Result(data=data, status=status, errors=errors)
+        add_result_metadata(context, result)
+        context.log.info(f"Processed images for {result.successful_count()} posts")
+        return result
+
+    @dg.asset(
+        name=f"{prefix}post_tags",
+        dagster_type=ResultDagsterType,
+        group_name=group,
+        ins={
+            "reddit_posts": dg.AssetIn(source),
+            "post_images": dg.AssetIn(f"{prefix}post_images"),
+        },
+    )
+    def post_tags(
+        context: dg.AssetExecutionContext,
+        tagger: TaggerResource,
+        cameras_json: CamerasJsonResource,
+        films_json: FilmsJsonResource,
+        reddit_posts,
+        post_images,
+    ) -> Result[ImageTags]:
+        ids = sorted(reddit_posts.successful_ids() & post_images.successful_ids())
+        tagger_client = tagger.client(cameras_json.client(), films_json.client())
+
+        data = {}
+        status = {}
+        errors = {}
+        inputs = []
+        tagged = []
+        for id in ids:
+            p = reddit_posts.data[id]
+            try:
+                url = medium_url(post_images.data[id].images)
+            except ValueError as e:
+                context.log.warning(f"Failed to tag {id}, uploading without tags: {e}")
+                status[id] = Status.FAILED
+                errors[id] = str(e)
+                continue
+            inputs.append(
+                TagInput(
+                    image_url=url,
+                    title=p.title,
+                    description=p.selftext,
+                    grayscale=post_images.data[id].grayscale,
+                )
+            )
+            tagged.append(id)
+
+        results = tagger_client.tag_all(inputs, tagger.concurrency)
+        text_only = 0
+        for id, r in zip(tagged, results, strict=True):
+            if isinstance(r, Exception):
+                context.log.warning(f"Failed to tag {id}, uploading without tags: {r}")
+                status[id] = Status.FAILED
+                errors[id] = str(r)
+                continue
+            if r.text_only:
+                text_only += 1
+            data[id] = r
+            status[id] = Status.SUCCESS
+
+        result = Result(data=data, status=status, errors=errors)
+        context.add_output_metadata(
+            {
+                "success": result.successful_count(),
+                "failed": result.failed_count(),
+                "text_only": text_only,
+            }
+        )
+        context.log.info(
+            f"Tagged {result.successful_count()} posts, {text_only} from the title only"
+        )
+        return result
+
+    @dg.asset(
+        name=f"{prefix}final_posts",
+        group_name=group,
+        ins={
+            "reddit_posts": dg.AssetIn(source),
+            "title_metadatas": dg.AssetIn(f"{prefix}title_metadatas"),
+            "post_images": dg.AssetIn(f"{prefix}post_images"),
+            "post_tags": dg.AssetIn(f"{prefix}post_tags"),
+        },
+    )
+    def final_posts(
+        context: dg.AssetExecutionContext,
+        reddit_posts,
+        title_metadatas,
+        post_images,
+        post_tags,
+    ):
+        ids = (
+            reddit_posts.successful_ids()
+            & title_metadatas.successful_ids()
+            & post_images.successful_ids()
+        )
+        context.log.info(f"Creating final posts for {len(ids)} posts")
+
+        data = {}
+        status = {}
+        errors = {}
+        tags = post_tags.successful()
+
+        for id in ids:
+            try:
+                t = tags.get(id)
+                if t is None:
+                    context.log.warning(
+                        f"Missing tags for {id}, uploading without them"
+                    )
+                final = new_post_create(
+                    post=reddit_posts.data[id],
+                    metadata=title_metadatas.data[id],
+                    images=post_images.data[id],
+                    keywords=t.keywords() if t else [],
+                    caption=t.post_caption() if t else None,
+                )
+
+                data[id] = final
+                status[id] = Status.SUCCESS
+
+            except Exception as e:
+                context.log.error(f"Failed to create final post for {id}: {e}")
+                status[id] = Status.FAILED
+                errors[id] = str(e)
+
+        result = Result(data=data, status=status, errors=errors)
+        add_result_metadata(context, result)
+        context.log.info(f"Created {result.successful_count()} final posts")
+        return result
+
+    @dg.asset(
+        name=f"{prefix}upload_posts",
+        group_name=group,
+        ins={"final_posts": dg.AssetIn(f"{prefix}final_posts")},
+        retry_policy=dg.RetryPolicy(
+            max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
+        ),
+    )
+    def upload_posts(
+        context: dg.AssetExecutionContext, analogdb: AnalogDBResource, final_posts
+    ) -> dg.MaterializeResult:
+        adb = analogdb.client()
+        created = 0
+        exists = 0
+        duplicate = 0
+        failed = 0
+        for id, p in final_posts.successful().items():
+            try:
+                uploaded = adb.upload_post(convert_create(p))
+            except Exception as e:
+                failed += 1
+                context.log.error(
+                    f"Failed to upload post, permalink={id}, {error_detail(e)}"
+                )
+                continue
+            if uploaded == Uploaded.EXISTS:
+                exists += 1
+                context.log.info(f"Post already exists, permalink={id}")
+            elif uploaded == Uploaded.DUPLICATE:
+                duplicate += 1
+                context.log.info(f"Post is a duplicate image, permalink={id}")
+            else:
+                created += 1
+
+        counts = {
+            "created": created,
+            "exists": exists,
+            "duplicate": duplicate,
+            "failed": failed,
         }
-    )
-    context.log.info(
-        f"Tagged {result.successful_count()} posts, {text_only} from the title only"
-    )
-    return result
-
-
-@dg.asset(group_name="scrape")
-def final_posts(
-    context: dg.AssetExecutionContext,
-    reddit_posts,
-    title_metadatas,
-    post_images,
-    post_tags,
-):
-    ids = (
-        reddit_posts.successful_ids()
-        & title_metadatas.successful_ids()
-        & post_images.successful_ids()
-    )
-    context.log.info(f"Creating final posts for {len(ids)} posts")
-
-    data = {}
-    status = {}
-    errors = {}
-    tags = post_tags.successful()
-
-    for id in ids:
-        try:
-            t = tags.get(id)
-            if t is None:
-                context.log.warning(f"Missing tags for {id}, uploading without them")
-            final = new_post_create(
-                post=reddit_posts.data[id],
-                metadata=title_metadatas.data[id],
-                images=post_images.data[id],
-                keywords=t.keywords() if t else [],
-                caption=t.post_caption() if t else None,
-            )
-
-            data[id] = final
-            status[id] = Status.SUCCESS
-
-        except Exception as e:
-            context.log.error(f"Failed to create final post for {id}: {e}")
-            status[id] = Status.FAILED
-            errors[id] = str(e)
-
-    result = Result(data=data, status=status, errors=errors)
-    add_result_metadata(context, result)
-    context.log.info(f"Created {result.successful_count()} final posts")
-    return result
-
-
-@dg.asset(
-    group_name="scrape",
-    retry_policy=dg.RetryPolicy(
-        max_retries=2, delay=60, backoff=dg.Backoff.EXPONENTIAL
-    ),
-)
-def upload_posts(
-    context: dg.AssetExecutionContext, analogdb: AnalogDBResource, final_posts
-) -> dg.MaterializeResult:
-    adb = analogdb.client()
-    created = 0
-    exists = 0
-    duplicate = 0
-    failed = 0
-    for id, p in final_posts.successful().items():
-        try:
-            uploaded = adb.upload_post(convert_create(p))
-        except Exception as e:
-            failed += 1
-            context.log.error(
-                f"Failed to upload post, permalink={id}, {error_detail(e)}"
-            )
-            continue
-        if uploaded == Uploaded.EXISTS:
-            exists += 1
-            context.log.info(f"Post already exists, permalink={id}")
-        elif uploaded == Uploaded.DUPLICATE:
-            duplicate += 1
-            context.log.info(f"Post is a duplicate image, permalink={id}")
-        else:
-            created += 1
-
-    counts = {
-        "created": created,
-        "exists": exists,
-        "duplicate": duplicate,
-        "failed": failed,
-    }
-    context.log.info(
-        f"Uploaded posts, created={created}, exists={exists}, "
-        f"duplicate={duplicate}, failed={failed}"
-    )
-    if failed > 0:
-        raise dg.Failure(
-            description=f"Failed to upload {failed} of {sum(counts.values())} posts",
-            metadata=counts,
+        context.log.info(
+            f"Uploaded posts, created={created}, exists={exists}, "
+            f"duplicate={duplicate}, failed={failed}"
         )
-    return dg.MaterializeResult(metadata=counts)
+        if failed > 0:
+            raise dg.Failure(
+                description=f"Failed to upload {failed} of {sum(counts.values())} posts",
+                metadata=counts,
+            )
+        return dg.MaterializeResult(metadata=counts)
+
+    return [title_metadatas, post_images, post_tags, final_posts, upload_posts]
+
+
+title_metadatas, post_images, post_tags, final_posts, upload_posts = scrape_assets(
+    "", "reddit_posts", "scrape"
+)
+(
+    archive_title_metadatas,
+    archive_post_images,
+    archive_post_tags,
+    archive_final_posts,
+    archive_upload_posts,
+) = scrape_assets("archive_", "archive_reddit_posts", "archive")
 
 
 @dg.asset(partitions_def=daily_partitions, group_name="backfill")
