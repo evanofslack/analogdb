@@ -25,6 +25,7 @@ from .assets import (
 )
 from .backfill import (
     reencode_post_vectors,
+    reextract_post_colors,
     rematch_post_metadata,
     tag_missing_post_captions,
 )
@@ -102,6 +103,11 @@ tag_missing_captions_job = dg.define_asset_job(
 reencode_vectors_job = dg.define_asset_job(
     name="reencode_vectors",
     selection=[reencode_post_vectors],
+)
+
+reextract_colors_job = dg.define_asset_job(
+    name="reextract_colors",
+    selection=[reextract_post_colors],
 )
 
 report_duplicates_job = dg.define_asset_job(

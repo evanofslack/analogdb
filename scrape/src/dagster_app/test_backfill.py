@@ -7,16 +7,18 @@ import dagster as dg
 import pytest
 from analogdb.client import Deleted
 from dagster_aws.s3 import S3Resource
-from scrape.models import MatchResult, PhotoMetadata, RedditComment
+from scrape.models import Color, MatchResult, PhotoMetadata, RedditComment
 from scrape.tagging import ImageTags, TaggingError
 
 from . import backfill
 from .backfill import (
     PruneCatalogConfig,
     ReencodeVectorsConfig,
+    ReextractColorsConfig,
     TagMissingCaptionsConfig,
     prune_catalog,
     reencode_post_vectors,
+    reextract_post_colors,
     rematch_post_metadata,
     tag_missing_post_captions,
 )
@@ -24,6 +26,7 @@ from .resources import (
     AnalogDBResource,
     CamerasJsonResource,
     FilmsJsonResource,
+    ImageProcessorResource,
     MetadataResource,
     RedditResource,
     StorageResource,
@@ -322,6 +325,102 @@ class TestReencodeVectors:
 
         assert result.metadata["failed"] == 2
         assert result.metadata["failed_ids"] == "[1, 2]"
+
+
+def images(id):
+    return [
+        adb.Image(resolution=r, url=f"https://i.analogdb.com/{id}-{r}.jpg")
+        for r in ("low", "medium", "high", "raw")
+    ]
+
+
+class FakeProcessor:
+    def __init__(self, fail=()):
+        self.fail = set(fail)
+        self.urls = []
+
+    def download_colors(self, url):
+        self.urls.append(url)
+        if url in self.fail:
+            raise RuntimeError("timeout")
+        return [Color("#c81e28", 0.6), Color("#1e5ac8", 0.3)]
+
+
+class TestReextractColors:
+    def run(self, client, processor, **config):
+        with (
+            patch.object(AnalogDBResource, "client", return_value=client),
+            patch.object(ImageProcessorResource, "client", return_value=processor),
+            dg.build_asset_context() as context,
+        ):
+            return reextract_post_colors(
+                context,
+                config=ReextractColorsConfig(**config),
+                analogdb=AnalogDBResource(),
+                image_processor=ImageProcessorResource(),
+            )
+
+    def test_patches_every_post_from_low_image(self):
+        client = MagicMock()
+        client.get_posts_all.return_value = [
+            post(2, images=images(2)),
+            post(1, images=images(1)),
+        ]
+        processor = FakeProcessor()
+
+        result = self.run(client, processor)
+
+        assert processor.urls == [
+            "https://i.analogdb.com/1-low.jpg",
+            "https://i.analogdb.com/2-low.jpg",
+        ]
+        assert [c.args[0] for c in client.patch_post.call_args_list] == [1, 2]
+        assert client.patch_post.call_args.args[1].to_dict() == {
+            "colors": [
+                {"hex": "#c81e28", "percent": 0.6},
+                {"hex": "#1e5ac8", "percent": 0.3},
+            ]
+        }
+        assert result.metadata["posts"] == 2
+        assert result.metadata["patched"] == 2
+        assert "failed_ids" not in result.metadata
+
+    def test_config_ids_and_limit(self):
+        client = MagicMock()
+        client.get_posts_all.return_value = [
+            post(i, images=images(i)) for i in (1, 2, 3)
+        ]
+
+        result = self.run(client, FakeProcessor(), ids=[3, 1, 9], limit=2)
+
+        assert [c.args[0] for c in client.patch_post.call_args_list] == [3, 1]
+        assert result.metadata["patched"] == 2
+
+    def test_failures_are_counted_not_fatal(self):
+        client = MagicMock()
+        client.get_posts_all.return_value = [
+            post(1, images=images(1)),
+            post(2, images=images(2)),
+            post(3, images=[]),
+            post(4, images=images(4)),
+        ]
+
+        def patch_post(id, patch):
+            if id == 4:
+                raise RuntimeError("500")
+
+        client.patch_post.side_effect = patch_post
+        processor = FakeProcessor(fail={"https://i.analogdb.com/2-low.jpg"})
+
+        result = self.run(client, processor, ids=[1, 2, 3, 4, 5])
+
+        assert result.metadata["posts"] == 4
+        assert result.metadata["patched"] == 1
+        assert result.metadata["extract_failed"] == 1
+        assert result.metadata["no_image"] == 1
+        assert result.metadata["patch_failed"] == 1
+        assert result.metadata["not_found"] == 1
+        assert result.metadata["failed_ids"] == "[2, 3, 4]"
 
 
 PRUNE_CAMERAS_JSON = [

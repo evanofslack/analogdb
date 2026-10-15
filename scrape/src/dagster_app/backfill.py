@@ -1,6 +1,6 @@
 """Upkeep over the whole post archive: rematching metadata and pruning the
-catalog after catalog changes, and repairing posts missing a caption or an
-image vector.
+catalog after catalog changes, repairing posts missing a caption or an image
+vector, and extracting post colors again.
 
 These assets return only metadata, so nothing large goes through the IO
 manager. Posts are processed in chunks so a failure late in a long run keeps
@@ -18,7 +18,7 @@ from scrape.tagging import TAGGER_VERSION, TEXT_ONLY_SUFFIX, TagInput, medium_ur
 
 from .assets import error_detail, upload_cameras, upload_films
 from .catalog import Retired, camera_key, catalog_for_matching, retired_entries
-from .convert import convert_caption, convert_keyword
+from .convert import convert_caption, convert_color, convert_keyword
 from .metadata_flow import (
     WriteStats,
     catalog_matcher,
@@ -32,6 +32,7 @@ from .resources import (
     AnalogDBResource,
     CamerasJsonResource,
     FilmsJsonResource,
+    ImageProcessorResource,
     TaggerResource,
 )
 
@@ -440,4 +441,95 @@ def reencode_post_vectors(
                 metadata=failed_metadata,
             )
         return dg.MaterializeResult(metadata=failed_metadata)
+    return dg.MaterializeResult(metadata=metadata)
+
+
+class ReextractColorsConfig(dg.Config):
+    ids: Optional[List[int]] = None
+    limit: Optional[int] = None
+
+
+@dataclass
+class ColorStats:
+    posts: int = 0
+    patched: int = 0
+    no_image: int = 0
+    extract_failed: int = 0
+    patch_failed: int = 0
+    not_found: int = 0
+
+    def metadata(self) -> Dict[str, int]:
+        return dict(self.__dict__)
+
+
+def low_url(images: Sequence[adb.Image]) -> Optional[str]:
+    for image in images:
+        if image.resolution == "low" and image.url:
+            return image.url
+    return None
+
+
+@dg.asset(group_name="backfill")
+def reextract_post_colors(
+    context: dg.AssetExecutionContext,
+    config: ReextractColorsConfig,
+    analogdb: AnalogDBResource,
+    image_processor: ImageProcessorResource,
+) -> dg.MaterializeResult:
+    """Extract the palette of every post, or of the configured ids, from its low
+    res image and patch the post colors. Failures are counted and listed, and
+    never fail the run, so a rerun with the failed ids picks them up."""
+    client = analogdb.client()
+    processor = image_processor.client()
+    posts = {p.id: p for p in client.get_posts_all(count=MAX_POSTS)}
+    ids = config.ids if config.ids is not None else sorted(posts)
+    if config.limit is not None:
+        ids = ids[: config.limit]
+    context.log.info(f"Extracting colors of {len(ids)} posts")
+
+    stats = ColorStats()
+    failed: List[int] = []
+    start = time.monotonic()
+    for chunk in chunks(ids, BACKFILL_CHUNK):
+        for id in chunk:
+            post = posts.get(id)
+            if post is None:
+                stats.not_found += 1
+                continue
+            stats.posts += 1
+            url = low_url(post.images or [])
+            if url is None:
+                stats.no_image += 1
+                failed.append(id)
+                context.log.warning(f"Failed to extract colors, id={id}, no low image")
+                continue
+            try:
+                colors = processor.download_colors(url)
+            except Exception as e:
+                stats.extract_failed += 1
+                failed.append(id)
+                context.log.warning(f"Failed to extract colors, id={id}, error={e}")
+                continue
+            patch = adb.PostPatch(colors=[convert_color(c) for c in colors])
+            try:
+                client.patch_post(id, patch)
+            except Exception as e:
+                stats.patch_failed += 1
+                failed.append(id)
+                context.log.error(
+                    f"Failed to patch post colors, id={id}, {error_detail(e)}"
+                )
+                continue
+            stats.patched += 1
+        rate = stats.posts / max(time.monotonic() - start, 1e-9)
+        context.log.info(
+            f"Reextract colors progress: {stats.posts} of {len(ids)} posts, "
+            f"patched={stats.patched}, failed={len(failed)}, {rate:.1f} posts/s"
+        )
+
+    metadata: Dict[str, object] = {**stats.metadata()}
+    if failed:
+        metadata["failed_ids"] = str(failed)
+        context.log.error(f"Failed to reextract colors of posts: {failed}")
+    context.log.info(f"Finished reextract colors: {stats.metadata()}")
     return dg.MaterializeResult(metadata=metadata)
