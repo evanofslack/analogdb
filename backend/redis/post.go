@@ -105,6 +105,11 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 
 	// fallback to db
 	v, err := s.postsCache.once(ctx, postsKey, func(ctx context.Context) (any, error) {
+		// a load that finished after our miss may have stored them already
+		var cached postsResult
+		if s.postsCache.lookup(ctx, postsKey, &cached.posts) == nil && s.postsCache.lookup(ctx, countKey, &cached.count) == nil {
+			return cached, nil
+		}
 		posts, count, err := s.dbService.FindPosts(ctx, filter)
 		if err != nil {
 			return nil, err
@@ -142,16 +147,26 @@ func (s *PostService) FindPostByID(ctx context.Context, id int) (*analogdb.Post,
 
 	// error means we must fallback to db
 	v, err := s.postCache.once(ctx, postKey, func(ctx context.Context) (any, error) {
+		// a load that finished after our miss may have stored it already
+		var cached *analogdb.Post
+		if s.postCache.lookup(ctx, postKey, &cached) == nil {
+			return cached, nil
+		}
+
 		before, genErr := s.rdb.readGen(ctx, postsEntity)
 		post, err := s.dbService.FindPostByID(ctx, id)
 		if err != nil {
 			return nil, err
 		}
+		if genErr != nil {
+			return post, nil
+		}
 
-		// a write during the lookup may have made this post stale, only cache it if none happened
-		after, err := s.rdb.readGen(ctx, postsEntity)
-		if genErr == nil && err == nil && before == after {
-			s.postCache.set(ctx, postKey, post, postTTL)
+		// a write during the lookup may have made this post stale. Check after the set, a write
+		// either bumped the generation before this check or deletes the key after our set
+		s.postCache.set(ctx, postKey, post, postTTL)
+		if after, err := s.rdb.readGen(ctx, postsEntity); err != nil || after != before {
+			_ = s.postCache.delete(ctx, postKey)
 		}
 		return post, nil
 	})
