@@ -66,6 +66,21 @@ export interface ApiDemoGroup {
   demos: ApiDemo[];
 }
 
+export interface RepoLanguage {
+  name: string;
+  percent: number;
+  color: string;
+}
+
+// the github repo as the open source card shows it
+export interface RepoData {
+  description: string;
+  stars: number;
+  license: string | null;
+  pushedAt: string;
+  languages: RepoLanguage[];
+}
+
 export interface AboutData {
   numPosts: number;
   numAuthors: number;
@@ -77,6 +92,7 @@ export interface AboutData {
   films: FilmSet[];
   searches: SearchDemo[];
   apiDemos: ApiDemoGroup[];
+  repo: RepoData | null;
 }
 
 export function shuffle<T>(items: T[]): T[] {

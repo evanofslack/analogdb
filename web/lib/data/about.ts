@@ -9,6 +9,8 @@ import {
   FilmSet,
   RainbowGroup,
   RainbowPhoto,
+  RepoData,
+  RepoLanguage,
   SearchDemo,
   SimilarityData,
 } from "@lib/about";
@@ -557,6 +559,66 @@ async function fetchApiDemos(): Promise<ApiDemoGroup[]> {
   return results.filter((group): group is ApiDemoGroup => group !== null);
 }
 
+const REPO_API = "https://api.github.com/repos/evanofslack/analogdb";
+const REPO_LANGUAGES = 3;
+
+// github's own language colors, anything else is gray
+const LANGUAGE_COLORS: Record<string, string> = {
+  Go: "#00ADD8",
+  TypeScript: "#3178c6",
+  Python: "#3572A5",
+  JavaScript: "#f1e05a",
+  CSS: "#663399",
+};
+const OTHER_COLOR = "#8b8b8b";
+
+// the largest languages by bytes, the rest folded into other
+function repoLanguages(bytes: Record<string, number>): RepoLanguage[] {
+  const total = Object.values(bytes).reduce((sum, n) => sum + n, 0);
+  if (!total) return [];
+  const sorted = Object.entries(bytes).sort(([, a], [, b]) => b - a);
+  const languages = sorted.slice(0, REPO_LANGUAGES).map(([name, n]) => ({
+    name,
+    percent: (n / total) * 100,
+    color: LANGUAGE_COLORS[name] ?? OTHER_COLOR,
+  }));
+  const rest = sorted.slice(REPO_LANGUAGES).reduce((sum, [, n]) => sum + n, 0);
+  if (rest) {
+    languages.push({
+      name: "Other",
+      percent: (rest / total) * 100,
+      color: OTHER_COLOR,
+    });
+  }
+  return languages;
+}
+
+async function fetchRepo(): Promise<RepoData | null> {
+  try {
+    const headers = { Accept: "application/vnd.github+json" };
+    const [repoResponse, languagesResponse] = await Promise.all([
+      fetch(REPO_API, { headers }),
+      fetch(`${REPO_API}/languages`, { headers }),
+    ]);
+    if (!repoResponse.ok || !languagesResponse.ok) return null;
+    const [repo, languages] = await Promise.all([
+      repoResponse.json(),
+      languagesResponse.json(),
+    ]);
+    const license = repo.license?.spdx_id;
+    return {
+      description: repo.description ?? "",
+      stars: repo.stargazers_count ?? 0,
+      license: license && license !== "NOASSERTION" ? license : null,
+      pushedAt: repo.pushed_at,
+      languages: repoLanguages(languages),
+    };
+  } catch (error) {
+    console.error("Fail fetch repo:", error);
+    return null;
+  }
+}
+
 async function getData(): Promise<AboutData> {
   const [
     numPosts,
@@ -568,6 +630,7 @@ async function getData(): Promise<AboutData> {
     films,
     searches,
     apiDemos,
+    repo,
   ] = await Promise.all([
     getPostsTotalCount(),
     getAuthorsTotalCount(),
@@ -578,6 +641,7 @@ async function getData(): Promise<AboutData> {
     fetchFilms(),
     fetchSearches(),
     fetchApiDemos(),
+    fetchRepo(),
   ]);
 
   return {
@@ -591,9 +655,10 @@ async function getData(): Promise<AboutData> {
     films,
     searches,
     apiDemos,
+    repo,
   };
 }
 
-export const getAboutData = unstable_cache(getData, ["about-data-v4"], {
+export const getAboutData = unstable_cache(getData, ["about-data-v5"], {
   revalidate: 3600,
 });

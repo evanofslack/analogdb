@@ -21,6 +21,7 @@ import styles from "./about.module.css";
 import AboutApi from "./aboutApi";
 import AboutFilms from "./aboutFilms";
 import AboutPhoto, { AboutPhotoProvider } from "./aboutPhoto";
+import AboutRepo from "./aboutRepo";
 import AboutSearch from "./aboutSearch";
 import Footer from "./footer";
 
@@ -482,9 +483,9 @@ export default function About(props: AboutProps) {
               <div>
                 <h2 className={styles.title}>Open Source</h2>
                 <p className={styles.subtitle}>
-                  All code made publicly available on Github with flexible
-                  licensing. AnalogDB is an open community where all
-                  contributions are welcome!
+                  Every part of AnalogDB is on GitHub: the Go API, this site,
+                  and the pipeline that scrapes and analyzes each photo. Issues
+                  and pull requests welcome.
                 </p>
                 <a
                   className={styles.link}
@@ -493,14 +494,20 @@ export default function About(props: AboutProps) {
                   view source
                 </a>
               </div>
-              <div className={styles.desktopOnly}>
-                <IconBrandGithub
-                  size={160}
-                  stroke={1}
-                  className={styles.githubIcon}
-                  aria-hidden
-                />
-              </div>
+              {props.data.repo ? (
+                <div className={`${styles.visual} ${styles.repoVisual}`}>
+                  <AboutRepo repo={props.data.repo} />
+                </div>
+              ) : (
+                <div className={styles.desktopOnly}>
+                  <IconBrandGithub
+                    size={160}
+                    stroke={1}
+                    className={styles.githubIcon}
+                    aria-hidden
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>

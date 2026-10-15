@@ -49,9 +49,9 @@
   padding-top: 4rem;
 }
 
-/* the last section sits close to the footer */
+/* the last section leaves room above the footer */
 .band:last-child .split {
-  padding-bottom: 3rem;
+  padding-bottom: 5rem;
 }
 
 /* split with a large visual */
@@ -368,6 +368,11 @@
   max-width: 610px;
 }
 
+.repoVisual {
+  flex: 1;
+  max-width: 420px;
+}
+
 .githubIcon {
   display: block;
   color: var(--adb-heading);
@@ -465,6 +470,10 @@
 
   .hero {
     padding-top: 1.5rem;
+  }
+
+  .band:last-child .split {
+    padding-bottom: 3.5rem;
   }
 
   .text {
