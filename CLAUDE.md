@@ -137,7 +137,7 @@ Note: the backend uses `log/slog` for logging, wrapped in `logger.Logger` (`/bac
 
 ## Testing
 
-- **Backend**: `just backend test` runs all unit tests
+- **Backend**: `just backend test` runs all unit tests. Follow `/backend/TESTING.md` when writing tests (no sleeps for sync, stress concurrent tests under load)
 - **Scrape**: `just scrape test` runs pytest
 - **Frontend**: No test suite yet, `just web lint` runs ESLint
 - **Load testing**: k6 scripts in `/test/k6/`, run natively with `just load` (see its README)

@@ -3,6 +3,8 @@ package redis
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sync/atomic"
 	"time"
 
 	"github.com/evanofslack/analogdb/logger"
@@ -114,6 +116,8 @@ type Cache struct {
 	stats    *cacheStats
 	logger   *logger.Logger
 	group    singleflight.Group
+	// counts deletes, a read that raced one drops what it put in the local cache
+	deletes atomic.Int64
 }
 
 // create a new cache backed by redis
@@ -151,7 +155,13 @@ func (rdb *RDB) NewCache(instance string, size int, ttl time.Duration) *Cache {
 func (cache *Cache) get(ctx context.Context, key string, item interface{}) error {
 	cache.logger.DebugContext(ctx, "Getting item from cache", "instance", cache.instance)
 
-	b, err := cache.getBytes(ctx, key)
+	err := cache.lookup(ctx, key, item)
+	if errors.Is(err, errDecode) {
+		cache.logger.WarnContext(ctx, "Cache decode error", "instance", cache.instance, "error", err)
+		cache.stats.incErrors(errorKindDecode)
+		_ = cache.delete(ctx, key)
+		return rediscache.ErrCacheMiss
+	}
 	if errors.Is(err, rediscache.ErrCacheMiss) {
 		cache.logger.DebugContext(ctx, "Cache miss", "instance", cache.instance)
 		cache.stats.incMisses()
@@ -163,15 +173,22 @@ func (cache *Cache) get(ctx context.Context, key string, item interface{}) error
 		return err
 	}
 
-	if err := cache.cache.Unmarshal(b, item); err != nil {
-		cache.logger.WarnContext(ctx, "Cache decode error", "instance", cache.instance, "error", err)
-		cache.stats.incErrors(errorKindDecode)
-		_ = cache.delete(ctx, key)
-		return rediscache.ErrCacheMiss
-	}
-
 	cache.logger.DebugContext(ctx, "Cache hit", "instance", cache.instance)
 	cache.stats.incHits()
+	return nil
+}
+
+var errDecode = errors.New("cache decode error")
+
+// lookup is get without logging or stats, it returns errDecode when the value can't be decoded
+func (cache *Cache) lookup(ctx context.Context, key string, item interface{}) error {
+	b, err := cache.getBytes(ctx, key)
+	if err != nil {
+		return err
+	}
+	if err := cache.cache.Unmarshal(b, item); err != nil {
+		return fmt.Errorf("%w: %w", errDecode, err)
+	}
 	return nil
 }
 
@@ -179,6 +196,7 @@ func (cache *Cache) getBytes(ctx context.Context, key string) ([]byte, error) {
 	if b, ok := cache.local.Get(key); ok {
 		return b, nil
 	}
+	deletes := cache.deletes.Load()
 	b, err := cache.redis.Get(ctx, key).Bytes()
 	if errors.Is(err, redis.Nil) {
 		return nil, rediscache.ErrCacheMiss
@@ -186,7 +204,11 @@ func (cache *Cache) getBytes(ctx context.Context, key string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	// check after the set, a delete either comes after it or bumped the count before this check
 	cache.local.Set(key, b)
+	if cache.deletes.Load() != deletes {
+		cache.local.Del(key)
+	}
 	return b, nil
 }
 
@@ -214,6 +236,7 @@ func (cache *Cache) delete(ctx context.Context, key string) error {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), cacheOpTimeout)
 	defer cancel()
 
+	cache.deletes.Add(1)
 	err := cache.cache.Delete(ctx, key)
 	if err != nil {
 		cache.logger.ErrorContext(ctx, "Fail delete item in cache", "instance", cache.instance, "error", err)
@@ -240,6 +263,11 @@ func fetch[T any](ctx context.Context, cache *Cache, key string, ttl time.Durati
 	}
 
 	v, err := cache.once(ctx, key, func(ctx context.Context) (any, error) {
+		// a load that finished after our miss may have stored it already
+		var value T
+		if err := cache.lookup(ctx, key, &value); err == nil {
+			return value, nil
+		}
 		value, err := load(ctx)
 		if err != nil {
 			return nil, err

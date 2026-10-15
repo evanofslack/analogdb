@@ -379,8 +379,13 @@ func TestConcurrentMissesShareOneLoad(t *testing.T) {
 	db := newFakePostService(1, 2)
 	s := NewCachePostService(rdb, db)
 
+	entered := make(chan struct{})
 	release := make(chan struct{})
-	db.afterRead = func() { <-release }
+	signal := sync.OnceFunc(func() { close(entered) })
+	db.afterRead = func() {
+		signal()
+		<-release
+	}
 
 	var wg sync.WaitGroup
 	for range 50 {
@@ -393,10 +398,8 @@ func TestConcurrentMissesShareOneLoad(t *testing.T) {
 		}()
 	}
 
-	for db.findCalls.Load() == 0 {
-		time.Sleep(time.Millisecond)
-	}
-	time.Sleep(50 * time.Millisecond)
+	// late callers either join this load or find what it stored
+	<-entered
 	close(release)
 	wg.Wait()
 
