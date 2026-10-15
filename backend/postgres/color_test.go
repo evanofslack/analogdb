@@ -25,9 +25,9 @@ func colorTestPalette(i int) []analogdb.Color {
 	}
 }
 
-func createColorPost(t *testing.T, service *PostService, name string, colors []analogdb.Color, grayscale bool) *analogdb.Post {
+func createColorPost(ctx context.Context, t *testing.T, service *PostService, name string, colors []analogdb.Color, grayscale bool) *analogdb.Post {
 	t.Helper()
-	post, err := service.CreatePost(context.Background(), &analogdb.CreatePost{
+	post, err := service.CreatePost(ctx, &analogdb.CreatePost{
 		Title:     name,
 		Author:    "u/colors",
 		Permalink: "reddit.com/" + name,
@@ -71,7 +71,7 @@ func TestPostService_ColorsDerived(t *testing.T) {
 		{Hex: "#C0392B", Css: "client", Html: "client", Percent: 0.3},
 		{Hex: "008080", Percent: 0.1},
 	}
-	post := createColorPost(t, service, "derived", colors, false)
+	post := createColorPost(ctx, t, service, "derived", colors, false)
 
 	wantNames := [][2]string{{"gray", "gray"}, {"firebrick", "red"}, {"teal", "teal"}}
 	check := func(got []analogdb.Color) {
@@ -141,11 +141,11 @@ func TestPostService_ColorsDerived(t *testing.T) {
 	})
 
 	t.Run("neutral and grayscale posts", func(t *testing.T) {
-		neutral := createColorPost(t, service, "neutral", []analogdb.Color{{Hex: "#808080", Percent: 0.7}, {Hex: "#000000", Percent: 0.3}}, false)
+		neutral := createColorPost(ctx, t, service, "neutral", []analogdb.Color{{Hex: "#808080", Percent: 0.7}, {Hex: "#000000", Percent: 0.3}}, false)
 		if row := mustPostColor(t, db, neutral.Id); row.hue.Valid || row.rainbow.Valid {
 			t.Errorf("expected no representative for a neutral palette, got %+v", row)
 		}
-		gray := createColorPost(t, service, "grayscale", []analogdb.Color{{Hex: "#ff0000", Percent: 1}}, true)
+		gray := createColorPost(ctx, t, service, "grayscale", []analogdb.Color{{Hex: "#ff0000", Percent: 1}}, true)
 		if row := mustPostColor(t, db, gray.Id); row.hue.Valid || row.rainbow.Valid {
 			t.Errorf("expected no representative for a grayscale post, got %+v", row)
 		}
@@ -272,7 +272,7 @@ func TestPostService_ColorSort(t *testing.T) {
 	for i := range 40 {
 		colors := colorTestPalette(i)
 		grayscale := i%9 == 0
-		post := createColorPost(t, service, fmt.Sprintf("color_%d", i), colors, grayscale)
+		post := createColorPost(ctx, t, service, fmt.Sprintf("color_%d", i), colors, grayscale)
 		palette := []colorspace.Swatch{}
 		for _, c := range colors {
 			palette = append(palette, colorspace.Swatch{Hex: c.Hex, Percent: c.Percent})
