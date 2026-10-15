@@ -12,6 +12,7 @@ import (
 	goTime "time"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/evanofslack/analogdb/colorspace"
 )
 
 // ensure interface is implemented
@@ -59,6 +60,7 @@ type rawPost struct {
 	keywords []byte
 	created  goTime.Time
 	updated  goTime.Time
+	sortRank sql.NullFloat64
 }
 
 // insertedPost holds the values the DB sets when a post is inserted
@@ -300,39 +302,38 @@ func (db *DB) deleteKeywords(ctx context.Context, tx *sql.Tx, id int64) error {
 	return nil
 }
 
-// insertKeywords inserts a post's keywords into the DB
-func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Color, id int64) error {
+// insertColors inserts a post's colors with their derived values and sets the
+// post's representative color. It returns the colors with derived names.
+func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Color, id int64) ([]analogdb.Color, error) {
 	db.logger.DebugContext(ctx, "Start insert post colors", "post_id", id)
 
-	first := 1
-	second := 2
-	third := 3
-	fourth := 4
-	fifth := 5
+	derived, err := deriveColors(colors)
+	if err != nil {
+		return nil, err
+	}
 
 	vals := []any{}
 	inserts := []string{}
 
 	query := `
 	INSERT INTO colors
-	(hex, css, html, percent, post_id)
+	(hex, css, html, percent, post_id, oklab_l, oklab_a, oklab_b, chroma, hue)
 	VALUES `
 
-	for _, c := range colors {
-		inserts = append(inserts, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d)", first, second, third, fourth, fifth))
-		vals = append(vals, c.Hex, c.Css, c.Html, c.Percent, id)
-		first += 5
-		second += 5
-		third += 5
-		fourth += 5
-		fifth += 5
+	out := make([]analogdb.Color, len(colors))
+	for i, c := range colors {
+		d := derived[i]
+		n := len(vals)
+		inserts = append(inserts, fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d, $%d)", n+1, n+2, n+3, n+4, n+5, n+6, n+7, n+8, n+9, n+10))
+		vals = append(vals, c.Hex, d.Css, d.Html, c.Percent, id, d.L, d.A, d.B, d.Chroma, d.Hue)
+		out[i] = analogdb.Color{Hex: c.Hex, Css: d.Css, Html: d.Html, Percent: c.Percent}
 	}
 
 	query += strings.Join(inserts, ",")
 	stmt, err := tx.PrepareContext(ctx, query)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail insert post colors", "post_id", id, "errors", err)
-		return err
+		return nil, err
 	}
 
 	defer stmt.Close()
@@ -340,10 +341,87 @@ func (db *DB) insertColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Co
 	_, err = stmt.ExecContext(ctx, vals...)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail insert post colors", "post_id", id, "errors", err)
-		return err
+		return nil, err
+	}
+	if err := db.setPostColor(ctx, tx, colors, derived, id); err != nil {
+		return nil, err
 	}
 	db.logger.InfoContext(ctx, "Finish insert post colors", "post_id", id)
+	return out, nil
+}
+
+// deriveColors validates colors and computes their OKLab values and names
+func deriveColors(colors []analogdb.Color) ([]colorspace.Derived, error) {
+	derived := make([]colorspace.Derived, len(colors))
+	sum := 0.0
+	for i, c := range colors {
+		d, err := colorspace.Derive(c.Hex)
+		if err != nil {
+			return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: fmt.Sprintf("invalid color hex %q", c.Hex)}
+		}
+		if c.Percent < 0 {
+			return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "color percent must not be negative"}
+		}
+		sum += c.Percent
+		derived[i] = d
+	}
+	if sum > 1.001 {
+		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "color percents must sum to at most 1"}
+	}
+	return derived, nil
+}
+
+// setPostColor stores the representative color of a post, NULL for grayscale
+// posts and posts without a chromatic color
+func (db *DB) setPostColor(ctx context.Context, tx *sql.Tx, colors []analogdb.Color, derived []colorspace.Derived, id int64) error {
+	chromas, percents := make([]float64, len(colors)), make([]float64, len(colors))
+	for i := range colors {
+		chromas[i], percents[i] = derived[i].Chroma, colors[i].Percent
+	}
+	var hue, chroma sql.NullFloat64
+	if i := colorspace.Representative(chromas, percents); i >= 0 {
+		hue = sql.NullFloat64{Float64: derived[i].Hue, Valid: true}
+		chroma = sql.NullFloat64{Float64: derived[i].Chroma, Valid: true}
+	}
+	query := `
+		UPDATE pictures SET
+			color_hue = CASE WHEN greyscale THEN NULL ELSE $1::real END,
+			color_chroma = CASE WHEN greyscale THEN NULL ELSE $2::real END
+		WHERE id = $3`
+	if _, err := tx.ExecContext(ctx, query, hue, chroma, id); err != nil {
+		db.logger.ErrorContext(ctx, "Fail set post color", "post_id", id, "error", err)
+		return err
+	}
 	return nil
+}
+
+// refreshPostColor recomputes the representative color from the stored colors
+func (db *DB) refreshPostColor(ctx context.Context, tx *sql.Tx, id int) error {
+	rows, err := tx.QueryContext(ctx, "SELECT hex, percent FROM colors WHERE post_id = $1 ORDER BY percent DESC, id", id)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	colors := []analogdb.Color{}
+	for rows.Next() {
+		var c analogdb.Color
+		if err := rows.Scan(&c.Hex, &c.Percent); err != nil {
+			return err
+		}
+		colors = append(colors, c)
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	derived := make([]colorspace.Derived, 0, len(colors))
+	valid := make([]analogdb.Color, 0, len(colors))
+	for _, c := range colors {
+		if d, err := colorspace.Derive(c.Hex); err == nil {
+			derived = append(derived, d)
+			valid = append(valid, c)
+		}
+	}
+	return db.setPostColor(ctx, tx, valid, derived, int64(id))
 }
 
 // deleteKeywords deletes all keywords for a given post
@@ -379,8 +457,9 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 	}
 
 	// insert colors if they are provided
+	colors := post.Colors
 	if len(post.Colors) != 0 {
-		err = db.insertColors(ctx, tx, post.Colors, id)
+		colors, err = db.insertColors(ctx, tx, post.Colors, id)
 		if err != nil {
 			return nil, err
 		}
@@ -424,7 +503,7 @@ func (db *DB) createPost(ctx context.Context, tx *sql.Tx, post *analogdb.CreateP
 		FocalLength: post.FocalLength,
 		Aperture:    post.Aperture,
 		Images:      post.Images,
-		Colors:      post.Colors,
+		Colors:      colors,
 		Keywords:    post.Keywords,
 	}
 
@@ -446,24 +525,49 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 	db.logger.DebugContext(ctx, "Start find posts", "filter", filterFmt)
 	defer db.logger.DebugContext(ctx, "Finish find posts", "filter", filterFmt)
 
-	postWhere, countArgs := filterToWherePost(filter, false)
-	countWhere, _ := filterToWherePost(filter, true)
+	countWhere, countArgs := filterToWherePost(filter, true)
+	ranked := filter.IsColorSort() && !filter.IsRainbow()
+	whereFilter := filter
+	if ranked {
+		// the rank join applies the color filters
+		withoutColors := *filter
+		withoutColors.Colors, withoutColors.ColorPercents, withoutColors.Sort = nil, nil, nil
+		whereFilter = &withoutColors
+	}
+	postWhere, postArgs := filterToWherePost(whereFilter, false)
 
-	postArgs := append([]any{}, countArgs...)
 	seedIndex := 0
 	if isRandomSort(filter) {
 		postArgs = append(postArgs, filterSeed(filter))
 		seedIndex = len(postArgs)
 	}
-	if pageWhere, pageArgs := filterToPageWhere(filter, len(postArgs)+1, seedIndex); pageWhere != "" {
-		postWhere += " AND " + pageWhere
-		postArgs = append(postArgs, pageArgs...)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM pictures WHERE %s", countWhere)
+	var inner string
+	switch {
+	case ranked:
+		rankJoin, rankArgs := filterToColorRank(filter, len(postArgs)+1)
+		postArgs = append(postArgs, rankArgs...)
+		inner = fmt.Sprintf("SELECT pictures.*, r.sort_rank FROM pictures JOIN (%s) r ON r.post_id = pictures.id WHERE %s", rankJoin, postWhere)
+	case filter.IsRainbow():
+		inner = fmt.Sprintf("SELECT *, rainbow_key AS sort_rank FROM pictures WHERE %s", postWhere)
+	default:
+		inner = fmt.Sprintf("SELECT *, NULL::float8 AS sort_rank FROM pictures WHERE %s", postWhere)
+	}
+	pageWhere, pageArgs := filterToPageWhere(filter, len(postArgs)+1, seedIndex)
+	postArgs = append(postArgs, pageArgs...)
+	if ranked {
+		// wrap once so the keyset can use the rank alias
+		if pageWhere == "" {
+			pageWhere = "true"
+		}
+		inner = fmt.Sprintf("SELECT * FROM (%s) ranked WHERE %s", inner, pageWhere)
+	} else if pageWhere != "" {
+		inner += " AND " + pageWhere
 	}
 	subqueryOrder := filterToOrder(filter, "", seedIndex)
 	mainOrder := filterToOrder(filter, "p.", seedIndex)
 
 	// Count total matching posts
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM pictures WHERE %s", countWhere)
 	var count int
 	err := tx.QueryRowContext(ctx, countQuery, countArgs...).Scan(&count)
 	if err != nil {
@@ -508,10 +612,10 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 			p.updated,
 			pc.caption,
 			c.colors,
-			k.keywords
+			k.keywords,
+			p.sort_rank
 		FROM (
-			SELECT * FROM pictures
-			WHERE %s
+			%s
 			%s %s
 		) p
 		LEFT JOIN LATERAL (
@@ -532,7 +636,7 @@ func (db *DB) findPosts(ctx context.Context, tx *sql.Tx, filter *analogdb.PostFi
 		) k ON true
 		LEFT JOIN post_captions pc ON pc.post_id = p.id
 		%s
-	`, postWhere, subqueryOrder, limit, mainOrder)
+	`, inner, subqueryOrder, limit, mainOrder)
 
 	rows, err := tx.QueryContext(ctx, query, postArgs...)
 	if err != nil {
@@ -599,6 +703,11 @@ func filterToOrder(filter *analogdb.PostFilter, tableAlias string, seedIndex int
 			return fmt.Sprintf(" ORDER BY %[1]sscore %[2]s, %[1]sid %[2]s", tableAlias, filterDirection(filter))
 		case analogdb.PostSortRandom:
 			return fmt.Sprintf(" ORDER BY md5(%[1]sid::text || $%[2]d::text), %[1]sid", tableAlias, seedIndex)
+		case analogdb.PostSortColor:
+			if filter.IsRainbow() {
+				return fmt.Sprintf(" ORDER BY %[1]srainbow_key, %[1]sid", tableAlias)
+			}
+			return fmt.Sprintf(" ORDER BY %[1]ssort_rank DESC, %[1]sid DESC", tableAlias)
 		}
 	}
 	return ""
@@ -623,6 +732,11 @@ func filterToPageWhere(filter *analogdb.PostFilter, index int, seedIndex int) (s
 			return fmt.Sprintf("(score, id) %s ($%d, $%d)", op, index, index+1), []any{c.Value, c.ID}
 		case analogdb.PostSortRandom:
 			return fmt.Sprintf("(md5(id::text || $%d::text), id) > ($%d, $%d)", seedIndex, index, index+1), []any{c.Hash, c.ID}
+		case analogdb.PostSortColor:
+			if filter.IsRainbow() {
+				return fmt.Sprintf("(rainbow_key, id) > ($%d::float8, $%d)", index, index+1), []any{c.Rank, c.ID}
+			}
+			return fmt.Sprintf("(sort_rank, id) < ($%d::float8, $%d)", index, index+1), []any{c.Rank, c.ID}
 		}
 		return "", nil
 	}
@@ -809,15 +923,25 @@ func filterToWherePost(filter *analogdb.PostFilter, forCount bool) (string, []an
 		}
 
 		for i := range colors {
-			color, percent := colors[i], colorPercents[i]
+			percent := colorPercents[i]
 			if forCount {
-				where = append(where, fmt.Sprintf("id IN (SELECT post_id FROM colors WHERE html = $%d GROUP BY post_id HAVING sum(percent) > $%d)", index, index+1))
+				match, matchArgs := colorMatch("", colors[i], index)
+				index += len(matchArgs)
+				where = append(where, fmt.Sprintf("id IN (SELECT post_id FROM colors WHERE %s GROUP BY post_id HAVING sum(percent) > $%d)", match, index))
+				args = append(args, matchArgs...)
 			} else {
-				where = append(where, fmt.Sprintf("EXISTS (SELECT 1 FROM colors c WHERE c.post_id = pictures.id AND c.html = $%d HAVING sum(c.percent) > $%d)", index, index+1))
+				match, matchArgs := colorMatch("c.", colors[i], index)
+				index += len(matchArgs)
+				where = append(where, fmt.Sprintf("EXISTS (SELECT 1 FROM colors c WHERE c.post_id = pictures.id AND %s HAVING sum(c.percent) > $%d)", match, index))
+				args = append(args, matchArgs...)
 			}
-			index += 2
-			args = append(args, color, percent)
+			index++
+			args = append(args, percent)
 		}
+	}
+
+	if filter.IsRainbow() {
+		where = append(where, "rainbow_key IS NOT NULL")
 	}
 
 	if filter.Keywords != nil {
@@ -830,6 +954,59 @@ func filterToWherePost(filter *analogdb.PostFilter, forCount bool) (string, []an
 
 	whereQuery := strings.Join(where, " AND ")
 	return whereQuery, args
+}
+
+// colorMatch is the predicate selecting a post's colors that count toward a
+// query color. Names match the html bucket, hexes match colors within the
+// match radius in OKLab, checked first against a bounding box.
+func colorMatch(alias, color string, index int) (string, []any) {
+	if colorspace.IsBucket(color) || !colorspace.IsHex(color) {
+		return fmt.Sprintf("%shtml = $%d", alias, index), []any{color}
+	}
+	rgb, _ := colorspace.ParseHex(color)
+	lab := rgb.ToLab()
+	l, a, b, r := index, index+1, index+2, index+3
+	match := fmt.Sprintf(
+		"%[1]soklab_a BETWEEN $%[3]d::float8 - $%[5]d::float8 AND $%[3]d::float8 + $%[5]d::float8 "+
+			"AND %[1]soklab_b BETWEEN $%[4]d::float8 - $%[5]d::float8 AND $%[4]d::float8 + $%[5]d::float8 "+
+			"AND (%[1]soklab_l - $%[2]d::float8)^2 + (%[1]soklab_a - $%[3]d::float8)^2 + (%[1]soklab_b - $%[4]d::float8)^2 < $%[5]d::float8^2",
+		alias, l, a, b, r)
+	return match, []any{lab.L, lab.A, lab.B, colorspace.MatchRadius}
+}
+
+// filterToColorRank selects the posts matching every query color with their
+// rank for sort=color: the smallest share among the query colors. It reads
+// the matching colors once, grouped by post.
+func filterToColorRank(filter *analogdb.PostFilter, index int) (string, []any) {
+	var percents []float64
+	if filter.ColorPercents != nil {
+		percents = *filter.ColorPercents
+	}
+	matches, shares, having, args := []string{}, []string{}, []string{}, []any{}
+	for i, color := range *filter.Colors {
+		match, matchArgs := colorMatch("", color, index)
+		index += len(matchArgs)
+		args = append(args, matchArgs...)
+		matches = append(matches, "("+match+")")
+		share := fmt.Sprintf("s%d", i)
+		shares = append(shares, fmt.Sprintf("COALESCE(sum(percent) FILTER (WHERE %s), 0) AS %s", match, share))
+		if i < len(percents) {
+			having = append(having, fmt.Sprintf("%s > $%d", share, index))
+			args = append(args, percents[i])
+			index++
+		}
+	}
+	names := make([]string, len(shares))
+	for i := range shares {
+		names[i] = fmt.Sprintf("s%d", i)
+	}
+	if len(having) == 0 {
+		having = []string{"true"}
+	}
+	query := fmt.Sprintf(
+		"SELECT post_id, LEAST(%s)::float8 AS sort_rank FROM (SELECT post_id, %s FROM colors WHERE %s GROUP BY post_id) shares WHERE %s",
+		strings.Join(names, ", "), strings.Join(shares, ", "), strings.Join(matches, " OR "), strings.Join(having, " AND "))
+	return query, args
 }
 
 func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPost, id int) error {
@@ -880,6 +1057,14 @@ func (db *DB) patchPost(ctx context.Context, tx *sql.Tx, patch *analogdb.PatchPo
 	if patch.Colors != nil {
 		hasPatchFields = true
 		if err := db.updateColors(ctx, tx, *patch.Colors, id); err != nil {
+			db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
+			return err
+		}
+	}
+
+	// grayscale posts have no representative color
+	if patch.Grayscale != nil && patch.Colors == nil {
+		if err := db.refreshPostColor(ctx, tx, id); err != nil {
 			db.logger.ErrorContext(ctx, "Fail patch post", "post_id", id, "error", err)
 			return err
 		}
@@ -953,14 +1138,17 @@ func (db *DB) updateColors(ctx context.Context, tx *sql.Tx, colors []analogdb.Co
 		return err
 	}
 
-	// if we have no colors to insert, just return
+	// if we have no colors to insert, clear the representative color and return
 	if len(colors) == 0 {
+		if err := db.setPostColor(ctx, tx, nil, nil, int64(id)); err != nil {
+			return err
+		}
 		db.logger.InfoContext(ctx, "Finish update post colors (dropped all colors)", "post_id", id)
 		return nil
 	}
 
 	// then insert all new colors
-	if err := db.insertColors(ctx, tx, colors, int64(id)); err != nil {
+	if _, err := db.insertColors(ctx, tx, colors, int64(id)); err != nil {
 		db.logger.ErrorContext(ctx, "Fail update post colors", "post_id", id, "error", err)
 		return err
 	}
@@ -1271,6 +1459,9 @@ func createPostToRawPostCreate(p *analogdb.CreatePost, imageBase string) (*rawCr
 	if len(p.Colors) == 0 || len(p.Colors) > 5 {
 		return nil, &analogdb.Error{Code: analogdb.ERRUNPROCESSABLE, Message: "fail create post, expected 1 to 5 colors"}
 	}
+	if _, err := deriveColors(p.Colors); err != nil {
+		return nil, err
+	}
 
 	post := &rawCreatePost{
 		url:         imageKey(imageBase, raw.Url),
@@ -1331,7 +1522,8 @@ func rawPostToPost(p rawPost, imageBase string) (*analogdb.Post, error) {
 	}
 
 	post := &analogdb.Post{
-		Id: p.id,
+		Id:       p.id,
+		SortRank: p.sortRank.Float64,
 		DisplayPost: analogdb.DisplayPost{
 			Title:       p.title,
 			Author:      p.author,
@@ -1396,7 +1588,8 @@ func scanRowToRawPostCount(rows *sql.Rows) (*rawPost, error) {
 		&p.updated,
 		&p.caption,
 		&p.colors,
-		&p.keywords); err != nil {
+		&p.keywords,
+		&p.sortRank); err != nil {
 		return nil, err
 	}
 	return &p, nil

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
-)
 
-const defaultMinColorPercent = 0.0
+	"github.com/evanofslack/analogdb/colorspace"
+)
 
 // Image represents the source info for an image
 type Image struct {
@@ -19,9 +19,12 @@ type Image struct {
 
 // Color represents a single color of an image
 type Color struct {
-	Hex     string  `json:"hex" example:"#837d5c"`
-	Css     string  `json:"css" example:"dimgray"`
-	Html    string  `json:"html" example:"gray"`
+	Hex string `json:"hex" example:"#837d5c"`
+	// Nearest CSS color name, derived by the API and ignored on write
+	Css string `json:"css" example:"gray"`
+	// Color bucket, derived by the API and ignored on write
+	Html string `json:"html" example:"olive"`
+	// Share of the whole image, from 0 to 1
 	Percent float64 `json:"percent" example:"0.55"`
 }
 
@@ -136,6 +139,8 @@ func (p *PatchPost) ValidateClear() error {
 type Post struct {
 	Id int `json:"id" example:"1"`
 	DisplayPost
+	// SortRank is the color rank or rainbow key of the post for sort=color
+	SortRank float64 `json:"-"`
 }
 
 type PostSort int
@@ -145,6 +150,7 @@ const (
 	PostSortTime
 	PostSortScore
 	PostSortRandom
+	PostSortColor
 )
 
 func (s PostSort) String() string {
@@ -155,6 +161,8 @@ func (s PostSort) String() string {
 		return "score"
 	case PostSortRandom:
 		return "random"
+	case PostSortColor:
+		return "color"
 	default:
 		return "unknown"
 	}
@@ -168,6 +176,8 @@ func PostSortFromString(s string) PostSort {
 		return PostSortScore
 	case "random":
 		return PostSortRandom
+	case "color":
+		return PostSortColor
 	default:
 		return PostSortUnknown
 	}
@@ -222,10 +232,11 @@ func (dim *Dimension) String() string {
 }
 
 // Cursor marks the last post of a page. Value is its time or score,
-// Hash is its random sort key.
+// Hash is its random sort key and Rank its color rank or rainbow key.
 type Cursor struct {
 	Value int
 	Hash  string
+	Rank  float64
 	ID    int
 }
 
@@ -310,7 +321,7 @@ func (filter *PostFilter) String() string {
 		out = append(out, fmt.Sprintf("order: %s", *filter.Order))
 	}
 	if c := filter.Cursor; c != nil {
-		out = append(out, fmt.Sprintf("cursor: value=%d, hash=%s, id=%d", c.Value, c.Hash, c.ID))
+		out = append(out, fmt.Sprintf("cursor: value=%d, hash=%s, rank=%v, id=%d", c.Value, c.Hash, c.Rank, c.ID))
 	}
 	if filter.Keyset != nil {
 		out = append(out, fmt.Sprintf("keyset: %d", *filter.Keyset))
@@ -384,6 +395,16 @@ func (filter *PostFilter) String() string {
 	return strings.Join(out, ", ")
 }
 
+// IsColorSort reports whether the filter sorts by color
+func (filter *PostFilter) IsColorSort() bool {
+	return filter.Sort != nil && *filter.Sort == PostSortColor
+}
+
+// IsRainbow reports whether the filter sorts by color with no colors to rank by
+func (filter *PostFilter) IsRainbow() bool {
+	return filter.IsColorSort() && (filter.Colors == nil || len(*filter.Colors) == 0)
+}
+
 // Ascending reports whether the filter asks for ascending order
 func (filter *PostFilter) Ascending() bool {
 	return filter.Order != nil && *filter.Order == PostOrderAsc
@@ -404,9 +425,9 @@ func (filter *PostFilter) SetMinColorPercent() {
 
 	colors, percents := *filter.Colors, *filter.ColorPercents
 
-	// ensure at least as long as colors
+	// fill missing thresholds with the server defaults
 	for len(colors) > len(percents) {
-		percents = append(percents, defaultMinColorPercent)
+		percents = append(percents, colorspace.DefaultThreshold(colors[len(percents)], len(colors)))
 	}
 
 	// ensure at no longer than colors

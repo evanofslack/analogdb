@@ -95,7 +95,7 @@ func TestPostService_CreatePost(t *testing.T) {
 				{Label: "high", Url: "http://example.com/captioned_high.jpg"},
 				{Label: "raw", Url: "http://example.com/captioned_raw.jpg"},
 			},
-			Colors:  make([]analogdb.Color, 1),
+			Colors:  testColors(1),
 			Caption: &analogdb.PostCaption{Caption: &text, Model: "m", Version: "v1", Raw: json.RawMessage(`{"tags": ["dog"]}`)},
 		}
 
@@ -128,7 +128,7 @@ func TestPostService_CreatePost(t *testing.T) {
 			Author:    "u/testuser",
 			Permalink: "test_post_duplicate",
 			Images:    make([]analogdb.Image, 4),
-			Colors:    make([]analogdb.Color, 5),
+			Colors:    testColors(5),
 		}
 
 		if _, err := service.CreatePost(ctx, createPost); err != nil {
@@ -167,7 +167,7 @@ func TestPostService_CreatePost(t *testing.T) {
 				{Label: "high", Url: "http://example.com/fewer_high.jpg"},
 				{Label: "raw", Url: "http://example.com/fewer_raw.jpg"},
 			},
-			Colors: make([]analogdb.Color, 4),
+			Colors: testColors(4),
 		}
 
 		post, err := service.CreatePost(ctx, createPost)
@@ -709,4 +709,13 @@ func TestPostService_AllPostIDs(t *testing.T) {
 			t.Error("Expected IDs to be sorted in ascending order")
 		}
 	}
+}
+
+// testColors returns n valid colors sharing the whole image
+func testColors(n int) []analogdb.Color {
+	colors := make([]analogdb.Color, n)
+	for i := range colors {
+		colors[i] = analogdb.Color{Hex: "#808080", Percent: 1 / float64(n)}
+	}
+	return colors
 }

@@ -152,6 +152,55 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 		randomCursor = &analogdb.Cursor{Hash: hex.EncodeToString(sum[:]), ID: last.Id}
 	}
 
+	// cursors for the fifth page of each color sort
+	colorFilter := func(colors []string) *analogdb.PostFilter {
+		filter := postFilter(analogdb.PostSortColor)
+		if colors != nil {
+			filter.Colors = &colors
+			filter.SetMinColorPercent()
+		}
+		return filter
+	}
+	colorCursor := func(colors []string) *analogdb.Cursor {
+		var cursor *analogdb.Cursor
+		for page := 1; page < 5; page++ {
+			filter := colorFilter(colors)
+			filter.Cursor = cursor
+			found, _, err := posts.FindPosts(ctx, filter)
+			if err != nil {
+				b.Fatal(err)
+			}
+			if len(found) == 0 {
+				b.Fatal("benchmark database has no colored posts, run make bench-seed")
+			}
+			last := found[len(found)-1]
+			cursor = &analogdb.Cursor{Rank: last.SortRank, ID: last.Id}
+		}
+		return cursor
+	}
+	colorCases := []struct {
+		name   string
+		colors []string
+	}{
+		{"color_red_sort", []string{"red"}},
+		{"color_hex_sort", []string{"bb3333"}},
+		{"color_three_sort", []string{"red", "teal", "gray"}},
+		{"rainbow", nil},
+	}
+	colorBench := []benchCase{}
+	for _, c := range colorCases {
+		cursor := colorCursor(c.colors)
+		colorBench = append(colorBench,
+			benchCase{c.name, findPosts(func() *analogdb.PostFilter { return colorFilter(c.colors) })},
+			benchCase{c.name + "_page5", findPosts(func() *analogdb.PostFilter {
+				filter := colorFilter(c.colors)
+				page := *cursor
+				filter.Cursor = &page
+				return filter
+			})},
+		)
+	}
+
 	randomSQL := func(order string) func(ctx context.Context) error {
 		query := "SELECT * FROM pictures ORDER BY " + order + " LIMIT 20"
 		return func(ctx context.Context) error {
@@ -166,7 +215,7 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 		}
 	}
 
-	return []benchCase{
+	return append([]benchCase{
 		{"posts_default", findPosts(func() *analogdb.PostFilter {
 			return postFilter(analogdb.PostSortTime)
 		})},
@@ -236,7 +285,7 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 			_, err := cameras.FindCameras(ctx, filter)
 			return err
 		}},
-	}
+	}, colorBench...)
 }
 
 func openBench(b *testing.B) (*DB, *queryRecorder) {
