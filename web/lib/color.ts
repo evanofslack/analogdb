@@ -59,11 +59,11 @@ export const colorOptions = [
   },
   {
     id: "navy",
-    label: "navy",
-    bg: "#064679",
-    tooltipColor: "navy.7",
-    checkedColor: "navy.8",
-    colorProp: "navy.8",
+    label: "blue",
+    bg: "#1c7ed6",
+    tooltipColor: "blue.7",
+    checkedColor: "blue.8",
+    colorProp: "blue.8",
   },
   {
     id: "purple",
@@ -72,6 +72,14 @@ export const colorOptions = [
     tooltipColor: "grape.8",
     checkedColor: "grape.9",
     colorProp: "grape.9",
+  },
+  {
+    id: "pink",
+    label: "pink",
+    bg: "#f06595",
+    tooltipColor: "pink.5",
+    checkedColor: "pink.6",
+    colorProp: "pink.6",
   },
   {
     id: "gray",
