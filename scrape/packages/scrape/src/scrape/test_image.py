@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from .constants import AWS_BUCKET_PHOTOS, CLOUDFRONT_URL, USER_AGENT
+from .constants import AWS_BUCKET_PHOTOS, CLOUDFRONT_URL, LOW_RES, USER_AGENT
 from .image import (
     ImageProcessor,
     extract_palette,
@@ -15,7 +15,7 @@ from .image import (
     oklab_to_srgb,
     srgb_to_oklab,
 )
-from .models import RedditPost
+from .models import Color, RedditPost
 
 
 class FakeS3:
@@ -162,9 +162,25 @@ class TestProcess:
 
         assert get.call_args.kwargs["headers"] == {"User-Agent": USER_AGENT}
 
-    def test_colors_extracted(self):
+    def test_colors_are_the_low_res_palette(self):
         _, result = process(make_post(PERMALINK), jpeg_bytes())
-        assert result.colors
+
+        source = Image.open(BytesIO(jpeg_bytes()))
+        low, _, _ = ImageProcessor().resize_image(source, LOW_RES)
+        assert result.colors == [Color(h, p) for h, p in extract_palette(low)]
+        assert 1 < len(result.colors) <= 5
+
+    def test_download_colors(self):
+        buf = BytesIO()
+        Image.new("RGB", (300, 200), (200, 30, 40)).save(buf, "PNG")
+        with patch(
+            "scrape.image.requests.get",
+            return_value=fake_response(buf.getvalue(), "image/png"),
+        ) as get:
+            colors = ImageProcessor().download_colors("https://i.analogdb.com/a.png")
+
+        assert colors == [Color("#c81e28", 1.0)]
+        assert get.call_args.kwargs["headers"] == {"User-Agent": USER_AGENT}
 
 
 def hash_distance(a: str, b: str) -> int:

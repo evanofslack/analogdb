@@ -42,8 +42,6 @@ class ScrapeResult:
 @dataclass
 class Color:
     hex: str
-    css: str
-    html: str
     percent: float
 
 

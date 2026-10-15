@@ -24,7 +24,7 @@ FULL = s.CreatePost(
         s.S3Image("raw", "https://x/raw.jpg", 4800, 3600),
     ],
     keywords=[s.Keyword("field", 0.43)],
-    colors=[s.Color("#837d5c", "dimgray", "gray", 0.55)],
+    colors=[s.Color("#837d5c", 0.55)],
 )
 
 FULL_BODY = {
@@ -54,7 +54,7 @@ FULL_BODY = {
         },
     ],
     "keywords": [{"word": "field", "weight": 0.43}],
-    "colors": [{"hex": "#837d5c", "css": "dimgray", "html": "gray", "percent": 0.55}],
+    "colors": [{"hex": "#837d5c", "percent": 0.55}],
 }
 
 BARE = s.CreatePost(

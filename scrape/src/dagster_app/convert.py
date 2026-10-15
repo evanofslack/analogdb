@@ -35,7 +35,7 @@ def convert_image(i: scrape.S3Image) -> analog.Image:
 
 
 def convert_color(c: scrape.Color) -> analog.Color:
-    return analog.Color(hex=c.hex, css=c.css, html=c.html, percent=c.percent)
+    return analog.Color(hex=c.hex, percent=c.percent)
 
 
 def convert_keyword(k: scrape.Keyword) -> analog.Keyword:
