@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,6 +20,10 @@ func (mockAdmin) Stats(ctx context.Context) (*analogdb.AdminStats, error) {
 
 func (mockAdmin) Quality(ctx context.Context) (*analogdb.AdminQuality, error) {
 	return &analogdb.AdminQuality{Coverage: analogdb.AdminCoverage{Total: 10}}, nil
+}
+
+func (mockAdmin) Queue(ctx context.Context) (*analogdb.AdminQueue, error) {
+	return &analogdb.AdminQueue{OpenReports: 3, UnmatchedCameras: 12, UnmatchedFilms: 29}, nil
 }
 
 func (mockAdmin) MissingPosts(ctx context.Context, filter *analogdb.MissingPostsFilter) ([]*analogdb.AdminPost, error) {
@@ -38,7 +43,8 @@ func (mockAdmin) PostsByIDs(ctx context.Context, ids []int) ([]*analogdb.AdminPo
 }
 
 type mockAnalytics struct {
-	err error
+	err   error
+	audit *analogdb.AuditFilter
 }
 
 func (m mockAnalytics) Traffic(ctx context.Context, r analogdb.TrafficRange) (*analogdb.Traffic, error) {
@@ -51,6 +57,9 @@ func (m mockAnalytics) Analytics(ctx context.Context, r analogdb.TrafficRange) (
 }
 
 func (m mockAnalytics) Audit(ctx context.Context, filter *analogdb.AuditFilter) ([]*analogdb.AuditEntry, error) {
+	if m.audit != nil {
+		*m.audit = *filter
+	}
 	return []*analogdb.AuditEntry{{StartMs: 5}}, m.err
 }
 
@@ -88,6 +97,7 @@ func TestAdminRequiresAuth(t *testing.T) {
 	for _, path := range []string{
 		"/v1/admin/overview",
 		"/v1/admin/quality",
+		"/v1/admin/queue",
 		"/v1/admin/posts/missing?field=camera",
 		"/v1/admin/posts/missing?field=caption",
 		"/v1/admin/traffic",
@@ -164,9 +174,48 @@ func TestAdminBadParams(t *testing.T) {
 		"/v1/admin/traffic?range=1y",
 		"/v1/admin/analytics?range=1y",
 		"/v1/admin/audit?before=abc",
+		"/v1/admin/audit?client=bot",
 	} {
 		if w := adminRequest(s, path, true); w.Code != http.StatusBadRequest {
 			t.Errorf("%s: want 400, got %d", path, w.Code)
+		}
+	}
+}
+
+func TestAdminQueue(t *testing.T) {
+	s := mustOpenAdmin(t)
+	defer mustClose(t, s)
+
+	w := adminRequest(s, "/v1/admin/queue", true)
+	if w.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var body map[string]int
+	if err := json.NewDecoder(w.Body).Decode(&body); err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]int{"open_reports": 3, "unmatched_cameras": 12, "unmatched_films": 29}
+	if !maps.Equal(body, want) {
+		t.Errorf("want %v, got %v", want, body)
+	}
+}
+
+func TestAdminAuditClient(t *testing.T) {
+	s := mustOpenAdmin(t)
+	defer mustClose(t, s)
+
+	for _, client := range []string{"", "web", "scraper", "direct"} {
+		var got analogdb.AuditFilter
+		s.AnalyticsService = mockAnalytics{audit: &got}
+		path := "/v1/admin/audit"
+		if client != "" {
+			path += "?client=" + client
+		}
+		if w := adminRequest(s, path, true); w.Code != http.StatusOK {
+			t.Fatalf("%s: want 200, got %d: %s", path, w.Code, w.Body.String())
+		}
+		if got.Client != client {
+			t.Errorf("%s: want client %q, got %q", path, client, got.Client)
 		}
 	}
 }

@@ -124,6 +124,31 @@ func (s *AdminService) Quality(ctx context.Context) (*analogdb.AdminQuality, err
 	return quality, nil
 }
 
+// Queue counts open reports and every unmatched camera and film group, without the list limit
+func (s *AdminService) Queue(ctx context.Context) (*analogdb.AdminQueue, error) {
+	s.db.logger.DebugContext(ctx, "Starting admin queue")
+	defer s.db.logger.DebugContext(ctx, "Finished admin queue")
+
+	query := `
+		SELECT
+			(SELECT COUNT(*) FROM post_reports WHERE resolved_at IS NULL),
+			(SELECT COUNT(*) FROM (
+				SELECT 1 FROM pictures p
+				WHERE ` + unmatchedCameraWhere + `
+				GROUP BY p.camera_make, p.camera_model
+			) cameras),
+			(SELECT COUNT(*) FROM (
+				SELECT 1 FROM pictures p
+				WHERE ` + unmatchedFilmWhere + `
+				GROUP BY p.film_make, p.film_type
+			) films)`
+	queue := &analogdb.AdminQueue{}
+	if err := s.db.db.QueryRowContext(ctx, query).Scan(&queue.OpenReports, &queue.UnmatchedCameras, &queue.UnmatchedFilms); err != nil {
+		return nil, fmt.Errorf("admin queue: %w", err)
+	}
+	return queue, nil
+}
+
 func adminCoverage(ctx context.Context, db *sql.DB, c *analogdb.AdminCoverage) error {
 	query := `
 		SELECT
@@ -143,16 +168,25 @@ func adminCoverage(ctx context.Context, db *sql.DB, c *analogdb.AdminCoverage) e
 
 const unmatchedLimit = 50
 
-func unmatchedCameras(ctx context.Context, db *sql.DB) ([]analogdb.AdminUnmatchedCamera, error) {
-	query := `
-		SELECT p.camera_make, p.camera_model, COUNT(*) AS post_count, MAX(p.id) AS sample_post_id
-		FROM pictures p
-		WHERE NULLIF(p.camera_make, '') IS NOT NULL
+const unmatchedCameraWhere = `NULLIF(p.camera_make, '') IS NOT NULL
 			AND NULLIF(p.camera_model, '') IS NOT NULL
 			AND NOT EXISTS (
 				SELECT 1 FROM cameras c
 				WHERE c.camera_make = p.camera_make AND c.camera_model = p.camera_model
-			)
+			)`
+
+const unmatchedFilmWhere = `NULLIF(p.film_make, '') IS NOT NULL
+			AND NULLIF(p.film_type, '') IS NOT NULL
+			AND NOT EXISTS (
+				SELECT 1 FROM films f
+				WHERE f.film_make = p.film_make AND f.film_type = p.film_type
+			)`
+
+func unmatchedCameras(ctx context.Context, db *sql.DB) ([]analogdb.AdminUnmatchedCamera, error) {
+	query := `
+		SELECT p.camera_make, p.camera_model, COUNT(*) AS post_count, MAX(p.id) AS sample_post_id
+		FROM pictures p
+		WHERE ` + unmatchedCameraWhere + `
 		GROUP BY p.camera_make, p.camera_model
 		ORDER BY post_count DESC, p.camera_make, p.camera_model
 		LIMIT $1`
@@ -179,12 +213,7 @@ func unmatchedFilms(ctx context.Context, db *sql.DB) ([]analogdb.AdminUnmatchedF
 		SELECT p.film_make, p.film_type, MODE() WITHIN GROUP (ORDER BY p.film_speed) AS film_speed,
 			COUNT(*) AS post_count, MAX(p.id) AS sample_post_id
 		FROM pictures p
-		WHERE NULLIF(p.film_make, '') IS NOT NULL
-			AND NULLIF(p.film_type, '') IS NOT NULL
-			AND NOT EXISTS (
-				SELECT 1 FROM films f
-				WHERE f.film_make = p.film_make AND f.film_type = p.film_type
-			)
+		WHERE ` + unmatchedFilmWhere + `
 		GROUP BY p.film_make, p.film_type
 		ORDER BY post_count DESC, p.film_make, p.film_type
 		LIMIT $1`

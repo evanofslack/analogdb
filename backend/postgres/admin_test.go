@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/evanofslack/analogdb"
@@ -70,6 +72,44 @@ func TestAdminQuality(t *testing.T) {
 		if f.FilmSpeed == nil || *f.FilmSpeed != 400 {
 			t.Errorf("want film speed 400 for %+v", f)
 		}
+	}
+}
+
+func TestAdminQueue(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+	defer mustClose(t, db)
+	ctx := context.Background()
+
+	if _, err := db.db.ExecContext(ctx, `UPDATE pictures SET film_type = 'portra' WHERE id = 1;
+		UPDATE pictures SET camera_make = 'pentax', camera_model = 'k1000' WHERE id = 2;
+		INSERT INTO post_reports (post_id, reason) VALUES (1, 'other'), (2, 'other');
+		INSERT INTO post_reports (post_id, reason, resolved_at) VALUES (3, 'other', NOW())`); err != nil {
+		t.Fatal(err)
+	}
+
+	queue, err := NewAdminService(db).Queue(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := analogdb.AdminQueue{OpenReports: 2, UnmatchedCameras: 1, UnmatchedFilms: 2}
+	if *queue != want {
+		t.Errorf("want queue %+v, got %+v", want, *queue)
+	}
+
+	values := make([]string, 0, unmatchedLimit+1)
+	for i := 0; i <= unmatchedLimit; i++ {
+		values = append(values, fmt.Sprintf("('https://example.com/extra%[1]d.jpg', 'extra', 'u/extra', 'reddit.com/extra_%[1]d', 'brand', 'model %[1]d')", i))
+	}
+	if _, err := db.db.ExecContext(ctx, `INSERT INTO pictures (url, title, author, permalink, camera_make, camera_model) VALUES `+strings.Join(values, ", ")); err != nil {
+		t.Fatal(err)
+	}
+	queue, err = NewAdminService(db).Queue(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := unmatchedLimit + 2; queue.UnmatchedCameras != want {
+		t.Errorf("want %d unmatched cameras past the list limit, got %d", want, queue.UnmatchedCameras)
 	}
 }
 

@@ -75,6 +75,12 @@ type AdminQuality struct {
 	UnmatchedFilms   []AdminUnmatchedFilm   `json:"unmatched_films"`
 }
 
+type AdminQueue struct {
+	OpenReports      int `json:"open_reports"`
+	UnmatchedCameras int `json:"unmatched_cameras"`
+	UnmatchedFilms   int `json:"unmatched_films"`
+}
+
 type MissingField string
 
 const (
@@ -117,6 +123,7 @@ type AdminPost struct {
 type AdminService interface {
 	Stats(ctx context.Context) (*AdminStats, error)
 	Quality(ctx context.Context) (*AdminQuality, error)
+	Queue(ctx context.Context) (*AdminQueue, error)
 	MissingPosts(ctx context.Context, filter *MissingPostsFilter) ([]*AdminPost, error)
 	PostsByIDs(ctx context.Context, ids []int) ([]*AdminPost, error)
 }

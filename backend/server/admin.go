@@ -57,6 +57,7 @@ func (s *Server) mountAdminHandlers(r chi.Router) {
 			r.Use(s.require())
 			r.Get("/overview", s.getAdminOverview)
 			r.Get("/quality", s.getAdminQuality)
+			r.Get("/queue", s.getAdminQueue)
 			r.Get("/posts/missing", s.getAdminMissingPosts)
 			r.Get("/traffic", s.getAdminTraffic)
 			r.Get("/analytics", s.getAdminAnalytics)
@@ -155,6 +156,17 @@ func (s *Server) getAdminQuality(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := encodeResponse(w, r, http.StatusOK, quality); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+func (s *Server) getAdminQueue(w http.ResponseWriter, r *http.Request) {
+	queue, err := s.AdminService.Queue(r.Context())
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if err := encodeResponse(w, r, http.StatusOK, queue); err != nil {
 		s.writeError(w, r, err)
 	}
 }
@@ -354,6 +366,13 @@ func (s *Server) getAdminAudit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		filter.Before = &val
+	}
+	switch client := query.Get("client"); client {
+	case "", analogdb.ClientWeb, analogdb.ClientScraper, analogdb.ClientDirect:
+		filter.Client = client
+	default:
+		s.writeError(w, r, badRequest("invalid client %q, want web, scraper or direct", client))
+		return
 	}
 	if s.analyticsUnavailable(w, r) {
 		return
