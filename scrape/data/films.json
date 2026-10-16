@@ -749,6 +749,9 @@
     "make": "fujifilm",
     "speed": 200,
     "color_type": "color",
+    "aliases": [
+      "fujicolor 200"
+    ],
     "description": "Fujicolor c200 from Fujifilm is a medium speed daylight-balanced color negative film offering a vivid color palette with accurate skin tones and color reproduction in a variety of lighting conditions. It features a nominal sensitivity of ISO 200/24° along with a wide exposure latitude for use in a variety of conditions, even under fluorescent lighting. The fine grain structure and high degree sharpness are well-suited to scanning and enlarging for printing purposes."
   },
   {
@@ -798,6 +801,9 @@
     "make": "fujifilm",
     "speed": 400,
     "color_type": "color",
+    "aliases": [
+      "xtra 400"
+    ],
     "description": "Fujicolor Superia X-TRA 400 is a high speed daylight-balanced color negative film featuring Fujifilm's 4th Color Layer technology to produce vibrant, yet naturally appearing colors with smooth skin tones and repeatable results under mixed lighting conditions. A nominal sensitivity of ISO 400/27° is well-suited to use in a variety of conditions, and Super Fine-Sigma Grain Technology yields an unobtrusive, fine grain structure with high sharpness to benefit scanning and printing applications."
   },
   {
@@ -991,14 +997,14 @@
   },
   {
     "type": "phoenix 200",
-    "make": "harmon",
+    "make": "harman",
     "speed": 200,
     "color_type": "color",
-    "description": "Harmon Phoenix 200 is an experimental C41 color film and the first ever made by Harman Photo. In addition to the risk of occasional coating anomalies, this film does not have masking dyes and limited antihalation incorporated in the base layer. This means that striking halation effects around bright light sources and reflections are possible. In addition to its atypical color rendering, this film has a distinctly analogue look when shooting certain scenes and color palettes."
+    "description": "Harman Phoenix 200 is an experimental C41 color film and the first ever made by Harman Photo. In addition to the risk of occasional coating anomalies, this film does not have masking dyes and limited antihalation incorporated in the base layer. This means that striking halation effects around bright light sources and reflections are possible. In addition to its atypical color rendering, this film has a distinctly analogue look when shooting certain scenes and color palettes."
   },
   {
-    "type": "phoenix 200 II",
-    "make": "harmon",
+    "type": "phoenix 200 ii",
+    "make": "harman",
     "speed": 200,
     "color_type": "color",
     "aliases": [
@@ -1008,7 +1014,7 @@
   },
   {
     "type": "red 125",
-    "make": "harmon",
+    "make": "harman",
     "speed": 125,
     "color_type": "color",
     "description": "Harman RED 125 is an ISO 125 redscale film, that can transform mundane scenes into dystopian masterpieces with hues of red, orange, yellow and green. Based on the Phoenix emulsion, this rescale film has a clear base, no anti-halation layer, and high red & green sensitivity which makes it the perfect emulsion for a redscale film, ensuring minimal speed loss."
