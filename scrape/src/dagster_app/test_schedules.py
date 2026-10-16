@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
+from pathlib import Path
 
 import dagster as dg
+import yaml
 
 from .backfill import ReencodeVectorsConfig, TagMissingCaptionsConfig
 from .definitions import defs
@@ -122,6 +124,15 @@ def test_archive_job_has_its_own_assets():
         "archive_upload_posts",
     }
     assert job.tags["reddit"] == "true"
+    assert job.tags["archive"] == "true"
+
+
+def test_archive_runs_one_at_a_time():
+    with open(Path(__file__).parents[2] / "config" / "dagster.yaml") as f:
+        limits = yaml.safe_load(f)["run_coordinator"]["config"][
+            "tag_concurrency_limits"
+        ]
+    assert {"key": "archive", "value": "true", "limit": 1} in limits
 
 
 def test_retry_policies():
