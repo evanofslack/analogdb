@@ -61,12 +61,12 @@ FILM_MAKE_ALIASES = {
     "fuji": "fujifilm",
     "fujichrome": "fujifilm",
     "fujicolor": "fujifilm",
-    "harman": "harmon",
+    "harmon": "harman",
     "jch": "japan camera hunter",
     "lomo": "lomography",
     "lucky": "china lucky film",
     "orwo": "original wolfen",
-    "phoenix": "harmon",
+    "phoenix": "harman",
     "reflexlab": "reflx labs",
     "reflexlabs": "reflx labs",
     "reflxlab": "reflx labs",
@@ -77,7 +77,7 @@ FILM_MAKE_ALIASES = {
 
 # Product lines that name their make wherever they're written: a "Fujifilm Phoenix 200"
 # is a Harman Phoenix 200
-FILM_LINES = {"phoenix": "harmon"}
+FILM_LINES = {"phoenix": "harman"}
 
 # Makes that sell under both names: Agfa APX is agfaphoto in the catalog
 FILM_MAKE_FAMILIES = {"agfa": ["agfaphoto"], "agfaphoto": ["agfa"]}
@@ -401,7 +401,9 @@ class CatalogMatcher:
                     _key(a.alias),
                     *film_type_keys(a.alias, self.film_make_words),
                 }:
-                    if key:
+                    # "Fujicolor 200" on C200 is also "200", which is Fujifilm 200
+                    taken = self.types.get(make, {}).get(key, [])
+                    if key and all(t is f for t in taken):
                         self.types.setdefault(make, {}).setdefault(key, []).append(f)
                         self.types_any.setdefault(key, []).append(f)
 

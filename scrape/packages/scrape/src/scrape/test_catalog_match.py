@@ -565,9 +565,9 @@ def test_film_lines_written_as_the_make():
         Film(id=i, make=m, type=t, speed=s, color_type="color", description="")
         for i, (m, t, s) in enumerate(
             [
-                ("harmon", "phoenix 200", 200),
-                ("harmon", "phoenix 200 II", 200),
-                ("harmon", "red 125", 125),
+                ("harman", "phoenix 200", 200),
+                ("harman", "phoenix 200 ii", 200),
+                ("harman", "red 125", 125),
                 ("china lucky film", "lucky color 200", 200),
             ]
         )
@@ -576,18 +576,53 @@ def test_film_lines_written_as_the_make():
         [],
         films,
         [
-            CatalogAlias("film", "harmon", "phoenix 200 II", "phoenix ii"),
+            CatalogAlias("film", "harman", "phoenix 200 ii", "phoenix ii"),
             CatalogAlias("film", "china lucky film", "lucky color 200", "c200"),
         ],
     )
     for make, type, expected in [
-        ("Phoenix", "200", ("harmon", "phoenix 200")),
-        ("Harman", "Phoenix 200", ("harmon", "phoenix 200")),
-        (None, "Phoenix 200", ("harmon", "phoenix 200")),
-        (None, "Phoenix II", ("harmon", "phoenix 200 ii")),
-        ("Harman", "Red 125", ("harmon", "red 125")),
-        ("Fujifilm", "Phoenix 200", ("harmon", "phoenix 200")),
+        ("Phoenix", "200", ("harman", "phoenix 200")),
+        ("Harman", "Phoenix 200", ("harman", "phoenix 200")),
+        (None, "Phoenix 200", ("harman", "phoenix 200")),
+        (None, "Phoenix II", ("harman", "phoenix 200 ii")),
+        ("Harman", "Red 125", ("harman", "red 125")),
+        ("Harmon", "Phoenix 200", ("harman", "phoenix 200")),
+        ("Fujifilm", "Phoenix 200", ("harman", "phoenix 200")),
         ("Lucky", "C200", ("china lucky film", "lucky color 200")),
+    ]:
+        assert _film(film(m, make, type, None)) == expected, (make, type)
+
+
+def test_film_alias_does_not_take_another_films_name():
+    films = [
+        Film(id=i, make="fujifilm", type=t, speed=s, color_type="color", description="")
+        for i, (t, s) in enumerate(
+            [
+                ("200", 200),
+                ("400", 400),
+                ("fujicolor c200", 200),
+                ("fujicolor superia x-tra 400", 400),
+            ]
+        )
+    ]
+    m = CatalogMatcher(
+        [],
+        films,
+        [
+            CatalogAlias("film", "fujifilm", "fujicolor c200", "fujicolor 200"),
+            CatalogAlias("film", "fujifilm", "fujicolor superia x-tra 400", "xtra 400"),
+        ],
+    )
+    for make, type, expected in [
+        ("Fujifilm", "200", ("fujifilm", "200")),
+        ("Fuji", "200", ("fujifilm", "200")),
+        ("Fujifilm", "400", ("fujifilm", "400")),
+        ("Fujifilm", "Fujicolor 200", ("fujifilm", "fujicolor c200")),
+        ("Fujifilm", "FujiColor 200", ("fujifilm", "fujicolor c200")),
+        ("Fujicolor", "200", ("fujifilm", "200")),
+        ("Fujifilm", "X-Tra 400", ("fujifilm", "fujicolor superia x-tra 400")),
+        ("Fujifilm", "Xtra-400", ("fujifilm", "fujicolor superia x-tra 400")),
+        ("Fujifilm", "Xtra400", ("fujifilm", "fujicolor superia x-tra 400")),
     ]:
         assert _film(film(m, make, type, None)) == expected, (make, type)
 
