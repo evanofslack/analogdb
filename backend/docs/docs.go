@@ -3125,6 +3125,19 @@ const docTemplate = `{
                 }
             }
         },
+        "analogdb.StatsMonthRange": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string",
+                    "example": "2023-10"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "2025-09"
+                }
+            }
+        },
         "analogdb.StatsMover": {
             "type": "object",
             "properties": {
@@ -3153,11 +3166,17 @@ const docTemplate = `{
         "analogdb.StatsMoverGroups": {
             "type": "object",
             "properties": {
+                "base": {
+                    "$ref": "#/definitions/analogdb.StatsMonthRange"
+                },
                 "cameras": {
                     "$ref": "#/definitions/analogdb.StatsMovers"
                 },
                 "films": {
                     "$ref": "#/definitions/analogdb.StatsMovers"
+                },
+                "recent": {
+                    "$ref": "#/definitions/analogdb.StatsMonthRange"
                 }
             }
         },
@@ -3452,6 +3471,11 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/analogdb.StatsArrival"
                     }
+                },
+                "arrivals_after": {
+                    "description": "first month a film or camera can count as a new arrival",
+                    "type": "string",
+                    "example": "2023-07"
                 },
                 "camera_brands": {
                     "type": "array",

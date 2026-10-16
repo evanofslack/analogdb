@@ -649,6 +649,15 @@ definitions:
         example: ViT-B-16-laion2b_s34b_b88k
         type: string
     type: object
+  analogdb.StatsMonthRange:
+    properties:
+      from:
+        example: 2023-10
+        type: string
+      to:
+        example: 2025-09
+        type: string
+    type: object
   analogdb.StatsMover:
     properties:
       change:
@@ -669,10 +678,14 @@ definitions:
     type: object
   analogdb.StatsMoverGroups:
     properties:
+      base:
+        $ref: '#/definitions/analogdb.StatsMonthRange'
       cameras:
         $ref: '#/definitions/analogdb.StatsMovers'
       films:
         $ref: '#/definitions/analogdb.StatsMovers'
+      recent:
+        $ref: '#/definitions/analogdb.StatsMonthRange'
     type: object
   analogdb.StatsMovers:
     properties:
@@ -875,6 +888,10 @@ definitions:
         items:
           $ref: '#/definitions/analogdb.StatsArrival'
         type: array
+      arrivals_after:
+        description: first month a film or camera can count as a new arrival
+        example: 2023-07
+        type: string
       camera_brands:
         items:
           $ref: '#/definitions/analogdb.StatsTrendItem'
