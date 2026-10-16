@@ -30,6 +30,7 @@ from .backfill import (
     tag_missing_post_captions,
 )
 from .duplicates import report_duplicates
+from .stats import rebuild_stats
 
 scrape_job = dg.define_asset_job(
     name="scrape_and_upload",
@@ -113,4 +114,9 @@ reextract_colors_job = dg.define_asset_job(
 report_duplicates_job = dg.define_asset_job(
     name="report_duplicate_posts",
     selection=[report_duplicates],
+)
+
+rebuild_stats_job = dg.define_asset_job(
+    name="rebuild_stats_snapshot",
+    selection=[rebuild_stats],
 )
