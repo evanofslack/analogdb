@@ -27,6 +27,13 @@ const (
 	referrerCond = `referrer_host != '' AND referrer_host != 'analogdb.com' AND NOT endsWith(referrer_host, '.analogdb.com')`
 )
 
+// a search is counted once by search_id on its first page, page is 0 based
+const (
+	searchQueryExpr = `JSONExtractString(props, 'q_norm')`
+	searchEmptyExpr = `JSONExtractString(props, 'outcome') = 'empty'`
+	searchCond      = `event_name = 'search' AND NOT is_bot AND search_id != '' AND JSONExtractInt(props, 'page') = 0 AND ` + searchQueryExpr + ` != '' AND ` + uiWindow
+)
+
 func (db *DB) Analytics(ctx context.Context, r analogdb.TrafficRange) (*analogdb.Analytics, error) {
 	db.logger.DebugContext(ctx, "Starting analytics query", "range", r)
 	defer db.logger.DebugContext(ctx, "Finished analytics query")
@@ -46,6 +53,8 @@ func (db *DB) Analytics(ctx context.Context, r analogdb.TrafficRange) (*analogdb
 
 	analytics := &analogdb.Analytics{Range: r, Bucket: bucketName}
 	top := &analytics.Top
+	api := &analytics.API
+	searches := &analytics.Searches
 	g, gctx := errgroup.WithContext(ctx)
 	counts := func(dst *[]analogdb.AnalyticsCount, column, filter string, limit int) func() error {
 		return func() (err error) {
@@ -71,6 +80,16 @@ func (db *DB) Analytics(ctx context.Context, r analogdb.TrafficRange) (*analogdb
 		{"browsers", counts(&top.Browsers, "browser", "", browsersLimit)},
 		{"posts", func() (err error) { analytics.Posts, err = db.analyticsPosts(gctx, since, until); return }},
 		{"vitals", func() (err error) { analytics.Vitals, err = db.analyticsVitals(gctx, since, until); return }},
+		{"api summary", func() error { return db.trafficSummary(gctx, before, since, until, &api.Summary) }},
+		{"api page views", func() error { return db.trafficPageViews(gctx, before, since, until, &api.Summary) }},
+		{"api callers", func() (err error) { api.Callers, err = db.trafficCallers(gctx, since, until); return }},
+		{"api errors", func() (err error) { api.Errors, err = db.trafficErrors(gctx, since, until); return }},
+		{"search totals", func() error { return db.searchTotals(gctx, before, since, until, searches) }},
+		{"top searches", func() (err error) { searches.Top, err = db.searchCounts(gctx, "", since, until); return }},
+		{"empty searches", func() (err error) {
+			searches.Empty, err = db.searchCounts(gctx, searchEmptyExpr, since, until)
+			return
+		}},
 	}
 	for _, step := range steps {
 		g.Go(func() error {
@@ -243,6 +262,64 @@ func (db *DB) analyticsVitals(ctx context.Context, from, to int64) ([]analogdb.A
 		vitals = append(vitals, v)
 	}
 	return vitals, rows.Err()
+}
+
+// searchTotals reads the current window and the one before it in one pass
+func (db *DB) searchTotals(ctx context.Context, before, since, until int64, s *analogdb.AnalyticsSearches) error {
+	query := fmt.Sprintf(`
+		WITH fromUnixTimestamp64Milli(toInt64(?), 'UTC') AS since_ts
+		SELECT
+			toInt64(uniqExactIf(search_id, received_ts >= since_ts)),
+			toInt64(uniqExactIf(search_id, received_ts >= since_ts AND is_empty)),
+			toInt64(uniqExactIf(search_id, received_ts < since_ts)),
+			toInt64(uniqExactIf(search_id, received_ts < since_ts AND is_empty))
+		FROM (
+			SELECT received_ts, search_id, %s AS is_empty
+			FROM %s
+			WHERE %s
+		)`, searchEmptyExpr, uiTable, searchCond)
+	rows, done, err := db.query(ctx, query, since, before, until)
+	if err != nil {
+		return err
+	}
+	defer done()
+
+	cur, prev := &s.Current, &s.Previous
+	if rows.Next() {
+		if err := rows.Scan(&cur.Searches, &cur.Empty, &prev.Searches, &prev.Empty); err != nil {
+			return err
+		}
+	}
+	return rows.Err()
+}
+
+// searchCounts groups searches by normalized query, filter is an optional condition without bind parameters
+func (db *DB) searchCounts(ctx context.Context, filter string, from, to int64) ([]analogdb.AnalyticsSearch, error) {
+	if filter != "" {
+		filter = " AND " + filter
+	}
+	query := fmt.Sprintf(`
+		SELECT %s AS q, toInt64(uniqExact(search_id)) AS searches
+		FROM %s
+		WHERE %s%s
+		GROUP BY q
+		ORDER BY searches DESC, q
+		LIMIT ?`, searchQueryExpr, uiTable, searchCond, filter)
+	rows, done, err := db.query(ctx, query, from, to, topLimit)
+	if err != nil {
+		return nil, err
+	}
+	defer done()
+
+	searches := make([]analogdb.AnalyticsSearch, 0)
+	for rows.Next() {
+		var s analogdb.AnalyticsSearch
+		if err := rows.Scan(&s.Query, &s.Searches); err != nil {
+			return nil, err
+		}
+		searches = append(searches, s)
+	}
+	return searches, rows.Err()
 }
 
 func finite(f float64) *float64 {

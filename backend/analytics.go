@@ -157,21 +157,56 @@ type AnalyticsVital struct {
 	Samples int64    `json:"samples"`
 }
 
+// AnalyticsAPI is API load from request logs over the same windows
+type AnalyticsAPI struct {
+	Summary TrafficSummary  `json:"summary"`
+	Callers []TrafficCaller `json:"callers"`
+	Errors  []TrafficError  `json:"errors"`
+}
+
+type AnalyticsSearchTotals struct {
+	Searches int64 `json:"searches"`
+	Empty    int64 `json:"empty"`
+}
+
+type AnalyticsSearch struct {
+	Query    string `json:"query"`
+	Searches int64  `json:"searches"`
+}
+
+// AnalyticsSearches counts human text searches, once per search on its first page
+type AnalyticsSearches struct {
+	Current  AnalyticsSearchTotals `json:"current"`
+	Previous AnalyticsSearchTotals `json:"previous"`
+	Top      []AnalyticsSearch     `json:"top"`
+	Empty    []AnalyticsSearch     `json:"empty"`
+}
+
 // Analytics is product traffic from UI events
 type Analytics struct {
-	Range   TrafficRange      `json:"range"`
-	Bucket  string            `json:"bucket"`
-	Summary AnalyticsSummary  `json:"summary"`
-	Series  []AnalyticsBucket `json:"series"`
-	Top     AnalyticsTop      `json:"top"`
-	Posts   []AnalyticsPost   `json:"posts"`
-	Vitals  []AnalyticsVital  `json:"vitals"`
+	Range    TrafficRange      `json:"range"`
+	Bucket   string            `json:"bucket"`
+	Summary  AnalyticsSummary  `json:"summary"`
+	Series   []AnalyticsBucket `json:"series"`
+	Top      AnalyticsTop      `json:"top"`
+	Posts    []AnalyticsPost   `json:"posts"`
+	Vitals   []AnalyticsVital  `json:"vitals"`
+	API      AnalyticsAPI      `json:"api"`
+	Searches AnalyticsSearches `json:"searches"`
 }
+
+const (
+	ClientWeb     = "web"
+	ClientScraper = "scraper"
+	ClientDirect  = "direct"
+)
 
 type AuditFilter struct {
 	Limit int
 	// Before is a start time in unix milliseconds
 	Before *int64
+	// Client is web, scraper or direct, empty for all
+	Client string
 }
 
 type AuditEntry struct {

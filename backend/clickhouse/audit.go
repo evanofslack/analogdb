@@ -18,14 +18,15 @@ func (db *DB) Audit(ctx context.Context, filter *analogdb.AuditFilter) ([]*analo
 	}
 
 	query := fmt.Sprintf(`
-		SELECT %s, start_time, method, path, response_code, remote_ip, user_agent, request_id, %s
+		SELECT %s, start_time, method, path, response_code, remote_ip, user_agent, request_id, %s AS client
 		FROM %s
 		WHERE method IN ('POST', 'PUT', 'PATCH', 'DELETE')
 			AND (authorized OR response_code IN (401, 403))
 			AND start_time < ?
+			AND (? = '' OR client = ?)
 		ORDER BY start_time DESC
 		LIMIT ?`, timeExpr, clientExpr, db.table)
-	rows, done, err := db.query(ctx, query, before, filter.Limit)
+	rows, done, err := db.query(ctx, query, before, filter.Client, filter.Client, filter.Limit)
 	if err != nil {
 		db.logger.ErrorContext(ctx, "Fail audit query", "error", err)
 		return nil, err
