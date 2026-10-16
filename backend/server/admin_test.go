@@ -47,10 +47,6 @@ type mockAnalytics struct {
 	audit *analogdb.AuditFilter
 }
 
-func (m mockAnalytics) Traffic(ctx context.Context, r analogdb.TrafficRange) (*analogdb.Traffic, error) {
-	return &analogdb.Traffic{Range: r}, m.err
-}
-
 func (m mockAnalytics) Analytics(ctx context.Context, r analogdb.TrafficRange) (*analogdb.Analytics, error) {
 	posts := []analogdb.AnalyticsPost{{PostID: 12, ViewCounts: analogdb.ViewCounts{PageViews: 5}}, {PostID: 404, ViewCounts: analogdb.ViewCounts{PageViews: 2}}}
 	return &analogdb.Analytics{Range: r, Posts: posts}, m.err
@@ -100,7 +96,6 @@ func TestAdminRequiresAuth(t *testing.T) {
 		"/v1/admin/queue",
 		"/v1/admin/posts/missing?field=camera",
 		"/v1/admin/posts/missing?field=caption",
-		"/v1/admin/traffic",
 		"/v1/admin/analytics",
 		"/v1/admin/audit",
 	} {
@@ -171,7 +166,6 @@ func TestAdminBadParams(t *testing.T) {
 		"/v1/admin/posts/missing",
 		"/v1/admin/posts/missing?field=title",
 		"/v1/admin/posts/missing?field=camera&before_id=abc",
-		"/v1/admin/traffic?range=1y",
 		"/v1/admin/analytics?range=1y",
 		"/v1/admin/audit?before=abc",
 		"/v1/admin/audit?client=bot",
@@ -197,6 +191,15 @@ func TestAdminQueue(t *testing.T) {
 	want := map[string]int{"open_reports": 3, "unmatched_cameras": 12, "unmatched_films": 29}
 	if !maps.Equal(body, want) {
 		t.Errorf("want %v, got %v", want, body)
+	}
+}
+
+func TestAdminTrafficGone(t *testing.T) {
+	s := mustOpenAdmin(t)
+	defer mustClose(t, s)
+
+	if w := adminRequest(s, "/v1/admin/traffic", true); w.Code != http.StatusNotFound {
+		t.Errorf("want 404 for the removed traffic route, got %d", w.Code)
 	}
 }
 
@@ -239,14 +242,14 @@ func TestAdminAnalyticsUnavailable(t *testing.T) {
 	defer mustClose(t, s)
 
 	s.AnalyticsService = nil
-	for _, path := range []string{"/v1/admin/traffic", "/v1/admin/analytics", "/v1/admin/audit"} {
+	for _, path := range []string{"/v1/admin/analytics", "/v1/admin/audit"} {
 		if w := adminRequest(s, path, true); w.Code != http.StatusServiceUnavailable {
 			t.Errorf("%s: want 503 when disabled, got %d", path, w.Code)
 		}
 	}
 
 	s.AnalyticsService = mockAnalytics{err: errors.New("dial tcp: connection refused")}
-	for _, path := range []string{"/v1/admin/traffic", "/v1/admin/analytics", "/v1/admin/audit"} {
+	for _, path := range []string{"/v1/admin/analytics", "/v1/admin/audit"} {
 		if w := adminRequest(s, path, true); w.Code != http.StatusServiceUnavailable {
 			t.Errorf("%s: want 503 when down, got %d", path, w.Code)
 		}
