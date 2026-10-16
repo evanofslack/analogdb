@@ -10,7 +10,14 @@ from urllib3 import Retry
 from urllib3.exceptions import HTTPError
 from werkzeug import Request, Response
 
-from .client import DUPLICATES_TIMEOUT, REQUEST_TIMEOUT, Client, Deleted, Uploaded
+from .client import (
+    DUPLICATES_TIMEOUT,
+    REQUEST_TIMEOUT,
+    STATS_TIMEOUT,
+    Client,
+    Deleted,
+    Uploaded,
+)
 from .models import (
     CameraCreate,
     FilmCreate,
@@ -369,6 +376,30 @@ class TestTimeout:
 
         assert client.get_duplicates() == []
         assert DUPLICATES_TIMEOUT == (10.0, 300.0)
+
+    def test_stats_rebuild_outlasts_default_timeout(self, httpserver: HTTPServer):
+        def handler(request: Request):
+            time.sleep(0.5)
+            body = {"id": 3, "build_ms": 24366, "films": 38, "themes": 36}
+            return Response(json.dumps(body), mimetype="application/json")
+
+        httpserver.expect_request(
+            "/v1/admin/stats/rebuild", method="POST"
+        ).respond_with_handler(handler)
+        client = Client(
+            base_url=httpserver.url_for("").rstrip("/"),
+            timeout=(1.0, 0.2),
+            retries=Retry(0),
+        )
+
+        build = client.rebuild_stats()
+        assert (build.id, build.build_ms, build.films, build.themes) == (
+            3,
+            24366,
+            38,
+            36,
+        )
+        assert STATS_TIMEOUT == (10.0, 360.0)
 
 
 def extraction(post_id: int) -> PostExtraction:

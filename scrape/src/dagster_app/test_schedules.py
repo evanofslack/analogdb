@@ -9,6 +9,7 @@ from .definitions import defs
 from .resources import TaggerResource
 from .schedules import (
     encode_missing_vectors_schedule,
+    rebuild_stats_schedule,
     tag_missing_captions_schedule,
     update_post_comments_schedule,
     update_post_scores_schedule,
@@ -145,3 +146,9 @@ def test_retry_policies():
             assert policy.backoff == dg.Backoff.EXPONENTIAL
             retried.add(asset.key.to_user_string())
     assert retried == RETRY_ASSETS
+
+
+def test_rebuild_stats_schedule():
+    assert rebuild_stats_schedule.cron_schedule == "0 4 * * *"
+    assert rebuild_stats_schedule.execution_timezone == "UTC"
+    assert defs.get_job_def("rebuild_stats_snapshot").name == "rebuild_stats_snapshot"

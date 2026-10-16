@@ -53,6 +53,7 @@ from .jobs import (
     patch_comments_job,
     patch_descriptions_job,
     patch_scores_job,
+    rebuild_stats_job,
     reencode_vectors_job,
     reextract_colors_job,
     rematch_metadata_job,
@@ -72,16 +73,19 @@ from .resources import (
 )
 from .schedules import (
     encode_missing_vectors_schedule,
+    rebuild_stats_schedule,
     scrape_analog_schedule,
     tag_missing_captions_schedule,
     update_post_comments_schedule,
     update_post_scores_schedule,
 )
+from .stats import rebuild_stats
 
 defs = dg.Definitions(
     assets=[
         prune_catalog,
         report_duplicates,
+        rebuild_stats,
         reencode_post_vectors,
         reextract_post_colors,
         rematch_post_metadata,
@@ -153,6 +157,7 @@ defs = dg.Definitions(
         reencode_vectors_job,
         reextract_colors_job,
         report_duplicates_job,
+        rebuild_stats_job,
         rematch_metadata_job,
         scrape_job,
         patch_descriptions_job,
@@ -162,6 +167,7 @@ defs = dg.Definitions(
     ],
     schedules=[
         encode_missing_vectors_schedule,
+        rebuild_stats_schedule,
         scrape_analog_schedule,
         tag_missing_captions_schedule,
         update_post_comments_schedule,

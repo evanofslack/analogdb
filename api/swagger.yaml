@@ -1240,6 +1240,23 @@ definitions:
           $ref: '#/definitions/analogdb.Post'
         type: array
     type: object
+  server.StatsRebuildResponse:
+    properties:
+      build_ms:
+        example: 24366
+        type: integer
+      created:
+        type: string
+      films:
+        example: 38
+        type: integer
+      id:
+        example: 12
+        type: integer
+      themes:
+        example: 36
+        type: integer
+    type: object
   server.UpsertExtractionsResponse:
     properties:
       skipped:
@@ -1426,6 +1443,43 @@ paths:
       summary: List removed post permalinks
       tags:
       - removed
+  /admin/stats/rebuild:
+    post:
+      description: Build a new stats snapshot and serve it from GET /stats. One build
+        runs at a time and a failed build keeps the previous snapshot. Can take a
+        minute (requires authentication)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/server.StatsRebuildResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "404":
+          description: No stats seed uploaded
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "409":
+          description: A build is already running
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Rebuild stats
+      tags:
+      - scrape
   /authors:
     get:
       description: Usernames of every author with a post

@@ -5,6 +5,7 @@ import dagster as dg
 from .jobs import (
     patch_comments_job,
     patch_scores_job,
+    rebuild_stats_job,
     reencode_vectors_job,
     scrape_job,
     tag_missing_captions_job,
@@ -25,6 +26,14 @@ encode_missing_vectors_schedule = dg.ScheduleDefinition(
     name="encode_missing_vectors_schedule",
     description="Daily encode of posts missing an image vector",
     run_config={"ops": {"reencode_post_vectors": {"config": {"fail_on_error": False}}}},
+)
+
+rebuild_stats_schedule = dg.ScheduleDefinition(
+    job=rebuild_stats_job,
+    cron_schedule="0 4 * * *",
+    execution_timezone="UTC",
+    name="rebuild_stats_schedule",
+    description="Daily stats snapshot, after the nightly jobs",
 )
 
 tag_missing_captions_schedule = dg.ScheduleDefinition(
