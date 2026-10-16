@@ -31,6 +31,10 @@ from .models import Color, PostImages, RedditPost, S3Image
 from .s3 import S3
 
 
+class HtmlContentError(ValueError):
+    """The post links to a web page, usually a video or external site, not an image."""
+
+
 def image_hash(image: Image.Image) -> str:
     """64 bit dHash as 16 hex characters. Each bit says whether a pixel of the
     9x8 grayscale thumbnail is brighter than its left neighbour, so a resized or
@@ -277,6 +281,8 @@ class ImageProcessor:
     def _download(self, url: str) -> Tuple[bytes, str]:
         resp = self._fetch(url)
         content_type = resp.headers.get("content-type", "").split(";")[0].strip()
+        if content_type == "text/html":
+            raise HtmlContentError(f"Invalid content type: {content_type}")
         if content_type not in VALID_CONTENT:
             raise ValueError(f"Invalid content type: {content_type}")
         return resp.content, content_type

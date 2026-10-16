@@ -10,6 +10,7 @@ import dagster as dg
 from analogdb.client import Client, Uploaded
 from analogdb_generated.exceptions import ApiException
 from scrape.arctic import ArcticShift, ArcticShiftError
+from scrape.image import HtmlContentError
 from scrape.models import (
     MetadataPost,
     PhotoMetadata,
@@ -47,9 +48,11 @@ daily_partitions = dg.TimeWindowPartitionsDefinition(
 MIN_POSTS_FOR_COMMENTS = 5
 
 
-def add_result_metadata(context: dg.AssetExecutionContext, result: Result) -> None:
+def add_result_metadata(
+    context: dg.AssetExecutionContext, result: Result, **extra: int
+) -> None:
     context.add_output_metadata(
-        {"success": result.successful_count(), "failed": result.failed_count()}
+        {"success": result.successful_count(), "failed": result.failed_count(), **extra}
     )
 
 
@@ -333,18 +336,26 @@ def scrape_assets(prefix: str, source: str, group: str) -> List[dg.AssetsDefinit
         data = {}
         status = {}
         errors = {}
+        skipped = 0
         processor = image_processor.client()
         for id, p in reddit_posts.successful().items():
             try:
                 data[id] = processor.process(p, storage)
                 status[id] = Status.SUCCESS
+            except HtmlContentError as e:
+                context.log.debug(f"Skipping {id}, links to a web page not an image")
+                skipped += 1
+                status[id] = Status.FAILED
+                errors[id] = str(e)
             except Exception as e:
                 context.log.error(f"Failed to process images for {id}: {e}")
                 status[id] = Status.FAILED
                 errors[id] = str(e)
 
         result = Result(data=data, status=status, errors=errors)
-        add_result_metadata(context, result)
+        add_result_metadata(context, result, skipped_html=skipped)
+        if skipped:
+            context.log.info(f"Skipped {skipped} posts that link to a web page")
         context.log.info(f"Processed images for {result.successful_count()} posts")
         return result
 

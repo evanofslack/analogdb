@@ -226,6 +226,15 @@ class TestPostImages:
         assert result.successful_ids() == set(reddit_posts.data) - {bad}
         assert s3_client.put_object.call_count == 8
 
+    def test_html_is_skipped_without_error_log(self):
+        reddit_posts = make_reddit_posts(2)
+        with patch.object(dg.DagsterLogManager, "error") as log_error:
+            result, _ = run_post_images(reddit_posts, {"https://i.redd.it/1.jpg"})
+
+        bad = "https://www.reddit.com/r/analog/comments/1/title"
+        assert result.status[bad] == Status.FAILED
+        log_error.assert_not_called()
+
     def test_output_has_no_images(self):
         result, _ = run_post_images(make_reddit_posts(20), set())
 
