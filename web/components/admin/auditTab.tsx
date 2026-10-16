@@ -1,22 +1,18 @@
 import { AuditPage } from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
-import { Button } from "@mantine/core";
-import Link from "next/link";
 import styles from "./adminPanel.module.css";
+import Pager from "./pager";
 
 interface AuditTabProps {
   page: AuditPage;
+  firstPage: boolean;
 }
 
-export default function AuditTab({ page }: AuditTabProps) {
+export default function AuditTab({ page, firstPage }: AuditTabProps) {
   return (
     <>
-      <p className={styles.note} style={{ marginBottom: "1rem" }}>
-        Authorized writes and failed logins (401) on the API. The web server and
-        the scraper share credentials, the client column tells them apart.
-      </p>
       {page.entries.length === 0 ? (
-        <p className={styles.note}>No entries.</p>
+        <p className={styles.empty}>No entries</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -36,15 +32,19 @@ export default function AuditTab({ page }: AuditTabProps) {
               {page.entries.map((e) => (
                 <tr
                   key={e.request_id || e.start_ms}
-                  className={e.status === 401 ? styles.errorRow : undefined}
+                  className={
+                    e.status === 401 || e.status === 403
+                      ? styles.errorRow
+                      : undefined
+                  }
                 >
-                  <td>{formatDateTime(e.time)}</td>
+                  <td className={styles.nowrap}>{formatDateTime(e.time)}</td>
                   <td>{e.method}</td>
                   <td className={styles.mono}>{e.path}</td>
                   <td className={styles.num}>{e.status}</td>
                   <td>{e.client}</td>
                   <td className={styles.mono}>{e.remote_ip}</td>
-                  <td>{e.user_agent}</td>
+                  <td className={styles.wrap}>{e.user_agent}</td>
                   <td className={styles.mono}>{e.request_id}</td>
                 </tr>
               ))}
@@ -52,17 +52,14 @@ export default function AuditTab({ page }: AuditTabProps) {
           </table>
         </div>
       )}
-      <div className={styles.pager}>
-        {page.next_before && (
-          <Button
-            component={Link}
-            href={`/admin?tab=audit&before=${page.next_before}`}
-            variant="default"
-          >
-            Older
-          </Button>
-        )}
-      </div>
+      <Pager
+        newest={firstPage ? null : "/admin?tab=audit"}
+        older={
+          page.next_before
+            ? `/admin?tab=audit&before=${page.next_before}`
+            : null
+        }
+      />
     </>
   );
 }

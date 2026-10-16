@@ -76,7 +76,7 @@ export default function CatalogButton({ kind, initial }: CatalogButtonProps) {
 
   return (
     <>
-      <Button size="xs" variant="light" onClick={open}>
+      <Button size="xs" variant="default" onClick={open}>
         Add
       </Button>
       <Modal

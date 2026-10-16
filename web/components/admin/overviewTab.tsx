@@ -5,56 +5,35 @@ import {
   formatDuration,
   formatNumber,
 } from "@lib/format";
-import { Badge } from "@mantine/core";
-import { ReactNode } from "react";
 import styles from "./adminPanel.module.css";
+import Hint from "./hint";
+import Section from "./section";
+import Stat, { Tone } from "./stat";
+import StatusDot from "./statusDot";
 
 interface OverviewTabProps {
   overview: AdminOverview;
   now: number;
 }
 
-interface StatProps {
-  label: ReactNode;
-  value: ReactNode;
-  detail?: ReactNode;
-  className?: string;
-}
-
-const statusColors: Record<string, string> = {
-  ok: "green",
-  down: "red",
-  disabled: "gray",
-};
 const dependencies = ["postgres", "redis", "weaviate", "clickhouse"];
 
 const day = 24 * 60 * 60;
 
-function freshnessClass(unixSeconds: number | null, now: number) {
-  if (!unixSeconds) return styles.veryStale;
+function freshnessTone(unixSeconds: number | null, now: number): Tone | null {
+  if (!unixSeconds) return "bad";
   const age = now / 1000 - unixSeconds;
-  if (age > 4 * day) return styles.veryStale;
-  if (age > 2 * day) return styles.stale;
-  return styles.fresh;
-}
-
-function Stat({ label, value, detail, className }: StatProps) {
-  return (
-    <div className={styles.card}>
-      <div className={styles.statLabel}>{label}</div>
-      <div className={`${styles.statValue} ${className ?? ""}`}>{value}</div>
-      {detail && <div className={styles.statDetail}>{detail}</div>}
-    </div>
-  );
+  if (age > 4 * day) return "bad";
+  if (age > 2 * day) return "warn";
+  return null;
 }
 
 function vectorDetail({ objects, posts }: AdminOverview["vectors"]) {
-  if (objects === null) return "Could not count objects";
+  if (objects === null) return "could not count";
   const diff = objects - posts;
-  if (diff === 0) return "Matches post count";
-  if (diff > 0)
-    return `${formatNumber(diff)} more objects than posts (duplicates)`;
-  return `${formatNumber(-diff)} posts without an object`;
+  if (diff === 0) return null;
+  if (diff > 0) return `${formatNumber(diff)} extra objects`;
+  return `${formatNumber(-diff)} posts missing`;
 }
 
 export default function OverviewTab({ overview, now }: OverviewTabProps) {
@@ -63,35 +42,48 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
 
   const freshnessItems = [
     { label: "Newest post", value: freshness.newest_post },
-    { label: "Score update", value: freshness.score_update },
-    { label: "Keywords update", value: freshness.keywords_update },
-    { label: "Colors update", value: freshness.colors_update },
+    { label: "Scores", value: freshness.score_update },
+    { label: "Keywords", value: freshness.keywords_update },
+    { label: "Colors", value: freshness.colors_update },
   ];
+  const vectorsOff =
+    vectors.objects === null || vectors.objects !== vectors.posts;
 
   return (
     <>
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Status</h2>
+      <Section title="Status">
         <div className={styles.statusRow}>
           {dependencies.map((name) => (
-            <Badge
-              key={name}
-              color={statusColors[status[name]] ?? "gray"}
-              variant="light"
-              size="lg"
-            >
-              {name}: {status[name] ?? "unknown"}
-            </Badge>
+            <StatusDot key={name} label={name} status={status[name]} />
+          ))}
+          <span className={styles.appInfo}>
+            {app.version} · {app.env} · {app.hostname} · up{" "}
+            {formatDuration(app.uptime_seconds)}
+          </span>
+        </div>
+      </Section>
+
+      <Section
+        title={
+          <Hint
+            label="Freshness"
+            tip="Amber after 2 days, red after 4. Scrapes run a day or two behind."
+          />
+        }
+      >
+        <div className={styles.stats}>
+          {freshnessItems.map((item) => (
+            <Stat
+              key={item.label}
+              label={item.label}
+              value={formatAgo(item.value, now)}
+              tone={freshnessTone(item.value, now)}
+            />
           ))}
         </div>
-        <p className={styles.note}>
-          API {app.version} ({app.env}) on {app.hostname}, up{" "}
-          {formatDuration(app.uptime_seconds)}
-        </p>
-      </section>
+      </Section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Content</h2>
+      <Section title="Collection">
         <div className={styles.stats}>
           <Stat label="Posts" value={formatNumber(counts.posts)} />
           <Stat label="Authors" value={formatNumber(counts.authors)} />
@@ -99,61 +91,46 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
           <Stat label="Films" value={formatNumber(counts.films)} />
           <Stat label="Keywords" value={formatNumber(counts.keywords)} />
         </div>
-      </section>
+      </Section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Posted</h2>
+      <Section
+        title={
+          <Hint
+            label="Posted"
+            tip="By Reddit post date, not the date the post was added."
+          />
+        }
+      >
         <div className={styles.stats}>
-          <Stat label="Last 24 hours" value={formatNumber(posted.day)} />
-          <Stat label="Last 7 days" value={formatNumber(posted.week)} />
-          <Stat label="Last 30 days" value={formatNumber(posted.month)} />
+          <Stat label="24 hours" value={formatNumber(posted.day)} />
+          <Stat label="7 days" value={formatNumber(posted.week)} />
+          <Stat label="30 days" value={formatNumber(posted.month)} />
         </div>
-        <p className={styles.note}>
-          By Reddit post date, not the date we added the post.
-        </p>
-      </section>
+      </Section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Pipeline freshness</h2>
-        <div className={styles.stats}>
-          {freshnessItems.map((item) => (
-            <Stat
-              key={item.label}
-              label={item.label}
-              value={formatAgo(item.value, now)}
-              className={freshnessClass(item.value, now)}
-            />
-          ))}
-        </div>
-        <p className={styles.note}>
-          Amber after 2 days, red after 4. Scrapes run a day or two behind.
-        </p>
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Similarity index</h2>
+      <Section title="Similarity index">
         <div className={styles.stats}>
           <Stat
-            label="Weaviate objects"
+            label="Objects"
             value={
               vectors.objects === null ? "—" : formatNumber(vectors.objects)
             }
             detail={vectorDetail(vectors)}
+            tone={vectorsOff ? "warn" : null}
           />
           <Stat label="Posts" value={formatNumber(vectors.posts)} />
         </div>
-      </section>
+      </Section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Database</h2>
+      <Section title="Database">
         <div className={styles.twoCol}>
           <div className={styles.stats}>
             <Stat label="Total size" value={formatBytes(database.bytes)} />
             <Stat
               label="Migration"
               value={database.migration_version}
-              detail={database.migration_dirty ? "Dirty" : "Clean"}
-              className={database.migration_dirty ? styles.veryStale : ""}
+              detail={database.migration_dirty ? "dirty" : "clean"}
+              tone={database.migration_dirty ? "bad" : null}
             />
           </div>
           <div className={styles.tableWrap}>
@@ -175,7 +152,7 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
             </table>
           </div>
         </div>
-      </section>
+      </Section>
     </>
   );
 }

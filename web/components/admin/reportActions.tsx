@@ -5,9 +5,10 @@ import {
   dismissReport,
   takedownReportedPost,
 } from "@app/actions/admin";
-import { Button, Group } from "@mantine/core";
+import { Button, Tooltip } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import styles from "./adminPanel.module.css";
 import EditPostButton from "./editPostButton";
 
 interface ReportActionsProps {
@@ -47,19 +48,21 @@ export default function ReportActions({
   }
 
   return (
-    <Group gap="xs" wrap="nowrap" title={error ?? undefined}>
+    <div className={styles.actions} title={error ?? undefined}>
       {!removed && <EditPostButton id={postId} />}
       {!removed && (
-        <Button
-          size="xs"
-          color="red"
-          variant="light"
-          onClick={takedown}
-          loading={pending === "takedown"}
-          disabled={pending !== null}
-        >
-          Take down
-        </Button>
+        <Tooltip label="Delete post and vector, block re-scrape" withArrow>
+          <Button
+            size="xs"
+            color="red"
+            variant="subtle"
+            onClick={takedown}
+            loading={pending === "takedown"}
+            disabled={pending !== null}
+          >
+            Take down
+          </Button>
+        </Tooltip>
       )}
       {!resolved && (
         <Button
@@ -73,6 +76,6 @@ export default function ReportActions({
           {error ? "Retry" : "Dismiss"}
         </Button>
       )}
-    </Group>
+    </div>
   );
 }

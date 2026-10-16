@@ -1,6 +1,5 @@
 import { logoutAction } from "@app/actions/auth";
 import Header from "@components/header";
-import { Button, Title } from "@mantine/core";
 import { IconLogout } from "@tabler/icons-react";
 import Link from "next/link";
 import { ReactNode } from "react";
@@ -14,6 +13,7 @@ export interface AdminLink {
 interface AdminPanelProps {
   tab: string;
   links: AdminLink[];
+  counts?: Record<string, number>;
   children: ReactNode;
 }
 
@@ -27,15 +27,18 @@ export const adminTabs = [
   { id: "audit", label: "Audit" },
 ];
 
-export default function AdminPanel({ tab, links, children }: AdminPanelProps) {
+export default function AdminPanel({
+  tab,
+  links,
+  counts,
+  children,
+}: AdminPanelProps) {
   return (
     <div className={styles.main}>
       <Header />
       <div className={styles.container}>
         <div className={styles.header}>
-          <Title order={1} size="h2">
-            Admin
-          </Title>
+          <h1 className={styles.title}>Admin</h1>
           <div className={styles.headerLinks}>
             {links.map((link) => (
               <a
@@ -43,21 +46,16 @@ export default function AdminPanel({ tab, links, children }: AdminPanelProps) {
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"
-                className={styles.externalLink}
+                className={styles.textLink}
               >
                 {link.label} ↗
               </a>
             ))}
             <form action={logoutAction}>
-              <Button
-                type="submit"
-                color="red"
-                variant="outline"
-                size="xs"
-                leftSection={<IconLogout size={14} />}
-              >
+              <button type="submit" className={styles.textButton}>
+                <IconLogout size={14} stroke={1.5} />
                 Logout
-              </Button>
+              </button>
             </form>
           </div>
         </div>
@@ -73,6 +71,9 @@ export default function AdminPanel({ tab, links, children }: AdminPanelProps) {
               aria-current={t.id === tab ? "page" : undefined}
             >
               {t.label}
+              {counts?.[t.id] ? (
+                <span className={styles.tabCount}>{counts[t.id]}</span>
+              ) : null}
             </Link>
           ))}
         </nav>

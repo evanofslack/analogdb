@@ -6,10 +6,11 @@ import {
 } from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
 import { reportReasonLabel } from "@lib/reports";
-import { Badge, Button } from "@mantine/core";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
+import Pager from "./pager";
 import ReportActions from "./reportActions";
+import Segmented from "./segmented";
 
 function redditLink(permalink: string | null): string | null {
   if (!permalink) return null;
@@ -25,64 +26,69 @@ interface ReportRowProps {
 function ReportRow({ report }: ReportRowProps) {
   const { post } = report;
   const reddit = redditLink(post.permalink);
+  const title = post.title ?? `Post ${report.post_id}`;
+  const marks = [post.removed && "removed", post.nsfw && "nsfw"].filter(
+    Boolean
+  );
   return (
     <tr>
       <td>
-        {post.low_url && (
+        {post.low_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            className={styles.reportThumb}
+            className={styles.thumb}
             src={post.low_url}
-            alt={post.title ?? ""}
+            alt={title}
             loading="lazy"
           />
+        ) : (
+          <span className={styles.thumb} />
         )}
       </td>
       <td className={styles.wrap}>
         {post.removed ? (
-          <span>{post.title ?? `Post ${report.post_id}`}</span>
+          <span>{title}</span>
         ) : (
           <Link href={`/post/${report.post_id}`} className={styles.link}>
-            {post.title ?? `Post ${report.post_id}`}
+            {title}
           </Link>
         )}
-        <div className={styles.reportMeta}>
-          {post.author}
+        <div className={styles.meta}>
+          {[post.author, ...marks].filter(Boolean).join(" · ")}
           {reddit && (
             <>
               {" · "}
-              <a href={reddit} target="_blank" rel="noreferrer">
+              <a
+                href={reddit}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.link}
+              >
                 reddit ↗
               </a>
             </>
           )}
-          {post.removed && (
-            <Badge ml="xs" size="xs" color="red" variant="light">
-              removed
-            </Badge>
-          )}
-          {post.nsfw && (
-            <Badge ml="xs" size="xs" color="orange" variant="light">
-              nsfw
-            </Badge>
-          )}
         </div>
       </td>
       <td className={styles.wrap}>
-        <strong>{reportReasonLabel(report.reason)}</strong>
+        <div>{reportReasonLabel(report.reason)}</div>
         {report.message && (
-          <div className={styles.reportMessage}>{report.message}</div>
+          <div className={`${styles.message} ${styles.meta}`}>
+            {report.message}
+          </div>
         )}
         {report.email && (
-          <div className={styles.reportMeta}>
-            <a href={`mailto:${report.email}`}>{report.email}</a>
+          <div className={styles.meta}>
+            <a href={`mailto:${report.email}`} className={styles.link}>
+              {report.email}
+            </a>
           </div>
         )}
       </td>
-      <td>
+      <td className={styles.nowrap}>
         {formatDateTime(report.created_at)}
         {report.resolved_at && (
-          <div className={styles.reportMeta}>
+          <div className={styles.meta}>
             resolved {formatDateTime(report.resolved_at)}
           </div>
         )}
@@ -113,28 +119,22 @@ export default function ReportsTab({
   return (
     <>
       <div className={styles.controls}>
-        {reportStatuses.map((s) => (
-          <Link
-            key={s}
-            href={`/admin?tab=reports&status=${s}`}
-            className={`${styles.chip} ${
-              s === status ? styles.chipActive : ""
-            }`}
-          >
-            {s}
-          </Link>
-        ))}
+        <Segmented
+          active={status}
+          items={reportStatuses.map((s) => ({
+            key: s,
+            href: `/admin?tab=reports&status=${s}`,
+            label: s,
+          }))}
+        />
       </div>
-      <p className={styles.note} style={{ marginBottom: "1rem" }}>
-        Reports from the post page, newest first. Take down deletes the post and
-        its vector and stops the scraper adding it again, the S3 images stay.
-        Dismiss resolves the report and clears its email.
-      </p>
       {page.reports.length === 0 ? (
-        <p className={styles.note}>No reports.</p>
+        <p className={styles.empty}>
+          {status === "all" ? "No reports" : `No ${status} reports`}
+        </p>
       ) : (
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.top}`}>
             <thead>
               <tr>
                 <th></th>
@@ -152,27 +152,14 @@ export default function ReportsTab({
           </table>
         </div>
       )}
-      <div className={styles.pager}>
-        {!firstPage && (
-          <Button
-            component={Link}
-            href={`/admin?tab=reports&status=${status}`}
-            variant="default"
-            mr="sm"
-          >
-            Newest
-          </Button>
-        )}
-        {page.next_before && (
-          <Button
-            component={Link}
-            href={`/admin?tab=reports&status=${status}&before=${page.next_before}`}
-            variant="default"
-          >
-            Older
-          </Button>
-        )}
-      </div>
+      <Pager
+        newest={firstPage ? null : `/admin?tab=reports&status=${status}`}
+        older={
+          page.next_before
+            ? `/admin?tab=reports&status=${status}&before=${page.next_before}`
+            : null
+        }
+      />
     </>
   );
 }

@@ -4,6 +4,8 @@ import { LineChartSeries } from "@mantine/charts";
 import styles from "./adminPanel.module.css";
 import Change from "./change";
 import RangePicker from "./rangePicker";
+import Section from "./section";
+import Share from "./share";
 import Stat from "./stat";
 import TabError, { LoadError } from "./tabError";
 import TimeChart from "./timeChart";
@@ -15,13 +17,13 @@ interface TrafficTabProps {
 }
 
 const requestSeries: LineChartSeries[] = [
-  { name: "web", label: "Web server", color: "blue.6" },
-  { name: "scraper", label: "Scraper", color: "teal.6" },
-  { name: "direct", label: "Direct", color: "gray.6" },
+  { name: "web", label: "Web server", color: "var(--adb-heading)" },
+  { name: "scraper", label: "Scraper", color: "var(--adb-border)" },
+  { name: "direct", label: "Direct", color: "var(--adb-muted)" },
 ];
 
 const errorSeries: LineChartSeries[] = [
-  { name: "status_4xx", label: "4xx", color: "orange.6" },
+  { name: "status_4xx", label: "4xx", color: "var(--adb-muted)" },
   { name: "status_5xx", label: "5xx", color: "red.6" },
 ];
 
@@ -46,10 +48,9 @@ function seconds(ms: number) {
 export default function TrafficTab({ traffic, error, range }: TrafficTabProps) {
   return (
     <>
-      <RangePicker tab="traffic" range={range} />
-      <p className={styles.note} style={{ marginBottom: "1.5rem" }}>
-        Backend API requests. Visitors are on the Analytics tab.
-      </p>
+      <div className={styles.controls}>
+        <RangePicker tab="traffic" range={range} />
+      </div>
 
       {error ? <TabError error={error} /> : <TrafficBody traffic={traffic} />}
     </>
@@ -137,10 +138,9 @@ function CallersTable({
   direct: number;
 }) {
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Direct callers</h2>
+    <Section title="Direct callers">
       {callers.length === 0 ? (
-        <p className={styles.note}>None.</p>
+        <p className={styles.empty}>None</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -156,7 +156,10 @@ function CallersTable({
             <tbody>
               {callers.map((c) => (
                 <tr key={`${c.kind}|${c.name}`}>
-                  <td className={styles.wrap}>{c.name || "(empty)"}</td>
+                  <td className={styles.wrap}>
+                    {c.name || "(empty)"}
+                    <Share value={c.requests} total={direct} />
+                  </td>
                   <td>{c.kind}</td>
                   <td className={styles.num}>{formatNumber(c.requests)}</td>
                   <td className={styles.num}>
@@ -169,16 +172,15 @@ function CallersTable({
           </table>
         </div>
       )}
-    </section>
+    </Section>
   );
 }
 
 function RoutesTable({ routes }: { routes: Traffic["routes"] }) {
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Routes by total time</h2>
+    <Section title="Routes by total time">
       {routes.length === 0 ? (
-        <p className={styles.note}>None.</p>
+        <p className={styles.empty}>None</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -209,22 +211,21 @@ function RoutesTable({ routes }: { routes: Traffic["routes"] }) {
           </table>
         </div>
       )}
-    </section>
+    </Section>
   );
 }
 
 function StatusTable({ rows }: { rows: Traffic["errors"]["by_status"] }) {
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Errors by status</h2>
+    <Section title="Errors by status">
       {rows.length === 0 ? (
-        <p className={styles.note}>No errors in this range.</p>
+        <p className={styles.empty}>No errors in this range</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
               <tr>
-                <th className={styles.num}>Status</th>
+                <th>Status</th>
                 <th>Route</th>
                 <th className={styles.num}>Requests</th>
               </tr>
@@ -232,7 +233,7 @@ function StatusTable({ rows }: { rows: Traffic["errors"]["by_status"] }) {
             <tbody>
               {rows.map((r) => (
                 <tr key={`${r.status}|${r.route}`}>
-                  <td className={styles.num}>{r.status}</td>
+                  <td>{r.status}</td>
                   <td className={styles.mono}>{r.route}</td>
                   <td className={styles.num}>{formatNumber(r.requests)}</td>
                 </tr>
@@ -241,16 +242,15 @@ function StatusTable({ rows }: { rows: Traffic["errors"]["by_status"] }) {
           </table>
         </div>
       )}
-    </section>
+    </Section>
   );
 }
 
 function RecentTable({ rows }: { rows: Traffic["errors"]["recent"] }) {
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Recent 5xx</h2>
+    <Section title="Recent 5xx">
       {rows.length === 0 ? (
-        <p className={styles.note}>No server errors in this range.</p>
+        <p className={styles.empty}>No server errors in this range</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -266,7 +266,7 @@ function RecentTable({ rows }: { rows: Traffic["errors"]["recent"] }) {
             <tbody>
               {rows.map((e) => (
                 <tr key={e.request_id || e.time}>
-                  <td>{formatDateTime(e.time)}</td>
+                  <td className={styles.nowrap}>{formatDateTime(e.time)}</td>
                   <td>{e.method}</td>
                   <td className={styles.mono}>{e.path}</td>
                   <td className={styles.num}>{e.status}</td>
@@ -277,7 +277,7 @@ function RecentTable({ rows }: { rows: Traffic["errors"]["recent"] }) {
           </table>
         </div>
       )}
-    </section>
+    </Section>
   );
 }
 
@@ -286,24 +286,22 @@ function TrafficBody({ traffic }: { traffic: Traffic }) {
     <>
       <Summary summary={traffic.summary} />
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Requests per {traffic.bucket}</h2>
+      <Section title={`Requests per ${traffic.bucket}`}>
         <TimeChart
           data={traffic.series}
           series={requestSeries}
           bucket={traffic.bucket}
         />
-      </section>
+      </Section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Errors per {traffic.bucket}</h2>
+      <Section title={`Errors per ${traffic.bucket}`}>
         <TimeChart
           data={traffic.series}
           series={errorSeries}
           bucket={traffic.bucket}
           height={140}
         />
-      </section>
+      </Section>
 
       <CallersTable
         callers={traffic.callers}

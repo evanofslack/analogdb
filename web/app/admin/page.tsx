@@ -105,7 +105,7 @@ async function renderTab(tab: string, params: AdminSearchParams) {
       const before = positiveInt(params.before);
       const { data, error } = await load(() => getAudit(before));
       if (error) return <TabError error={error} />;
-      return <AuditTab page={data} />;
+      return <AuditTab page={data} firstPage={!before} />;
     }
     default: {
       const { data, error } = await load(getOverview);
