@@ -2,6 +2,7 @@ import {
   AdminCoverage,
   AdminPost,
   AdminQuality,
+  AdminQueue,
   MissingField,
   missingFields,
   MissingPosts as MissingPostsPage,
@@ -173,9 +174,10 @@ interface MissingPostsProps {
   missing?: MissingPostsPage;
   error?: LoadError;
   field: MissingField;
+  firstPage: boolean;
 }
 
-function MissingPosts({ missing, error, field }: MissingPostsProps) {
+function MissingPosts({ missing, error, field, firstPage }: MissingPostsProps) {
   return (
     <>
       <div className={styles.controls}>
@@ -183,7 +185,7 @@ function MissingPosts({ missing, error, field }: MissingPostsProps) {
           active={field}
           items={missingFields.map((f) => ({
             key: f,
-            href: `/admin?tab=quality&field=${f}`,
+            href: `/admin?tab=catalog&field=${f}`,
             label: f,
           }))}
         />
@@ -220,9 +222,10 @@ function MissingPosts({ missing, error, field }: MissingPostsProps) {
         </div>
       )}
       <Pager
+        newest={firstPage ? null : `/admin?tab=catalog&field=${field}`}
         older={
           missing?.next_before_id
-            ? `/admin?tab=quality&field=${field}&before_id=${missing.next_before_id}`
+            ? `/admin?tab=catalog&field=${field}&before_id=${missing.next_before_id}`
             : null
         }
       />
@@ -230,41 +233,50 @@ function MissingPosts({ missing, error, field }: MissingPostsProps) {
   );
 }
 
-interface QualityTabProps {
+interface CatalogTabProps {
   quality: AdminQuality;
+  queue?: AdminQueue;
   missing?: MissingPostsPage;
   missingError?: LoadError;
   field: MissingField;
+  firstPage: boolean;
 }
 
-export default function QualityTab({
+export default function CatalogTab({
   quality,
+  queue,
   missing,
   missingError,
   field,
-}: QualityTabProps) {
+  firstPage,
+}: CatalogTabProps) {
   return (
     <>
       <Section
         title="Cameras not in catalog"
-        count={quality.unmatched_cameras.length}
+        count={queue?.unmatched_cameras ?? quality.unmatched_cameras.length}
       >
         <UnmatchedCameras cameras={quality.unmatched_cameras} />
       </Section>
 
       <Section
         title="Films not in catalog"
-        count={quality.unmatched_films.length}
+        count={queue?.unmatched_films ?? quality.unmatched_films.length}
       >
         <UnmatchedFilms films={quality.unmatched_films} />
       </Section>
 
-      <Section title="Coverage" count={quality.coverage.total}>
+      <Section title="Coverage" count={quality.coverage.total} panel>
         <Coverage coverage={quality.coverage} />
       </Section>
 
       <Section title="Missing a field">
-        <MissingPosts missing={missing} error={missingError} field={field} />
+        <MissingPosts
+          missing={missing}
+          error={missingError}
+          field={field}
+          firstPage={firstPage}
+        />
       </Section>
     </>
   );

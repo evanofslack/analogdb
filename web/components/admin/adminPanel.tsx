@@ -19,13 +19,20 @@ interface AdminPanelProps {
 
 export const adminTabs = [
   { id: "overview", label: "Overview" },
-  { id: "review", label: "Review" },
-  { id: "reports", label: "Reports" },
-  { id: "quality", label: "Quality" },
+  { id: "moderation", label: "Moderation" },
+  { id: "catalog", label: "Catalog" },
   { id: "analytics", label: "Analytics" },
-  { id: "traffic", label: "Traffic" },
-  { id: "audit", label: "Audit" },
 ];
+
+export const tabIds = [...adminTabs.map((t) => t.id), "activity"];
+
+export const legacyTabs: Record<string, string> = {
+  review: "moderation",
+  reports: "moderation",
+  quality: "catalog",
+  traffic: "analytics",
+  audit: "activity",
+};
 
 export default function AdminPanel({
   tab,
@@ -40,6 +47,13 @@ export default function AdminPanel({
         <div className={styles.header}>
           <h1 className={styles.title}>Admin</h1>
           <div className={styles.headerLinks}>
+            <Link
+              href="/admin?tab=activity"
+              className={styles.textLink}
+              aria-current={tab === "activity" ? "page" : undefined}
+            >
+              Activity
+            </Link>
             {links.map((link) => (
               <a
                 key={link.label}

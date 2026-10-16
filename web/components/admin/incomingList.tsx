@@ -3,12 +3,13 @@
 import { removePost, updatePost } from "@app/actions/admin";
 import { ReviewPost } from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
-import { Button, Group, Switch, Text } from "@mantine/core";
+import { Button, Switch } from "@mantine/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import styles from "./adminPanel.module.css";
 import PostEditor from "./postEditor";
+import Section from "./section";
 
 const reviewedKey = "adb-admin-last-reviewed";
 const flags = [
@@ -33,13 +34,21 @@ function writeReviewed(id: number) {
 
 type FlagKey = (typeof flags)[number]["key"];
 
-interface ReviewCardProps {
+function gear(post: ReviewPost) {
+  const camera = [post.camera_make, post.camera_model]
+    .filter(Boolean)
+    .join(" ");
+  const film = [post.film_make, post.film_type].filter(Boolean).join(" ");
+  return { camera, film };
+}
+
+interface IncomingRowProps {
   post: ReviewPost;
   isNew: boolean;
   onDeleted: (id: number) => void;
 }
 
-function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
+function IncomingRow({ post, isNew, onDeleted }: IncomingRowProps) {
   const router = useRouter();
   const [values, setValues] = useState(post);
   const [pending, setPending] = useState<string | null>(null);
@@ -47,6 +56,7 @@ function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
   const [editing, setEditing] = useState(false);
   const image =
     post.images.find((i) => i.resolution === "low") ?? post.images[0];
+  const { camera, film } = gear(values);
 
   async function toggle(key: FlagKey, checked: boolean) {
     setPending(key);
@@ -73,39 +83,54 @@ function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
   }
 
   return (
-    <div className={styles.card}>
-      <Link href={`/post/${post.id}`} className={styles.reviewImage}>
+    <div className={styles.incoming}>
+      <Link href={`/post/${post.id}`}>
         {image && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={image.url} alt={post.title} loading="lazy" />
+          <img
+            className={styles.thumb}
+            src={image.url}
+            alt={post.title}
+            loading="lazy"
+          />
         )}
       </Link>
-      <div className={styles.reviewBody}>
-        <Link href={`/post/${post.id}`} className={styles.reviewTitle}>
-          {post.title}
-        </Link>
+      <div className={styles.rowText}>
+        <div>
+          <Link href={`/post/${post.id}`} className={styles.link}>
+            {post.title}
+          </Link>
+        </div>
         <div className={styles.meta}>
+          #{post.id} · {post.author} · {formatDateTime(post.timestamp * 1000)}
           {isNew && (
             <>
+              {" · "}
               <span className={styles.newDot} />
-              new ·{" "}
+              new
             </>
           )}
-          #{post.id} · {post.author} · {formatDateTime(post.timestamp * 1000)}
         </div>
-        <Group gap="sm">
-          {flags.map((flag) => (
-            <Switch
-              key={flag.key}
-              size="xs"
-              label={flag.label}
-              checked={!!values[flag.key]}
-              disabled={pending !== null}
-              onChange={(e) => toggle(flag.key, e.currentTarget.checked)}
-            />
-          ))}
-        </Group>
-        <Group gap={6} justify="flex-end">
+        <div className={styles.meta}>
+          {camera || <span className={styles.faint}>no camera</span>}
+          {" · "}
+          {film || <span className={styles.faint}>no film</span>}
+        </div>
+        {error && <div className={styles.veryStale}>{error}</div>}
+      </div>
+      <div className={styles.incomingControls}>
+        {flags.map((flag) => (
+          <Switch
+            key={flag.key}
+            size="xs"
+            color="gray"
+            label={flag.label}
+            checked={!!values[flag.key]}
+            disabled={pending !== null}
+            onChange={(e) => toggle(flag.key, e.currentTarget.checked)}
+          />
+        ))}
+        <div className={styles.actions}>
           <Button size="xs" variant="default" onClick={() => setEditing(true)}>
             Edit
           </Button>
@@ -117,12 +142,7 @@ function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
           >
             Delete
           </Button>
-        </Group>
-        {error && (
-          <Text size="xs" c="red">
-            {error}
-          </Text>
-        )}
+        </div>
       </div>
       <PostEditor
         post={values}
@@ -137,12 +157,17 @@ function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
   );
 }
 
-interface ReviewGridProps {
+interface IncomingListProps {
   posts: ReviewPost[];
   firstPage: boolean;
+  pager: ReactNode;
 }
 
-export default function ReviewGrid({ posts, firstPage }: ReviewGridProps) {
+export default function IncomingList({
+  posts,
+  firstPage,
+  pager,
+}: IncomingListProps) {
   const [reviewed, setReviewed] = useState(0);
   const [deleted, setDeleted] = useState<number[]>([]);
 
@@ -160,31 +185,37 @@ export default function ReviewGrid({ posts, firstPage }: ReviewGridProps) {
   }
 
   return (
-    <>
-      <div className={styles.controls}>
-        <Text size="sm" c="dimmed">
-          {reviewed ? `${newCount} new` : "Nothing reviewed yet"}
-        </Text>
-        {firstPage && newest > reviewed && (
+    <Section
+      title="Incoming"
+      right={
+        <>
+          {reviewed > 0 && <span>{newCount} new</span>}
           <button
             type="button"
             className={styles.textButton}
             onClick={markReviewed}
+            disabled={!firstPage || newest <= reviewed}
           >
             Mark reviewed
           </button>
-        )}
-      </div>
-      <div className={styles.reviewGrid}>
-        {visible.map((post) => (
-          <ReviewCard
-            key={post.id}
-            post={post}
-            isNew={reviewed > 0 && post.id > reviewed}
-            onDeleted={(id) => setDeleted((d) => [...d, id])}
-          />
-        ))}
-      </div>
-    </>
+        </>
+      }
+    >
+      {visible.length === 0 ? (
+        <p className={styles.empty}>No posts</p>
+      ) : (
+        <div className={styles.rows}>
+          {visible.map((post) => (
+            <IncomingRow
+              key={post.id}
+              post={post}
+              isNew={reviewed > 0 && post.id > reviewed}
+              onDeleted={(id) => setDeleted((d) => [...d, id])}
+            />
+          ))}
+        </div>
+      )}
+      {pager}
+    </Section>
   );
 }

@@ -1,11 +1,14 @@
 import {
   Analytics,
+  AnalyticsAPI,
   AnalyticsCount,
+  AnalyticsSearch,
   AnalyticsTopKey,
   AnalyticsTotals,
   TrafficRange,
+  TrafficTotals,
 } from "@lib/adminClient";
-import { formatNumber, formatPercent } from "@lib/format";
+import { formatDateTime, formatNumber, formatPercent } from "@lib/format";
 import { LineChartSeries } from "@mantine/charts";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
@@ -22,6 +25,7 @@ interface AnalyticsTabProps {
   analytics?: Analytics;
   error?: LoadError;
   range: TrafficRange;
+  grafana?: string;
 }
 
 type VitalMetric = "lcp" | "inp" | "cls";
@@ -251,15 +255,187 @@ function ratio(a: number, b: number) {
 function derived(t: AnalyticsTotals) {
   return {
     ...t,
-    per_visitor: ratio(t.page_views, t.visitors),
     bot_share: ratio(t.bot_views, t.page_views + t.bot_views),
   };
+}
+
+function apiDerived(t: TrafficTotals) {
+  return {
+    ...t,
+    direct_share: ratio(t.direct, t.requests),
+    rate_5xx: ratio(t.status_5xx, t.requests),
+  };
+}
+
+function SearchTable({
+  title,
+  rows,
+  total,
+}: {
+  title: string;
+  rows: AnalyticsSearch[];
+  total: number;
+}) {
+  return (
+    <Section title={title} level="h3">
+      {rows.length === 0 ? (
+        <p className={styles.empty}>None</p>
+      ) : (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Query</th>
+                <th className={styles.num}>Searches</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row.query}>
+                  <td className={styles.wrap}>
+                    {row.query}
+                    <Share value={row.searches} total={total} />
+                  </td>
+                  <td className={styles.num}>{formatNumber(row.searches)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Section>
+  );
+}
+
+function APISection({ api, grafana }: { api: AnalyticsAPI; grafana?: string }) {
+  const current = apiDerived(api.summary.current);
+  const previous = apiDerived(api.summary.previous);
+  return (
+    <Section
+      title="API"
+      right={
+        grafana && (
+          <a
+            href={grafana}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.textLink}
+          >
+            Grafana ↗
+          </a>
+        )
+      }
+    >
+      <div className={`${styles.panel} ${styles.statsGap}`}>
+        <div className={styles.stats}>
+          <Stat
+            label="Requests"
+            value={formatNumber(current.requests)}
+            detail={
+              <Change current={current.requests} previous={previous.requests} />
+            }
+          />
+          <Stat
+            label="Direct share"
+            value={formatPercent(current.direct, current.requests)}
+            detail={
+              <Change
+                current={current.direct_share}
+                previous={previous.direct_share}
+                invert
+              />
+            }
+          />
+          <Stat
+            label="p95 latency"
+            value={`${formatNumber(Math.round(current.p95_ms))} ms`}
+            detail={
+              <Change
+                current={current.p95_ms}
+                previous={previous.p95_ms}
+                invert
+              />
+            }
+          />
+        </div>
+      </div>
+      <div className={styles.twoCol}>
+        <Section title="Direct callers" level="h3">
+          {api.callers.length === 0 ? (
+            <p className={styles.empty}>None</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Caller</th>
+                    <th>Kind</th>
+                    <th className={styles.num}>Requests</th>
+                    <th className={styles.num}>IPs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {api.callers.map((c) => (
+                    <tr key={`${c.kind}|${c.name}`}>
+                      <td className={styles.wrap}>
+                        {c.name || "(empty)"}
+                        <Share value={c.requests} total={current.direct} />
+                      </td>
+                      <td className={styles.muted}>{c.kind}</td>
+                      <td className={styles.num}>{formatNumber(c.requests)}</td>
+                      <td className={styles.num}>{formatNumber(c.ips)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
+        <Section title="Recent 5xx" level="h3">
+          {api.errors.length === 0 ? (
+            <p className={styles.empty}>None</p>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Request</th>
+                    <th className={styles.num}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {api.errors.map((e) => (
+                    <tr key={e.request_id || e.time}>
+                      <td className={styles.nowrap}>
+                        {formatDateTime(e.time)}
+                      </td>
+                      <td className={styles.wrap}>
+                        <span className={styles.mono}>
+                          {e.method} {e.path}
+                        </span>
+                        <div className={`${styles.meta} ${styles.mono}`}>
+                          {e.request_id}
+                        </div>
+                      </td>
+                      <td className={styles.num}>{e.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Section>
+      </div>
+    </Section>
+  );
 }
 
 export default function AnalyticsTab({
   analytics,
   error,
   range,
+  grafana,
 }: AnalyticsTabProps) {
   const live = analytics?.summary.live;
   return (
@@ -275,22 +451,30 @@ export default function AnalyticsTab({
       {error ? (
         <TabError error={error} />
       ) : (
-        <AnalyticsBody analytics={analytics} />
+        <AnalyticsBody analytics={analytics} grafana={grafana} />
       )}
     </>
   );
 }
 
-function AnalyticsBody({ analytics }: { analytics: Analytics }) {
+function AnalyticsBody({
+  analytics,
+  grafana,
+}: {
+  analytics: Analytics;
+  grafana?: string;
+}) {
   const current = derived(analytics.summary.current);
   const previous = derived(analytics.summary.previous);
+  const searches = analytics.searches;
+  const api = analytics.api.summary;
   const [pages, referrers, sources, campaigns, devices, browsers] =
     topTables.map(({ key, ...t }) => (
       <ViewsTable key={key} {...t} rows={analytics.top[key]} />
     ));
   return (
     <>
-      <section className={styles.section}>
+      <Section panel>
         <div className={styles.stats}>
           <Stat
             label={
@@ -315,12 +499,43 @@ function AnalyticsBody({ analytics }: { analytics: Analytics }) {
             }
           />
           <Stat
-            label="Views per visitor-day"
-            value={current.per_visitor.toFixed(2)}
+            label="Searches"
+            value={formatNumber(searches.current.searches)}
             detail={
               <Change
-                current={current.per_visitor}
-                previous={previous.per_visitor}
+                current={searches.current.searches}
+                previous={searches.previous.searches}
+              />
+            }
+          />
+          <Stat
+            label="No-result rate"
+            value={formatPercent(
+              searches.current.empty,
+              searches.current.searches
+            )}
+            detail={
+              <Change
+                current={ratio(
+                  searches.current.empty,
+                  searches.current.searches
+                )}
+                previous={ratio(
+                  searches.previous.empty,
+                  searches.previous.searches
+                )}
+                invert
+              />
+            }
+          />
+          <Stat
+            label="API 5xx rate"
+            value={formatPercent(api.current.status_5xx, api.current.requests)}
+            detail={
+              <Change
+                current={ratio(api.current.status_5xx, api.current.requests)}
+                previous={ratio(api.previous.status_5xx, api.previous.requests)}
+                invert
               />
             }
           />
@@ -336,9 +551,9 @@ function AnalyticsBody({ analytics }: { analytics: Analytics }) {
             }
           />
         </div>
-      </section>
+      </Section>
 
-      <Section title={`Page views per ${analytics.bucket}`}>
+      <Section panel title={`Page views per ${analytics.bucket}`}>
         <TimeChart
           data={analytics.series}
           series={viewSeries}
@@ -347,18 +562,30 @@ function AnalyticsBody({ analytics }: { analytics: Analytics }) {
       </Section>
 
       <div className={`${styles.section} ${styles.twoCol}`}>
-        {pages}
         <PostsTable posts={analytics.posts} />
+        {pages}
         {referrers}
         <div>
           <div className={styles.subsection}>{sources}</div>
           <div className={styles.subsection}>{campaigns}</div>
         </div>
+        <SearchTable
+          title="Top searches"
+          rows={searches.top}
+          total={searches.current.searches}
+        />
+        <SearchTable
+          title="No-result searches"
+          rows={searches.empty}
+          total={searches.current.empty}
+        />
         {devices}
         {browsers}
       </div>
 
       <VitalsTable vitals={analytics.vitals} />
+
+      <APISection api={analytics.api} grafana={grafana} />
     </>
   );
 }

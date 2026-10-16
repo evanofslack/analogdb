@@ -1,13 +1,13 @@
 "use client";
 
-import { Traffic } from "@lib/adminClient";
+import { Analytics } from "@lib/adminClient";
 import { formatNumber } from "@lib/format";
 import { ChartTooltip, LineChart, LineChartSeries } from "@mantine/charts";
 import styles from "./adminPanel.module.css";
 
 const day = 24 * 60 * 60 * 1000;
 
-type Bucket = Traffic["bucket"];
+type Bucket = Analytics["bucket"];
 
 interface TimeChartProps {
   data: { time: string }[];

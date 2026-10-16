@@ -1,4 +1,4 @@
-import { AdminOverview } from "@lib/adminClient";
+import { AdminOverview, AdminQueue } from "@lib/adminClient";
 import {
   formatAgo,
   formatBytes,
@@ -13,7 +13,14 @@ import StatusDot from "./statusDot";
 
 interface OverviewTabProps {
   overview: AdminOverview;
+  queue?: AdminQueue;
   now: number;
+}
+
+const postedTip = "By Reddit post date, not the date the post was added.";
+
+function count(value?: number) {
+  return value === undefined ? "—" : formatNumber(value);
 }
 
 const dependencies = ["postgres", "redis", "weaviate", "clickhouse"];
@@ -36,7 +43,11 @@ function vectorDetail({ objects, posts }: AdminOverview["vectors"]) {
   return `${formatNumber(-diff)} posts missing`;
 }
 
-export default function OverviewTab({ overview, now }: OverviewTabProps) {
+export default function OverviewTab({
+  overview,
+  queue,
+  now,
+}: OverviewTabProps) {
   const { status, app, counts, posted, freshness, database, vectors } =
     overview;
 
@@ -46,24 +57,55 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
     { label: "Keywords", value: freshness.keywords_update },
     { label: "Colors", value: freshness.colors_update },
   ];
+  const apiFacts = [
+    ["API", app.version],
+    ["env", app.env],
+    ["host", app.hostname],
+    ["up", formatDuration(app.uptime_seconds)],
+  ];
   const vectorsOff =
     vectors.objects === null || vectors.objects !== vectors.posts;
 
   return (
-    <>
-      <Section title="Status">
+    <div className={styles.dashboard}>
+      <Section title="Status" panel>
         <div className={styles.statusRow}>
           {dependencies.map((name) => (
             <StatusDot key={name} label={name} status={status[name]} />
           ))}
-          <span className={styles.appInfo}>
-            {app.version} · {app.env} · {app.hostname} · up{" "}
-            {formatDuration(app.uptime_seconds)}
-          </span>
+        </div>
+        <dl className={`${styles.panelFoot} ${styles.facts}`}>
+          {apiFacts.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      <Section title="To do" panel>
+        <div className={styles.stats}>
+          <Stat
+            label="Open reports"
+            value={count(queue?.open_reports)}
+            href="/admin?tab=moderation"
+          />
+          <Stat
+            label="Unmatched cameras"
+            value={count(queue?.unmatched_cameras)}
+            href="/admin?tab=catalog"
+          />
+          <Stat
+            label="Unmatched films"
+            value={count(queue?.unmatched_films)}
+            href="/admin?tab=catalog"
+          />
         </div>
       </Section>
 
       <Section
+        panel
         title={
           <Hint
             label="Freshness"
@@ -83,7 +125,15 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
         </div>
       </Section>
 
-      <Section title="Collection">
+      <Section panel title={<Hint label="Posted" tip={postedTip} />}>
+        <div className={styles.stats}>
+          <Stat label="Last 24h" value={formatNumber(posted.day)} />
+          <Stat label="Last 7d" value={formatNumber(posted.week)} />
+          <Stat label="Last 30d" value={formatNumber(posted.month)} />
+        </div>
+      </Section>
+
+      <Section title="Collection" panel>
         <div className={styles.stats}>
           <Stat label="Posts" value={formatNumber(counts.posts)} />
           <Stat label="Authors" value={formatNumber(counts.authors)} />
@@ -93,22 +143,7 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
         </div>
       </Section>
 
-      <Section
-        title={
-          <Hint
-            label="Posted"
-            tip="By Reddit post date, not the date the post was added."
-          />
-        }
-      >
-        <div className={styles.stats}>
-          <Stat label="24 hours" value={formatNumber(posted.day)} />
-          <Stat label="7 days" value={formatNumber(posted.week)} />
-          <Stat label="30 days" value={formatNumber(posted.month)} />
-        </div>
-      </Section>
-
-      <Section title="Similarity index">
+      <Section title="Similarity index" panel>
         <div className={styles.stats}>
           <Stat
             label="Objects"
@@ -122,8 +157,8 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
         </div>
       </Section>
 
-      <Section title="Database">
-        <div className={styles.twoCol}>
+      <Section title="Database" panel className={styles.span}>
+        <div className={styles.dbGrid}>
           <div className={styles.stats}>
             <Stat label="Total size" value={formatBytes(database.bytes)} />
             <Stat
@@ -153,6 +188,6 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
           </div>
         </div>
       </Section>
-    </>
+    </div>
   );
 }

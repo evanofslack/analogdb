@@ -128,46 +128,45 @@ export interface TrafficTotals {
 
 export type CallerKind = "bot" | "tool" | "browser" | "empty";
 
-export interface Traffic {
-  range: TrafficRange;
-  bucket: "hour" | "day";
+export interface TrafficCaller {
+  name: string;
+  kind: CallerKind;
+  requests: number;
+  ips: number;
+}
+
+export interface TrafficError {
+  time: string;
+  method: string;
+  path: string;
+  status: number;
+  request_id: string;
+}
+
+export interface AnalyticsAPI {
   summary: {
     current: TrafficTotals;
     previous: TrafficTotals;
   };
-  series: {
-    time: string;
-    web: number;
-    scraper: number;
-    direct: number;
-    status_4xx: number;
-    status_5xx: number;
-  }[];
-  callers: {
-    name: string;
-    kind: CallerKind;
-    requests: number;
-    ips: number;
-  }[];
-  routes: {
-    route: string;
-    requests: number;
-    total_ms: number;
-    p50_ms: number;
-    p95_ms: number;
-    status_4xx: number;
-    status_5xx: number;
-  }[];
-  errors: {
-    by_status: { status: number; route: string; requests: number }[];
-    recent: {
-      time: string;
-      method: string;
-      path: string;
-      status: number;
-      request_id: string;
-    }[];
-  };
+  callers: TrafficCaller[];
+  errors: TrafficError[];
+}
+
+export interface AnalyticsSearchTotals {
+  searches: number;
+  empty: number;
+}
+
+export interface AnalyticsSearch {
+  query: string;
+  searches: number;
+}
+
+export interface AnalyticsSearches {
+  current: AnalyticsSearchTotals;
+  previous: AnalyticsSearchTotals;
+  top: AnalyticsSearch[];
+  empty: AnalyticsSearch[];
 }
 
 export interface ViewCounts {
@@ -209,6 +208,14 @@ export interface Analytics {
     cls: number | null;
     samples: number;
   }[];
+  api: AnalyticsAPI;
+  searches: AnalyticsSearches;
+}
+
+export interface AdminQueue {
+  open_reports: number;
+  unmatched_cameras: number;
+  unmatched_films: number;
 }
 
 export interface AuditEntry {
@@ -237,6 +244,11 @@ export interface ReviewPost {
   nsfw: boolean;
   grayscale: boolean;
   sprocket: boolean;
+  camera_make?: string;
+  camera_model?: string;
+  film_make?: string;
+  film_type?: string;
+  film_speed?: number;
   images: { resolution: string; url: string; width: number; height: number }[];
 }
 
@@ -329,6 +341,10 @@ function query(params: Record<string, string | number | null | undefined>) {
   return str ? `?${str}` : "";
 }
 
+export function getQueue(): Promise<AdminQueue> {
+  return adminGet("/admin/queue");
+}
+
 export function getOverview(): Promise<AdminOverview> {
   return adminGet("/admin/overview");
 }
@@ -346,16 +362,18 @@ export function getMissingPosts(
   );
 }
 
-export function getTraffic(range: TrafficRange): Promise<Traffic> {
-  return adminGet(`/admin/traffic${query({ range })}`);
-}
-
 export function getAnalytics(range: TrafficRange): Promise<Analytics> {
   return adminGet(`/admin/analytics${query({ range })}`);
 }
 
-export function getAudit(before?: number | null): Promise<AuditPage> {
-  return adminGet(`/admin/audit${query({ before, limit: 50 })}`);
+export const auditClients = ["web", "scraper", "direct"] as const;
+export type AuditClient = (typeof auditClients)[number];
+
+export function getAudit(
+  before?: number | null,
+  client?: AuditClient | null
+): Promise<AuditPage> {
+  return adminGet(`/admin/audit${query({ before, client, limit: 50 })}`);
 }
 
 export async function getReviewPosts(

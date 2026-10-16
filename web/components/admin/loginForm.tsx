@@ -1,6 +1,6 @@
+import { loginAction } from "@app/actions/auth";
 import Footer from "@components/footer";
 import Header from "@components/header";
-import { loginAction } from "@app/actions/auth";
 import {
   Alert,
   Button,
