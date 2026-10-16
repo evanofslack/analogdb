@@ -471,6 +471,450 @@ definitions:
     - ReportNotFilm
     - ReportDuplicate
     - ReportOther
+  analogdb.Stats:
+    properties:
+      families:
+        items:
+          $ref: '#/definitions/analogdb.StatsFamily'
+        type: array
+      films:
+        items:
+          $ref: '#/definitions/analogdb.StatsFilm'
+        type: array
+      generated:
+        type: string
+      method:
+        $ref: '#/definitions/analogdb.StatsMethod'
+      popularity:
+        $ref: '#/definitions/analogdb.StatsPopularity'
+      posting:
+        $ref: '#/definitions/analogdb.StatsPosting'
+      seed_version:
+        example: "2026-10-16T20:11:27+00:00"
+        type: string
+      subjects:
+        $ref: '#/definitions/analogdb.StatsSubjects'
+      themes:
+        items:
+          $ref: '#/definitions/analogdb.StatsThemeEntry'
+        type: array
+      totals:
+        $ref: '#/definitions/analogdb.StatsTotals'
+      trends:
+        $ref: '#/definitions/analogdb.StatsTrends'
+      version:
+        example: 1
+        type: integer
+      window:
+        $ref: '#/definitions/analogdb.StatsWindow'
+    type: object
+  analogdb.StatsArrival:
+    properties:
+      count:
+        example: 112
+        type: integer
+      first:
+        example: 2024-07
+        type: string
+      kind:
+        example: camera
+        type: string
+      name:
+        example: Pentax 17
+        type: string
+      slug:
+        example: pentax-17
+        type: string
+    type: object
+  analogdb.StatsBands:
+    properties:
+      cool:
+        example: 0.25
+        type: number
+      green:
+        example: 0.13
+        type: number
+      magenta:
+        example: 0.03
+        type: number
+      warm:
+        example: 0.59
+        type: number
+    type: object
+  analogdb.StatsBorder:
+    properties:
+      popularity:
+        example: 35
+        type: number
+      theme:
+        example: t34
+        type: string
+    type: object
+  analogdb.StatsFamily:
+    properties:
+      key:
+        example: landscape
+        type: string
+      name:
+        example: Landscape and slide
+        type: string
+    type: object
+  analogdb.StatsFilm:
+    properties:
+      bands:
+        $ref: '#/definitions/analogdb.StatsBands'
+      chroma:
+        example: 0.034
+        type: number
+      color_type:
+        example: color
+        type: string
+      family:
+        example: portrait
+        type: string
+      hue:
+        items:
+          type: number
+        type: array
+      lightness:
+        example: 0.549
+        type: number
+      make:
+        example: kodak
+        type: string
+      palette:
+        example:
+        - '#c9a27e'
+        items:
+          type: string
+        type: array
+      popularity:
+        example: 57.1
+        type: number
+      position:
+        $ref: '#/definitions/analogdb.StatsPosition'
+      post_count:
+        example: 4084
+        type: integer
+      similar:
+        items:
+          $ref: '#/definitions/analogdb.StatsSimilar'
+        type: array
+      slug:
+        example: kodak-portra-400
+        type: string
+      styles:
+        additionalProperties:
+          type: number
+        type: object
+      type:
+        example: portra 400
+        type: string
+      typical:
+        items:
+          $ref: '#/definitions/analogdb.StatsPost'
+        type: array
+    type: object
+  analogdb.StatsFocalGroup:
+    properties:
+      count:
+        example: 4447
+        type: integer
+      popularity:
+        example: 51
+        type: number
+      value:
+        example: 50
+        type: integer
+    type: object
+  analogdb.StatsGroup:
+    properties:
+      count:
+        example: 1009
+        type: integer
+      popularity:
+        example: 67.2
+        type: number
+    type: object
+  analogdb.StatsMethod:
+    properties:
+      author_cap:
+        example: 5
+        type: integer
+      min_camera_posts:
+        example: 100
+        type: integer
+      min_film_posts:
+        example: 80
+        type: integer
+      model:
+        example: ViT-B-16-laion2b_s34b_b88k
+        type: string
+    type: object
+  analogdb.StatsMover:
+    properties:
+      change:
+        example: 5.5
+        type: number
+      from:
+        example: 9.1
+        type: number
+      name:
+        example: Kodak gold 200
+        type: string
+      slug:
+        example: kodak-gold-200
+        type: string
+      to:
+        example: 14.6
+        type: number
+    type: object
+  analogdb.StatsMoverGroups:
+    properties:
+      cameras:
+        $ref: '#/definitions/analogdb.StatsMovers'
+      films:
+        $ref: '#/definitions/analogdb.StatsMovers'
+    type: object
+  analogdb.StatsMovers:
+    properties:
+      down:
+        items:
+          $ref: '#/definitions/analogdb.StatsMover'
+        type: array
+      up:
+        items:
+          $ref: '#/definitions/analogdb.StatsMover'
+        type: array
+    type: object
+  analogdb.StatsPopularity:
+    properties:
+      aperture:
+        items:
+          $ref: '#/definitions/analogdb.StatsValueGroup'
+        type: array
+      border:
+        $ref: '#/definitions/analogdb.StatsBorder'
+      bw:
+        example: 33.2
+        type: number
+      color:
+        example: 53.1
+        type: number
+      focal:
+        items:
+          $ref: '#/definitions/analogdb.StatsFocalGroup'
+        type: array
+      saturation:
+        items:
+          type: number
+        type: array
+    type: object
+  analogdb.StatsPosition:
+    properties:
+      x:
+        example: 0.21
+        type: number
+      "y":
+        example: -0.44
+        type: number
+    type: object
+  analogdb.StatsPost:
+    properties:
+      id:
+        example: 1
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/analogdb.Image'
+        type: array
+      nsfw:
+        example: false
+        type: boolean
+      score:
+        example: 150
+        type: integer
+      title:
+        example: Sunset over the lake
+        type: string
+    type: object
+  analogdb.StatsPosting:
+    properties:
+      cells:
+        items:
+          $ref: '#/definitions/analogdb.StatsPostingCell'
+        type: array
+    type: object
+  analogdb.StatsPostingCell:
+    properties:
+      count:
+        example: 120
+        type: integer
+      hour:
+        example: 0
+        type: integer
+      popularity:
+        example: 46
+        type: number
+      weekday:
+        example: 1
+        type: integer
+    type: object
+  analogdb.StatsSimilar:
+    properties:
+      similarity:
+        example: 0.83
+        type: number
+      slug:
+        example: kodak-gold-200
+        type: string
+    type: object
+  analogdb.StatsSubjectRow:
+    properties:
+      count:
+        items:
+          type: integer
+        type: array
+      lift:
+        items:
+          type: number
+        type: array
+      slug:
+        example: cinestill-800t
+        type: string
+    type: object
+  analogdb.StatsSubjects:
+    properties:
+      rows:
+        items:
+          $ref: '#/definitions/analogdb.StatsSubjectRow'
+        type: array
+      words:
+        example:
+        - neon
+        items:
+          type: string
+        type: array
+    type: object
+  analogdb.StatsThemeEntry:
+    properties:
+      bw:
+        $ref: '#/definitions/analogdb.StatsGroup'
+      color:
+        $ref: '#/definitions/analogdb.StatsGroup'
+      count:
+        example: 1009
+        type: integer
+      key:
+        example: t02
+        type: string
+      name:
+        example: Color figure and nude
+        type: string
+      nsfw_share:
+        example: 0.75
+        type: number
+      popularity:
+        example: 67.2
+        type: number
+      posts:
+        items:
+          $ref: '#/definitions/analogdb.StatsPost'
+        type: array
+    type: object
+  analogdb.StatsTotals:
+    properties:
+      cameras:
+        example: 640
+        type: integer
+      films:
+        example: 212
+        type: integer
+      photographers:
+        example: 9080
+        type: integer
+      photos:
+        example: 24531
+        type: integer
+    type: object
+  analogdb.StatsTrendItem:
+    properties:
+      key:
+        example: ""
+        type: string
+      name:
+        example: Kodak gold 200
+        type: string
+      shares:
+        items:
+          type: number
+        type: array
+      slug:
+        example: kodak-gold-200
+        type: string
+    type: object
+  analogdb.StatsTrends:
+    properties:
+      arrivals:
+        items:
+          $ref: '#/definitions/analogdb.StatsArrival'
+        type: array
+      camera_brands:
+        items:
+          $ref: '#/definitions/analogdb.StatsTrendItem'
+        type: array
+      cameras:
+        items:
+          $ref: '#/definitions/analogdb.StatsTrendItem'
+        type: array
+      film_brands:
+        items:
+          $ref: '#/definitions/analogdb.StatsTrendItem'
+        type: array
+      films:
+        items:
+          $ref: '#/definitions/analogdb.StatsTrendItem'
+        type: array
+      movers:
+        $ref: '#/definitions/analogdb.StatsMoverGroups'
+      partial:
+        example:
+        - 2026H2
+        items:
+          type: string
+        type: array
+      periods:
+        example:
+        - 2022H1
+        items:
+          type: string
+        type: array
+      themes:
+        items:
+          $ref: '#/definitions/analogdb.StatsTrendItem'
+        type: array
+    type: object
+  analogdb.StatsValueGroup:
+    properties:
+      count:
+        example: 1346
+        type: integer
+      popularity:
+        example: 52
+        type: number
+      value:
+        example: f/1.4
+        type: string
+    type: object
+  analogdb.StatsWindow:
+    properties:
+      from:
+        example: "2022-01-01"
+        type: string
+      to:
+        example: "2026-10-17"
+        type: string
+    type: object
   server.AuthorsResponse:
     properties:
       authors:
@@ -2272,6 +2716,28 @@ paths:
       summary: Search posts by image
       tags:
       - search
+  /stats:
+    get:
+      description: 'The latest stats snapshot: how each film looks, film families,
+        subjects, trends, visual themes, popularity and posting time. Rebuilt daily.'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/analogdb.Stats'
+        "404":
+          description: No snapshot built yet
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/server.ErrorResponse'
+      summary: Get collection stats
+      tags:
+      - stats
 securityDefinitions:
   BasicAuth:
     type: basic
