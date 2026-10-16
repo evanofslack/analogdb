@@ -8,15 +8,20 @@ interface ChangeProps {
 
 export default function Change({ current, previous, invert }: ChangeProps) {
   if (!previous) {
-    return current ? <span>New this period</span> : null;
+    return current ? <span className={styles.change}>new</span> : null;
   }
   const pct = ((current - previous) / previous) * 100;
-  const good = invert ? pct < 0 : pct > 0;
-  const className = pct === 0 ? "" : good ? styles.fresh : styles.veryStale;
+  const rounded = Math.round(pct);
+  const bad = invert ? pct > 10 : pct < -10;
+  const text =
+    rounded === 0
+      ? "±0%"
+      : rounded > 0
+      ? `+${rounded}%`
+      : `−${Math.abs(rounded)}%`;
   return (
-    <span className={className}>
-      {pct > 0 ? "+" : ""}
-      {pct.toFixed(1)}% vs previous
+    <span className={`${styles.change} ${bad ? styles.stale : ""}`}>
+      {text}
     </span>
   );
 }
