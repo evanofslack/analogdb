@@ -63,6 +63,7 @@ func (s *Server) mountAdminHandlers(r chi.Router) {
 			r.Get("/audit", s.getAdminAudit)
 			r.Post("/colors/rederive", s.rederiveColors)
 			s.mountAdminReportHandlers(r)
+			s.mountAdminStatsHandlers(r)
 		})
 		r.Group(func(r chi.Router) {
 			r.Use(s.require(roleScraper))

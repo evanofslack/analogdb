@@ -68,6 +68,7 @@ type Server struct {
 	ExtractionService analogdb.ExtractionService
 	ColorService      analogdb.ColorService
 	ReportService     analogdb.ReportService
+	StatsService      analogdb.StatsService
 	AnalyticsService  analogdb.AnalyticsService
 	VectorCounter     analogdb.VectorCounter
 	VectorLister      analogdb.VectorLister
