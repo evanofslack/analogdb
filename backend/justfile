@@ -9,6 +9,8 @@ psql := env("PSQL", "docker exec -i analogdb-bench psql -U postgres -d analogdb"
 
 prod_pg_image := "postgres:15"
 prod_dump_dir := "dumps"
+prod_weaviate_image := "cr.weaviate.io/semitechnologies/weaviate:1.39.8"
+prod_clip_image := "cr.weaviate.io/semitechnologies/multi2vec-clip:ViT-B-16-laion2b_s34b_b88k-1.5.1"
 restore_dsn := "postgres://postgres:postgres@localhost:55433/analogdb?sslmode=disable"
 
 [private]
@@ -125,11 +127,69 @@ prod-restore name="":
     docker exec analogdb-prod psql -U postgres -d analogdb -c 'ANALYZE' >/dev/null
     echo "restored to {{ restore_dsn }}" >&2
 
+# Restore PostImage from Weaviate backup <id> in $WEAVIATE_S3 (s3://bucket/path), Weaviate on 58080 and CLIP on 58081
+prod-weaviate-restore id:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${WEAVIATE_S3:?set WEAVIATE_S3 to s3://bucket/path}"
+    loc="${WEAVIATE_S3#s3://}"
+    bucket="${loc%%/*}"
+    path=""
+    [ "$loc" != "$bucket" ] && path="${loc#*/}"
+    endpoint=$(aws configure get endpoint_url || true)
+    endpoint="${endpoint#*://}"
+    region=$(aws configure get region || echo us-east-1)
+    creds=$(aws configure export-credentials --format env-no-export)
+    docker rm -f analogdb-prod-weaviate analogdb-prod-clip >/dev/null 2>&1 || true
+    docker network create analogdb-prod >/dev/null 2>&1 || true
+    docker run -d --name analogdb-prod-clip --network analogdb-prod --network-alias clip \
+        -p 127.0.0.1:58081:8080 -e ENABLE_CUDA=0 {{ prod_clip_image }} >/dev/null
+    docker run -d --name analogdb-prod-weaviate --network analogdb-prod \
+        -p 127.0.0.1:58080:8080 -p 127.0.0.1:50052:50051 \
+        -e CLIP_INFERENCE_API=http://clip:8080 -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true \
+        -e PERSISTENCE_DATA_PATH=/var/lib/weaviate -e DEFAULT_VECTORIZER_MODULE=none \
+        -e ENABLE_MODULES=multi2vec-clip,backup-s3 -e CLUSTER_HOSTNAME=node1 \
+        -e BACKUP_S3_BUCKET="$bucket" -e BACKUP_S3_PATH="$path" -e BACKUP_S3_ENDPOINT="$endpoint" \
+        -e AWS_REGION="$region" --env-file <(echo "$creds") \
+        {{ prod_weaviate_image }} >/dev/null
+    url=http://127.0.0.1:58080
+    echo "waiting for weaviate" >&2
+    until curl -sf "$url/v1/.well-known/ready" >/dev/null; do sleep 2; done
+    echo "restoring {{ id }}" >&2
+    if ! out=$(curl -sS --fail-with-body -X POST "$url/v1/backups/s3/{{ id }}/restore" \
+        -H 'Content-Type: application/json' -d '{"include":["PostImage"]}'); then
+        echo "$out" >&2
+        exit 1
+    fi
+    while :; do
+        status=$(curl -sf "$url/v1/backups/s3/{{ id }}/restore" | sed -n 's/.*"status":"\([A-Z]*\)".*/\1/p')
+        case "$status" in
+            SUCCESS) break ;;
+            FAILED|CANCELED) curl -s "$url/v1/backups/s3/{{ id }}/restore" >&2; echo >&2; exit 1 ;;
+        esac
+        sleep 2
+    done
+    curl -s "$url/v1/graphql" -H 'Content-Type: application/json' \
+        -d '{"query":"{Aggregate{PostImage{meta{count}}}}"}'
+    echo
+    echo "restored to $url" >&2
+
+# Upload a stats seed file to $ANALOGDB_URL with $ANALOGDB_USER and $ANALOGDB_PASS
+stats-seed file:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${ANALOGDB_USER:?set ANALOGDB_USER}" "${ANALOGDB_PASS:?set ANALOGDB_PASS}"
+    curl -sS --fail-with-body -X PUT "${ANALOGDB_URL:-http://localhost:8080}/v1/admin/stats/seed" \
+        -u "$ANALOGDB_USER:$ANALOGDB_PASS" -H 'Content-Type: application/json' \
+        --data-binary @"{{ file }}"
+    echo
+
 # Open psql on the restored prod database
 prod-psql:
     docker exec -it analogdb-prod psql -U postgres -d analogdb
 
-# Remove the restored prod database, add dumps=1 to delete downloaded dumps too
+# Remove the restored prod containers, add dumps=1 to delete downloaded dumps too
 prod-clean dumps="":
-    docker rm -f analogdb-prod
+    docker rm -f analogdb-prod analogdb-prod-weaviate analogdb-prod-clip
+    docker network rm analogdb-prod 2>/dev/null || true
     {{ if dumps == "" { "" } else { "rm -rf " + prod_dump_dir } }}

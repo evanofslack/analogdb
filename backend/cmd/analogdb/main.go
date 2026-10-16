@@ -245,6 +245,7 @@ func main() {
 	server.ExtractionService = postgres.NewExtractionService(db)
 	server.ColorService = colorService
 	server.ReportService = postgres.NewReportService(db)
+	server.StatsService = postgres.NewStatsService(db)
 	if analytics != nil {
 		server.AnalyticsService = analytics
 	}

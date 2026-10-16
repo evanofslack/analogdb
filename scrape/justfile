@@ -13,6 +13,10 @@ dev:
 test *args:
     uv run pytest src packages {{ args }}
 
+# Fit the stats page themes and prompt vectors from restored backups
+stats-fit *args:
+    uv run scripts/fit_themes.py {{ args }}
+
 lint:
     uv run ruff check .
 
