@@ -67,6 +67,10 @@ run_coordinator:
       - key: "reddit"
         value: "true"
         limit: 2
+      # archive runs share IO manager keys, so they must run one at a time
+      - key: "archive"
+        value: "true"
+        limit: 1
 
 compute_logs:
   module: dagster_obstore.s3.compute_log_manager

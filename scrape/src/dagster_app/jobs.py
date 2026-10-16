@@ -47,7 +47,7 @@ scrape_job = dg.define_asset_job(
 archive_job = dg.define_asset_job(
     name="scrape_archive",
     description="Fill missed days from Arctic Shift, set config.days to dates or ranges",
-    tags={"reddit": "true"},
+    tags={"reddit": "true", "archive": "true"},
     selection=[
         archive_reddit_posts,
         archive_title_metadatas,
