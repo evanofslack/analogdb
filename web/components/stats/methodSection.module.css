@@ -1,0 +1,28 @@
+.details {
+  max-width: 40rem;
+  font-size: 0.82rem;
+  color: var(--adb-muted);
+}
+
+.summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--adb-muted);
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary:hover {
+  color: var(--adb-heading);
+}
+
+.list {
+  margin: 0.8rem 0 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  line-height: 1.45;
+}

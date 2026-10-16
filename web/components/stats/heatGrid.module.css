@@ -1,0 +1,102 @@
+.scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.grid {
+  --adb-heat: var(--mantine-color-orange-7);
+  --heat-label: minmax(6rem, 13rem);
+  display: grid;
+  gap: 2px;
+  min-width: max-content;
+  font-size: 0.75rem;
+}
+
+[data-mantine-color-scheme="dark"] .grid {
+  --adb-heat: var(--mantine-color-orange-4);
+}
+
+.row {
+  display: contents;
+}
+
+.sticky {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--adb-surface);
+}
+
+.corner {
+  min-height: 1rem;
+}
+
+.column {
+  color: var(--adb-muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-bottom: 0.2rem;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: left;
+  max-height: 7rem;
+}
+
+.compact .column {
+  writing-mode: horizontal-tb;
+  transform: none;
+  text-align: left;
+  overflow: visible;
+}
+
+.rowLabel a {
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowLabel a:hover {
+  text-decoration: underline;
+}
+
+.rowLabel {
+  color: var(--adb-heading);
+  white-space: nowrap;
+  min-width: 0;
+  padding-right: 0.6rem;
+  display: flex;
+  align-items: center;
+}
+
+.cell {
+  height: 1.7rem;
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--adb-heading);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  background: transparent;
+}
+
+.compact .cell {
+  height: 1.3rem;
+}
+
+.strong {
+  color: var(--adb-surface);
+}
+
+a.cell:hover {
+  outline: 1px solid var(--adb-heading);
+}
+
+@media (max-width: 720px) {
+  .grid {
+    --heat-label: 7.5rem;
+  }
+}
