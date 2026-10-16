@@ -1,4 +1,4 @@
-import { AdminOverview } from "@lib/adminClient";
+import { AdminOverview, AdminQueue } from "@lib/adminClient";
 import {
   formatAgo,
   formatBytes,
@@ -13,7 +13,14 @@ import StatusDot from "./statusDot";
 
 interface OverviewTabProps {
   overview: AdminOverview;
+  queue?: AdminQueue;
   now: number;
+}
+
+const postedTip = "By Reddit post date, not the date the post was added.";
+
+function count(value?: number) {
+  return value === undefined ? "—" : formatNumber(value);
 }
 
 const dependencies = ["postgres", "redis", "weaviate", "clickhouse"];
@@ -36,7 +43,11 @@ function vectorDetail({ objects, posts }: AdminOverview["vectors"]) {
   return `${formatNumber(-diff)} posts missing`;
 }
 
-export default function OverviewTab({ overview, now }: OverviewTabProps) {
+export default function OverviewTab({
+  overview,
+  queue,
+  now,
+}: OverviewTabProps) {
   const { status, app, counts, posted, freshness, database, vectors } =
     overview;
 
@@ -60,6 +71,26 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
             {app.version} · {app.env} · {app.hostname} · up{" "}
             {formatDuration(app.uptime_seconds)}
           </span>
+        </div>
+      </Section>
+
+      <Section title="To do">
+        <div className={styles.stats}>
+          <Stat
+            label="Open reports"
+            value={count(queue?.open_reports)}
+            href="/admin?tab=moderation"
+          />
+          <Stat
+            label="Unmatched cameras"
+            value={count(queue?.unmatched_cameras)}
+            href="/admin?tab=catalog"
+          />
+          <Stat
+            label="Unmatched films"
+            value={count(queue?.unmatched_films)}
+            href="/admin?tab=catalog"
+          />
         </div>
       </Section>
 
@@ -91,20 +122,19 @@ export default function OverviewTab({ overview, now }: OverviewTabProps) {
           <Stat label="Films" value={formatNumber(counts.films)} />
           <Stat label="Keywords" value={formatNumber(counts.keywords)} />
         </div>
-      </Section>
-
-      <Section
-        title={
-          <Hint
-            label="Posted"
-            tip="By Reddit post date, not the date the post was added."
+        <div className={`${styles.stats} ${styles.statsRow}`}>
+          <Stat
+            label={<Hint label="Posted 24h" tip={postedTip} />}
+            value={formatNumber(posted.day)}
           />
-        }
-      >
-        <div className={styles.stats}>
-          <Stat label="24 hours" value={formatNumber(posted.day)} />
-          <Stat label="7 days" value={formatNumber(posted.week)} />
-          <Stat label="30 days" value={formatNumber(posted.month)} />
+          <Stat
+            label={<Hint label="Posted 7d" tip={postedTip} />}
+            value={formatNumber(posted.week)}
+          />
+          <Stat
+            label={<Hint label="Posted 30d" tip={postedTip} />}
+            value={formatNumber(posted.month)}
+          />
         </div>
       </Section>
 

@@ -3,14 +3,18 @@ import {
   ReportsPage,
   ReportStatus,
   reportStatuses,
+  ReviewPage,
 } from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
 import { reportReasonLabel } from "@lib/reports";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
+import IncomingList from "./incomingList";
 import Pager from "./pager";
 import ReportActions from "./reportActions";
+import Section from "./section";
 import Segmented from "./segmented";
+import TabError, { LoadError } from "./tabError";
 
 function redditLink(permalink: string | null): string | null {
   if (!permalink) return null;
@@ -105,61 +109,118 @@ function ReportRow({ report }: ReportRowProps) {
   );
 }
 
-interface ReportsTabProps {
-  page: ReportsPage;
+export interface ModerationParams {
   status: ReportStatus;
-  firstPage: boolean;
+  before: number | null;
+  cursor: string | null;
 }
 
-export default function ReportsTab({
-  page,
-  status,
-  firstPage,
-}: ReportsTabProps) {
+export function moderationHref(params: ModerationParams) {
+  const search = new URLSearchParams({ tab: "moderation" });
+  if (params.status !== "open") search.set("status", params.status);
+  if (params.before) search.set("before", String(params.before));
+  if (params.cursor) search.set("cursor", params.cursor);
+  return `/admin?${search}`;
+}
+
+interface ModerationTabProps {
+  params: ModerationParams;
+  reports?: ReportsPage;
+  reportsError?: LoadError;
+  incoming?: ReviewPage;
+  incomingError?: LoadError;
+  openReports?: number;
+}
+
+export default function ModerationTab({
+  params,
+  reports,
+  reportsError,
+  incoming,
+  incomingError,
+  openReports,
+}: ModerationTabProps) {
+  const { status, before, cursor } = params;
   return (
     <>
-      <div className={styles.controls}>
-        <Segmented
-          active={status}
-          items={reportStatuses.map((s) => ({
-            key: s,
-            href: `/admin?tab=reports&status=${s}`,
-            label: s,
-          }))}
-        />
-      </div>
-      {page.reports.length === 0 ? (
-        <p className={styles.empty}>
-          {status === "all" ? "No reports" : `No ${status} reports`}
-        </p>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={`${styles.table} ${styles.top}`}>
-            <thead>
-              <tr>
-                <th></th>
-                <th>Post</th>
-                <th>Report</th>
-                <th>Time</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {page.reports.map((r) => (
-                <ReportRow key={r.id} report={r} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      <Pager
-        newest={firstPage ? null : `/admin?tab=reports&status=${status}`}
-        older={
-          page.next_before
-            ? `/admin?tab=reports&status=${status}&before=${page.next_before}`
-            : null
+      <Section
+        title="Reports"
+        count={openReports}
+        right={
+          <Segmented
+            active={status}
+            items={reportStatuses.map((s) => ({
+              key: s,
+              href: moderationHref({ status: s, before: null, cursor }),
+              label: s,
+            }))}
+          />
         }
-      />
+      >
+        {reportsError ? (
+          <TabError error={reportsError} />
+        ) : reports.reports.length === 0 ? (
+          <p className={styles.empty}>
+            {status === "all" ? "No reports" : `No ${status} reports`}
+          </p>
+        ) : (
+          <div className={styles.tableWrap}>
+            <table className={`${styles.table} ${styles.top}`}>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Post</th>
+                  <th>Report</th>
+                  <th>Time</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.reports.map((r) => (
+                  <ReportRow key={r.id} report={r} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <Pager
+          newest={
+            before ? moderationHref({ status, before: null, cursor }) : null
+          }
+          older={
+            reports?.next_before
+              ? moderationHref({ status, before: reports.next_before, cursor })
+              : null
+          }
+        />
+      </Section>
+
+      {incomingError ? (
+        <Section title="Incoming">
+          <TabError error={incomingError} />
+        </Section>
+      ) : (
+        <IncomingList
+          posts={incoming.posts}
+          firstPage={!cursor}
+          pager={
+            <Pager
+              newest={
+                cursor ? moderationHref({ status, before, cursor: null }) : null
+              }
+              older={
+                incoming.next_cursor
+                  ? moderationHref({
+                      status,
+                      before,
+                      cursor: incoming.next_cursor,
+                    })
+                  : null
+              }
+            />
+          }
+        />
+      )}
     </>
   );
 }

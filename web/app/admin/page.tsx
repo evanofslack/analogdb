@@ -1,22 +1,25 @@
-import AdminPanel, { AdminLink, adminTabs } from "@components/admin/adminPanel";
+import ActivityTab, { activityViews } from "@components/admin/activityTab";
+import AdminPanel, {
+  AdminLink,
+  legacyTabs,
+  tabIds,
+} from "@components/admin/adminPanel";
 import AnalyticsTab from "@components/admin/analyticsTab";
-import AuditTab from "@components/admin/auditTab";
+import CatalogTab from "@components/admin/catalogTab";
 import LoginForm from "@components/admin/loginForm";
+import ModerationTab from "@components/admin/moderationTab";
 import OverviewTab from "@components/admin/overviewTab";
-import QualityTab from "@components/admin/qualityTab";
-import ReportsTab from "@components/admin/reportsTab";
-import ReviewTab from "@components/admin/reviewTab";
 import TabError, { LoadError } from "@components/admin/tabError";
-import TrafficTab from "@components/admin/trafficTab";
 import {
+  AdminQueue,
   getAnalytics,
   getAudit,
   getMissingPosts,
   getOverview,
   getQuality,
+  getQueue,
   getReports,
   getReviewPosts,
-  getTraffic,
   missingFields,
   reportStatuses,
   trafficRanges,
@@ -59,58 +62,84 @@ async function load<T>(
   }
 }
 
-async function renderTab(tab: string, params: AdminSearchParams) {
+type QueueLoad = Promise<{ data?: AdminQueue; error?: LoadError }>;
+
+async function renderTab(
+  tab: string,
+  params: AdminSearchParams,
+  queueLoad: QueueLoad
+) {
   switch (tab) {
-    case "review": {
-      const cursor = typeof params.cursor === "string" ? params.cursor : null;
-      const { data, error } = await load(() => getReviewPosts(cursor));
-      if (error) return <TabError error={error} />;
-      return <ReviewTab page={data} firstPage={!cursor} />;
-    }
-    case "reports": {
+    case "moderation": {
       const status = pick(params.status, reportStatuses, "open");
       const before = positiveInt(params.before);
-      const { data, error } = await load(() => getReports(status, before));
-      if (error) return <TabError error={error} />;
-      return <ReportsTab page={data} status={status} firstPage={!before} />;
+      const cursor = typeof params.cursor === "string" ? params.cursor : null;
+      const [reports, incoming, queue] = await Promise.all([
+        load(() => getReports(status, before)),
+        load(() => getReviewPosts(cursor)),
+        queueLoad,
+      ]);
+      return (
+        <ModerationTab
+          params={{ status, before, cursor }}
+          reports={reports.data}
+          reportsError={reports.error}
+          incoming={incoming.data}
+          incomingError={incoming.error}
+          openReports={queue.data?.open_reports}
+        />
+      );
     }
-    case "quality": {
+    case "catalog": {
       const field = pick(params.field, missingFields, "camera");
       const beforeId = positiveInt(params.before_id);
-      const [quality, missing] = await Promise.all([
+      const [quality, missing, queue] = await Promise.all([
         load(getQuality),
         load(() => getMissingPosts(field, beforeId)),
+        queueLoad,
       ]);
       if (quality.error) return <TabError error={quality.error} />;
       return (
-        <QualityTab
+        <CatalogTab
           quality={quality.data}
+          queue={queue.data}
           missing={missing.data}
           missingError={missing.error}
           field={field}
+          firstPage={!beforeId}
         />
       );
     }
     case "analytics": {
       const range = pick(params.range, trafficRanges, "7d");
       const { data, error } = await load(() => getAnalytics(range));
-      return <AnalyticsTab analytics={data} error={error} range={range} />;
+      return (
+        <AnalyticsTab
+          analytics={data}
+          error={error}
+          range={range}
+          grafana={process.env.GRAFANA_URL}
+        />
+      );
     }
-    case "traffic": {
-      const range = pick(params.range, trafficRanges, "7d");
-      const { data, error } = await load(() => getTraffic(range));
-      return <TrafficTab traffic={data} error={error} range={range} />;
-    }
-    case "audit": {
+    case "activity": {
+      const view = pick(params.view, activityViews, "admin");
       const before = positiveInt(params.before);
-      const { data, error } = await load(() => getAudit(before));
+      const { data, error } = await load(() =>
+        getAudit(before, view === "admin" ? "web" : null)
+      );
       if (error) return <TabError error={error} />;
-      return <AuditTab page={data} firstPage={!before} />;
+      return <ActivityTab page={data} view={view} before={before} />;
     }
     default: {
-      const { data, error } = await load(getOverview);
+      const [{ data, error }, queue] = await Promise.all([
+        load(getOverview),
+        queueLoad,
+      ]);
       if (error) return <TabError error={error} />;
-      return <OverviewTab overview={data} now={Date.now()} />;
+      return (
+        <OverviewTab overview={data} queue={queue.data} now={Date.now()} />
+      );
     }
   }
 }
@@ -126,6 +155,14 @@ function externalLinks() {
   return links;
 }
 
+function tabCounts(queue?: AdminQueue) {
+  if (!queue) return {};
+  return {
+    moderation: queue.open_reports,
+    catalog: queue.unmatched_cameras + queue.unmatched_films,
+  };
+}
+
 export default async function AdminPage({ searchParams }: AdminPageProps) {
   const params = (await searchParams) ?? {};
   const isAdmin = await checkAdminAuth();
@@ -134,15 +171,25 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
     return <LoginForm error={params.error} />;
   }
 
-  const tab = pick(
-    params.tab,
-    adminTabs.map((t) => t.id),
-    "overview"
-  );
+  const requested =
+    typeof params.tab === "string"
+      ? legacyTabs[params.tab] ?? params.tab
+      : params.tab;
+  const tab = pick(requested, tabIds, "overview");
+
+  const queueLoad = load(getQueue);
+  const [queue, content] = await Promise.all([
+    queueLoad,
+    renderTab(tab, params, queueLoad),
+  ]);
 
   return (
-    <AdminPanel tab={tab} links={externalLinks()}>
-      {await renderTab(tab, params)}
+    <AdminPanel
+      tab={tab}
+      links={externalLinks()}
+      counts={tabCounts(queue.data)}
+    >
+      {content}
     </AdminPanel>
   );
 }

@@ -7,6 +7,7 @@ interface PagerProps {
 }
 
 export default function Pager({ newest, older }: PagerProps) {
+  if (!newest && !older) return null;
   return (
     <nav className={styles.pager}>
       {newest && <Link href={newest}>← Newest</Link>}
