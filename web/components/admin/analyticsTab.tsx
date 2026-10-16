@@ -10,8 +10,11 @@ import { LineChartSeries } from "@mantine/charts";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
 import Change from "./change";
+import Hint from "./hint";
 import RangePicker from "./rangePicker";
-import Stat from "./stat";
+import Section from "./section";
+import Share from "./share";
+import Stat, { Tone, toneClass } from "./stat";
 import TabError, { LoadError } from "./tabError";
 import TimeChart from "./timeChart";
 
@@ -36,8 +39,8 @@ interface ViewsTableProps extends Omit<TopTable, "key"> {
 }
 
 const viewSeries: LineChartSeries[] = [
-  { name: "page_views", label: "Page views", color: "blue.6" },
-  { name: "visitors", label: "Visitor-days", color: "teal.6" },
+  { name: "page_views", label: "Page views", color: "var(--adb-heading)" },
+  { name: "visitors", label: "Visitor-days", color: "var(--adb-muted)" },
 ];
 
 const vitalThresholds: Record<VitalMetric, [number, number]> = {
@@ -46,12 +49,16 @@ const vitalThresholds: Record<VitalMetric, [number, number]> = {
   cls: [0.1, 0.25],
 };
 
+function sum(rows: { page_views: number }[]) {
+  return rows.reduce((total, row) => total + row.page_views, 0);
+}
+
 function ViewsTable({ title, rows, nameLabel, href, mono }: ViewsTableProps) {
+  const total = sum(rows);
   return (
-    <div>
-      <h3 className={styles.sectionTitle}>{title}</h3>
+    <Section title={title} level="h3">
       {rows.length === 0 ? (
-        <p className={styles.note}>None.</p>
+        <p className={styles.empty}>None</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -68,21 +75,24 @@ function ViewsTable({ title, rows, nameLabel, href, mono }: ViewsTableProps) {
                 const link = row.name && href ? href(row.name) : null;
                 return (
                   <tr key={row.name}>
-                    <td className={`${styles.wrap} ${mono ? styles.mono : ""}`}>
-                      {link ? (
-                        <a
-                          href={link}
-                          className={styles.link}
-                          target={
-                            link.startsWith("http") ? "_blank" : undefined
-                          }
-                          rel="noreferrer"
-                        >
-                          {name}
-                        </a>
-                      ) : (
-                        name
-                      )}
+                    <td className={styles.wrap}>
+                      <span className={mono ? styles.mono : undefined}>
+                        {link ? (
+                          <a
+                            href={link}
+                            className={styles.link}
+                            target={
+                              link.startsWith("http") ? "_blank" : undefined
+                            }
+                            rel="noreferrer"
+                          >
+                            {name}
+                          </a>
+                        ) : (
+                          name
+                        )}
+                      </span>
+                      <Share value={row.page_views} total={total} />
                     </td>
                     <td className={styles.num}>
                       {formatNumber(row.page_views)}
@@ -95,16 +105,15 @@ function ViewsTable({ title, rows, nameLabel, href, mono }: ViewsTableProps) {
           </table>
         </div>
       )}
-    </div>
+    </Section>
   );
 }
 
 function PostsTable({ posts }: { posts: Analytics["posts"] }) {
   return (
-    <div>
-      <h3 className={styles.sectionTitle}>Top posts</h3>
+    <Section title="Top posts" level="h3">
       {posts.length === 0 ? (
-        <p className={styles.note}>None.</p>
+        <p className={styles.empty}>None</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -121,20 +130,18 @@ function PostsTable({ posts }: { posts: Analytics["posts"] }) {
                   <td className={styles.wrap}>
                     <Link
                       href={`/post/${p.post_id}`}
-                      className={styles.postCell}
+                      className={`${styles.postCell} ${styles.link}`}
                     >
                       {p.low_url && (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          className={styles.postThumb}
+                          className={styles.thumb}
                           src={p.low_url}
                           alt=""
                           loading="lazy"
                         />
                       )}
-                      <span className={styles.link}>
-                        {p.title || `Post ${p.post_id}`}
-                      </span>
+                      <span>{p.title || `Post ${p.post_id}`}</span>
                     </Link>
                   </td>
                   <td className={styles.num}>{formatNumber(p.page_views)}</td>
@@ -145,15 +152,15 @@ function PostsTable({ posts }: { posts: Analytics["posts"] }) {
           </table>
         </div>
       )}
-    </div>
+    </Section>
   );
 }
 
-function vitalClass(metric: VitalMetric, value: number) {
+function vitalTone(metric: VitalMetric, value: number): Tone | null {
   const [good, poor] = vitalThresholds[metric];
-  if (value <= good) return styles.fresh;
-  if (value <= poor) return styles.stale;
-  return styles.veryStale;
+  if (value <= good) return null;
+  if (value <= poor) return "warn";
+  return "bad";
 }
 
 function Vital({
@@ -164,7 +171,7 @@ function Vital({
   value: number | null;
 }) {
   if (value === null || value === undefined) {
-    return <td className={styles.num}>–</td>;
+    return <td className={`${styles.num} ${styles.muted}`}>–</td>;
   }
   const text =
     metric === "cls"
@@ -172,17 +179,17 @@ function Vital({
       : metric === "lcp"
       ? `${(value / 1000).toFixed(2)} s`
       : `${Math.round(value)} ms`;
+  const tone = vitalTone(metric, value);
   return (
-    <td className={`${styles.num} ${vitalClass(metric, value)}`}>{text}</td>
+    <td className={`${styles.num} ${tone ? toneClass[tone] : ""}`}>{text}</td>
   );
 }
 
 function VitalsTable({ vitals }: { vitals: Analytics["vitals"] }) {
   return (
-    <section className={styles.section}>
-      <h2 className={styles.sectionTitle}>Web vitals (p75)</h2>
+    <Section title="Web vitals p75">
       {vitals.length === 0 ? (
-        <p className={styles.note}>No web vitals in this range.</p>
+        <p className={styles.empty}>No web vitals in this range</p>
       ) : (
         <div className={styles.tableWrap}>
           <table className={styles.table}>
@@ -209,7 +216,7 @@ function VitalsTable({ vitals }: { vitals: Analytics["vitals"] }) {
           </table>
         </div>
       )}
-    </section>
+    </Section>
   );
 }
 
@@ -257,15 +264,14 @@ export default function AnalyticsTab({
   const live = analytics?.summary.live;
   return (
     <>
-      <RangePicker tab="analytics" range={range}>
+      <div className={styles.controls}>
+        <RangePicker tab="analytics" range={range} />
         {live && (
-          <span className={styles.liveBadge}>
-            <span className={styles.liveDot} />
-            {formatNumber(live.visitors)} visitors,{" "}
-            {formatNumber(live.page_views)} views in the last 30 min
+          <span className={styles.live}>
+            {formatNumber(live.visitors)} visitors in last 30 min
           </span>
         )}
-      </RangePicker>
+      </div>
       {error ? (
         <TabError error={error} />
       ) : (
@@ -287,6 +293,18 @@ function AnalyticsBody({ analytics }: { analytics: Analytics }) {
       <section className={styles.section}>
         <div className={styles.stats}>
           <Stat
+            label={
+              <Hint
+                label="Visitor-days"
+                tip="Visitor ids reset every day, so one person on three days counts three times. Bots are left out of every number but bot share."
+              />
+            }
+            value={formatNumber(current.visitors)}
+            detail={
+              <Change current={current.visitors} previous={previous.visitors} />
+            }
+          />
+          <Stat
             label="Page views"
             value={formatNumber(current.page_views)}
             detail={
@@ -294,13 +312,6 @@ function AnalyticsBody({ analytics }: { analytics: Analytics }) {
                 current={current.page_views}
                 previous={previous.page_views}
               />
-            }
-          />
-          <Stat
-            label="Visitor-days"
-            value={formatNumber(current.visitors)}
-            detail={
-              <Change current={current.visitors} previous={previous.visitors} />
             }
           />
           <Stat
@@ -325,36 +336,27 @@ function AnalyticsBody({ analytics }: { analytics: Analytics }) {
             }
           />
         </div>
-        <p className={styles.note}>
-          {current.page_views === 0 && "No page views in this range yet. "}
-          Visitor ids reset every day, so one person visiting on three days
-          counts as three visitor-days. Bots are left out of every number but
-          bot share.
-        </p>
       </section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          Page views per {analytics.bucket}
-        </h2>
+      <Section title={`Page views per ${analytics.bucket}`}>
         <TimeChart
           data={analytics.series}
           series={viewSeries}
           bucket={analytics.bucket}
         />
-      </section>
+      </Section>
 
-      <section className={`${styles.section} ${styles.twoCol}`}>
+      <div className={`${styles.section} ${styles.twoCol}`}>
         {pages}
         <PostsTable posts={analytics.posts} />
         {referrers}
         <div>
-          {sources}
-          <div style={{ marginTop: "1.5rem" }}>{campaigns}</div>
+          <div className={styles.subsection}>{sources}</div>
+          <div className={styles.subsection}>{campaigns}</div>
         </div>
         {devices}
         {browsers}
-      </section>
+      </div>
 
       <VitalsTable vitals={analytics.vitals} />
     </>

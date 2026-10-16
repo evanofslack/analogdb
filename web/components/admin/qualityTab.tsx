@@ -9,11 +9,14 @@ import {
   UnmatchedFilm,
 } from "@lib/adminClient";
 import { formatNumber, formatPercent } from "@lib/format";
-import { Button, Progress } from "@mantine/core";
+import { Progress } from "@mantine/core";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
 import CatalogButton from "./catalogButton";
 import EditPostButton from "./editPostButton";
+import Pager from "./pager";
+import Section from "./section";
+import Segmented from "./segmented";
 import TabError, { LoadError } from "./tabError";
 
 const coverageRows = [
@@ -39,16 +42,13 @@ function Coverage({ coverage }: CoverageProps) {
         return (
           <div key={row.key} className={styles.coverageRow}>
             <span>{row.label}</span>
-            <Progress value={pct} size="lg" radius="sm" />
+            <Progress value={pct} size={4} radius={4} color="gray" />
             <span className={styles.num}>
               {formatPercent(value, coverage.total)}
             </span>
           </div>
         );
       })}
-      <p className={styles.note}>
-        Out of {formatNumber(coverage.total)} posts.
-      </p>
     </div>
   );
 }
@@ -59,9 +59,7 @@ interface UnmatchedCamerasProps {
 
 function UnmatchedCameras({ cameras }: UnmatchedCamerasProps) {
   if (cameras.length === 0) {
-    return (
-      <p className={styles.note}>Every camera on a post is in the catalog.</p>
-    );
+    return <p className={styles.empty}>All cameras are in the catalog</p>;
   }
   return (
     <div className={styles.tableWrap}>
@@ -81,7 +79,7 @@ function UnmatchedCameras({ cameras }: UnmatchedCamerasProps) {
               <td>{c.camera_make}</td>
               <td>{c.camera_model}</td>
               <td className={styles.num}>{formatNumber(c.post_count)}</td>
-              <td>
+              <td className={styles.nowrap}>
                 <Link
                   href={`/post/${c.sample_post_id}`}
                   className={styles.link}
@@ -89,7 +87,7 @@ function UnmatchedCameras({ cameras }: UnmatchedCamerasProps) {
                   #{c.sample_post_id}
                 </Link>
               </td>
-              <td>
+              <td className={styles.num}>
                 <CatalogButton
                   kind="camera"
                   initial={{
@@ -113,9 +111,7 @@ interface UnmatchedFilmsProps {
 
 function UnmatchedFilms({ films }: UnmatchedFilmsProps) {
   if (films.length === 0) {
-    return (
-      <p className={styles.note}>Every film on a post is in the catalog.</p>
-    );
+    return <p className={styles.empty}>All films are in the catalog</p>;
   }
   return (
     <div className={styles.tableWrap}>
@@ -137,7 +133,7 @@ function UnmatchedFilms({ films }: UnmatchedFilmsProps) {
               <td>{f.film_type}</td>
               <td className={styles.num}>{f.film_speed ?? "—"}</td>
               <td className={styles.num}>{formatNumber(f.post_count)}</td>
-              <td>
+              <td className={styles.nowrap}>
                 <Link
                   href={`/post/${f.sample_post_id}`}
                   className={styles.link}
@@ -145,7 +141,7 @@ function UnmatchedFilms({ films }: UnmatchedFilmsProps) {
                   #{f.sample_post_id}
                 </Link>
               </td>
-              <td>
+              <td className={styles.num}>
                 <CatalogButton
                   kind="film"
                   initial={{
@@ -183,53 +179,53 @@ function MissingPosts({ missing, error, field }: MissingPostsProps) {
   return (
     <>
       <div className={styles.controls}>
-        {missingFields.map((f) => (
-          <Link
-            key={f}
-            href={`/admin?tab=quality&field=${f}`}
-            className={`${styles.chip} ${f === field ? styles.chipActive : ""}`}
-          >
-            {f}
-          </Link>
-        ))}
+        <Segmented
+          active={field}
+          items={missingFields.map((f) => ({
+            key: f,
+            href: `/admin?tab=quality&field=${f}`,
+            label: f,
+          }))}
+        />
       </div>
       {error ? (
         <TabError error={error} />
       ) : missing.posts.length === 0 ? (
-        <p className={styles.note}>No posts are missing {field}.</p>
+        <p className={styles.empty}>No posts missing {field}</p>
       ) : (
-        <div className={styles.missingList}>
+        <div className={styles.rows}>
           {missing.posts.map((post) => (
-            <div key={post.id} className={styles.missingItem}>
+            <div key={post.id} className={styles.row}>
               <Link href={`/post/${post.id}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={post.low_url} alt={post.title} loading="lazy" />
+                <img
+                  className={styles.thumb}
+                  src={post.low_url}
+                  alt={post.title}
+                  loading="lazy"
+                />
               </Link>
-              <div className={styles.missingText}>
+              <div className={styles.rowText}>
                 <div>
                   <Link href={`/post/${post.id}`} className={styles.link}>
-                    #{post.id}
-                  </Link>{" "}
-                  {post.title}
+                    <span className={styles.muted}>#{post.id}</span>{" "}
+                    {post.title}
+                  </Link>
                 </div>
-                <div className={styles.note}>{describePost(post)}</div>
+                <div className={styles.meta}>{describePost(post)}</div>
               </div>
               <EditPostButton id={post.id} />
             </div>
           ))}
         </div>
       )}
-      {missing?.next_before_id && (
-        <div className={styles.pager}>
-          <Button
-            component={Link}
-            href={`/admin?tab=quality&field=${field}&before_id=${missing.next_before_id}`}
-            variant="default"
-          >
-            Older
-          </Button>
-        </div>
-      )}
+      <Pager
+        older={
+          missing?.next_before_id
+            ? `/admin?tab=quality&field=${field}&before_id=${missing.next_before_id}`
+            : null
+        }
+      />
     </>
   );
 }
@@ -249,29 +245,27 @@ export default function QualityTab({
 }: QualityTabProps) {
   return (
     <>
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Coverage</h2>
-        <Coverage coverage={quality.coverage} />
-      </section>
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Cameras not in the catalog</h2>
+      <Section
+        title="Cameras not in catalog"
+        count={quality.unmatched_cameras.length}
+      >
         <UnmatchedCameras cameras={quality.unmatched_cameras} />
-      </section>
+      </Section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Films not in the catalog</h2>
+      <Section
+        title="Films not in catalog"
+        count={quality.unmatched_films.length}
+      >
         <UnmatchedFilms films={quality.unmatched_films} />
-        <p className={styles.note}>
-          Films match the catalog on make and type. Speed shows the most common
-          value on posts.
-        </p>
-      </section>
+      </Section>
 
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Posts missing a field</h2>
+      <Section title="Coverage" count={quality.coverage.total}>
+        <Coverage coverage={quality.coverage} />
+      </Section>
+
+      <Section title="Missing a field">
         <MissingPosts missing={missing} error={missingError} field={field} />
-      </section>
+      </Section>
     </>
   );
 }

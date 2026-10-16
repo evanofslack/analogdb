@@ -40,41 +40,39 @@ export default function TimeChart({
   height = 220,
 }: TimeChartProps) {
   if (data.length === 0) {
-    return <p className={styles.note}>No data in this range.</p>;
+    return <p className={styles.empty}>No data in this range</p>;
   }
   const span =
     new Date(data[data.length - 1].time).getTime() -
     new Date(data[0].time).getTime();
   const multiDay = span > day;
   return (
-    <div className={styles.card}>
-      <LineChart
-        h={height}
-        data={data}
-        dataKey="time"
-        series={series}
-        curveType="linear"
-        withDots={false}
-        withLegend={series.length > 1}
-        gridAxis="y"
-        strokeWidth={1.5}
-        valueFormatter={formatNumber}
-        yAxisProps={{ width: 48 }}
-        xAxisProps={{
-          minTickGap: 24,
-          tickFormatter: (time) => bucketLabel(time, bucket, { multiDay }),
-        }}
-        tooltipProps={{
-          content: ({ label, payload }) => (
-            <ChartTooltip
-              label={label ? bucketLabel(label, bucket, { full: true }) : null}
-              payload={payload}
-              series={series}
-              valueFormatter={formatNumber}
-            />
-          ),
-        }}
-      />
-    </div>
+    <LineChart
+      h={height}
+      data={data}
+      dataKey="time"
+      series={series}
+      curveType="linear"
+      withDots={false}
+      withLegend={series.length > 1}
+      gridAxis="y"
+      strokeWidth={1.5}
+      valueFormatter={formatNumber}
+      yAxisProps={{ width: 48 }}
+      xAxisProps={{
+        minTickGap: 24,
+        tickFormatter: (time) => bucketLabel(time, bucket, { multiDay }),
+      }}
+      tooltipProps={{
+        content: ({ label, payload }) => (
+          <ChartTooltip
+            label={label ? bucketLabel(label, bucket, { full: true }) : null}
+            payload={payload}
+            series={series}
+            valueFormatter={formatNumber}
+          />
+        ),
+      }}
+    />
   );
 }

@@ -3,15 +3,7 @@
 import { removePost, updatePost } from "@app/actions/admin";
 import { ReviewPost } from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
-import {
-  ActionIcon,
-  Button,
-  Group,
-  Switch,
-  Text,
-  Tooltip,
-} from "@mantine/core";
-import { IconPencil, IconTrash } from "@tabler/icons-react";
+import { Button, Group, Switch, Text } from "@mantine/core";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -81,9 +73,7 @@ function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
   }
 
   return (
-    <div
-      className={`${styles.reviewCard} ${isNew ? styles.reviewCardNew : ""}`}
-    >
+    <div className={styles.card}>
       <Link href={`/post/${post.id}`} className={styles.reviewImage}>
         {image && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -94,7 +84,13 @@ function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
         <Link href={`/post/${post.id}`} className={styles.reviewTitle}>
           {post.title}
         </Link>
-        <div className={styles.reviewMeta}>
+        <div className={styles.meta}>
+          {isNew && (
+            <>
+              <span className={styles.newDot} />
+              new ·{" "}
+            </>
+          )}
           #{post.id} · {post.author} · {formatDateTime(post.timestamp * 1000)}
         </div>
         <Group gap="sm">
@@ -109,28 +105,18 @@ function ReviewCard({ post, isNew, onDeleted }: ReviewCardProps) {
             />
           ))}
         </Group>
-        <Group gap="xs" justify="flex-end">
-          <Tooltip label="edit">
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              onClick={() => setEditing(true)}
-              aria-label="edit"
-            >
-              <IconPencil size={18} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="delete">
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              onClick={remove}
-              loading={pending === "delete"}
-              aria-label="delete"
-            >
-              <IconTrash size={18} />
-            </ActionIcon>
-          </Tooltip>
+        <Group gap={6} justify="flex-end">
+          <Button size="xs" variant="default" onClick={() => setEditing(true)}>
+            Edit
+          </Button>
+          <Button
+            size="xs"
+            variant="default"
+            onClick={remove}
+            loading={pending === "delete"}
+          >
+            Delete
+          </Button>
         </Group>
         {error && (
           <Text size="xs" c="red">
@@ -177,14 +163,16 @@ export default function ReviewGrid({ posts, firstPage }: ReviewGridProps) {
     <>
       <div className={styles.controls}>
         <Text size="sm" c="dimmed">
-          {reviewed
-            ? `${newCount} new since last review (post ${reviewed})`
-            : "No review marker yet"}
+          {reviewed ? `${newCount} new` : "Nothing reviewed yet"}
         </Text>
         {firstPage && newest > reviewed && (
-          <Button size="xs" variant="light" onClick={markReviewed}>
-            Mark all reviewed
-          </Button>
+          <button
+            type="button"
+            className={styles.textButton}
+            onClick={markReviewed}
+          >
+            Mark reviewed
+          </button>
         )}
       </div>
       <div className={styles.reviewGrid}>
