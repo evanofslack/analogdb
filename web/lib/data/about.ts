@@ -45,7 +45,7 @@ const RAINBOW_BANDS: { color: string; from: number; to: number }[] = [
 ];
 const RAINBOW_NEUTRALS = ["black", "white"];
 const RAINBOW_COUNT = 2;
-const RAINBOW_PAGES = 2;
+const RAINBOW_PAGE_SIZE = 100;
 const RAINBOW_POOL = 20;
 
 function inBand(hue: number, { from, to }: { from: number; to: number }) {
@@ -189,24 +189,18 @@ async function fetchColor(
   }
 }
 
-// the first pages of the rainbow sort, colored posts in hue order
+// the first page of the rainbow sort, colored posts in hue order
 async function fetchRainbow(): Promise<RainbowPhoto[]> {
   const result: RainbowPhoto[] = [];
-  let cursor: string | undefined;
   try {
-    for (let page = 0; page < RAINBOW_PAGES; page++) {
-      const response = await getPosts({
-        ...colorPostsRequest,
-        pageSize: 100,
-        cursor,
-      });
-      for (const post of response.posts ?? []) {
-        const hue = representativeHue(post.colors);
-        const photo = toPhoto(post);
-        if (photo && hue !== null) result.push({ photo, hue });
-      }
-      cursor = response.meta?.nextCursor;
-      if (!cursor) break;
+    const response = await getPosts({
+      ...colorPostsRequest,
+      pageSize: RAINBOW_PAGE_SIZE,
+    });
+    for (const post of response.posts ?? []) {
+      const hue = representativeHue(post.colors);
+      const photo = toPhoto(post);
+      if (photo && hue !== null) result.push({ photo, hue });
     }
   } catch (error) {
     console.error("Fail fetch rainbow posts:", error);
@@ -221,10 +215,10 @@ async function fetchColors(): Promise<{
   colorData: ColorData;
   rainbow: RainbowGroup[];
 }> {
-  const [red, navy, teal, spectrum, ...neutrals] = await Promise.all([
+  const [red, green, navy, spectrum, ...neutrals] = await Promise.all([
     fetchColor("red", COLOR_ROW_POOL),
+    fetchColor("green", COLOR_ROW_POOL),
     fetchColor("navy", COLOR_ROW_POOL),
-    fetchColor("teal", COLOR_ROW_POOL),
     fetchRainbow(),
     ...RAINBOW_NEUTRALS.map((color) => fetchColor(color, RAINBOW_POOL)),
   ]);
@@ -242,8 +236,8 @@ async function fetchColors(): Promise<{
 
   return {
     colorData: {
-      teal: plain(teal),
       red: plain(red),
+      green: plain(green),
       navy: plain(navy),
     },
     rainbow: [...bands, ...neutralGroups].filter(
@@ -640,6 +634,6 @@ async function getData(): Promise<AboutData> {
   };
 }
 
-export const getAboutData = unstable_cache(getData, ["about-data-v6"], {
+export const getAboutData = unstable_cache(getData, ["about-data-v7"], {
   revalidate: 3600,
 });

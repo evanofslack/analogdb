@@ -51,8 +51,8 @@ function pickColorRows(colorData: ColorData, random: boolean): ColorData {
   const pick = (images: Photo[]) =>
     (random ? shuffle(images) : images).slice(0, COLOR_ROW_SIZE);
   return {
-    teal: pick(colorData.teal),
     red: pick(colorData.red),
+    green: pick(colorData.green),
     navy: pick(colorData.navy),
   };
 }
@@ -183,8 +183,8 @@ export default function About(props: AboutProps) {
 
           <div className={styles.band}>
             <div className={styles.colorSection}>
-              {renderColorRow(colorData.teal, "right", 0)}
-              {renderColorRow(colorData.red, "left", 0)}
+              {renderColorRow(colorData.red, "right", 0)}
+              {renderColorRow(colorData.green, "left", 0)}
               {renderColorRow(colorData.navy, "right", 0)}
               {renderMobileColorRows()}
               <div className={styles.colorTextOverlay}>
