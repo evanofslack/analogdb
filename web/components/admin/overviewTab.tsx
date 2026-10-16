@@ -57,6 +57,12 @@ export default function OverviewTab({
     { label: "Keywords", value: freshness.keywords_update },
     { label: "Colors", value: freshness.colors_update },
   ];
+  const apiFacts = [
+    ["API", app.version],
+    ["env", app.env],
+    ["host", app.hostname],
+    ["up", formatDuration(app.uptime_seconds)],
+  ];
   const vectorsOff =
     vectors.objects === null || vectors.objects !== vectors.posts;
 
@@ -68,10 +74,14 @@ export default function OverviewTab({
             <StatusDot key={name} label={name} status={status[name]} />
           ))}
         </div>
-        <p className={styles.panelFoot}>
-          {app.version} · {app.env} · {app.hostname} · up{" "}
-          {formatDuration(app.uptime_seconds)}
-        </p>
+        <dl className={`${styles.panelFoot} ${styles.facts}`}>
+          {apiFacts.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
       </Section>
 
       <Section title="To do" panel>

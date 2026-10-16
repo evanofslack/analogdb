@@ -7,15 +7,16 @@ interface StatusDotProps {
 }
 
 export default function StatusDot({ label, status }: StatusDotProps) {
-  const down = status !== "ok" && status !== "disabled";
+  const state = status ?? "unknown";
+  const down = state !== "ok" && state !== "disabled";
   return (
     <span
       className={`${styles.statusDot} ${down ? styles.veryStale : ""}`}
-      data-status={status ?? "unknown"}
+      data-status={state}
     >
       {label}
-      {status === "disabled" && " off"}
-      {down && ` ${status ?? "unknown"}`}
+      {state === "disabled" && " disabled"}
+      {down && ` ${state}`}
     </span>
   );
 }
