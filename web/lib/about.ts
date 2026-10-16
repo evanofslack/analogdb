@@ -13,8 +13,8 @@ export interface AboutPhoto {
 }
 
 export interface ColorData {
-  teal: AboutPhoto[];
   red: AboutPhoto[];
+  green: AboutPhoto[];
   navy: AboutPhoto[];
 }
 
