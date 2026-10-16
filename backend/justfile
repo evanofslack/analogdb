@@ -7,6 +7,10 @@ bench_args := env("BENCH_ARGS", "-benchtime=2s")
 bench_explain := env("BENCH_EXPLAIN", "")
 psql := env("PSQL", "docker exec -i analogdb-bench psql -U postgres -d analogdb")
 
+prod_pg_image := "postgres:15"
+prod_dump_dir := "dumps"
+prod_dsn := "postgres://postgres:postgres@localhost:55433/analogdb?sslmode=disable"
+
 [private]
 default:
     @just --list
@@ -80,3 +84,52 @@ bench:
 # Remove the bench database
 bench-clean:
     docker rm -f analogdb-bench
+
+# Download a backup from $BACKUP_S3 (s3://bucket/prefix), the newest when no name is given
+prod-pull name="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${BACKUP_S3:?set BACKUP_S3 to s3://bucket/prefix}"
+    name="{{ name }}"
+    if [ -z "$name" ]; then
+        name=$(aws s3 ls "${BACKUP_S3%/}/" | awk '/\.dump\.gpg$/ {print $4}' | sort | tail -1)
+    fi
+    mkdir -p "{{ prod_dump_dir }}"
+    file="{{ prod_dump_dir }}/$name"
+    if [ -f "$file" ]; then
+        echo "have $file" >&2
+    else
+        echo "downloading $name" >&2
+        aws s3 cp --quiet "${BACKUP_S3%/}/$name" "$file"
+    fi
+    echo "$file"
+
+# Restore a backup into analogdb-prod on port 55433, decrypting with $BACKUP_PASSPHRASE
+prod-restore name="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    file=$(just prod-pull "{{ name }}")
+    if [ -z "${BACKUP_PASSPHRASE:-}" ]; then
+        read -rsp "Backup passphrase: " BACKUP_PASSPHRASE
+        echo
+    fi
+    export BACKUP_PASSPHRASE
+    docker rm -f analogdb-prod >/dev/null 2>&1 || true
+    docker run -d --name analogdb-prod -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=analogdb \
+        -p 55433:5432 {{ prod_pg_image }} >/dev/null
+    until docker exec analogdb-prod pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; do sleep 1; done
+    echo "restoring $file" >&2
+    docker exec -i -e BACKUP_PASSPHRASE analogdb-prod sh -c \
+        'gpg --batch --quiet --passphrase "$BACKUP_PASSPHRASE" --decrypt | pg_restore -U postgres -d analogdb --no-owner --no-acl' \
+        < "$file"
+    docker exec analogdb-prod psql -U postgres -d analogdb -c 'ANALYZE' >/dev/null
+    echo "restored to {{ prod_dsn }}" >&2
+
+# Open psql on the restored prod database
+prod-psql:
+    docker exec -it analogdb-prod psql -U postgres -d analogdb
+
+# Remove the restored prod database, add dumps=1 to delete downloaded dumps too
+prod-clean dumps="":
+    docker rm -f analogdb-prod
+    {{ if dumps == "" { "" } else { "rm -rf " + prod_dump_dir } }}
