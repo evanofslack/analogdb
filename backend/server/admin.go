@@ -59,7 +59,6 @@ func (s *Server) mountAdminHandlers(r chi.Router) {
 			r.Get("/quality", s.getAdminQuality)
 			r.Get("/queue", s.getAdminQueue)
 			r.Get("/posts/missing", s.getAdminMissingPosts)
-			r.Get("/traffic", s.getAdminTraffic)
 			r.Get("/analytics", s.getAdminAnalytics)
 			r.Get("/audit", s.getAdminAudit)
 			r.Post("/colors/rederive", s.rederiveColors)
@@ -276,26 +275,6 @@ func parseRange(r *http.Request) (analogdb.TrafficRange, error) {
 		return "", badRequest("invalid range %q, want 24h, 7d or 30d", rng)
 	}
 	return rng, nil
-}
-
-func (s *Server) getAdminTraffic(w http.ResponseWriter, r *http.Request) {
-	rng, err := parseRange(r)
-	if err != nil {
-		s.writeError(w, r, err)
-		return
-	}
-	if s.analyticsUnavailable(w, r) {
-		return
-	}
-
-	traffic, err := s.AnalyticsService.Traffic(r.Context(), rng)
-	if err != nil {
-		s.writeError(w, r, analyticsError(err))
-		return
-	}
-	if err := encodeResponse(w, r, http.StatusOK, traffic); err != nil {
-		s.writeError(w, r, err)
-	}
 }
 
 func (s *Server) getAdminAnalytics(w http.ResponseWriter, r *http.Request) {

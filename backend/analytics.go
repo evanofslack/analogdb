@@ -30,15 +30,6 @@ func (r TrafficRange) Duration() (time.Duration, bool) {
 	return 0, false
 }
 
-type TrafficBucket struct {
-	Time    time.Time `json:"time"`
-	Web     int64     `json:"web"`
-	Scraper int64     `json:"scraper"`
-	Direct  int64     `json:"direct"`
-	Status4 int64     `json:"status_4xx"`
-	Status5 int64     `json:"status_5xx"`
-}
-
 // TrafficTotals counts API requests, direct is neither web nor scraper
 type TrafficTotals struct {
 	Requests  int64   `json:"requests"`
@@ -65,44 +56,12 @@ type TrafficCaller struct {
 	IPs      int64  `json:"ips"`
 }
 
-type TrafficRoute struct {
-	Route    string  `json:"route"`
-	Requests int64   `json:"requests"`
-	TotalMs  int64   `json:"total_ms"`
-	P50Ms    float64 `json:"p50_ms"`
-	P95Ms    float64 `json:"p95_ms"`
-	Status4  int64   `json:"status_4xx"`
-	Status5  int64   `json:"status_5xx"`
-}
-
-type TrafficStatus struct {
-	Status   int32  `json:"status"`
-	Route    string `json:"route"`
-	Requests int64  `json:"requests"`
-}
-
 type TrafficError struct {
 	Time      time.Time `json:"time"`
 	Method    string    `json:"method"`
 	Path      string    `json:"path"`
 	Status    int32     `json:"status"`
 	RequestID string    `json:"request_id"`
-}
-
-type TrafficErrors struct {
-	ByStatus []TrafficStatus `json:"by_status"`
-	Recent   []TrafficError  `json:"recent"`
-}
-
-// Traffic is API load from request logs
-type Traffic struct {
-	Range   TrafficRange    `json:"range"`
-	Bucket  string          `json:"bucket"`
-	Summary TrafficSummary  `json:"summary"`
-	Series  []TrafficBucket `json:"series"`
-	Callers []TrafficCaller `json:"callers"`
-	Routes  []TrafficRoute  `json:"routes"`
-	Errors  TrafficErrors   `json:"errors"`
 }
 
 // ViewCounts holds page views and visitor-days, visitor ids rotate daily
@@ -222,7 +181,6 @@ type AuditEntry struct {
 }
 
 type AnalyticsService interface {
-	Traffic(ctx context.Context, r TrafficRange) (*Traffic, error)
 	Analytics(ctx context.Context, r TrafficRange) (*Analytics, error)
 	Audit(ctx context.Context, filter *AuditFilter) ([]*AuditEntry, error)
 	Readyz(ctx context.Context) error

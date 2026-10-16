@@ -252,6 +252,20 @@ func TestAnalytics(t *testing.T) {
 		}
 	})
 
+	t.Run("month", func(t *testing.T) {
+		analytics, err := db.Analytics(ctx, analogdb.TrafficMonth)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if analytics.Bucket != "day" {
+			t.Errorf("want day buckets, got %s", analytics.Bucket)
+		}
+		mustFilled(t, analyticsTimes(analytics.Series), 24*time.Hour, 30)
+		if analytics.API.Summary.Current.Requests != 15 || analytics.API.Summary.Previous.Requests != 1 {
+			t.Errorf("want 15 api requests and one before, got %+v", analytics.API.Summary)
+		}
+	})
+
 	t.Run("shape", func(t *testing.T) {
 		analytics, err := db.Analytics(ctx, analogdb.TrafficDay)
 		if err != nil {
