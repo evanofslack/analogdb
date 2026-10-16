@@ -128,7 +128,6 @@ func (b *builder) filmLooks() []analogdb.StatsFilm {
 			Popularity: pop(mean(pops)),
 			Hue:        []float64{},
 			Palette:    []string{},
-			Styles:     map[string]float64{},
 			Similar:    b.similar(f),
 			Position:   position[f.slug],
 			Typical:    []analogdb.StatsPost{},
@@ -157,7 +156,7 @@ func (b *builder) filmLooks() []analogdb.StatsFilm {
 				}
 			}
 			if len(zs) > 0 {
-				film.Styles[key] = r3(mean(zs))
+				setStyle(&film.Styles, key, r3(mean(zs)))
 			}
 		}
 
@@ -167,6 +166,21 @@ func (b *builder) filmLooks() []analogdb.StatsFilm {
 		films = append(films, film)
 	}
 	return films
+}
+
+func setStyle(styles *analogdb.StatsStyles, key string, value float64) {
+	switch key {
+	case "vivid":
+		styles.Vivid = value
+	case "teal_orange":
+		styles.TealOrange = value
+	case "red_night":
+		styles.RedNight = value
+	case "grain":
+		styles.Grain = value
+	case "crisp":
+		styles.Crisp = value
+	}
 }
 
 // chromatic is one color row that counts toward hue, weighted by its percent

@@ -157,6 +157,15 @@ type StatsBands struct {
 	Magenta float64 `json:"magenta" example:"0.03"`
 }
 
+// StatsStyles is the mean z score of a film's posts for each style prompt
+type StatsStyles struct {
+	Vivid      float64 `json:"vivid" example:"0.12"`
+	TealOrange float64 `json:"teal_orange" example:"-0.05"`
+	RedNight   float64 `json:"red_night" example:"0.02"`
+	Grain      float64 `json:"grain" example:"-0.3"`
+	Crisp      float64 `json:"crisp" example:"0.1"`
+}
+
 type StatsSimilar struct {
 	Slug       string  `json:"slug" example:"kodak-gold-200"`
 	Similarity float64 `json:"similarity" example:"0.83"`
@@ -180,7 +189,7 @@ type StatsFilm struct {
 	Hue        []float64          `json:"hue"`
 	Bands      *StatsBands        `json:"bands"`
 	Palette    []string           `json:"palette" example:"#c9a27e"`
-	Styles     map[string]float64 `json:"styles"`
+	Styles     StatsStyles        `json:"styles"`
 	Similar    []StatsSimilar     `json:"similar"`
 	Position   StatsPosition      `json:"position"`
 	Typical    []StatsPost        `json:"typical"`

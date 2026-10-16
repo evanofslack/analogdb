@@ -40,7 +40,7 @@ func testSeed(hidden ...string) *analogdb.StatsSeed {
 	}
 	seed.Themes[3].Role = &border
 	for i, key := range analogdb.StatsPromptKeys {
-		seed.Prompts = append(seed.Prompts, analogdb.StatsPrompt{Key: key, Label: key, Text: key, Vector: basis(10 + i)})
+		seed.Prompts = append(seed.Prompts, analogdb.StatsPrompt{Key: key, Label: key, Text: key, Vector: basis(100 + i)})
 	}
 	return seed
 }
@@ -182,9 +182,6 @@ func TestFilmLooks(t *testing.T) {
 		if len(f.Palette) == 0 || f.Palette[0][0] != '#' {
 			t.Errorf("%s: want a hex palette, got %v", f.Slug, f.Palette)
 		}
-		if len(f.Styles) != len(analogdb.StatsPromptKeys)-1 {
-			t.Errorf("%s: want a value per style, got %v", f.Slug, f.Styles)
-		}
 		if len(f.Typical) == 0 {
 			t.Errorf("%s: want typical posts", f.Slug)
 		}
@@ -193,6 +190,19 @@ func TestFilmLooks(t *testing.T) {
 				t.Errorf("%s: typical post %d is NSFW", f.Slug, p.ID)
 			}
 		}
+	}
+
+	var styles analogdb.StatsStyles
+	for _, f := range stats.Films {
+		s := f.Styles
+		styles.Vivid += math.Abs(s.Vivid)
+		styles.TealOrange += math.Abs(s.TealOrange)
+		styles.RedNight += math.Abs(s.RedNight)
+		styles.Grain += math.Abs(s.Grain)
+		styles.Crisp += math.Abs(s.Crisp)
+	}
+	if s := styles; s.Vivid == 0 || s.TealOrange == 0 || s.RedNight == 0 || s.Grain == 0 || s.Crisp == 0 {
+		t.Errorf("want every style scored for some film, got %+v", s)
 	}
 
 	if b := film(t, stats, "cinestill-800t").Bands; b.Cool < 0.99 {

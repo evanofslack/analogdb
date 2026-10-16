@@ -7,7 +7,8 @@ func round(x float64, places int) float64 {
 		return 0
 	}
 	p := math.Pow(10, float64(places))
-	return math.Round(x*p) / p
+	// adding zero turns -0 into 0, so it never marshals as -0
+	return math.Round(x*p)/p + 0
 }
 
 func r3(x float64) float64 { return round(x, 3) }

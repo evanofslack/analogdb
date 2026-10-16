@@ -3060,10 +3060,7 @@ const docTemplate = `{
                     "example": "kodak-portra-400"
                 },
                 "styles": {
-                    "type": "object",
-                    "additionalProperties": {
-                        "type": "number"
-                    }
+                    "$ref": "#/definitions/analogdb.StatsStyles"
                 },
                 "type": {
                     "type": "string",
@@ -3297,6 +3294,31 @@ const docTemplate = `{
                 "slug": {
                     "type": "string",
                     "example": "kodak-gold-200"
+                }
+            }
+        },
+        "analogdb.StatsStyles": {
+            "type": "object",
+            "properties": {
+                "crisp": {
+                    "type": "number",
+                    "example": 0.1
+                },
+                "grain": {
+                    "type": "number",
+                    "example": -0.3
+                },
+                "red_night": {
+                    "type": "number",
+                    "example": 0.02
+                },
+                "teal_orange": {
+                    "type": "number",
+                    "example": -0.05
+                },
+                "vivid": {
+                    "type": "number",
+                    "example": 0.12
                 }
             }
         },

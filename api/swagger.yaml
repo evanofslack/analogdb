@@ -604,9 +604,7 @@ definitions:
         example: kodak-portra-400
         type: string
       styles:
-        additionalProperties:
-          type: number
-        type: object
+        $ref: '#/definitions/analogdb.StatsStyles'
       type:
         example: portra 400
         type: string
@@ -768,6 +766,24 @@ definitions:
       slug:
         example: kodak-gold-200
         type: string
+    type: object
+  analogdb.StatsStyles:
+    properties:
+      crisp:
+        example: 0.1
+        type: number
+      grain:
+        example: -0.3
+        type: number
+      red_night:
+        example: 0.02
+        type: number
+      teal_orange:
+        example: -0.05
+        type: number
+      vivid:
+        example: 0.12
+        type: number
     type: object
   analogdb.StatsSubjectRow:
     properties:
