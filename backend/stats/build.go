@@ -28,7 +28,9 @@ type post struct {
 }
 
 type builder struct {
-	now    time.Time
+	now time.Time
+	// first day of the window
+	start  time.Time
 	seed   *analogdb.StatsSeed
 	posts  []*post
 	films  []*filmGroup
@@ -53,6 +55,7 @@ func Build(in *analogdb.StatsInput, vecs map[int][]float32, seed *analogdb.Stats
 	}
 
 	b := &builder{now: now.UTC(), seed: seed}
+	b.start = windowStart(in.Posts, b.now)
 	b.index(in, vecs)
 	b.computeStyles()
 	b.assignThemes()
@@ -62,7 +65,7 @@ func Build(in *analogdb.StatsInput, vecs map[int][]float32, seed *analogdb.Stats
 		Version:     SnapshotVersion,
 		Generated:   b.now.Truncate(time.Second),
 		SeedVersion: seed.Version,
-		Window:      analogdb.StatsWindow{From: Start.Format(time.DateOnly), To: b.now.Format(time.DateOnly)},
+		Window:      analogdb.StatsWindow{From: b.start.Format(time.DateOnly), To: b.now.Format(time.DateOnly)},
 		Totals:      b.totals(),
 		Films:       b.filmLooks(),
 		Families:    families(),
@@ -82,7 +85,7 @@ func Build(in *analogdb.StatsInput, vecs map[int][]float32, seed *analogdb.Stats
 }
 
 func (b *builder) index(in *analogdb.StatsInput, vecs map[int][]float32) {
-	start := Start.Unix()
+	start := b.start.Unix()
 	byID := make(map[int]*post, len(in.Posts))
 	for _, p := range in.Posts {
 		if p.Time < start {
@@ -116,6 +119,40 @@ func (b *builder) index(in *analogdb.StatsInput, vecs map[int][]float32) {
 		}
 	}
 	b.globalMean = meanVector(withVec)
+}
+
+func monthOf(t time.Time) time.Time {
+	t = t.UTC()
+	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC)
+}
+
+// windowStart is the first month after which every complete month has at
+// least MinMonthPosts posts, so thin early months stay out as the archive
+// grows backwards. Without such a month it is the month of the first post.
+func windowStart(posts []analogdb.StatsInputPost, now time.Time) time.Time {
+	current := monthOf(now)
+	if len(posts) == 0 {
+		return current
+	}
+	counts := map[time.Time]int{}
+	first := current
+	for _, p := range posts {
+		m := monthOf(time.Unix(p.Time, 0))
+		counts[m]++
+		if m.Before(first) {
+			first = m
+		}
+	}
+	start := first
+	for m := first; m.Before(current); m = m.AddDate(0, 1, 0) {
+		if counts[m] < MinMonthPosts {
+			start = m.AddDate(0, 1, 0)
+		}
+	}
+	if !start.Before(current) {
+		return first
+	}
+	return start
 }
 
 // postColor is the percent weighted mean lightness and chroma of a post's colors

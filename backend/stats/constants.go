@@ -2,17 +2,25 @@ package stats
 
 import "time"
 
-// Start is the first day of the window, earlier posts are too few
-var Start = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
-
-// ArrivalsAfter is the earliest first post for a film or camera to count as
-// new, earlier ones may only look new because the window starts
-var ArrivalsAfter = time.Date(2023, 7, 1, 0, 0, 0, 0, time.UTC)
-
-// MoversFromEnd closes the base period movers are measured against
-var MoversFromEnd = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
+// LoadSince is how far back posts are loaded, the window start is then
+// found from the data
+var LoadSince = time.Unix(0, 0).UTC()
 
 const (
+	// MinMonthPosts is the fewest posts a month needs to be in the window. The
+	// window starts at the first month after which every complete month has this many.
+	MinMonthPosts = 200
+
+	// ArrivalsAfterMonths is how long after the window start a first post has
+	// to be for a film or camera to count as new. Earlier ones may only look
+	// new because the window starts.
+	ArrivalsAfterMonths = 18
+
+	// Movers compare the last MoverRecentMonths complete months with the
+	// MoverBaseMonths before them
+	MoverRecentMonths = 12
+	MoverBaseMonths   = 24
+
 	SnapshotVersion = 1
 
 	MinFilmPosts    = 80

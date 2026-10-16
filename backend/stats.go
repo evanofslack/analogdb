@@ -177,22 +177,22 @@ type StatsPosition struct {
 }
 
 type StatsFilm struct {
-	Slug       string             `json:"slug" example:"kodak-portra-400"`
-	Make       string             `json:"make" example:"kodak"`
-	Type       string             `json:"type" example:"portra 400"`
-	ColorType  string             `json:"color_type" example:"color"`
-	Family     string             `json:"family" example:"portrait"`
-	PostCount  int                `json:"post_count" example:"4084"`
-	Popularity float64            `json:"popularity" example:"57.1"`
-	Lightness  float64            `json:"lightness" example:"0.549"`
-	Chroma     float64            `json:"chroma" example:"0.034"`
-	Hue        []float64          `json:"hue"`
-	Bands      *StatsBands        `json:"bands"`
-	Palette    []string           `json:"palette" example:"#c9a27e"`
-	Styles     StatsStyles        `json:"styles"`
-	Similar    []StatsSimilar     `json:"similar"`
-	Position   StatsPosition      `json:"position"`
-	Typical    []StatsPost        `json:"typical"`
+	Slug       string         `json:"slug" example:"kodak-portra-400"`
+	Make       string         `json:"make" example:"kodak"`
+	Type       string         `json:"type" example:"portra 400"`
+	ColorType  string         `json:"color_type" example:"color"`
+	Family     string         `json:"family" example:"portrait"`
+	PostCount  int            `json:"post_count" example:"4084"`
+	Popularity float64        `json:"popularity" example:"57.1"`
+	Lightness  float64        `json:"lightness" example:"0.549"`
+	Chroma     float64        `json:"chroma" example:"0.034"`
+	Hue        []float64      `json:"hue"`
+	Bands      *StatsBands    `json:"bands"`
+	Palette    []string       `json:"palette" example:"#c9a27e"`
+	Styles     StatsStyles    `json:"styles"`
+	Similar    []StatsSimilar `json:"similar"`
+	Position   StatsPosition  `json:"position"`
+	Typical    []StatsPost    `json:"typical"`
 }
 
 type StatsFamily struct {
@@ -231,9 +231,17 @@ type StatsMovers struct {
 	Down []StatsMover `json:"down"`
 }
 
+// StatsMonthRange is a range of whole months, both ends included
+type StatsMonthRange struct {
+	From string `json:"from" example:"2023-10"`
+	To   string `json:"to" example:"2025-09"`
+}
+
 type StatsMoverGroups struct {
-	Films   StatsMovers `json:"films"`
-	Cameras StatsMovers `json:"cameras"`
+	Base    StatsMonthRange `json:"base"`
+	Recent  StatsMonthRange `json:"recent"`
+	Films   StatsMovers     `json:"films"`
+	Cameras StatsMovers     `json:"cameras"`
 }
 
 type StatsArrival struct {
@@ -252,8 +260,10 @@ type StatsTrends struct {
 	FilmBrands   []StatsTrendItem `json:"film_brands"`
 	CameraBrands []StatsTrendItem `json:"camera_brands"`
 	Movers       StatsMoverGroups `json:"movers"`
-	Arrivals     []StatsArrival   `json:"arrivals"`
-	Themes       []StatsTrendItem `json:"themes"`
+	// first month a film or camera can count as a new arrival
+	ArrivalsAfter string           `json:"arrivals_after" example:"2023-07"`
+	Arrivals      []StatsArrival   `json:"arrivals"`
+	Themes        []StatsTrendItem `json:"themes"`
 }
 
 type StatsGroup struct {
