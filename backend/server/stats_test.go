@@ -42,7 +42,7 @@ func (m *mockStats) LoadStatsInput(ctx context.Context, since time.Time, subject
 	}
 	in := &analogdb.StatsInput{}
 	for i := 1; i <= 3; i++ {
-		in.Posts = append(in.Posts, analogdb.StatsInputPost{ID: i, Author: "a", Time: since.Unix() + int64(i), Popularity: 0.5})
+		in.Posts = append(in.Posts, analogdb.StatsInputPost{ID: i, Author: "a", Time: time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC).Unix() + int64(i), Popularity: 0.5})
 	}
 	return in, nil
 }

@@ -241,7 +241,7 @@ func (s *Server) buildStats(ctx context.Context) (*analogdb.StatsSnapshot, *anal
 	if err != nil {
 		return nil, nil, err
 	}
-	in, err := s.StatsService.LoadStatsInput(ctx, stats.Start, stats.Subjects)
+	in, err := s.StatsService.LoadStatsInput(ctx, stats.LoadSince, stats.Subjects)
 	if err != nil {
 		return nil, nil, err
 	}
