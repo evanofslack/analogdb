@@ -115,26 +115,32 @@ func (b *builder) tally(of item, periodOf func(p *post) int, periods int) *tally
 	return t
 }
 
-// halfYear is the index of a time's half year counted from the window start
-func halfYear(t time.Time) int {
+func halfIndex(t time.Time) int {
 	t = t.UTC()
-	return (t.Year()-Start.Year())*2 + (int(t.Month())-1)/6
+	return t.Year()*2 + (int(t.Month())-1)/6
 }
 
-func periodName(i int) string {
-	return fmt.Sprintf("%dH%d", Start.Year()+i/2, i%2+1)
+// halfYear is the index of a time's half year counted from the window start
+func (b *builder) halfYear(t time.Time) int {
+	return halfIndex(t) - halfIndex(b.start)
+}
+
+func (b *builder) periodName(i int) string {
+	abs := halfIndex(b.start) + i
+	return fmt.Sprintf("%dH%d", abs/2, abs%2+1)
 }
 
 func (b *builder) trends() analogdb.StatsTrends {
-	periods := halfYear(b.now) + 1
-	byHalf := func(p *post) int { return halfYear(time.Unix(p.Time, 0)) }
+	periods := b.halfYear(b.now) + 1
+	byHalf := func(p *post) int { return b.halfYear(time.Unix(p.Time, 0)) }
 
 	names := make([]string, periods)
 	for i := range names {
-		names[i] = periodName(i)
+		names[i] = b.periodName(i)
 	}
 	films := b.tally(filmItem, byHalf, periods)
 	cameras := b.tally(cameraItem, byHalf, periods)
+	base, recent := b.moverRanges()
 
 	return analogdb.StatsTrends{
 		Periods:      names,
@@ -144,11 +150,14 @@ func (b *builder) trends() analogdb.StatsTrends {
 		FilmBrands:   brandLines(b.tally(filmBrandItem, byHalf, periods)),
 		CameraBrands: brandLines(b.tally(cameraBrandItem, byHalf, periods)),
 		Movers: analogdb.StatsMoverGroups{
+			Base:    monthRange(base),
+			Recent:  monthRange(recent),
 			Films:   b.movers(filmItem, MinFilmPosts),
 			Cameras: b.movers(cameraItem, MinCameraPosts),
 		},
-		Arrivals: b.arrivals(films, cameras),
-		Themes:   b.themeTrends(periods),
+		ArrivalsAfter: b.arrivalsAfter().Format("2006-01"),
+		Arrivals:      b.arrivals(films, cameras),
+		Themes:        b.themeTrends(periods),
 	}
 }
 
@@ -174,16 +183,46 @@ func brandLines(t *tally) []analogdb.StatsTrendItem {
 	return shareLines(t, t.ranked(MinTrendPosts), BrandTop, false)
 }
 
-// movers compares each item's share across the base years with its share in
-// the last twelve complete months
+// span is a half open range of time, [from, to)
+type span struct {
+	from, to time.Time
+}
+
+func (s span) contains(t time.Time) bool {
+	return !t.Before(s.from) && t.Before(s.to)
+}
+
+// monthRange names the first and last month of a span
+func monthRange(s span) analogdb.StatsMonthRange {
+	return analogdb.StatsMonthRange{From: s.from.Format("2006-01"), To: s.to.AddDate(0, -1, 0).Format("2006-01")}
+}
+
+// moverRanges are the recent complete months and the months before them,
+// the base clipped to the window start
+func (b *builder) moverRanges() (base, recent span) {
+	recent.to = monthOf(b.now)
+	recent.from = recent.to.AddDate(0, -MoverRecentMonths, 0)
+	base.to = recent.from
+	base.from = base.to.AddDate(0, -MoverBaseMonths, 0)
+	if base.from.Before(b.start) {
+		base.from = b.start
+	}
+	return base, recent
+}
+
+func (b *builder) arrivalsAfter() time.Time {
+	return b.start.AddDate(0, ArrivalsAfterMonths, 0)
+}
+
+// movers compares each item's share in the base months with its share in
+// the recent months
 func (b *builder) movers(of item, min int) analogdb.StatsMovers {
-	recentEnd := time.Date(b.now.Year(), b.now.Month(), 1, 0, 0, 0, 0, time.UTC)
-	recentStart := recentEnd.AddDate(-1, 0, 0)
+	base, recent := b.moverRanges()
 	window := func(p *post) int {
 		switch t := time.Unix(p.Time, 0).UTC(); {
-		case t.Before(MoversFromEnd):
+		case base.contains(t):
 			return 0
-		case !t.Before(recentStart) && t.Before(recentEnd):
+		case recent.contains(t):
 			return 1
 		}
 		return -1
@@ -216,7 +255,7 @@ func (b *builder) movers(of item, min int) analogdb.StatsMovers {
 
 // arrivals is the films and cameras first seen late in the window, by count
 func (b *builder) arrivals(films, cameras *tally) []analogdb.StatsArrival {
-	after := ArrivalsAfter.Unix()
+	after := b.arrivalsAfter().Unix()
 	out := []analogdb.StatsArrival{}
 	for _, group := range []struct {
 		kind string
@@ -259,7 +298,7 @@ func (b *builder) themeTrends(periods int) []analogdb.StatsTrendItem {
 		if p.theme < 0 {
 			continue
 		}
-		period := halfYear(time.Unix(p.Time, 0))
+		period := b.halfYear(time.Unix(p.Time, 0))
 		if period < 0 || period >= periods {
 			continue
 		}

@@ -12,7 +12,10 @@ import (
 	"github.com/evanofslack/analogdb"
 )
 
-var testNow = time.Date(2026, 10, 16, 12, 0, 0, 0, time.UTC)
+var (
+	testNow   = time.Date(2026, 10, 16, 12, 0, 0, 0, time.UTC)
+	testStart = time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
+)
 
 func basis(i int) []float32 {
 	v := make([]float32, analogdb.StatsVectorDims)
@@ -66,7 +69,7 @@ func testInput(rng *rand.Rand) (*analogdb.StatsInput, map[int][]float32) {
 	in := &analogdb.StatsInput{}
 	vecs := map[int][]float32{}
 	id := 0
-	span := testNow.Unix() - Start.Unix()
+	span := testNow.Unix() - testStart.Unix()
 	for fi, f := range testFilms {
 		for i := range f.posts {
 			id++
@@ -78,7 +81,7 @@ func testInput(rng *rand.Rand) (*analogdb.StatsInput, map[int][]float32) {
 			p := analogdb.StatsInputPost{
 				ID:            id,
 				Author:        author,
-				Time:          Start.Unix() + rng.Int63n(span),
+				Time:          testStart.Unix() + rng.Int63n(span),
 				Score:         rng.Intn(1000),
 				Nsfw:          i%10 == 0,
 				Greyscale:     grey,
@@ -280,7 +283,7 @@ func TestAuthorCap(t *testing.T) {
 	for i := range 5 {
 		add(100+i, fmt.Sprintf("other-%d", i), "b")
 	}
-	b := &builder{now: testNow}
+	b := &builder{now: testNow, start: testStart}
 	b.index(in, nil)
 	tally := b.tally(filmItem, func(*post) int { return 0 }, 1)
 	if got := tally.counts["a"][0]; got != AuthorCap {
@@ -305,7 +308,7 @@ func TestMovers(t *testing.T) {
 			})
 		}
 	}
-	early := time.Date(2022, 6, 1, 0, 0, 0, 0, time.UTC)
+	early := time.Date(2024, 6, 1, 0, 0, 0, 0, time.UTC)
 	late := time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC)
 	add(early, "rising", 10)
 	add(late, "rising", 60)
@@ -314,7 +317,7 @@ func TestMovers(t *testing.T) {
 	add(early, "falling", 40)
 	add(late, "falling", 10)
 
-	b := &builder{now: testNow}
+	b := &builder{now: testNow, start: testStart}
 	b.index(in, nil)
 	movers := b.movers(filmItem, 50)
 	if len(movers.Up) != 1 || movers.Up[0].Slug != "rising" {
@@ -441,4 +444,58 @@ func TestRounding(t *testing.T) {
 		t.Fatal(err)
 	}
 	walk(doc)
+}
+
+func TestWindowStart(t *testing.T) {
+	posts := []analogdb.StatsInputPost{}
+	add := func(month time.Time, n int) {
+		for i := range n {
+			posts = append(posts, analogdb.StatsInputPost{ID: len(posts) + 1, Time: month.Add(time.Duration(i) * time.Minute).Unix()})
+		}
+	}
+	add(time.Date(2018, 6, 1, 0, 0, 0, 0, time.UTC), 5)
+	add(time.Date(2021, 12, 1, 0, 0, 0, 0, time.UTC), 30)
+	for m := testStart; m.Before(monthOf(testNow)); m = m.AddDate(0, 1, 0) {
+		add(m, MinMonthPosts)
+	}
+	add(monthOf(testNow), 10)
+
+	if got := windowStart(posts, testNow); !got.Equal(testStart) {
+		t.Errorf("want the window from %v, got %v", testStart, got)
+	}
+
+	gap := time.Date(2024, 5, 1, 0, 0, 0, 0, time.UTC)
+	thinned := slices.DeleteFunc(slices.Clone(posts), func(p analogdb.StatsInputPost) bool {
+		return monthOf(time.Unix(p.Time, 0)).Equal(gap) && p.ID%2 == 0
+	})
+	if got := windowStart(thinned, testNow); !got.Equal(gap.AddDate(0, 1, 0)) {
+		t.Errorf("want the window after a thin month, got %v", got)
+	}
+
+	thin := posts[:35]
+	if got := windowStart(thin, testNow); !got.Equal(time.Date(2018, 6, 1, 0, 0, 0, 0, time.UTC)) {
+		t.Errorf("want the first post's month without a full month, got %v", got)
+	}
+}
+
+func TestRelativeRanges(t *testing.T) {
+	stats := build(t, testSeed())
+	tr := stats.Trends
+	if stats.Window.From != "2022-01-01" {
+		t.Errorf("want the window from the first post's month, got %s", stats.Window.From)
+	}
+	if tr.ArrivalsAfter != "2023-07" {
+		t.Errorf("want arrivals after 18 months, got %s", tr.ArrivalsAfter)
+	}
+	if tr.Movers.Recent != (analogdb.StatsMonthRange{From: "2025-10", To: "2026-09"}) {
+		t.Errorf("want the last 12 complete months, got %+v", tr.Movers.Recent)
+	}
+	if tr.Movers.Base != (analogdb.StatsMonthRange{From: "2023-10", To: "2025-09"}) {
+		t.Errorf("want the 24 months before, got %+v", tr.Movers.Base)
+	}
+
+	b := &builder{now: testNow, start: time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)}
+	if base, _ := b.moverRanges(); !base.from.Equal(b.start) {
+		t.Errorf("want the base clipped to the window, got %v", base.from)
+	}
 }
