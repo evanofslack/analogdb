@@ -14,6 +14,7 @@ const (
 	postsEntity   = "posts"
 	filmsEntity   = "films"
 	camerasEntity = "cameras"
+	statsEntity   = "stats"
 
 	// how long a generation read from redis is reused
 	genMemoTTL = time.Second
@@ -32,6 +33,7 @@ func newGenerations() map[string]*generation {
 		postsEntity:   {},
 		filmsEntity:   {},
 		camerasEntity: {},
+		statsEntity:   {},
 	}
 }
 

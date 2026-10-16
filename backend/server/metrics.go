@@ -29,6 +29,8 @@ type httpStats struct {
 	searchDuration     *prometheus.HistogramVec
 	searchSlots        *prometheus.GaugeVec
 	searchSlotsInUse   *prometheus.GaugeVec
+	statsBuildSeconds  prometheus.Histogram
+	statsBuildErrors   prometheus.Counter
 }
 
 func newHttpStats() *httpStats {
@@ -170,6 +172,25 @@ func newHttpStats() *httpStats {
 		[]string{"kind"},
 	)
 
+	statsBuildSeconds := prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.StatsSubsystem,
+			Name:      "build_seconds",
+			Help:      "Duration of stats snapshot builds",
+			Buckets:   []float64{1, 5, 10, 20, 30, 60, 120, 300},
+		},
+	)
+
+	statsBuildErrors := prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: metrics.AnalogdbNamespace,
+			Subsystem: metrics.StatsSubsystem,
+			Name:      "build_errors_total",
+			Help:      "Number of failed stats snapshot builds",
+		},
+	)
+
 	stats := &httpStats{
 		requestsTotal:      requestsTotal,
 		requestDuration:    requestDuration,
@@ -185,6 +206,8 @@ func newHttpStats() *httpStats {
 		searchDuration:     searchDuration,
 		searchSlots:        searchSlots,
 		searchSlotsInUse:   searchSlotsInUse,
+		statsBuildSeconds:  statsBuildSeconds,
+		statsBuildErrors:   statsBuildErrors,
 	}
 
 	return stats
@@ -205,6 +228,8 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 	registerer.MustRegister(stats.searchDuration)
 	registerer.MustRegister(stats.searchSlots)
 	registerer.MustRegister(stats.searchSlotsInUse)
+	registerer.MustRegister(stats.statsBuildSeconds)
+	registerer.MustRegister(stats.statsBuildErrors)
 	return nil
 }
 

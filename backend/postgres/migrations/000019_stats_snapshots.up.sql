@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS stats_snapshots (
+    id BIGSERIAL PRIMARY KEY,
+    created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    seed_version TEXT NOT NULL,
+    build_ms INTEGER NOT NULL,
+    body JSONB NOT NULL
+);

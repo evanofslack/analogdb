@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/evanofslack/analogdb"
 )
@@ -89,4 +92,93 @@ func TestStatsSeed(t *testing.T) {
 			t.Errorf("want %d prompts, got %d", len(analogdb.StatsPromptKeys), len(got.Prompts))
 		}
 	})
+}
+
+func TestLoadStatsInput(t *testing.T) {
+	db, cleanup := mustOpen(t)
+	defer cleanup()
+	defer mustClose(t, db)
+
+	ctx := context.Background()
+	since := time.Date(2022, 1, 1, 0, 0, 0, 0, time.UTC)
+	exec := func(query string, args ...any) {
+		t.Helper()
+		if _, err := db.db.ExecContext(ctx, query, args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	exec(`INSERT INTO films (film_make, film_type, film_speed, color_type, description) VALUES ('kodak', 'portra 400', 400, 'color', '')`)
+	insert := `INSERT INTO pictures (id, url, permalink, author, score, time, film_make, film_type, lowurl, medurl)
+		VALUES ($1::integer, 'u' || $1::text, 'p' || $1::text, $2, $3, $4, $5, $6, 'low.jpg', 'med.jpg')`
+	exec(insert, 1, "a", 10, since.Add(-time.Hour).Unix(), "kodak", "portra 400")
+	exec(insert, 2, "a", 10, since.Add(time.Hour).Unix(), "kodak", "portra 400")
+	exec(insert, 3, "b", 20, since.Add(2*time.Hour).Unix(), "kodak", "unknown")
+	exec(`INSERT INTO colors (hex, css, html, percent, post_id, oklab_l, oklab_a, oklab_b, chroma, hue)
+		VALUES ('ff0000', 'red', 'red', 0.5, 1, 0.6, 0.2, 0.1, 0.22, 26), ('ff0000', 'red', 'red', 0.5, 2, 0.6, 0.2, 0.1, 0.22, 26)`)
+	exec(`INSERT INTO keywords (word, weight, post_id) VALUES ('neon', 0.9, 1), ('neon', 0.9, 2), ('neon', 0.5, 2), ('tree', 0.9, 2)`)
+
+	in, err := NewStatsService(db).LoadStatsInput(ctx, since, []string{"neon"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(in.Posts) != 2 || in.Posts[0].ID != 2 || in.Posts[1].ID != 3 {
+		t.Fatalf("want posts 2 and 3 in the window, got %+v", in.Posts)
+	}
+	if p := in.Posts[0]; p.FilmSlug != "kodak-portra-400" || p.FilmColorType != "color" || len(p.Images) != 2 {
+		t.Errorf("want post 2 joined to the catalog with images, got %+v", p)
+	}
+	if p := in.Posts[1]; p.FilmSlug != "" {
+		t.Errorf("want no film for a type outside the catalog, got %q", p.FilmSlug)
+	}
+	if in.Posts[0].Popularity != 0 || in.Posts[1].Popularity != 1 {
+		t.Errorf("want popularity ranked within the month, got %v and %v", in.Posts[0].Popularity, in.Posts[1].Popularity)
+	}
+	if len(in.Colors) != 1 || in.Colors[0].PostID != 2 {
+		t.Errorf("want only post 2's color, got %+v", in.Colors)
+	}
+	if len(in.Keywords) != 1 || in.Keywords[0].Word != "neon" || in.Keywords[0].PostID != 2 {
+		t.Errorf("want one neon keyword for post 2, got %+v", in.Keywords)
+	}
+}
+
+func TestStatsSnapshots(t *testing.T) {
+	db, cleanup := mustOpen(t)
+	defer cleanup()
+	defer mustClose(t, db)
+
+	stats := NewStatsService(db)
+	ctx := context.Background()
+
+	if _, err := stats.FindLatestSnapshot(ctx); analogdb.ErrorCode(err) != analogdb.ERRNOTFOUND {
+		t.Fatalf("want not found before any snapshot, got %v", err)
+	}
+	for i := range statsSnapshotsKept + 2 {
+		snapshot := &analogdb.StatsSnapshot{SeedVersion: "v1", BuildMs: i, Body: []byte(fmt.Sprintf(`{"version": 1, "build": %d}`, i))}
+		if err := stats.CreateSnapshot(ctx, snapshot); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	snapshots, err := stats.FindSnapshots(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snapshots) != statsSnapshotsKept {
+		t.Fatalf("want %d snapshots kept, got %d", statsSnapshotsKept, len(snapshots))
+	}
+	if snapshots[0].BuildMs != statsSnapshotsKept+1 || snapshots[0].Size == 0 {
+		t.Errorf("want the newest first with a size, got %+v", snapshots[0])
+	}
+
+	latest, err := stats.FindLatestSnapshot(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body struct{ Build int }
+	if err := json.Unmarshal(latest.Body, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.Build != statsSnapshotsKept+1 || latest.SeedVersion != "v1" {
+		t.Errorf("want the newest body, got %+v", body)
+	}
 }

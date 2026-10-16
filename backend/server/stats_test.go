@@ -7,13 +7,18 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/evanofslack/analogdb"
 	"github.com/evanofslack/analogdb/config"
 )
 
 type mockStats struct {
-	seed *analogdb.StatsSeed
+	seed      *analogdb.StatsSeed
+	snapshots []*analogdb.StatsSnapshot
+	// block, when set, holds LoadStatsInput until it is closed
+	block   chan struct{}
+	started chan struct{}
 }
 
 func (m *mockStats) ReplaceSeed(ctx context.Context, seed *analogdb.StatsSeed) error {
@@ -26,6 +31,49 @@ func (m *mockStats) FindSeed(ctx context.Context) (*analogdb.StatsSeed, error) {
 		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "stats seed not found"}
 	}
 	return m.seed, nil
+}
+
+func (m *mockStats) LoadStatsInput(ctx context.Context, since time.Time, subjects []string) (*analogdb.StatsInput, error) {
+	if m.started != nil {
+		close(m.started)
+	}
+	if m.block != nil {
+		<-m.block
+	}
+	in := &analogdb.StatsInput{}
+	for i := 1; i <= 3; i++ {
+		in.Posts = append(in.Posts, analogdb.StatsInputPost{ID: i, Author: "a", Time: since.Unix() + int64(i), Popularity: 0.5})
+	}
+	return in, nil
+}
+
+func (m *mockStats) CreateSnapshot(ctx context.Context, snapshot *analogdb.StatsSnapshot) error {
+	snapshot.ID = int64(len(m.snapshots) + 1)
+	snapshot.Created = time.Now()
+	m.snapshots = append(m.snapshots, snapshot)
+	return nil
+}
+
+func (m *mockStats) FindLatestSnapshot(ctx context.Context) (*analogdb.StatsSnapshot, error) {
+	if len(m.snapshots) == 0 {
+		return nil, &analogdb.Error{Code: analogdb.ERRNOTFOUND, Message: "stats not built yet"}
+	}
+	return m.snapshots[len(m.snapshots)-1], nil
+}
+
+func (m *mockStats) FindSnapshots(ctx context.Context) ([]*analogdb.StatsSnapshot, error) {
+	return m.snapshots, nil
+}
+
+type mockScanner struct{}
+
+func (mockScanner) ScanVectors(ctx context.Context, fn func(postID int, vector []float32) error) error {
+	for id := 1; id <= 3; id++ {
+		if err := fn(id, statsVector(id)); err != nil {
+			return err
+		}
+	}
+	return fn(99, statsVector(0))
 }
 
 func statsVector(i int) []float32 {
@@ -157,5 +205,112 @@ func TestGetStatsSeed(t *testing.T) {
 	}
 	if got.Model != stats.seed.Model || len(got.Themes) != 2 || got.Themes[1].Role == nil {
 		t.Errorf("want model and 2 themes with the border role, got %+v", got)
+	}
+}
+
+func TestGetStats(t *testing.T) {
+	s := newRolesServer(t, &config.Config{})
+	stats := &mockStats{seed: validStatsSeed()}
+	s.StatsService = stats
+	s.VectorScanner = mockScanner{}
+
+	if w := roleRequest(s, http.MethodGet, "/v1/stats", nil, ""); w.Code != http.StatusNotFound {
+		t.Fatalf("want 404 before a build, got %d", w.Code)
+	}
+
+	w := roleRequest(s, http.MethodPost, "/v1/admin/stats/rebuild", &scraperPair, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("rebuild: want 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var rebuilt StatsRebuildResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &rebuilt); err != nil {
+		t.Fatal(err)
+	}
+	if rebuilt.ID != 1 || rebuilt.Themes == 0 {
+		t.Errorf("want snapshot 1 with themes, got %+v", rebuilt)
+	}
+
+	w = roleRequest(s, http.MethodGet, "/v1/stats", nil, "")
+	if w.Code != http.StatusOK {
+		t.Fatalf("want 200 after a build, got %d", w.Code)
+	}
+	if cc := w.Header().Get("Cache-Control"); !strings.Contains(cc, "s-maxage=3600") {
+		t.Errorf("want edge cacheable, got %q", cc)
+	}
+	var got analogdb.Stats
+	if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Totals.Photos != 3 || got.SeedVersion != stats.seed.Version {
+		t.Errorf("want 3 photos and the seed version, got %+v", got.Totals)
+	}
+
+	w = roleRequest(s, http.MethodGet, "/v1/admin/stats/snapshots", &adminPair, "")
+	if w.Code != http.StatusOK || strings.Contains(w.Body.String(), "themes") {
+		t.Errorf("want snapshots without bodies, got %d %s", w.Code, w.Body.String())
+	}
+}
+
+func TestRebuildStatsRoles(t *testing.T) {
+	s := newRolesServer(t, &config.Config{})
+	s.StatsService = &mockStats{seed: validStatsSeed()}
+	s.VectorScanner = mockScanner{}
+
+	tests := []struct {
+		name  string
+		creds *pair
+		want  int
+	}{
+		{name: "anonymous", want: http.StatusUnauthorized},
+		{name: "web", creds: &webPair, want: http.StatusForbidden},
+		{name: "scraper", creds: &scraperPair, want: http.StatusOK},
+		{name: "admin", creds: &adminPair, want: http.StatusOK},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if w := roleRequest(s, http.MethodPost, "/v1/admin/stats/rebuild", tt.creds, ""); w.Code != tt.want {
+				t.Errorf("want %d, got %d", tt.want, w.Code)
+			}
+		})
+	}
+	if w := roleRequest(s, http.MethodGet, "/v1/admin/stats/snapshots", &scraperPair, ""); w.Code != http.StatusForbidden {
+		t.Errorf("scraper snapshots: want 403, got %d", w.Code)
+	}
+}
+
+func TestRebuildStatsBusy(t *testing.T) {
+	s := newRolesServer(t, &config.Config{})
+	stats := &mockStats{seed: validStatsSeed(), block: make(chan struct{}), started: make(chan struct{})}
+	s.StatsService = stats
+	s.VectorScanner = mockScanner{}
+
+	first := make(chan int)
+	go func() {
+		first <- roleRequest(s, http.MethodPost, "/v1/admin/stats/rebuild", &scraperPair, "").Code
+	}()
+	<-stats.started
+	if w := roleRequest(s, http.MethodPost, "/v1/admin/stats/rebuild", &scraperPair, ""); w.Code != http.StatusConflict {
+		t.Errorf("want 409 while a build runs, got %d", w.Code)
+	}
+	close(stats.block)
+	if code := <-first; code != http.StatusOK {
+		t.Errorf("want the first build to finish, got %d", code)
+	}
+	if len(stats.snapshots) != 1 {
+		t.Errorf("want one snapshot, got %d", len(stats.snapshots))
+	}
+}
+
+func TestRebuildStatsKeepsPrevious(t *testing.T) {
+	s := newRolesServer(t, &config.Config{})
+	stats := &mockStats{snapshots: []*analogdb.StatsSnapshot{{ID: 1, Body: []byte(`{"version":1}`)}}}
+	s.StatsService = stats
+	s.VectorScanner = mockScanner{}
+
+	if w := roleRequest(s, http.MethodPost, "/v1/admin/stats/rebuild", &adminPair, ""); w.Code != http.StatusNotFound {
+		t.Errorf("want the missing seed reported, got %d", w.Code)
+	}
+	if len(stats.snapshots) != 1 {
+		t.Errorf("want nothing stored on failure, got %d snapshots", len(stats.snapshots))
 	}
 }

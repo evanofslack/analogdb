@@ -2178,6 +2178,38 @@
                     }
                 }
             }
+        },
+        "/stats": {
+            "get": {
+                "description": "The latest stats snapshot: how each film looks, film families, subjects, trends, visual themes, popularity and posting time. Rebuilt daily.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "stats"
+                ],
+                "summary": "Get collection stats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/analogdb.Stats"
+                        }
+                    },
+                    "404": {
+                        "description": "No snapshot built yet",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -2831,6 +2863,672 @@
                 "ReportDuplicate",
                 "ReportOther"
             ]
+        },
+        "analogdb.Stats": {
+            "type": "object",
+            "properties": {
+                "families": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsFamily"
+                    }
+                },
+                "films": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsFilm"
+                    }
+                },
+                "generated": {
+                    "type": "string"
+                },
+                "method": {
+                    "$ref": "#/definitions/analogdb.StatsMethod"
+                },
+                "popularity": {
+                    "$ref": "#/definitions/analogdb.StatsPopularity"
+                },
+                "posting": {
+                    "$ref": "#/definitions/analogdb.StatsPosting"
+                },
+                "seed_version": {
+                    "type": "string",
+                    "example": "2026-10-16T20:11:27+00:00"
+                },
+                "subjects": {
+                    "$ref": "#/definitions/analogdb.StatsSubjects"
+                },
+                "themes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsThemeEntry"
+                    }
+                },
+                "totals": {
+                    "$ref": "#/definitions/analogdb.StatsTotals"
+                },
+                "trends": {
+                    "$ref": "#/definitions/analogdb.StatsTrends"
+                },
+                "version": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "window": {
+                    "$ref": "#/definitions/analogdb.StatsWindow"
+                }
+            }
+        },
+        "analogdb.StatsArrival": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 112
+                },
+                "first": {
+                    "type": "string",
+                    "example": "2024-07"
+                },
+                "kind": {
+                    "type": "string",
+                    "example": "camera"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Pentax 17"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "pentax-17"
+                }
+            }
+        },
+        "analogdb.StatsBands": {
+            "type": "object",
+            "properties": {
+                "cool": {
+                    "type": "number",
+                    "example": 0.25
+                },
+                "green": {
+                    "type": "number",
+                    "example": 0.13
+                },
+                "magenta": {
+                    "type": "number",
+                    "example": 0.03
+                },
+                "warm": {
+                    "type": "number",
+                    "example": 0.59
+                }
+            }
+        },
+        "analogdb.StatsBorder": {
+            "type": "object",
+            "properties": {
+                "popularity": {
+                    "type": "number",
+                    "example": 35
+                },
+                "theme": {
+                    "type": "string",
+                    "example": "t34"
+                }
+            }
+        },
+        "analogdb.StatsFamily": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "example": "landscape"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Landscape and slide"
+                }
+            }
+        },
+        "analogdb.StatsFilm": {
+            "type": "object",
+            "properties": {
+                "bands": {
+                    "$ref": "#/definitions/analogdb.StatsBands"
+                },
+                "chroma": {
+                    "type": "number",
+                    "example": 0.034
+                },
+                "color_type": {
+                    "type": "string",
+                    "example": "color"
+                },
+                "family": {
+                    "type": "string",
+                    "example": "portrait"
+                },
+                "hue": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "lightness": {
+                    "type": "number",
+                    "example": 0.549
+                },
+                "make": {
+                    "type": "string",
+                    "example": "kodak"
+                },
+                "palette": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "#c9a27e"
+                    ]
+                },
+                "popularity": {
+                    "type": "number",
+                    "example": 57.1
+                },
+                "position": {
+                    "$ref": "#/definitions/analogdb.StatsPosition"
+                },
+                "post_count": {
+                    "type": "integer",
+                    "example": 4084
+                },
+                "similar": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsSimilar"
+                    }
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "kodak-portra-400"
+                },
+                "styles": {
+                    "$ref": "#/definitions/analogdb.StatsStyles"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "portra 400"
+                },
+                "typical": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsPost"
+                    }
+                }
+            }
+        },
+        "analogdb.StatsFocalGroup": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 4447
+                },
+                "popularity": {
+                    "type": "number",
+                    "example": 51
+                },
+                "value": {
+                    "type": "integer",
+                    "example": 50
+                }
+            }
+        },
+        "analogdb.StatsGroup": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 1009
+                },
+                "popularity": {
+                    "type": "number",
+                    "example": 67.2
+                }
+            }
+        },
+        "analogdb.StatsMethod": {
+            "type": "object",
+            "properties": {
+                "author_cap": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "min_camera_posts": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "min_film_posts": {
+                    "type": "integer",
+                    "example": 80
+                },
+                "model": {
+                    "type": "string",
+                    "example": "ViT-B-16-laion2b_s34b_b88k"
+                }
+            }
+        },
+        "analogdb.StatsMover": {
+            "type": "object",
+            "properties": {
+                "change": {
+                    "type": "number",
+                    "example": 5.5
+                },
+                "from": {
+                    "type": "number",
+                    "example": 9.1
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Kodak gold 200"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "kodak-gold-200"
+                },
+                "to": {
+                    "type": "number",
+                    "example": 14.6
+                }
+            }
+        },
+        "analogdb.StatsMoverGroups": {
+            "type": "object",
+            "properties": {
+                "cameras": {
+                    "$ref": "#/definitions/analogdb.StatsMovers"
+                },
+                "films": {
+                    "$ref": "#/definitions/analogdb.StatsMovers"
+                }
+            }
+        },
+        "analogdb.StatsMovers": {
+            "type": "object",
+            "properties": {
+                "down": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsMover"
+                    }
+                },
+                "up": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsMover"
+                    }
+                }
+            }
+        },
+        "analogdb.StatsPopularity": {
+            "type": "object",
+            "properties": {
+                "aperture": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsValueGroup"
+                    }
+                },
+                "border": {
+                    "$ref": "#/definitions/analogdb.StatsBorder"
+                },
+                "bw": {
+                    "type": "number",
+                    "example": 33.2
+                },
+                "color": {
+                    "type": "number",
+                    "example": 53.1
+                },
+                "focal": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsFocalGroup"
+                    }
+                },
+                "saturation": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                }
+            }
+        },
+        "analogdb.StatsPosition": {
+            "type": "object",
+            "properties": {
+                "x": {
+                    "type": "number",
+                    "example": 0.21
+                },
+                "y": {
+                    "type": "number",
+                    "example": -0.44
+                }
+            }
+        },
+        "analogdb.StatsPost": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.Image"
+                    }
+                },
+                "nsfw": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "score": {
+                    "type": "integer",
+                    "example": 150
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Sunset over the lake"
+                }
+            }
+        },
+        "analogdb.StatsPosting": {
+            "type": "object",
+            "properties": {
+                "cells": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsPostingCell"
+                    }
+                }
+            }
+        },
+        "analogdb.StatsPostingCell": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 120
+                },
+                "hour": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "popularity": {
+                    "type": "number",
+                    "example": 46
+                },
+                "weekday": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "analogdb.StatsSimilar": {
+            "type": "object",
+            "properties": {
+                "similarity": {
+                    "type": "number",
+                    "example": 0.83
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "kodak-gold-200"
+                }
+            }
+        },
+        "analogdb.StatsStyles": {
+            "type": "object",
+            "properties": {
+                "crisp": {
+                    "type": "number",
+                    "example": 0.1
+                },
+                "grain": {
+                    "type": "number",
+                    "example": -0.3
+                },
+                "red_night": {
+                    "type": "number",
+                    "example": 0.02
+                },
+                "teal_orange": {
+                    "type": "number",
+                    "example": -0.05
+                },
+                "vivid": {
+                    "type": "number",
+                    "example": 0.12
+                }
+            }
+        },
+        "analogdb.StatsSubjectRow": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "lift": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "cinestill-800t"
+                }
+            }
+        },
+        "analogdb.StatsSubjects": {
+            "type": "object",
+            "properties": {
+                "rows": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsSubjectRow"
+                    }
+                },
+                "words": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "neon"
+                    ]
+                }
+            }
+        },
+        "analogdb.StatsThemeEntry": {
+            "type": "object",
+            "properties": {
+                "bw": {
+                    "$ref": "#/definitions/analogdb.StatsGroup"
+                },
+                "color": {
+                    "$ref": "#/definitions/analogdb.StatsGroup"
+                },
+                "count": {
+                    "type": "integer",
+                    "example": 1009
+                },
+                "key": {
+                    "type": "string",
+                    "example": "t02"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Color figure and nude"
+                },
+                "nsfw_share": {
+                    "type": "number",
+                    "example": 0.75
+                },
+                "popularity": {
+                    "type": "number",
+                    "example": 67.2
+                },
+                "posts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsPost"
+                    }
+                }
+            }
+        },
+        "analogdb.StatsTotals": {
+            "type": "object",
+            "properties": {
+                "cameras": {
+                    "type": "integer",
+                    "example": 640
+                },
+                "films": {
+                    "type": "integer",
+                    "example": 212
+                },
+                "photographers": {
+                    "type": "integer",
+                    "example": 9080
+                },
+                "photos": {
+                    "type": "integer",
+                    "example": 24531
+                }
+            }
+        },
+        "analogdb.StatsTrendItem": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string",
+                    "example": ""
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Kodak gold 200"
+                },
+                "shares": {
+                    "type": "array",
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "kodak-gold-200"
+                }
+            }
+        },
+        "analogdb.StatsTrends": {
+            "type": "object",
+            "properties": {
+                "arrivals": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsArrival"
+                    }
+                },
+                "camera_brands": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsTrendItem"
+                    }
+                },
+                "cameras": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsTrendItem"
+                    }
+                },
+                "film_brands": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsTrendItem"
+                    }
+                },
+                "films": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsTrendItem"
+                    }
+                },
+                "movers": {
+                    "$ref": "#/definitions/analogdb.StatsMoverGroups"
+                },
+                "partial": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "2026H2"
+                    ]
+                },
+                "periods": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "2022H1"
+                    ]
+                },
+                "themes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/analogdb.StatsTrendItem"
+                    }
+                }
+            }
+        },
+        "analogdb.StatsValueGroup": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "example": 1346
+                },
+                "popularity": {
+                    "type": "number",
+                    "example": 52
+                },
+                "value": {
+                    "type": "string",
+                    "example": "f/1.4"
+                }
+            }
+        },
+        "analogdb.StatsWindow": {
+            "type": "object",
+            "properties": {
+                "from": {
+                    "type": "string",
+                    "example": "2022-01-01"
+                },
+                "to": {
+                    "type": "string",
+                    "example": "2026-10-17"
+                }
+            }
         },
         "server.AuthorsResponse": {
             "type": "object",

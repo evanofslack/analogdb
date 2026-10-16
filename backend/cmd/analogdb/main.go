@@ -196,6 +196,7 @@ func main() {
 	var similarityService analogdb.SimilarityService
 	var searchService analogdb.SearchService
 	var colorService analogdb.ColorService
+	var statsService analogdb.StatsService
 
 	// create service implementations
 	postService = postgres.NewPostService(db)
@@ -206,6 +207,7 @@ func main() {
 	scrapeService = postgres.NewScrapeService(db)
 	keywordService = postgres.NewKeywordService(db)
 	colorService = postgres.NewColorService(db)
+	statsService = postgres.NewStatsService(db)
 
 	// if cache enabled, replace the with cache implementation
 	if cfg.App.CacheEnabled {
@@ -216,6 +218,7 @@ func main() {
 		filmService = redis.NewCacheFilmService(rdb, filmService)
 		cameraService = redis.NewCacheCameraService(rdb, cameraService)
 		keywordService = redis.NewCacheKeywordService(rdb, keywordService)
+		statsService = redis.NewCacheStatsService(rdb, statsService)
 	}
 
 	similarityService = weaviate.NewSimilarityService(dbVec, postService)
@@ -241,11 +244,12 @@ func main() {
 	server.VectorReadyService = dbVec
 	server.VectorCounter = dbVec
 	server.VectorLister = dbVec
+	server.VectorScanner = dbVec
 	server.AdminService = postgres.NewAdminService(db)
 	server.ExtractionService = postgres.NewExtractionService(db)
 	server.ColorService = colorService
 	server.ReportService = postgres.NewReportService(db)
-	server.StatsService = postgres.NewStatsService(db)
+	server.StatsService = statsService
 	if analytics != nil {
 		server.AnalyticsService = analytics
 	}

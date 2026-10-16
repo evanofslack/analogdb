@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -52,6 +53,7 @@ type Server struct {
 	missingVectorCache missingVectorCache
 	reportLimit        func(http.Handler) http.Handler
 	ui                 *uiEvents
+	statsBuild         sync.Mutex
 
 	PostService       analogdb.PostService
 	FilmService       analogdb.FilmService
@@ -72,6 +74,7 @@ type Server struct {
 	AnalyticsService  analogdb.AnalyticsService
 	VectorCounter     analogdb.VectorCounter
 	VectorLister      analogdb.VectorLister
+	VectorScanner     analogdb.VectorScanner
 	SearchService     analogdb.SearchService
 
 	CacheReadyService  analogdb.ReadyService
@@ -168,6 +171,7 @@ func (s *Server) mountResourceHandlers() {
 	s.mountAdminHandlers(v1)
 	s.mountSearchHandlers(v1)
 	s.mountEventHandlers(v1)
+	s.mountStatsHandlers(v1)
 	s.router.Mount("/v1", v1)
 
 	// Mount legacy routes with deprecation
