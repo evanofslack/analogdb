@@ -14,7 +14,7 @@ import {
   SearchDemo,
   SimilarityData,
 } from "@lib/about";
-import { authorized_fetch, postsApi } from "@lib/client";
+import { authorized_fetch } from "@lib/client";
 import { representativeHue } from "@lib/color";
 import { getAuthorsTotalCount } from "@lib/data/authors";
 import { getCameraOptions } from "@lib/data/cameras";
@@ -45,8 +45,7 @@ const RAINBOW_BANDS: { color: string; from: number; to: number }[] = [
 ];
 const RAINBOW_NEUTRALS = ["black", "white"];
 const RAINBOW_COUNT = 2;
-// one request at the api's max page size, the posts wrapper caps client calls lower
-const RAINBOW_PAGE_SIZE = 200;
+const RAINBOW_PAGE_SIZE = 100;
 const RAINBOW_POOL = 20;
 
 function inBand(hue: number, { from, to }: { from: number; to: number }) {
@@ -194,7 +193,7 @@ async function fetchColor(
 async function fetchRainbow(): Promise<RainbowPhoto[]> {
   const result: RainbowPhoto[] = [];
   try {
-    const response = await postsApi.postsGet({
+    const response = await getPosts({
       ...colorPostsRequest,
       pageSize: RAINBOW_PAGE_SIZE,
     });
