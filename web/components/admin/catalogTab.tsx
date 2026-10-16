@@ -266,7 +266,7 @@ export default function CatalogTab({
         <UnmatchedFilms films={quality.unmatched_films} />
       </Section>
 
-      <Section title="Coverage" count={quality.coverage.total}>
+      <Section title="Coverage" count={quality.coverage.total} panel>
         <Coverage coverage={quality.coverage} />
       </Section>
 

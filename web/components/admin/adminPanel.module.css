@@ -100,7 +100,7 @@
 }
 
 .section {
-  margin-bottom: 2.25rem;
+  margin-bottom: 2.75rem;
 }
 
 .sectionHead {
@@ -109,7 +109,61 @@
   align-items: center;
   gap: 0.5rem 1rem;
   min-height: 1.75rem;
-  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--adb-divider);
+}
+
+.panel {
+  padding: 0.875rem 1.25rem 1.125rem;
+  background-color: var(--adb-surface-alt);
+  border-radius: 4px;
+}
+
+.panel .sectionHead {
+  padding-bottom: 0;
+  margin-bottom: 0.875rem;
+  border-bottom: none;
+}
+
+.panel .table tbody tr:hover td {
+  background: none;
+}
+
+.panelFoot {
+  margin: 0.875rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--adb-muted);
+}
+
+.dashboard {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2.75rem;
+}
+
+.dashboard > .section {
+  margin-bottom: 0;
+}
+
+.dbGrid {
+  display: grid;
+  gap: 1.25rem 2.5rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .dashboard {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .span {
+    grid-column: 1 / -1;
+  }
+
+  .dbGrid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
 }
 
 .sectionTitle {
@@ -152,8 +206,8 @@
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  gap: 1.25rem 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+  gap: 1rem;
 }
 
 .stat {
@@ -166,12 +220,8 @@ a.stat:hover .statValue {
   text-underline-offset: 3px;
 }
 
-.statsRow {
-  margin-top: 1.25rem;
-}
-
 .statsGap {
-  margin-bottom: 1.75rem;
+  margin-bottom: 2rem;
 }
 
 .statLabel {
@@ -227,10 +277,6 @@ a.stat:hover .statValue {
 
 .statusDot[data-status="down"]::before {
   background: currentColor;
-}
-
-.appInfo {
-  color: var(--adb-muted);
 }
 
 .stale {

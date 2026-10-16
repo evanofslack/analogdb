@@ -326,36 +326,38 @@ function APISection({ api, grafana }: { api: AnalyticsAPI; grafana?: string }) {
         )
       }
     >
-      <div className={`${styles.stats} ${styles.statsGap}`}>
-        <Stat
-          label="Requests"
-          value={formatNumber(current.requests)}
-          detail={
-            <Change current={current.requests} previous={previous.requests} />
-          }
-        />
-        <Stat
-          label="Direct share"
-          value={formatPercent(current.direct, current.requests)}
-          detail={
-            <Change
-              current={current.direct_share}
-              previous={previous.direct_share}
-              invert
-            />
-          }
-        />
-        <Stat
-          label="p95 latency"
-          value={`${formatNumber(Math.round(current.p95_ms))} ms`}
-          detail={
-            <Change
-              current={current.p95_ms}
-              previous={previous.p95_ms}
-              invert
-            />
-          }
-        />
+      <div className={`${styles.panel} ${styles.statsGap}`}>
+        <div className={styles.stats}>
+          <Stat
+            label="Requests"
+            value={formatNumber(current.requests)}
+            detail={
+              <Change current={current.requests} previous={previous.requests} />
+            }
+          />
+          <Stat
+            label="Direct share"
+            value={formatPercent(current.direct, current.requests)}
+            detail={
+              <Change
+                current={current.direct_share}
+                previous={previous.direct_share}
+                invert
+              />
+            }
+          />
+          <Stat
+            label="p95 latency"
+            value={`${formatNumber(Math.round(current.p95_ms))} ms`}
+            detail={
+              <Change
+                current={current.p95_ms}
+                previous={previous.p95_ms}
+                invert
+              />
+            }
+          />
+        </div>
       </div>
       <div className={styles.twoCol}>
         <Section title="Direct callers" level="h3">
@@ -472,7 +474,7 @@ function AnalyticsBody({
     ));
   return (
     <>
-      <section className={styles.section}>
+      <Section panel>
         <div className={styles.stats}>
           <Stat
             label={
@@ -549,9 +551,9 @@ function AnalyticsBody({
             }
           />
         </div>
-      </section>
+      </Section>
 
-      <Section title={`Page views per ${analytics.bucket}`}>
+      <Section panel title={`Page views per ${analytics.bucket}`}>
         <TimeChart
           data={analytics.series}
           series={viewSeries}

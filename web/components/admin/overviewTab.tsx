@@ -61,20 +61,20 @@ export default function OverviewTab({
     vectors.objects === null || vectors.objects !== vectors.posts;
 
   return (
-    <>
-      <Section title="Status">
+    <div className={styles.dashboard}>
+      <Section title="Status" panel>
         <div className={styles.statusRow}>
           {dependencies.map((name) => (
             <StatusDot key={name} label={name} status={status[name]} />
           ))}
-          <span className={styles.appInfo}>
-            {app.version} · {app.env} · {app.hostname} · up{" "}
-            {formatDuration(app.uptime_seconds)}
-          </span>
         </div>
+        <p className={styles.panelFoot}>
+          {app.version} · {app.env} · {app.hostname} · up{" "}
+          {formatDuration(app.uptime_seconds)}
+        </p>
       </Section>
 
-      <Section title="To do">
+      <Section title="To do" panel>
         <div className={styles.stats}>
           <Stat
             label="Open reports"
@@ -95,6 +95,7 @@ export default function OverviewTab({
       </Section>
 
       <Section
+        panel
         title={
           <Hint
             label="Freshness"
@@ -114,7 +115,15 @@ export default function OverviewTab({
         </div>
       </Section>
 
-      <Section title="Collection">
+      <Section panel title={<Hint label="Posted" tip={postedTip} />}>
+        <div className={styles.stats}>
+          <Stat label="Last 24h" value={formatNumber(posted.day)} />
+          <Stat label="Last 7d" value={formatNumber(posted.week)} />
+          <Stat label="Last 30d" value={formatNumber(posted.month)} />
+        </div>
+      </Section>
+
+      <Section title="Collection" panel>
         <div className={styles.stats}>
           <Stat label="Posts" value={formatNumber(counts.posts)} />
           <Stat label="Authors" value={formatNumber(counts.authors)} />
@@ -122,23 +131,9 @@ export default function OverviewTab({
           <Stat label="Films" value={formatNumber(counts.films)} />
           <Stat label="Keywords" value={formatNumber(counts.keywords)} />
         </div>
-        <div className={`${styles.stats} ${styles.statsRow}`}>
-          <Stat
-            label={<Hint label="Posted 24h" tip={postedTip} />}
-            value={formatNumber(posted.day)}
-          />
-          <Stat
-            label={<Hint label="Posted 7d" tip={postedTip} />}
-            value={formatNumber(posted.week)}
-          />
-          <Stat
-            label={<Hint label="Posted 30d" tip={postedTip} />}
-            value={formatNumber(posted.month)}
-          />
-        </div>
       </Section>
 
-      <Section title="Similarity index">
+      <Section title="Similarity index" panel>
         <div className={styles.stats}>
           <Stat
             label="Objects"
@@ -152,8 +147,8 @@ export default function OverviewTab({
         </div>
       </Section>
 
-      <Section title="Database">
-        <div className={styles.twoCol}>
+      <Section title="Database" panel className={styles.span}>
+        <div className={styles.dbGrid}>
           <div className={styles.stats}>
             <Stat label="Total size" value={formatBytes(database.bytes)} />
             <Stat
@@ -183,6 +178,6 @@ export default function OverviewTab({
           </div>
         </div>
       </Section>
-    </>
+    </div>
   );
 }
