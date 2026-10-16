@@ -31,3 +31,6 @@ backend/search-eval/
 
 # k6 run summaries
 test/k6/results/
+
+# prod postgres dumps
+backend/dumps/
