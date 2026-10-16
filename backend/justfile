@@ -9,7 +9,7 @@ psql := env("PSQL", "docker exec -i analogdb-bench psql -U postgres -d analogdb"
 
 prod_pg_image := "postgres:15"
 prod_dump_dir := "dumps"
-prod_dsn := "postgres://postgres:postgres@localhost:55433/analogdb?sslmode=disable"
+restore_dsn := "postgres://postgres:postgres@localhost:55433/analogdb?sslmode=disable"
 
 [private]
 default:
@@ -116,14 +116,14 @@ prod-restore name="":
     export BACKUP_PASSPHRASE
     docker rm -f analogdb-prod >/dev/null 2>&1 || true
     docker run -d --name analogdb-prod -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=analogdb \
-        -p 55433:5432 {{ prod_pg_image }} >/dev/null
+        -p 127.0.0.1:55433:5432 {{ prod_pg_image }} >/dev/null
     until docker exec analogdb-prod pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; do sleep 1; done
     echo "restoring $file" >&2
     docker exec -i -e BACKUP_PASSPHRASE analogdb-prod sh -c \
         'gpg --batch --quiet --passphrase "$BACKUP_PASSPHRASE" --decrypt | pg_restore -U postgres -d analogdb --no-owner --no-acl' \
         < "$file"
     docker exec analogdb-prod psql -U postgres -d analogdb -c 'ANALYZE' >/dev/null
-    echo "restored to {{ prod_dsn }}" >&2
+    echo "restored to {{ restore_dsn }}" >&2
 
 # Open psql on the restored prod database
 prod-psql:
