@@ -138,7 +138,15 @@ async function renderTab(
       ]);
       if (error) return <TabError error={error} />;
       return (
-        <OverviewTab overview={data} queue={queue.data} now={Date.now()} />
+        <OverviewTab
+          overview={data}
+          queue={queue.data}
+          web={{
+            version: process.env.APP_VERSION || "dev",
+            uptime_seconds: Math.floor(process.uptime()),
+          }}
+          now={Date.now()}
+        />
       );
     }
   }
