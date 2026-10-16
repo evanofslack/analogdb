@@ -5,16 +5,56 @@ import {
   formatDuration,
   formatNumber,
 } from "@lib/format";
+import { ReactNode } from "react";
 import styles from "./adminPanel.module.css";
 import Hint from "./hint";
 import Section from "./section";
 import Stat, { Tone } from "./stat";
 import StatusDot from "./statusDot";
 
+export interface WebInfo {
+  version: string;
+  uptime_seconds: number;
+}
+
 interface OverviewTabProps {
   overview: AdminOverview;
   queue?: AdminQueue;
+  web: WebInfo;
   now: number;
+}
+
+const repo = "https://github.com/evanofslack/analogdb";
+
+function Version({ value }: { value: string }) {
+  if (/^[0-9a-f]{40}$/.test(value)) {
+    return (
+      <a href={`${repo}/commit/${value}`} className={styles.link}>
+        {value.slice(0, 7)}
+      </a>
+    );
+  }
+  if (/^v\d/.test(value)) {
+    return (
+      <a href={`${repo}/releases/tag/${value}`} className={styles.link}>
+        {value}
+      </a>
+    );
+  }
+  return <>{value}</>;
+}
+
+function Facts({ facts }: { facts: [string, ReactNode][] }) {
+  return (
+    <dl className={styles.facts}>
+      {facts.map(([label, value]) => (
+        <div key={label}>
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 const postedTip = "By Reddit post date, not the date the post was added.";
@@ -46,6 +86,7 @@ function vectorDetail({ objects, posts }: AdminOverview["vectors"]) {
 export default function OverviewTab({
   overview,
   queue,
+  web,
   now,
 }: OverviewTabProps) {
   const { status, app, counts, posted, freshness, database, vectors } =
@@ -57,11 +98,14 @@ export default function OverviewTab({
     { label: "Keywords", value: freshness.keywords_update },
     { label: "Colors", value: freshness.colors_update },
   ];
-  const apiFacts = [
-    ["API", app.version],
+  const apiFacts: [string, ReactNode][] = [
+    ["API", <Version key="v" value={app.version} />],
     ["env", app.env],
-    ["host", app.hostname],
     ["up", formatDuration(app.uptime_seconds)],
+  ];
+  const webFacts: [string, ReactNode][] = [
+    ["Web", <Version key="v" value={web.version} />],
+    ["up", formatDuration(web.uptime_seconds)],
   ];
   const vectorsOff =
     vectors.objects === null || vectors.objects !== vectors.posts;
@@ -74,14 +118,10 @@ export default function OverviewTab({
             <StatusDot key={name} label={name} status={status[name]} />
           ))}
         </div>
-        <dl className={`${styles.panelFoot} ${styles.facts}`}>
-          {apiFacts.map(([label, value]) => (
-            <div key={label}>
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className={styles.panelFoot}>
+          <Facts facts={apiFacts} />
+          <Facts facts={webFacts} />
+        </div>
       </Section>
 
       <Section title="To do" panel>

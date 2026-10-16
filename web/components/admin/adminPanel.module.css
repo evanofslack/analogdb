@@ -300,6 +300,11 @@ a.stat:hover .statValue {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 1rem;
+  margin: 0;
+}
+
+.facts + .facts {
+  margin-top: 0.25rem;
 }
 
 .facts dt {
