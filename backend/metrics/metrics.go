@@ -23,6 +23,7 @@ const (
 	EventsSubsystem   = "events"
 	UiEventsSubsystem = "ui_events"
 	SearchSubsystem   = "search"
+	StatsSubsystem    = "stats"
 )
 
 // track stats from cache

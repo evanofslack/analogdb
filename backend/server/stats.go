@@ -1,14 +1,18 @@
 package server
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
 	"regexp"
 	"slices"
+	"time"
 	"unicode/utf8"
 
 	"github.com/evanofslack/analogdb"
+	"github.com/evanofslack/analogdb/stats"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -148,4 +152,142 @@ func validateStatsVector(v []float32) error {
 		return fmt.Errorf("want unit length, got norm %.3f", norm)
 	}
 	return nil
+}
+
+const (
+	statsPath         = "/stats"
+	statsWriteTimeout = 5 * time.Minute
+)
+
+type StatsRebuildResponse struct {
+	ID      int64     `json:"id"`
+	Created time.Time `json:"created"`
+	BuildMs int       `json:"build_ms"`
+	Films   int       `json:"films"`
+	Themes  int       `json:"themes"`
+}
+
+type adminStatsSnapshotsResponse struct {
+	Snapshots []*analogdb.StatsSnapshot `json:"snapshots"`
+}
+
+func (s *Server) mountStatsHandlers(r chi.Router) {
+	r.With(s.edgeCache(fixedTTL(catalogEdgeTTL))).Get(statsPath, s.getStats)
+}
+
+// @Summary Get collection stats
+// @Description The latest stats snapshot: how each film looks, film families, subjects, trends, visual themes, popularity and posting time. Rebuilt daily.
+// @Tags stats
+// @Produce json
+// @Success 200 {object} analogdb.Stats
+// @Failure 404 {object} ErrorResponse "No snapshot built yet"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /stats [get]
+func (s *Server) getStats(w http.ResponseWriter, r *http.Request) {
+	snapshot, err := s.StatsService.FindLatestSnapshot(r.Context())
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write(snapshot.Body); err != nil {
+		s.logger.WarnContext(r.Context(), "Fail write stats", "error", err)
+	}
+}
+
+// rebuildStats builds and stores a new snapshot. One build runs at a time,
+// a failed build stores nothing so the previous snapshot stays live.
+func (s *Server) rebuildStats(w http.ResponseWriter, r *http.Request) {
+	if !s.statsBuild.TryLock() {
+		s.writeError(w, r, &analogdb.Error{Code: analogdb.ERRCONFLICT, Message: "a stats build is already running"})
+		return
+	}
+	defer s.statsBuild.Unlock()
+
+	if err := http.NewResponseController(w).SetWriteDeadline(time.Now().Add(statsWriteTimeout)); err != nil {
+		s.logger.WarnContext(r.Context(), "Fail extend write deadline for stats", "error", err)
+	}
+
+	start := time.Now()
+	snapshot, built, err := s.buildStats(r.Context())
+	if err != nil {
+		s.stats.statsBuildErrors.Inc()
+		s.logger.ErrorContext(r.Context(), "Fail build stats", "error", err)
+		s.writeError(w, r, err)
+		return
+	}
+	s.stats.statsBuildSeconds.Observe(time.Since(start).Seconds())
+
+	response := StatsRebuildResponse{
+		ID:      snapshot.ID,
+		Created: snapshot.Created,
+		BuildMs: snapshot.BuildMs,
+		Films:   len(built.Films),
+		Themes:  len(built.Themes),
+	}
+	if err := encodeResponse(w, r, http.StatusOK, response); err != nil {
+		s.writeError(w, r, err)
+	}
+}
+
+func (s *Server) buildStats(ctx context.Context) (*analogdb.StatsSnapshot, *analogdb.Stats, error) {
+	if s.VectorScanner == nil {
+		return nil, nil, &analogdb.Error{Code: analogdb.ERRUNAVAILABLE, Message: "vector database is not enabled"}
+	}
+	start := time.Now()
+
+	seed, err := s.StatsService.FindSeed(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	in, err := s.StatsService.LoadStatsInput(ctx, stats.Start, stats.Subjects)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	window := make(map[int]bool, len(in.Posts))
+	for _, p := range in.Posts {
+		window[p.ID] = true
+	}
+	vecs := make(map[int][]float32, len(in.Posts))
+	err = s.VectorScanner.ScanVectors(ctx, func(postID int, vector []float32) error {
+		if _, seen := vecs[postID]; window[postID] && !seen {
+			vecs[postID] = vector
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	built, err := stats.Build(in, vecs, seed, time.Now())
+	if err != nil {
+		return nil, nil, err
+	}
+	body, err := json.Marshal(built)
+	if err != nil {
+		return nil, nil, err
+	}
+	snapshot := &analogdb.StatsSnapshot{
+		SeedVersion: seed.Version,
+		BuildMs:     int(time.Since(start).Milliseconds()),
+		Body:        body,
+	}
+	if err := s.StatsService.CreateSnapshot(ctx, snapshot); err != nil {
+		return nil, nil, err
+	}
+	s.logger.InfoContext(ctx, "Built stats snapshot", "id", snapshot.ID, "build_ms", snapshot.BuildMs, "size", len(body), "vectors", len(vecs))
+	return snapshot, built, nil
+}
+
+func (s *Server) getStatsSnapshots(w http.ResponseWriter, r *http.Request) {
+	snapshots, err := s.StatsService.FindSnapshots(r.Context())
+	if err != nil {
+		s.writeError(w, r, err)
+		return
+	}
+	if err := encodeResponse(w, r, http.StatusOK, adminStatsSnapshotsResponse{Snapshots: snapshots}); err != nil {
+		s.writeError(w, r, err)
+	}
 }
