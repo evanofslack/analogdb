@@ -279,6 +279,20 @@ func TestClickhouse(t *testing.T) {
 		if len(entries) != 1 || entries[0].RequestID != "r8" {
 			t.Errorf("want only r8 before r6, got %+v", entries)
 		}
+
+		for client, want := range map[string][]string{"web": {"r8"}, "scraper": {"r5"}, "direct": {"r6"}} {
+			entries, err = db.Audit(ctx, &analogdb.AuditFilter{Limit: 10, Client: client})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := []string{}
+			for _, e := range entries {
+				got = append(got, e.RequestID)
+			}
+			if !slices.Equal(got, want) {
+				t.Errorf("want %s audit %v, got %v", client, want, got)
+			}
+		}
 	})
 }
 
