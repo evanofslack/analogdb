@@ -6,6 +6,8 @@ RUN go build cmd/analogdb/main.go
 # RUN go build -o main ./cmd/analogdb
 
 FROM alpine
+ARG VERSION=dev
+ENV APP_VERSION=$VERSION
 RUN adduser -S -D -H -h /app appuser
 USER appuser
 COPY --from=builder /build/main /app/

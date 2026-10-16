@@ -1,6 +1,6 @@
 app:
   name: "analogdb"
-  version: "0.1.0"
+  version: "dev"
   env: "prod"
   cache_enabled: true
   rate_limit_enabled: true

@@ -41,4 +41,7 @@ USER nextjs
 EXPOSE 3000
 ENV PORT 3000
 
+ARG VERSION=dev
+ENV APP_VERSION=$VERSION
+
 CMD ["node", "server.js"]
