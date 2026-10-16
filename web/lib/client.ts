@@ -8,6 +8,7 @@ import {
   PostApi,
   PostsApi,
   SearchApi,
+  StatsApi,
 } from "analogdb-generated";
 import pkg from "../package.json";
 import { baseURL } from "./constants";
@@ -54,6 +55,7 @@ export const camerasApi: CamerasApi = new CamerasApi(config);
 export const searchApi: SearchApi = new SearchApi(config);
 export const keywordsApi: KeywordsApi = new KeywordsApi(config);
 export const authorsApi: AuthorsApi = new AuthorsApi(config);
+export const statsApi: StatsApi = new StatsApi(config);
 
 // errorStatus returns the HTTP status of a failed generated client call. It
 // checks the shape rather than instanceof ResponseError, because the server

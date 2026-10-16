@@ -1,0 +1,147 @@
+.main {
+  width: 100%;
+  padding-bottom: 4rem;
+  overflow-x: hidden;
+}
+
+.page {
+  width: calc(100% - 2.4rem);
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.header {
+  margin: 1.5rem 0 0;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.title {
+  margin: 0;
+  font-family: "Courier Prime", Courier, monospace;
+  font-size: 1.8rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--adb-heading);
+}
+
+.switch {
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.tagline {
+  margin: 0.4rem 0 0;
+  color: var(--adb-muted);
+  font-size: 1rem;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 1.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  border: 1px solid var(--adb-border-soft);
+  border-radius: 4px;
+  padding: 0.7rem 0.8rem;
+}
+
+.tileValue {
+  display: block;
+  font-family: "Courier Prime", Courier, monospace;
+  font-size: 1.4rem;
+  color: var(--adb-heading);
+  font-variant-numeric: tabular-nums;
+}
+
+.tileLabel {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--adb-muted);
+}
+
+.since {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--adb-muted);
+}
+
+.section {
+  margin: 3.5rem 0 0;
+  scroll-margin-top: 1rem;
+}
+
+.heading {
+  margin: 0;
+  font-family: "Courier Prime", Courier, monospace;
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--adb-heading);
+}
+
+.lead {
+  margin: 0.35rem 0 1.2rem;
+  max-width: 40rem;
+  color: var(--adb-muted);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.subheading {
+  margin: 2rem 0 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--adb-heading);
+  text-transform: uppercase;
+}
+
+.more {
+  display: inline-block;
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  color: var(--adb-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.more:hover {
+  color: var(--adb-heading);
+}
+
+.note {
+  margin: 0.6rem 0 0;
+  font-size: 0.75rem;
+  color: var(--adb-muted);
+}
+
+.empty {
+  margin: 2rem 0 0;
+  color: var(--adb-muted);
+}
+
+@media (max-width: 720px) {
+  .tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .switch {
+    flex-basis: 100%;
+  }
+}

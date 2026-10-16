@@ -33,6 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteURL}/docs` },
     { url: `${siteURL}/films` },
     { url: `${siteURL}/cameras` },
+    { url: `${siteURL}/stats` },
     ...films.map((film) => ({
       url: `${siteURL}${catalogHref("films", film)}`,
     })),

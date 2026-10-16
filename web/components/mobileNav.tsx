@@ -34,6 +34,11 @@ const LINKS: NavLink[] = [
     label: "Cameras",
     active: (path) => path.startsWith("/cameras"),
   },
+  {
+    href: "/stats",
+    label: "Stats",
+    active: (path) => path.startsWith("/stats"),
+  },
   { href: "/about", label: "About", active: (path) => path === "/about" },
 ];
 

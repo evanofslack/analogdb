@@ -1,0 +1,51 @@
+.chart {
+  width: 100%;
+  max-width: 560px;
+  aspect-ratio: 1;
+  border: 1px solid var(--adb-border-soft);
+  border-radius: 4px;
+}
+
+.chart svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.dot {
+  cursor: pointer;
+}
+
+.label {
+  font-size: 2.3px;
+  fill: var(--adb-muted);
+  pointer-events: none;
+}
+
+.labelActive {
+  fill: var(--adb-heading);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.2rem;
+  list-style: none;
+  margin: 0.7rem 0 0;
+  padding: 0;
+  font-size: 0.8rem;
+  color: var(--adb-muted);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend span {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+}
