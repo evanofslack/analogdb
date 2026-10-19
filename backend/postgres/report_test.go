@@ -189,3 +189,67 @@ func TestReportService(t *testing.T) {
 		}
 	})
 }
+
+func TestReportServiceDuplicates(t *testing.T) {
+	db, cleanup := mustOpenWithSeed(t)
+	defer cleanup()
+	defer mustClose(t, db)
+
+	reports := NewReportService(db)
+	posts := NewPostService(db)
+	scrape := NewScrapeService(db)
+	ctx := context.Background()
+
+	if _, err := reports.CreateReport(ctx, &analogdb.CreateReport{PostID: 3, Reason: analogdb.ReportOther}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := scrape.ReportDuplicates(ctx, []analogdb.DuplicatePost{{KeepID: 1, DuplicateID: 2}}); err != nil {
+		t.Fatal(err)
+	}
+
+	find := func() *analogdb.Report {
+		t.Helper()
+		got, err := reports.FindReports(ctx, &analogdb.ReportFilter{Status: analogdb.ReportStatusOpen, Reason: analogdb.ReportDuplicate, Limit: 10})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got) != 1 {
+			t.Fatalf("want only the duplicate report, got %d reports", len(got))
+		}
+		return got[0]
+	}
+
+	t.Run("original snapshot", func(t *testing.T) {
+		got := find()
+		if got.PostID != 2 || got.DuplicateOf == nil || *got.DuplicateOf != 1 {
+			t.Fatalf("want post 2 a duplicate of post 1, got %+v", got)
+		}
+		o := got.Original
+		if o == nil || o.Removed || o.Permalink == nil || o.MedURL == nil || o.PostedAt == nil || o.Width == nil {
+			t.Errorf("want a live original snapshot, got %+v", o)
+		}
+		if got.Post.MedURL == nil || got.Post.PostedAt == nil || got.Post.Height == nil {
+			t.Errorf("want med url, posted time and size on the reported post, got %+v", got.Post)
+		}
+	})
+
+	t.Run("other reports have no original", func(t *testing.T) {
+		got, err := reports.FindReports(ctx, &analogdb.ReportFilter{Status: analogdb.ReportStatusOpen, Reason: analogdb.ReportOther, Limit: 10})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got) != 1 || got[0].DuplicateOf != nil || got[0].Original != nil {
+			t.Errorf("want one other report with no original, got %+v", got)
+		}
+	})
+
+	t.Run("removed original keeps the snapshot", func(t *testing.T) {
+		if err := posts.DeletePost(ctx, 1, string(analogdb.ReportTakedown)); err != nil {
+			t.Fatal(err)
+		}
+		o := find().Original
+		if o == nil || !o.Removed || o.Permalink == nil {
+			t.Errorf("want a removed original snapshot, got %+v", o)
+		}
+	})
+}

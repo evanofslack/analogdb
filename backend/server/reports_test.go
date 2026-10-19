@@ -215,6 +215,16 @@ func TestAdminReports(t *testing.T) {
 		t.Errorf("want 400 for bad status, got %d", w.Code)
 	}
 
+	if w := roleRequest(s, http.MethodGet, "/v1/admin/reports?reason=duplicate", &adminPair, ""); w.Code != http.StatusOK {
+		t.Errorf("want 200 for duplicate reason, got %d", w.Code)
+	}
+	if reports.filter.Reason != analogdb.ReportDuplicate {
+		t.Errorf("want duplicate reason filter, got %+v", reports.filter)
+	}
+	if w := roleRequest(s, http.MethodGet, "/v1/admin/reports?reason=bogus", &adminPair, ""); w.Code != http.StatusBadRequest {
+		t.Errorf("want 400 for bad reason, got %d", w.Code)
+	}
+
 	if w := roleRequest(s, http.MethodPost, "/v1/admin/reports/7/resolve", &adminPair, ""); w.Code != http.StatusOK {
 		t.Errorf("want 200 resolving, got %d", w.Code)
 	}

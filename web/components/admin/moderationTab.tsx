@@ -6,22 +6,16 @@ import {
   ReviewPage,
 } from "@lib/adminClient";
 import { formatDateTime } from "@lib/format";
-import { reportReasonLabel } from "@lib/reports";
+import { redditLink, reportReasonLabel } from "@lib/reports";
 import Link from "next/link";
 import styles from "./adminPanel.module.css";
+import DuplicateList from "./duplicateList";
 import IncomingList from "./incomingList";
 import Pager from "./pager";
 import ReportActions from "./reportActions";
 import Section from "./section";
 import Segmented from "./segmented";
 import TabError, { LoadError } from "./tabError";
-
-function redditLink(permalink: string | null): string | null {
-  if (!permalink) return null;
-  return permalink.startsWith("http")
-    ? permalink
-    : `https://www.reddit.com${permalink}`;
-}
 
 interface ReportRowProps {
   report: Report;
@@ -112,6 +106,7 @@ function ReportRow({ report }: ReportRowProps) {
 export interface ModerationParams {
   status: ReportStatus;
   before: number | null;
+  dupes: number | null;
   cursor: string | null;
 }
 
@@ -119,6 +114,7 @@ export function moderationHref(params: ModerationParams) {
   const search = new URLSearchParams({ tab: "moderation" });
   if (params.status !== "open") search.set("status", params.status);
   if (params.before) search.set("before", String(params.before));
+  if (params.dupes) search.set("dupes", String(params.dupes));
   if (params.cursor) search.set("cursor", params.cursor);
   return `/admin?${search}`;
 }
@@ -127,6 +123,8 @@ interface ModerationTabProps {
   params: ModerationParams;
   reports?: ReportsPage;
   reportsError?: LoadError;
+  duplicates?: ReportsPage;
+  duplicatesError?: LoadError;
   incoming?: ReviewPage;
   incomingError?: LoadError;
   openReports?: number;
@@ -136,13 +134,40 @@ export default function ModerationTab({
   params,
   reports,
   reportsError,
+  duplicates,
+  duplicatesError,
   incoming,
   incomingError,
   openReports,
 }: ModerationTabProps) {
-  const { status, before, cursor } = params;
+  const { status, before, dupes, cursor } = params;
   return (
     <>
+      <Section title="Duplicates">
+        {duplicatesError ? (
+          <TabError error={duplicatesError} />
+        ) : (
+          <DuplicateList
+            reports={duplicates.reports}
+            pager={
+              <Pager
+                newest={
+                  dupes ? moderationHref({ ...params, dupes: null }) : null
+                }
+                older={
+                  duplicates.next_before
+                    ? moderationHref({
+                        ...params,
+                        dupes: duplicates.next_before,
+                      })
+                    : null
+                }
+              />
+            }
+          />
+        )}
+      </Section>
+
       <Section
         title="Reports"
         count={openReports}
@@ -151,7 +176,7 @@ export default function ModerationTab({
             active={status}
             items={reportStatuses.map((s) => ({
               key: s,
-              href: moderationHref({ status: s, before: null, cursor }),
+              href: moderationHref({ ...params, status: s, before: null }),
               label: s,
             }))}
           />
@@ -184,12 +209,10 @@ export default function ModerationTab({
           </div>
         )}
         <Pager
-          newest={
-            before ? moderationHref({ status, before: null, cursor }) : null
-          }
+          newest={before ? moderationHref({ ...params, before: null }) : null}
           older={
             reports?.next_before
-              ? moderationHref({ status, before: reports.next_before, cursor })
+              ? moderationHref({ ...params, before: reports.next_before })
               : null
           }
         />
@@ -206,13 +229,12 @@ export default function ModerationTab({
           pager={
             <Pager
               newest={
-                cursor ? moderationHref({ status, before, cursor: null }) : null
+                cursor ? moderationHref({ ...params, cursor: null }) : null
               }
               older={
                 incoming.next_cursor
                   ? moderationHref({
-                      status,
-                      before,
+                      ...params,
                       cursor: incoming.next_cursor,
                     })
                   : null

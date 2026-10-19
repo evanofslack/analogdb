@@ -170,11 +170,12 @@ func TestScrapeService_ReportDuplicates(t *testing.T) {
 		t.Fatalf("want 1 report for the live post, got %d", reported)
 	}
 	var reason, message string
-	if err := db.db.QueryRow(`SELECT reason, message FROM post_reports WHERE post_id = 2`).Scan(&reason, &message); err != nil {
+	var duplicateOf int
+	if err := db.db.QueryRow(`SELECT reason, message, duplicate_of FROM post_reports WHERE post_id = 2`).Scan(&reason, &message, &duplicateOf); err != nil {
 		t.Fatal(err)
 	}
-	if reason != "duplicate" || message != "duplicate of post 1, 0 bits apart, other author" {
-		t.Errorf("unexpected report %q %q", reason, message)
+	if reason != "duplicate" || message != "duplicate of post 1, 0 bits apart, other author" || duplicateOf != 1 {
+		t.Errorf("unexpected report %q %q duplicate of %d", reason, message, duplicateOf)
 	}
 
 	if reported, err = service.ReportDuplicates(ctx, dupes); err != nil || reported != 0 {

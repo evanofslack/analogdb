@@ -54,12 +54,16 @@ type CreateReport struct {
 // ReportPost is a snapshot of the reported post, from pictures while it
 // exists and from removed_posts after a takedown
 type ReportPost struct {
-	Title     *string `json:"title"`
-	Author    *string `json:"author"`
-	Permalink *string `json:"permalink"`
-	LowURL    *string `json:"low_url"`
-	Nsfw      *bool   `json:"nsfw"`
-	Removed   bool    `json:"removed"`
+	Title     *string    `json:"title"`
+	Author    *string    `json:"author"`
+	Permalink *string    `json:"permalink"`
+	LowURL    *string    `json:"low_url"`
+	MedURL    *string    `json:"med_url"`
+	PostedAt  *time.Time `json:"posted_at"`
+	Width     *int       `json:"width"`
+	Height    *int       `json:"height"`
+	Nsfw      *bool      `json:"nsfw"`
+	Removed   bool       `json:"removed"`
 }
 
 type Report struct {
@@ -71,10 +75,16 @@ type Report struct {
 	CreatedAt  time.Time    `json:"created_at"`
 	ResolvedAt *time.Time   `json:"resolved_at"`
 	Post       ReportPost   `json:"post"`
+	// DuplicateOf is the older post a duplicate report points at, and
+	// Original its snapshot
+	DuplicateOf *int        `json:"duplicate_of"`
+	Original    *ReportPost `json:"original"`
 }
 
 type ReportFilter struct {
-	Status   ReportStatus
+	Status ReportStatus
+	// Reason limits the reports to one reason, all reasons when empty
+	Reason   ReportReason
 	BeforeID *int
 	Limit    int
 }

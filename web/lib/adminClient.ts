@@ -435,6 +435,19 @@ export async function deletePost(id: number): Promise<void> {
 export type ReportStatus = "open" | "resolved" | "all";
 export const reportStatuses: ReportStatus[] = ["open", "resolved", "all"];
 
+export interface ReportPost {
+  title: string | null;
+  author: string | null;
+  permalink: string | null;
+  low_url: string | null;
+  med_url: string | null;
+  posted_at: string | null;
+  width: number | null;
+  height: number | null;
+  nsfw: boolean | null;
+  removed: boolean;
+}
+
 export interface Report {
   id: number;
   post_id: number;
@@ -443,14 +456,9 @@ export interface Report {
   email: string | null;
   created_at: string;
   resolved_at: string | null;
-  post: {
-    title: string | null;
-    author: string | null;
-    permalink: string | null;
-    low_url: string | null;
-    nsfw: boolean | null;
-    removed: boolean;
-  };
+  post: ReportPost;
+  duplicate_of: number | null;
+  original: ReportPost | null;
 }
 
 export interface ReportsPage {
@@ -460,9 +468,12 @@ export interface ReportsPage {
 
 export function getReports(
   status: ReportStatus,
-  before?: number | null
+  before?: number | null,
+  reason?: string
 ): Promise<ReportsPage> {
-  return adminGet(`/admin/reports${query({ status, before, limit: 50 })}`);
+  return adminGet(
+    `/admin/reports${query({ status, before, reason, limit: 50 })}`
+  );
 }
 
 export async function resolveReport(id: number): Promise<void> {

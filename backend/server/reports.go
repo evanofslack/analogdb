@@ -143,6 +143,14 @@ func (s *Server) getAdminReports(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if str := query.Get("reason"); str != "" {
+		reason := analogdb.ReportReason(str)
+		if !reason.Valid() {
+			s.writeError(w, r, badRequest("invalid reason %q", str))
+			return
+		}
+		filter.Reason = reason
+	}
 	if str := query.Get("limit"); str != "" {
 		val, err := stringToInt(str)
 		if err != nil {
