@@ -62,7 +62,7 @@ def process(
 ) -> Tuple[FakeS3, object]:
     s3 = FakeS3()
     with patch(
-        "scrape.image.requests.get",
+        "scrape.image.requests.Session.get",
         return_value=fake_response(content, content_type),
     ):
         result = ImageProcessor().process(post, s3)
@@ -154,13 +154,7 @@ class TestProcess:
             process(make_post(PERMALINK), b"<html></html>", "text/html")
 
     def test_sends_analogdb_user_agent(self):
-        with patch(
-            "scrape.image.requests.get",
-            return_value=fake_response(jpeg_bytes(), "image/jpeg"),
-        ) as get:
-            ImageProcessor().process(make_post("/r/analog/comments/a"), FakeS3())
-
-        assert get.call_args.kwargs["headers"] == {"User-Agent": USER_AGENT}
+        assert ImageProcessor().session.headers["User-Agent"] == USER_AGENT
 
     def test_colors_are_the_low_res_palette(self):
         _, result = process(make_post(PERMALINK), jpeg_bytes())
@@ -174,13 +168,13 @@ class TestProcess:
         buf = BytesIO()
         Image.new("RGB", (300, 200), (200, 30, 40)).save(buf, "PNG")
         with patch(
-            "scrape.image.requests.get",
+            "scrape.image.requests.Session.get",
             return_value=fake_response(buf.getvalue(), "image/png"),
         ) as get:
             colors = ImageProcessor().download_colors("https://i.analogdb.com/a.png")
 
         assert colors == [Color("#c81e28", 1.0)]
-        assert get.call_args.kwargs["headers"] == {"User-Agent": USER_AGENT}
+        get.assert_called_once()
 
 
 def hash_distance(a: str, b: str) -> int:

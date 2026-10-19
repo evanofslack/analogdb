@@ -209,7 +209,7 @@ def run_post_images(reddit_posts: Result[RedditPost], bad_urls: set[str]):
     context = dg.build_asset_context()
     with (
         patch.object(S3Resource, "get_client", return_value=s3_client),
-        patch("scrape.image.requests.get", side_effect=fake_get(bad_urls)),
+        patch("scrape.image.requests.Session.get", side_effect=fake_get(bad_urls)),
     ):
         result = post_images(context, ImageProcessorResource(), storage, reddit_posts)
     return result, s3_client
@@ -234,6 +234,25 @@ class TestPostImages:
         bad = "https://www.reddit.com/r/analog/comments/1/title"
         assert result.status[bad] == Status.FAILED
         log_error.assert_not_called()
+
+    def test_one_s3_client_for_all_uploads(self):
+        s3_client = MagicMock()
+        storage = StorageResource(s3_resource=S3Resource(region_name="us-east-1"))
+        with (
+            patch.object(
+                S3Resource, "get_client", return_value=s3_client
+            ) as get_client,
+            patch("scrape.image.requests.Session.get", side_effect=fake_get(set())),
+        ):
+            post_images(
+                dg.build_asset_context(),
+                ImageProcessorResource(),
+                storage,
+                make_reddit_posts(3),
+            )
+
+        assert get_client.call_count == 1
+        assert s3_client.put_object.call_count == 12
 
     def test_output_has_no_images(self):
         result, _ = run_post_images(make_reddit_posts(20), set())
@@ -384,8 +403,9 @@ class TestPostTags:
     def test_tags_with_medium_image(self):
         reddit_posts = make_reddit_posts(2)
         tagger = FakeTagger()
-        with patch.object(CamerasJsonResource, "client", return_value=[]), patch.object(
-            FilmsJsonResource, "client", return_value=[]
+        with (
+            patch.object(CamerasJsonResource, "client", return_value=[]),
+            patch.object(FilmsJsonResource, "client", return_value=[]),
         ):
             result = run_post_tags(reddit_posts, medium_images(2), tagger)
 
@@ -403,8 +423,9 @@ class TestPostTags:
         images = medium_images(3)
         images.data[list(images.data)[2]].images[1].resolution = "4"
 
-        with patch.object(CamerasJsonResource, "client", return_value=[]), patch.object(
-            FilmsJsonResource, "client", return_value=[]
+        with (
+            patch.object(CamerasJsonResource, "client", return_value=[]),
+            patch.object(FilmsJsonResource, "client", return_value=[]),
         ):
             tags = run_post_tags(reddit_posts, images, FakeTagger({"refused"}))
         finals = run_final_posts(images, tags)
