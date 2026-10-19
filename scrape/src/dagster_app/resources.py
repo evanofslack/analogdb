@@ -6,6 +6,7 @@ from analogdb.client import Client
 from dagster import ConfigurableResource
 from dagster_aws.s3 import S3Resource
 from openai import OpenAI
+from pydantic import PrivateAttr
 from scrape.image import ImageProcessor
 from scrape.metadata import MetadataExtractor
 from scrape.reddit import RedditScraper
@@ -88,10 +89,18 @@ class TaggerResource(ConfigurableResource):
 
 class StorageResource(ConfigurableResource):
     s3_resource: S3Resource
+    _client: Any = PrivateAttr(default=None)
+
+    def _s3(self) -> Any:
+        """One boto3 client per resource, so uploads reuse connections and skip a
+        DNS lookup and TLS handshake each time."""
+        if self._client is None:
+            self._client = self.s3_resource.get_client()
+        return self._client
 
     def get_object(self, bucket: str, key: str) -> Optional[bytes]:
         """File data, or None when the key doesn't exist."""
-        s3 = self.s3_resource.get_client()
+        s3 = self._s3()
         try:
             return s3.get_object(Bucket=bucket, Key=key)["Body"].read()
         except s3.exceptions.NoSuchKey:
@@ -99,7 +108,7 @@ class StorageResource(ConfigurableResource):
 
     def put_object(self, bucket: str, key: str, body: bytes, content_type: str) -> None:
         """Upload file data. The caller builds the public CloudFront URL."""
-        self.s3_resource.get_client().put_object(
+        self._s3().put_object(
             Bucket=bucket, Key=key, Body=body, ContentType=content_type
         )
 

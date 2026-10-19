@@ -206,6 +206,10 @@ class ImageProcessor:
         "image/gif": "GIF",
     }
 
+    def __init__(self, session: Optional[requests.Session] = None):
+        self.session = session or requests.Session()
+        self.session.headers["User-Agent"] = USER_AGENT
+
     def process(self, post: RedditPost, s3: S3) -> PostImages:
         content, content_type = self._download(post.image_url)
         prefix = self._key_prefix(post.permalink)
@@ -272,9 +276,7 @@ class ImageProcessor:
 
     @retry(delay=1, tries=5)
     def _fetch(self, url: str) -> requests.Response:
-        resp = requests.get(
-            url, headers={"User-Agent": USER_AGENT}, timeout=IMAGE_TIMEOUT
-        )
+        resp = self.session.get(url, timeout=IMAGE_TIMEOUT)
         resp.raise_for_status()
         return resp
 
