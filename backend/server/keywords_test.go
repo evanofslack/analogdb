@@ -14,7 +14,7 @@ import (
 func TestKeywordSummaryInvalidPageSize(t *testing.T) {
 	s := mustOpen(t)
 	defer mustClose(t, s)
-	r := httptest.NewRequest(http.MethodGet, "/keywords/summary?page_size=abc", nil)
+	r := httptest.NewRequest(http.MethodGet, "/v1/keywords/summary?page_size=abc", nil)
 	w := httptest.NewRecorder()
 	s.router.ServeHTTP(w, r)
 
@@ -33,7 +33,7 @@ func TestKeywordSummaryParams(t *testing.T) {
 		wantSort   analogdb.KeywordSort
 	}{
 		{url: "/v1/keywords/summary", wantStatus: http.StatusOK},
-		{url: "/keywords/summary?min_count=20", wantStatus: http.StatusOK, wantMin: intPtr(20)},
+		{url: "/v1/keywords/summary?min_count=20", wantStatus: http.StatusOK, wantMin: intPtr(20)},
 		{url: "/v1/keywords/summary?page_size=60&min_count=20&top_posts=1", wantStatus: http.StatusOK, wantTop: intPtr(1), wantMin: intPtr(20)},
 		{url: "/v1/keywords/summary?top_posts=50&days=7", wantStatus: http.StatusOK, wantTop: intPtr(maxTopPosts), wantDays: intPtr(7)},
 		{url: "/v1/keywords/summary?top_posts=0", wantStatus: http.StatusOK, wantTop: intPtr(1)},

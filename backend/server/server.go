@@ -156,8 +156,7 @@ func (s *Server) Run() error {
 	return nil
 }
 
-// Mount all resources at both base and v1 paths.
-// Once deprecation date, can drop mount at base and just keep v1.
+// Mount all resources under /v1.
 func (s *Server) mountResourceHandlers() {
 	v1 := chi.NewRouter()
 	s.mountPostHandlers(v1)
@@ -173,18 +172,6 @@ func (s *Server) mountResourceHandlers() {
 	s.mountEventHandlers(v1)
 	s.mountStatsHandlers(v1)
 	s.router.Mount("/v1", v1)
-
-	// Mount legacy routes with deprecation
-	s.router.Group(func(r chi.Router) {
-		r.Use(s.deprecationMiddleware)
-		s.mountPostHandlers(r)
-		s.mountFilmHandlers(r)
-		s.mountCameraHandlers(r)
-		s.mountAuthorHandlers(r)
-		s.mountSimilarityHandlers(r)
-		s.mountScrapeHandlers(r)
-		s.mountKeywordHandlers(r)
-	})
 }
 
 func (s *Server) Close() error {
