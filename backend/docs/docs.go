@@ -1606,12 +1606,6 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
-                        "type": "integer",
-                        "description": "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random or sort=color",
-                        "name": "page_id",
-                        "in": "query"
-                    },
-                    {
                         "enum": [
                             "time",
                             "score",
@@ -3850,11 +3844,6 @@ const docTemplate = `{
                     "description": "Opaque cursor for the next page, empty at the end",
                     "type": "string",
                     "example": "eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0"
-                },
-                "next_page_id": {
-                    "description": "Deprecated: use next_cursor",
-                    "type": "integer",
-                    "example": 1752244116
                 },
                 "next_page_url": {
                     "type": "string",

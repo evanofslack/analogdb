@@ -89,7 +89,7 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 
 	postFilter := func(sort analogdb.PostSort) *analogdb.PostFilter {
 		limit := 20
-		return analogdb.NewPostFilter(&limit, &sort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		return analogdb.NewPostFilter(&limit, &sort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	}
 	findPosts := func(build func() *analogdb.PostFilter) func(ctx context.Context) error {
 		return func(ctx context.Context) error {
@@ -98,13 +98,11 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 		}
 	}
 
-	// keyset for the fifth page of the score sort, found by paging like a client
-	var scoreKeyset int
+	// cursor for the fifth page of the score sort, found by paging like a client
+	var scoreCursor *analogdb.Cursor
 	for page := 1; page < 5; page++ {
 		filter := postFilter(analogdb.PostSortScore)
-		if page > 1 {
-			filter.Keyset = &scoreKeyset
-		}
+		filter.Cursor = scoreCursor
 		found, _, err := posts.FindPosts(ctx, filter)
 		if err != nil {
 			b.Fatal(err)
@@ -112,7 +110,8 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 		if len(found) == 0 {
 			b.Fatal("benchmark database has no posts, run make bench-seed")
 		}
-		scoreKeyset = found[len(found)-1].Score
+		last := found[len(found)-1]
+		scoreCursor = &analogdb.Cursor{Value: last.Score, ID: last.Id}
 	}
 
 	// cursor for the fifth page of the ascending score sort
@@ -221,8 +220,7 @@ func benchCases(b *testing.B, db *DB) []benchCase {
 		})},
 		{"sort_score_page5", findPosts(func() *analogdb.PostFilter {
 			filter := postFilter(analogdb.PostSortScore)
-			keyset := scoreKeyset
-			filter.Keyset = &keyset
+			filter.Cursor = scoreCursor
 			return filter
 		})},
 		{"sort_time_asc", findPosts(func() *analogdb.PostFilter {

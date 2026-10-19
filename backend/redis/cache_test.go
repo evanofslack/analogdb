@@ -183,7 +183,7 @@ func newMiniRDB(t *testing.T) (*RDB, *miniredis.Miniredis) {
 }
 
 func postsFilter(limit int) *analogdb.PostFilter {
-	return analogdb.NewPostFilter(&limit, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return analogdb.NewPostFilter(&limit, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 func postIDs(posts []*analogdb.Post) []int {
@@ -566,7 +566,7 @@ func TestRederiveColorsDropsCachedPosts(t *testing.T) {
 	posts := NewCachePostService(rdb, db)
 
 	limit := 5
-	filter := analogdb.NewPostFilter(&limit, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilter(&limit, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	read := func() (*analogdb.Post, *analogdb.Post) {
 		t.Helper()
 		post, err := posts.FindPostByID(ctx, 2*invalidateBatch+1)

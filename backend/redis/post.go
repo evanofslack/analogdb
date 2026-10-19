@@ -81,7 +81,6 @@ func (s *PostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter
 	countFilter := *filter
 	countFilter.Limit = nil
 	countFilter.Cursor = nil
-	countFilter.Keyset = nil
 	countFilter.Sort = nil
 	if filter.IsRainbow() {
 		// the rainbow only counts posts with a representative color

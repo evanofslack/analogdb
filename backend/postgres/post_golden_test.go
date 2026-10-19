@@ -37,7 +37,7 @@ func TestPostService_FindPostsGolden(t *testing.T) {
 
 	filter := func(sort analogdb.PostSort, modify func(f *analogdb.PostFilter)) *analogdb.PostFilter {
 		limit := 20
-		f := analogdb.NewPostFilter(&limit, &sort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		f := analogdb.NewPostFilter(&limit, &sort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		if modify != nil {
 			modify(f)
 		}
@@ -55,9 +55,7 @@ func TestPostService_FindPostsGolden(t *testing.T) {
 	}{
 		{"time", filter(analogdb.PostSortTime, nil)},
 		{"time_limit_2", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) { f.Limit = intPtr(2) })},
-		{"time_keyset", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) { f.Keyset = intPtr(1641427200) })},
 		{"score", filter(analogdb.PostSortScore, nil)},
-		{"score_keyset", filter(analogdb.PostSortScore, func(f *analogdb.PostFilter) { f.Keyset = intPtr(150) })},
 		{"time_asc", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) { f.Order = &asc })},
 		{"score_asc", filter(analogdb.PostSortScore, func(f *analogdb.PostFilter) { f.Order = &asc })},
 		{"time_asc_cursor", filter(analogdb.PostSortTime, func(f *analogdb.PostFilter) {

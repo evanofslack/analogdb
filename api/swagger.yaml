@@ -1145,10 +1145,6 @@ definitions:
         description: Opaque cursor for the next page, empty at the end
         example: eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0
         type: string
-      next_page_id:
-        description: 'Deprecated: use next_cursor'
-        example: 1752244116
-        type: integer
       next_page_url:
         example: /posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time
         type: string
@@ -2346,11 +2342,6 @@ paths:
         in: query
         name: cursor
         type: string
-      - description: 'Deprecated: use cursor. Keyset from next_page_id, not supported
-          with sort=random or sort=color'
-        in: query
-        name: page_id
-        type: integer
       - default: time
         description: Sort order. color ranks by the share of the given colors, or
           gives a rainbow with no colors
