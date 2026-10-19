@@ -149,10 +149,6 @@ const paginations = [
     description:
       "request the next page of results. Each request returns a next_cursor that can be passed back to access the next page of results",
   },
-  {
-    param: "page_id",
-    description: "deprecated, use cursor",
-  },
 ];
 
 const errorStatuses = [
@@ -432,11 +428,6 @@ const metas = [
     description: "cursor for the next page, empty on the last page",
   },
   {
-    field: "next_page_id",
-    type: "integer",
-    description: "deprecated, use next_cursor",
-  },
-  {
     field: "next_page_url",
     type: "string",
     description: "path of the next page, relative to /v1",
@@ -479,12 +470,6 @@ const postsGenerals = [
   {
     param: "cursor",
     description: "cursor of page to retrieve, from next_cursor",
-    default: "null",
-    options: "",
-  },
-  {
-    param: "page_id",
-    description: "deprecated, use cursor",
     default: "null",
     options: "",
   },
@@ -732,8 +717,7 @@ export default function Documentation() {
           <p>
             Use the following URI to access the endpoints:{" "}
             <Code>https://api.analogdb.com/v1</Code>. Paths without{" "}
-            <Code>/v1</Code> still work but are deprecated and will stop working
-            on March 31, 2027.
+            <Code>/v1</Code> have been removed.
           </p>
           <Section />
           <h1 className={styles.h1}> Rate Limiting </h1>
