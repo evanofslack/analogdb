@@ -246,7 +246,6 @@ type PostFilter struct {
 	Sort          *PostSort
 	Order         *PostOrder
 	Cursor        *Cursor
-	Keyset        *int
 	Nsfw          *bool
 	Grayscale     *bool
 	Sprocket      *bool
@@ -271,11 +270,10 @@ type PostFilter struct {
 	AspectRatio   *Dimension
 }
 
-func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, timeStart, timeEnd *time.Time, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
+func NewPostFilter(limit *int, sort *PostSort, nsfw, grayscale, sprocket *bool, seed *int, ids *[]int, title, author *string, timeStart, timeEnd *time.Time, cameraMake, cameraModel, filmMake, filmType *string, filmSpeed, focalLength *int, aperture *string, colors *[]string, colorPercents *[]float64, keywords *[]string) *PostFilter {
 	filter := &PostFilter{
 		Limit:         limit,
 		Sort:          sort,
-		Keyset:        keyset,
 		Nsfw:          nsfw,
 		Grayscale:     grayscale,
 		Sprocket:      sprocket,
@@ -306,7 +304,7 @@ func NewPostFilter(limit *int, sort *PostSort, keyset *int, nsfw, grayscale, spr
 // NewPostFilterWithIDs is a convenience function
 // to create a post filter with only IDs set.
 func NewPostFilterWithIDs(ids []int) *PostFilter {
-	return NewPostFilter(nil, nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	return NewPostFilter(nil, nil, nil, nil, nil, nil, &ids, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 }
 
 func (filter *PostFilter) String() string {
@@ -322,9 +320,6 @@ func (filter *PostFilter) String() string {
 	}
 	if c := filter.Cursor; c != nil {
 		out = append(out, fmt.Sprintf("cursor: value=%d, hash=%s, rank=%v, id=%d", c.Value, c.Hash, c.Rank, c.ID))
-	}
-	if filter.Keyset != nil {
-		out = append(out, fmt.Sprintf("keyset: %d", *filter.Keyset))
 	}
 	if filter.Nsfw != nil {
 		out = append(out, fmt.Sprintf("nsfw: %t", *filter.Nsfw))

@@ -125,7 +125,6 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 100,
 				PageSize:   2,
 				NextCursor: mustCursor(sortTime, last, 0),
-				PageID:     2000,
 				PageURL:    "/posts?cursor=" + mustCursor(sortTime, last, 0) + "&page_size=2&sort=time",
 			},
 		},
@@ -142,7 +141,6 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 100,
 				PageSize:   2,
 				NextCursor: ascCursor,
-				PageID:     2000,
 				PageURL:    "/posts?cursor=" + ascCursor + "&order=asc&page_size=2&sort=time",
 			},
 		},
@@ -159,7 +157,6 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 50,
 				PageSize:   2,
 				NextCursor: mustCursor(sortScore, last, 0),
-				PageID:     200,
 				PageURL:    "/posts?cursor=" + mustCursor(sortScore, last, 0) + "&page_size=2&sort=score",
 			},
 		},
@@ -173,13 +170,12 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 10,
 				PageSize:   1,
 				NextCursor: mustCursor(sortRandom, lastRandom, 42),
-				PageID:     1000,
 				PageURL:    "/posts?cursor=" + mustCursor(sortRandom, lastRandom, 42) + "&page_size=1&seed=42&sort=random",
 				Seed:       42,
 			},
 		},
 		{
-			name:    "zero score keeps page id non-zero",
+			name:    "zero score",
 			filter:  &analogdb.PostFilter{Limit: &limit1, Sort: &sortScore},
 			posts:   []*analogdb.Post{lastZeroScore},
 			count:   10,
@@ -188,7 +184,6 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 10,
 				PageSize:   1,
 				NextCursor: mustCursor(sortScore, lastZeroScore, 0),
-				PageID:     1,
 				PageURL:    "/posts?cursor=" + mustCursor(sortScore, lastZeroScore, 0) + "&page_size=1&sort=score",
 			},
 		},
@@ -312,9 +307,6 @@ func TestSetMetaColorSort(t *testing.T) {
 	if *cursor != (analogdb.Cursor{Rank: 0.25, ID: 7}) {
 		t.Errorf("unexpected cursor %+v", *cursor)
 	}
-	if meta.PageID != 2000 {
-		t.Errorf("expected next_page_id 2000, got %d", meta.PageID)
-	}
 }
 
 func FuzzParseToPostFilter(f *testing.F) {
@@ -324,7 +316,6 @@ func FuzzParseToPostFilter(f *testing.F) {
 		"page_size=abc",
 		"sort=random&seed=7",
 		"sort=random&seed=0",
-		"sort=random&page_id=5",
 		"cursor=abc",
 		"sort=score&cursor=eyJzIjoic2NvcmUiLCJ2IjoxNTMsImlkIjo0MDIxMX0",
 		"sort=bad",

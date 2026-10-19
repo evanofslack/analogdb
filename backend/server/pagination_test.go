@@ -158,7 +158,7 @@ func walk(t *testing.T, s *Server, first string, next func(PostResponse) string)
 func fullOrder(t *testing.T, service analogdb.PostService, sort analogdb.PostSort, seed int, modify func(*analogdb.PostFilter)) []int {
 	t.Helper()
 	limit := 10000
-	filter := analogdb.NewPostFilter(&limit, &sort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilter(&limit, &sort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	if seed != 0 {
 		filter.Seed = &seed
 	}
@@ -202,9 +202,6 @@ func checkWalk(t *testing.T, result walkResult, want []int) {
 		}
 		if last != (page.Meta.PageURL == "") {
 			t.Errorf("page %d: next_page_url %q on last=%t", i, page.Meta.PageURL, last)
-		}
-		if last != (page.Meta.PageID == 0) {
-			t.Errorf("page %d: next_page_id %d on last=%t", i, page.Meta.PageID, last)
 		}
 	}
 }
@@ -303,59 +300,6 @@ func TestPostsPagination(t *testing.T) {
 		}
 	})
 
-	t.Run("legacy page_id on time", func(t *testing.T) {
-		want := fullOrder(t, service, analogdb.PostSortTime, 0, nil)
-		w, first := getPostsPage(t, s, "/v1/posts?sort=time&page_size=7")
-		if w.Code != http.StatusOK {
-			t.Fatal(w.Body.String())
-		}
-		keyset := first.Meta.PageID
-		if keyset != first.Posts[6].Time {
-			t.Fatalf("expected next_page_id %d, got %d", first.Posts[6].Time, keyset)
-		}
-		w, second := getPostsPage(t, s, fmt.Sprintf("/v1/posts?sort=time&page_size=7&page_id=%d", keyset))
-		if w.Code != http.StatusOK {
-			t.Fatal(w.Body.String())
-		}
-		if w.Header().Get("Deprecation") != "true" || w.Header().Get("Sunset") != sunsetDate {
-			t.Error("expected deprecation headers")
-		}
-		// page_id pages on time alone: every post older than the keyset, newest first
-		older := []int{}
-		for _, id := range want {
-			if pagingTime(id) < keyset {
-				older = append(older, id)
-			}
-		}
-		got := []int{}
-		for _, p := range second.Posts {
-			got = append(got, p.Id)
-		}
-		if !reflect.DeepEqual(got, older[:7]) {
-			t.Errorf("expected %v, got %v", older[:7], got)
-		}
-		if second.Meta.TotalPosts != pagingPosts {
-			t.Errorf("expected total_posts %d, got %d", pagingPosts, second.Meta.TotalPosts)
-		}
-	})
-
-	t.Run("legacy page_id with random", func(t *testing.T) {
-		w, _ := getPostsPage(t, s, "/v1/posts?sort=random&page_id=1600000000")
-		if w.Code != http.StatusBadRequest {
-			t.Fatalf("expected 400, got %d", w.Code)
-		}
-		var e ErrorResponse
-		if err := json.NewDecoder(w.Body).Decode(&e); err != nil {
-			t.Fatal(err)
-		}
-		if e.Error != "page_id is not supported with sort=random; use cursor" {
-			t.Errorf("unexpected message %q", e.Error)
-		}
-		if w.Header().Get("Deprecation") != "true" {
-			t.Error("expected deprecation header")
-		}
-	})
-
 	t.Run("cursor errors", func(t *testing.T) {
 		for _, path := range []string{"/v1/posts?cursor=garbage", "/v1/posts?sort=time&cursor=" + mustEncodeCursor(t, analogdb.PostSortScore, &analogdb.Post{Id: 1}, 0)} {
 			if w, _ := getPostsPage(t, s, path); w.Code != http.StatusBadRequest {
@@ -392,7 +336,7 @@ func TestPostsPagination(t *testing.T) {
 			t.Errorf("expected relative /posts path, got %q", next.Path)
 		}
 		q := next.Query()
-		if q.Get("title") != "a&b" || q.Get("time_start") != fmt.Sprint(start) || q.Get("page_id") != "" || q.Get("cursor") != first.Meta.NextCursor {
+		if q.Get("title") != "a&b" || q.Get("time_start") != fmt.Sprint(start) || q.Get("cursor") != first.Meta.NextCursor {
 			t.Errorf("next_page_url lost parameters: %s", first.Meta.PageURL)
 		}
 
@@ -521,12 +465,6 @@ func TestColorPagination(t *testing.T) {
 			})
 		}
 	}
-
-	t.Run("page_id with color", func(t *testing.T) {
-		if w, _ := getPostsPage(t, s, "/v1/posts?sort=color&page_id=1600000000"); w.Code != http.StatusBadRequest {
-			t.Fatalf("expected 400, got %d", w.Code)
-		}
-	})
 
 	t.Run("unknown color", func(t *testing.T) {
 		if w, _ := getPostsPage(t, s, "/v1/posts?color=blue"); w.Code != http.StatusBadRequest {

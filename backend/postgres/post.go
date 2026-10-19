@@ -738,7 +738,7 @@ func filterToOrder(filter *analogdb.PostFilter, tableAlias string, seedIndex int
 }
 
 // filterToPageWhere builds the predicate that starts the page after the
-// cursor, or after the legacy keyset. The count query never includes it.
+// cursor. The count query never includes it.
 func filterToPageWhere(filter *analogdb.PostFilter, index int, seedIndex int) (string, []any) {
 	sort := filter.Sort
 	if sort == nil {
@@ -763,14 +763,6 @@ func filterToPageWhere(filter *analogdb.PostFilter, index int, seedIndex int) (s
 			return fmt.Sprintf("(sort_rank, id) < ($%d::float8, $%d)", index, index+1), []any{c.Rank, c.ID}
 		}
 		return "", nil
-	}
-	if keyset := filter.Keyset; keyset != nil {
-		switch *sort {
-		case analogdb.PostSortTime:
-			return fmt.Sprintf("time < $%d", index), []any{*keyset}
-		case analogdb.PostSortScore:
-			return fmt.Sprintf("score < $%d", index), []any{*keyset}
-		}
 	}
 	return "", nil
 }

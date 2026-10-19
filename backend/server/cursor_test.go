@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/evanofslack/analogdb"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
 func TestCursorRoundTrip(t *testing.T) {
@@ -181,25 +180,11 @@ func TestParseToPostFilterPaging(t *testing.T) {
 	timeCursor := mustEncodeCursor(t, analogdb.PostSortTime, post, 0)
 	scoreCursor := mustEncodeCursor(t, analogdb.PostSortScore, post, 0)
 
-	t.Run("page_id sets keyset", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/posts?sort=time&page_id=1000", nil)
+	t.Run("time cursor", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/posts?sort=time&cursor="+timeCursor, nil)
 		filter, err := parseToPostFilter(req)
 		if err != nil {
 			t.Fatal(err)
-		}
-		if filter.Keyset == nil || *filter.Keyset != 1000 || filter.Cursor != nil {
-			t.Errorf("expected keyset 1000 and no cursor, got %v %v", filter.Keyset, filter.Cursor)
-		}
-	})
-
-	t.Run("cursor wins over page_id", func(t *testing.T) {
-		req := httptest.NewRequest(http.MethodGet, "/posts?sort=time&page_id=1&cursor="+timeCursor, nil)
-		filter, err := parseToPostFilter(req)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if filter.Keyset != nil {
-			t.Errorf("expected no keyset, got %d", *filter.Keyset)
 		}
 		if want := (analogdb.Cursor{Value: 1000, ID: 5}); filter.Cursor == nil || *filter.Cursor != want {
 			t.Errorf("expected cursor %+v, got %+v", want, filter.Cursor)
@@ -236,9 +221,9 @@ func TestParseToPostFilterPaging(t *testing.T) {
 		})
 	}
 
-	t.Run("cursor with random ignores page_id", func(t *testing.T) {
+	t.Run("cursor with random", func(t *testing.T) {
 		randomCursor := mustEncodeCursor(t, analogdb.PostSortRandom, post, 9)
-		req := httptest.NewRequest(http.MethodGet, "/posts?sort=random&page_id=1&cursor="+randomCursor, nil)
+		req := httptest.NewRequest(http.MethodGet, "/posts?sort=random&cursor="+randomCursor, nil)
 		if _, err := parseToPostFilter(req); err != nil {
 			t.Fatal(err)
 		}
@@ -249,15 +234,11 @@ func TestParseToPostFilterPaging(t *testing.T) {
 		url     string
 		message string
 	}{
-		{"page_id with random", "/posts?sort=random&page_id=1000", "page_id is not supported with sort=random; use cursor"},
-		{"page_id with random and seed", "/posts?sort=random&seed=3&page_id=1000", "page_id is not supported with sort=random; use cursor"},
 		{"garbage cursor", "/posts?cursor=garbage!", "invalid cursor"},
 		{"cursor sort mismatch", "/posts?sort=time&cursor=" + scoreCursor, "cursor does not match sort"},
 		{"cursor default sort mismatch", "/posts?cursor=" + scoreCursor, "cursor does not match sort"},
 		{"desc cursor with asc", "/posts?sort=time&order=asc&cursor=" + timeCursor, "cursor does not match sort"},
 		{"invalid order", "/posts?sort=time&order=up", "invalid order parameter up, valid options are 'asc', 'desc'"},
-		{"page_id with asc", "/posts?sort=time&order=asc&page_id=1000", "page_id is not supported with order=asc; use cursor"},
-		{"page_id with color", "/posts?sort=color&color=red&page_id=1000", "page_id is not supported with sort=color; use cursor"},
 		{"unknown sort", "/posts?sort=best", "invalid sort parameter best, valid options are 'time', 'score', 'random', 'color'"},
 		{"unknown color", "/posts?color=blue", "invalid color blue, use a color name or a 6 digit hex"},
 		{"short hex", "/posts?color=fff", "invalid color fff, use a color name or a 6 digit hex"},
@@ -286,58 +267,6 @@ type mockFindPostService struct {
 func (m *mockFindPostService) FindPosts(ctx context.Context, filter *analogdb.PostFilter) ([]*analogdb.Post, int, error) {
 	m.filters = append(m.filters, *filter)
 	return []*analogdb.Post{}, 0, nil
-}
-
-func TestGetPostsDeprecatedPageID(t *testing.T) {
-	s := mustOpen(t)
-	defer mustClose(t, s)
-	posts := &mockFindPostService{}
-	s.PostService = posts
-
-	tests := []struct {
-		name       string
-		url        string
-		userAgent  string
-		status     int
-		deprecated bool
-		client     string
-	}{
-		{"cursor only", "/v1/posts?sort=time", "analogdb-web/1.0", http.StatusOK, false, ""},
-		{"page_id time", "/v1/posts?sort=time&page_id=100", "analogdb-scraper/1.0", http.StatusOK, true, "scraper"},
-		{"page_id score", "/v1/posts?sort=score&page_id=100", "analogdb-web/1.0", http.StatusOK, true, "web"},
-		{"page_id random", "/v1/posts?sort=random&page_id=100", "curl/8", http.StatusBadRequest, true, "other"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var before float64
-			if tt.deprecated {
-				before = testutil.ToFloat64(s.stats.deprecatedParams.WithLabelValues("page_id", tt.client))
-			}
-			req := httptest.NewRequest(http.MethodGet, tt.url, nil)
-			req.Header.Set("User-Agent", tt.userAgent)
-			w := httptest.NewRecorder()
-			s.router.ServeHTTP(w, req)
-
-			if w.Code != tt.status {
-				t.Errorf("expected status %d, got %d: %s", tt.status, w.Code, w.Body.String())
-			}
-			if got := w.Header().Get("Deprecation") == "true"; got != tt.deprecated {
-				t.Errorf("expected deprecation header %t, got %t", tt.deprecated, got)
-			}
-			if tt.deprecated {
-				if got := w.Header().Get("Sunset"); got != sunsetDate {
-					t.Errorf("expected sunset %q, got %q", sunsetDate, got)
-				}
-				after := testutil.ToFloat64(s.stats.deprecatedParams.WithLabelValues("page_id", tt.client))
-				if after != before+1 {
-					t.Errorf("expected counter to go from %v to %v, got %v", before, before+1, after)
-				}
-			} else if got := w.Header().Get("Sunset"); got != "" {
-				t.Errorf("expected no sunset header, got %q", got)
-			}
-		})
-	}
 }
 
 func TestMakePostResponseFetchesOneExtra(t *testing.T) {

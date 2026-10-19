@@ -20,10 +20,8 @@ type Meta struct {
 	PageSize   int `json:"page_size" example:"20"`
 	// Opaque cursor for the next page, empty at the end
 	NextCursor string `json:"next_cursor" example:"eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0"`
-	// Deprecated: use next_cursor
-	PageID  int    `json:"next_page_id" example:"1752244116"`
-	PageURL string `json:"next_page_url" example:"/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time"`
-	Seed    int    `json:"seed,omitempty" example:"37"`
+	PageURL    string `json:"next_page_url" example:"/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time"`
+	Seed       int    `json:"seed,omitempty" example:"37"`
 }
 
 type PostResponse struct {
@@ -102,7 +100,6 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Produce json
 // @Param page_size query int false "Number of posts per page, 1 to 200" default(20)
 // @Param cursor query string false "Opaque cursor from next_cursor for the next page"
-// @Param page_id query int false "Deprecated: use cursor. Keyset from next_page_id, not supported with sort=random or sort=color"
 // @Param sort query string false "Sort order. color ranks by the share of the given colors, or gives a rainbow with no colors" Enums(time,score,random,color) default(time)
 // @Param order query string false "Sort direction for time and score, ignored for random and color" Enums(asc,desc) default(desc)
 // @Param seed query int false "Random seed for consistent random sorting, picked from 1..500 when missing"
@@ -135,11 +132,6 @@ func (s *Server) mountPostHandlers(r chi.Router) {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /posts [get]
 func (s *Server) getPosts(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Query().Get("page_id") != "" {
-		w.Header().Set("Deprecation", "true")
-		w.Header().Set("Sunset", sunsetDate)
-		s.stats.deprecatedParams.WithLabelValues("page_id", legacyClient(r.UserAgent())).Inc()
-	}
 	filter, err := parseToPostFilter(r)
 	if err != nil {
 		s.writeError(w, r, err)
@@ -490,19 +482,6 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int, has
 	}
 	last := posts[len(posts)-1]
 
-	// pageID, kept non-zero while there are more pages
-	switch sort {
-	case analogdb.PostSortTime, analogdb.PostSortRandom, analogdb.PostSortColor:
-		meta.PageID = last.Time
-	case analogdb.PostSortScore:
-		meta.PageID = last.Score
-	default:
-		return Meta{}, fmt.Errorf("invalid sort parameter: %s", sort.String())
-	}
-	if meta.PageID == 0 {
-		meta.PageID = 1
-	}
-
 	cursor, err := encodeCursor(sort, filter.Ascending(), last, seed)
 	if err != nil {
 		return Meta{}, err
@@ -656,7 +635,7 @@ func clampLimit(limit, fallback, min, max int) int {
 
 // parse URL for query parameters and convert to PostFilter needed to query db
 func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
-	filter := analogdb.NewPostFilter(&defaultPostsLimit, &defaultPostsSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	filter := analogdb.NewPostFilter(&defaultPostsLimit, &defaultPostsSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 	sortTime := analogdb.PostSortTime
 	sortScore := analogdb.PostSortScore
 	sortRandom := analogdb.PostSortRandom
@@ -701,14 +680,6 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 		}
 	}
 
-	if key := values.Get("page_id"); key != "" {
-		if keyset, err := stringToInt(key); err != nil {
-			return nil, err
-		} else {
-			filter.Keyset = &keyset
-		}
-	}
-
 	if seed := values.Get("seed"); seed != "" {
 		if seed, err := strconv.Atoi(seed); err == nil && validSeed(seed) {
 			filter.Seed = &seed
@@ -721,27 +692,17 @@ func parseToPostFilter(r *http.Request) (*analogdb.PostFilter, error) {
 			return nil, err
 		}
 		filter.Cursor = cursor
-		filter.Keyset = nil
 		if seed != 0 {
 			filter.Seed = &seed
 		}
 	}
 
 	if *filter.Sort == analogdb.PostSortRandom {
-		if filter.Keyset != nil {
-			return nil, badRequest("page_id is not supported with sort=random; use cursor")
-		}
 		if filter.Seed == nil {
 			seed := rand.IntN(randomSeedPool) + 1
 			filter.Seed = &seed
 		}
 	} else {
-		if filter.Keyset != nil && *filter.Sort == analogdb.PostSortColor {
-			return nil, badRequest("page_id is not supported with sort=color; use cursor")
-		}
-		if filter.Keyset != nil && filter.Ascending() {
-			return nil, badRequest("page_id is not supported with order=asc; use cursor")
-		}
 		filter.Seed = nil
 	}
 

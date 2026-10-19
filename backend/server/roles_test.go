@@ -151,9 +151,7 @@ func TestProtectedRoutes(t *testing.T) {
 
 	public := map[string]bool{
 		"POST /v1/search/image":  true,
-		"POST /search/image":     true,
 		"POST /v1/post/1/report": true,
-		"POST /post/1/report":    true,
 	}
 	webAllowed := map[string]bool{
 		"POST /v1/events": true,

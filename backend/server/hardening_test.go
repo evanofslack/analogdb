@@ -262,32 +262,23 @@ func TestRunPortInUse(t *testing.T) {
 	}
 }
 
-func TestLegacyRequestsMetric(t *testing.T) {
+func TestUnversionedRoutesRemoved(t *testing.T) {
 	s := newTestServer(t, &config.Config{})
 
 	tests := []struct {
-		path      string
-		userAgent string
+		path string
+		want int
 	}{
-		{"/encode", "analogdb-scraper/1.0"},
-		{"/encode", "analogdb-web/1.0"},
-		{"/encode", "curl/8.0"},
-		{"/v1/encode", "analogdb-scraper/1.0"},
+		{"/encode", http.StatusNotFound},
+		{"/v1/encode", http.StatusUnauthorized},
 	}
 	for _, tt := range tests {
 		r := httptest.NewRequest(http.MethodPut, tt.path, nil)
-		r.Header.Set("User-Agent", tt.userAgent)
 		w := httptest.NewRecorder()
 		s.router.ServeHTTP(w, r)
-	}
-
-	for _, client := range []string{"scraper", "web", "other"} {
-		if got := testutil.ToFloat64(s.stats.legacyRequests.WithLabelValues("/encode", client)); got != 1 {
-			t.Errorf("want 1 legacy request for %s, got %v", client, got)
+		if w.Code != tt.want {
+			t.Errorf("PUT %s: want %d, got %d", tt.path, tt.want, w.Code)
 		}
-	}
-	if got := testutil.CollectAndCount(s.stats.legacyRequests); got != 3 {
-		t.Errorf("want 3 legacy series, got %d", got)
 	}
 }
 

@@ -23,8 +23,6 @@ type httpStats struct {
 	rateLimited        *prometheus.CounterVec
 	authRequests       *prometheus.CounterVec
 	unknownJSONFields  *prometheus.CounterVec
-	legacyRequests     *prometheus.CounterVec
-	deprecatedParams   *prometheus.CounterVec
 	searchRequests     *prometheus.CounterVec
 	searchDuration     *prometheus.HistogramVec
 	searchSlots        *prometheus.GaugeVec
@@ -112,26 +110,6 @@ func newHttpStats() *httpStats {
 		[]string{"route"},
 	)
 
-	legacyRequests := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metrics.AnalogdbNamespace,
-			Subsystem: metrics.HttpSubsystem,
-			Name:      "legacy_requests_total",
-			Help:      "Number of HTTP requests to deprecated unversioned routes",
-		},
-		[]string{"route", "client"},
-	)
-
-	deprecatedParams := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: metrics.AnalogdbNamespace,
-			Subsystem: metrics.HttpSubsystem,
-			Name:      "deprecated_param_total",
-			Help:      "Number of HTTP requests using a deprecated query parameter",
-		},
-		[]string{"param", "client"},
-	)
-
 	searchRequests := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: metrics.AnalogdbNamespace,
@@ -200,8 +178,6 @@ func newHttpStats() *httpStats {
 		rateLimited:        rateLimited,
 		authRequests:       authRequests,
 		unknownJSONFields:  unknownJSONFields,
-		legacyRequests:     legacyRequests,
-		deprecatedParams:   deprecatedParams,
 		searchRequests:     searchRequests,
 		searchDuration:     searchDuration,
 		searchSlots:        searchSlots,
@@ -222,8 +198,6 @@ func (stats *httpStats) register(registerer prometheus.Registerer) error {
 	registerer.MustRegister(stats.rateLimited)
 	registerer.MustRegister(stats.authRequests)
 	registerer.MustRegister(stats.unknownJSONFields)
-	registerer.MustRegister(stats.legacyRequests)
-	registerer.MustRegister(stats.deprecatedParams)
 	registerer.MustRegister(stats.searchRequests)
 	registerer.MustRegister(stats.searchDuration)
 	registerer.MustRegister(stats.searchSlots)

@@ -13,7 +13,7 @@ func TestPostFilterHashIncludesCursorAndSeed(t *testing.T) {
 	filter := func(seed int, cursor *analogdb.Cursor) *analogdb.PostFilter {
 		limit := 21
 		sort := analogdb.PostSortRandom
-		f := analogdb.NewPostFilter(&limit, &sort, nil, nil, nil, nil, &seed, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		f := analogdb.NewPostFilter(&limit, &sort, nil, nil, nil, &seed, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		f.Cursor = cursor
 		return f
 	}
@@ -88,8 +88,8 @@ func TestFindPostsCachesSortRank(t *testing.T) {
 
 	limit := 10
 	timeSort, colorSort := analogdb.PostSortTime, analogdb.PostSortColor
-	byTime := analogdb.NewPostFilter(&limit, &timeSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
-	rainbow := analogdb.NewPostFilter(&limit, &colorSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	byTime := analogdb.NewPostFilter(&limit, &timeSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	rainbow := analogdb.NewPostFilter(&limit, &colorSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	check := func() {
 		t.Helper()

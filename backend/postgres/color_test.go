@@ -352,7 +352,7 @@ func TestPostService_ColorSort(t *testing.T) {
 	colorSort := analogdb.PostSortColor
 	query := func(colors []string, limit int, cursor *analogdb.Cursor) ([]*analogdb.Post, int) {
 		t.Helper()
-		filter := analogdb.NewPostFilter(&limit, &colorSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		filter := analogdb.NewPostFilter(&limit, &colorSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		if colors != nil {
 			filter.Colors = &colors
 			filter.SetMinColorPercent()
@@ -439,7 +439,7 @@ func TestPostService_ColorSort(t *testing.T) {
 	t.Run("min_color override", func(t *testing.T) {
 		limit := 1000
 		colors, min := []string{"red"}, []float64{0.6}
-		filter := analogdb.NewPostFilter(&limit, &colorSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		filter := analogdb.NewPostFilter(&limit, &colorSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		filter.Colors, filter.ColorPercents = &colors, &min
 		filter.SetMinColorPercent()
 		got, _, err := service.FindPosts(ctx, filter)
@@ -460,7 +460,7 @@ func TestPostService_ColorSort(t *testing.T) {
 		limit := 1000
 		timeSort := analogdb.PostSortTime
 		colors := []string{"red"}
-		filter := analogdb.NewPostFilter(&limit, &timeSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+		filter := analogdb.NewPostFilter(&limit, &timeSort, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil)
 		filter.Colors = &colors
 		filter.SetMinColorPercent()
 		got, count, err := service.FindPosts(ctx, filter)
