@@ -46,20 +46,34 @@ func (s *ReportService) CreateReport(ctx context.Context, report *analogdb.Creat
 	return id, nil
 }
 
-const reportSelect = `
+// reportPostColumns snapshots a post from pictures while it exists and from
+// removed_posts after a takedown
+func reportPostColumns(p, rp string) string {
+	return fmt.Sprintf(`
+		COALESCE(%[1]s.title, %[2]s.title), COALESCE(%[1]s.author, %[2]s.author),
+		COALESCE(%[1]s.permalink, %[2]s.permalink), COALESCE(%[1]s.lowurl, %[2]s.low_url),
+		COALESCE(%[1]s.medurl, %[2]s.med_url), COALESCE(to_timestamp(%[1]s.time), %[2]s.posted_at),
+		%[1]s.width, %[1]s.height, %[1]s.nsfw, %[1]s.id IS NULL AND %[2]s.post_id IS NOT NULL`, p, rp)
+}
+
+var reportSelect = `
 	SELECT r.id, r.post_id, r.reason, r.message, r.email, r.created_at, r.resolved_at,
-		COALESCE(p.title, rp.title), COALESCE(p.author, rp.author),
-		COALESCE(p.permalink, rp.permalink), COALESCE(p.lowurl, rp.low_url),
-		p.nsfw, p.id IS NULL AND rp.post_id IS NOT NULL
+		r.duplicate_of,` + reportPostColumns("p", "rp") + `,` + reportPostColumns("op", "orp") + `
 	FROM post_reports r
 	LEFT JOIN pictures p ON p.id = r.post_id
-	LEFT JOIN removed_posts rp ON rp.post_id = r.post_id`
+	LEFT JOIN removed_posts rp ON rp.post_id = r.post_id
+	LEFT JOIN pictures op ON op.id = r.duplicate_of
+	LEFT JOIN removed_posts orp ON orp.post_id = r.duplicate_of`
 
 func (s *ReportService) FindReports(ctx context.Context, filter *analogdb.ReportFilter) ([]*analogdb.Report, error) {
 	s.db.logger.DebugContext(ctx, "Starting find reports")
 	defer s.db.logger.DebugContext(ctx, "Finished find reports")
 
 	where, args := []string{}, []any{}
+	if filter.Reason != "" {
+		args = append(args, string(filter.Reason))
+		where = append(where, fmt.Sprintf("r.reason = $%d", len(args)))
+	}
 	switch filter.Status {
 	case analogdb.ReportStatusOpen:
 		where = append(where, "r.resolved_at IS NULL")
@@ -110,11 +124,14 @@ type rowScanner interface {
 func scanReport(row rowScanner, imageBase string) (*analogdb.Report, error) {
 	var r analogdb.Report
 	var reason string
-	var message, email, title, author, permalink, lowURL sql.NullString
+	var message, email sql.NullString
 	var resolvedAt sql.NullTime
-	var nsfw sql.NullBool
-	if err := row.Scan(&r.ID, &r.PostID, &reason, &message, &email, &r.CreatedAt, &resolvedAt,
-		&title, &author, &permalink, &lowURL, &nsfw, &r.Post.Removed); err != nil {
+	var duplicateOf sql.NullInt64
+	var post, original reportPostScan
+	dest := []any{&r.ID, &r.PostID, &reason, &message, &email, &r.CreatedAt, &resolvedAt, &duplicateOf}
+	dest = append(dest, post.dest()...)
+	dest = append(dest, original.dest()...)
+	if err := row.Scan(dest...); err != nil {
 		return nil, err
 	}
 	r.Reason = analogdb.ReportReason(reason)
@@ -123,17 +140,64 @@ func scanReport(row rowScanner, imageBase string) (*analogdb.Report, error) {
 	if resolvedAt.Valid {
 		r.ResolvedAt = &resolvedAt.Time
 	}
-	r.Post.Title = nullStringPtr(title)
-	r.Post.Author = nullStringPtr(author)
-	r.Post.Permalink = nullStringPtr(permalink)
-	if lowURL.Valid {
-		lowURL.String = imageURL(imageBase, lowURL.String)
-	}
-	r.Post.LowURL = nullStringPtr(lowURL)
-	if nsfw.Valid {
-		r.Post.Nsfw = &nsfw.Bool
+	r.Post = post.reportPost(imageBase)
+	if duplicateOf.Valid {
+		id := int(duplicateOf.Int64)
+		r.DuplicateOf = &id
+		o := original.reportPost(imageBase)
+		r.Original = &o
 	}
 	return &r, nil
+}
+
+// reportPostScan holds the columns of one reportPostColumns snapshot
+type reportPostScan struct {
+	title, author, permalink, lowURL, medURL sql.NullString
+	postedAt                                 sql.NullTime
+	width, height                            sql.NullInt64
+	nsfw                                     sql.NullBool
+	removed                                  bool
+}
+
+func (s *reportPostScan) dest() []any {
+	return []any{&s.title, &s.author, &s.permalink, &s.lowURL, &s.medURL, &s.postedAt,
+		&s.width, &s.height, &s.nsfw, &s.removed}
+}
+
+func (s *reportPostScan) reportPost(imageBase string) analogdb.ReportPost {
+	post := analogdb.ReportPost{
+		Title:     nullStringPtr(s.title),
+		Author:    nullStringPtr(s.author),
+		Permalink: nullStringPtr(s.permalink),
+		LowURL:    nullImageURL(imageBase, s.lowURL),
+		MedURL:    nullImageURL(imageBase, s.medURL),
+		Width:     nullIntPtr(s.width),
+		Height:    nullIntPtr(s.height),
+		Removed:   s.removed,
+	}
+	if s.postedAt.Valid {
+		post.PostedAt = &s.postedAt.Time
+	}
+	if s.nsfw.Valid {
+		post.Nsfw = &s.nsfw.Bool
+	}
+	return post
+}
+
+func nullImageURL(imageBase string, n sql.NullString) *string {
+	if !n.Valid {
+		return nil
+	}
+	url := imageURL(imageBase, n.String)
+	return &url
+}
+
+func nullIntPtr(n sql.NullInt64) *int {
+	if !n.Valid {
+		return nil
+	}
+	v := int(n.Int64)
+	return &v
 }
 
 func (s *ReportService) ResolveReport(ctx context.Context, id int) error {

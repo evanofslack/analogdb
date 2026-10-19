@@ -178,22 +178,24 @@ func (s *ScrapeService) ReportDuplicates(ctx context.Context, dupes []analogdb.D
 		return 0, nil
 	}
 	ids := make([]int64, 0, len(dupes))
+	keeps := make([]int64, 0, len(dupes))
 	messages := make([]string, 0, len(dupes))
 	for _, d := range dupes {
 		ids = append(ids, int64(d.DuplicateID))
+		keeps = append(keeps, int64(d.KeepID))
 		messages = append(messages, analogdb.DuplicateReportMessage(d))
 	}
 
 	query := `
-		INSERT INTO post_reports (post_id, reason, message)
-		SELECT v.id, $3, v.message
-		FROM unnest($1::int[], $2::text[]) AS v(id, message)
+		INSERT INTO post_reports (post_id, reason, message, duplicate_of)
+		SELECT v.id, $3, v.message, v.keep
+		FROM unnest($1::int[], $2::text[], $4::int[]) AS v(id, message, keep)
 		WHERE EXISTS (SELECT 1 FROM pictures p WHERE p.id = v.id)
 			AND NOT EXISTS (
 				SELECT 1 FROM post_reports r
 				WHERE r.post_id = v.id AND r.reason = $3 AND r.resolved_at IS NULL
 			)`
-	result, err := s.db.db.ExecContext(ctx, query, pq.Array(ids), pq.Array(messages), string(analogdb.ReportDuplicate))
+	result, err := s.db.db.ExecContext(ctx, query, pq.Array(ids), pq.Array(messages), string(analogdb.ReportDuplicate), pq.Array(keeps))
 	if err != nil {
 		s.db.logger.ErrorContext(ctx, "Fail report duplicate posts", "error", err)
 		return 0, err

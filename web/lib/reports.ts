@@ -20,3 +20,11 @@ export function isReportReason(value: unknown): value is ReportReason {
 export function reportReasonLabel(value: string): string {
   return reportReasons.find((r) => r.value === value)?.label ?? value;
 }
+
+// redditLink turns a stored permalink into a full link
+export function redditLink(permalink: string | null): string | null {
+  if (!permalink) return null;
+  return permalink.startsWith("http")
+    ? permalink
+    : `https://www.reddit.com${permalink}`;
+}

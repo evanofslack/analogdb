@@ -73,17 +73,21 @@ async function renderTab(
     case "moderation": {
       const status = pick(params.status, reportStatuses, "open");
       const before = positiveInt(params.before);
+      const dupes = positiveInt(params.dupes);
       const cursor = typeof params.cursor === "string" ? params.cursor : null;
-      const [reports, incoming, queue] = await Promise.all([
+      const [reports, duplicates, incoming, queue] = await Promise.all([
         load(() => getReports(status, before)),
+        load(() => getReports("open", dupes, "duplicate")),
         load(() => getReviewPosts(cursor)),
         queueLoad,
       ]);
       return (
         <ModerationTab
-          params={{ status, before, cursor }}
+          params={{ status, before, dupes, cursor }}
           reports={reports.data}
           reportsError={reports.error}
+          duplicates={duplicates.data}
+          duplicatesError={duplicates.error}
           incoming={incoming.data}
           incomingError={incoming.error}
           openReports={queue.data?.open_reports}
