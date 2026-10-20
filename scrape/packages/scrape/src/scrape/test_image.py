@@ -9,6 +9,7 @@ from PIL import Image
 from .constants import AWS_BUCKET_PHOTOS, CLOUDFRONT_URL, LOW_RES, USER_AGENT
 from .image import (
     ImageProcessor,
+    RemovedImageError,
     extract_palette,
     image_bytes_hash,
     image_hash,
@@ -35,8 +36,11 @@ def jpeg_bytes(width: int = 1600, height: int = 1200) -> bytes:
     return buf.getvalue()
 
 
-def fake_response(content: bytes, content_type: str) -> MagicMock:
+def fake_response(
+    content: bytes, content_type: str, url: str = "https://i.redd.it/x.jpg"
+) -> MagicMock:
     resp = MagicMock()
+    resp.url = url
     resp.content = content
     resp.headers = {"content-type": content_type}
     return resp
@@ -152,6 +156,14 @@ class TestProcess:
     def test_invalid_content_type_raises(self):
         with pytest.raises(ValueError):
             process(make_post(PERMALINK), b"<html></html>", "text/html")
+
+    def test_removed_imgur_redirect_raises(self):
+        resp = fake_response(
+            jpeg_bytes(161, 81), "image/png", "https://i.imgur.com/removed.png"
+        )
+        with patch("scrape.image.requests.Session.get", return_value=resp):
+            with pytest.raises(RemovedImageError):
+                ImageProcessor().process(make_post(PERMALINK), FakeS3())
 
     def test_sends_analogdb_user_agent(self):
         assert ImageProcessor().session.headers["User-Agent"] == USER_AGENT

@@ -192,6 +192,7 @@ def fake_get(bad_urls: set[str]):
 
     def get(url, **kwargs):
         resp = MagicMock()
+        resp.url = url
         if url in bad_urls:
             resp.content = b"<html></html>"
             resp.headers = {"content-type": "text/html"}

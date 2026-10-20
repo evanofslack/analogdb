@@ -10,7 +10,7 @@ import dagster as dg
 from analogdb.client import Client, Uploaded
 from analogdb_generated.exceptions import ApiException
 from scrape.arctic import ArcticShift, ArcticShiftError
-from scrape.image import HtmlContentError
+from scrape.image import HtmlContentError, RemovedImageError
 from scrape.models import (
     MetadataPost,
     PhotoMetadata,
@@ -337,6 +337,7 @@ def scrape_assets(prefix: str, source: str, group: str) -> List[dg.AssetsDefinit
         status = {}
         errors = {}
         skipped = 0
+        removed = 0
         processor = image_processor.client()
         for id, p in reddit_posts.successful().items():
             try:
@@ -347,15 +348,24 @@ def scrape_assets(prefix: str, source: str, group: str) -> List[dg.AssetsDefinit
                 skipped += 1
                 status[id] = Status.FAILED
                 errors[id] = str(e)
+            except RemovedImageError as e:
+                context.log.debug(f"Skipping {id}, image was removed by its host")
+                removed += 1
+                status[id] = Status.FAILED
+                errors[id] = str(e)
             except Exception as e:
                 context.log.error(f"Failed to process images for {id}: {e}")
                 status[id] = Status.FAILED
                 errors[id] = str(e)
 
         result = Result(data=data, status=status, errors=errors)
-        add_result_metadata(context, result, skipped_html=skipped)
+        add_result_metadata(
+            context, result, skipped_html=skipped, skipped_removed=removed
+        )
         if skipped:
             context.log.info(f"Skipped {skipped} posts that link to a web page")
+        if removed:
+            context.log.info(f"Skipped {removed} posts whose image was removed")
         context.log.info(f"Processed images for {result.successful_count()} posts")
         return result
 
