@@ -2,6 +2,7 @@ import hashlib
 import warnings
 from io import BytesIO
 from typing import List, Optional, Tuple
+from urllib.parse import urlsplit
 
 import numpy as np
 import requests
@@ -24,6 +25,7 @@ from .constants import (
     PALETTE_MERGE_DISTANCE,
     PALETTE_SAMPLE,
     PALETTE_SEED,
+    REMOVED_IMAGE_URLS,
     USER_AGENT,
     VALID_CONTENT,
 )
@@ -33,6 +35,10 @@ from .s3 import S3
 
 class HtmlContentError(ValueError):
     """The post links to a web page, usually a video or external site, not an image."""
+
+
+class RemovedImageError(ValueError):
+    """The host deleted the image and redirected to a placeholder image."""
 
 
 def image_hash(image: Image.Image) -> str:
@@ -282,6 +288,9 @@ class ImageProcessor:
 
     def _download(self, url: str) -> Tuple[bytes, str]:
         resp = self._fetch(url)
+        final = urlsplit(resp.url)
+        if f"{final.netloc}{final.path}" in REMOVED_IMAGE_URLS:
+            raise RemovedImageError(f"Image removed, redirected to {resp.url}")
         content_type = resp.headers.get("content-type", "").split(";")[0].strip()
         if content_type == "text/html":
             raise HtmlContentError(f"Invalid content type: {content_type}")

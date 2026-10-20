@@ -22,6 +22,9 @@ REDDIT_URL = "https://www.reddit.com"
 # imgur rejects the default python-requests user agent
 USER_AGENT = "analogdb/1.0 (+https://analogdb.com)"
 
+# hosts redirect deleted images here and serve a placeholder that is a valid image
+REMOVED_IMAGE_URLS = {"i.imgur.com/removed.png"}
+
 # valid media types
 VALID_CONTENT = [
     "image/png",
