@@ -34,6 +34,7 @@ from .models import (
     PostExtraction,
     PostPatch,
     PostsFilter,
+    StatsBuild,
 )
 
 DEFAULT_PAGE_SIZE = 20
@@ -42,6 +43,7 @@ USER_AGENT = f"analogdb-scraper/{version('analogdb')}"
 REQUEST_TIMEOUT = (10.0, 30.0)
 ENCODE_TIMEOUT = (10.0, 900.0)
 DUPLICATES_TIMEOUT = (10.0, 300.0)
+STATS_TIMEOUT = (10.0, 360.0)
 EXTRACTIONS_CHUNK = 200
 EXTRACTIONS_PAGE_SIZE = 500
 DUPLICATE_MESSAGE = "duplicate of post"
@@ -194,6 +196,11 @@ class Client:
             _request_timeout=DUPLICATES_TIMEOUT
         )
         return resp.duplicates or [], resp.reported or 0
+
+    def rebuild_stats(self) -> StatsBuild:
+        """Build a new stats snapshot. The route builds synchronously and has
+        5 minutes per request."""
+        return self.scrape_api.admin_stats_rebuild_post(_request_timeout=STATS_TIMEOUT)
 
     def get_films(self) -> List[Film]:
         return self._call(self.films_api.films_get).films or []

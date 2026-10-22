@@ -160,11 +160,11 @@ const (
 )
 
 type StatsRebuildResponse struct {
-	ID      int64     `json:"id"`
+	ID      int64     `json:"id" example:"12"`
 	Created time.Time `json:"created"`
-	BuildMs int       `json:"build_ms"`
-	Films   int       `json:"films"`
-	Themes  int       `json:"themes"`
+	BuildMs int       `json:"build_ms" example:"24366"`
+	Films   int       `json:"films" example:"38"`
+	Themes  int       `json:"themes" example:"36"`
 }
 
 type adminStatsSnapshotsResponse struct {
@@ -196,8 +196,18 @@ func (s *Server) getStats(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// rebuildStats builds and stores a new snapshot. One build runs at a time,
-// a failed build stores nothing so the previous snapshot stays live.
+// @Summary Rebuild stats
+// @Description Build a new stats snapshot and serve it from GET /stats. One build runs at a time and a failed build keeps the previous snapshot. Can take a minute (requires authentication)
+// @Tags scrape
+// @Produce json
+// @Success 200 {object} StatsRebuildResponse
+// @Failure 401 {object} ErrorResponse "Unauthorized"
+// @Failure 403 {object} ErrorResponse "Forbidden"
+// @Failure 404 {object} ErrorResponse "No stats seed uploaded"
+// @Failure 409 {object} ErrorResponse "A build is already running"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Security BasicAuth
+// @Router /admin/stats/rebuild [post]
 func (s *Server) rebuildStats(w http.ResponseWriter, r *http.Request) {
 	if !s.statsBuild.TryLock() {
 		s.writeError(w, r, &analogdb.Error{Code: analogdb.ERRCONFLICT, Message: "a stats build is already running"})

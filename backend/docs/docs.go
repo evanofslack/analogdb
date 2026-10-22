@@ -217,6 +217,61 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/stats/rebuild": {
+            "post": {
+                "security": [
+                    {
+                        "BasicAuth": []
+                    }
+                ],
+                "description": "Build a new stats snapshot and serve it from GET /stats. One build runs at a time and a failed build keeps the previous snapshot. Can take a minute (requires authentication)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "scrape"
+                ],
+                "summary": "Rebuild stats",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/server.StatsRebuildResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "No stats seed uploaded",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "A build is already running",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/server.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/authors": {
             "get": {
                 "description": "Usernames of every author with a post",
@@ -3976,6 +4031,30 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/analogdb.Post"
                     }
+                }
+            }
+        },
+        "server.StatsRebuildResponse": {
+            "type": "object",
+            "properties": {
+                "build_ms": {
+                    "type": "integer",
+                    "example": 24366
+                },
+                "created": {
+                    "type": "string"
+                },
+                "films": {
+                    "type": "integer",
+                    "example": 38
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "themes": {
+                    "type": "integer",
+                    "example": 36
                 }
             }
         },

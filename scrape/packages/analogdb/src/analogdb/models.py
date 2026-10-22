@@ -28,6 +28,9 @@ from analogdb_generated.models.analogdb_post_caption import (
 from analogdb_generated.models.analogdb_post_extraction import (
     AnalogdbPostExtraction as PostExtraction,
 )
+from analogdb_generated.models.server_stats_rebuild_response import (
+    ServerStatsRebuildResponse as StatsBuild,
+)
 
 __all__ = [
     "Camera",
@@ -43,6 +46,7 @@ __all__ = [
     "PostCreate",
     "PostExtraction",
     "PostPatch",
+    "StatsBuild",
     "PostsFilter",
     "create_posts_filter",
 ]
