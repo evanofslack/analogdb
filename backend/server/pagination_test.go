@@ -273,7 +273,7 @@ func TestPostsPagination(t *testing.T) {
 					if resp.Meta.PageURL == "" {
 						return ""
 					}
-					return "/v1" + resp.Meta.PageURL
+					return resp.Meta.PageURL
 				})
 				checkWalk(t, result, want)
 			})
@@ -287,7 +287,7 @@ func TestPostsPagination(t *testing.T) {
 			if resp.Meta.PageURL == "" {
 				return ""
 			}
-			return "/v1" + resp.Meta.PageURL
+			return resp.Meta.PageURL
 		})
 		if len(result.pages) != 2 {
 			t.Fatalf("expected 2 pages, got %d", len(result.pages))
@@ -332,15 +332,15 @@ func TestPostsPagination(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if next.Path != "/posts" {
-			t.Errorf("expected relative /posts path, got %q", next.Path)
+		if next.Path != "/v1/posts" {
+			t.Errorf("expected /v1/posts path, got %q", next.Path)
 		}
 		q := next.Query()
 		if q.Get("title") != "a&b" || q.Get("time_start") != fmt.Sprint(start) || q.Get("cursor") != first.Meta.NextCursor {
 			t.Errorf("next_page_url lost parameters: %s", first.Meta.PageURL)
 		}
 
-		_, viaURL := getPostsPage(t, s, "/v1"+first.Meta.PageURL)
+		_, viaURL := getPostsPage(t, s, first.Meta.PageURL)
 		_, viaCursor := getPostsPage(t, s, base+"&cursor="+url.QueryEscape(first.Meta.NextCursor))
 		gotURL, gotCursor := []int{}, []int{}
 		for i := range viaURL.Posts {
@@ -372,7 +372,7 @@ func TestPostsPagination(t *testing.T) {
 		}
 
 		want := fullOrder(t, service, analogdb.PostSortRandom, first.Meta.Seed, nil)
-		_, second := getPostsPage(t, s, "/v1"+first.Meta.PageURL)
+		_, second := getPostsPage(t, s, first.Meta.PageURL)
 		if second.Meta.Seed != first.Meta.Seed {
 			t.Errorf("expected seed %d on page 2, got %d", first.Meta.Seed, second.Meta.Seed)
 		}
@@ -459,7 +459,7 @@ func TestColorPagination(t *testing.T) {
 					if q.Get("order") != "" || q.Get("sort") != "color" || !reflect.DeepEqual(q["color"], tc.colors) {
 						t.Fatalf("unexpected next_page_url %s", resp.Meta.PageURL)
 					}
-					return "/v1" + resp.Meta.PageURL
+					return resp.Meta.PageURL
 				})
 				checkWalk(t, result, want)
 			})

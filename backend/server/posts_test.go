@@ -125,7 +125,7 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 100,
 				PageSize:   2,
 				NextCursor: mustCursor(sortTime, last, 0),
-				PageURL:    "/posts?cursor=" + mustCursor(sortTime, last, 0) + "&page_size=2&sort=time",
+				PageURL:    "/v1/posts?cursor=" + mustCursor(sortTime, last, 0) + "&page_size=2&sort=time",
 			},
 		},
 		{
@@ -141,7 +141,7 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 100,
 				PageSize:   2,
 				NextCursor: ascCursor,
-				PageURL:    "/posts?cursor=" + ascCursor + "&order=asc&page_size=2&sort=time",
+				PageURL:    "/v1/posts?cursor=" + ascCursor + "&order=asc&page_size=2&sort=time",
 			},
 		},
 		{
@@ -157,7 +157,7 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 50,
 				PageSize:   2,
 				NextCursor: mustCursor(sortScore, last, 0),
-				PageURL:    "/posts?cursor=" + mustCursor(sortScore, last, 0) + "&page_size=2&sort=score",
+				PageURL:    "/v1/posts?cursor=" + mustCursor(sortScore, last, 0) + "&page_size=2&sort=score",
 			},
 		},
 		{
@@ -170,7 +170,7 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 10,
 				PageSize:   1,
 				NextCursor: mustCursor(sortRandom, lastRandom, 42),
-				PageURL:    "/posts?cursor=" + mustCursor(sortRandom, lastRandom, 42) + "&page_size=1&seed=42&sort=random",
+				PageURL:    "/v1/posts?cursor=" + mustCursor(sortRandom, lastRandom, 42) + "&page_size=1&seed=42&sort=random",
 				Seed:       42,
 			},
 		},
@@ -184,7 +184,7 @@ func TestSetMeta(t *testing.T) {
 				TotalPosts: 10,
 				PageSize:   1,
 				NextCursor: mustCursor(sortScore, lastZeroScore, 0),
-				PageURL:    "/posts?cursor=" + mustCursor(sortScore, lastZeroScore, 0) + "&page_size=1&sort=score",
+				PageURL:    "/v1/posts?cursor=" + mustCursor(sortScore, lastZeroScore, 0) + "&page_size=1&sort=score",
 			},
 		},
 		{
