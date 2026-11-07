@@ -32,6 +32,7 @@ const (
 	readTimeout       = 15 * time.Second
 	writeTimeout      = 30 * time.Second
 	idleTimeout       = 120 * time.Second
+	apiPrefix         = "/v1"
 )
 
 type Server struct {
@@ -171,7 +172,7 @@ func (s *Server) mountResourceHandlers() {
 	s.mountSearchHandlers(v1)
 	s.mountEventHandlers(v1)
 	s.mountStatsHandlers(v1)
-	s.router.Mount("/v1", v1)
+	s.router.Mount(apiPrefix, v1)
 }
 
 func (s *Server) Close() error {

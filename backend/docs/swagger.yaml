@@ -1146,7 +1146,7 @@ definitions:
         example: eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0
         type: string
       next_page_url:
-        example: /posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time
+        example: /v1/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time
         type: string
       page_size:
         example: 20
@@ -1199,7 +1199,7 @@ definitions:
         example: eyJvIjo1MH0
         type: string
       next_page_url:
-        example: /search?cursor=eyJvIjo1MH0&page_size=50&q=girl+at+sunset
+        example: /v1/search?cursor=eyJvIjo1MH0&page_size=50&q=girl+at+sunset
         type: string
       page_size:
         example: 50

@@ -20,7 +20,7 @@ type Meta struct {
 	PageSize   int `json:"page_size" example:"20"`
 	// Opaque cursor for the next page, empty at the end
 	NextCursor string `json:"next_cursor" example:"eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0"`
-	PageURL    string `json:"next_page_url" example:"/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time"`
+	PageURL    string `json:"next_page_url" example:"/v1/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0&page_size=20&sort=time"`
 	Seed       int    `json:"seed,omitempty" example:"37"`
 }
 
@@ -490,7 +490,7 @@ func setMeta(filter *analogdb.PostFilter, posts []*analogdb.Post, count int, has
 
 	values := filterToValues(filter, sort)
 	values.Set("cursor", cursor)
-	meta.PageURL = postsPath + "?" + values.Encode()
+	meta.PageURL = apiPrefix + postsPath + "?" + values.Encode()
 	return meta, nil
 }
 

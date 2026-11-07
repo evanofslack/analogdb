@@ -47,7 +47,7 @@ type SearchMeta struct {
 	PageSize int `json:"page_size" example:"50"`
 	// Opaque cursor for the next page, empty at the end
 	NextCursor string `json:"next_cursor" example:"eyJvIjo1MH0"`
-	PageURL    string `json:"next_page_url" example:"/search?cursor=eyJvIjo1MH0&page_size=50&q=girl+at+sunset"`
+	PageURL    string `json:"next_page_url" example:"/v1/search?cursor=eyJvIjo1MH0&page_size=50&q=girl+at+sunset"`
 }
 
 type SearchResponse struct {
@@ -246,7 +246,7 @@ func (s *Server) searchText(w http.ResponseWriter, r *http.Request) {
 		resp.Meta.NextCursor = cursor
 		values := searchValues(filter, strings.TrimSpace(r.URL.Query().Get("q")))
 		values.Set("cursor", cursor)
-		resp.Meta.PageURL = searchPath + "?" + values.Encode()
+		resp.Meta.PageURL = apiPrefix + searchPath + "?" + values.Encode()
 	}
 
 	s.observeSearch("text", resp, start)

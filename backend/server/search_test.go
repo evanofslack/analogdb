@@ -178,14 +178,14 @@ func TestSearchText(t *testing.T) {
 		t.Fatalf("unexpected meta %+v", resp.Meta)
 	}
 	next, err := url.Parse(resp.Meta.PageURL)
-	if err != nil || next.Path != "/search" {
+	if err != nil || next.Path != "/v1/search" {
 		t.Fatalf("unexpected next page url %q", resp.Meta.PageURL)
 	}
 	if q := next.Query(); q.Get("q") != "cats" || q.Get("page_size") != "3" || q.Get("grayscale") != "false" || q.Get("cursor") != resp.Meta.NextCursor {
 		t.Errorf("unexpected next page url %q", resp.Meta.PageURL)
 	}
 
-	w, resp = doSearch(t, s, "/v1"+resp.Meta.PageURL)
+	w, resp = doSearch(t, s, resp.Meta.PageURL)
 	if w.Code != http.StatusOK {
 		t.Fatalf("want 200, got %d", w.Code)
 	}
@@ -246,7 +246,7 @@ func TestSearchRelatedPosts(t *testing.T) {
 	}
 
 	keywords.words = nil
-	w, resp = doSearch(t, s, "/v1"+resp.Meta.PageURL+"&related_posts=3")
+	w, resp = doSearch(t, s, resp.Meta.PageURL+"&related_posts=3")
 	if w.Code != http.StatusOK || keywords.words != nil || resp.RelatedPosts != nil {
 		t.Errorf("want no related posts after page one, got %d %v", w.Code, resp.RelatedPosts)
 	}
