@@ -430,7 +430,7 @@ const metas = [
   {
     field: "next_page_url",
     type: "string",
-    description: "path of the next page, relative to /v1",
+    description: "path of the next page",
   },
   {
     field: "seed",
@@ -745,9 +745,8 @@ export default function Documentation() {
             <Code>/posts</Code> and <Code>/search</Code> are paginated with
             cursors. By default, 20 posts are returned per page. Pass the{" "}
             <Code>next_cursor</Code> from one response to get the next page, or
-            follow <Code>next_page_url</Code>, a path relative to{" "}
-            <Code>/v1</Code>. Other endpoints return a single page sized by{" "}
-            <Code>page_size</Code>.
+            follow <Code>next_page_url</Code>. Other endpoints return a single
+            page sized by <Code>page_size</Code>.
           </p>
           <ParamTable rows={paginations} />
           <Example code="curl https://api.analogdb.com/v1/posts?page_size=10&cursor=eyJzIjoidGltZSIsInYiOjE3OTA1Mzk5MjIsImlkIjo0MDA1Mn0" />
