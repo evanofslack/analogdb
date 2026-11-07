@@ -3847,7 +3847,7 @@ const docTemplate = `{
                 },
                 "next_page_url": {
                     "type": "string",
-                    "example": "/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0\u0026page_size=20\u0026sort=time"
+                    "example": "/v1/posts?cursor=eyJzIjoidGltZSIsInYiOjE3NTIyNDQxMTYsImlkIjo0MDIxMX0\u0026page_size=20\u0026sort=time"
                 },
                 "page_size": {
                     "type": "integer",
@@ -3925,7 +3925,7 @@ const docTemplate = `{
                 },
                 "next_page_url": {
                     "type": "string",
-                    "example": "/search?cursor=eyJvIjo1MH0\u0026page_size=50\u0026q=girl+at+sunset"
+                    "example": "/v1/search?cursor=eyJvIjo1MH0\u0026page_size=50\u0026q=girl+at+sunset"
                 },
                 "page_size": {
                     "type": "integer",
